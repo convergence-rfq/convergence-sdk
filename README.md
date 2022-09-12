@@ -2,5 +2,6 @@
 
 ```bash
 npm login
+npm version minor
 npm publish
 ```
