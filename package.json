@@ -1,5 +1,5 @@
 {
-  "name": "convergence-sdk",
+  "name": "@convergence-rfq/convergence-sdk",
   "version": "0.1.0",
   "description": "Official Convergence RFQ SDK",
   "main": "index.js",
