@@ -1,26 +1,17 @@
-/* eslint-disable global-require */
-import typescript from "rollup-plugin-typescript2";
-import pkg from "./package.json";
+import { createConfigs } from '../../rollup.config';
+import pkg from './package.json';
 
-export default {
-  input: "src/index.ts",
-  output: [
+export default createConfigs({
+  pkg,
+  additionalExternals: ['@noble/hashes/sha3', '@noble/hashes/sha512'],
+  builds: [
     {
-      file: pkg.main,
-      format: "cjs",
+      dir: 'dist/esm',
+      format: 'es',
     },
     {
-      file: pkg.module,
-      format: "es",
+      dir: 'dist/cjs',
+      format: 'cjs',
     },
   ],
-  external: [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.peerDependencies || {}),
-  ],
-  plugins: [
-    typescript({
-      typescript: require("typescript"),
-    }),
-  ],
-};
+});

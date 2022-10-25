@@ -1,2 +1,4 @@
 .DS_Store
 packages/js/node_modules
+packages/js/dist
+examples/node_modules

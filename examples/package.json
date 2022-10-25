@@ -1,0 +1,12 @@
+{
+  "name": "@convergence-rfq/examples",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "main": "ts-node ./src/main.ts"
+  },
+  "dependencies": {
+    "@convergence-rfq/sdk": "file:../packages/js"
+  }
+}
