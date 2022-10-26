@@ -18,7 +18,7 @@ export class AssertionError extends Error {
  * Assserts that the provided condition is true.
  * @internal
  */
-export default function assert(
+export function assert(
   condition: boolean,
   message?: string
 ): asserts condition {
