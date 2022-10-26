@@ -1,5 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import { ConvergenceRfq } from "@/ConvergenceRfq";
+import { Convergence } from "@/Convergence";
 import { Cluster } from "@/types";
 import { GpaBuilder } from "@/utils";
 
@@ -14,5 +14,5 @@ export type Program = {
   address: PublicKey;
   clusterFilter?: (cluster: Cluster) => boolean;
   errorResolver?: (error: ErrorWithLogs) => ErrorWithCode | null | undefined;
-  gpaResolver?: (cvg: ConvergenceRfq) => GpaBuilder;
+  gpaResolver?: (convergence: Convergence) => GpaBuilder;
 };

@@ -1,7 +1,7 @@
-import { Amman } from "@metaplex-foundation/amman-client";
-import { cusper as cusperTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
-import { TransactionError } from "@solana/web3.js";
-import { logDebug } from "../../src/utils/log";
+import { Amman } from '@metaplex-foundation/amman-client';
+import { cusper as cusperTokenMetadata } from '@metaplex-foundation/mpl-token-metadata';
+import { TransactionError } from '@solana/web3.js';
+import { logDebug } from '../../src/utils/log';
 
 export const amman = Amman.instance({
   log: logDebug,

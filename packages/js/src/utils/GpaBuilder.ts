@@ -1,14 +1,14 @@
-import { Buffer } from "buffer";
+import { Buffer } from 'buffer';
 import {
   GetProgramAccountsConfig,
   GetProgramAccountsFilter,
   PublicKey,
-} from "@solana/web3.js";
-import base58 from "bs58";
-import BN from "bn.js";
-import { GmaBuilder, GmaBuilderOptions } from "./GmaBuilder";
-import { ConvergenceRfq } from "@/ConvergenceRfq";
-import { UnparsedAccount } from "@/types";
+} from '@solana/web3.js';
+import base58 from 'bs58';
+import BN from 'bn.js';
+import { GmaBuilder, GmaBuilderOptions } from './GmaBuilder';
+import { Convergence } from '@/Convergence';
+import { UnparsedAccount } from '@/types';
 
 export type GpaSortCallback = (
   a: UnparsedAccount,
@@ -17,7 +17,7 @@ export type GpaSortCallback = (
 
 export class GpaBuilder {
   /** The connection instance to use when fetching accounts. */
-  protected readonly metaplex: ConvergenceRfq;
+  protected readonly convergence: Convergence;
 
   /** The public key of the program we want to retrieve accounts from. */
   protected readonly programId: PublicKey;
@@ -28,20 +28,18 @@ export class GpaBuilder {
   /** When provided, reorder accounts using this callback. */
   protected sortCallback?: GpaSortCallback;
 
-  constructor(metaplex: ConvergenceRfq, programId: PublicKey) {
-    this.metaplex = metaplex;
+  constructor(convergence: Convergence, programId: PublicKey) {
+    this.convergence = convergence;
     this.programId = programId;
   }
 
   mergeConfig(config: GetProgramAccountsConfig) {
     this.config = { ...this.config, ...config };
-
     return this;
   }
 
   slice(offset: number, length: number) {
     this.config.dataSlice = { offset, length };
-
     return this;
   }
 
@@ -62,12 +60,12 @@ export class GpaBuilder {
   where(offset: number, bytes: string | Buffer | PublicKey | BN | number) {
     if (Buffer.isBuffer(bytes)) {
       bytes = base58.encode(bytes);
-    } else if (typeof bytes === "object" && "toBase58" in bytes) {
+    } else if (typeof bytes === 'object' && 'toBase58' in bytes) {
       bytes = bytes.toBase58();
     } else if (BN.isBN(bytes)) {
       bytes = base58.encode(bytes.toArray());
-    } else if (typeof bytes !== "string") {
-      bytes = base58.encode(new BN(bytes, "le").toArray());
+    } else if (typeof bytes !== 'string') {
+      bytes = base58.encode(new BN(bytes, 'le').toArray());
     }
 
     return this.addFilter({ memcmp: { offset, bytes } });
@@ -79,12 +77,11 @@ export class GpaBuilder {
 
   sortUsing(callback: GpaSortCallback) {
     this.sortCallback = callback;
-
     return this;
   }
 
   async get(): Promise<UnparsedAccount[]> {
-    const accounts = await this.metaplex
+    const accounts = await this.convergence
       .rpc()
       .getProgramAccounts(this.programId, this.config);
 
@@ -104,7 +101,7 @@ export class GpaBuilder {
   }
 
   async getDataAsPublicKeys(): Promise<PublicKey[]> {
-    // TODO(loris): Throw a custom Metaplex error if the data is not a public key.
+    // TODO: Throw a custom ConvergenceRfq error if the data is not a public key.
     return this.getAndMap((account) => new PublicKey(account.data));
   }
 
@@ -112,9 +109,9 @@ export class GpaBuilder {
     callback?: (account: UnparsedAccount) => PublicKey,
     options?: GmaBuilderOptions
   ): Promise<GmaBuilder> {
-    // TODO(loris): Throw a custom Metaplex error if the data is not a public key.
+    // TODO(loris): Throw a custom Convergence error if the data is not a public key.
     const cb = callback ?? ((account) => new PublicKey(account.data));
 
-    return new GmaBuilder(this.metaplex, await this.getAndMap(cb), options);
+    return new GmaBuilder(this.convergence, await this.getAndMap(cb), options);
   }
 }

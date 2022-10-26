@@ -1,4 +1,4 @@
-import { ConvergenceRfqError } from "../errors";
+import { ConvergenceError } from "../errors";
 
 /**
  * Error indicating that an assertion failed.
@@ -51,7 +51,7 @@ export function assertObjectHasDefinedKeys<
 >(
   input: T,
   keys: K[],
-  onError: (missingKeys: K[]) => ConvergenceRfqError
+  onError: (missingKeys: K[]) => ConvergenceError
 ): asserts input is { [key in keyof T]: T[key] } & { [key in K]-?: T[key] } {
   const missingKeys = keys.filter(
     (property) => input?.[property] === undefined

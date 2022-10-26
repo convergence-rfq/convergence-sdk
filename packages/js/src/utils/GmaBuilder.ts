@@ -1,38 +1,36 @@
 import { Commitment, PublicKey } from "@solana/web3.js";
 import { chunk } from "./common";
-import { ConvergenceRfq } from "@/ConvergenceRfq";
+import { Convergence } from "@/Convergence";
 import { UnparsedMaybeAccount } from "@/types";
 
 export type GmaBuilderOptions = {
   chunkSize?: number;
-
-  /** The level of commitment desired when querying the blockchain. */
   commitment?: Commitment;
 };
 
 export class GmaBuilder {
-  protected readonly metaplex: ConvergenceRfq;
+  protected readonly convergence: Convergence;
   protected readonly publicKeys: PublicKey[];
   protected readonly commitment?: Commitment;
   protected chunkSize: number;
 
   constructor(
-    metaplex: ConvergenceRfq,
+    convergence: Convergence,
     publicKeys: PublicKey[],
     options: GmaBuilderOptions = {}
   ) {
-    this.metaplex = metaplex;
+    this.convergence = convergence;
     this.chunkSize = options.chunkSize ?? 100;
     this.commitment = options.commitment;
     this.publicKeys = publicKeys;
   }
 
   static make(
-    metaplex: ConvergenceRfq,
+    cvg: Convergence,
     publicKeys: PublicKey[],
     options: GmaBuilderOptions = {}
   ) {
-    return new GmaBuilder(metaplex, publicKeys, options);
+    return new GmaBuilder(cvg, publicKeys, options);
   }
 
   chunkBy(n: number) {
@@ -110,12 +108,12 @@ export class GmaBuilder {
     publicKeys: PublicKey[]
   ): Promise<UnparsedMaybeAccount[]> {
     try {
-      // TODO(loris): Use lower level RPC call to add dataSlice support.
-      return await this.metaplex
+      // TODO: Use lower level RPC call to add dataSlice support.
+      return await this.convergence
         .rpc()
         .getMultipleAccounts(publicKeys, this.commitment);
     } catch (error) {
-      // TODO(loris): Custom error instead.
+      // TODO: Custom error instead.
       throw error;
     }
   }

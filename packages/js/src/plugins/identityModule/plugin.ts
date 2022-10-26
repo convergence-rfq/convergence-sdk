@@ -1,17 +1,17 @@
 import { IdentityClient } from "./IdentityClient";
-import type { ConvergenceRfq } from "@/ConvergenceRfq";
-import { ConvergenceRfqPlugin } from "@/types";
+import type { Convergence } from "@/Convergence";
+import { ConvergencePlugin } from "@/types";
 
 /** @group Plugins */
-export const identityModule = (): ConvergenceRfqPlugin => ({
-  install(cvg: ConvergenceRfq) {
+export const identityModule = (): ConvergencePlugin => ({
+  install(convergence: Convergence) {
     const identityClient = new IdentityClient();
-    cvg.identity = () => identityClient;
+    convergence.identity = () => identityClient;
   },
 });
 
-declare module "../../ConvergenceRfq" {
-  interface ConvergenceRfq {
+declare module "../../Convergence" {
+  interface Convergence {
     identity(): IdentityClient;
   }
 }

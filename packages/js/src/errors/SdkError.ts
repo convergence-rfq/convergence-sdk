@@ -1,44 +1,44 @@
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey } from '@solana/web3.js';
 import {
-  ConvergenceRfqError,
-  ConvergenceRfqErrorInputWithoutSource,
-  ConvergenceRfqErrorOptions,
-} from "./ConvergenceRfqError";
-import { Cluster, Program, Currency } from "@/types";
+  ConvergenceError,
+  ConvergenceErrorInputWithoutSource,
+  ConvergenceErrorOptions,
+} from './ConvergenceError';
+import { Cluster, Program, Currency } from '@/types';
 
 /** @group Errors */
-export class SdkError extends ConvergenceRfqError {
-  constructor(input: ConvergenceRfqErrorInputWithoutSource) {
+export class SdkError extends ConvergenceError {
+  constructor(input: ConvergenceErrorInputWithoutSource) {
     super({
       ...input,
       key: `sdk.${input.key}`,
-      source: "sdk",
+      source: 'sdk',
     });
   }
 }
 
 /** @group Errors */
 export class OperationHandlerMissingError extends SdkError {
-  constructor(operationKey: string, options?: ConvergenceRfqErrorOptions) {
+  constructor(operationKey: string, options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "operation_handler_missing",
-      title: "Operation Handler Missing",
+      key: 'operation_handler_missing',
+      title: 'Operation Handler Missing',
       problem: `No operation handler was registered for the [${operationKey}] operation.`,
       solution:
-        "Did you forget to register it? You may do this by using: " +
-        '"metaplex.register(operation, operationHandler)".',
+        'Did you forget to register it? You may do this by using: ' +
+        '"convergence.register(operation, operationHandler)".',
     });
   }
 }
 
 /** @group Errors */
 export class DriverNotProvidedError extends SdkError {
-  constructor(driver: string, options?: ConvergenceRfqErrorOptions) {
+  constructor(driver: string, options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "driver_not_provided",
-      title: "Driver Not Provided",
+      key: 'driver_not_provided',
+      title: 'Driver Not Provided',
       problem: `The SDK tried to access the driver [${driver}] but was not provided.`,
       solution:
         'Make sure the driver is registered by using the "setDriver(myDriver)" method.',
@@ -53,15 +53,15 @@ export class UnexpectedCurrencyError extends SdkError {
   constructor(
     actual: Currency,
     expected: Currency,
-    options?: ConvergenceRfqErrorOptions
+    options?: ConvergenceErrorOptions
   ) {
     super({
       options,
-      key: "unexpected_currency",
-      title: "Unexpected Currency",
+      key: 'unexpected_currency',
+      title: 'Unexpected Currency',
       problem: `Expected currency [${expected}] but got [${actual}].`,
       solution:
-        "Ensure the provided Amount or Currency is of the expected type.",
+        'Ensure the provided Amount or Currency is of the expected type.',
     });
     this.actual = actual;
     this.expected = expected;
@@ -77,18 +77,18 @@ export class CurrencyMismatchError extends SdkError {
     left: Currency,
     right: Currency,
     operation?: string,
-    options?: ConvergenceRfqErrorOptions
+    options?: ConvergenceErrorOptions
   ) {
-    const wrappedOperation = operation ? ` [${operation}]` : "";
+    const wrappedOperation = operation ? ` [${operation}]` : '';
     super({
       options,
-      key: "currency_mismatch",
-      title: "Currency Mismatch",
+      key: 'currency_mismatch',
+      title: 'Currency Mismatch',
       problem:
         `The SDK tried to execute an operation${wrappedOperation} on two different currencies: ` +
         `${left.symbol} and ${right.symbol}.`,
       solution:
-        "Provide both amounts in the same currency to perform this operation.",
+        'Provide both amounts in the same currency to perform this operation.',
     });
     this.left = left;
     this.right = right;
@@ -98,12 +98,12 @@ export class CurrencyMismatchError extends SdkError {
 
 /** @group Errors */
 export class InvalidJsonVariableError extends SdkError {
-  constructor(options?: ConvergenceRfqErrorOptions) {
+  constructor(options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "invalid_json_variable",
-      title: "Invalid JSON Variable",
-      problem: "The provided JSON variable could not be parsed into a string.",
+      key: 'invalid_json_variable',
+      title: 'Invalid JSON Variable',
+      problem: 'The provided JSON variable could not be parsed into a string.',
       solution:
         'Ensure the variable can be parsed as a JSON string using "JSON.stringify(myVariable)".',
     });
@@ -112,43 +112,43 @@ export class InvalidJsonVariableError extends SdkError {
 
 /** @group Errors */
 export class InvalidJsonStringError extends SdkError {
-  constructor(options?: ConvergenceRfqErrorOptions) {
+  constructor(options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "invalid_json_string",
-      title: "Invalid JSON String",
-      problem: "The provided string could not be parsed into a JSON variable.",
-      solution: "Ensure the provided string uses a valid JSON syntax.",
+      key: 'invalid_json_string',
+      title: 'Invalid JSON String',
+      problem: 'The provided string could not be parsed into a JSON variable.',
+      solution: 'Ensure the provided string uses a valid JSON syntax.',
     });
   }
 }
 
 /** @group Errors */
 export class OperationUnauthorizedForGuestsError extends SdkError {
-  constructor(operation: string, options?: ConvergenceRfqErrorOptions) {
+  constructor(operation: string, options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "operation_unauthorized_for_guests",
-      title: "Operation Unauthorized For Guests",
+      key: 'operation_unauthorized_for_guests',
+      title: 'Operation Unauthorized For Guests',
       problem: `Trying to access the [${operation}] operation as a guest.`,
       solution:
-        "Ensure your wallet is connected using the identity driver. " +
-        'For instance, by using "metaplex.use(walletAdapterIdentity(wallet))" or ' +
-        '"metaplex.use(keypairIdentity(keypair))".',
+        'Ensure your wallet is connected using the identity driver. ' +
+        'For instance, by using "convergence.use(walletAdapterIdentity(wallet))" or ' +
+        '"convergence.use(keypairIdentity(keypair))".',
     });
   }
 }
 
 /** @group Errors */
 export class UninitializedWalletAdapterError extends SdkError {
-  constructor(options?: ConvergenceRfqErrorOptions) {
+  constructor(options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "uninitialized_wallet_adapter",
-      title: "Uninitialized Wallet Adapter",
-      problem: "The current wallet adapter is not initialized.",
+      key: 'uninitialized_wallet_adapter',
+      title: 'Uninitialized Wallet Adapter',
+      problem: 'The current wallet adapter is not initialized.',
       solution:
-        "You likely have selected a wallet adapter but forgot to initialize it. " +
+        'You likely have selected a wallet adapter but forgot to initialize it. ' +
         'You may do this by running the following asynchronous method: "walletAdapter.connect();".',
     });
   }
@@ -156,25 +156,25 @@ export class UninitializedWalletAdapterError extends SdkError {
 
 /** @group Errors */
 export class OperationNotSupportedByWalletAdapterError extends SdkError {
-  constructor(operation: string, options?: ConvergenceRfqErrorOptions) {
+  constructor(operation: string, options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "operation_not_supported_by_wallet_adapter",
-      title: "Operation Not Supported By Wallet Adapter",
+      key: 'operation_not_supported_by_wallet_adapter',
+      title: 'Operation Not Supported By Wallet Adapter',
       problem: `The current wallet adapter does not support the following operation: [${operation}].`,
       solution:
-        "Ensure your wallet is connected using a compatible wallet adapter.",
+        'Ensure your wallet is connected using a compatible wallet adapter.',
     });
   }
 }
 
 /** @group Errors */
 export class TaskIsAlreadyRunningError extends SdkError {
-  constructor(options?: ConvergenceRfqErrorOptions) {
+  constructor(options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "task_is_already_running",
-      title: "Task Is Already Running",
+      key: 'task_is_already_running',
+      title: 'Task Is Already Running',
       problem: "Trying to re-run a task that hasn't completed yet.",
       solution:
         'Ensure the task has completed using "await" before trying to run it again.',
@@ -184,13 +184,13 @@ export class TaskIsAlreadyRunningError extends SdkError {
 
 /** @group Errors */
 export class AssetNotFoundError extends SdkError {
-  constructor(location: string, options?: ConvergenceRfqErrorOptions) {
+  constructor(location: string, options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "asset_not_found",
-      title: "Asset Not Found",
+      key: 'asset_not_found',
+      title: 'Asset Not Found',
       problem: `The asset at [${location}] could not be found.`,
-      solution: "Ensure the asset exists at the given path or URI.",
+      solution: 'Ensure the asset exists at the given path or URI.',
     });
   }
 }
@@ -200,19 +200,19 @@ export class AccountNotFoundError extends SdkError {
   constructor(
     address: PublicKey,
     accountType?: string,
-    options?: ConvergenceRfqErrorOptions
+    options?: ConvergenceErrorOptions
   ) {
     super({
       options,
-      key: "account_not_found",
-      title: "Account Not Found",
+      key: 'account_not_found',
+      title: 'Account Not Found',
       problem:
         (accountType
           ? `The account of type [${accountType}] was not found`
-          : "No account was found") +
+          : 'No account was found') +
         ` at the provided address [${address.toBase58()}].`,
       solution:
-        "Ensure the provided address is correct and that an account exists at this address.",
+        'Ensure the provided address is correct and that an account exists at this address.',
     });
   }
 }
@@ -222,12 +222,12 @@ export class UnexpectedAccountError extends SdkError {
   constructor(
     address: PublicKey,
     expectedType: string,
-    options?: ConvergenceRfqErrorOptions
+    options?: ConvergenceErrorOptions
   ) {
     super({
       options,
-      key: "unexpected_account",
-      title: "Unexpected Account",
+      key: 'unexpected_account',
+      title: 'Unexpected Account',
       problem:
         `The account at the provided address [${address.toBase58()}] ` +
         `is not of the expected type [${expectedType}].`,
@@ -242,12 +242,12 @@ export class UnexpectedTypeError extends SdkError {
     variable: string,
     actualType: string,
     expectedType: string,
-    options?: ConvergenceRfqErrorOptions
+    options?: ConvergenceErrorOptions
   ) {
     super({
       options,
-      key: "unexpected_type",
-      title: "Unexpected Type",
+      key: 'unexpected_type',
+      title: 'Unexpected Type',
       problem: `Expected variable [${variable}] to be of type [${expectedType}] but got [${actualType}].`,
       solution: `Please check that you are providing the right variable for this use case.`,
     });
@@ -259,16 +259,16 @@ export class ExpectedSignerError extends SdkError {
   constructor(
     variable: string,
     actualType: string,
-    options?: ConvergenceRfqErrorOptions
+    options?: ConvergenceErrorOptions
   ) {
     super({
       options,
-      key: "expected_signer",
-      title: "Expected Signer",
+      key: 'expected_signer',
+      title: 'Expected Signer',
       problem: `Expected variable [${variable}] to be of type [Signer] but got [${actualType}].`,
       solution:
-        "Please check that you are providing the variable as a signer. " +
-        "Note that, it may be allowed to provide a non-signer variable for certain use cases but not this one.",
+        'Please check that you are providing the variable as a signer. ' +
+        'Note that, it may be allowed to provide a non-signer variable for certain use cases but not this one.',
     });
   }
 }
@@ -280,20 +280,20 @@ export class ProgramNotRecognizedError extends SdkError {
   constructor(
     nameOrAddress: string | PublicKey,
     cluster: Cluster,
-    options?: ConvergenceRfqErrorOptions
+    options?: ConvergenceErrorOptions
   ) {
-    const isName = typeof nameOrAddress === "string";
+    const isName = typeof nameOrAddress === 'string';
     const toString = isName ? nameOrAddress : nameOrAddress.toBase58();
     super({
       options,
-      key: "program_not_recognized",
-      title: "Program Not Recognized",
+      key: 'program_not_recognized',
+      title: 'Program Not Recognized',
       problem:
-        `The provided program ${isName ? "name" : "address"} [${toString}] ` +
+        `The provided program ${isName ? 'name' : 'address'} [${toString}] ` +
         `is not recognized in the [${cluster}] cluster.`,
       solution:
-        "Did you forget to register this program? " +
-        'If so, you may use "metaplex.programs().register(myProgram)" to fix this.',
+        'Did you forget to register this program? ' +
+        'If so, you may use "convergence.programs().register(myProgram)" to fix this.',
     });
     this.nameOrAddress = nameOrAddress;
     this.cluster = cluster;
@@ -303,10 +303,10 @@ export class ProgramNotRecognizedError extends SdkError {
 /** @group Errors */
 export class MissingGpaBuilderError extends SdkError {
   program: Program;
-  constructor(program: Program, options?: ConvergenceRfqErrorOptions) {
+  constructor(program: Program, options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "missing_gpa_builder",
+      key: 'missing_gpa_builder',
       title: 'Missing "getProgramAccount" Builder',
       problem: `The program [${program.name}] does not have a registered "getProgramAccount" builder.`,
       solution:
@@ -322,12 +322,12 @@ export class NoInstructionsToSendError extends SdkError {
   constructor(
     operation: string,
     solution?: string,
-    options?: ConvergenceRfqErrorOptions
+    options?: ConvergenceErrorOptions
   ) {
     super({
       options,
-      key: "no_instructions_to_send",
-      title: "No Instructions To Send",
+      key: 'no_instructions_to_send',
+      title: 'No Instructions To Send',
       problem:
         `The input provided to the [${operation}] resulted ` +
         `in a Transaction containing no Instructions.`,
@@ -342,75 +342,72 @@ export class NoInstructionsToSendError extends SdkError {
 
 /** @group Errors */
 export class FailedToSerializeDataError extends SdkError {
-  constructor(dataDescription: string, options?: ConvergenceRfqErrorOptions) {
+  constructor(dataDescription: string, options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "failed_to_serialize_data",
-      title: "Failed To Serialize Data",
+      key: 'failed_to_serialize_data',
+      title: 'Failed To Serialize Data',
       problem: `The received data could not be serialized as a [${dataDescription}].`,
       solution:
-        "Ensure the data is of the expected type so it can be serialized.",
+        'Ensure the data is of the expected type so it can be serialized.',
     });
   }
 }
 
 /** @group Errors */
 export class MissingInputDataError extends SdkError {
-  constructor(
-    missingParameters: string[],
-    options?: ConvergenceRfqErrorOptions
-  ) {
+  constructor(missingParameters: string[], options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "missing_input_data",
-      title: "Missing Input Data",
-      problem: "Some parameters are missing from the provided input object.",
+      key: 'missing_input_data',
+      title: 'Missing Input Data',
+      problem: 'Some parameters are missing from the provided input object.',
       solution:
-        "Please provide the following missing parameters: [" +
-        missingParameters.join(", ") +
-        "].",
+        'Please provide the following missing parameters: [' +
+        missingParameters.join(', ') +
+        '].',
     });
   }
 }
 
 /** @group Errors */
 export class FailedToDeserializeDataError extends SdkError {
-  constructor(dataDescription: string, options?: ConvergenceRfqErrorOptions) {
+  constructor(dataDescription: string, options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "failed_to_deserialize_data",
-      title: "Failed To Deserialize Data",
+      key: 'failed_to_deserialize_data',
+      title: 'Failed To Deserialize Data',
       problem: `The received serialized data could not be deserialized to a [${dataDescription}].`,
       solution:
-        "Ensure the serialized data is not corrupted and complies with the expected type.",
+        'Ensure the serialized data is not corrupted and complies with the expected type.',
     });
   }
 }
 
 /** @group Errors */
 export class NotYetImplementedError extends SdkError {
-  constructor(options?: ConvergenceRfqErrorOptions) {
+  constructor(options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "not_yet_implemented",
-      title: "Not Yet Implemented",
-      problem: "This feature is not yet implemented.",
-      solution: "Please check back later.",
+      key: 'not_yet_implemented',
+      title: 'Not Yet Implemented',
+      problem: 'This feature is not yet implemented.',
+      solution: 'Please check back later.',
     });
   }
 }
 
 /** @group Errors */
 export class UnreachableCaseError extends SdkError {
-  constructor(value: never, options?: ConvergenceRfqErrorOptions) {
+  constructor(value: never, options?: ConvergenceErrorOptions) {
     super({
       options,
-      key: "unreachable_case",
+      key: 'unreachable_case',
       title: `The Case '${value}' in a Switch or If Statement went Unhandled.`,
       problem:
-        "The developer is not handling that case yet or is missing a `break` or `return` statement.",
+        'The developer is not handling that case yet or is missing a `break` or `return` statement.',
       solution:
-        "Check your inputs or file an issue to have all cases handled properly.",
+        'Check your inputs or file an issue to have all cases handled properly.',
     });
   }
 }
