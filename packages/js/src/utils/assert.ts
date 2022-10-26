@@ -16,7 +16,10 @@ export class AssertionError extends Error {
  * Assserts that the provided condition is true.
  * @internal
  */
-export default function assert(condition: boolean, message?: string): asserts condition {
+export default function assert(
+  condition: boolean,
+  message?: string
+): asserts condition {
   if (!condition) {
     throw new AssertionError(message ?? "Assertion failed");
   }
@@ -26,7 +29,11 @@ export default function assert(condition: boolean, message?: string): asserts co
  * Asserts that both values are strictly equal.
  * @internal
  */
-assert.equal = function assertEqual<T>(actual: unknown, expected: T, message?: string): asserts actual is T {
+assert.equal = function assertEqual<T>(
+  actual: unknown,
+  expected: T,
+  message?: string
+): asserts actual is T {
   if (actual !== expected) {
     throw new AssertionError((message ?? "") + ` ${actual} !== ${expected}`);
   }
@@ -36,12 +43,17 @@ assert.equal = function assertEqual<T>(actual: unknown, expected: T, message?: s
  * Asserts that a given object contains the specified
  * keys such that their values are defined.
  */
-export function assertObjectHasDefinedKeys<T extends object, K extends keyof T = keyof T>(
+export function assertObjectHasDefinedKeys<
+  T extends object,
+  K extends keyof T = keyof T
+>(
   input: T,
   keys: K[],
   onError: (missingKeys: K[]) => any
 ): asserts input is { [key in keyof T]: T[key] } & { [key in K]-?: T[key] } {
-  const missingKeys = keys.filter((property) => input?.[property] === undefined);
+  const missingKeys = keys.filter(
+    (property) => input?.[property] === undefined
+  );
 
   if (missingKeys.length > 0) {
     throw onError(missingKeys);

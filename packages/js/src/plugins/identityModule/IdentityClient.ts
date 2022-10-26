@@ -1,14 +1,14 @@
-import * as ed25519 from '@noble/ed25519';
-import { PublicKey, Transaction } from '@solana/web3.js';
-import { IdentityDriver } from './IdentityDriver';
+import * as ed25519 from "@noble/ed25519";
+import { PublicKey, Transaction } from "@solana/web3.js";
+import { IdentityDriver } from "./IdentityDriver";
 import {
   HasDriver,
   IdentitySigner,
   isSigner,
   KeypairSigner,
   Signer,
-} from '@/types';
-import { DriverNotProvidedError } from '@/errors';
+} from "@/types";
+import { DriverNotProvidedError } from "@/errors";
 
 /**
  * @group Modules
@@ -20,7 +20,7 @@ export class IdentityClient
 
   driver(): IdentityDriver {
     if (!this._driver) {
-      throw new DriverNotProvidedError('IdentityDriver');
+      throw new DriverNotProvidedError("IdentityDriver");
     }
 
     return this._driver;
