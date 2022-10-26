@@ -3,3 +3,4 @@ export * from "./common";
 export * from "./GmaBuilder";
 export * from "./GpaBuilder";
 export * from "./log";
+export * from "./types";

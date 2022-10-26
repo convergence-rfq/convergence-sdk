@@ -68,8 +68,11 @@ export const token = (
     amount = toBigNumber(amount).toNumber();
   }
 
+  // @ts-ignore
+  const basisPoints = toBigNumber(amount * Math.pow(10, decimals));
+
   return {
-    basisPoints: toBigNumber(amount * Math.pow(10, decimals)),
+    basisPoints,
     currency: {
       symbol,
       decimals,
