@@ -1,15 +1,14 @@
 import { Commitment, Connection, Keypair } from "@solana/web3.js";
 import { LOCALHOST } from "@metaplex-foundation/amman-client";
+
 import { amman } from "./amman";
 import {
   ConvergenceRfq,
-  guestIdentity,
   keypairIdentity,
-  mockStorage,
-  UploadMetadataInput,
-  CreateNftInput,
+  //UploadMetadataInput,
+  //CreateNftInput,
   KeypairSigner,
-  CreateSftInput,
+  //CreateSftInput,
 } from "@/index";
 
 export type ConvergenceRfqTestOptions = {
@@ -24,59 +23,58 @@ export const convergenceRfqGuest = (
   const connection = new Connection(options.rpcEndpoint ?? LOCALHOST, {
     commitment: options.commitment ?? "confirmed",
   });
-  return ConvergenceRfq.make(connection)
-    .use(guestIdentity())
-    .use(mockStorage());
+  return ConvergenceRfq.make(connection);
 };
 
 export const convergenceRfq = async (
   options: ConvergenceRfqTestOptions = {}
 ) => {
-  const cRfq = convergenceRfqGuest(options);
-  const wallet = await createWallet(cRfq, options.solsToAirdrop);
-  return cRfq.use(keypairIdentity(wallet as Keypair));
+  const cvg = convergenceRfqGuest(options);
+  const wallet = await createWallet(cvg, options.solsToAirdrop);
+  return cvg.use(keypairIdentity(wallet as Keypair));
 };
 
 export const createWallet = async (
-  cRfq: ConvergenceRfq,
+  cvg: ConvergenceRfq,
   solsToAirdrop = 100
 ): Promise<KeypairSigner> => {
   const wallet = Keypair.generate();
-  await amman.airdrop(cRfq.connection, wallet.publicKey, solsToAirdrop);
+  await amman.airdrop(cvg.connection, wallet.publicKey, solsToAirdrop);
   return wallet;
 };
 
-export const createRfq = async (
-  cRfq: ConvergenceRfq,
-  input: Partial<CreateNftInput & { json: UploadMetadataInput }> = {}
-) => {
-  const { uri } = await cRfq.nfts().uploadMetadata(input.json ?? {});
-  const { nft } = await cRfq.nfts().create({
-    uri,
-    name: "My NFT",
-    sellerFeeBasisPoints: 200,
-    ...input,
-  });
-
-  return nft;
-};
-
-export const createCollectionNft = (
-  cRfq: ConvergenceRfq,
-  input: Partial<CreateNftInput & { json: UploadMetadataInput }> = {}
-) => createRfq(cRfq, { ...input, isCollection: true });
-
-export const createSft = async (
-  cRfq: ConvergenceRfq,
-  input: Partial<CreateSftInput & { json: UploadMetadataInput }> = {}
-) => {
-  const { uri } = await cRfq.nfts().uploadMetadata(input.json ?? {});
-  const { sft } = await cRfq.nfts().createSft({
-    uri,
-    name: "My SFT",
-    sellerFeeBasisPoints: 200,
-    ...input,
-  });
-
-  return sft;
-};
+//export const createRfq = async (
+//  cvg: ConvergenceRfq,
+//  input: Partial<CreateNftInput & { json: UploadMetadataInput }> = {}
+//) => {
+//  const { uri } = await cvg.rfqs().uploadMetadata(input.json ?? {});
+//  const { nft } = await cvg.rfqs().create({
+//    uri,
+//    name: "My NFT",
+//    sellerFeeBasisPoints: 200,
+//    ...input,
+//  });
+//
+//  return nft;
+//};
+//
+//export const createCollectionNft = (
+//  cvg: ConvergenceRfq,
+//  input: Partial<CreateNftInput & { json: UploadMetadataInput }> = {}
+//) => createRfq(cvg, { ...input, isCollection: true });
+//
+//export const createSft = async (
+//  cvg: ConvergenceRfq,
+//  input: Partial<CreateSftInput & { json: UploadMetadataInput }> = {}
+//) => {
+//  const { uri } = await cvg.rfqs().uploadMetadata(input.json ?? {});
+//  const { sft } = await cvg.rfqs().createSft({
+//    uri,
+//    name: "My RFQ",
+//    sellerFeeBasisPoints: 200,
+//    ...input,
+//  });
+//
+//  return sft;
+//};
+//

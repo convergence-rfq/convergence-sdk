@@ -1,6 +1,10 @@
 import { Connection } from "@solana/web3.js";
 
-import { ConvergenceRfqPlugin, Cluster, resolveClusterFromConnection } from "./types";
+import {
+  ConvergenceRfqPlugin,
+  Cluster,
+  resolveClusterFromConnection,
+} from "./types";
 import { corePlugins } from "./plugins/corePlugins";
 
 export type ConvergenceRfqOptions = {
