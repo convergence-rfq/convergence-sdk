@@ -14,7 +14,6 @@ import {
   OperationHandler,
   OperationScope,
   Signer,
-  token,
   toPublicKey,
   useOperation,
 } from '@/types';
@@ -382,35 +381,20 @@ export const createRfqBuilder = async (
 ): Promise<TransactionBuilder<CreateRfqBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
-    useNewMint = Keypair.generate(),
     updateAuthority = convergence.identity(),
     mintAuthority = convergence.identity(),
-    tokenOwner = convergence.identity().publicKey,
   } = params;
 
   const tokenMetadataProgram = convergence
     .programs()
     .getTokenMetadata(programs);
 
-  const sftBuilder = await convergence
-    .rfqs()
-    .builders()
-    .createSft(
-      {
-        ...params,
-        updateAuthority,
-        mintAuthority,
-        freezeAuthority: mintAuthority.publicKey,
-        useNewMint,
-        tokenOwner,
-        tokenAmount: token(1),
-        decimals: 0,
-      },
-      { programs, payer }
-    );
+  const mintAddress = Keypair.generate().publicKey;
+  const metadataAddress = Keypair.generate().publicKey;
+  const tokenAddress = Keypair.generate().publicKey;
 
-  const { mintAddress, metadataAddress, tokenAddress } =
-    sftBuilder.getContext();
+  //const { mintAddress, metadataAddress, tokenAddress } =
+  //  sftBuilder.getContext();
   const masterEditionAddress = convergence.rfqs().pdas().masterEdition({
     mint: mintAddress,
     programs,
@@ -427,7 +411,7 @@ export const createRfqBuilder = async (
       })
 
       // Create the mint, the token and the metadata.
-      .add(sftBuilder)
+      //.add(sftBuilder)
 
       // Create master edition account (prevents further minting).
       .add({

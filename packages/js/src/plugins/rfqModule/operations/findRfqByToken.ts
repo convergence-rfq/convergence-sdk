@@ -13,13 +13,13 @@ import { Convergence } from '@/Convergence';
 // Operation
 // -----------------
 
-const Key = 'FindNftByTokenOperation' as const;
+const Key = 'FindRfqByTokenOperation' as const;
 
 /**
- * Finds an NFT or an SFT by its token address.
+ * Finds an RFQ by its token address.
  *
  * ```ts
- * const nft = await convergence
+ * const rfq = await convergence
  *   .rfqs()
  *   .findByToken({ token };
  * ```
@@ -28,23 +28,23 @@ const Key = 'FindNftByTokenOperation' as const;
  * @category Constructors
  */
 export const findNftByTokenOperation =
-  useOperation<FindNftByTokenOperation>(Key);
+  useOperation<FindRfqByTokenOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type FindNftByTokenOperation = Operation<
+export type FindRfqByTokenOperation = Operation<
   typeof Key,
-  FindNftByTokenInput,
-  FindNftByTokenOutput
+  FindRfqByTokenInput,
+  FindRfqByTokenOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type FindNftByTokenInput = {
+export type FindRfqByTokenInput = {
   /** The address of the token account. */
   token: PublicKey;
 
@@ -60,19 +60,19 @@ export type FindNftByTokenInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindNftByTokenOutput = RfqWithToken;
+export type FindRfqByTokenOutput = RfqWithToken;
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const findNftByTokenOperationHandler: OperationHandler<FindNftByTokenOperation> =
+export const findRfqByTokenOperationHandler: OperationHandler<FindRfqByTokenOperation> =
   {
     handle: async (
-      operation: FindNftByTokenOperation,
+      operation: FindRfqByTokenOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<FindNftByTokenOutput> => {
+    ): Promise<FindRfqByTokenOutput> => {
       const token = toTokenAccount(
         await convergence.rpc().getAccount(operation.input.token)
       );
@@ -87,6 +87,6 @@ export const findNftByTokenOperationHandler: OperationHandler<FindNftByTokenOper
         scope
       );
 
-      return asset as FindNftByTokenOutput;
+      return asset as FindRfqByTokenOutput;
     },
   };

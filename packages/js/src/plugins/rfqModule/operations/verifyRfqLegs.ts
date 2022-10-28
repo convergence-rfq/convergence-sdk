@@ -18,10 +18,10 @@ import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 // Operation
 // -----------------
 
-const Key = 'VerifyNftCollectionOperation' as const;
+const Key = 'VerifyRfqLegsOperation' as const;
 
 /**
- * Verifies the collection of an NFT or SFT.
+ * Verifies the legs of an RFQ.
  *
  * ```ts
  * await convergence
@@ -32,24 +32,23 @@ const Key = 'VerifyNftCollectionOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const verifyNftCollectionOperation =
-  useOperation<VerifyNftCollectionOperation>(Key);
+export const verifyRfqLegsOperation = useOperation<VerifyRfqLegsOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type VerifyNftCollectionOperation = Operation<
+export type VerifyRfqLegsOperation = Operation<
   typeof Key,
-  VerifyNftCollectionInput,
-  VerifyNftCollectionOutput
+  VerifyRfqLegsInput,
+  VerifyRfqLegsOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type VerifyNftCollectionInput = {
+export type VerifyRfqLegsInput = {
   /** The address of the mint account. */
   mintAddress: PublicKey;
 
@@ -86,7 +85,7 @@ export type VerifyNftCollectionInput = {
  * @group Operations
  * @category Outputs
  */
-export type VerifyNftCollectionOutput = {
+export type VerifyRfqLegsOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
@@ -95,14 +94,14 @@ export type VerifyNftCollectionOutput = {
  * @group Operations
  * @category Handlers
  */
-export const verifyNftCollectionOperationHandler: OperationHandler<VerifyNftCollectionOperation> =
+export const verifyRfqLegsOperationHandler: OperationHandler<VerifyRfqLegsOperation> =
   {
     handle: async (
-      operation: VerifyNftCollectionOperation,
+      operation: VerifyRfqLegsOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<VerifyNftCollectionOutput> => {
-      return verifyNftCollectionBuilder(
+    ): Promise<VerifyRfqLegsOutput> => {
+      return verifyRfqLegsBuilder(
         convergence,
         operation.input,
         scope
@@ -118,8 +117,8 @@ export const verifyNftCollectionOperationHandler: OperationHandler<VerifyNftColl
  * @group Transaction Builders
  * @category Inputs
  */
-export type VerifyNftCollectionBuilderParams = Omit<
-  VerifyNftCollectionInput,
+export type VerifyRfqLegsBuilderParams = Omit<
+  VerifyRfqLegsInput,
   'confirmOptions'
 > & {
   /** A key to distinguish the instruction that verifies the collection. */
@@ -139,9 +138,9 @@ export type VerifyNftCollectionBuilderParams = Omit<
  * @group Transaction Builders
  * @category Constructors
  */
-export const verifyNftCollectionBuilder = (
+export const verifyRfqLegsBuilder = (
   convergence: Convergence,
-  params: VerifyNftCollectionBuilderParams,
+  params: VerifyRfqLegsBuilderParams,
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;

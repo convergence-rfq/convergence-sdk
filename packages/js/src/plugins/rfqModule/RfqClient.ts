@@ -6,56 +6,32 @@ import { Rfq, RfqWithToken } from './models';
 import { RfqBuildersClient } from './RfqBuildersClient';
 import { RfqPdasClient } from './RfqPdasClient';
 import {
-  ApproveNftCollectionAuthorityInput,
-  approveNftCollectionAuthorityOperation,
-  ApproveNftUseAuthorityInput,
-  approveNftUseAuthorityOperation,
   CreateRfqInput,
   createRfqOperation,
-  CreateSftInput,
-  createSftOperation,
-  DeleteNftInput,
-  deleteNftOperation,
+  DeleteRfqInput,
+  deleteRfqOperation,
   FindNftByMetadataInput,
   findNftByMetadataOperation,
   FindRfqByMintInput,
   findRfqByMintOperation,
-  FindNftByTokenInput,
+  FindRfqByTokenInput,
   findNftByTokenOperation,
   FindNftsByCreatorInput,
   findNftsByCreatorOperation,
-  FindNftsByMintListInput,
-  findNftsByMintListOperation,
+  FindNftsByMintListInput as FindRfqsByMintListInput,
+  findNftsByMintListOperation as findRfqsByMintListOperation,
   FindNftsByOwnerInput,
   findNftsByOwnerOperation,
   FindNftsByUpdateAuthorityInput,
   findNftsByUpdateAuthorityOperation,
-  FreezeDelegatedNftInput,
-  freezeDelegatedNftOperation,
   LoadMetadataInput,
   loadMetadataOperation,
-  MigrateToSizedCollectionNftInput,
-  migrateToSizedCollectionNftOperation,
-  PrintNewEditionInput,
-  printNewEditionOperation,
-  RevokeNftCollectionAuthorityInput,
-  revokeNftCollectionAuthorityOperation,
-  RevokeNftUseAuthorityInput,
-  revokeNftUseAuthorityOperation,
-  ThawDelegatedNftInput,
-  thawDelegatedNftOperation,
-  UnverifyNftCollectionInput,
-  unverifyNftCollectionOperation,
-  UnverifyNftCreatorInput,
-  unverifyNftCreatorOperation,
-  UpdateNftInput,
-  updateNftOperation,
   UploadMetadataInput,
   uploadMetadataOperation,
-  UseNftInput,
-  useNftOperation,
-  VerifyNftCollectionInput,
-  verifyNftCollectionOperation,
+  UseRfqInput,
+  useRfqOperation,
+  VerifyRfqLegsInput,
+  verifyRfqLegsOperation,
   VerifyRfqCreatorInput,
   verifyRfqCreatorOperation,
 } from './operations';
@@ -69,10 +45,10 @@ import type { Convergence } from '@/Convergence';
  * It enables us to interact with the Token Metadata program in order to
  * manage NFTs and SFTs.
  *
- * You may access this client via the `rfqs()()` method of your `Convergence` instance.
+ * You may access this client via the `rfqs()` method of your `Convergence` instance.
  *
  * ```ts
- * const nftClient = convergence.rfqs()();
+ * const nftClient = convergence.rfqs();
  * ```
  *
  * @example
@@ -82,18 +58,18 @@ import type { Convergence } from '@/Convergence';
  *
  * ```ts
  * const { uri } = await convergence
- *   .rfqs()()
+ *   .rfqs()
  *   .uploadMetadata({
  *     name: "My off-chain name",
  *     description: "My off-chain description",
  *     image: "https://arweave.net/123",
  *   };
  *
- * const { nft } = await convergence
- *   .rfqs()()
+ * const { rfq } = await convergence
+ *   .rfqs()
  *   .create({
  *     uri,
- *     name: 'My on-chain NFT',
+ *     name: 'My on-chain RFQ',
  *     sellerFeeBasisPoints: 250, // 2.5%
  *   };
  * ```
@@ -126,10 +102,6 @@ export class RfqClient {
     return new RfqPdasClient(this.convergence);
   }
 
-  // -----------------
-  // Queries
-  // -----------------
-
   /** {@inheritDoc findNftByMintOperation} */
   findByMint(input: FindRfqByMintInput, options?: OperationOptions) {
     return this.convergence
@@ -145,7 +117,7 @@ export class RfqClient {
   }
 
   /** {@inheritDoc findNftByTokenOperation} */
-  findByToken(input: FindNftByTokenInput, options?: OperationOptions) {
+  findByToken(input: FindRfqByTokenInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findNftByTokenOperation(input), options);
@@ -160,12 +132,12 @@ export class RfqClient {
 
   /** {@inheritDoc findNftsByMintListOperation} */
   findAllByMintList(
-    input: FindNftsByMintListInput,
+    input: FindRfqsByMintListInput,
     options?: OperationOptions
   ) {
     return this.convergence
       .operations()
-      .execute(findNftsByMintListOperation(input), options);
+      .execute(findRfqsByMintListOperation(input), options);
   }
 
   /** {@inheritDoc findNftsByOwnerOperation} */
@@ -197,9 +169,8 @@ export class RfqClient {
    * and returns an instance of the same type.
    *
    * ```ts
-   * nft = await convergence.rfqs().refresh(nft);
-   * sft = await convergence.rfqs().refresh(sft);
-   * nftWithToken = await convergence.rfqs().refresh(nftWithToken);
+   * rfq = await convergence.rfqs().refresh(rfq);
+   * rfqWithToken = await convergence.rfqs().refresh(rfqWithToken);
    * ```
    */
   refresh<T extends Rfq | RfqWithToken | Metadata | PublicKey>(
@@ -220,29 +191,11 @@ export class RfqClient {
     ) as Promise<T extends Metadata | PublicKey ? Rfq : T>;
   }
 
-  // -----------------
-  // Create, Update and Delete
-  // -----------------
-
   /** {@inheritDoc createNftOperation} */
   create(input: CreateRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(createRfqOperation(input), options);
-  }
-
-  /** {@inheritDoc createSftOperation} */
-  createSft(input: CreateSftInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(createSftOperation(input), options);
-  }
-
-  /** {@inheritDoc printNewEditionOperation} */
-  printNewEdition(input: PrintNewEditionInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(printNewEditionOperation(input), options);
   }
 
   /** {@inheritDoc uploadMetadataOperation} */
@@ -252,54 +205,19 @@ export class RfqClient {
       .execute(uploadMetadataOperation(input), options);
   }
 
-  /** {@inheritDoc updateNftOperation} */
-  update(input: UpdateNftInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(updateNftOperation(input), options);
-  }
-
   /** {@inheritDoc deleteNftOperation} */
-  delete(input: DeleteNftInput, options?: OperationOptions) {
+  delete(input: DeleteRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(deleteNftOperation(input), options);
+      .execute(deleteRfqOperation(input), options);
   }
-
-  // -----------------
-  // Use
-  // -----------------
 
   /** {@inheritDoc useNftOperation} */
-  use(input: UseNftInput, options?: OperationOptions) {
+  use(input: UseRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(useNftOperation(input), options);
+      .execute(useRfqOperation(input), options);
   }
-
-  /** {@inheritDoc approveNftUseAuthorityOperation} */
-  approveUseAuthority(
-    input: ApproveNftUseAuthorityInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(approveNftUseAuthorityOperation(input), options);
-  }
-
-  /** {@inheritDoc revokeNftUseAuthorityOperation} */
-  revokeUseAuthority(
-    input: RevokeNftUseAuthorityInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(revokeNftUseAuthorityOperation(input), options);
-  }
-
-  // -----------------
-  // Creators
-  // -----------------
 
   /** {@inheritDoc verifyNftCreatorOperation} */
   verifyCreator(input: VerifyRfqCreatorInput, options?: OperationOptions) {
@@ -308,86 +226,11 @@ export class RfqClient {
       .execute(verifyRfqCreatorOperation(input), options);
   }
 
-  /** {@inheritDoc unverifyNftCreatorOperation} */
-  unverifyCreator(input: UnverifyNftCreatorInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(unverifyNftCreatorOperation(input), options);
-  }
-
-  // -----------------
-  // Collections
-  // -----------------
-
   /** {@inheritDoc verifyNftCollectionOperation} */
-  verifyCollection(
-    input: VerifyNftCollectionInput,
-    options?: OperationOptions
-  ) {
+  verifyCollection(input: VerifyRfqLegsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(verifyNftCollectionOperation(input), options);
-  }
-
-  /** {@inheritDoc unverifyNftCollectionOperation} */
-  unverifyCollection(
-    input: UnverifyNftCollectionInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(unverifyNftCollectionOperation(input), options);
-  }
-
-  /** {@inheritDoc approveNftCollectionAuthorityOperation} */
-  approveCollectionAuthority(
-    input: ApproveNftCollectionAuthorityInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(approveNftCollectionAuthorityOperation(input), options);
-  }
-
-  /** {@inheritDoc revokeNftCollectionAuthorityOperation} */
-  revokeCollectionAuthority(
-    input: RevokeNftCollectionAuthorityInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(revokeNftCollectionAuthorityOperation(input), options);
-  }
-
-  /** {@inheritDoc migrateToSizedCollectionNftOperation} */
-  migrateToSizedCollection(
-    input: MigrateToSizedCollectionNftInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(migrateToSizedCollectionNftOperation(input), options);
-  }
-
-  // -----------------
-  // Tokens
-  // -----------------
-
-  /** {@inheritDoc freezeDelegatedNftOperation} */
-  freezeDelegatedNft(
-    input: FreezeDelegatedNftInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(freezeDelegatedNftOperation(input), options);
-  }
-
-  /** {@inheritDoc thawDelegatedNftOperation} */
-  thawDelegatedNft(input: ThawDelegatedNftInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(thawDelegatedNftOperation(input), options);
+      .execute(verifyRfqLegsOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */

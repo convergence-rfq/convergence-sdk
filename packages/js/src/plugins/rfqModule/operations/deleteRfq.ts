@@ -15,7 +15,7 @@ import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 // Operation
 // -----------------
 
-const Key = 'DeleteNftOperation' as const;
+const Key = 'DeleteRfqOperation' as const;
 
 /**
  * Deletes an existing NFT.
@@ -29,23 +29,23 @@ const Key = 'DeleteNftOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const deleteNftOperation = useOperation<DeleteNftOperation>(Key);
+export const deleteRfqOperation = useOperation<DeleteRfqOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type DeleteNftOperation = Operation<
+export type DeleteRfqOperation = Operation<
   typeof Key,
-  DeleteNftInput,
-  DeleteNftOutput
+  DeleteRfqInput,
+  DeleteRfqOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type DeleteNftInput = {
+export type DeleteRfqInput = {
   /** The address of the mint account. */
   mintAddress: PublicKey;
 
@@ -80,7 +80,7 @@ export type DeleteNftInput = {
  * @group Operations
  * @category Outputs
  */
-export type DeleteNftOutput = {
+export type DeleteRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
@@ -89,13 +89,13 @@ export type DeleteNftOutput = {
  * @group Operations
  * @category Handlers
  */
-export const deleteNftOperationHandler: OperationHandler<DeleteNftOperation> = {
+export const deleteRfqOperationHandler: OperationHandler<DeleteRfqOperation> = {
   handle: async (
-    operation: DeleteNftOperation,
+    operation: DeleteRfqOperation,
     convergence: Convergence,
     scope: OperationScope
-  ): Promise<DeleteNftOutput> => {
-    return deleteNftBuilder(convergence, operation.input, scope).sendAndConfirm(
+  ): Promise<DeleteRfqOutput> => {
+    return deleteRfqBuilder(convergence, operation.input, scope).sendAndConfirm(
       convergence,
       scope.confirmOptions
     );
@@ -110,7 +110,7 @@ export const deleteNftOperationHandler: OperationHandler<DeleteNftOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type DeleteNftBuilderParams = Omit<DeleteNftInput, 'confirmOptions'> & {
+export type DeleteRfqBuilderParams = Omit<DeleteRfqInput, 'confirmOptions'> & {
   /** A key to distinguish the instruction that burns the NFT. */
   instructionKey?: string;
 };
@@ -128,9 +128,9 @@ export type DeleteNftBuilderParams = Omit<DeleteNftInput, 'confirmOptions'> & {
  * @group Transaction Builders
  * @category Constructors
  */
-export const deleteNftBuilder = (
+export const deleteRfqBuilder = (
   convergence: Convergence,
-  params: DeleteNftBuilderParams,
+  params: DeleteRfqBuilderParams,
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
@@ -180,6 +180,6 @@ export const deleteNftBuilder = (
         tokenMetadataProgram.address
       ),
       signers: [owner],
-      key: params.instructionKey ?? 'deleteNft',
+      key: params.instructionKey ?? 'deleteRfq',
     });
 };

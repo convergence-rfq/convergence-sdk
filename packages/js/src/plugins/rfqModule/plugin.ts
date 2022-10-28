@@ -2,22 +2,14 @@ import { cusper, PROGRAM_ID } from '@metaplex-foundation/mpl-token-metadata';
 import { ProgramClient } from '../programModule';
 import { RfqClient } from './RfqClient';
 import {
-  approveNftCollectionAuthorityOperation,
-  approveNftCollectionAuthorityOperationHandler,
-  approveNftUseAuthorityOperation,
-  approveNftUseAuthorityOperationHandler,
   createRfqOperation,
   createRfqOperationHandler,
-  createSftOperation,
-  createSftOperationHandler,
-  deleteNftOperation,
-  deleteNftOperationHandler,
   findNftByMetadataOperation,
   findNftByMetadataOperationHandler,
   findRfqByMintOperation,
   findRfqByMintOperationHandler,
   findNftByTokenOperation,
-  findNftByTokenOperationHandler,
+  findRfqByTokenOperationHandler,
   findNftsByCreatorOperation,
   findNftsByCreatorOperationHandler,
   findNftsByMintListOperation,
@@ -26,32 +18,14 @@ import {
   findNftsByOwnerOperationHandler,
   findNftsByUpdateAuthorityOperation,
   findNftsByUpdateAuthorityOperationHandler,
-  freezeDelegatedNftOperation,
-  freezeDelegatedNftOperationHandler,
   loadMetadataOperation,
   loadMetadataOperationHandler,
-  migrateToSizedCollectionNftOperation,
-  migrateToSizedCollectionNftOperationHandler,
-  printNewEditionOperation,
-  printNewEditionOperationHandler,
-  revokeNftCollectionAuthorityOperation,
-  revokeNftCollectionAuthorityOperationHandler,
-  revokeNftUseAuthorityOperation,
-  revokeNftUseAuthorityOperationHandler,
-  thawDelegatedNftOperation,
-  thawDelegatedNftOperationHandler,
-  unverifyNftCollectionOperation,
-  unverifyNftCollectionOperationHandler,
-  unverifyNftCreatorOperation,
-  unverifyNftCreatorOperationHandler,
-  updateNftOperation,
-  updateNftOperationHandler,
   uploadMetadataOperation,
   uploadMetadataOperationHandler,
-  useNftOperation,
-  useNftOperationHandler,
-  verifyNftCollectionOperation,
-  verifyNftCollectionOperationHandler,
+  useRfqOperation,
+  useRfqOperationHandler,
+  verifyRfqLegsOperation,
+  verifyRfqLegsOperationHandler,
   verifyRfqCreatorOperation,
   verifyRfqCreatorOperationHandler,
 } from './operations';
@@ -78,20 +52,10 @@ export const rfqModule = (): ConvergencePlugin => ({
 
     // Operations.
     const op = convergence.operations();
-    op.register(
-      approveNftCollectionAuthorityOperation,
-      approveNftCollectionAuthorityOperationHandler
-    );
-    op.register(
-      approveNftUseAuthorityOperation,
-      approveNftUseAuthorityOperationHandler
-    );
     op.register(createRfqOperation, createRfqOperationHandler);
-    op.register(createSftOperation, createSftOperationHandler);
-    op.register(deleteNftOperation, deleteNftOperationHandler);
     op.register(findNftByMetadataOperation, findNftByMetadataOperationHandler);
     op.register(findRfqByMintOperation, findRfqByMintOperationHandler);
-    op.register(findNftByTokenOperation, findNftByTokenOperationHandler);
+    op.register(findNftByTokenOperation, findRfqByTokenOperationHandler);
     op.register(findNftsByCreatorOperation, findNftsByCreatorOperationHandler);
     op.register(
       findNftsByMintListOperation,
@@ -102,40 +66,10 @@ export const rfqModule = (): ConvergencePlugin => ({
       findNftsByUpdateAuthorityOperation,
       findNftsByUpdateAuthorityOperationHandler
     );
-    op.register(
-      freezeDelegatedNftOperation,
-      freezeDelegatedNftOperationHandler
-    );
     op.register(loadMetadataOperation, loadMetadataOperationHandler);
-    op.register(
-      migrateToSizedCollectionNftOperation,
-      migrateToSizedCollectionNftOperationHandler
-    );
-    op.register(printNewEditionOperation, printNewEditionOperationHandler);
-    op.register(
-      revokeNftCollectionAuthorityOperation,
-      revokeNftCollectionAuthorityOperationHandler
-    );
-    op.register(
-      revokeNftUseAuthorityOperation,
-      revokeNftUseAuthorityOperationHandler
-    );
-    op.register(thawDelegatedNftOperation, thawDelegatedNftOperationHandler);
-    op.register(
-      unverifyNftCollectionOperation,
-      unverifyNftCollectionOperationHandler
-    );
-    op.register(
-      unverifyNftCreatorOperation,
-      unverifyNftCreatorOperationHandler
-    );
-    op.register(updateNftOperation, updateNftOperationHandler);
     op.register(uploadMetadataOperation, uploadMetadataOperationHandler);
-    op.register(useNftOperation, useNftOperationHandler);
-    op.register(
-      verifyNftCollectionOperation,
-      verifyNftCollectionOperationHandler
-    );
+    op.register(useRfqOperation, useRfqOperationHandler);
+    op.register(verifyRfqLegsOperation, verifyRfqLegsOperationHandler);
     op.register(verifyRfqCreatorOperation, verifyRfqCreatorOperationHandler);
 
     convergence.rfqs = function () {

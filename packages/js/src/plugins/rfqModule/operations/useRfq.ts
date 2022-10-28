@@ -14,14 +14,10 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
-// -----------------
-// Operation
-// -----------------
-
-const Key = 'UseNftOperation' as const;
+const Key = 'UseRfqOperation' as const;
 
 /**
- * Utilizes a usable NFT.
+ * Utilizes a usable Rfq.
  *
  * ```ts
  * await convergence.rfqs().use({ mintAddress });
@@ -31,19 +27,19 @@ const Key = 'UseNftOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const useNftOperation = useOperation<UseNftOperation>(Key);
+export const useRfqOperation = useOperation<UseRfqOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type UseNftOperation = Operation<typeof Key, UseNftInput, UseNftOutput>;
+export type UseRfqOperation = Operation<typeof Key, UseRfqInput, UseRfqOutput>;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type UseNftInput = {
+export type UseRfqInput = {
   /** The address of the mint account. */
   mintAddress: PublicKey;
 
@@ -55,7 +51,7 @@ export type UseNftInput = {
   numberOfUses?: number; // Defaults to 1.
 
   /**
-   * The owner of the NFT or SFT.
+   * The owner of the Rfq.
    *
    * This must be a Signer unless a `useAuthority` is provided.
    *
@@ -85,7 +81,7 @@ export type UseNftInput = {
  * @group Operations
  * @category Outputs
  */
-export type UseNftOutput = {
+export type UseRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
@@ -94,13 +90,13 @@ export type UseNftOutput = {
  * @group Operations
  * @category Handlers
  */
-export const useNftOperationHandler: OperationHandler<UseNftOperation> = {
+export const useRfqOperationHandler: OperationHandler<UseRfqOperation> = {
   handle: async (
-    operation: UseNftOperation,
+    operation: UseRfqOperation,
     convergence: Convergence,
     scope: OperationScope
-  ): Promise<UseNftOutput> => {
-    return useNftBuilder(convergence, operation.input, scope).sendAndConfirm(
+  ): Promise<UseRfqOutput> => {
+    return useRfqBuilder(convergence, operation.input, scope).sendAndConfirm(
       convergence,
       scope.confirmOptions
     );
@@ -115,13 +111,13 @@ export const useNftOperationHandler: OperationHandler<UseNftOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type UseNftBuilderParams = Omit<UseNftInput, 'confirmOptions'> & {
-  /** A key to distinguish the instruction that uses the NFT. */
+export type UseRfqBuilderParams = Omit<UseRfqInput, 'confirmOptions'> & {
+  /** A key to distinguish the instruction that uses the Rfq. */
   instructionKey?: string;
 };
 
 /**
- * Utilizes a usable NFT.
+ * Utilizes a usable Rfq.
  *
  * ```ts
  * const transactionBuilder = convergence
@@ -133,9 +129,9 @@ export type UseNftBuilderParams = Omit<UseNftInput, 'confirmOptions'> & {
  * @group Transaction Builders
  * @category Constructors
  */
-export const useNftBuilder = (
+export const useRfqBuilder = (
   convergence: Convergence,
-  params: UseNftBuilderParams,
+  params: UseRfqBuilderParams,
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
@@ -154,7 +150,7 @@ export const useNftBuilder = (
   if (!isSigner(owner) && !useAuthority) {
     throw new ExpectedSignerError('owner', 'PublicKey', {
       problemSuffix:
-        'In order to use an NFT you must either provide the owner as a Signer ' +
+        'In order to use an Rfq you must either provide the owner as a Signer ' +
         'or a delegated use authority as a Signer.',
     });
   }
@@ -205,7 +201,7 @@ export const useNftBuilder = (
           tokenMetadataProgram.address
         ),
         signers: [owner, useAuthority].filter(isSigner),
-        key: params.instructionKey ?? 'utilizeNft',
+        key: params.instructionKey ?? 'utilizeRfq',
       })
   );
 };
