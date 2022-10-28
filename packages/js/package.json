@@ -72,6 +72,7 @@
     "lodash": "^4.17.21",
     "lodash.clonedeep": "^4.5.0",
     "lodash.isequal": "^4.5.0",
+    "merkletreejs": "^0.3.0",
     "mime": "^3.0.0",
     "node-fetch": "^3.2.10",
     "rimraf": "^3.0.2",
