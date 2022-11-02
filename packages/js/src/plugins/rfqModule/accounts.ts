@@ -1,120 +1,52 @@
-import { Buffer } from 'buffer';
 import {
-  Edition,
-  Key,
-  MasterEditionV1,
-  MasterEditionV2,
-  Metadata,
-} from '@metaplex-foundation/mpl-token-metadata';
+  CollateralInfo,
+  ProtocolState,
+  Response,
+  Rfq,
+} from '@convergence-rfq/rfq';
 import {
   Account,
-  SolitaType,
   getAccountParsingAndAssertingFunction,
   getAccountParsingFunction,
 } from '@/types';
-import { NotYetImplementedError } from '@/errors';
 
 /** @group Accounts */
-export type MetadataAccount = Account<Metadata>;
+export type CollateralInfoAccount = Account<CollateralInfo>;
 
 /** @group Account Helpers */
-export const parseMetadataAccount = getAccountParsingFunction(Metadata);
+export const parseCollateralInfoAccount =
+  getAccountParsingFunction(CollateralInfo);
 
 /** @group Account Helpers */
-export const toMetadataAccount =
-  getAccountParsingAndAssertingFunction(Metadata);
+export const toCollateralInfoAccount =
+  getAccountParsingAndAssertingFunction(CollateralInfo);
 
 /** @group Accounts */
-export type OriginalOrPrintEditionAccountData =
-  | OriginalEditionAccountData
-  | PrintEditionAccountData;
+export type ProtocolState = Account<ProtocolState>;
+
+/** @group Account Helpers */
+export const parseProtocolStateAccount =
+  getAccountParsingFunction(ProtocolState);
+
+/** @group Account Helpers */
+export const toProtocolStateAccount =
+  getAccountParsingAndAssertingFunction(ProtocolState);
 
 /** @group Accounts */
-export type OriginalOrPrintEditionAccount =
-  Account<OriginalOrPrintEditionAccountData>;
-
-const originalOrPrintEditionAccountParser: SolitaType<OriginalOrPrintEditionAccountData> =
-  {
-    name: 'MasterEditionV1 | MasterEditionV2 | Edition',
-    deserialize: (data: Buffer, offset = 0) => {
-      if (data?.[0] === Key.MasterEditionV1) {
-        return MasterEditionV1.deserialize(data, offset);
-      } else if (data?.[0] === Key.MasterEditionV2) {
-        return MasterEditionV2.deserialize(data, offset);
-      }
-      return Edition.deserialize(data, offset);
-    },
-    fromArgs() {
-      throw new NotYetImplementedError();
-    },
-  };
+export type ResponseAccount = Account<Response>;
 
 /** @group Account Helpers */
-export const parseOriginalOrPrintEditionAccount =
-  getAccountParsingFunction<OriginalOrPrintEditionAccountData>(
-    originalOrPrintEditionAccountParser
-  );
+export const parseResponseAccount = getAccountParsingFunction(Response);
 
 /** @group Account Helpers */
-export const toOriginalOrPrintEditionAccount =
-  getAccountParsingAndAssertingFunction<OriginalOrPrintEditionAccountData>(
-    originalOrPrintEditionAccountParser
-  );
-
-/** @group Account Helpers */
-export const isOriginalEditionAccount = (
-  account: OriginalOrPrintEditionAccount
-): account is OriginalEditionAccount => {
-  return 'maxSupply' in account.data;
-};
-
-/** @group Account Helpers */
-export const isPrintEditionAccount = (
-  account: OriginalOrPrintEditionAccount
-): account is PrintEditionAccount => {
-  return !isOriginalEditionAccount(account);
-};
+export const toResponseAccount =
+  getAccountParsingAndAssertingFunction(Response);
 
 /** @group Accounts */
-export type OriginalEditionAccountData = MasterEditionV1 | MasterEditionV2;
-
-/** @group Accounts */
-export type OriginalEditionAccount = Account<OriginalEditionAccountData>;
-
-const originalEditionAccountParser: SolitaType<OriginalEditionAccountData> = {
-  name: 'MasterEditionV1 | MasterEditionV2',
-  deserialize: (data: Buffer, offset = 0) => {
-    if (data?.[0] === Key.MasterEditionV1) {
-      return MasterEditionV1.deserialize(data, offset);
-    }
-    return MasterEditionV2.deserialize(data, offset);
-  },
-  fromArgs() {
-    throw new NotYetImplementedError();
-  },
-};
+export type RfqAccount = Account<Rfq>;
 
 /** @group Account Helpers */
-export const parseOriginalEditionAccount =
-  getAccountParsingFunction<OriginalEditionAccountData>(
-    originalEditionAccountParser
-  );
+export const parseRfqAccount = getAccountParsingFunction(Rfq);
 
 /** @group Account Helpers */
-export const toOriginalEditionAccount =
-  getAccountParsingAndAssertingFunction<OriginalEditionAccountData>(
-    originalEditionAccountParser
-  );
-
-/** @group Accounts */
-export type PrintEditionAccountData = Edition;
-
-/** @group Accounts */
-export type PrintEditionAccount = Account<PrintEditionAccountData>;
-
-/** @group Account Helpers */
-export const parsePrintEditionAccount = getAccountParsingFunction(Edition);
-
-/** @group Account Helpers */
-export const toPrintEditionAccount =
-  getAccountParsingAndAssertingFunction(Edition);
+export const toRfqAccount = getAccountParsingAndAssertingFunction(Rfq);

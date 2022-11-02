@@ -33,6 +33,9 @@
       "amman:stop": "amman stop"
     },
     "devDependencies": {
+      "@convergence-rfq/rfq": "file:../convergence-program-library/rfq/js",
+      "@convergence-rfq/risk-engine": "file:../convergence-program-library/risk-engine/js",
+      "@convergence-rfq/spot-instrument": "file:../convergence-program-library/spot-instrument/js",
       "@babel/core": "^7.17.10",
       "@babel/preset-env": "^7.17.10",
       "@babel/preset-typescript": "^7.16.7",

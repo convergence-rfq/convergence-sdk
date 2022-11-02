@@ -14,6 +14,6 @@ The entry point to the JavaScript SDK is a Convergence instance that will give y
 import { Convergence } from '@convergence-rfq/sdk';
 import { Connection, clusterApiUrl } from '@solana/web3.js';
 
-const connection = new Connection(clusterApiUrl('mainnet-beta'));
+const connection = new Connection(clusterApiUrl('devnet'));
 const convergence = new Convergence(connection);
 ```
