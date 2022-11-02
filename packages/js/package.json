@@ -44,11 +44,11 @@
     "postversion": "git push --follow-tags"
   },
   "dependencies": {
+    "@bundlr-network/client": "^0.8.8",
+    "@metaplex-foundation/beet": "0.7.1",
     "@convergence-rfq/rfq": "2.0.4",
     "@convergence-rfq/risk-engine": "2.0.4",
     "@convergence-rfq/spot-instrument": "2.0.1",
-    "@bundlr-network/client": "^0.8.8",
-    "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/mpl-token-metadata": "^2.3.3",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.3",
