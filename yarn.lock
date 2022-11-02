@@ -1173,17 +1173,20 @@
     human-id "^1.0.2"
     prettier "^2.7.1"
 
-"@convergence-rfq/psyoptions-european-instrument@file:../convergence-program-library/psyoptions-european-instrument/js":
-  version "1.0.0"
+"@convergence-rfq/rfq@2.0.4":
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.0.4.tgz#c965a98780bda762e4a49ba0d0b823d8b52d6fe4"
+  integrity sha512-3vUdptJKa7pzNau5wmxur66j+dRw2Rf0lQ8b0XYzXeKwSsd9qw9AifTSVvKcCqUyFgjqxOyhqq5nr4vskwyr7w==
 
-"@convergence-rfq/rfq@file:../convergence-program-library/rfq/js":
-  version "1.0.0"
+"@convergence-rfq/risk-engine@2.0.4":
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.0.4.tgz#60a1133ed63b9fd0d838cbd6527243711396bdc5"
+  integrity sha512-YwC4X18bqoD3u+QpIPU3kmlbc9CWYc0/SstuHka5ZCWSpsE4SUBtW7vFQ8fBiGmtDGtBPivD5xEa/aYhGnPsjw==
 
-"@convergence-rfq/risk-engine@file:../convergence-program-library/risk-engine/js":
-  version "2.0.3"
-
-"@convergence-rfq/spot-instrument@file:../convergence-program-library/spot-instrument/js":
-  version "2.0.3"
+"@convergence-rfq/spot-instrument@2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.0.1.tgz#43d2c8a8caeb9f95e82f19acf70d76d9352e5aa4"
+  integrity sha512-4D1xtDA+qy3a45ppyVe3U9sEsfl3fJlI1mQxD8SkZ7eTK2izpw1jBM+5gQ+6WgaveTmOrb48bLyUKAeGYe2Teg==
 
 "@eslint/eslintrc@^1.3.3":
   version "1.3.3"
@@ -1878,7 +1881,7 @@
     wait-on "^6.0.0"
     yargs "^17.3.0"
 
-"@metaplex-foundation/beet-solana@^0.3.0", "@metaplex-foundation/beet-solana@^0.3.1":
+"@metaplex-foundation/beet-solana@^0.3.1":
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/@metaplex-foundation/beet-solana/-/beet-solana-0.3.1.tgz#4b37cda5c7f32ffd2bdd8b3164edc05c6463ab35"
   integrity sha512-tgyEl6dvtLln8XX81JyBvWjIiEcjTkUwZbrM5dIobTmoqMuGewSyk9CClno8qsMsFdB5T3jC91Rjeqmu/6xk2g==
@@ -1907,15 +1910,6 @@
     bn.js "^5.2.0"
     debug "^4.3.3"
 
-"@metaplex-foundation/beet@^0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@metaplex-foundation/beet/-/beet-0.4.0.tgz#eb2a0a6eb084bb25d67dd9bed2f7387ee7e63a55"
-  integrity sha512-2OAKJnLatCc3mBXNL0QmWVQKAWK2C7XDfepgL0p/9+8oSx4bmRAFHFqptl1A/C0U5O3dxGwKfmKluW161OVGcA==
-  dependencies:
-    ansicolors "^0.3.2"
-    bn.js "^5.2.0"
-    debug "^4.3.3"
-
 "@metaplex-foundation/beet@^0.6.1":
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/@metaplex-foundation/beet/-/beet-0.6.1.tgz#6331bdde0648bf2cae6f9e482f8e3552db05d69f"
@@ -1929,58 +1923,6 @@
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@metaplex-foundation/cusper/-/cusper-0.0.2.tgz#dc2032a452d6c269e25f016aa4dd63600e2af975"
   integrity sha512-S9RulC2fFCFOQraz61bij+5YCHhSO9llJegK8c8Y6731fSi6snUSQJdCUqYS8AIgR0TKbQvdvgSyIIdbDFZbBA==
-
-"@metaplex-foundation/mpl-auction-house@^2.1.1":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@metaplex-foundation/mpl-auction-house/-/mpl-auction-house-2.3.0.tgz#7022490cf10d30b4a1be43bd3a50c2c5a62ddb1e"
-  integrity sha512-J27In0C/B0ETsDvy/3HkopiZ+I7AR4TlEzU0T2URKsreP4ghWGUUmhldkblxY7KhgLpvvQN/L0IaIBt+TFWU8g==
-  dependencies:
-    "@metaplex-foundation/beet" "^0.6.1"
-    "@metaplex-foundation/beet-solana" "^0.3.1"
-    "@metaplex-foundation/cusper" "^0.0.2"
-    "@solana/web3.js" "^1.56.2"
-    bn.js "^5.2.0"
-
-"@metaplex-foundation/mpl-candy-guard@^0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@metaplex-foundation/mpl-candy-guard/-/mpl-candy-guard-0.0.2.tgz#72ea81c26479090b3bf73b34eea0212eac9734ec"
-  integrity sha512-BYDhfR2KTAYqbSK5LK2IUyjo4J8glkRkQy+Gs7kXid9PpvPzkjjPNqz44FtRyz/KDxmMgqWeDHY6FSWDmA5pjQ==
-  dependencies:
-    "@metaplex-foundation/beet" "^0.4.0"
-    "@metaplex-foundation/beet-solana" "^0.3.0"
-    "@metaplex-foundation/cusper" "^0.0.2"
-    "@solana/web3.js" "^1.56.2"
-    bn.js "^5.2.0"
-
-"@metaplex-foundation/mpl-candy-machine-core@^0.1.0":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@metaplex-foundation/mpl-candy-machine-core/-/mpl-candy-machine-core-0.1.2.tgz#07e19558d0ef120fac1d8612ae4de90d52cd4d1f"
-  integrity sha512-jjDkRvMR+iykt7guQ7qVnOHTZedql0lq3xqWDMaenAUCH3Xrf2zKATThhJppIVNX1/YtgBOO3lGqhaFbaI4pCw==
-  dependencies:
-    "@metaplex-foundation/beet" "^0.4.0"
-    "@metaplex-foundation/beet-solana" "^0.3.0"
-    "@metaplex-foundation/cusper" "^0.0.2"
-    "@solana/web3.js" "^1.56.2"
-    bn.js "^5.2.0"
-
-"@metaplex-foundation/mpl-candy-machine@^4.6.0":
-  version "4.7.1"
-  resolved "https://registry.yarnpkg.com/@metaplex-foundation/mpl-candy-machine/-/mpl-candy-machine-4.7.1.tgz#ecf6ebbe96245084c9a186761ecc51c62ce1206f"
-  integrity sha512-tBNRAfBE/rYy9pe2aJD4gTFw+pgQ11o3AJjoYGB4+05ow0VjJMSt6kQGzHm2LRPgdLY4diKAq8qHvgsbV5ikNQ==
-  dependencies:
-    "@metaplex-foundation/beet" "^0.4.0"
-    "@metaplex-foundation/beet-solana" "^0.3.0"
-    "@metaplex-foundation/cusper" "^0.0.2"
-    "@metaplex-foundation/mpl-core" "^0.6.1"
-    "@solana/web3.js" "^1.35.1"
-
-"@metaplex-foundation/mpl-core@^0.6.1":
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/@metaplex-foundation/mpl-core/-/mpl-core-0.6.1.tgz#bdc76a8b447a2ef310693973bf430e5ecec6ef0b"
-  integrity sha512-6R4HkfAqU2EUakNbVLcCmka0YuQTLGTbHJ62ig765+NRWuB2HNGUQ1HfHcRsGnyxhlCvwKK79JE01XUjFE+dzw==
-  dependencies:
-    "@solana/web3.js" "^1.35.1"
-    bs58 "^4.0.1"
 
 "@metaplex-foundation/mpl-token-metadata@^2.3.3":
   version "2.5.0"
@@ -6402,11 +6344,6 @@ lodash.get@^4.4.2:
   version "4.4.2"
   resolved "https://registry.yarnpkg.com/lodash.get/-/lodash.get-4.4.2.tgz#2d177f652fa31e939b4438d5341499dfa3825e99"
   integrity sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==
-
-lodash.isequal@^4.5.0:
-  version "4.5.0"
-  resolved "https://registry.yarnpkg.com/lodash.isequal/-/lodash.isequal-4.5.0.tgz#415c4478f2bcc30120c22ce10ed3226f7d3e18e0"
-  integrity sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==
 
 lodash.merge@^4.6.2:
   version "4.6.2"

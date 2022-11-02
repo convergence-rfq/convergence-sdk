@@ -3,7 +3,7 @@ import {
   PROGRAM_ID as DEFAULT_SPOT_INSTRUMENT_PROGRAM_ID,
 } from '@convergence-rfq/spot-instrument';
 import { assert } from '@/utils';
-import { ErrorWithLogs, Program, PublicKey } from '@/types';
+import { ErrorWithLogs, Program } from '@/types';
 
 /** @group Programs */
 export const spotInstrumentProgram: Program = {

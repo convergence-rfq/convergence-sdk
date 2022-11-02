@@ -31,9 +31,9 @@
     "postversion": "git push --follow-tags"
   },
   "dependencies": {
-    "@convergence-rfq/rfq": "file:../../../convergence-program-library/rfq/js",
-    "@convergence-rfq/risk-engine": "file:../../../convergence-program-library/risk-engine/js",
-    "@convergence-rfq/spot-instrument": "file:../../../convergence-program-library/spot-instrument/js",
+    "@convergence-rfq/rfq": "2.0.4",
+    "@convergence-rfq/risk-engine": "2.0.4",
+    "@convergence-rfq/spot-instrument": "2.0.1",
     "@bundlr-network/client": "^0.8.8",
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/mpl-token-metadata": "^2.3.3",
