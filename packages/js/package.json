@@ -1,11 +1,10 @@
 {
   "name": "@convergence-rfq/sdk",
-  "version": "1.0.0",
-  "license": "MIT",
+  "version": "2.0.0",
   "sideEffects": false,
+  "module": "dist/esm/index.mjs",
   "main": "dist/cjs/index.cjs",
   "types": "dist/types/index.d.ts",
-  "module": "dist/esm/index.mjs",
   "exports": {
     ".": {
       "import": "./dist/esm/index.mjs",
@@ -18,9 +17,23 @@
     "/dist/types",
     "/src"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "description": "Official Convergence RFQ SDK",
+  "keywords": [
+    "rfq",
+    "convergence",
+    "solana",
+    "blockchain"
+  ],
+  "author": "Convergence RFQ Maintainers <convergencerfq@tradersguild.so>",
+  "homepage": "https://www.convergence.so",
+  "repository": {
+    "url": "https://github.com/convergence-rfq/convergence-sdk.git"
+  },
   "scripts": {
-    "build:docs": "yarn run typedoc src/index.ts",
-    "type-check": "tsc --noEmit",
     "lint:test": "yarn eslint --ext js,ts,tsx src",
     "lint:fix": "yarn eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
@@ -37,6 +50,10 @@
     "@bundlr-network/client": "^0.8.8",
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/mpl-token-metadata": "^2.3.3",
+    "@metaplex-foundation/mpl-auction-house": "^2.1.1",
+    "@metaplex-foundation/mpl-candy-guard": "^0.0.2",
+    "@metaplex-foundation/mpl-candy-machine": "^4.6.0",
+    "@metaplex-foundation/mpl-candy-machine-core": "^0.1.0",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.3",
     "@solana/spl-token": "^0.3.5",

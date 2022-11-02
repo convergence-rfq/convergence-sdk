@@ -33,7 +33,7 @@
           "clean": {
             "executor": "nx:run-commands",
             "options": {
-              "commands": ["yarn workspace @metaplex-foundation/js clean"],
+              "commands": ["yarn workspace @convergence-rfq/sdk clean"],
               "parallel": false
             }
           },
