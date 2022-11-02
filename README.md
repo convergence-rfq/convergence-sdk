@@ -1,4 +1,4 @@
-# Convergence RFQ SDK
+# @convergence-rfq/sdk
 
 ## Installation
 

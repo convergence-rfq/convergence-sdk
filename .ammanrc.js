@@ -13,23 +13,18 @@ const programs = [
   {
     label: 'RFQ',
     programId: rfq.PROGRAM_ADDRESS,
-    deployPath: localDeployPath('mpl_token_metadata'),
+    deployPath: localDeployPath('rfq'),
   },
   {
     label: 'Risk Engine',
     programId: riskEngine.PROGRAM_ADDRESS,
-    deployPath: localDeployPath('mpl_candy_machine'),
+    deployPath: localDeployPath('risk-engine'),
   },
   {
     label: 'Spot Instrument',
     programId: spotInstrument.PROGRAM_ADDRESS,
-    deployPath: localDeployPath('mpl_auction_house'),
-  },
-  {
-    label: 'Gateway',
-    programId: 'gatem74V238djXdzWnJf94Wo1DcnuGkfijbf3AuBhfs',
-    deployPath: localDeployPath('solana_gateway_program'),
-  },
+    deployPath: localDeployPath('spot-instrument'),
+  }
 ];
 
 module.exports = {
@@ -47,9 +42,7 @@ module.exports = {
     accountProviders: {
       ...rfq.accountProviders,
       ...riskEngine.accountProviders,
-      // ...mplAuctionHouse.accountProviders,
-      ...mplCandyMachineCore.accountProviders,
-      ...mplCandyGuard.accountProviders,
+      ...spotInstrument.accountProviders,
     },
   },
   storage: {

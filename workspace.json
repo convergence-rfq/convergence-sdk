@@ -1,80 +1,79 @@
 {
-    "version": 2,
-    "projects": {
-      "packages/js": {
-        "root": "packages/js",
-        "projectType": "library",
-        "sourceRoot": "packages/js/src",
-        "targets": {
-          "prebuild": {
-            "executor": "nx:run-commands",
-            "options": {
-              "command": "yarn depcheck --ignore-patterns=test,dist --ignores=buffer",
-              "cwd": "packages/js"
-            }
-          },
-          "build": {
-            "executor": "nx:run-commands",
-            "options": {
-              "commands": ["yarn workspace @convergence-rfq/sdk build"],
-              "parallel": false
-            },
-            "dependsOn": [
-              {
-                "target": "prebuild",
-                "projects": "self"
-              },
-              {
-                "target": "build",
-                "projects": "dependencies"
-              }
-            ]
-          },
-          "clean": {
-            "executor": "nx:run-commands",
-            "options": {
-              "commands": ["yarn workspace @convergence-rfq/sdk clean"],
-              "parallel": false
-            }
-          },
-          "publish": {
-            "executor": "nx:run-commands",
-            "options": {
-              "command": "node ./infra/publish.mjs packages/js {args.ver} {args.tag}",
-              "forwardAllArgs": true
-            },
-            "dependsOn": [
-              {
-                "projects": "self",
-                "target": "build"
-              }
-            ]
-          },
-          "lint": {
-            "executor": "@nrwl/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-              "lintFilePatterns": ["packages/js/**/*.ts"],
-              "fix": true
-            }
-          },
-          "test": {
-            "executor": "nx:run-commands",
-            "options": {
-              "dir": "./dist/packages/js",
-              "commands": ["yarn workspace @convergence-rfq/sdk test"],
-              "parallel": false
-            },
-            "dependsOn": [
-              {
-                "target": "build",
-                "projects": "self"
-              }
-            ]
+  "version": 2,
+  "projects": {
+    "packages/js": {
+      "root": "packages/js",
+      "projectType": "library",
+      "sourceRoot": "packages/js/src",
+      "targets": {
+        "prebuild": {
+          "executor": "nx:run-commands",
+          "options": {
+            "command": "yarn depcheck --ignore-patterns=test,dist --ignores=buffer",
+            "cwd": "packages/js"
           }
         },
-        "tags": []
-      }
+        "build": {
+          "executor": "nx:run-commands",
+          "options": {
+            "commands": ["yarn workspace @convergence-rfq/sdk build"],
+            "parallel": false
+          },
+          "dependsOn": [
+            {
+              "target": "prebuild",
+              "projects": "self"
+            },
+            {
+              "target": "build",
+              "projects": "dependencies"
+            }
+          ]
+        },
+        "clean": {
+          "executor": "nx:run-commands",
+          "options": {
+            "commands": ["yarn workspace @convergence-rfq/sdk clean"],
+            "parallel": false
+          }
+        },
+        "publish": {
+          "executor": "nx:run-commands",
+          "options": {
+            "command": "node ./infra/publish.mjs packages/js {args.ver} {args.tag}",
+            "forwardAllArgs": true
+          },
+          "dependsOn": [
+            {
+              "projects": "self",
+              "target": "build"
+            }
+          ]
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["packages/js/**/*.ts"],
+            "fix": true
+          }
+        },
+        "test": {
+          "executor": "nx:run-commands",
+          "options": {
+            "dir": "./dist/packages/js",
+            "commands": ["yarn workspace @convergence-rfq/sdk test"],
+            "parallel": false
+          },
+          "dependsOn": [
+            {
+              "target": "build",
+              "projects": "self"
+            }
+          ]
+        }
+      },
+      "tags": []
     }
   }
-  
+}
