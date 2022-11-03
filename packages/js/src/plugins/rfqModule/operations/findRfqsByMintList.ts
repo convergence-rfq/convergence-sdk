@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { toMetadataAccount } from '../accounts';
+import { toRfqAccount } from '../accounts';
 import { Metadata, Rfq, toMetadata } from '../models';
 import { Convergence } from '@/Convergence';
 import {
@@ -84,7 +84,7 @@ export const findNftsByMintListOperationHandler: OperationHandler<FindNftsByMint
         }
 
         try {
-          return toMetadata(toMetadataAccount(account));
+          return toMetadata(toRfqAccount(account));
         } catch (error) {
           return null;
         }

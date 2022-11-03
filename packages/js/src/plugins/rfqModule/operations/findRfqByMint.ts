@@ -5,7 +5,7 @@ import {
   toToken,
   toTokenAccount,
 } from '../../tokenModule';
-import { toMetadataAccount } from '../accounts';
+import { toRfqAccount } from '../accounts';
 import {
   JsonMetadata,
   Rfq,
@@ -135,7 +135,7 @@ export const findRfqByMintOperationHandler: OperationHandler<FindRfqByMintOperat
       scope.throwIfCanceled();
 
       const mint = toMint(toMintAccount(accounts[0]));
-      let metadata = toMetadata(toMetadataAccount(accounts[1]));
+      let metadata = toMetadata(toRfqAccount(accounts[1]));
       const token = accounts[3] ? toToken(toTokenAccount(accounts[3])) : null;
 
       if (loadJsonMetadata) {

@@ -1,5 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
-import { toMetadataAccount } from '../accounts';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import { Rfq, RfqWithToken } from '../models';
 import {
   Operation,
@@ -99,15 +98,10 @@ export const findNftByMetadataOperationHandler: OperationHandler<FindNftByMetada
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindNftByMetadataOutput> => {
-      const metadata = toMetadataAccount(
-        await convergence.rpc().getAccount(operation.input.metadata)
-      );
+      const { publicKey: mintAddress } = Keypair.generate();
       scope.throwIfCanceled();
       return convergence
         .rfqs()
-        .findByMint(
-          { ...operation.input, mintAddress: metadata.data.mint },
-          scope
-        );
+        .findByMint({ ...operation.input, mintAddress }, scope);
     },
   };

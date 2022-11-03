@@ -3,7 +3,7 @@ import {
   UseMethod,
 } from '@metaplex-foundation/mpl-token-metadata';
 import { PublicKey } from '@solana/web3.js';
-import { MetadataAccount } from '../accounts';
+import { RfqAccount } from '../accounts';
 import { JsonMetadata } from './JsonMetadata';
 import { assert, Option, removeEmptyChars } from '@/utils';
 import { BigNumber, Creator, Pda, toBigNumber } from '@/types';
@@ -148,7 +148,7 @@ export function assertMetadata(value: any): asserts value is Metadata {
 
 /** @group Model Helpers */
 export const toMetadata = (
-  account: MetadataAccount,
+  account: RfqAccount,
   json?: Option<JsonMetadata>
 ): Metadata => ({
   model: 'metadata',
