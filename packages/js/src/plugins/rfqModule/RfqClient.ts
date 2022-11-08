@@ -20,8 +20,8 @@ import {
   findNftsByMintListOperation as findRfqsByMintListOperation,
   FindNftsByOwnerInput,
   findNftsByOwnerOperation,
-  LoadLegInput,
-  loadMetadataOperation,
+  LoadLegsInput,
+  loadLegsOperation,
   UseRfqInput,
   useRfqOperation,
   VerifyRfqLegsInput,
@@ -135,10 +135,10 @@ export class RfqClient {
   }
 
   /** {@inheritDoc loadMetadataOperation} */
-  load(input: LoadLegInput, options?: OperationOptions) {
+  load(input: LoadLegsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(loadMetadataOperation(input), options);
+      .execute(loadLegsOperation(input), options);
   }
 
   /**

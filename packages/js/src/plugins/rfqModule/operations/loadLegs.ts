@@ -12,7 +12,7 @@ import {
 // Operation
 // -----------------
 
-const Key = 'LoadLegOperation' as const;
+const Key = 'LoadLegsOperation' as const;
 
 /**
  * Transforms a `Metadata` model into a `Nft` or `Sft` model.
@@ -26,23 +26,23 @@ const Key = 'LoadLegOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const loadMetadataOperation = useOperation<LoadMetadataOperation>(Key);
+export const loadLegsOperation = useOperation<LoadLegsOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type LoadMetadataOperation = Operation<
+export type LoadLegsOperation = Operation<
   typeof Key,
-  LoadLegInput,
-  LoadMetadataOutput
+  LoadLegsInput,
+  LoadLegsOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type LoadLegInput = {
+export type LoadLegsInput = {
   /** The address of the leg account. */
   leg: Leg;
 
@@ -84,34 +84,30 @@ export type LoadLegInput = {
  * @group Operations
  * @category Outputs
  */
-export type LoadMetadataOutput = Rfq;
+export type LoadLegsOutput = Rfq;
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const loadMetadataOperationHandler: OperationHandler<LoadMetadataOperation> =
+export const loadMetadataOperationHandler: OperationHandler<LoadLegsOperation> =
   {
     handle: async (
-      operation: LoadMetadataOperation,
+      operation: LoadLegsOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<LoadMetadataOutput> => {
-      const { leg: metadata, loadJsonMetadata = true } = operation.input;
+    ): Promise<LoadLegsOutput> => {
+      const { leg, loadJsonMetadata = true } = operation.input;
 
-      let nftOrSft = await convergence.rfqs().findByMint(
+      const rfq = await convergence.rfqs().findByMint(
         {
           ...operation.input,
-          mintAddress: metadata.mintAddress,
-          loadJsonMetadata: !metadata.jsonLoaded && loadJsonMetadata,
+          mintAddress: leg.address,
+          loadJsonMetadata,
         },
         scope
       );
 
-      if (!nftOrSft.jsonLoaded && metadata.jsonLoaded) {
-        nftOrSft = { ...nftOrSft, json: metadata.json, jsonLoaded: true };
-      }
-
-      return nftOrSft;
+      return rfq;
     },
   };

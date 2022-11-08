@@ -5,7 +5,7 @@ export * from './findRfqByInstrument';
 export * from './findRfqsByCreator';
 export * from './findRfqsByMintList';
 export * from './findRfqsByOwner';
-export * from './loadLeg';
+export * from './loadLegs';
 export * from './useRfq';
 export * from './verifyRfqCreator';
 export * from './verifyRfqLegs';

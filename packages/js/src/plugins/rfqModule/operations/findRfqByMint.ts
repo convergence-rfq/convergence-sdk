@@ -6,13 +6,7 @@ import {
   toTokenAccount,
 } from '../../tokenModule';
 import { toRfqAccount } from '../accounts';
-import {
-  JsonMetadata,
-  Rfq,
-  toRfq,
-  toMetadata,
-  toRfqWithToken,
-} from '../models';
+import { JsonMetadata, Rfq, toRfq } from '../models';
 import {
   Operation,
   OperationHandler,

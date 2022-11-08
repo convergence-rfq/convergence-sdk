@@ -14,7 +14,7 @@ import {
   findNftsByMintListOperationHandler,
   findNftsByOwnerOperation,
   findNftsByOwnerOperationHandler,
-  loadMetadataOperation,
+  loadLegsOperation,
   loadMetadataOperationHandler,
   useRfqOperation,
   useRfqOperationHandler,
@@ -55,7 +55,7 @@ export const rfqModule = (): ConvergencePlugin => ({
       findNftsByMintListOperationHandler
     );
     op.register(findNftsByOwnerOperation, findNftsByOwnerOperationHandler);
-    op.register(loadMetadataOperation, loadMetadataOperationHandler);
+    op.register(loadLegsOperation, loadMetadataOperationHandler);
     op.register(useRfqOperation, useRfqOperationHandler);
     op.register(verifyRfqLegsOperation, verifyRfqLegsOperationHandler);
     op.register(verifyRfqCreatorOperation, verifyRfqCreatorOperationHandler);
