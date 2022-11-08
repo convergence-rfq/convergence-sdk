@@ -2,7 +2,7 @@ import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 import { PublicKey } from '@solana/web3.js';
 import { SendTokensInput } from '../tokenModule';
 import { toMintAddress } from './helpers';
-import { Rfq, RfqWithToken } from './models';
+import { Rfq } from './models';
 import { RfqBuildersClient } from './RfqBuildersClient';
 import { RfqPdasClient } from './RfqPdasClient';
 import {
@@ -10,8 +10,6 @@ import {
   createRfqOperation,
   DeleteRfqInput,
   deleteRfqOperation,
-  FindNftByMetadataInput,
-  findNftByMetadataOperation,
   FindRfqByMintInput,
   findRfqByMintOperation,
   FindRfqByTokenInput,
@@ -22,12 +20,8 @@ import {
   findNftsByMintListOperation as findRfqsByMintListOperation,
   FindNftsByOwnerInput,
   findNftsByOwnerOperation,
-  FindNftsByUpdateAuthorityInput,
-  findNftsByUpdateAuthorityOperation,
-  LoadMetadataInput,
+  LoadLegInput,
   loadMetadataOperation,
-  UploadMetadataInput,
-  uploadMetadataOperation,
   UseRfqInput,
   useRfqOperation,
   VerifyRfqLegsInput,
@@ -40,15 +34,15 @@ import { OperationOptions, token } from '@/types';
 import type { Convergence } from '@/Convergence';
 
 /**
- * This is a client for the NFT module.
+ * This is a client for the Rfq module.
  *
- * It enables us to interact with the Token Metadata program in order to
- * manage NFTs and SFTs.
+ * It enables us to interact with the Rfq program in order to
+ * manage Rfqs.
  *
  * You may access this client via the `rfqs()` method of your `Convergence` instance.
  *
  * ```ts
- * const nftClient = convergence.rfqs();
+ * const rfqClient = convergence.rfqs();
  * ```
  *
  * @example
@@ -109,13 +103,6 @@ export class RfqClient {
       .execute(findRfqByMintOperation(input), options);
   }
 
-  /** {@inheritDoc findNftByMetadataOperation} */
-  findByMetadata(input: FindNftByMetadataInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(findNftByMetadataOperation(input), options);
-  }
-
   /** {@inheritDoc findNftByTokenOperation} */
   findByToken(input: FindRfqByTokenInput, options?: OperationOptions) {
     return this.convergence
@@ -147,18 +134,8 @@ export class RfqClient {
       .execute(findNftsByOwnerOperation(input), options);
   }
 
-  /** {@inheritDoc findNftsByUpdateAuthorityOperation} */
-  findAllByUpdateAuthority(
-    input: FindNftsByUpdateAuthorityInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(findNftsByUpdateAuthorityOperation(input), options);
-  }
-
   /** {@inheritDoc loadMetadataOperation} */
-  load(input: LoadMetadataInput, options?: OperationOptions) {
+  load(input: LoadLegInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(loadMetadataOperation(input), options);
@@ -173,7 +150,7 @@ export class RfqClient {
    * rfqWithToken = await convergence.rfqs().refresh(rfqWithToken);
    * ```
    */
-  refresh<T extends Rfq | RfqWithToken | Metadata | PublicKey>(
+  refresh<T extends Rfq | PublicKey>(
     model: T,
     input?: Omit<
       FindRfqByMintInput,
@@ -184,7 +161,8 @@ export class RfqClient {
     return this.findByMint(
       {
         mintAddress: toMintAddress(model),
-        tokenAddress: 'token' in model ? model.token.address : undefined,
+        tokenAddress: undefined,
+        //tokenAddress: 'token' in model ? model.token.address : undefined,
         ...input,
       },
       options
@@ -196,13 +174,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(createRfqOperation(input), options);
-  }
-
-  /** {@inheritDoc uploadMetadataOperation} */
-  uploadMetadata(input: UploadMetadataInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(uploadMetadataOperation(input), options);
   }
 
   /** {@inheritDoc deleteNftOperation} */

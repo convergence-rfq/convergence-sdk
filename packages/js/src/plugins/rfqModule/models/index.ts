@@ -1,4 +1,3 @@
-export * from './JsonMetadata';
+export * from './JsonRfq';
 export * from './Leg';
-export * from './Metadata';
 export * from './Rfq';

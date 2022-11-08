@@ -1,16 +1,12 @@
-import {
-  cusper as defaultSpotInstrumentCusper,
-  PROGRAM_ID as DEFAULT_SPOT_INSTRUMENT_PROGRAM_ID,
-} from '@convergence-rfq/spot-instrument';
+import { PROGRAM_ID as DEFAULT_SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { assert } from '@/utils';
-import { ErrorWithLogs, Program } from '@/types';
+import { Program } from '@/types';
 
 /** @group Programs */
 export const spotInstrumentProgram: Program = {
   name: 'SpotInstrumentProgram',
   address: DEFAULT_SPOT_INSTRUMENT_PROGRAM_ID,
-  errorResolver: (error: ErrorWithLogs) =>
-    defaultSpotInstrumentCusper.errorFromProgramLogs(error.logs, false),
+  //errorResolver: (error: ErrorWithLogs) => error.logs,
 };
 
 /** @group Programs */
@@ -34,7 +30,7 @@ export function assertSpotInstrumentProgram(
 export const defaultSpotInstrumentProgram: SpotInstrumentProgram = {
   name: 'SpotInstrumentProgram',
   address: DEFAULT_SPOT_INSTRUMENT_PROGRAM_ID,
-  errorResolver: (error: ErrorWithLogs) =>
-    defaultSpotInstrumentCusper.errorFromProgramLogs(error.logs, false),
+  //errorResolver: (error: ErrorWithLogs) =>
+  //  defaultSpotInstrumentCusper.errorFromProgramLogs(error.logs, false),
   availableGuards: [],
 };

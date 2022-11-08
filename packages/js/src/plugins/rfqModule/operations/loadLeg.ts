@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Metadata, Rfq } from '../models';
+import { Leg, Rfq } from '../models';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -12,7 +12,7 @@ import {
 // Operation
 // -----------------
 
-const Key = 'LoadMetadataOperation' as const;
+const Key = 'LoadLegOperation' as const;
 
 /**
  * Transforms a `Metadata` model into a `Nft` or `Sft` model.
@@ -34,7 +34,7 @@ export const loadMetadataOperation = useOperation<LoadMetadataOperation>(Key);
  */
 export type LoadMetadataOperation = Operation<
   typeof Key,
-  LoadMetadataInput,
+  LoadLegInput,
   LoadMetadataOutput
 >;
 
@@ -42,9 +42,9 @@ export type LoadMetadataOperation = Operation<
  * @group Operations
  * @category Inputs
  */
-export type LoadMetadataInput = {
-  /** The address of the metadata account. */
-  metadata: Metadata;
+export type LoadLegInput = {
+  /** The address of the leg account. */
+  leg: Leg;
 
   /**
    * The explicit token account to fetch with the NFT or SFT.
@@ -97,7 +97,7 @@ export const loadMetadataOperationHandler: OperationHandler<LoadMetadataOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<LoadMetadataOutput> => {
-      const { metadata, loadJsonMetadata = true } = operation.input;
+      const { leg: metadata, loadJsonMetadata = true } = operation.input;
 
       let nftOrSft = await convergence.rfqs().findByMint(
         {

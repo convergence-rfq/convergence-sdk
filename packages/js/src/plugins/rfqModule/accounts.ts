@@ -22,7 +22,7 @@ export const toCollateralInfoAccount =
   getAccountParsingAndAssertingFunction(CollateralInfo);
 
 /** @group Accounts */
-export type ProtocolState = Account<ProtocolState>;
+export type ProtocolStateAccount = Account<ProtocolState>;
 
 /** @group Account Helpers */
 export const parseProtocolStateAccount =
