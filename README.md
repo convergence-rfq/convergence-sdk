@@ -17,3 +17,10 @@ import { Connection, clusterApiUrl } from '@solana/web3.js';
 const connection = new Connection(clusterApiUrl('devnet'));
 const convergence = new Convergence(connection);
 ```
+
+## TODO
+
+- [ ] Fix build
+- [ ] Complete `rfqModule`, `riskEngineModule`, and `spotInstrumentModule`
+- [ ] Add tests
+- [ ] Update inline examples
