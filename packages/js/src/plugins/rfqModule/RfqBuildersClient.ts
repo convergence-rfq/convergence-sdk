@@ -3,10 +3,6 @@ import {
   CreateRfqBuilderParams,
   useRfqBuilder,
   UseRfqBuilderParams,
-  verifyRfqLegsBuilder,
-  VerifyRfqLegsBuilderParams,
-  verifyRfqCreatorBuilder,
-  VerifyRfqCreatorBuilderParams,
 } from './operations';
 import type { Convergence } from '@/Convergence';
 import { TransactionBuilderOptions } from '@/utils';
@@ -29,21 +25,5 @@ export class RfqBuildersClient {
   /** {@inheritDoc useNftBuilder} */
   use(input: UseRfqBuilderParams, options?: TransactionBuilderOptions) {
     return useRfqBuilder(this.convergence, input, options);
-  }
-
-  /** {@inheritDoc verifyNftCreatorBuilder} */
-  verifyCreator(
-    input: VerifyRfqCreatorBuilderParams,
-    options?: TransactionBuilderOptions
-  ) {
-    return verifyRfqCreatorBuilder(this.convergence, input, options);
-  }
-
-  /** {@inheritDoc verifyNftCollectionBuilder} */
-  verifyCollection(
-    input: VerifyRfqLegsBuilderParams,
-    options?: TransactionBuilderOptions
-  ) {
-    return verifyRfqLegsBuilder(this.convergence, input, options);
   }
 }

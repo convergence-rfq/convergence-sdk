@@ -60,7 +60,6 @@
     "buffer": "^6.0.3",
     "debug": "^4.3.4",
     "eventemitter3": "^4.0.7",
-    "lodash.clonedeep": "^4.5.0",
     "merkletreejs": "^0.2.32",
     "mime": "^3.0.0",
     "node-fetch": "^2.6.7"

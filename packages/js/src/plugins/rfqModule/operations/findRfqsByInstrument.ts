@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { toTokenAccount } from '../../tokenModule';
-import { RfqWithToken } from '../models';
+import { Rfq } from '../models';
 import {
   Operation,
   OperationHandler,
@@ -9,11 +9,7 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 
-// -----------------
-// Operation
-// -----------------
-
-const Key = 'FindRfqByTokenOperation' as const;
+const Key = 'FindRfqByInstrumentOperation' as const;
 
 /**
  * Finds an RFQ by its token address.
@@ -21,32 +17,32 @@ const Key = 'FindRfqByTokenOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByToken({ token };
+ *   .findByInstrument({ instrument };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const findNftByTokenOperation =
-  useOperation<FindRfqByTokenOperation>(Key);
+export const findRfqsByInstrumentOperation =
+  useOperation<FindRfqByInstrumentOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type FindRfqByTokenOperation = Operation<
+export type FindRfqByInstrumentOperation = Operation<
   typeof Key,
-  FindRfqByTokenInput,
-  FindRfqByTokenOutput
+  FindRfqsByInstrumentInput,
+  FindRfqsByInstrumentOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type FindRfqByTokenInput = {
+export type FindRfqsByInstrumentInput = {
   /** The address of the token account. */
-  token: PublicKey;
+  instrument: PublicKey;
 
   /**
    * Whether or not we should fetch the JSON Metadata for the NFT or SFT.
@@ -60,33 +56,33 @@ export type FindRfqByTokenInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindRfqByTokenOutput = RfqWithToken;
+export type FindRfqsByInstrumentOutput = Rfq;
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const findRfqByTokenOperationHandler: OperationHandler<FindRfqByTokenOperation> =
+export const findRfqByTokenOperationHandler: OperationHandler<FindRfqByInstrumentOperation> =
   {
     handle: async (
-      operation: FindRfqByTokenOperation,
+      operation: FindRfqByInstrumentOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<FindRfqByTokenOutput> => {
+    ): Promise<FindRfqsByInstrumentOutput> => {
       const token = toTokenAccount(
-        await convergence.rpc().getAccount(operation.input.token)
+        await convergence.rpc().getAccount(operation.input.instrument)
       );
       scope.throwIfCanceled();
 
-      const asset = await convergence.rfqs().findByMint(
+      const asset = await convergence.rfqs().findByToken(
         {
           ...operation.input,
           mintAddress: token.data.mint,
-          tokenAddress: operation.input.token,
+          tokenAddress: operation.input.instrument,
         },
         scope
       );
 
-      return asset as FindRfqByTokenOutput;
+      return asset as FindRfqsByInstrumentOutput;
     },
   };

@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { TokenGpaBuilder } from '../../tokenModule';
-import { Metadata, Rfq } from '../models';
+import { Rfq } from '../models';
 import {
   Operation,
   OperationHandler,
@@ -9,11 +9,7 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 
-// -----------------
-// Operation
-// -----------------
-
-const Key = 'FindNftsByOwnerOperation' as const;
+const Key = 'FindRfqsByOwnerOperation' as const;
 
 /**
  * Finds multiple NFTs and SFTs by a given owner.
@@ -27,24 +23,24 @@ const Key = 'FindNftsByOwnerOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const findNftsByOwnerOperation =
-  useOperation<FindNftsByOwnerOperation>(Key);
+export const findRfqsByOwnerOperation =
+  useOperation<FindRfqsByOwnerOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type FindNftsByOwnerOperation = Operation<
+export type FindRfqsByOwnerOperation = Operation<
   typeof Key,
-  FindNftsByOwnerInput,
-  FindNftsByOwnerOutput
+  FindRfqsByOwnerInput,
+  FindRfqsByOwnerOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type FindNftsByOwnerInput = {
+export type FindRfqsByOwnerInput = {
   /** The address of the owner. */
   owner: PublicKey;
 };
@@ -53,19 +49,19 @@ export type FindNftsByOwnerInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindNftsByOwnerOutput = (Metadata | Rfq)[];
+export type FindRfqsByOwnerOutput = Rfq[];
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const findNftsByOwnerOperationHandler: OperationHandler<FindNftsByOwnerOperation> =
+export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOperation> =
   {
     handle: async (
-      operation: FindNftsByOwnerOperation,
+      operation: FindRfqsByOwnerOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<FindNftsByOwnerOutput> => {
+    ): Promise<FindRfqsByOwnerOutput> => {
       const { programs } = scope;
       const { owner } = operation.input;
 
@@ -77,9 +73,9 @@ export const findNftsByOwnerOperationHandler: OperationHandler<FindNftsByOwnerOp
         .getDataAsPublicKeys();
       scope.throwIfCanceled();
 
-      const rfqs = await convergence.rfqs().findAllByMintList({ mints }, scope);
+      const rfqs = await convergence.rfqs().findByToken(mints, scope);
       scope.throwIfCanceled();
 
-      return rfqs.filter((x): x is Metadata | Rfq => x !== null);
+      return rfqs.filter((x): x is Rfq => x !== null);
     },
   };

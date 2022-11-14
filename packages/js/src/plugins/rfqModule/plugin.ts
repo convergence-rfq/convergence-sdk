@@ -4,24 +4,16 @@ import { RfqClient } from './RfqClient';
 import {
   createRfqOperation,
   createRfqOperationHandler,
-  findRfqByMintOperation,
+  findRfqsByInstrumentOperation,
   findRfqByMintOperationHandler,
-  findNftByTokenOperation,
+  findRfqsByInstrumentOperation,
   findRfqByTokenOperationHandler,
-  findNftsByCreatorOperation,
-  findNftsByCreatorOperationHandler,
-  findNftsByMintListOperation,
-  findNftsByMintListOperationHandler,
-  findNftsByOwnerOperation,
-  findNftsByOwnerOperationHandler,
+  findRfqsByOwnerOperation,
+  findRfqsByOwnerOperationHandler,
   loadLegsOperation,
   loadMetadataOperationHandler,
   useRfqOperation,
   useRfqOperationHandler,
-  verifyRfqLegsOperation,
-  verifyRfqLegsOperationHandler,
-  verifyRfqCreatorOperation,
-  verifyRfqCreatorOperationHandler,
 } from './operations';
 import { ErrorWithLogs, ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -47,18 +39,11 @@ export const rfqModule = (): ConvergencePlugin => ({
     // Operations.
     const op = convergence.operations();
     op.register(createRfqOperation, createRfqOperationHandler);
-    op.register(findRfqByMintOperation, findRfqByMintOperationHandler);
-    op.register(findNftByTokenOperation, findRfqByTokenOperationHandler);
-    op.register(findNftsByCreatorOperation, findNftsByCreatorOperationHandler);
-    op.register(
-      findNftsByMintListOperation,
-      findNftsByMintListOperationHandler
-    );
-    op.register(findNftsByOwnerOperation, findNftsByOwnerOperationHandler);
+    op.register(findRfqsByInstrumentOperation, findRfqByMintOperationHandler);
+    op.register(findRfqsByInstrumentOperation, findRfqByTokenOperationHandler);
+    op.register(findRfqsByOwnerOperation, findRfqsByOwnerOperationHandler);
     op.register(loadLegsOperation, loadMetadataOperationHandler);
     op.register(useRfqOperation, useRfqOperationHandler);
-    op.register(verifyRfqLegsOperation, verifyRfqLegsOperationHandler);
-    op.register(verifyRfqCreatorOperation, verifyRfqCreatorOperationHandler);
 
     convergence.rfqs = function () {
       return new RfqClient(this);

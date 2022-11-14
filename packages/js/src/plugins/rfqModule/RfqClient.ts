@@ -8,26 +8,18 @@ import { RfqPdasClient } from './RfqPdasClient';
 import {
   CreateRfqInput,
   createRfqOperation,
-  DeleteRfqInput,
-  deleteRfqOperation,
-  FindRfqByMintInput,
-  findRfqByMintOperation,
-  FindRfqByTokenInput,
-  findNftByTokenOperation,
-  FindNftsByCreatorInput,
-  findNftsByCreatorOperation,
-  FindNftsByMintListInput as FindRfqsByMintListInput,
-  findNftsByMintListOperation as findRfqsByMintListOperation,
-  FindNftsByOwnerInput,
-  findNftsByOwnerOperation,
+  CancelRfqInput,
+  cancelRfqOperation,
+  FindRfqsByTokenInput,
+  FindRfqsByTokenOperation,
+  FindRfqsByInstrumentInput,
+  findRfqsByInstrumentOperation,
+  FindRfqsByOwnerInput,
+  findRfqsByOwnerOperation,
   LoadLegsInput,
   loadLegsOperation,
   UseRfqInput,
   useRfqOperation,
-  VerifyRfqLegsInput,
-  verifyRfqLegsOperation,
-  VerifyRfqCreatorInput,
-  verifyRfqCreatorOperation,
 } from './operations';
 import { PartialKeys } from '@/utils';
 import { OperationOptions, token } from '@/types';
@@ -97,41 +89,27 @@ export class RfqClient {
   }
 
   /** {@inheritDoc findNftByMintOperation} */
-  findByMint(input: FindRfqByMintInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(findRfqByMintOperation(input), options);
-  }
-
-  /** {@inheritDoc findNftByTokenOperation} */
-  findByToken(input: FindRfqByTokenInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(findNftByTokenOperation(input), options);
-  }
-
-  /** {@inheritDoc findNftsByCreatorOperation} */
-  findAllByCreator(input: FindNftsByCreatorInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(findNftsByCreatorOperation(input), options);
-  }
-
-  /** {@inheritDoc findNftsByMintListOperation} */
-  findAllByMintList(
-    input: FindRfqsByMintListInput,
+  findByInstrument(
+    input: FindRfqsByInstrumentInput,
     options?: OperationOptions
   ) {
     return this.convergence
       .operations()
-      .execute(findRfqsByMintListOperation(input), options);
+      .execute(findRfqsByInstrumentOperation(input), options);
+  }
+
+  /** {@inheritDoc findNftByTokenOperation} */
+  findByToken(input: FindRfqsByTokenInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(findRfqsByTokenOperation(input), options);
   }
 
   /** {@inheritDoc findNftsByOwnerOperation} */
-  findAllByOwner(input: FindNftsByOwnerInput, options?: OperationOptions) {
+  findAllByOwner(input: FindRfqsByOwnerInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(findNftsByOwnerOperation(input), options);
+      .execute(findRfqsByOwnerOperation(input), options);
   }
 
   /** {@inheritDoc loadMetadataOperation} */
@@ -153,12 +131,12 @@ export class RfqClient {
   refresh<T extends Rfq | PublicKey>(
     model: T,
     input?: Omit<
-      FindRfqByMintInput,
+      FindRfqsByTokenInput,
       'mintAddress' | 'tokenAddres' | 'tokenOwner'
     >,
     options?: OperationOptions
   ): Promise<T extends Metadata | PublicKey ? Rfq : T> {
-    return this.findByMint(
+    return this.findByToken(
       {
         mintAddress: toMintAddress(model),
         tokenAddress: undefined,
@@ -177,10 +155,10 @@ export class RfqClient {
   }
 
   /** {@inheritDoc deleteNftOperation} */
-  delete(input: DeleteRfqInput, options?: OperationOptions) {
+  delete(input: CancelRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(deleteRfqOperation(input), options);
+      .execute(cancelRfqOperation(input), options);
   }
 
   /** {@inheritDoc useNftOperation} */
@@ -188,20 +166,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(useRfqOperation(input), options);
-  }
-
-  /** {@inheritDoc verifyNftCreatorOperation} */
-  verifyCreator(input: VerifyRfqCreatorInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(verifyRfqCreatorOperation(input), options);
-  }
-
-  /** {@inheritDoc verifyNftCollectionOperation} */
-  verifyCollection(input: VerifyRfqLegsInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(verifyRfqLegsOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */

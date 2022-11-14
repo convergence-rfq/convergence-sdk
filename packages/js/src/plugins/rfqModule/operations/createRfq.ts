@@ -295,7 +295,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
-    const rfq = await convergence.rfqs().findByMint(
+    const rfq = await convergence.rfqs().findByToken(
       {
         mintAddress: output.mintAddress,
         tokenAddress: output.tokenAddress,

@@ -20,8 +20,8 @@ const Key = 'UseRfqOperation' as const;
  * Utilizes a usable Rfq.
  *
  * ```ts
- * await convergence.rfqs().use({ mintAddress });
- * await convergence.rfqs().use({ mintAddress, numberOfUses: 3 });
+ * await convergence.rfqs().use({ address });
+ * await convergence.rfqs().use({ address, numberOfUses: 3 });
  * ```
  *
  * @group Operations

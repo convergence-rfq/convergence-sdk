@@ -99,7 +99,7 @@ export const loadMetadataOperationHandler: OperationHandler<LoadLegsOperation> =
     ): Promise<LoadLegsOutput> => {
       const { leg, loadJsonMetadata = true } = operation.input;
 
-      const rfq = await convergence.rfqs().findByMint(
+      const rfq = await convergence.rfqs().findByToken(
         {
           ...operation.input,
           mintAddress: leg.address,
