@@ -11,7 +11,7 @@ import {
   CancelRfqInput,
   cancelRfqOperation,
   FindRfqsByTokenInput,
-  FindRfqsByTokenOperation,
+  findRfqsByTokenOperation,
   FindRfqsByInstrumentInput,
   findRfqsByInstrumentOperation,
   FindRfqsByOwnerInput,
@@ -88,7 +88,7 @@ export class RfqClient {
     return new RfqPdasClient(this.convergence);
   }
 
-  /** {@inheritDoc findNftByMintOperation} */
+  /** {@inheritDoc findRfqsByInstrumentOperation} */
   findByInstrument(
     input: FindRfqsByInstrumentInput,
     options?: OperationOptions
@@ -98,21 +98,21 @@ export class RfqClient {
       .execute(findRfqsByInstrumentOperation(input), options);
   }
 
-  /** {@inheritDoc findNftByTokenOperation} */
+  /** {@inheritDoc findRfqsByTokenOperation} */
   findByToken(input: FindRfqsByTokenInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findRfqsByTokenOperation(input), options);
   }
 
-  /** {@inheritDoc findNftsByOwnerOperation} */
+  /** {@inheritDoc findRfqsByOwnerOperation} */
   findAllByOwner(input: FindRfqsByOwnerInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findRfqsByOwnerOperation(input), options);
   }
 
-  /** {@inheritDoc loadMetadataOperation} */
+  /** {@inheritDoc loadLegsOperation} */
   load(input: LoadLegsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
@@ -147,21 +147,21 @@ export class RfqClient {
     ) as Promise<T extends Metadata | PublicKey ? Rfq : T>;
   }
 
-  /** {@inheritDoc createNftOperation} */
+  /** {@inheritDoc createRfqOperation} */
   create(input: CreateRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(createRfqOperation(input), options);
   }
 
-  /** {@inheritDoc deleteNftOperation} */
+  /** {@inheritDoc cancelRfqOperation} */
   delete(input: CancelRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(cancelRfqOperation(input), options);
   }
 
-  /** {@inheritDoc useNftOperation} */
+  /** {@inheritDoc useRfqOperation} */
   use(input: UseRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()

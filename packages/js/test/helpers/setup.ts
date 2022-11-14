@@ -4,7 +4,6 @@ import { amman } from './amman';
 import {
   Convergence,
   keypairIdentity,
-  UploadMetadataInput,
   CreateRfqInput,
   KeypairSigner,
 } from '@/index';
@@ -39,14 +38,11 @@ export const createWallet = async (
 
 export const createRfq = async (
   cvg: Convergence,
-  input: Partial<CreateRfqInput & { json: UploadMetadataInput }> = {}
+  input: Partial<CreateRfqInput> = {}
 ) => {
-  const { uri } = await cvg.rfqs().uploadMetadata(input.json ?? {});
-  const { rfq: nft } = await cvg.rfqs().create({
-    uri,
-    name: 'My NFT',
-    sellerFeeBasisPoints: 200,
+  const { rfq } = await cvg.rfqs().create({
+    name: 'My RFQ',
     ...input,
   });
-  return nft;
+  return rfq;
 };

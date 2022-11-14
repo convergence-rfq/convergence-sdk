@@ -1,5 +1,4 @@
 import { PublicKey } from '@solana/web3.js';
-import { TokenGpaBuilder } from '../../tokenModule';
 import { Rfq } from '../models';
 import {
   Operation,
@@ -62,18 +61,11 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
-      const { programs } = scope;
       const { owner } = operation.input;
 
-      const tokenProgram = convergence.programs().getToken(programs);
-      const mints = await new TokenGpaBuilder(convergence, tokenProgram.address)
-        .selectMint()
-        .whereOwner(owner)
-        .whereAmount(1)
-        .getDataAsPublicKeys();
       scope.throwIfCanceled();
 
-      const rfqs = await convergence.rfqs().findByToken(mints, scope);
+      const rfqs = await convergence.rfqs().findAllByOwner({ owner }, scope);
       scope.throwIfCanceled();
 
       return rfqs.filter((x): x is Rfq => x !== null);

@@ -7,7 +7,5 @@ export type HasMintAddress = Rfq | Leg | PublicKey;
 export const toMintAddress = (
   value: PublicKeyValues | HasMintAddress
 ): PublicKey => {
-  return typeof value === 'object' && 'mintAddress' in value
-    ? value.mintAddress
-    : toPublicKey(value);
+  return toPublicKey(value);
 };

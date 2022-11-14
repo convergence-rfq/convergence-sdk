@@ -5,8 +5,6 @@ import {
   createRfqOperation,
   createRfqOperationHandler,
   findRfqsByInstrumentOperation,
-  findRfqByMintOperationHandler,
-  findRfqsByInstrumentOperation,
   findRfqByTokenOperationHandler,
   findRfqsByOwnerOperation,
   findRfqsByOwnerOperationHandler,
@@ -39,7 +37,6 @@ export const rfqModule = (): ConvergencePlugin => ({
     // Operations.
     const op = convergence.operations();
     op.register(createRfqOperation, createRfqOperationHandler);
-    op.register(findRfqsByInstrumentOperation, findRfqByMintOperationHandler);
     op.register(findRfqsByInstrumentOperation, findRfqByTokenOperationHandler);
     op.register(findRfqsByOwnerOperation, findRfqsByOwnerOperationHandler);
     op.register(loadLegsOperation, loadMetadataOperationHandler);

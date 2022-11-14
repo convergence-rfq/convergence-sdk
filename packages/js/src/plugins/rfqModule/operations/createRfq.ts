@@ -4,7 +4,7 @@ import {
 } from '@metaplex-foundation/mpl-token-metadata';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertRfqWithToken, RfqWithToken } from '../models';
+import { assertRfq, Rfq } from '../models';
 import { Option, TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   BigNumber,
@@ -19,10 +19,6 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 
-// -----------------
-// Operation
-// -----------------
-
 const Key = 'CreateRfqOperation' as const;
 
 /**
@@ -34,7 +30,6 @@ const Key = 'CreateRfqOperation' as const;
  *   .create({
  *     name: 'My Rfq',
  *     uri: 'https://example.com/my-rfq',
- *     sellerFeeBasisPoints: 250, // 2.5%
  *   };
  * ```
  *
@@ -120,17 +115,8 @@ export type CreateRfqInput = {
    */
   tokenAddress?: PublicKey | Signer;
 
-  /** The URI that points to the JSON metadata of the asset. */
-  uri: string;
-
   /** The on-chain name of the asset, e.g. "My Rfq #123". */
   name: string;
-
-  /**
-   * The royalties in percent basis point (i.e. 250 is 2.5%) that
-   * should be paid to the creators on each secondary sale.
-   */
-  sellerFeeBasisPoints: number;
 
   /**
    * The on-chain symbol of the asset, stored in the Metadata account.
@@ -232,8 +218,8 @@ export type CreateRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
-  /** The newly created Rfq and its associated token. */
-  rfq: RfqWithToken;
+  /** The newly created Rfq. */
+  rfq: Rfq;
 
   /** The address of the mint account. */
   mintAddress: PublicKey;
@@ -304,14 +290,11 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     );
     scope.throwIfCanceled();
 
-    assertRfqWithToken(rfq);
+    assertRfq(rfq);
+
     return { ...output, rfq };
   },
 };
-
-// -----------------
-// Builder
-// -----------------
 
 /**
  * @group Transaction Builders
@@ -367,7 +350,6 @@ export type CreateRfqBuilderContext = Omit<CreateRfqOutput, 'response' | 'rfq'>;
  *   .create({
  *     name: 'My Rfq',
  *     uri: 'https://example.com/my-rfq',
- *     sellerFeeBasisPoints: 250, // 2.5%
  *   });
  * ```
  *
@@ -393,8 +375,6 @@ export const createRfqBuilder = async (
   const metadataAddress = Keypair.generate().publicKey;
   const tokenAddress = Keypair.generate().publicKey;
 
-  //const { mintAddress, metadataAddress, tokenAddress } =
-  //  sftBuilder.getContext();
   const masterEditionAddress = convergence.rfqs().pdas().masterEdition({
     mint: mintAddress,
     programs,
