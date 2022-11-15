@@ -1,5 +1,5 @@
 /** @group Models */
-export type JsonMetadata<Uri = string> = {
+export type JsonRfq<Uri = string> = {
   name?: string;
   symbol?: string;
   description?: string;
