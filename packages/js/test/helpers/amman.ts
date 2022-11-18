@@ -22,6 +22,7 @@ export function errorCode(err: TransactionError | TransactionInstructionError) {
     return err.InstructionError[1].Custom;
   }
 }
+
 export function resolveTransactionError(
   cusper: typeof cusperTokenMetadata,
   err: TransactionError | TransactionInstructionError

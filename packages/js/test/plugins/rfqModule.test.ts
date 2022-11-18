@@ -10,7 +10,9 @@ import {
 killStuckProcess();
 
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
-  const cvg = await convergence();
+  const cvg = await convergence({
+    rpcEndpoint: 'https://api.devnet.solana.com',
+  });
   const originalRfq = await createRfq(cvg);
   const rfq = await cvg
     .rfqs()
