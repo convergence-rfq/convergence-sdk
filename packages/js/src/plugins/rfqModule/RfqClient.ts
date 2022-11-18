@@ -17,9 +17,11 @@ import {
   findRfqsByInstrumentOperation,
   FindRfqsByOwnerInput,
   findRfqsByOwnerOperation,
+  RespondInput,
   LoadLegsInput,
   loadLegsOperation,
   findRfqsByAddressOperation,
+  respondOperation,
 } from './operations';
 import { PartialKeys } from '@/utils';
 import { OperationOptions, token } from '@/types';
@@ -98,6 +100,13 @@ export class RfqClient {
       .execute(findRfqsByTokenOperation(input), options);
   }
 
+  /** {@inheritDoc cancelRfqOperation} */
+  cancelRfq(input: CancelRfqInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(cancelRfqOperation(input), options);
+  }
+
   /** {@inheritDoc findRfqsByOwnerOperation} */
   findAllByOwner(input: FindRfqsByOwnerInput, options?: OperationOptions) {
     return this.convergence
@@ -151,6 +160,13 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(cancelRfqOperation(input), options);
+  }
+
+  /** {@inheritDoc respondOperation} */
+  respond(input: RespondInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(respondOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */

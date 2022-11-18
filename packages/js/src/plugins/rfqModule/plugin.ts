@@ -11,6 +11,10 @@ import {
   findRfqsByOwnerOperationHandler,
   loadLegsOperation,
   loadMetadataOperationHandler,
+  cancelRfqOperation,
+  cancelRfqOperationHandler,
+  respondOperationHandler,
+  respondOperation,
 } from './operations';
 import { ErrorWithLogs, ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -34,9 +38,11 @@ export const rfqModule = (): ConvergencePlugin => ({
 
     const op = convergence.operations();
     op.register(createRfqOperation, createRfqOperationHandler);
+    op.register(cancelRfqOperation, cancelRfqOperationHandler);
     op.register(findRfqsByInstrumentOperation, findRfqByTokenOperationHandler);
     op.register(findRfqsByOwnerOperation, findRfqsByOwnerOperationHandler);
     op.register(loadLegsOperation, loadMetadataOperationHandler);
+    op.register(respondOperation, respondOperationHandler);
 
     convergence.rfqs = function () {
       return new RfqClient(this);

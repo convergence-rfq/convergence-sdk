@@ -1,5 +1,5 @@
-import { createCancelRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
+import { PublicKey, Keypair, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -11,7 +11,7 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
-const Key = 'CancelRfqOperation' as const;
+const Key = 'RespondOperation' as const;
 
 /**
  * Cancels an existing Rfq.
@@ -19,29 +19,29 @@ const Key = 'CancelRfqOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .cancel({ address };
+ *   .respond({ ... };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const cancelRfqOperation = useOperation<CancelRfqOperation>(Key);
+export const respondOperation = useOperation<RespondOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CancelRfqOperation = Operation<
+export type RespondOperation = Operation<
   typeof Key,
-  CancelRfqInput,
-  CancelRfqOutput
+  RespondInput,
+  RespondOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CancelRfqInput = {
+export type RespondInput = {
   /** The address of the Rfq account. */
   address: PublicKey;
 
@@ -57,7 +57,7 @@ export type CancelRfqInput = {
  * @group Operations
  * @category Outputs
  */
-export type CancelRfqOutput = {
+export type RespondOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
@@ -66,13 +66,13 @@ export type CancelRfqOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
+export const respondOperationHandler: OperationHandler<RespondOperation> = {
   handle: async (
-    operation: CancelRfqOperation,
+    operation: RespondOperation,
     convergence: Convergence,
     scope: OperationScope
-  ): Promise<CancelRfqOutput> => {
-    return cancelRfqBuilder(convergence, operation.input, scope).sendAndConfirm(
+  ): Promise<RespondOutput> => {
+    return respondBuilder(convergence, operation.input, scope).sendAndConfirm(
       convergence,
       scope.confirmOptions
     );
@@ -83,7 +83,7 @@ export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type CancelRfqBuilderParams = Omit<CancelRfqInput, 'confirmOptions'> & {
+export type RespondBuilderParams = Omit<RespondInput, 'confirmOptions'> & {
   /** A key to distinguish the instruction that burns the NFT. */
   instructionKey?: string;
 };
@@ -101,28 +101,61 @@ export type CancelRfqBuilderParams = Omit<CancelRfqInput, 'confirmOptions'> & {
  * @group Transaction Builders
  * @category Constructors
  */
-export const cancelRfqBuilder = (
+export const respondBuilder = (
   convergence: Convergence,
-  params: CancelRfqBuilderParams,
+  params: RespondBuilderParams,
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { address, owner = convergence.identity() } = params;
+  const { owner = convergence.identity() } = params;
 
   const rfqProgram = convergence.programs().getToken(programs);
+
+  const maker = Keypair.generate().publicKey;
+  const protocol = Keypair.generate().publicKey;
+  const rfq = Keypair.generate().publicKey;
+  const response = Keypair.generate().publicKey;
+  const collateralInfo = Keypair.generate().publicKey;
+  const collateralToken = Keypair.generate().publicKey;
+  const riskEngine = Keypair.generate().publicKey;
+  const systemProgram = Keypair.generate().publicKey;
+  const anchorRemainingAccounts: AccountMeta[] = [];
+
+  //const ask = {
+  //  Standart: {
+  //    priceQuote: 1,
+  //    legsMultiplierBps: 1,
+  //  },
+  //};
+  //const bid = {
+  //  Standart: {
+  //    priceQuote: 1,
+  //    legsMultiplierBps: 1,
+  //  },
+  //};
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
-      instruction: createCancelRfqInstruction(
+      instruction: createRespondToRfqInstruction(
         {
-          taker: owner.publicKey,
-          protocol: address,
-          rfq: address,
+          maker,
+          protocol,
+          rfq,
+          response,
+          collateralInfo,
+          collateralToken,
+          riskEngine,
+          systemProgram,
+          anchorRemainingAccounts,
+        },
+        {
+          bid: null,
+          ask: null,
         },
         rfqProgram.address
       ),
       signers: [owner],
-      key: params.instructionKey ?? 'cancelRfq',
+      key: params.instructionKey ?? 'respondRfq',
     });
 };

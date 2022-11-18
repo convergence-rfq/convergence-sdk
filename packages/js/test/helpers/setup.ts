@@ -5,6 +5,7 @@ import {
   Convergence,
   keypairIdentity,
   CreateRfqInput,
+  CancelRfqInput,
   KeypairSigner,
 } from '@/index';
 
@@ -44,4 +45,19 @@ export const createRfq = async (
     ...input,
   });
   return rfq;
+};
+
+export const cancelRfq = async (
+  cvg: Convergence,
+  input: Partial<CancelRfqInput> = {}
+) => {
+  const { address } = input;
+
+  if (!address) {
+    return;
+  }
+
+  await cvg.rfqs().cancelRfq({
+    address,
+  });
 };
