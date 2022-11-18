@@ -1,20 +1,18 @@
 import {
-  createCreateMasterEditionV3Instruction,
-  Uses,
-} from '@metaplex-foundation/mpl-token-metadata';
-import { Keypair, PublicKey } from '@solana/web3.js';
+  createCreateRfqInstruction,
+  OrderType,
+  FixedSize,
+  Leg,
+} from '@convergence-rfq/rfq';
+import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
-import { Option, TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
-  BigNumber,
-  CreatorInput,
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
   OperationHandler,
   OperationScope,
-  Signer,
-  toPublicKey,
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
@@ -27,10 +25,7 @@ const Key = 'CreateRfqOperation' as const;
  * ```ts
  * const { rfq } = await convergence
  *   .rfqs()
- *   .create({
- *     name: 'My Rfq',
- *     uri: 'https://example.com/my-rfq',
- *   };
+ *   .create();
  * ```
  *
  * @group Operations
@@ -54,160 +49,25 @@ export type CreateRfqOperation = Operation<
  */
 export type CreateRfqInput = {
   /**
-   * The authority that will be able to make changes
-   * to the created Rfq.
-   *
-   * This is required as a Signer because creating the master
-   * edition account requires the update authority to sign
-   * the transaction.
-   *
-   * @defaultValue `convergence.identity()`
-   */
-  updateAuthority?: Signer;
-
-  /**
-   * The authority that is currently allowed to mint new tokens
-   * for the provided mint account.
-   *
-   * Note that this is only relevant if the `useExistingMint` parameter
-   * if provided.
-   *
-   * @defaultValue `convergence.identity()`
-   */
-  mintAuthority?: Signer;
-
-  /**
-   * The address of the new mint account as a Signer.
-   * This is useful if you already have a generated Keypair
-   * for the mint account of the Rfq to create.
-   *
-   * @defaultValue `Keypair.generate()`
-   */
-  useNewMint?: Signer;
-
-  /**
-   * The address of the existing mint account that should be converted
-   * into an Rfq. The account at this address should have the right
-   * requirements to become an Rfq, e.g. its supply should contains
-   * exactly 1 token.
-   *
-   * @defaultValue Defaults to creating a new mint account with the
-   * right requirements.
-   */
-  useExistingMint?: PublicKey;
-
-  /**
    * The owner of the Rfq to create.
    *
    * @defaultValue `convergence.identity().publicKey`
    */
-  tokenOwner?: PublicKey;
+  owner?: PublicKey;
+
+  legs?: object[];
+  expectedLegSize?: number;
 
   /**
-   * The token account linking the mint account and the token owner
-   * together. By default, the associated token account will be used.
+   * The type of order.
    *
-   * If the provided token account does not exist, it must be passed as
-   * a Signer as we will need to create it before creating the Rfq.
-   *
-   * @defaultValue Defaults to creating a new associated token account
-   * using the `mintAddress` and `tokenOwner` parameters.
+   * @defaultValue Defaults to creating a two-way order
    */
-  tokenAddress?: PublicKey | Signer;
+  orderType?: OrderType;
 
-  /** The on-chain name of the asset, e.g. "My Rfq #123". */
-  name: string;
-
-  /**
-   * The on-chain symbol of the asset, stored in the Metadata account.
-   * E.g. "MYRfq".
-   *
-   * @defaultValue `""`
-   */
-  symbol?: string;
-
-  /**
-   * {@inheritDoc CreatorInput}
-   * @defaultValue
-   * Defaults to using the provided `updateAuthority` as the only verified creator.
-   * ```ts
-   * [{
-   *   address: updateAuthority.publicKey,
-   *   authority: updateAuthority,
-   *   share: 100,
-   * }]
-   * ```
-   */
-  creators?: CreatorInput[];
-
-  /**
-   * Whether or not the Rfq's metadata is mutable.
-   * When set to `false` no one can update the Metadata account,
-   * not even the update authority.
-   *
-   * @defaultValue `true`
-   */
-  isMutable?: boolean;
-
-  /**
-   * The maximum supply of printed editions.
-   * When this is `null`, an unlimited amount of editions
-   * can be printed from the original edition.
-   *
-   * @defaultValue `toBigNumber(0)`
-   */
-  maxSupply?: Option<BigNumber>;
-
-  /**
-   * When this field is not `null`, it indicates that the Rfq
-   * can be "used" by its owner or any approved "use authorities".
-   *
-   * @defaultValue `null`
-   */
-  uses?: Option<Uses>;
-
-  /**
-   * Whether the created Rfq is a Collection Rfq.
-   * When set to `true`, the Rfq will be created as a
-   * Sized Collection Rfq with an initial size of 0.
-   *
-   * @defaultValue `false`
-   */
-  isCollection?: boolean;
-
-  /**
-   * The Collection Rfq that this new Rfq belongs to.
-   * When `null`, the created Rfq will not be part of a collection.
-   *
-   * @defaultValue `null`
-   */
-  collection?: Option<PublicKey>;
-
-  /**
-   * The collection authority that should sign the created Rfq
-   * to prove that it is part of the provided collection.
-   * When `null`, the provided `collection` will not be verified.
-   *
-   * @defaultValue `null`
-   */
-  collectionAuthority?: Option<Signer>;
-
-  /**
-   * Whether or not the provided `collectionAuthority` is a delegated
-   * collection authority, i.e. it was approved by the update authority
-   * using `convergence.rfqs().approveCollectionAuthority()`.
-   *
-   * @defaultValue `false`
-   */
-  collectionAuthorityIsDelegated?: boolean;
-
-  /**
-   * Whether or not the provided `collection` is a sized collection
-   * and not a legacy collection.
-   *
-   * @defaultValue `true`
-   */
-  collectionIsSized?: boolean;
+  fixedSize?: FixedSize;
+  activeWindow?: number;
+  settlingWindow?: number;
 };
 
 /**
@@ -220,18 +80,6 @@ export type CreateRfqOutput = {
 
   /** The newly created Rfq. */
   rfq: Rfq;
-
-  /** The address of the mint account. */
-  mintAddress: PublicKey;
-
-  /** The address of the metadata account. */
-  metadataAddress: PublicKey;
-
-  /** The address of the master edition account. */
-  masterEditionAddress: PublicKey;
-
-  /** The address of the token account. */
-  tokenAddress: PublicKey;
 };
 
 /**
@@ -244,31 +92,13 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
-    const {
-      useNewMint = Keypair.generate(),
-      useExistingMint,
-      tokenOwner = convergence.identity().publicKey,
-      tokenAddress: tokenSigner,
-    } = operation.input;
-
-    const mintAddress = useExistingMint ?? useNewMint.publicKey;
-    const tokenAddress = tokenSigner
-      ? toPublicKey(tokenSigner)
-      : convergence.tokens().pdas().associatedTokenAccount({
-          mint: mintAddress,
-          owner: tokenOwner,
-          programs: scope.programs,
-        });
-    const tokenAccount = await convergence.rpc().getAccount(tokenAddress);
-    const tokenExists = tokenAccount.exists;
+    const { owner = convergence.identity().publicKey } = operation.input;
 
     const builder = await createRfqBuilder(
       convergence,
       {
         ...operation.input,
-        useNewMint,
-        tokenOwner,
-        tokenExists,
+        owner,
       },
       scope
     );
@@ -281,10 +111,9 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
-    const rfq = await convergence.rfqs().findByToken(
+    const rfq = await convergence.rfqs().findByAddress(
       {
-        mintAddress: output.mintAddress,
-        tokenAddress: output.tokenAddress,
+        addresses: [],
       },
       scope
     );
@@ -308,37 +137,13 @@ export type CreateRfqBuilderParams = Omit<CreateRfqInput, 'confirmOptions'> & {
    * @defaultValue `true`
    */
   tokenExists?: boolean;
-
-  /** A key to distinguish the instruction that creates the mint account. */
-  createMintAccountInstructionKey?: string;
-
-  /** A key to distinguish the instruction that initializes the mint account. */
-  initializeMintInstructionKey?: string;
-
-  /** A key to distinguish the instruction that creates the associated token account. */
-  createAssociatedTokenAccountInstructionKey?: string;
-
-  /** A key to distinguish the instruction that creates the token account. */
-  createTokenAccountInstructionKey?: string;
-
-  /** A key to distinguish the instruction that initializes the token account. */
-  initializeTokenInstructionKey?: string;
-
-  /** A key to distinguish the instruction that mints tokens. */
-  mintTokensInstructionKey?: string;
-
-  /** A key to distinguish the instruction that creates the metadata account. */
-  createMetadataInstructionKey?: string;
-
-  /** A key to distinguish the instruction that creates the master edition account. */
-  createMasterEditionInstructionKey?: string;
 };
 
 /**
  * @group Transaction Builders
  * @category Contexts
  */
-export type CreateRfqBuilderContext = Omit<CreateRfqOutput, 'response' | 'rfq'>;
+export type CreateRfqBuilderContext = Omit<CreateRfqOutput, 'rfq'>;
 
 /**
  * Creates a new Rfq.
@@ -347,10 +152,7 @@ export type CreateRfqBuilderContext = Omit<CreateRfqOutput, 'response' | 'rfq'>;
  * const transactionBuilder = await convergence
  *   .rfqs()
  *   .builders()
- *   .create({
- *     name: 'My Rfq',
- *     uri: 'https://example.com/my-rfq',
- *   });
+ *   .create();
  * ```
  *
  * @group Transaction Builders
@@ -362,57 +164,49 @@ export const createRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<CreateRfqBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const {
-    updateAuthority = convergence.identity(),
-    mintAuthority = convergence.identity(),
-  } = params;
+  const { owner = convergence.identity() } = params;
 
-  const tokenMetadataProgram = convergence
-    .programs()
-    .getTokenMetadata(programs);
+  const systemProgram = convergence.programs().getSystem(programs);
+  const rfqProgram = convergence.programs().getRfq(programs);
 
-  const mintAddress = Keypair.generate().publicKey;
-  const metadataAddress = Keypair.generate().publicKey;
-  const tokenAddress = Keypair.generate().publicKey;
-
-  const masterEditionAddress = convergence.rfqs().pdas().masterEdition({
-    mint: mintAddress,
-    programs,
-  });
+  const rfq = new Keypair();
+  const expectedLegSize = 0;
+  const legs: Leg[] = [];
+  const orderType = OrderType.TwoWay;
+  // @ts-ignore
+  const fixedSize = FixedSize.None;
+  const activeWindow = 1;
+  const settlingWindow = 1;
+  const anchorRemainingAccounts: AccountMeta[] = [];
+  const quoteMint = new Keypair();
+  const protocol = new Keypair();
 
   return (
     TransactionBuilder.make<CreateRfqBuilderContext>()
       .setFeePayer(payer)
-      .setContext({
-        mintAddress,
-        metadataAddress,
-        masterEditionAddress,
-        tokenAddress: tokenAddress as PublicKey,
-      })
-
-      // Create the mint, the token and the metadata.
-      //.add(sftBuilder)
-
-      // Create master edition account (prevents further minting).
+      //.setContext()
       .add({
-        instruction: createCreateMasterEditionV3Instruction(
+        instruction: createCreateRfqInstruction(
           {
-            edition: masterEditionAddress,
-            mint: mintAddress,
-            updateAuthority: updateAuthority.publicKey,
-            mintAuthority: mintAuthority.publicKey,
-            payer: payer.publicKey,
-            metadata: metadataAddress,
+            taker: owner as PublicKey,
+            protocol: protocol.publicKey,
+            rfq: rfq.publicKey,
+            quoteMint: quoteMint.publicKey,
+            systemProgram: systemProgram.address,
+            anchorRemainingAccounts,
           },
           {
-            createMasterEditionArgs: {
-              maxSupply: params.maxSupply === undefined ? 0 : params.maxSupply,
-            },
+            expectedLegSize,
+            legs,
+            orderType,
+            fixedSize,
+            activeWindow,
+            settlingWindow,
           },
-          tokenMetadataProgram.address
+          rfqProgram.address
         ),
-        signers: [payer, mintAuthority, updateAuthority],
-        key: params.createMasterEditionInstructionKey ?? 'createMasterEdition',
+        signers: [payer, rfq],
+        key: 'createRfq',
       })
   );
 };

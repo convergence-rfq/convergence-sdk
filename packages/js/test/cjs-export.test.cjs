@@ -1,7 +1,7 @@
 const { test } = require('tape');
 const { Connection } = require('@solana/web3.js');
 const { LOCALHOST } = require('@metaplex-foundation/amman-client');
-const exported = require('../dist/cjs/packages/js/src/index.cjs');
+const exported = require('../dist/cjs/index.cjs');
 
 test('[cjs] it successfully exports commonjs named exports', (t) => {
   const exportedKeys = Object.keys(exported);

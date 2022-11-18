@@ -10,6 +10,7 @@ import {
   createRfqOperation,
   CancelRfqInput,
   cancelRfqOperation,
+  FindRfqsByAddressInput,
   FindRfqsByTokenInput,
   findRfqsByTokenOperation,
   FindRfqsByInstrumentInput,
@@ -18,8 +19,7 @@ import {
   findRfqsByOwnerOperation,
   LoadLegsInput,
   loadLegsOperation,
-  UseRfqInput,
-  useRfqOperation,
+  findRfqsByAddressOperation,
 } from './operations';
 import { PartialKeys } from '@/utils';
 import { OperationOptions, token } from '@/types';
@@ -38,26 +38,12 @@ import type { Convergence } from '@/Convergence';
  * ```
  *
  * @example
- * You can upload some custom JSON metadata and use its URI to create
- * a new NFT like so. The owner and update authority of this NFT will,
- * by default, be the current identity of the convergence instance.
- *
  * ```ts
- * const { uri } = await convergence
- *   .rfqs()
- *   .uploadMetadata({
- *     name: "My off-chain name",
- *     description: "My off-chain description",
- *     image: "https://arweave.net/123",
- *   };
- *
  * const { rfq } = await convergence
  *   .rfqs()
  *   .create({
- *     uri,
- *     name: 'My on-chain RFQ',
- *     sellerFeeBasisPoints: 250, // 2.5%
- *   };
+ *     side: 'buy',
+ *   });
  * ```
  *
  * @group Modules
@@ -98,6 +84,13 @@ export class RfqClient {
       .execute(findRfqsByInstrumentOperation(input), options);
   }
 
+  /** {@inheritDoc findRfqByAddressOperation} */
+  findByAddress(input: FindRfqsByAddressInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(findRfqsByAddressOperation(input), options);
+  }
+
   /** {@inheritDoc findRfqsByTokenOperation} */
   findByToken(input: FindRfqsByTokenInput, options?: OperationOptions) {
     return this.convergence
@@ -125,7 +118,6 @@ export class RfqClient {
    *
    * ```ts
    * rfq = await convergence.rfqs().refresh(rfq);
-   * rfqWithToken = await convergence.rfqs().refresh(rfqWithToken);
    * ```
    */
   refresh<T extends Rfq | PublicKey>(
@@ -159,13 +151,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(cancelRfqOperation(input), options);
-  }
-
-  /** {@inheritDoc useRfqOperation} */
-  use(input: UseRfqInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(useRfqOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */

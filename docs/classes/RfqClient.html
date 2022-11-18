@@ -23,10 +23,7 @@ manage Rfqs.</p>
 <pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">rfqClient</span><span class="hl-0"> = </span><span class="hl-2">convergence</span><span class="hl-0">.</span><span class="hl-6">rfqs</span><span class="hl-0">();</span>
 </code></pre>
 
-<h3>Example</h3><p>You can upload some custom JSON metadata and use its URI to create
-a new NFT like so. The owner and update authority of this NFT will,
-by default, be the current identity of the convergence instance.</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> { </span><span class="hl-5">uri</span><span class="hl-0"> } = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><br/><span class="hl-0">  .</span><span class="hl-6">rfqs</span><span class="hl-0">()</span><br/><span class="hl-0">  .</span><span class="hl-6">uploadMetadata</span><span class="hl-0">({</span><br/><span class="hl-0">    </span><span class="hl-2">name:</span><span class="hl-0"> </span><span class="hl-3">&quot;My off-chain name&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">description:</span><span class="hl-0"> </span><span class="hl-3">&quot;My off-chain description&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">image:</span><span class="hl-0"> </span><span class="hl-3">&quot;https://arweave.net/123&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  };</span><br/><br/><span class="hl-2">const</span><span class="hl-0"> { </span><span class="hl-2">rfq</span><span class="hl-0"> } = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><br/><span class="hl-0">  .</span><span class="hl-6">rfqs</span><span class="hl-0">()</span><br/><span class="hl-0">  .</span><span class="hl-6">create</span><span class="hl-0">({</span><br/><span class="hl-0">    </span><span class="hl-2">uri</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">name:</span><span class="hl-0"> </span><span class="hl-3">&#39;My on-chain RFQ&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">sellerFeeBasisPoints:</span><span class="hl-0"> </span><span class="hl-7">250</span><span class="hl-0">, </span><span class="hl-8">// 2.5%</span><br/><span class="hl-0">  };</span>
+<h3>Example</h3><pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> { </span><span class="hl-5">rfq</span><span class="hl-0"> } = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><br/><span class="hl-0">  .</span><span class="hl-6">rfqs</span><span class="hl-0">()</span><br/><span class="hl-0">  .</span><span class="hl-6">create</span><span class="hl-0">({</span><br/><span class="hl-0">    </span><span class="hl-2">side:</span><span class="hl-0"> </span><span class="hl-3">&#39;buy&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">  });</span>
 </code></pre>
 </div></section>
 <section class="tsd-panel tsd-hierarchy">
@@ -34,7 +31,7 @@ by default, be the current identity of the convergence instance.</p>
 <ul class="tsd-hierarchy">
 <li><span class="target">RfqClient</span></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L65">packages/js/src/plugins/rfqModule/RfqClient.ts:65</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L51">packages/js/src/plugins/rfqModule/RfqClient.ts:51</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -53,13 +50,13 @@ by default, be the current identity of the convergence instance.</p>
 <div class="tsd-index-list"><a href="RfqClient.html#builders" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="#FF4DB8" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12" id="icon-2048-path"></rect><path d="M9.162 16V7.24H10.578L11.514 10.072C11.602 10.328 11.674 10.584 11.73 10.84C11.794 11.088 11.842 11.28 11.874 11.416C11.906 11.28 11.954 11.088 12.018 10.84C12.082 10.584 12.154 10.324 12.234 10.06L13.122 7.24H14.538V16H13.482V12.82C13.482 12.468 13.49 12.068 13.506 11.62C13.53 11.172 13.558 10.716 13.59 10.252C13.622 9.78 13.654 9.332 13.686 8.908C13.726 8.476 13.762 8.1 13.794 7.78L12.366 12.16H11.334L9.894 7.78C9.934 8.092 9.97 8.456 10.002 8.872C10.042 9.28 10.078 9.716 10.11 10.18C10.142 10.636 10.166 11.092 10.182 11.548C10.206 12.004 10.218 12.428 10.218 12.82V16H9.162Z" fill="var(--color-text)" id="icon-2048-text"></path></svg><span>builders</span></a>
 <a href="RfqClient.html#pdas" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>pdas</span></a>
 <a href="RfqClient.html#findByInstrument" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>find<wbr/>By<wbr/>Instrument</span></a>
+<a href="RfqClient.html#findByAddress" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>find<wbr/>By<wbr/>Address</span></a>
 <a href="RfqClient.html#findByToken" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>find<wbr/>By<wbr/>Token</span></a>
 <a href="RfqClient.html#findAllByOwner" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>find<wbr/>All<wbr/>By<wbr/>Owner</span></a>
 <a href="RfqClient.html#load" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>load</span></a>
 <a href="RfqClient.html#refresh" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>refresh</span></a>
 <a href="RfqClient.html#create" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>create</span></a>
 <a href="RfqClient.html#delete" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>delete</span></a>
-<a href="RfqClient.html#use" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>use</span></a>
 <a href="RfqClient.html#send" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>send</span></a>
 </div></section></div></details></section></section>
 <section class="tsd-panel-group tsd-member-group">
@@ -76,14 +73,14 @@ by default, be the current identity of the convergence instance.</p>
 <h5>convergence: <a href="Convergence.html" class="tsd-signature-type" data-tsd-kind="Class">Convergence</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="RfqClient.html" class="tsd-signature-type" data-tsd-kind="Class">RfqClient</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L66">packages/js/src/plugins/rfqModule/RfqClient.ts:66</a></li></ul></aside></li></ul></section></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L52">packages/js/src/plugins/rfqModule/RfqClient.ts:52</a></li></ul></aside></li></ul></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Properties</h2>
 <section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-protected"><a id="convergence" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagProtected">Protected</code> <code class="tsd-tag ts-flagReadonly">Readonly</code> <span>convergence</span><a href="#convergence" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <div class="tsd-signature">convergence<span class="tsd-signature-symbol">:</span> <a href="Convergence.html" class="tsd-signature-type" data-tsd-kind="Class">Convergence</a></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L66">packages/js/src/plugins/rfqModule/RfqClient.ts:66</a></li></ul></aside></section></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L52">packages/js/src/plugins/rfqModule/RfqClient.ts:52</a></li></ul></aside></section></section>
 <section class="tsd-panel-group tsd-member-group">
 <h2>Methods</h2>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="builders" class="tsd-anchor"></a>
@@ -98,7 +95,7 @@ underlying Transaction Builders of this module.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <a href="RfqBuildersClient.html" class="tsd-signature-type" data-tsd-kind="Class">RfqBuildersClient</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L76">packages/js/src/plugins/rfqModule/RfqClient.ts:76</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L62">packages/js/src/plugins/rfqModule/RfqClient.ts:62</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="pdas" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>pdas</span><a href="#pdas" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -110,7 +107,7 @@ underlying Transaction Builders of this module.</p>
 </div>
 <h4 class="tsd-returns-title">Returns <a href="RfqPdasClient.html" class="tsd-signature-type" data-tsd-kind="Class">RfqPdasClient</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L87">packages/js/src/plugins/rfqModule/RfqClient.ts:87</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L73">packages/js/src/plugins/rfqModule/RfqClient.ts:73</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="findByInstrument" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>find<wbr/>By<wbr/>Instrument</span><a href="#findByInstrument" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -129,7 +126,24 @@ underlying Transaction Builders of this module.</p>
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/Rfq.html" class="tsd-signature-type" data-tsd-kind="Type alias">Rfq</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L92">packages/js/src/plugins/rfqModule/RfqClient.ts:92</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L78">packages/js/src/plugins/rfqModule/RfqClient.ts:78</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="findByAddress" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>find<wbr/>By<wbr/>Address</span><a href="#findByAddress" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+<li class="tsd-signature tsd-anchor-link" id="findByAddress.findByAddress-1">find<wbr/>By<wbr/>Address<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><a href="../types/FindRfqsByAddressInput.html" class="tsd-signature-type" data-tsd-kind="Type alias">FindRfqsByAddressInput</a>, options<span class="tsd-signature-symbol">?: </span><a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/Rfq.html" class="tsd-signature-type" data-tsd-kind="Type alias">Rfq</a><span class="tsd-signature-symbol">&gt;</span><a href="#findByAddress.findByAddress-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>{@inheritDoc findRfqByAddressOperation}</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5>input: <a href="../types/FindRfqsByAddressInput.html" class="tsd-signature-type" data-tsd-kind="Type alias">FindRfqsByAddressInput</a></h5></li>
+<li>
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/Rfq.html" class="tsd-signature-type" data-tsd-kind="Type alias">Rfq</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L88">packages/js/src/plugins/rfqModule/RfqClient.ts:88</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="findByToken" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>find<wbr/>By<wbr/>Token</span><a href="#findByToken" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -148,7 +162,7 @@ underlying Transaction Builders of this module.</p>
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/Rfq.html" class="tsd-signature-type" data-tsd-kind="Type alias">Rfq</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L102">packages/js/src/plugins/rfqModule/RfqClient.ts:102</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L95">packages/js/src/plugins/rfqModule/RfqClient.ts:95</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="findAllByOwner" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>find<wbr/>All<wbr/>By<wbr/>Owner</span><a href="#findAllByOwner" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -167,7 +181,7 @@ underlying Transaction Builders of this module.</p>
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/FindRfqsByOwnerOutput.html" class="tsd-signature-type" data-tsd-kind="Type alias">FindRfqsByOwnerOutput</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L109">packages/js/src/plugins/rfqModule/RfqClient.ts:109</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L102">packages/js/src/plugins/rfqModule/RfqClient.ts:102</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="load" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>load</span><a href="#load" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -186,7 +200,7 @@ underlying Transaction Builders of this module.</p>
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/Rfq.html" class="tsd-signature-type" data-tsd-kind="Type alias">Rfq</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L116">packages/js/src/plugins/rfqModule/RfqClient.ts:116</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L109">packages/js/src/plugins/rfqModule/RfqClient.ts:109</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="refresh" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>refresh</span><a href="#refresh" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -194,7 +208,7 @@ underlying Transaction Builders of this module.</p>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Helper method that refetches a given model
 and returns an instance of the same type.</p>
-<pre><code class="language-ts"><span class="hl-2">rfq</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><span class="hl-0">.</span><span class="hl-6">rfqs</span><span class="hl-0">().</span><span class="hl-6">refresh</span><span class="hl-0">(</span><span class="hl-2">rfq</span><span class="hl-0">);</span><br/><span class="hl-2">rfqWithToken</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><span class="hl-0">.</span><span class="hl-6">rfqs</span><span class="hl-0">().</span><span class="hl-6">refresh</span><span class="hl-0">(</span><span class="hl-2">rfqWithToken</span><span class="hl-0">);</span>
+<pre><code class="language-ts"><span class="hl-2">rfq</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><span class="hl-0">.</span><span class="hl-6">rfqs</span><span class="hl-0">().</span><span class="hl-6">refresh</span><span class="hl-0">(</span><span class="hl-2">rfq</span><span class="hl-0">);</span>
 </code></pre>
 </div>
 <section class="tsd-panel tsd-type-parameters">
@@ -213,14 +227,14 @@ and returns an instance of the same type.</p>
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type" data-tsd-kind="Type parameter">T</span><span class="tsd-signature-symbol"> extends </span><a href="PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Metadata</span><span class="tsd-signature-symbol"> ? </span><a href="../types/Rfq.html" class="tsd-signature-type" data-tsd-kind="Type alias">Rfq</a><span class="tsd-signature-symbol"> : </span><span class="tsd-signature-type" data-tsd-kind="Type parameter">T</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L131">packages/js/src/plugins/rfqModule/RfqClient.ts:131</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L123">packages/js/src/plugins/rfqModule/RfqClient.ts:123</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="create" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>create</span><a href="#create" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 <li class="tsd-signature tsd-anchor-link" id="create.create-1">create<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><a href="../types/CreateRfqInput.html" class="tsd-signature-type" data-tsd-kind="Type alias">CreateRfqInput</a>, options<span class="tsd-signature-symbol">?: </span><a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/CreateRfqOutput.html" class="tsd-signature-type" data-tsd-kind="Type alias">CreateRfqOutput</a><span class="tsd-signature-symbol">&gt;</span><a href="#create.create-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Creates a new Rfq.</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> { </span><span class="hl-5">rfq</span><span class="hl-0"> } = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><br/><span class="hl-0">  .</span><span class="hl-6">rfqs</span><span class="hl-0">()</span><br/><span class="hl-0">  .</span><span class="hl-6">create</span><span class="hl-0">({</span><br/><span class="hl-0">    </span><span class="hl-2">name:</span><span class="hl-0"> </span><span class="hl-3">&#39;My Rfq&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">uri:</span><span class="hl-0"> </span><span class="hl-3">&#39;https://example.com/my-rfq&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">  };</span>
+<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> { </span><span class="hl-5">rfq</span><span class="hl-0"> } = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><br/><span class="hl-0">  .</span><span class="hl-6">rfqs</span><span class="hl-0">()</span><br/><span class="hl-0">  .</span><span class="hl-6">create</span><span class="hl-0">();</span>
 </code></pre>
 </div>
 <div class="tsd-parameters">
@@ -232,7 +246,7 @@ and returns an instance of the same type.</p>
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/CreateRfqOutput.html" class="tsd-signature-type" data-tsd-kind="Type alias">CreateRfqOutput</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L151">packages/js/src/plugins/rfqModule/RfqClient.ts:151</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L143">packages/js/src/plugins/rfqModule/RfqClient.ts:143</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="delete" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>delete</span><a href="#delete" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -251,26 +265,7 @@ and returns an instance of the same type.</p>
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/CancelRfqOutput.html" class="tsd-signature-type" data-tsd-kind="Type alias">CancelRfqOutput</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L158">packages/js/src/plugins/rfqModule/RfqClient.ts:158</a></li></ul></aside></li></ul></section>
-<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="use" class="tsd-anchor"></a>
-<h3 class="tsd-anchor-link"><span>use</span><a href="#use" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
-<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-<li class="tsd-signature tsd-anchor-link" id="use.use-1">use<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><a href="../types/UseRfqInput.html" class="tsd-signature-type" data-tsd-kind="Type alias">UseRfqInput</a>, options<span class="tsd-signature-symbol">?: </span><a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/UseRfqOutput.html" class="tsd-signature-type" data-tsd-kind="Type alias">UseRfqOutput</a><span class="tsd-signature-symbol">&gt;</span><a href="#use.use-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
-<li class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Utilizes a usable Rfq.</p>
-<pre><code class="language-ts"><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><span class="hl-0">.</span><span class="hl-6">rfqs</span><span class="hl-0">().</span><span class="hl-6">use</span><span class="hl-0">({ </span><span class="hl-2">address</span><span class="hl-0"> });</span><br/><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">convergence</span><span class="hl-0">.</span><span class="hl-6">rfqs</span><span class="hl-0">().</span><span class="hl-6">use</span><span class="hl-0">({ </span><span class="hl-2">address</span><span class="hl-0">, </span><span class="hl-2">numberOfUses:</span><span class="hl-0"> </span><span class="hl-7">3</span><span class="hl-0"> });</span>
-</code></pre>
-</div>
-<div class="tsd-parameters">
-<h4 class="tsd-parameters-title">Parameters</h4>
-<ul class="tsd-parameter-list">
-<li>
-<h5>input: <a href="../types/UseRfqInput.html" class="tsd-signature-type" data-tsd-kind="Type alias">UseRfqInput</a></h5></li>
-<li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/UseRfqOutput.html" class="tsd-signature-type" data-tsd-kind="Type alias">UseRfqOutput</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
-<ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L165">packages/js/src/plugins/rfqModule/RfqClient.ts:165</a></li></ul></aside></li></ul></section>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L150">packages/js/src/plugins/rfqModule/RfqClient.ts:150</a></li></ul></aside></li></ul></section>
 <section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="send" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>send</span><a href="#send" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
 <ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -289,7 +284,7 @@ and returns an instance of the same type.</p>
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> options: <a href="../types/OperationOptions.html" class="tsd-signature-type" data-tsd-kind="Type alias">OperationOptions</a></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../types/SendTokensOutput.html" class="tsd-signature-type" data-tsd-kind="Type alias">SendTokensOutput</a><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/99d5171/packages/js/src/plugins/rfqModule/RfqClient.ts#L172">packages/js/src/plugins/rfqModule/RfqClient.ts:172</a></li></ul></aside></li></ul></section></section></div>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/ca1b65b/packages/js/src/plugins/rfqModule/RfqClient.ts#L157">packages/js/src/plugins/rfqModule/RfqClient.ts:157</a></li></ul></aside></li></ul></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -321,13 +316,13 @@ and returns an instance of the same type.</p>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#builders" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>builders</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#pdas" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>pdas</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#findByInstrument" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>find<wbr/>By<wbr/>Instrument</a></li>
+<li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#findByAddress" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>find<wbr/>By<wbr/>Address</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#findByToken" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>find<wbr/>By<wbr/>Token</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#findAllByOwner" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>find<wbr/>All<wbr/>By<wbr/>Owner</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#load" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>load</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#refresh" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>refresh</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#create" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>create</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#delete" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>delete</a></li>
-<li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#use" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>use</a></li>
 <li class="tsd-kind-method tsd-parent-kind-class"><a href="RfqClient.html#send" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg>send</a></li></ul></li></ul></nav></div></div>
 <div class="container tsd-generator">
 <p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>

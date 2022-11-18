@@ -41,7 +41,6 @@ export const createRfq = async (
   input: Partial<CreateRfqInput> = {}
 ) => {
   const { rfq } = await cvg.rfqs().create({
-    name: 'My RFQ',
     ...input,
   });
   return rfq;

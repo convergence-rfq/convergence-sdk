@@ -1,7 +1,7 @@
 import test from 'tape';
 import { Connection } from '@solana/web3.js';
 import { LOCALHOST } from '@metaplex-foundation/amman-client';
-import * as exported from '../dist/esm/packages/js/src/index.mjs';
+import * as exported from '../dist/esm/index.mjs';
 
 test('[esm] it successfully exports esm named exports', (t) => {
   const exportedKeys = Object.keys(exported);

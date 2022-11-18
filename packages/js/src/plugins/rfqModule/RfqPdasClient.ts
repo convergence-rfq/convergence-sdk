@@ -122,7 +122,7 @@ export class RfqPdasClient {
   }
 
   private programId(programs?: Program[]) {
-    return this.convergence.programs().getTokenMetadata(programs).address;
+    return this.convergence.programs().getRfq(programs).address;
   }
 }
 

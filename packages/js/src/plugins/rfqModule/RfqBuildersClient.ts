@@ -1,9 +1,4 @@
-import {
-  createRfqBuilder,
-  CreateRfqBuilderParams,
-  useRfqBuilder,
-  UseRfqBuilderParams,
-} from './operations';
+import { createRfqBuilder, CreateRfqBuilderParams } from './operations';
 import type { Convergence } from '@/Convergence';
 import { TransactionBuilderOptions } from '@/utils';
 
@@ -20,10 +15,5 @@ export class RfqBuildersClient {
   /** {@inheritDoc createNftBuilder} */
   create(input: CreateRfqBuilderParams, options?: TransactionBuilderOptions) {
     return createRfqBuilder(this.convergence, input, options);
-  }
-
-  /** {@inheritDoc useNftBuilder} */
-  use(input: UseRfqBuilderParams, options?: TransactionBuilderOptions) {
-    return useRfqBuilder(this.convergence, input, options);
   }
 }
