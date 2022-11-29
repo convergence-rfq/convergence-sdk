@@ -2,15 +2,12 @@ import { PublicKey } from '@solana/web3.js';
 import { RfqAccount } from '../accounts';
 import { assert } from '@/utils';
 
-/** @group Models */
-export type NftEdition = Leg;
-
 /** @group Model Helpers */
-export const isLeg = (value: any): value is NftEdition =>
+export const isLeg = (value: any): value is Leg =>
   typeof value === 'object' && value.model === 'leg';
 
 /** @group Model Helpers */
-export function assertLeg(value: any): asserts value is NftEdition {
+export function assertLeg(value: any): asserts value is Leg {
   assert(isLeg(value), `Expected Leg model`);
 }
 

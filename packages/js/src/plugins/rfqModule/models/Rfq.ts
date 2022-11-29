@@ -8,7 +8,7 @@ import { assert } from '@/utils';
  *
  * @group Models
  */
-export type Rfq = Omit<Leg, 'model' | 'address' | 'mintAddress'> & {
+export type Rfq = {
   /** A model identifier to distinguish models in the SDK. */
   readonly model: 'rfq';
 
@@ -24,6 +24,11 @@ export const isRfq = (value: any): value is Rfq =>
 export function assertRfq(value: any): asserts value is Rfq {
   assert(isRfq(value), `Expected Rfq model`);
 }
+
+/*
+  TODO: pull legs out of params and put into RFQ
+  should the toRfq function even exist? it needs a lot more params than this
+*/
 
 /** @group Model Helpers */
 export const toRfq = (legs: Leg[]): Rfq => ({
