@@ -30,8 +30,8 @@ export function assertRfq(value: any): asserts value is Rfq {
   should the toRfq function even exist? it needs a lot more params than this
 */
 
-/** @group Model Helpers */
-export const toRfq = (legs: Leg[]): Rfq => ({
-  model: 'rfq',
-  address: Keypair.generate().publicKey,
-});
+// /** @group Model Helpers */
+// export const toRfq = (legs: Leg[]): Rfq => ({
+//   model: 'rfq',
+//   address: Keypair.generate().publicKey,
+// });
