@@ -86,7 +86,7 @@ export class RfqClient {
       .execute(findRfqsByInstrumentOperation(input), options);
   }
 
-  /** {@inheritDoc findRfqByAddressOperation} */
+  /** {@inheritDoc findRfqsByAddressOperation} */
   findByAddress(input: FindRfqsByAddressInput, options?: OperationOptions) {
     return this.convergence
       .operations()
@@ -133,7 +133,7 @@ export class RfqClient {
     model: T,
     input?: Omit<
       FindRfqsByTokenInput,
-      'mintAddress' | 'tokenAddres' | 'tokenOwner'
+      'mintAddress' | 'tokenAddress' | 'tokenOwner'
     >,
     options?: OperationOptions
   ): Promise<T extends Metadata | PublicKey ? Rfq : T> {
@@ -153,13 +153,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(createRfqOperation(input), options);
-  }
-
-  /** {@inheritDoc cancelRfqOperation} */
-  delete(input: CancelRfqInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(cancelRfqOperation(input), options);
   }
 
   /** {@inheritDoc respondOperation} */

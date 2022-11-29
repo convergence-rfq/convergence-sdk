@@ -83,7 +83,7 @@ export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type CancelRfqBuilderParams = Omit<CancelRfqInput, 'confirmOptions'> & {
+export type CancelRfqBuilderParams = CancelRfqInput & {
   /** A key to distinguish the instruction that burns the NFT. */
   instructionKey?: string;
 };

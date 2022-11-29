@@ -129,7 +129,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type CreateRfqBuilderParams = Omit<CreateRfqInput, 'confirmOptions'> & {
+export type CreateRfqBuilderParams = CreateRfqInput & {
   /**
    * Whether or not the provided token account already exists.
    * If `false`, we'll add another instruction to create it.
