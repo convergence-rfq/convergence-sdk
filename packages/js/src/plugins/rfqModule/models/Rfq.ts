@@ -28,6 +28,9 @@ export function assertRfq(value: any): asserts value is Rfq {
 /*
   TODO: pull legs out of params and put into RFQ
   should the toRfq function even exist? it needs a lot more params than this
+
+  TODO: instead of toRfq() which is called by findRfqsByToken, we should just implement that method directly
+  in findRfqsByToken
 */
 
 // /** @group Model Helpers */

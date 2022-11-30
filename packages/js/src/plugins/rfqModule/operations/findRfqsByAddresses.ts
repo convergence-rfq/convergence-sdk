@@ -8,7 +8,7 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 
-const Key = 'FindRfqsByAddressOperation' as const;
+const Key = 'FindRfqsByAddressesOperation' as const;
 
 /**
  * Finds Rfq by a given address.
@@ -22,24 +22,24 @@ const Key = 'FindRfqsByAddressOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const findRfqsByAddressOperation =
-  useOperation<FindRfqsByAddressOperation>(Key);
+export const findRfqsByAddressesOperation =
+  useOperation<FindRfqsByAddressesOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type FindRfqsByAddressOperation = Operation<
+export type FindRfqsByAddressesOperation = Operation<
   typeof Key,
-  FindRfqsByAddressInput,
-  FindRfqsByAddressOutput
+  FindRfqsByAddressesInput,
+  FindRfqsByAddressesOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type FindRfqsByAddressInput = {
+export type FindRfqsByAddressesInput = {
   /** The address of the Rfq. */
   addresses: PublicKey[];
 };
@@ -48,26 +48,30 @@ export type FindRfqsByAddressInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByAddressOutput = Rfq;
+export type FindRfqsByAddressesOutput = Rfq[];
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const findRfqByAddressOperationHandler: OperationHandler<FindRfqsByAddressOperation> =
+export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAddressesOperation> =
   {
     handle: async (
-      operation: FindRfqsByAddressOperation,
+      operation: FindRfqsByAddressesOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<FindRfqsByAddressOutput> => {
+    ): Promise<FindRfqsByAddressesOutput> => {
       const { addresses } = operation.input;
 
-      scope.throwIfCanceled();
+      for (const address in addresses) {
+        scope.throwIfCanceled();
 
-      const rfq = await convergence.rfqs().findByAddress({ addresses }, scope);
-      scope.throwIfCanceled();
+        const rfq = await convergence
+          .rfqs()
+          .findByAddress(address, scope);
+        scope.throwIfCanceled();
 
-      return rfq;
+        return rfq;
+      }
     },
   };

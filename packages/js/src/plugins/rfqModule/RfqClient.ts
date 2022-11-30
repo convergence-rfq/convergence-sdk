@@ -10,7 +10,8 @@ import {
   createRfqOperation,
   CancelRfqInput,
   cancelRfqOperation,
-  FindRfqsByAddressInput,
+  FindRfqByAddressInput,
+  FindRfqsByAddressesInput,
   FindRfqsByTokenInput,
   findRfqsByTokenOperation,
   FindRfqsByInstrumentInput,
@@ -20,7 +21,8 @@ import {
   RespondInput,
   LoadLegsInput,
   loadLegsOperation,
-  findRfqsByAddressOperation,
+  findRfqByAddressOperation,
+  findRfqsByAddressesOperation,
   respondOperation,
 } from './operations';
 import { PartialKeys } from '@/utils';
@@ -86,11 +88,18 @@ export class RfqClient {
       .execute(findRfqsByInstrumentOperation(input), options);
   }
 
-  /** {@inheritDoc findRfqsByAddressOperation} */
-  findByAddress(input: FindRfqsByAddressInput, options?: OperationOptions) {
+  /** {@inheritDoc findRfqByAddressOperation} */
+  findByAddress(input: FindRfqByAddressInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(findRfqsByAddressOperation(input), options);
+      .execute(findRfqByAddressOperation(input), options);
+  }
+
+  /** {@inheritDoc findRfqsByAddressesOperation} */
+  findByAddresses(input: FindRfqsByAddressesInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(findRfqsByAddressesOperation(input), options);
   }
 
   /** {@inheritDoc findRfqsByTokenOperation} */

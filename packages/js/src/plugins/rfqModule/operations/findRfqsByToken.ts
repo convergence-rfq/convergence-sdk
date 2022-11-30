@@ -95,6 +95,11 @@ export const findRfqByMintOperationHandler: OperationHandler<FindRfqByTokenOpera
       scope: OperationScope
     ): Promise<FindRfqsByTokenOutput> => {
       scope.throwIfCanceled();
+
+      /*
+      TODO: directly pull RFQ by token here
+      */
+
       return toRfq([]);
     },
   };
