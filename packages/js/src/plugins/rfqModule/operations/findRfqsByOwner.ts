@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Rfq } from '../models';
+import { Rfq, toRfq } from '../models';
 import {
   Operation,
   OperationHandler,
@@ -7,6 +7,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { toRfqAccount } from '../accounts';
 
 const Key = 'FindRfqsByOwnerOperation' as const;
 
@@ -62,12 +63,37 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
       const { owner } = operation.input;
+      const { programs } = scope;
 
       scope.throwIfCanceled();
 
-      const rfqs = await convergence.rfqs().findAllByOwner({ owner }, scope);
+      const rfqProgram = convergence.programs().getRfq(programs);
+
+      const RFQ_ACCOUNT_DISCRIMINATOR = Buffer.from([
+        106, 19, 109, 78, 169, 13, 234, 58,
+      ]);
+
+      //TODO: we pretend the taker pubkey is at byte 8 in the Rfq.
+      //this might actually be correct as the Rfq struct in programlibrary
+      //has `taker` as the first field, and fields are serialized in order of declaration?
+      const rfqGpaBuilder = convergence
+        .programs()
+        .getGpaBuilder(rfqProgram.address)
+        .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
+        .where(8, owner);
+
+      const unparsedRfqs = await rfqGpaBuilder.get();
       scope.throwIfCanceled();
 
-      return rfqs.filter((x): x is Rfq => x !== null);
+      let rfqs: Rfq[] = [];
+
+      for (const unparsedRfq of unparsedRfqs) {
+        const rfqAccount = toRfqAccount(unparsedRfq);
+        const rfq = toRfq(rfqAccount);
+
+        rfqs.push(rfq);
+      }
+
+      return rfqs;
     },
   };

@@ -1,5 +1,12 @@
-import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, Keypair, AccountMeta } from '@solana/web3.js';
+import {
+  createRespondToRfqInstruction,
+  Quote,
+} from '@convergence-rfq/rfq';
+import {
+  PublicKey,
+  // AccountMeta,
+  SystemProgram,
+} from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -9,7 +16,7 @@ import {
   useOperation,
   Signer,
 } from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { TransactionBuilder, TransactionBuilderOptions, Option } from '@/utils';
 
 const Key = 'RespondOperation' as const;
 
@@ -42,15 +49,29 @@ export type RespondOperation = Operation<
  * @category Inputs
  */
 export type RespondInput = {
-  /** The address of the Rfq account. */
-  address: PublicKey;
-
   /**
-   * The owner of the Rfq as a Signer.
+   * The maker of the Rfq as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
-  owner?: Signer;
+  maker?: Signer;
+
+  protocol: PublicKey;
+
+  /** The address of the Rfq account. */
+  rfq: PublicKey;
+
+  response: PublicKey;
+
+  collateralInfo: PublicKey;
+
+  collateralToken: PublicKey;
+
+  riskEngine: PublicKey;
+
+  bid: Option<Quote>;
+
+  ask: Option<Quote>;
 };
 
 /**
@@ -83,10 +104,7 @@ export const respondOperationHandler: OperationHandler<RespondOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type RespondBuilderParams = Omit<RespondInput, 'confirmOptions'> & {
-  /** A key to distinguish the instruction that burns the NFT. */
-  instructionKey?: string;
-};
+export type RespondBuilderParams = RespondInput;
 
 /**
  * Cancels an existing Rfq.
@@ -107,55 +125,45 @@ export const respondBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { owner = convergence.identity() } = params;
+  const {
+    maker = convergence.identity(),
+    protocol,
+    rfq,
+    response,
+    collateralInfo,
+    collateralToken,
+    riskEngine,
+    bid = null,
+    ask = null,
+  } = params;
 
+  // const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getToken(programs);
 
-  const maker = Keypair.generate().publicKey;
-  const protocol = Keypair.generate().publicKey;
-  const rfq = Keypair.generate().publicKey;
-  const response = Keypair.generate().publicKey;
-  const collateralInfo = Keypair.generate().publicKey;
-  const collateralToken = Keypair.generate().publicKey;
-  const riskEngine = Keypair.generate().publicKey;
-  const systemProgram = Keypair.generate().publicKey;
-  const anchorRemainingAccounts: AccountMeta[] = [];
-
-  //const ask = {
-  //  Standart: {
-  //    priceQuote: 1,
-  //    legsMultiplierBps: 1,
-  //  },
-  //};
-  //const bid = {
-  //  Standart: {
-  //    priceQuote: 1,
-  //    legsMultiplierBps: 1,
-  //  },
-  //};
+  // const anchorRemainingAccounts: AccountMeta[] = [];
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createRespondToRfqInstruction(
         {
-          maker,
+          maker: maker.publicKey,
           protocol,
           rfq,
           response,
           collateralInfo,
           collateralToken,
           riskEngine,
-          systemProgram,
-          anchorRemainingAccounts,
+          systemProgram: SystemProgram.programId,
+          // anchorRemainingAccounts,
         },
         {
-          bid: null,
-          ask: null,
+          bid,
+          ask,
         },
         rfqProgram.address
       ),
-      signers: [owner],
-      key: params.instructionKey ?? 'respondRfq',
+      signers: [maker],
+      key: 'respondRfq',
     });
 };

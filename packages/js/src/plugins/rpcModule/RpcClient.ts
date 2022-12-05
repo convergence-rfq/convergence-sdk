@@ -1,4 +1,4 @@
-import { Buffer } from "buffer";
+// import { Buffer } from "buffer";
 import {
   AccountInfo,
   Blockhash,
@@ -13,7 +13,7 @@ import {
   SignatureResult,
   Transaction,
   TransactionSignature,
-} from "@solana/web3.js";
+} from '@solana/web3.js';
 import {
   FailedToConfirmTransactionError,
   FailedToConfirmTransactionWithResponseError,
@@ -21,8 +21,8 @@ import {
   ConvergenceError,
   ParsedProgramError,
   UnknownProgramError,
-} from "@/errors";
-import type { Convergence } from "@/Convergence";
+} from '@/errors';
+import type { Convergence } from '@/Convergence';
 import {
   assertSol,
   getSignerHistogram,
@@ -33,8 +33,9 @@ import {
   SolAmount,
   UnparsedAccount,
   UnparsedMaybeAccount,
-} from "@/types";
-import { TransactionBuilder, zipMap } from "@/utils";
+} from '@/types';
+import { TransactionBuilder, zipMap } from '@/utils';
+
 
 export type ConfirmTransactionResponse = RpcResponseAndContext<SignatureResult>;
 export type SendAndConfirmTransactionResponse = {
@@ -62,7 +63,7 @@ export class RpcClient {
   }> {
     let blockhashWithExpiryBlockHeight: BlockhashWithExpiryBlockHeight;
     if (
-      !("records" in transaction) &&
+      !('records' in transaction) &&
       transaction.recentBlockhash &&
       transaction.lastValidBlockHeight
     ) {
@@ -74,7 +75,7 @@ export class RpcClient {
       blockhashWithExpiryBlockHeight = await this.getLatestBlockhash();
     }
 
-    if ("records" in transaction) {
+    if ('records' in transaction) {
       signers = [...transaction.getSigners(), ...signers];
       transaction = transaction.toTransaction(blockhashWithExpiryBlockHeight);
     }
@@ -185,6 +186,21 @@ export class RpcClient {
     return this.getUnparsedMaybeAccount(publicKey, accountInfo);
   }
 
+  async getAccounts(publicKeys: PublicKey[], commitment?: Commitment) {
+    let accountInfos: UnparsedMaybeAccount[] = [];
+
+    for (const publicKey of publicKeys) {
+      const accountInfo = await this.convergence.connection.getAccountInfo(
+        publicKey,
+        commitment
+      );
+
+      accountInfos.push(this.getUnparsedMaybeAccount(publicKey, accountInfo));
+    }
+
+    return accountInfos;
+  }
+
   async accountExists(publicKey: PublicKey, commitment?: Commitment) {
     const balance = await this.convergence.connection.getBalance(
       publicKey,
@@ -267,22 +283,22 @@ export class RpcClient {
   }
 
   async getLatestBlockhash(
-    commitmentOrConfig: Commitment | GetLatestBlockhashConfig = "finalized"
+    commitmentOrConfig: Commitment | GetLatestBlockhashConfig = 'finalized'
   ): Promise<BlockhashWithExpiryBlockHeight> {
     return this.convergence.connection.getLatestBlockhash(commitmentOrConfig);
   }
 
   getSolanaExporerUrl(signature: string): string {
-    let clusterParam = "";
+    let clusterParam = '';
     switch (this.convergence.cluster) {
-      case "devnet":
-        clusterParam = "?cluster=devnet";
+      case 'devnet':
+        clusterParam = '?cluster=devnet';
         break;
-      case "testnet":
-        clusterParam = "?cluster=testnet";
+      case 'testnet':
+        clusterParam = '?cluster=testnet';
         break;
-      case "localnet":
-      case "custom":
+      case 'localnet':
+      case 'custom':
         const url = encodeURIComponent(this.convergence.connection.rpcEndpoint);
         clusterParam = `?cluster=custom&customUrl=${url}`;
         break;

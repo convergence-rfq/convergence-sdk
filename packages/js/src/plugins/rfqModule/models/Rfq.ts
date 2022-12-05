@@ -1,6 +1,15 @@
 import { Keypair, PublicKey } from '@solana/web3.js';
-import type { Leg } from './Leg';
-import { assert } from '@/utils';
+import { assert, Option } from '@/utils';
+import { RfqAccount } from '../accounts';
+// import type { Leg } from './Leg';
+// import { Account } from '@/types';
+// import {
+//   // accountProviders,
+//   FixedSize,
+//   OrderType,
+//   StoredRfqState,
+// } from '@convergence-rfq/rfq';
+// import { bignum } from '@metaplex-foundation/beet';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -25,16 +34,9 @@ export function assertRfq(value: any): asserts value is Rfq {
   assert(isRfq(value), `Expected Rfq model`);
 }
 
-/*
-  TODO: pull legs out of params and put into RFQ
-  should the toRfq function even exist? it needs a lot more params than this
-
-  TODO: instead of toRfq() which is called by findRfqsByToken, we should just implement that method directly
-  in findRfqsByToken
-*/
-
-// /** @group Model Helpers */
+/** @group Model Helpers */
 // export const toRfq = (legs: Leg[]): Rfq => ({
-//   model: 'rfq',
-//   address: Keypair.generate().publicKey,
-// });
+export const toRfq = (account: RfqAccount): Rfq => ({
+  model: 'rfq',
+  address: account.publicKey,
+});

@@ -51,6 +51,8 @@ export type CancelRfqInput = {
    * @defaultValue `convergence.identity()`
    */
   owner?: Signer;
+
+  protocol: PublicKey;
 };
 
 /**
@@ -72,6 +74,8 @@ export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ): Promise<CancelRfqOutput> => {
+    scope.throwIfCanceled();
+    
     return cancelRfqBuilder(convergence, operation.input, scope).sendAndConfirm(
       convergence,
       scope.confirmOptions
@@ -83,10 +87,7 @@ export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type CancelRfqBuilderParams = CancelRfqInput & {
-  /** A key to distinguish the instruction that burns the NFT. */
-  instructionKey?: string;
-};
+export type CancelRfqBuilderParams = CancelRfqInput;
 
 /**
  * Cancels an existing Rfq.
@@ -107,9 +108,9 @@ export const cancelRfqBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { address, owner = convergence.identity() } = params;
+  const { address, protocol, owner = convergence.identity() } = params;
 
-  const rfqProgram = convergence.programs().getToken(programs);
+  const rfqProgram = convergence.programs().getRfq(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -117,12 +118,12 @@ export const cancelRfqBuilder = (
       instruction: createCancelRfqInstruction(
         {
           taker: owner.publicKey,
-          protocol: address,
+          protocol,
           rfq: address,
         },
         rfqProgram.address
       ),
       signers: [owner],
-      key: params.instructionKey ?? 'cancelRfq',
+      key: 'cancelRfq',
     });
 };

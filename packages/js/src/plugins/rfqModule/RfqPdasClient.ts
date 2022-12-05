@@ -1,9 +1,26 @@
-import { Buffer } from 'buffer';
+// import { Buffer } from 'buffer';
 import type { Convergence } from '@/Convergence';
-import { BigNumber, Pda, Program, PublicKey, toBigNumber } from '@/types';
+// import { BigNumber, Pda, Program, PublicKey, toBigNumber } from '@/types';
+
+/*
+  PDAs needed:
+
+  Derived from Rfq:
+    Collateral (derived from Rfq Taker) (settle_two_party_default.rs, unlock_response_collateral.rs)
+    Collateral Token (same as above)
+
+
+  Derived from response:
+    Quote Escrow (prepare_settlement.rs, revert_settlement.rs, settle.rs)
+    Collateral (Derived from Response Maker) (settle_two_party_default.rs)
+    Collateral Token (same as above)
+
+
+*/
+
 
 /**
- * This client allows you to build PDAs related to the NFT module.
+ * This client allows you to build PDAs related to the Rfq module.
  *
  * @see {@link RfqClient}
  * @group Module Pdas

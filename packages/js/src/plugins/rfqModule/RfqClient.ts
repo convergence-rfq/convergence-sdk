@@ -19,8 +19,8 @@ import {
   FindRfqsByOwnerInput,
   findRfqsByOwnerOperation,
   RespondInput,
-  LoadLegsInput,
-  loadLegsOperation,
+  // LoadLegsInput,
+  // loadLegsOperation,
   findRfqByAddressOperation,
   findRfqsByAddressesOperation,
   respondOperation,
@@ -123,12 +123,12 @@ export class RfqClient {
       .execute(findRfqsByOwnerOperation(input), options);
   }
 
-  /** {@inheritDoc loadLegsOperation} */
-  load(input: LoadLegsInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(loadLegsOperation(input), options);
-  }
+  // /** {@inheritDoc loadLegsOperation} */
+  // load(input: LoadLegsInput, options?: OperationOptions) {
+  //   return this.convergence
+  //     .operations()
+  //     .execute(loadLegsOperation(input), options);
+  // }
 
   /**
    * Helper method that refetches a given model

@@ -4,7 +4,7 @@ import {
   FixedSize,
   Leg,
 } from '@convergence-rfq/rfq';
-import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
+import { Keypair, PublicKey, AccountMeta, SystemProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -14,6 +14,7 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
+  Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
 
@@ -49,13 +50,17 @@ export type CreateRfqOperation = Operation<
  */
 export type CreateRfqInput = {
   /**
-   * The owner of the Rfq to create.
+   * The taker of the Rfq to create.
    *
    * @defaultValue `convergence.identity().publicKey`
    */
-  owner?: PublicKey;
+  taker?: Signer;
 
-  legs?: object[];
+  rfq: PublicKey;
+
+  // legs?: object[];
+  legs?: Leg[];
+
   expectedLegSize?: number;
 
   /**
@@ -66,8 +71,14 @@ export type CreateRfqInput = {
   orderType?: OrderType;
 
   fixedSize?: FixedSize;
+
+  quoteMint: PublicKey;
+
   activeWindow?: number;
+
   settlingWindow?: number;
+
+  protocol: PublicKey;
 };
 
 /**
@@ -92,13 +103,13 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
-    const { owner = convergence.identity().publicKey } = operation.input;
+    const { taker = convergence.identity().publicKey } = operation.input;
 
     const builder = await createRfqBuilder(
       convergence,
       {
         ...operation.input,
-        owner,
+        taker,
       },
       scope
     );
@@ -111,12 +122,12 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
-    const rfq = await convergence.rfqs().findByAddress(
-      {
-        addresses: [],
-      },
-      scope
-    );
+    let rfq;
+
+    if (operation.__output) {
+      const { rfq: RFQ } = operation.__output;
+      rfq = RFQ;
+    }
     scope.throwIfCanceled();
 
     assertRfq(rfq);
@@ -129,21 +140,22 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type CreateRfqBuilderParams = CreateRfqInput & {
-  /**
-   * Whether or not the provided token account already exists.
-   * If `false`, we'll add another instruction to create it.
-   *
-   * @defaultValue `true`
-   */
-  tokenExists?: boolean;
-};
+export type CreateRfqBuilderParams = CreateRfqInput;
+// & {
+//   /**
+//    * Whether or not the provided token account already exists.
+//    * If `false`, we'll add another instruction to create it.
+//    *
+//    * @defaultValue `true`
+//    */
+//   tokenExists?: boolean;
+// };
 
 /**
  * @group Transaction Builders
  * @category Contexts
  */
-export type CreateRfqBuilderContext = Omit<CreateRfqOutput, 'rfq'>;
+export type CreateRfqBuilderContext = SendAndConfirmTransactionResponse;
 
 /**
  * Creates a new Rfq.
@@ -164,49 +176,47 @@ export const createRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<CreateRfqBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { owner = convergence.identity() } = params;
 
-  const systemProgram = convergence.programs().getSystem(programs);
+  const {
+    taker = convergence.identity(),
+    rfq,
+    legs = [],
+    expectedLegSize = 0,
+    orderType = OrderType.TwoWay,
+    fixedSize, //should default to `None`
+    quoteMint,
+    activeWindow = 1,
+    settlingWindow = 1,
+    protocol,
+  } = params;
+
+  const fixedsz = fixedSize!;
+
+  // const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const rfq = new Keypair();
-  const expectedLegSize = 0;
-  const legs: Leg[] = [];
-  const orderType = OrderType.TwoWay;
-  // @ts-ignore
-  const fixedSize = FixedSize.None;
-  const activeWindow = 1;
-  const settlingWindow = 1;
-  const anchorRemainingAccounts: AccountMeta[] = [];
-  const quoteMint = new Keypair();
-  const protocol = new Keypair();
-
-  return (
-    TransactionBuilder.make<CreateRfqBuilderContext>()
-      .setFeePayer(payer)
-      //.setContext()
-      .add({
-        instruction: createCreateRfqInstruction(
-          {
-            taker: owner as PublicKey,
-            protocol: protocol.publicKey,
-            rfq: rfq.publicKey,
-            quoteMint: quoteMint.publicKey,
-            systemProgram: systemProgram.address,
-            anchorRemainingAccounts,
-          },
-          {
-            expectedLegSize,
-            legs,
-            orderType,
-            fixedSize,
-            activeWindow,
-            settlingWindow,
-          },
-          rfqProgram.address
-        ),
-        signers: [payer, rfq],
-        key: 'createRfq',
-      })
-  );
+  return TransactionBuilder.make<CreateRfqBuilderContext>()
+    .setFeePayer(payer)
+    .add({
+      instruction: createCreateRfqInstruction(
+        {
+          taker: taker as PublicKey,
+          protocol,
+          rfq,
+          quoteMint,
+          systemProgram: SystemProgram.programId,
+        },
+        {
+          expectedLegSize,
+          legs,
+          orderType,
+          fixedSize: fixedsz, //TODO: get None value
+          activeWindow,
+          settlingWindow,
+        },
+        rfqProgram.address
+      ),
+      signers: [payer],
+      key: 'createRfq',
+    });
 };

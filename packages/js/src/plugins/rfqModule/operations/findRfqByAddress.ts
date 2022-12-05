@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Rfq } from '../models';
+import { Rfq, toRfq } from '../models';
 import {
   Operation,
   OperationHandler,
@@ -7,6 +7,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { toRfqAccount } from '../accounts';
 
 const Key = 'FindRfqByAddressOperation' as const;
 
@@ -61,13 +62,15 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqByAddressOutput> => {
+      const { commitment } = scope;
       const { address } = operation.input;
-
       scope.throwIfCanceled();
 
-      const rfq = await convergence.rfqs().findByAddress({ address }, scope);
+      const account = toRfqAccount(
+        await convergence.rpc().getAccount(address, commitment)
+      );
       scope.throwIfCanceled();
 
-      return rfq;
+      return toRfq(account);
     },
   };
