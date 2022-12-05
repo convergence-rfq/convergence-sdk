@@ -4,7 +4,11 @@ import {
   FixedSize,
   Leg,
 } from '@convergence-rfq/rfq';
-import { Keypair, PublicKey, AccountMeta, SystemProgram } from '@solana/web3.js';
+import {
+  PublicKey,
+  // AccountMeta,
+  SystemProgram,
+} from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -103,13 +107,10 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
-    const { taker = convergence.identity().publicKey } = operation.input;
-
     const builder = await createRfqBuilder(
       convergence,
       {
         ...operation.input,
-        taker,
       },
       scope
     );
@@ -200,7 +201,7 @@ export const createRfqBuilder = async (
     .add({
       instruction: createCreateRfqInstruction(
         {
-          taker: taker as PublicKey,
+          taker: taker.publicKey,
           protocol,
           rfq,
           quoteMint,
