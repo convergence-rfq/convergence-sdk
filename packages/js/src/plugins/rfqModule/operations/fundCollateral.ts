@@ -12,9 +12,10 @@ import { Convergence } from '@/Convergence';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Signer, makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
+import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
+import { bignum } from '@metaplex-foundation/beet';
 
-const Key = 'InitializeCollateralOperation' as const;
+const Key = 'FundCollateralOperation' as const;
 
 /**
  * Finds Rfq by a given address.
@@ -28,24 +29,24 @@ const Key = 'InitializeCollateralOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const initializeCollateralOperation =
-  useOperation<InitializeCollateralOperation>(Key);
+export const fundCollateralOperation =
+  useOperation<FundCollateralOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type InitializeCollateralOperation = Operation<
+export type FundCollateralOperation = Operation<
   typeof Key,
-  InitializeCollateralInput,
-  InitializeCollateralOutput
+  FundCollateralInput,
+  FundCollateralOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type InitializeCollateralInput = {
+export type FundCollateralInput = {
   /**
    * The user for whom collateral is initialized.
    *
@@ -53,20 +54,22 @@ export type InitializeCollateralInput = {
    */
   user?: Signer;
 
+  userTokens: PublicKey;
+
   protocol: PublicKey;
 
   collateralInfo: PublicKey;
 
   collateralToken: PublicKey;
 
-  collateralMint: PublicKey;
+  amount: bignum;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type InitializeCollateralOutput = {
+export type FundCollateralOutput = {
   response: SendAndConfirmTransactionResponse;
 };
 
@@ -74,14 +77,14 @@ export type InitializeCollateralOutput = {
  * @group Operations
  * @category Handlers
  */
-export const initializeCollateralOperationHandler: OperationHandler<InitializeCollateralOperation> =
+export const fundCollateralOperationHandler: OperationHandler<FundCollateralOperation> =
   {
     handle: async (
-      operation: InitializeCollateralOperation,
+      operation: FundCollateralOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<InitializeCollateralOutput> => {
-      const builder = await initializeCollateralBuilder(
+    ): Promise<FundCollateralOutput> => {
+      const builder = await fundCollateralBuilder(
         convergence,
         {
           ...operation.input,
@@ -102,17 +105,16 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
     },
   };
 
-export type InitializeCollateralBuilderParams = InitializeCollateralInput;
+export type FundCollateralBuilderParams = FundCollateralInput;
 
 /**
  * @group Transaction Builders
  * @category Contexts
  */
-export type InitializeCollateralBuilderContext =
-  SendAndConfirmTransactionResponse;
+export type FundCollateralBuilderContext = SendAndConfirmTransactionResponse;
 
 /**
- * Initializes a collateral account.
+ * Funds a collateral account.
  *
  * ```ts
  * const transactionBuilder = await convergence
@@ -124,36 +126,38 @@ export type InitializeCollateralBuilderContext =
  * @group Transaction Builders
  * @category Constructors
  */
-export const initializeCollateralBuilder = async (
+export const fundCollateralBuilder = async (
   convergence: Convergence,
-  params: InitializeCollateralBuilderParams,
+  params: FundCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder<InitializeCollateralBuilderContext>> => {
+): Promise<TransactionBuilder<FundCollateralBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
   const tokenProgram = convergence.programs().getToken(programs);
-  const systemProgram = convergence.programs().getSystem(programs);
 
   const {
     user = convergence.identity(),
+    userTokens,
     protocol,
     collateralInfo,
     collateralToken,
-    collateralMint,
+    amount,
   } = params;
 
-  return TransactionBuilder.make<InitializeCollateralBuilderContext>()
+  return TransactionBuilder.make<FundCollateralBuilderContext>()
     .setFeePayer(payer)
     .add({
-      instruction: createInitializeCollateralInstruction(
+      instruction: createFundCollateralInstruction(
         {
           user: user.publicKey,
+          userTokens,
           protocol,
           collateralInfo,
           collateralToken,
-          collateralMint,
-          systemProgram: systemProgram.address,
           tokenProgram: tokenProgram.address,
+        },
+        {
+          amount,
         },
         rfqProgram.address
       ),

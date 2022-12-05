@@ -1,15 +1,6 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
-import { assert, Option } from '@/utils';
+import { PublicKey } from '@solana/web3.js';
+import { assert } from '@/utils';
 import { RfqAccount } from '../accounts';
-// import type { Leg } from './Leg';
-// import { Account } from '@/types';
-// import {
-//   // accountProviders,
-//   FixedSize,
-//   OrderType,
-//   StoredRfqState,
-// } from '@convergence-rfq/rfq';
-// import { bignum } from '@metaplex-foundation/beet';
 
 /**
  * This model captures all the relevant information about an RFQ
