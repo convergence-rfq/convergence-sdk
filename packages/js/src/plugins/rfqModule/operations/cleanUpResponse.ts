@@ -1,4 +1,4 @@
-import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
+import { createCleanUpResponseInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -13,35 +13,39 @@ import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 const Key = 'CleanUpResponseLegsOperation' as const;
 
 /**
- * Cleans up Legs for a Response
+ * Cleans up a Response.
  *
  * ```ts
  * await convergence
  *   .rfqs()
- *   .cleanUpResponseLegs({ address };
+ *   .cleanUpResponse({ address };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const cleanUpResponseLegsOperation =
-  useOperation<CleanUpResponseLegsOperation>(Key);
+export const cleanUpResponseOperation =
+  useOperation<CleanUpResponseOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CleanUpResponseLegsOperation = Operation<
+export type CleanUpResponseOperation = Operation<
   typeof Key,
-  CleanUpResponseLegsInput,
-  CleanUpResponseLegsOutput
+  CleanUpResponseInput,
+  CleanUpResponseOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CleanUpResponseLegsInput = {
+export type CleanUpResponseInput = {
+  /** The Maker of the Response */
+  maker: PublicKey;
+
+  firstToPrepareQuote: PublicKey;
   /**
    * The address of the protocol
    */
@@ -50,19 +54,18 @@ export type CleanUpResponseLegsInput = {
   rfq: PublicKey;
   /** The address of the Reponse account */
   response: PublicKey;
+  /** The address of the quote escrow account.
+   * Can be a valid escrow account or an unitialized account. */
+  quoteEscrow: PublicKey;
 
-  /*
-   * Args
-   */
-
-  legAmountToClear: number;
+  quoteBackupTokens: PublicKey;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type CleanUpResponseLegsOutput = {
+export type CleanUpResponseOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
@@ -71,16 +74,16 @@ export type CleanUpResponseLegsOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cleanUpResponseLegsOperationHandler: OperationHandler<CleanUpResponseLegsOperation> =
+export const cleanUpResponseOperationHandler: OperationHandler<CleanUpResponseOperation> =
   {
     handle: async (
-      operation: CleanUpResponseLegsOperation,
+      operation: CleanUpResponseOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<CleanUpResponseLegsOutput> => {
+    ): Promise<CleanUpResponseOutput> => {
       scope.throwIfCanceled();
 
-      return cleanUpResponseLegsBuilder(
+      return cleanUpResponseBuilder(
         convergence,
         operation.input,
         scope
@@ -92,46 +95,57 @@ export const cleanUpResponseLegsOperationHandler: OperationHandler<CleanUpRespon
  * @group Transaction Builders
  * @category Inputs
  */
-export type CancelResponseBuilderParams = CleanUpResponseLegsInput;
+export type CancelResponseBuilderParams = CleanUpResponseInput;
 
 /**
- * Cleans up Legs for a Response.
+ * Cleans up an existing Response.
  *
  * ```ts
  * const transactionBuilder = convergence
  *   .rfqs()
  *   .builders()
- *   .cleanUpResponseLegs({ address });
+ *   .cleanUpResponse({ address });
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const cleanUpResponseLegsBuilder = (
+export const cleanUpResponseBuilder = (
   convergence: Convergence,
   params: CancelResponseBuilderParams,
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { protocol, rfq, response, legAmountToClear } = params;
+  const {
+    maker,
+    firstToPrepareQuote,
+    protocol,
+    rfq,
+    response,
+    quoteEscrow,
+    quoteBackupTokens,
+  } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
+  const tokenProgram = convergence.programs().getToken(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
-      instruction: createCleanUpResponseLegsInstruction(
+      instruction: createCleanUpResponseInstruction(
         {
+          maker,
+          firstToPrepareQuote,
           protocol,
           rfq,
           response,
-        },
-        {
-          legAmountToClear,
+          quoteEscrow,
+          quoteBackupTokens,
+          tokenProgram: tokenProgram.address,
         },
         rfqProgram.address
       ),
       signers: [payer],
-      key: 'cleanUpResponseLegs',
+      key: 'cleanUpResponse',
     });
 };
