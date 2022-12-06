@@ -1,7 +1,6 @@
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 import { PublicKey } from '@solana/web3.js';
 import { SendTokensInput } from '../tokenModule';
-import { toMintAddress } from './helpers';
 import { Rfq } from './models';
 import { RfqBuildersClient } from './RfqBuildersClient';
 import { RfqPdasClient } from './RfqPdasClient';
@@ -132,24 +131,21 @@ export class RfqClient {
    * Helper method that refetches a given model
    * and returns an instance of the same type.
    *
+   * If the model we pass is an `Rfq`, we extract the pubkey and
+   * pass to `findByAddress`. Else, it's a pubkey and we pass
+   * it directly.
+   *
    * ```ts
    * rfq = await convergence.rfqs().refresh(rfq);
    * ```
    */
   refresh<T extends Rfq | PublicKey>(
     model: T,
-    input?: Omit<
-      FindRfqsByTokenInput,
-      'mintAddress' | 'tokenAddress' | 'tokenOwner'
-    >,
     options?: OperationOptions
   ): Promise<T extends Metadata | PublicKey ? Rfq : T> {
-    return this.findByToken(
+    return this.findByAddress(
       {
-        mintAddress: toMintAddress(model),
-        tokenAddress: undefined,
-        //tokenAddress: 'token' in model ? model.token.address : undefined,
-        ...input,
+        rfq: 'model' in model ? model.address : model,
       },
       options
     ) as Promise<T extends Metadata | PublicKey ? Rfq : T>;

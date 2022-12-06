@@ -25,7 +25,7 @@ const Key = 'CancelResponseOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const CancelResponseOperation =
+export const cancelResponseOperation =
   useOperation<CancelResponseOperation>(Key);
 
 /**

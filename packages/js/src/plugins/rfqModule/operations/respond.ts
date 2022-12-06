@@ -79,7 +79,7 @@ export type RespondOutput = {
  * @group Operations
  * @category Handlers
  */
-export const RespondOperationHandler: OperationHandler<RespondOperation> = {
+export const respondOperationHandler: OperationHandler<RespondOperation> = {
   handle: async (
     operation: RespondOperation,
     convergence: Convergence,

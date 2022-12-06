@@ -89,7 +89,7 @@ export type PrepareSettlementOutput = {
  * @group Operations
  * @category Handlers
  */
-export const respondOperationHandler: OperationHandler<PrepareSettlementOperation> =
+export const prepareSettlementOperationHandler: OperationHandler<PrepareSettlementOperation> =
   {
     handle: async (
       operation: PrepareSettlementOperation,

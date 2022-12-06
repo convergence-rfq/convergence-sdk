@@ -42,7 +42,7 @@ export type FindRfqByAddressOperation = Operation<
  */
 export type FindRfqByAddressInput = {
   /** The address of the Rfq. */
-  address: PublicKey;
+  rfq: PublicKey;
 };
 
 /**
@@ -63,11 +63,11 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
       scope: OperationScope
     ): Promise<FindRfqByAddressOutput> => {
       const { commitment } = scope;
-      const { address } = operation.input;
+      const { rfq } = operation.input;
       scope.throwIfCanceled();
 
       const account = toRfqAccount(
-        await convergence.rpc().getAccount(address, commitment)
+        await convergence.rpc().getAccount(rfq, commitment)
       );
       scope.throwIfCanceled();
 

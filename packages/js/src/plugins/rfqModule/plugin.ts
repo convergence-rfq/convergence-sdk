@@ -11,12 +11,54 @@ import {
   findRfqsByTokenOperationHandler,
   findRfqsByOwnerOperation,
   findRfqsByOwnerOperationHandler,
-  // loadLegsOperation,
-  // loadLegsOperationHandler,
+  addInstrumentOperation,
+  addInstrumentOperationHandler,
   cancelRfqOperation,
   cancelRfqOperationHandler,
   respondOperationHandler,
   respondOperation,
+  addLegsToRfqOperation,
+  addLegsToRfqOperationHandler,
+  cleanUpResponseLegsOperation,
+  cleanUpResponseLegsOperationHandler,
+  cleanUpResponseOperation,
+  cleanUpResponseOperationHandler,
+  cleanUpRfqOperation,
+  cleanUpRfqOperationHandler,
+  finalizeRfqConstructionOperation,
+  finalizeRfqConstructionOperationHandler,
+  cancelResponseOperation,
+  cancelResponseOperationHandler,
+  confirmResponseOperation,
+  confirmResponseOperationHandler,
+  findRfqByAddressOperation,
+  findRfqByAddressOperationHandler,
+  findRfqsByAddressesOperation,
+  findRfqsByAddressesOperationHandler,
+  initializeCollateralOperation,
+  initializeCollateralOperationHandler,
+  fundCollateralOperation,
+  fundCollateralOperationHandler,
+  partiallySettleLegsOperation,
+  partiallySettleLegsOperationHandler,
+  prepareMoreLegsSettlementOperation,
+  prepareMoreLegsSettlementOperationHandler,
+  partlyRevertSettlementPreparationOperation,
+  partlyRevertSettlementPreparationOperationHandler,
+  prepareSettlementOperation,
+  prepareSettlementOperationHandler,
+  settleOperation,
+  settleOperationHandler,
+  settleOnePartyDefaultOperation,
+  settleOnePartyDefaultOperationHandler,
+  settleTwoPartyDefaultOperation,
+  settleTwoPartyDefaultOperationHandler,
+  unlockResponseCollateralOperation,
+  unlockResponseCollateralOperationHandler,
+  unlockRfqCollateralOperation,
+  unlockRfqCollateralOperationHandler,
+  withdrawCollateralOperation,
+  withdrawCollateralOperationHandler,
 } from './operations';
 import { ErrorWithLogs, ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -39,16 +81,75 @@ export const rfqModule = (): ConvergencePlugin => ({
     };
 
     const op = convergence.operations();
-    op.register(createRfqOperation, createRfqOperationHandler);
+
+    op.register(addInstrumentOperation, addInstrumentOperationHandler);
+    op.register(addLegsToRfqOperation, addLegsToRfqOperationHandler);
+    op.register(cancelResponseOperation, cancelResponseOperationHandler);
     op.register(cancelRfqOperation, cancelRfqOperationHandler);
+    op.register(cleanUpResponseOperation, cleanUpResponseOperationHandler);
+    op.register(
+      cleanUpResponseLegsOperation,
+      cleanUpResponseLegsOperationHandler
+    );
+    op.register(cleanUpRfqOperation, cleanUpRfqOperationHandler);
+    op.register(confirmResponseOperation, confirmResponseOperationHandler);
+    op.register(createRfqOperation, createRfqOperationHandler);
+    op.register(
+      finalizeRfqConstructionOperation,
+      finalizeRfqConstructionOperationHandler
+    );
+    op.register(findRfqByAddressOperation, findRfqByAddressOperationHandler);
+    op.register(
+      findRfqsByAddressesOperation,
+      findRfqsByAddressesOperationHandler
+    );
     op.register(
       findRfqsByInstrumentOperation,
       findRfqsByInstrumentOperationHandler
     );
     op.register(findRfqsByOwnerOperation, findRfqsByOwnerOperationHandler);
     op.register(findRfqsByTokenOperation, findRfqsByTokenOperationHandler);
-    // op.register(loadLegsOperation, loadLegsOperationHandler);
+    op.register(fundCollateralOperation, fundCollateralOperationHandler);
+    op.register(
+      initializeCollateralOperation,
+      initializeCollateralOperationHandler
+    );
+    op.register(
+      partiallySettleLegsOperation,
+      partiallySettleLegsOperationHandler
+    );
+
+    op.register(
+      partlyRevertSettlementPreparationOperation,
+      partlyRevertSettlementPreparationOperationHandler
+    );
+    op.register(
+      prepareMoreLegsSettlementOperation,
+      prepareMoreLegsSettlementOperationHandler
+    );
+    op.register(prepareSettlementOperation, prepareSettlementOperationHandler);
     op.register(respondOperation, respondOperationHandler);
+    op.register(settleOperation, settleOperationHandler);
+    op.register(
+      settleOnePartyDefaultOperation,
+      settleOnePartyDefaultOperationHandler
+    );
+    op.register(
+      settleTwoPartyDefaultOperation,
+      settleTwoPartyDefaultOperationHandler
+    );
+    op.register(
+      unlockResponseCollateralOperation,
+      unlockResponseCollateralOperationHandler
+    );
+    op.register(
+      unlockRfqCollateralOperation,
+      unlockRfqCollateralOperationHandler
+    );
+    op.register(
+      withdrawCollateralOperation,
+      withdrawCollateralOperationHandler
+    );
 
     convergence.rfqs = function () {
       return new RfqClient(this);
