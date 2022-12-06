@@ -175,7 +175,7 @@ export const createRfqBuilder = async (
   convergence: Convergence,
   params: CreateRfqBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder<CreateRfqBuilderContext>> => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
   const {
@@ -196,7 +196,7 @@ export const createRfqBuilder = async (
   // const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  return TransactionBuilder.make<CreateRfqBuilderContext>()
+  return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createCreateRfqInstruction(
