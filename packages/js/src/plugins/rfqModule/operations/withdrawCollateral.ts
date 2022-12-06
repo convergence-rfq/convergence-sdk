@@ -15,12 +15,12 @@ import { bignum } from '@metaplex-foundation/beet';
 const Key = 'WithdrawCollateralOperation' as const;
 
 /**
- * Finds Rfq by a given address.
+ * Withdraws collateral
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByAddress({ address };
+ *   .withdrawCollateral({ address };
  * ```
  *
  * @group Operations
@@ -50,19 +50,20 @@ export type WithdrawCollateralInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   user?: Signer;
-
+  /** Public key of User's Token account */
   userTokens: PublicKey;
-
+  /** Public key address of protocol account */
   protocol: PublicKey;
-
+  /** Public key address of User's collateral_info account */
   collateralInfo: PublicKey;
-
+  /** Public key address of user's Token account for the collateral asset */
   collateralToken: PublicKey;
 
   /*
    * Args
    */
 
+  /** amount of collateral to withdraw */
   amount: bignum;
 };
 
@@ -109,13 +110,13 @@ export const withdrawCollateralOperationHandler: OperationHandler<WithdrawCollat
 export type WithdrawCollateralBuilderParams = WithdrawCollateralInput;
 
 /**
- * Funds a collateral account.
+ * Withdraws collateral.
  *
  * ```ts
  * const transactionBuilder = await convergence
  *   .rfqs()
  *   .builders()
- *   .create();
+ *   .withdrawCollateral();
  * ```
  *
  * @group Transaction Builders

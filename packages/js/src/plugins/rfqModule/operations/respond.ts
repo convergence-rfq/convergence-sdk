@@ -48,22 +48,21 @@ export type RespondInput = {
    * @defaultValue `convergence.identity()`
    */
   maker?: Signer;
-
+  /** The address of the protocol account. */
   protocol: PublicKey;
-
   /** The address of the Rfq account. */
   rfq: PublicKey;
-
+  /** The address of the response account. */
   response: PublicKey;
-
+  /** The address of the Maker's collateral_info account. */
   collateralInfo: PublicKey;
-
+  /** The address of the Maker's collateral_token account. */
   collateralToken: PublicKey;
-
+  /** The address of the risk_engine account. */
   riskEngine: PublicKey;
-
+  /** The optional Bid side */
   bid: Option<Quote>;
-
+  /** The optional Ask side */
   ask: Option<Quote>;
 };
 

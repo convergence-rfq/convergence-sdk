@@ -99,6 +99,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
         106, 19, 109, 78, 169, 13, 234, 58,
       ]);
 
+      //just picking a random offset, 42
       const rfqGpaBuilder = convergence
         .programs()
         .getGpaBuilder(rfqProgram.address)

@@ -9,9 +9,7 @@ import { Convergence } from '@/Convergence';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import {
-  createPartiallySettleLegsInstruction,
-} from '@convergence-rfq/rfq';
+import { createPartiallySettleLegsInstruction } from '@convergence-rfq/rfq';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 

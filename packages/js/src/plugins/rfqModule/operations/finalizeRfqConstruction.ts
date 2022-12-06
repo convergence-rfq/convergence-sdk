@@ -1,7 +1,6 @@
 import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -51,15 +50,15 @@ export type FinalizeRfqConstructionInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   taker?: Signer;
-
+  /** The address of the protocol account */
   protocol: PublicKey;
-
+  /** The address of the Rfq account */
   rfq: PublicKey;
-
+  /** The address of the Taker's collateral_info account */
   collateralInfo: PublicKey;
-
+  /** The address of the Taker's collateral_token account */
   collateralToken: PublicKey;
-
+  /** The address of the risk_engine account */
   riskEngine: PublicKey;
 };
 
@@ -70,9 +69,6 @@ export type FinalizeRfqConstructionInput = {
 export type FinalizeRfqConstructionOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
-
-  /** The newly created Rfq. */
-  rfq: Rfq;
 };
 
 /**
@@ -85,7 +81,7 @@ export const finalizeRfqConstructionOperationHandler: OperationHandler<FinalizeR
       operation: FinalizeRfqConstructionOperation,
       convergence: Convergence,
       scope: OperationScope
-    ) => {
+    ): Promise<FinalizeRfqConstructionOutput> => {
       const builder = await finalizeRfqConstructionBuilder(
         convergence,
         {

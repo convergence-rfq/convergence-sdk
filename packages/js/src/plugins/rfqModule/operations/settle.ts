@@ -84,7 +84,7 @@ export const settleOperationHandler: OperationHandler<SettleOperation> = {
 export type SettleBuilderParams = SettleInput;
 
 /**
- * Settles 
+ * Settles
  *
  * ```ts
  * const transactionBuilder = convergence
