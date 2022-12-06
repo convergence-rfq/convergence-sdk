@@ -135,7 +135,7 @@ export const unlockResponseCollateralBuilder = async (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [],
       key: 'unlockResponseCollateral',
     });
 };

@@ -164,7 +164,7 @@ export const finalizeRfqConstructionBuilder = async (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [taker],
       key: 'finalizeRfqConstruction',
     });
 };

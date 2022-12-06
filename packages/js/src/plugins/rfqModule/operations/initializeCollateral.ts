@@ -157,7 +157,7 @@ export const initializeCollateralBuilder = async (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [user],
       key: 'initializeCollateral',
     });
 };

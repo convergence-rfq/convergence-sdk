@@ -1,6 +1,4 @@
-import {
-  PublicKey,
-} from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import {
   Operation,
   OperationHandler,
@@ -158,7 +156,7 @@ export const withdrawCollateralBuilder = async (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [user],
       key: 'withdrawCollateral',
     });
 };

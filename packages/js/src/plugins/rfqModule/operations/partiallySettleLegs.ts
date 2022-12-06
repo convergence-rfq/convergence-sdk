@@ -138,7 +138,7 @@ export const partiallySettleLegsBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [],
       key: 'partiallySettleLegs',
     });
 };

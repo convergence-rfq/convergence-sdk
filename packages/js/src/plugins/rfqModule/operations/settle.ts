@@ -121,7 +121,7 @@ export const settleBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [],
       key: 'settle',
     });
 };

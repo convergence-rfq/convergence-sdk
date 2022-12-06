@@ -129,7 +129,7 @@ export const cancelResponseBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [maker],
       key: 'cancelResponse',
     });
 };

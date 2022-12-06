@@ -4,11 +4,7 @@ import {
   FixedSize,
   Leg,
 } from '@convergence-rfq/rfq';
-import {
-  PublicKey,
-  // AccountMeta,
-  SystemProgram,
-} from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -60,12 +56,19 @@ export type CreateRfqInput = {
    */
   taker?: Signer;
 
+  protocol: PublicKey;
+
   rfq: PublicKey;
 
-  // legs?: object[];
-  legs?: Leg[];
+  quoteMint: PublicKey;
+
+  /*
+   * Args
+   */
 
   expectedLegSize?: number;
+
+  legs?: Leg[];
 
   /**
    * The type of order.
@@ -76,13 +79,9 @@ export type CreateRfqInput = {
 
   fixedSize?: FixedSize;
 
-  quoteMint: PublicKey;
-
   activeWindow?: number;
 
   settlingWindow?: number;
-
-  protocol: PublicKey;
 };
 
 /**
@@ -193,7 +192,7 @@ export const createRfqBuilder = async (
 
   const fixedsz = fixedSize!;
 
-  // const systemProgram = convergence.programs().getSystem(programs);
+  const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
   return TransactionBuilder.make()
@@ -205,7 +204,7 @@ export const createRfqBuilder = async (
           protocol,
           rfq,
           quoteMint,
-          systemProgram: SystemProgram.programId,
+          systemProgram: systemProgram.address,
         },
         {
           expectedLegSize,
@@ -217,7 +216,7 @@ export const createRfqBuilder = async (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [taker],
       key: 'createRfq',
     });
 };

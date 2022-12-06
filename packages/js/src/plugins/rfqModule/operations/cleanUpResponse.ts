@@ -145,7 +145,7 @@ export const cleanUpResponseBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [],
       key: 'cleanUpResponse',
     });
 };

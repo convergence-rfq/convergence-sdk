@@ -42,17 +42,18 @@ export type CancelRfqOperation = Operation<
  * @category Inputs
  */
 export type CancelRfqInput = {
-  /** The address of the Rfq account. */
-  address: PublicKey;
-
   /**
-   * The owner of the Rfq as a Signer.
+   * The Taker of the Rfq as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
-  owner?: Signer;
+  taker?: Signer;
 
+  /** The address of the protocol account */
   protocol: PublicKey;
+
+  /** The address of the Rfq account. */
+  rfq: PublicKey;
 };
 
 /**
@@ -75,7 +76,7 @@ export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
     scope: OperationScope
   ): Promise<CancelRfqOutput> => {
     scope.throwIfCanceled();
-    
+
     return cancelRfqBuilder(convergence, operation.input, scope).sendAndConfirm(
       convergence,
       scope.confirmOptions
@@ -108,7 +109,7 @@ export const cancelRfqBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { address, protocol, owner = convergence.identity() } = params;
+  const { taker = convergence.identity(), protocol, rfq } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
@@ -117,13 +118,13 @@ export const cancelRfqBuilder = (
     .add({
       instruction: createCancelRfqInstruction(
         {
-          taker: owner.publicKey,
+          taker: taker.publicKey,
           protocol,
-          rfq: address,
+          rfq,
         },
         rfqProgram.address
       ),
-      signers: [owner],
+      signers: [taker],
       key: 'cancelRfq',
     });
 };

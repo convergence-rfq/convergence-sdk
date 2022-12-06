@@ -164,7 +164,7 @@ export const respondBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [caller],
       key: 'prepareSettlement',
     });
 };

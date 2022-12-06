@@ -146,7 +146,7 @@ export const settleTwoPartyDefaultBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [],
       key: 'settleTwoPartyDefault',
     });
 };

@@ -158,7 +158,7 @@ export const prepareMoreLegsSettlementBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [caller],
       key: 'prepareMoreLegsSettlement',
     });
 };

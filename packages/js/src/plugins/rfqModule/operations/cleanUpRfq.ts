@@ -128,7 +128,7 @@ export const cleanUpRfqBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [taker],
       key: 'cleanUpRfq',
     });
 };

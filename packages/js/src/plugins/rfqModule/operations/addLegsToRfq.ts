@@ -133,7 +133,7 @@ export const addLegsToRfqBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [taker],
       key: 'addLegsToRfq',
     });
 };

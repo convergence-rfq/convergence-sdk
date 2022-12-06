@@ -131,7 +131,7 @@ export const cleanUpResponseLegsBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [],
       key: 'cleanUpResponseLegs',
     });
 };

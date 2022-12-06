@@ -154,7 +154,7 @@ export const addInstrumentBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [authority],
       key: 'addInstrument',
     });
 };

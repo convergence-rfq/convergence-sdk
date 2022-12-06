@@ -155,7 +155,7 @@ export const fundCollateralBuilder = async (
         },
         rfqProgram.address
       ),
-      signers: [payer],
-      key: 'initializeCollateral',
+      signers: [user],
+      key: 'fundCollateral',
     });
 };

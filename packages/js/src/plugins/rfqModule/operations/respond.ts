@@ -118,8 +118,9 @@ export const RespondBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+
   const {
-    maker = convergence.identity(),
+    maker = convergence.identity() || convergence.rpc().getDefaultFeePayer(),
     protocol,
     rfq,
     response,
@@ -154,6 +155,6 @@ export const RespondBuilder = (
         rfqProgram.address
       ),
       signers: [maker],
-      key: 'Respond',
+      key: 'respond',
     });
 };

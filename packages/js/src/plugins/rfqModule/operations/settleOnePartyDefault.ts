@@ -142,7 +142,7 @@ export const settleOnePartyDefaultBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [],
       key: 'settleOnePartyDefault',
     });
 };
