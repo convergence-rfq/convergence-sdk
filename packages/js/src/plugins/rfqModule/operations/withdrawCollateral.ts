@@ -111,13 +111,6 @@ export const withdrawCollateralOperationHandler: OperationHandler<WithdrawCollat
 export type WithdrawCollateralBuilderParams = WithdrawCollateralInput;
 
 /**
- * @group Transaction Builders
- * @category Contexts
- */
-export type WithdrawCollateralBuilderContext =
-  SendAndConfirmTransactionResponse;
-
-/**
  * Funds a collateral account.
  *
  * ```ts
@@ -134,7 +127,7 @@ export const withdrawCollateralBuilder = async (
   convergence: Convergence,
   params: WithdrawCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder<WithdrawCollateralBuilderContext>> => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
   const tokenProgram = convergence.programs().getToken(programs);
@@ -148,7 +141,7 @@ export const withdrawCollateralBuilder = async (
     amount,
   } = params;
 
-  return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
+  return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createWithdrawCollateralInstruction(
