@@ -25,7 +25,7 @@ const Key = 'CleanUpRfqOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const CleanUpRfqOperation = useOperation<CleanUpRfqOperation>(Key);
+export const cleanUpRfqOperation = useOperation<CleanUpRfqOperation>(Key);
 
 /**
  * @group Operations
