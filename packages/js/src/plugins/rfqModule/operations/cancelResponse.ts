@@ -71,7 +71,7 @@ export type CancelResponseOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cancelRfqOperationHandler: OperationHandler<CancelResponseOperation> =
+export const cancelResponseOperationHandler: OperationHandler<CancelResponseOperation> =
   {
     handle: async (
       operation: CancelResponseOperation,

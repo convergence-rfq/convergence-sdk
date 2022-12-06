@@ -1,12 +1,5 @@
-import {
-  createRespondToRfqInstruction,
-  Quote,
-} from '@convergence-rfq/rfq';
-import {
-  PublicKey,
-  // AccountMeta,
-  SystemProgram,
-} from '@solana/web3.js';
+import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
+import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -21,12 +14,12 @@ import { TransactionBuilder, TransactionBuilderOptions, Option } from '@/utils';
 const Key = 'RespondOperation' as const;
 
 /**
- * Cancels an existing Rfq.
+ * Responds to an Rfq.
  *
  * ```ts
  * await convergence
  *   .rfqs()
- *   .respond({ ... };
+ *   .Respond({ ... };
  * ```
  *
  * @group Operations
@@ -87,13 +80,13 @@ export type RespondOutput = {
  * @group Operations
  * @category Handlers
  */
-export const respondOperationHandler: OperationHandler<RespondOperation> = {
+export const RespondOperationHandler: OperationHandler<RespondOperation> = {
   handle: async (
     operation: RespondOperation,
     convergence: Convergence,
     scope: OperationScope
   ): Promise<RespondOutput> => {
-    return respondBuilder(convergence, operation.input, scope).sendAndConfirm(
+    return RespondBuilder(convergence, operation.input, scope).sendAndConfirm(
       convergence,
       scope.confirmOptions
     );
@@ -119,7 +112,7 @@ export type RespondBuilderParams = RespondInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const respondBuilder = (
+export const RespondBuilder = (
   convergence: Convergence,
   params: RespondBuilderParams,
   options: TransactionBuilderOptions = {}
@@ -137,10 +130,8 @@ export const respondBuilder = (
     ask = null,
   } = params;
 
-  // const systemProgram = convergence.programs().getSystem(programs);
+  const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getToken(programs);
-
-  // const anchorRemainingAccounts: AccountMeta[] = [];
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -154,8 +145,7 @@ export const respondBuilder = (
           collateralInfo,
           collateralToken,
           riskEngine,
-          systemProgram: SystemProgram.programId,
-          // anchorRemainingAccounts,
+          systemProgram: systemProgram.address,
         },
         {
           bid,
@@ -164,6 +154,6 @@ export const respondBuilder = (
         rfqProgram.address
       ),
       signers: [maker],
-      key: 'respondRfq',
+      key: 'Respond',
     });
 };

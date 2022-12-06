@@ -108,12 +108,6 @@ export const fundCollateralOperationHandler: OperationHandler<FundCollateralOper
 export type FundCollateralBuilderParams = FundCollateralInput;
 
 /**
- * @group Transaction Builders
- * @category Contexts
- */
-export type FundCollateralBuilderContext = SendAndConfirmTransactionResponse;
-
-/**
  * Funds a collateral account.
  *
  * ```ts
@@ -130,7 +124,7 @@ export const fundCollateralBuilder = async (
   convergence: Convergence,
   params: FundCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder<FundCollateralBuilderContext>> => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
   const tokenProgram = convergence.programs().getToken(programs);
@@ -144,7 +138,7 @@ export const fundCollateralBuilder = async (
     amount,
   } = params;
 
-  return TransactionBuilder.make<FundCollateralBuilderContext>()
+  return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createFundCollateralInstruction(

@@ -19,8 +19,6 @@ import {
   FindRfqsByOwnerInput,
   findRfqsByOwnerOperation,
   RespondInput,
-  // LoadLegsInput,
-  // loadLegsOperation,
   findRfqByAddressOperation,
   findRfqsByAddressesOperation,
   respondOperation,

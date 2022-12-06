@@ -95,7 +95,7 @@ export const cleanUpResponseOperationHandler: OperationHandler<CleanUpResponseOp
  * @group Transaction Builders
  * @category Inputs
  */
-export type CancelResponseBuilderParams = CleanUpResponseInput;
+export type CleanUpResponseBuilderParams = CleanUpResponseInput;
 
 /**
  * Cleans up an existing Response.
@@ -112,7 +112,7 @@ export type CancelResponseBuilderParams = CleanUpResponseInput;
  */
 export const cleanUpResponseBuilder = (
   convergence: Convergence,
-  params: CancelResponseBuilderParams,
+  params: CleanUpResponseBuilderParams,
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;

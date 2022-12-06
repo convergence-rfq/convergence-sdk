@@ -88,7 +88,7 @@ export const prepareMoreLegsSettlementOperationHandler: OperationHandler<Prepare
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareMoreLegsSettlementOutput> => {
-      const builder = await prepareMoreLegsSettlementBuilder(
+      const builder = prepareMoreLegsSettlementBuilder(
         convergence,
         {
           ...operation.input,

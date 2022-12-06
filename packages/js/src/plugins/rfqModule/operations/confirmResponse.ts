@@ -84,14 +84,14 @@ export type ConfirmResponseOutput = {
  * @group Operations
  * @category Handlers
  */
-export const respondOperationHandler: OperationHandler<ConfirmResponseOperation> =
+export const confirmResponseOperationHandler: OperationHandler<ConfirmResponseOperation> =
   {
     handle: async (
       operation: ConfirmResponseOperation,
       convergence: Convergence,
       scope: OperationScope
     ): Promise<ConfirmResponseOutput> => {
-      return respondBuilder(convergence, operation.input, scope).sendAndConfirm(
+      return confirmResponseBuilder(convergence, operation.input, scope).sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
@@ -117,7 +117,7 @@ export type ConfirmResponseBuilderParams = ConfirmResponseInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const respondBuilder = (
+export const confirmResponseBuilder = (
   convergence: Convergence,
   params: ConfirmResponseBuilderParams,
   options: TransactionBuilderOptions = {}
