@@ -14,9 +14,7 @@ test('[rfqModule] it can create an RFQ', async (t: Test) => {
     rpcEndpoint: 'https://api.devnet.solana.com',
   });
   const originalRfq = await createRfq(cvg);
-  const rfq = await cvg
-    .rfqs()
-    .findByAddress({ address: originalRfq.address });
+  const rfq = await cvg.rfqs().findByAddress({ rfq: originalRfq.rfq });
 
   spok(t, rfq, {
     $topic: 'Loaded RFQ',
@@ -46,10 +44,12 @@ test('[rfqModule] it can cancel an RFQ', async (t: Test) => {
     rpcEndpoint: 'https://api.devnet.solana.com',
   });
   const originalRfq = await createRfq(cvg);
-  await cvg.rfqs().cancelRfq({ address: originalRfq.address });
-  const rfq = await cvg
+  await cvg
     .rfqs()
-    .findByAddress({ address: originalRfq.address });
+    .cancelRfq({
+      rfq: originalRfq.address
+    });
+  const rfq = await cvg.rfqs().findByAddress({ rfq: originalRfq.address });
 
   spok(t, rfq, {
     $topic: 'Loaded RFQ',
@@ -63,10 +63,8 @@ test('[rfqModule] it can respond to an RFQ', async (t: Test) => {
     rpcEndpoint: 'https://api.devnet.solana.com',
   });
   const originalRfq = await createRfq(cvg);
-  await cvg.rfqs().respond({ address: originalRfq.address });
-  const rfq = await cvg
-    .rfqs()
-    .findByAddress({ address: originalRfq.address });
+  await cvg.rfqs().respond({ rfq: originalRfq.rfq });
+  const rfq = await cvg.rfqs().findByAddress({ address: originalRfq.address });
 
   spok(t, rfq, {
     $topic: 'Loaded RFQ',

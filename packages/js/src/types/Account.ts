@@ -1,4 +1,4 @@
-// import { Buffer } from "buffer";
+import { Buffer } from "buffer";
 import { PublicKey } from "@solana/web3.js";
 import { SolAmount } from "./Amount";
 import {

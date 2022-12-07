@@ -2,7 +2,7 @@ import {
   createPrepareSettlementInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -65,7 +65,7 @@ export type PrepareSettlementInput = {
   /** The address of the quote escrow TokenAccount */
   quoteEscrow: PublicKey;
   /** The rent sysvar */
-  rent: PublicKey;
+  rent?: PublicKey;
 
   /*
    * Args
@@ -136,7 +136,7 @@ export const respondBuilder = (
     response,
     quoteMint,
     quoteEscrow,
-    rent,
+    rent = SYSVAR_RENT_PUBKEY,
     side,
     legAmountToPrepare,
   } = params;

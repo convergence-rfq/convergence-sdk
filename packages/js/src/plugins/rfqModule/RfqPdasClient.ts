@@ -1,153 +1,135 @@
-// import { Buffer } from 'buffer';
+import { Buffer } from 'buffer';
 import type { Convergence } from '@/Convergence';
-// import { BigNumber, Pda, Program, PublicKey, toBigNumber } from '@/types';
-
-/*
-  PDAs needed:
-
-  Derived from Rfq:
-    Collateral (derived from Rfq Taker) (settle_two_party_default.rs, unlock_response_collateral.rs)
-    Collateral Token (same as above)
-
-
-  Derived from response:
-    Quote Escrow (prepare_settlement.rs, revert_settlement.rs, settle.rs)
-    Collateral (Derived from Response Maker) (settle_two_party_default.rs)
-    Collateral Token (same as above)
-
-
-*/
-
+import { BigNumber, Pda, Program, PublicKey, toBigNumber } from '@/types';
 
 /**
- * This client allows you to build PDAs related to the Rfq module.
+ * This client allows you to build PDAs related to the NFT module.
  *
- * @see {@link RfqClient}
+ * @see {@link NftClient}
  * @group Module Pdas
  */
 export class RfqPdasClient {
   constructor(protected readonly convergence: Convergence) {}
 
-
   /** Finds the Metadata PDA of a given mint address. */
-  // metadata({ mint, programs }: MintAddressPdaInput): Pda {
-  //   const programId = this.programId(programs);
-  //   return Pda.find(programId, [
-  //     Buffer.from('metadata', 'utf8'),
-  //     programId.toBuffer(),
-  //     mint.toBuffer(),
-  //   ]);
-  // }
+  metadata({ mint, programs }: MintAddressPdaInput): Pda {
+    const programId = this.programId(programs);
+    return Pda.find(programId, [
+      Buffer.from('metadata', 'utf8'),
+      programId.toBuffer(),
+      mint.toBuffer(),
+    ]);
+  }
 
   /** Finds the Master Edition PDA of a given mint address. */
-  // masterEdition({ mint, programs }: MintAddressPdaInput): Pda {
-  //   const programId = this.programId(programs);
-  //   return Pda.find(programId, [
-  //     Buffer.from('metadata', 'utf8'),
-  //     programId.toBuffer(),
-  //     mint.toBuffer(),
-  //     Buffer.from('edition', 'utf8'),
-  //   ]);
-  // }
+  masterEdition({ mint, programs }: MintAddressPdaInput): Pda {
+    const programId = this.programId(programs);
+    return Pda.find(programId, [
+      Buffer.from('metadata', 'utf8'),
+      programId.toBuffer(),
+      mint.toBuffer(),
+      Buffer.from('edition', 'utf8'),
+    ]);
+  }
 
   /** Finds the Edition PDA of a given mint address. */
-  // edition(input: MintAddressPdaInput): Pda {
-  //   return this.masterEdition(input);
-  // }
+  edition(input: MintAddressPdaInput): Pda {
+    return this.masterEdition(input);
+  }
 
   /** Finds the Edition Marker PDA of a given edition number. */
-  // editionMarker({
-  //   mint,
-  //   edition,
-  //   programs,
-  // }: {
-  //   /** The address of the mint account of the edition NFT. */
-  //   mint: PublicKey;
-  //   /** The edition number of the NFT. */
-  //   edition: BigNumber;
-  //   /** An optional set of programs that override the registered ones. */
-  //   programs?: Program[];
-  // }): Pda {
-  //   const programId = this.programId(programs);
-  //   return Pda.find(programId, [
-  //     Buffer.from('metadata', 'utf8'),
-  //     programId.toBuffer(),
-  //     mint.toBuffer(),
-  //     Buffer.from('edition', 'utf8'),
-  //     Buffer.from(edition.div(toBigNumber(248)).toString()),
-  //   ]);
-  // }
+  editionMarker({
+    mint,
+    edition,
+    programs,
+  }: {
+    /** The address of the mint account of the edition NFT. */
+    mint: PublicKey;
+    /** The edition number of the NFT. */
+    edition: BigNumber;
+    /** An optional set of programs that override the registered ones. */
+    programs?: Program[];
+  }): Pda {
+    const programId = this.programId(programs);
+    return Pda.find(programId, [
+      Buffer.from('metadata', 'utf8'),
+      programId.toBuffer(),
+      mint.toBuffer(),
+      Buffer.from('edition', 'utf8'),
+      Buffer.from(edition.div(toBigNumber(248)).toString()),
+    ]);
+  }
 
   /** Finds the collection authority PDA for a given NFT and authority. */
-  // collectionAuthorityRecord({
-  //   mint,
-  //   collectionAuthority,
-  //   programs,
-  // }: {
-  //   /** The address of the NFT's mint account. */
-  //   mint: PublicKey;
-  //   /** The address of the collection authority. */
-  //   collectionAuthority: PublicKey;
-  //   /** An optional set of programs that override the registered ones. */
-  //   programs?: Program[];
-  // }): Pda {
-  //   const programId = this.programId(programs);
-  //   return Pda.find(programId, [
-  //     Buffer.from('metadata', 'utf8'),
-  //     programId.toBuffer(),
-  //     mint.toBuffer(),
-  //     Buffer.from('collection_authority', 'utf8'),
-  //     collectionAuthority.toBuffer(),
-  //   ]);
-  // }
+  collectionAuthorityRecord({
+    mint,
+    collectionAuthority,
+    programs,
+  }: {
+    /** The address of the NFT's mint account. */
+    mint: PublicKey;
+    /** The address of the collection authority. */
+    collectionAuthority: PublicKey;
+    /** An optional set of programs that override the registered ones. */
+    programs?: Program[];
+  }): Pda {
+    const programId = this.programId(programs);
+    return Pda.find(programId, [
+      Buffer.from('metadata', 'utf8'),
+      programId.toBuffer(),
+      mint.toBuffer(),
+      Buffer.from('collection_authority', 'utf8'),
+      collectionAuthority.toBuffer(),
+    ]);
+  }
 
   /** Finds the use authority PDA for a given NFT and user. */
-  // useAuthorityRecord({
-  //   mint,
-  //   useAuthority,
-  //   programs,
-  // }: {
-  //   /** The address of the NFT's mint account. */
-  //   mint: PublicKey;
-  //   /** The address of the use authority. */
-  //   useAuthority: PublicKey;
-  //   /** An optional set of programs that override the registered ones. */
-  //   programs?: Program[];
-  // }): Pda {
-  //   const programId = this.programId(programs);
-  //   return Pda.find(programId, [
-  //     Buffer.from('metadata', 'utf8'),
-  //     programId.toBuffer(),
-  //     mint.toBuffer(),
-  //     Buffer.from('user', 'utf8'),
-  //     useAuthority.toBuffer(),
-  //   ]);
-  // }
+  useAuthorityRecord({
+    mint,
+    useAuthority,
+    programs,
+  }: {
+    /** The address of the NFT's mint account. */
+    mint: PublicKey;
+    /** The address of the use authority. */
+    useAuthority: PublicKey;
+    /** An optional set of programs that override the registered ones. */
+    programs?: Program[];
+  }): Pda {
+    const programId = this.programId(programs);
+    return Pda.find(programId, [
+      Buffer.from('metadata', 'utf8'),
+      programId.toBuffer(),
+      mint.toBuffer(),
+      Buffer.from('user', 'utf8'),
+      useAuthority.toBuffer(),
+    ]);
+  }
 
   /** Finds the burner PDA of the Token Metadata program. */
-//   burner({
-//     programs,
-//   }: {
-//     /** An optional set of programs that override the registered ones. */
-//     programs?: Program[];
-//   }): Pda {
-//     const programId = this.programId(programs);
-//     return Pda.find(programId, [
-//       Buffer.from('metadata', 'utf8'),
-//       programId.toBuffer(),
-//       Buffer.from('burn', 'utf8'),
-//     ]);
-//   }
+  burner({
+    programs,
+  }: {
+    /** An optional set of programs that override the registered ones. */
+    programs?: Program[];
+  }): Pda {
+    const programId = this.programId(programs);
+    return Pda.find(programId, [
+      Buffer.from('metadata', 'utf8'),
+      programId.toBuffer(),
+      Buffer.from('burn', 'utf8'),
+    ]);
+  }
 
-//   private programId(programs?: Program[]) {
-//     return this.convergence.programs().getRfq(programs).address;
-//   }
+  private programId(programs?: Program[]) {
+    return this.convergence.programs().getRfq(programs).address;
+  }
 }
 
-// type MintAddressPdaInput = {
-//   /** The address of the mint account. */
-//   mint: PublicKey;
+type MintAddressPdaInput = {
+  /** The address of the mint account. */
+  mint: PublicKey;
 
-//   /** An optional set of programs that override the registered ones. */
-//   programs?: Program[];
-// };
+  /** An optional set of programs that override the registered ones. */
+  programs?: Program[];
+};

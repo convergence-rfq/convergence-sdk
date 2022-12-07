@@ -19,7 +19,7 @@ const Key = 'RespondOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .Respond({ ... };
+ *   .respond({ ... };
  * ```
  *
  * @group Operations
@@ -99,13 +99,13 @@ export const respondOperationHandler: OperationHandler<RespondOperation> = {
 export type RespondBuilderParams = RespondInput;
 
 /**
- * Cancels an existing Rfq.
+ * Responds to an Rfq.
  *
  * ```ts
  * const transactionBuilder = convergence
  *   .rfqs()
  *   .builders()
- *   .cancel({ address });
+ *   .respond({ address });
  * ```
  *
  * @group Transaction Builders

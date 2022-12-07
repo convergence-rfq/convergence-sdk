@@ -55,11 +55,11 @@ export type CreateRfqInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   taker?: Signer;
-
+  /** The pubkey address of the protocol account. */
   protocol: PublicKey;
-
+  /** The pubkey address of the Rfq account. */
   rfq: PublicKey;
-
+  /** The pubkey address of the quote_mint account. */
   quoteMint: PublicKey;
 
   /*
@@ -91,7 +91,6 @@ export type CreateRfqInput = {
 export type CreateRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
-
   /** The newly created Rfq. */
   rfq: Rfq;
 };

@@ -39,7 +39,7 @@ export const createWallet = async (
 
 export const createRfq = async (
   cvg: Convergence,
-  input: Partial<CreateRfqInput> = {}
+  input: CreateRfqInput
 ) => {
   const { rfq } = await cvg.rfqs().create({
     ...input,
@@ -47,17 +47,14 @@ export const createRfq = async (
   return rfq;
 };
 
-export const cancelRfq = async (
-  cvg: Convergence,
-  input: Partial<CancelRfqInput> = {}
-) => {
-  const { address } = input;
+export const cancelRfq = async (cvg: Convergence, input: CancelRfqInput) => {
+  const { rfq } = input;
 
-  if (!address) {
+  if (!rfq) {
     return;
   }
 
   await cvg.rfqs().cancelRfq({
-    address,
+    ...input
   });
 };

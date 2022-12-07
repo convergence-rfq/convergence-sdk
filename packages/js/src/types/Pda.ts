@@ -1,4 +1,4 @@
-// import { Buffer } from 'buffer';
+import { Buffer } from 'buffer';
 import { PublicKey, PublicKeyInitData } from '@solana/web3.js';
 
 export class Pda extends PublicKey {

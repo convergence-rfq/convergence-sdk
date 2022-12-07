@@ -1,4 +1,4 @@
-// import { Buffer } from "buffer";
+import { Buffer } from "buffer";
 import type { Beet } from "@metaplex-foundation/beet";
 import * as beet from "@metaplex-foundation/beet";
 import {
