@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["16.x", "18.x", "22.x"]
+        node: ["16.x", "18.x"]
         solana: ["1.10.34"]
     steps:
     - name: Git checkout
