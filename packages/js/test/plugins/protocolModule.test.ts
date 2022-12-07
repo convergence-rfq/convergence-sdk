@@ -7,12 +7,10 @@ killStuckProcess();
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   // TODO: This is not working bc we need to create these accounts beforehand
-  const riskEngine = new Keypair();
   const collateralMint = new Keypair();
 
   const cvg = await convergence();
   const { protocol } = await cvg.protocol().initialize({
-    riskEngine: riskEngine.publicKey,
     collateralMint: collateralMint.publicKey,
   });
 

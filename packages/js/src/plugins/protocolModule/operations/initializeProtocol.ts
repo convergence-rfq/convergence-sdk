@@ -56,11 +56,6 @@ export type InitializeProtocolInput = {
   owner?: PublicKey;
 
   /**
-   * The protocol risk engine.
-   */
-  riskEngine: PublicKey;
-
-  /**
    * The protocol collateral token mint.
    */
   collateralMint: PublicKey;
@@ -167,10 +162,11 @@ export const createProtocolBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<InitializeProtocolBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { riskEngine, collateralMint } = params;
+  const { collateralMint } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
-  const rfqProgram = convergence.programs().getRfq(programs);
+  const rfqProgram = convergence.programs().getRfq();
+  const riskEngineProgram = convergence.programs().getRiskEngine();
 
   // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
   const [protocol] = await PublicKey.findProgramAddress(
@@ -189,7 +185,7 @@ export const createProtocolBuilder = async (
         {
           protocol,
           signer: payer.publicKey,
-          riskEngine,
+          riskEngine: riskEngineProgram.address,
           collateralMint,
           systemProgram: systemProgram.address,
         },
