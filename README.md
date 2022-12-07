@@ -30,10 +30,5 @@ const convergence = new Convergence(connection);
 
 ```bash
 yarn 
-```
-
-**Building**
-
-```bash
 yarn build
 ```
