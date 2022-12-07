@@ -1,5 +1,4 @@
 import { Keypair, PublicKey } from '@solana/web3.js';
-import type { Leg } from './Leg';
 import { assert } from '@/utils';
 
 /**
@@ -8,25 +7,25 @@ import { assert } from '@/utils';
  *
  * @group Models
  */
-export type Rfq = Omit<Leg, 'model' | 'address' | 'mintAddress'> & {
+export type Protocol = {
   /** A model identifier to distinguish models in the SDK. */
-  readonly model: 'rfq';
+  readonly model: 'protocol';
 
   /** The mint address of the Rfq. */
   readonly address: PublicKey;
 };
 
 /** @group Model Helpers */
-export const isRfq = (value: any): value is Rfq =>
+export const isProtocol = (value: any): value is Protocol =>
   typeof value === 'object' && value.model === 'rfq';
 
 /** @group Model Helpers */
-export function assertRfq(value: any): asserts value is Rfq {
-  assert(isRfq(value), `Expected Rfq model`);
+export function assertProtocol(value: any): asserts value is Protocol {
+  assert(isProtocol(value), `Expected Protocol model`);
 }
 
 /** @group Model Helpers */
-export const toRfq = (): Rfq => ({
-  model: 'rfq',
+export const toProtocol = (): Protocol => ({
+  model: 'protocol',
   address: Keypair.generate().publicKey,
 });

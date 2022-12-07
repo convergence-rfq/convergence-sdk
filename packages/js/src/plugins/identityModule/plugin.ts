@@ -1,6 +1,6 @@
-import { IdentityClient } from "./IdentityClient";
-import type { Convergence } from "@/Convergence";
-import { ConvergencePlugin } from "@/types";
+import { IdentityClient } from './IdentityClient';
+import type { Convergence } from '@/Convergence';
+import { ConvergencePlugin } from '@/types';
 
 /** @group Plugins */
 export const identityModule = (): ConvergencePlugin => ({
@@ -10,7 +10,7 @@ export const identityModule = (): ConvergencePlugin => ({
   },
 });
 
-declare module "../../Convergence" {
+declare module '../../Convergence' {
   interface Convergence {
     identity(): IdentityClient;
   }
