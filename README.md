@@ -17,3 +17,23 @@ import { Connection, clusterApiUrl } from '@solana/web3.js';
 const connection = new Connection(clusterApiUrl('devnet'));
 const convergence = new Convergence(connection);
 ```
+
+## Development
+
+**Requirements**
+
+- [Node](https://nodejs.org/en/download/)
+- [Yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
+- [NX](https://nx.dev/recipes/adopting-nx/adding-to-monorepo)
+
+**Setup**
+
+```bash
+yarn 
+```
+
+**Building**
+
+```bash
+yarn build
+```

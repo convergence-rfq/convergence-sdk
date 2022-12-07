@@ -9,7 +9,7 @@ import {
 
 killStuckProcess();
 
-test('[rfqModule] it can create a RFQ', async (t: Test) => {
+test('[rfqModule] it can create a RFQ', async (_t: Test) => {
   await convergence();
   //const originalRfq = await createRfq(cvg);
   //const rfq = await cvg
@@ -23,7 +23,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
   //});
 });
 
-test('[rfqModule] it can cancel an RFQ', async (t: Test) => {
+test('[rfqModule] it can cancel an RFQ', async (_t: Test) => {
   await convergence();
   //const originalRfq = await createRfq(cvg);
   //await cvg.rfqs().cancelRfq({ address: originalRfq.address });
