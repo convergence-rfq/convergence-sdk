@@ -105,29 +105,28 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
-    const builder = await createRfqBuilder(
-      convergence,
-      {
-        ...operation.input,
-      },
-      scope
-    );
+    const builder = await createRfqBuilder(convergence, operation.input, scope);
     scope.throwIfCanceled();
 
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
       convergence,
       scope.confirmOptions
     );
+    
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
-    let rfq;
+    //TODO: verify that operation.__output is written to at some point
+    //if so, then this code should be valid
+    // let rfq;
 
-    if (operation.__output) {
-      const { rfq: RFQ } = operation.__output;
-      rfq = RFQ;
-    }
-    scope.throwIfCanceled();
+    // if (operation.__output) {
+    //   const { rfq: RFQ } = operation.__output;
+    //   rfq = RFQ;
+    // }
+    // scope.throwIfCanceled();
+
+    const rfq = operation.input.rfq;
 
     assertRfq(rfq);
 
@@ -178,18 +177,17 @@ export const createRfqBuilder = async (
 
   const {
     taker = convergence.identity(),
+    protocol,
     rfq,
-    legs = [],
-    expectedLegSize = 0,
-    orderType = OrderType.TwoWay,
-    fixedSize, //should default to `None`
     quoteMint,
+    expectedLegSize = 0,
+    legs = [],
+    orderType = OrderType.TwoWay,
+    // @ts-ignore
+    fixedSize = FixedSize.None,
     activeWindow = 1,
     settlingWindow = 1,
-    protocol,
   } = params;
-
-  const fixedsz = fixedSize!;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -209,7 +207,7 @@ export const createRfqBuilder = async (
           expectedLegSize,
           legs,
           orderType,
-          fixedSize: fixedsz, //TODO: get None value
+          fixedSize,
           activeWindow,
           settlingWindow,
         },

@@ -90,9 +90,7 @@ export const initializeProtocolOperationHandler: OperationHandler<InitializeProt
     ): Promise<InitializeProtocolOutput> => {
       const builder = initializeProtocolBuilder(
         convergence,
-        {
-          ...operation.input,
-        },
+        operation.input,
         scope
       );
       scope.throwIfCanceled();
@@ -132,7 +130,6 @@ export const initializeProtocolBuilder = (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
   const systemProgram = convergence.programs().getSystem(programs);
-
   const {
     signer = convergence.identity(),
     protocol,
@@ -159,7 +156,7 @@ export const initializeProtocolBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [signer],
       key: 'initializeProtocol',
     });
 };
