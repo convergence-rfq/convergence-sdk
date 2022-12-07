@@ -173,8 +173,7 @@ export const createRfqBuilder = async (
   const expectedLegSize = 0;
   const legs: Leg[] = [];
   const orderType = OrderType.TwoWay;
-  // @ts-ignore
-  const fixedSize = FixedSize.None;
+  const fixedSize: FixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 };
   const activeWindow = 1;
   const settlingWindow = 1;
   const anchorRemainingAccounts: AccountMeta[] = [];
