@@ -28,18 +28,6 @@ import type { Convergence } from '@/Convergence';
 export class ProtocolClient {
   constructor(protected readonly convergence: Convergence) {}
 
-  /**
-   * You may use the `builders()` client to access the
-   * underlying Transaction Builders of this module.
-   *
-   * ```ts
-   * const buildersClient = convergence.rfqs().builders();
-   * ```
-   */
-  //builders() {
-  //  return new ProtocolBuildersClient(this.convergence);
-  //}
-
   /** {@inheritDoc initializeProtocolOperation} */
   initialize(input: InitializeProtocolInput, options?: OperationOptions) {
     return this.convergence

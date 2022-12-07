@@ -18,7 +18,8 @@ import { Convergence } from '@/Convergence';
 const Key = 'InitializeProtocolOperation' as const;
 
 /**
- * Initialize a new protocol.
+ * Initialize a new protocol. Note the PDA is derived from a seed, meaning
+ * only one protocol can be initialized per network.
  *
  * ```ts
  * const { protocol } = await convergence
@@ -73,7 +74,7 @@ export type InitializeProtocolOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
-  /** The newly created Rfq. */
+  /** The newly initialized protocol. */
   protocol: Protocol;
 };
 
@@ -171,11 +172,13 @@ export const createProtocolBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
+  // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
   const [protocol] = await PublicKey.findProgramAddress(
     [Buffer.from('protocol')],
     rfqProgram.address
   );
 
+  // TODO: Make this configurable
   const settleFees: FeeParameters = { takerBps: 0, makerBps: 0 };
   const defaultFees: FeeParameters = { takerBps: 0, makerBps: 0 };
 
