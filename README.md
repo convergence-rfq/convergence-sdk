@@ -22,7 +22,7 @@ const convergence = new Convergence(connection);
 
 **Requirements**
 
-- [Node (18.12.1](https://nodejs.org/en/download/)
+- [Node (18.12.1)](https://nodejs.org/en/download/)
 - [Yarn (1.22.15)](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
 - [NX (14.8.6)](https://nx.dev/recipes/adopting-nx/adding-to-monorepo)
 
