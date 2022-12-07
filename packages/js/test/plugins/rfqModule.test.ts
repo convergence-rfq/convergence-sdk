@@ -49,7 +49,7 @@ test('[rfqModule] it can cancel an RFQ', async (t: Test) => {
     .cancelRfq({
       rfq: originalRfq.address
     });
-  const rfq = await cvg.rfqs().findByAddress({ rfq: originalRfq.address });
+  const rfq = await cvg.rfqs().findRfqByAddress({ rfq: originalRfq.address });
 
   spok(t, rfq, {
     $topic: 'Loaded RFQ',
@@ -64,7 +64,7 @@ test('[rfqModule] it can respond to an RFQ', async (t: Test) => {
   });
   const originalRfq = await createRfq(cvg);
   await cvg.rfqs().respond({ rfq: originalRfq.rfq });
-  const rfq = await cvg.rfqs().findByAddress({ address: originalRfq.address });
+  const rfq = await cvg.rfqs().findRfqByAddress({ address: originalRfq.address });
 
   spok(t, rfq, {
     $topic: 'Loaded RFQ',

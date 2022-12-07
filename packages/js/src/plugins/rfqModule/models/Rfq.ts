@@ -26,7 +26,6 @@ export function assertRfq(value: any): asserts value is Rfq {
 }
 
 /** @group Model Helpers */
-// export const toRfq = (legs: Leg[]): Rfq => ({
 export const toRfq = (account: RfqAccount): Rfq => ({
   model: 'rfq',
   address: account.publicKey,

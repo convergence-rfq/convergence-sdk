@@ -6,7 +6,8 @@ import {
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertRfq, Rfq } from '../models';
+import { assertRfq, toRfq, Rfq } from '../models';
+import { toRfqAccount } from '../accounts';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -105,6 +106,8 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
+    const { commitment } = scope;
+    const { rfq: rfqPubkey } = operation.input;
     const builder = await createRfqBuilder(convergence, operation.input, scope);
     scope.throwIfCanceled();
 
@@ -112,12 +115,13 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       convergence,
       scope.confirmOptions
     );
-    
+
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
     //TODO: verify that operation.__output is written to at some point
-    //if so, then this code should be valid
+    //if so, then this code should be valid. I'd like to get the pubkey
+    //from the output rather than the input
     // let rfq;
 
     // if (operation.__output) {
@@ -126,7 +130,11 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     // }
     // scope.throwIfCanceled();
 
-    const rfq = operation.input.rfq;
+    const account = toRfqAccount(
+      await convergence.rpc().getAccount(rfqPubkey, commitment)
+    );
+
+    const rfq = toRfq(account);
 
     assertRfq(rfq);
 
