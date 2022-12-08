@@ -9,6 +9,8 @@ import { bundlrStorage } from '../bundlrStorage';
 import { systemModule } from '../systemModule';
 import { tokenModule } from '../tokenModule';
 import { rfqModule } from '../rfqModule';
+import { protocolModule } from '../protocolModule';
+import { riskEngineModule } from '../riskEngineModule';
 
 export const corePlugins = () => ({
   install(convergence: Convergence) {
@@ -26,6 +28,8 @@ export const corePlugins = () => ({
     // Verticals
     convergence.use(systemModule());
     convergence.use(tokenModule());
+    convergence.use(protocolModule());
     convergence.use(rfqModule());
+    convergence.use(riskEngineModule());
   },
 });

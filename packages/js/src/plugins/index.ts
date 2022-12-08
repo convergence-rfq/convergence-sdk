@@ -10,6 +10,7 @@ export * from './rfqModule';
 export * from './riskEngineModule';
 export * from './rpcModule';
 export * from './spotInstrumentModule';
+export * from './protocolModule';
 export * from './storageModule';
 export * from './systemModule';
 export * from './tokenModule';

@@ -8,7 +8,7 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 
-const Key = 'FindRfqsByAddressOperation' as const;
+const Key = 'FindRfqByAddressOperation' as const;
 
 /**
  * Finds Rfq by a given address.
@@ -22,50 +22,50 @@ const Key = 'FindRfqsByAddressOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const findRfqsByAddressOperation =
-  useOperation<FindRfqsByAddressOperation>(Key);
+export const findRfqByAddressOperation =
+  useOperation<FindRfqByAddressOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type FindRfqsByAddressOperation = Operation<
+export type FindRfqByAddressOperation = Operation<
   typeof Key,
-  FindRfqsByAddressInput,
-  FindRfqsByAddressOutput
+  FindRfqByAddressInput,
+  FindRfqByAddressOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type FindRfqsByAddressInput = {
+export type FindRfqByAddressInput = {
   /** The address of the Rfq. */
-  addresses: PublicKey[];
+  address: PublicKey;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByAddressOutput = Rfq;
+export type FindRfqByAddressOutput = Rfq;
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const findRfqByAddressOperationHandler: OperationHandler<FindRfqsByAddressOperation> =
+export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddressOperation> =
   {
     handle: async (
-      operation: FindRfqsByAddressOperation,
+      operation: FindRfqByAddressOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<FindRfqsByAddressOutput> => {
-      const { addresses } = operation.input;
+    ): Promise<FindRfqByAddressOutput> => {
+      const { address } = operation.input;
 
       scope.throwIfCanceled();
 
-      const rfq = await convergence.rfqs().findByAddress({ addresses }, scope);
+      const rfq = await convergence.rfqs().findByAddress({ address }, scope);
       scope.throwIfCanceled();
 
       return rfq;

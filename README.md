@@ -32,3 +32,10 @@ const convergence = new Convergence(connection);
 yarn 
 yarn build
 ```
+
+**TDD**
+
+```bash
+yarn amman:watch
+yarn test
+```
