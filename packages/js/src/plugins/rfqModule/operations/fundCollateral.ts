@@ -1,7 +1,4 @@
-import {
-  PublicKey,
-  // SystemProgram
-} from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import {
   Operation,
   OperationHandler,
@@ -18,12 +15,12 @@ import { bignum } from '@metaplex-foundation/beet';
 const Key = 'FundCollateralOperation' as const;
 
 /**
- * Finds Rfq by a given address.
+ * Funds a collateral account.
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByAddress({ address };
+ *   .fundCollateral({ address };
  * ```
  *
  * @group Operations
@@ -48,19 +45,23 @@ export type FundCollateralOperation = Operation<
  */
 export type FundCollateralInput = {
   /**
-   * The user for whom collateral is initialized.
+   * The user for whom collateral is funded.
    *
    * @defaultValue `convergence.identity().publicKey`
    */
   user?: Signer;
-
+  /** Token account of user's token */
   userTokens: PublicKey;
-
+  /** The address of the protocol account. */
   protocol: PublicKey;
-
+  /** The address of the user's collateral_info account. */
   collateralInfo: PublicKey;
-
+  /** The Token account of the user's collateral */
   collateralToken: PublicKey;
+
+  /*
+   * Args
+   */
 
   amount: bignum;
 };
@@ -83,12 +84,12 @@ export const fundCollateralOperationHandler: OperationHandler<FundCollateralOper
       operation: FundCollateralOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<FundCollateralOutput> => {
+    ) => {
+      scope.throwIfCanceled();
+
       const builder = await fundCollateralBuilder(
         convergence,
-        {
-          ...operation.input,
-        },
+        operation.input,
         scope
       );
       scope.throwIfCanceled();
@@ -114,7 +115,7 @@ export type FundCollateralBuilderParams = FundCollateralInput;
  * const transactionBuilder = await convergence
  *   .rfqs()
  *   .builders()
- *   .create();
+ *   .fundCollateral();
  * ```
  *
  * @group Transaction Builders

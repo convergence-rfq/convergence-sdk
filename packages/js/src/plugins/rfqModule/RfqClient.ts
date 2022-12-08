@@ -333,7 +333,7 @@ export class RfqClient {
   }
 
   /** {@inheritDoc settleOnePartyDefaultOperation} */
-  sesettleOnePartyDefault(
+  settleOnePartyDefault(
     input: SettleOnePartyDefaultInput,
     options?: OperationOptions
   ) {

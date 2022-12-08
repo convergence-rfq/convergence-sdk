@@ -191,8 +191,7 @@ export const createRfqBuilder = async (
     expectedLegSize = 0,
     legs = [],
     orderType = OrderType.TwoWay,
-    // @ts-ignore
-    fixedSize = FixedSize.None,
+    fixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 },
     activeWindow = 1,
     settlingWindow = 1,
   } = params;

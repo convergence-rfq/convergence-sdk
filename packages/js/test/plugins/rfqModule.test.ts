@@ -6,6 +6,7 @@ import {
   killStuckProcess,
   spokSamePubkey,
 } from '../helpers';
+import { Keypair } from '@solana/web3.js';
 
 killStuckProcess();
 
@@ -13,8 +14,17 @@ test('[rfqModule] it can create an RFQ', async (t: Test) => {
   const cvg = await convergence({
     rpcEndpoint: 'https://api.devnet.solana.com',
   });
-  const originalRfq = await createRfq(cvg);
-  const rfq = await cvg.rfqs().findByAddress({ rfq: originalRfq.rfq });
+
+  const protocol = new Keypair().publicKey;
+  const rfqPubkey = new Keypair().publicKey;
+  const quoteMint = new Keypair().publicKey;
+
+  const originalRfq = await createRfq(cvg, {
+    protocol,
+    rfq: rfqPubkey,
+    quoteMint,
+  });
+  const rfq = await cvg.rfqs().findRfqByAddress({ rfq: originalRfq.address });
 
   spok(t, rfq, {
     $topic: 'Loaded RFQ',
@@ -43,12 +53,20 @@ test('[rfqModule] it can cancel an RFQ', async (t: Test) => {
   const cvg = await convergence({
     rpcEndpoint: 'https://api.devnet.solana.com',
   });
-  const originalRfq = await createRfq(cvg);
-  await cvg
-    .rfqs()
-    .cancelRfq({
-      rfq: originalRfq.address
-    });
+
+  const protocol = new Keypair().publicKey;
+  const rfqPubkey = new Keypair().publicKey;
+  const quoteMint = new Keypair().publicKey;
+
+  const originalRfq = await createRfq(cvg, {
+    protocol,
+    rfq: rfqPubkey,
+    quoteMint,
+  });
+  await cvg.rfqs().cancelRfq({
+    protocol,
+    rfq: originalRfq.address,
+  });
   const rfq = await cvg.rfqs().findRfqByAddress({ rfq: originalRfq.address });
 
   spok(t, rfq, {
@@ -64,7 +82,9 @@ test('[rfqModule] it can respond to an RFQ', async (t: Test) => {
   });
   const originalRfq = await createRfq(cvg);
   await cvg.rfqs().respond({ rfq: originalRfq.rfq });
-  const rfq = await cvg.rfqs().findRfqByAddress({ address: originalRfq.address });
+  const rfq = await cvg
+    .rfqs()
+    .findRfqByAddress({ address: originalRfq.address });
 
   spok(t, rfq, {
     $topic: 'Loaded RFQ',
@@ -72,3 +92,37 @@ test('[rfqModule] it can respond to an RFQ', async (t: Test) => {
     address: spokSamePubkey(rfq.address),
   });
 });
+
+// test('[rfqModule] it can initialize collateral', async (t: Test) => {
+//   const cvg = await convergence({
+//     rpcEndpoint: 'https://api.devnet.solana.com',
+//   });
+//   const originalRfq = await createRfq(cvg);
+//   await cvg.rfqs().initializeCollateral({ rfq: originalRfq.rfq });
+//   const rfq = await cvg
+//     .rfqs()
+//     .findRfqByAddress({ address: originalRfq.address });
+
+//   spok(t, rfq, {
+//     $topic: 'Loaded RFQ',
+//     model: 'rfq',
+//     address: spokSamePubkey(rfq.address),
+//   });
+// });
+
+// test('[rfqModule] it can fund collateral', async (t: Test) => {
+//   const cvg = await convergence({
+//     rpcEndpoint: 'https://api.devnet.solana.com',
+//   });
+//   const originalRfq = await createRfq(cvg);
+//   await cvg.rfqs().respond({ rfq: originalRfq.rfq });
+//   const rfq = await cvg
+//     .rfqs()
+//     .findRfqByAddress({ address: originalRfq.address });
+
+//   spok(t, rfq, {
+//     $topic: 'Loaded RFQ',
+//     model: 'rfq',
+//     address: spokSamePubkey(rfq.address),
+//   });
+// });

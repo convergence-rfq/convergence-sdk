@@ -1,7 +1,4 @@
-import {
-  PublicKey,
-  // SystemProgram
-} from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import {
   Operation,
   OperationHandler,
@@ -17,12 +14,12 @@ import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
 const Key = 'InitializeCollateralOperation' as const;
 
 /**
- * Finds Rfq by a given address.
+ * Initializes a collateral account.
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByAddress({ address };
+ *   .initializeCollateral({ address };
  * ```
  *
  * @group Operations
@@ -52,7 +49,7 @@ export type InitializeCollateralInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   user?: Signer;
-
+  /** The address of the protocol*/
   protocol: PublicKey;
 
   collateralInfo: PublicKey;
@@ -80,12 +77,12 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       operation: InitializeCollateralOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<InitializeCollateralOutput> => {
+    ) => {
+      scope.throwIfCanceled();
+
       const builder = await initializeCollateralBuilder(
         convergence,
-        {
-          ...operation.input,
-        },
+        operation.input,
         scope
       );
       scope.throwIfCanceled();
@@ -105,20 +102,13 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
 export type InitializeCollateralBuilderParams = InitializeCollateralInput;
 
 /**
- * @group Transaction Builders
- * @category Contexts
- */
-export type InitializeCollateralBuilderContext =
-  SendAndConfirmTransactionResponse;
-
-/**
  * Initializes a collateral account.
  *
  * ```ts
  * const transactionBuilder = await convergence
  *   .rfqs()
  *   .builders()
- *   .create();
+ *   .initializeCollateral();
  * ```
  *
  * @group Transaction Builders
@@ -128,7 +118,7 @@ export const initializeCollateralBuilder = async (
   convergence: Convergence,
   params: InitializeCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder<InitializeCollateralBuilderContext>> => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
   const tokenProgram = convergence.programs().getToken(programs);
@@ -142,7 +132,7 @@ export const initializeCollateralBuilder = async (
     collateralMint,
   } = params;
 
-  return TransactionBuilder.make<InitializeCollateralBuilderContext>()
+  return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createInitializeCollateralInstruction(
