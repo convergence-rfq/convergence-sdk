@@ -35,10 +35,6 @@ import {
   findRfqByAddressOperationHandler,
   findRfqsByAddressesOperation,
   findRfqsByAddressesOperationHandler,
-  initializeCollateralOperation,
-  initializeCollateralOperationHandler,
-  fundCollateralOperation,
-  fundCollateralOperationHandler,
   partiallySettleLegsOperation,
   partiallySettleLegsOperationHandler,
   prepareMoreLegsSettlementOperation,
@@ -109,11 +105,6 @@ export const rfqModule = (): ConvergencePlugin => ({
     );
     op.register(findRfqsByOwnerOperation, findRfqsByOwnerOperationHandler);
     op.register(findRfqsByTokenOperation, findRfqsByTokenOperationHandler);
-    op.register(fundCollateralOperation, fundCollateralOperationHandler);
-    op.register(
-      initializeCollateralOperation,
-      initializeCollateralOperationHandler
-    );
     op.register(
       partiallySettleLegsOperation,
       partiallySettleLegsOperationHandler

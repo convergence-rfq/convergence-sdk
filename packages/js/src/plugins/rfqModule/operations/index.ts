@@ -13,8 +13,6 @@ export * from './findRfqsByAddresses';
 export * from './findRfqsByInstrument';
 export * from './findRfqsByOwner';
 export * from './findRfqsByToken';
-export * from './fundCollateral';
-export * from './initializeCollateral';
 export * from './partiallySettleLegs';
 export * from './partlyRevertSettlementPreparation';
 export * from './prepareMoreLegsSettlement';
