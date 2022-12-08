@@ -7,9 +7,7 @@ killStuckProcess();
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const cvg = await convergence();
   const { rfq: originalRfq } = await cvg.rfqs().create({});
-  const rfq = await cvg
-    .rfqs()
-    .findByAddress({ addresses: [originalRfq.address] });
+  const rfq = await cvg.rfqs().findByAddress({ address: originalRfq.address });
 
   spok(t, rfq, {
     $topic: 'Created RFQ',

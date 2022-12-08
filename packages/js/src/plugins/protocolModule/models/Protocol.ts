@@ -1,4 +1,6 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
+import { ProtocolAccount } from '../accounts';
+import { Pda } from '@/types';
 import { assert } from '@/utils';
 
 /**
@@ -11,13 +13,16 @@ export type Protocol = {
   /** A model identifier to distinguish models in the SDK. */
   readonly model: 'protocol';
 
-  /** The mint address of the Rfq. */
+  /** The address of the protocol. */
   readonly address: PublicKey;
+
+  /** The address of the protocol. */
+  readonly collateralMint: PublicKey;
 };
 
 /** @group Model Helpers */
 export const isProtocol = (value: any): value is Protocol =>
-  typeof value === 'object' && value.model === 'rfq';
+  typeof value === 'object' && value.model === 'protocol';
 
 /** @group Model Helpers */
 export function assertProtocol(value: any): asserts value is Protocol {
@@ -25,7 +30,11 @@ export function assertProtocol(value: any): asserts value is Protocol {
 }
 
 /** @group Model Helpers */
-export const toProtocol = (): Protocol => ({
+export const toProtocol = (account: ProtocolAccount): Protocol => ({
   model: 'protocol',
-  address: Keypair.generate().publicKey,
+  address: Pda.find(account.owner, [
+    Buffer.from('protocol', 'utf8'),
+    account.owner.toBuffer(),
+  ]),
+  collateralMint: account.data.collateralMint,
 });

@@ -111,9 +111,9 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
-    const rfq = await convergence.rfqs().findByAddress(
+    const rfq = await convergence.rfqs().create(
       {
-        addresses: [],
+        ...operation.input,
       },
       scope
     );

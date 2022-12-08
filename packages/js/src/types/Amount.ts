@@ -1,7 +1,7 @@
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-import BN from "bn.js";
-import { BigNumber, BigNumberValues, toBigNumber } from "./BigNumber";
-import { CurrencyMismatchError, UnexpectedCurrencyError } from "@/errors";
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import BN from 'bn.js';
+import { BigNumber, BigNumberValues, toBigNumber } from './BigNumber';
+import { CurrencyMismatchError, UnexpectedCurrencyError } from '@/errors';
 
 export type Amount<T extends Currency = Currency> = {
   basisPoints: BigNumber;
@@ -11,19 +11,19 @@ export type Amount<T extends Currency = Currency> = {
 export type Currency = {
   symbol: string;
   decimals: number;
-  namespace?: "spl-token";
+  namespace?: 'spl-token';
 };
 
 export type SplTokenCurrency = {
   symbol: string;
   decimals: number;
-  namespace: "spl-token";
+  namespace: 'spl-token';
 };
 export type SplTokenAmount = Amount<SplTokenCurrency>;
 
 /** @group Constants */
 export const SOL = {
-  symbol: "SOL",
+  symbol: 'SOL',
   decimals: 9,
 } as const;
 export type SolCurrency = typeof SOL;
@@ -31,7 +31,7 @@ export type SolAmount = Amount<SolCurrency>;
 
 /** @group Constants */
 export const USD = {
-  symbol: "USD",
+  symbol: 'USD',
   decimals: 2,
 } as const;
 export type UsdCurrency = typeof USD;
@@ -62,9 +62,9 @@ export const usd = (usd: number): UsdAmount => {
 export const token = (
   amount: BigNumberValues,
   decimals = 0,
-  symbol = "Token"
+  symbol = 'Token'
 ): SplTokenAmount => {
-  if (typeof amount !== "number") {
+  if (typeof amount !== 'number') {
     amount = toBigNumber(amount).toNumber();
   }
 
@@ -76,7 +76,7 @@ export const token = (
     currency: {
       symbol,
       decimals,
-      namespace: "spl-token",
+      namespace: 'spl-token',
     },
   };
 };
@@ -93,11 +93,11 @@ export const sameCurrencies = (
   left: Currency | Amount,
   right: Currency | Amount
 ): boolean => {
-  if ("currency" in left) {
+  if ('currency' in left) {
     left = left.currency;
   }
 
-  if ("currency" in right) {
+  if ('currency' in right) {
     right = right.currency;
   }
 
@@ -124,7 +124,7 @@ export function assertCurrency<T extends Currency>(
   actual: Currency | Amount,
   expected: T
 ): asserts actual is T | Amount<T> {
-  if ("currency" in actual) {
+  if ('currency' in actual) {
     actual = actual.currency;
   }
 
@@ -148,11 +148,11 @@ export function assertSameCurrencies<L extends Currency, R extends Currency>(
   right: R | Amount<R>,
   operation?: string
 ) {
-  if ("currency" in left) {
+  if ('currency' in left) {
     left = left.currency;
   }
 
-  if ("currency" in right) {
+  if ('currency' in right) {
     right = right.currency;
   }
 
@@ -165,7 +165,7 @@ export const addAmounts = <T extends Currency>(
   left: Amount<T>,
   right: Amount<T>
 ): Amount<T> => {
-  assertSameCurrencies(left, right, "add");
+  assertSameCurrencies(left, right, 'add');
 
   return amount(left.basisPoints.add(right.basisPoints), left.currency);
 };
@@ -174,7 +174,7 @@ export const subtractAmounts = <T extends Currency>(
   left: Amount<T>,
   right: Amount<T>
 ): Amount<T> => {
-  assertSameCurrencies(left, right, "subtract");
+  assertSameCurrencies(left, right, 'subtract');
 
   return amount(left.basisPoints.sub(right.basisPoints), left.currency);
 };
@@ -203,7 +203,7 @@ export const compareAmounts = <T extends Currency>(
   left: Amount<T>,
   right: Amount<T>
 ): -1 | 0 | 1 => {
-  assertSameCurrencies(left, right, "compare");
+  assertSameCurrencies(left, right, 'compare');
 
   return left.basisPoints.cmp(right.basisPoints);
 };
@@ -214,8 +214,8 @@ export const isEqualToAmount = <T extends Currency>(
   tolerance?: Amount<T>
 ): boolean => {
   tolerance = tolerance ?? amount(0, left.currency);
-  assertSameCurrencies(left, right, "isEqualToAmount");
-  assertSameCurrencies(left, tolerance, "isEqualToAmount");
+  assertSameCurrencies(left, right, 'isEqualToAmount');
+  assertSameCurrencies(left, tolerance, 'isEqualToAmount');
 
   const delta = absoluteAmount(subtractAmounts(left, right));
 

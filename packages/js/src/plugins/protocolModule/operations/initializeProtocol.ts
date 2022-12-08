@@ -4,7 +4,8 @@ import {
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertProtocol, Protocol } from '../models';
+import { assertProtocol, Protocol, toProtocol } from '../models';
+import { toProtocolAccount } from '../accounts';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -84,6 +85,7 @@ export const initializeProtocolOperationHandler: OperationHandler<InitializeProt
       convergence: Convergence,
       scope: OperationScope
     ) => {
+      const { commitment } = scope;
       const { owner = convergence.identity().publicKey } = operation.input;
 
       const builder = await createProtocolBuilder(
@@ -103,14 +105,17 @@ export const initializeProtocolOperationHandler: OperationHandler<InitializeProt
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      const protocol = await convergence.rfqs().findByAddress(
-        {
-          addresses: [],
-        },
-        scope
+      const rfqProgram = convergence.programs().getRfq();
+      const [protocolPda] = await PublicKey.findProgramAddress(
+        [Buffer.from('protocol')],
+        rfqProgram.address
       );
+      const account = await convergence
+        .rpc()
+        .getAccount(protocolPda, commitment);
       scope.throwIfCanceled();
 
+      const protocol = toProtocol(toProtocolAccount(account));
       assertProtocol(protocol);
 
       return { ...output, protocol };
