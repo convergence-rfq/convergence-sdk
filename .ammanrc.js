@@ -18,12 +18,12 @@ const programs = [
   {
     label: 'Risk Engine',
     programId: riskEngine.PROGRAM_ADDRESS,
-    deployPath: localDeployPath('risk-engine'),
+    deployPath: localDeployPath('risk_engine'),
   },
   {
     label: 'Spot Instrument',
     programId: spotInstrument.PROGRAM_ADDRESS,
-    deployPath: localDeployPath('spot-instrument'),
+    deployPath: localDeployPath('spot_instrument'),
   }
 ];
 
