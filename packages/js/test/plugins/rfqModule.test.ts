@@ -1,19 +1,13 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-import {
-  convergence,
-  createRfq,
-  killStuckProcess,
-  spokSamePubkey,
-} from '../helpers';
-import { Keypair } from '@solana/web3.js';
+import { convergence, killStuckProcess, spokSamePubkey } from '../helpers';
 
 killStuckProcess();
 
 
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const cvg = await convergence();
-  const originalRfq = await createRfq(cvg);
+  const { rfq: originalRfq } = await cvg.rfqs().create({});
   const rfq = await cvg
     .rfqs()
     .findByAddresses({ addresses: [originalRfq.address] });

@@ -1,4 +1,4 @@
-import { Buffer } from "buffer";
+import { Buffer } from 'buffer';
 import {
   AccountInfo,
   Blockhash,
@@ -35,7 +35,6 @@ import {
   UnparsedMaybeAccount,
 } from '@/types';
 import { TransactionBuilder, zipMap } from '@/utils';
-
 
 export type ConfirmTransactionResponse = RpcResponseAndContext<SignatureResult>;
 export type SendAndConfirmTransactionResponse = {

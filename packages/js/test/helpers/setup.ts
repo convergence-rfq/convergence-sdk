@@ -1,17 +1,11 @@
 import { Commitment, Connection, Keypair } from '@solana/web3.js';
 import { LOCALHOST } from '@metaplex-foundation/amman-client';
 import { amman } from './amman';
-import {
-  Convergence,
-  keypairIdentity,
-  CreateRfqInput,
-  CancelRfqInput,
-  KeypairSigner,
-} from '@/index';
+import { Convergence, keypairIdentity, KeypairSigner } from '@/index';
 
 export type ConvergenceTestOptions = {
-  rpcEndpoint?: string;
   commitment?: Commitment;
+  rpcEndpoint?: string;
   solsToAirdrop?: number;
 };
 
@@ -39,7 +33,7 @@ export const createWallet = async (
 
 export const createRfq = async (
   cvg: Convergence,
-  input: CreateRfqInput
+  input: Partial<CreateRfqInput> = {}
 ) => {
   const { rfq } = await cvg.rfqs().create({
     ...input,
@@ -47,14 +41,17 @@ export const createRfq = async (
   return rfq;
 };
 
-export const cancelRfq = async (cvg: Convergence, input: CancelRfqInput) => {
-  const { rfq } = input;
+export const cancelRfq = async (
+  cvg: Convergence,
+  input: Partial<CancelRfqInput> = {}
+) => {
+  const { address } = input;
 
-  if (!rfq) {
+  if (!address) {
     return;
   }
 
   await cvg.rfqs().cancelRfq({
-    ...input
+    address,
   });
 };
