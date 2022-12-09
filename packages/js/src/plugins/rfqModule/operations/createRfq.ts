@@ -119,22 +119,12 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
-    //TODO: verify that operation.__output is written to at some point
-    //if so, then this code should be valid. I'd like to get the pubkey
-    //from the output rather than the input
-    // let rfq;
-
-    // if (operation.__output) {
-    //   const { rfq: RFQ } = operation.__output;
-    //   rfq = RFQ;
-    // }
-    // scope.throwIfCanceled();
-
-    const account = toRfqAccount(
-      await convergence.rpc().getAccount(rfqPubkey, commitment)
+    const rfq = await convergence.rfqs().create(
+      {
+        ...operation.input,
+      },
+      scope
     );
-
-    const rfq = toRfq(account);
 
     assertRfq(rfq);
 
