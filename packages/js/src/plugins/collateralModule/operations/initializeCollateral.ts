@@ -10,6 +10,7 @@ import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Signer, makeConfirmOptionsFinalizedOnMainnet } from '@/types';
 import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
+import { Collateral, toCollateral } from '../models';
 
 const Key = 'InitializeCollateralOperation' as const;
 
@@ -64,7 +65,10 @@ export type InitializeCollateralInput = {
  * @category Outputs
  */
 export type InitializeCollateralOutput = {
+  /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+  /** The newly created Collateral account */
+  collateral: Collateral;
 };
 
 /**
@@ -95,7 +99,9 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      return output;
+      const collateral = toCollateral(operation.input.collateralInfo);
+
+      return { ...output, collateral };
     },
   };
 

@@ -196,17 +196,14 @@ export class RfqClient {
   }
 
   /** {@inheritDoc findRfqByAddressOperation} */
-  findRfqByAddress(input: FindRfqByAddressInput, options?: OperationOptions) {
+  findByAddress(input: FindRfqByAddressInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findRfqByAddressOperation(input), options);
   }
 
   /** {@inheritDoc findRfqsByAddressesOperation} */
-  findRfqsByAddresses(
-    input: FindRfqsByAddressesInput,
-    options?: OperationOptions
-  ) {
+  findByAddresses(input: FindRfqsByAddressesInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findRfqsByAddressesOperation(input), options);
@@ -234,23 +231,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(findRfqsByTokenOperation(input), options);
-  }
-
-  /** {@inheritDoc fundCollateralOperation} */
-  fundCollateral(input: FundCollateralInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(fundCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc initializeCollateralOperation} */
-  initializeCollateral(
-    input: InitializeCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(initializeCollateralOperation(input), options);
   }
 
   /** {@inheritDoc partiallySettleLegsOperation} */
@@ -306,7 +286,7 @@ export class RfqClient {
     model: T,
     options?: OperationOptions
   ): Promise<T extends Metadata | PublicKey ? Rfq : T> {
-    return this.findRfqByAddress(
+    return this.findByAddress(
       {
         rfq: 'model' in model ? model.address : model,
       },

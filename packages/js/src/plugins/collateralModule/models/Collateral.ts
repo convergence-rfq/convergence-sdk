@@ -25,7 +25,7 @@ export function assertCollateral(value: any): asserts value is Collateral {
 }
 
 /** @group Model Helpers */
-export const toCollateral = (): Collateral => ({
+export const toCollateral = (address: PublicKey): Collateral => ({
   model: 'collateral',
   address: Keypair.generate().publicKey,
 });

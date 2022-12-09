@@ -1,6 +1,3 @@
-import { cusper } from '@metaplex-foundation/mpl-token-metadata';
-import { PROGRAM_ID } from '@convergence-rfq/rfq';
-import { ProgramClient } from '../programModule';
 import { CollateralClient } from './CollateralClient';
 import {
   initializeCollateralOperation,
@@ -25,7 +22,7 @@ export const collateralModule = (): ConvergencePlugin => ({
       initializeCollateralOperation,
       initializeCollateralOperationHandler
     );
-    
+
     convergence.collateral = function () {
       return new CollateralClient(this);
     };
@@ -35,11 +32,5 @@ export const collateralModule = (): ConvergencePlugin => ({
 declare module '../../Convergence' {
   interface Convergence {
     collateral(): CollateralClient;
-  }
-}
-
-declare module '../collateralModule/CollateralClient' {
-  interface CollateralClient {
-    getCollateral(): Collateral;
   }
 }
