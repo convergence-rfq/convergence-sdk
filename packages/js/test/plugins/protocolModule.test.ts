@@ -30,5 +30,6 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
     $topic: 'Initialize Protocol',
     model: 'protocol',
     address: spokSamePubkey(protocol.address),
+    collateralMint: spokSamePubkey(mint.address),
   });
 });
