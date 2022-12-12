@@ -1,9 +1,9 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-import { convergence, killStuckProcess, spokSamePubkey } from '../helpers';
 import { Keypair } from '@solana/web3.js';
-import { Signer } from '@/types';
 import { bignum } from '@metaplex-foundation/beet';
+import { convergence, killStuckProcess, spokSamePubkey } from '../helpers';
+import { Signer } from '@/types';
 
 killStuckProcess();
 
@@ -38,13 +38,6 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 test('[collateralModule] it can fund collateral', async (t: Test) => {
   const cvg = await convergence();
 
-  const rfqProgram = cvg.programs().getRfq();
-
-  //TODO: change to Collateral account discriminator
-  const RFQ_ACCOUNT_DISCRIMINATOR = Buffer.from([
-    106, 19, 109, 78, 169, 13, 234, 58,
-  ]);
-
   const user: Signer = new Keypair();
   const collateralMint = new Keypair();
   const userTokens = new Keypair();
@@ -73,16 +66,9 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     amount,
   });
 
-  // spok(t, collateral, {
-  //   $topic: 'Fund Collateral',
-  //   model: 'collateral',
-  //   address: spokSamePubkey(collateral.address),
-  // });
-
-  const rfqGpaBuilder = cvg
-    .programs()
-    .getGpaBuilder(rfqProgram.address)
-    .where(0, RFQ_ACCOUNT_DISCRIMINATOR);
-
-  const unparsedCollaterals = await rfqGpaBuilder.get();
+  spok(t, collateral, {
+    $topic: 'Fund Collateral',
+    model: 'collateral',
+    address: spokSamePubkey(collateral.address),
+  });
 });

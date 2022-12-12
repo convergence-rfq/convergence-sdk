@@ -6,8 +6,7 @@ import {
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertRfq, toRfq, Rfq } from '../models';
-import { toRfqAccount } from '../accounts';
+import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -106,8 +105,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
-    const { commitment } = scope;
-    const { rfq: rfqPubkey } = operation.input;
     const builder = await createRfqBuilder(convergence, operation.input, scope);
     scope.throwIfCanceled();
 
