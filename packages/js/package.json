@@ -38,7 +38,6 @@
     "lint:fix": "yarn eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
     "build": "yarn clean && tsc && tsc-alias && tsc -p test/tsconfig.json && tsc-alias -p test/tsconfig.json && rollup -c",
-    "test:mocha": "yarn ts-mocha -t 1000000 -p ./tsconfig.json test/**/**.test.ts",
     "test": "tape dist/test/**/*.test.js",
     "test:all": "tape dist/test/**/*.test.js && yarn test:exports",
     "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs",
@@ -64,9 +63,7 @@
     "eventemitter3": "^4.0.7",
     "merkletreejs": "^0.2.32",
     "mime": "^3.0.0",
-    "mocha": "^10.1.0",
-    "node-fetch": "^2.6.7",
-    "ts-mocha": "^10.0.0"
+    "node-fetch": "^2.6.7"
   },
   "engines": {
     "node": ">=16.0"

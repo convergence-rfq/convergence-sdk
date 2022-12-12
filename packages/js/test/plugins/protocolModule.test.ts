@@ -9,6 +9,7 @@ killStuckProcess();
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const cvg = await convergence();
   const { mint } = await cvg.tokens().createMint();
+
   const signer = Keypair.generate();
 
   const { token: toToken } = await cvg
