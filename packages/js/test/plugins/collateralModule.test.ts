@@ -2,11 +2,7 @@ import test from 'tape';
 //import test, { Test } from 'tape';
 //import spok from 'spok';
 import { PublicKey } from '@solana/web3.js';
-//import { bignum } from '@metaplex-foundation/beet';
-//import { convergence, killStuckProcess, spokSamePubkey } from '../helpers';
 import { convergence, killStuckProcess, initializeProtocol } from '../helpers';
-//import { token } from '@/index';
-//import { Signer } from '@/types';
 
 killStuckProcess();
 
@@ -24,7 +20,6 @@ test('[collateralModule] it can initialize collateral', async () => {
   );
 
   const user = cvg.identity();
-  //const user: Signer = new Keypair();
 
   const [collateralToken] = await PublicKey.findProgramAddress(
     [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
@@ -35,17 +30,6 @@ test('[collateralModule] it can initialize collateral', async () => {
     [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
     rfqProgram.address
   );
-
-  //const { token: toToken } = await cvg.tokens().createToken({
-  //  mint: collateralMint.address,
-  //  owner: user.publicKey,
-  //});
-
-  //await cvg.tokens().mint({
-  //  mintAddress: collateralMint.address,
-  //  amount: token(1_000_000_000),
-  //  toToken: toToken.address,
-  //});
 
   await cvg.collateral().initializeCollateral({
     user,

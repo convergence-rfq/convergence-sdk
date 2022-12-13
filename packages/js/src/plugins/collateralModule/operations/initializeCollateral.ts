@@ -130,11 +130,11 @@ export const initializeCollateralBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-  //const tokenProgram = convergence.programs().getToken(programs);
-  //const systemProgram = convergence.programs().getSystem(programs);
+  const tokenProgram = convergence.programs().getToken(programs);
+  const systemProgram = convergence.programs().getSystem(programs);
 
   const {
-    user, // = convergence.identity(),
+    user = convergence.identity(),
     protocol,
     collateralToken,
     collateralMint,
@@ -151,8 +151,8 @@ export const initializeCollateralBuilder = async (
           collateralInfo,
           collateralToken,
           collateralMint,
-          //systemProgram: systemProgram.address,
-          //tokenProgram: tokenProgram.address,
+          systemProgram: systemProgram.address,
+          tokenProgram: tokenProgram.address,
         },
         rfqProgram.address
       ),
