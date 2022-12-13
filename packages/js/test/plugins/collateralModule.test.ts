@@ -1,11 +1,11 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-import { PublicKey } from '@solana/web3.js';
 import {
   convergence,
   killStuckProcess,
   spokSamePubkey,
   initializeProtocol,
+  initializeCollateral,
 } from '../helpers';
 
 killStuckProcess();
@@ -14,30 +14,7 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const cvg = await convergence();
 
   const { collateralMint } = await initializeProtocol(cvg);
-
-  const rfqProgram = cvg.programs().getRfq();
-
-  // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
-  const [protocol] = await PublicKey.findProgramAddress(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
-  const [collateralToken] = await PublicKey.findProgramAddress(
-    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralInfo] = await PublicKey.findProgramAddress(
-    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-
-  const { collateral } = await cvg.collateral().initializeCollateral({
-    user: cvg.identity(),
-    protocol,
-    collateralToken,
-    collateralInfo,
-    collateralMint: collateralMint.address,
-  });
+  const { collateral } = await initializeCollateral(cvg, collateralMint);
 
   spok(t, collateral, {
     $topic: 'Initialize Collateral',
