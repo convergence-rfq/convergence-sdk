@@ -1,8 +1,8 @@
-import { Keypair } from '@solana/web3.js';
+// import { Keypair } from '@solana/web3.js';
 import test from 'tape';
 //import test, { Test } from 'tape';
 //import spok from 'spok';
-// import { Keypair } from '@solana/web3.js';
+import { Keypair } from '@solana/web3.js';
 //import { bignum } from '@metaplex-foundation/beet';
 import { convergence, killStuckProcess, initializeProtocol } from '../helpers';
 // import { Signer } from '@/types';

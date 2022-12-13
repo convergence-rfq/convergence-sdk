@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import {
   Operation,
   OperationHandler,
@@ -145,17 +145,18 @@ export const initializeCollateralBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
 
   const {
-    // user = convergence.identity().publicKey,
+    user = convergence.identity().publicKey,
     protocol,
     collateralMint,
   } = params;
+  const rent = Keypair.generate().publicKey;
 
   const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), payer.publicKey.toBuffer()],
+    [Buffer.from('collateral_info'), user.toBuffer()],
     rfqProgram.address
   );
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), payer.publicKey.toBuffer()],
+    [Buffer.from('collateral_token'), user.toBuffer()],
     rfqProgram.address
   );
 
@@ -171,6 +172,7 @@ export const initializeCollateralBuilder = async (
           collateralMint,
           systemProgram: systemProgram.address,
           tokenProgram: tokenProgram.address,
+          rent,
         },
         rfqProgram.address
       ),

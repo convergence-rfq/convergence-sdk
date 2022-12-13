@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { assert } from '@/utils';
 import { CollateralInfoAccount } from '../accounts';
+import { Pda } from '@/types';
 
 /**
  * This model captures all the relevant information about a Collateral account
@@ -28,5 +29,8 @@ export function assertCollateral(value: any): asserts value is Collateral {
 /** @group Model Helpers */
 export const toCollateral = (account: CollateralInfoAccount): Collateral => ({
   model: 'collateral',
-  address: account.publicKey,
+  address: Pda.find(account.owner, [
+    Buffer.from('collateral_info', 'utf8'),
+    account.data.user.toBuffer(),
+  ]),
 });
