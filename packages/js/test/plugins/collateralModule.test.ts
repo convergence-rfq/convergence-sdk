@@ -1,14 +1,18 @@
-import test from 'tape';
-//import test, { Test } from 'tape';
-//import spok from 'spok';
+import test, { Test } from 'tape';
+import spok from 'spok';
 import { PublicKey } from '@solana/web3.js';
-import { convergence, killStuckProcess, initializeProtocol } from '../helpers';
+import {
+  convergence,
+  killStuckProcess,
+  spokSamePubkey,
+  initializeProtocol,
+} from '../helpers';
 
 killStuckProcess();
 
-//test('[collateralModule] it can initialize collateral', async (t: Test) => {
-test('[collateralModule] it can initialize collateral', async () => {
+test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const cvg = await convergence();
+
   const { collateralMint } = await initializeProtocol(cvg);
 
   const rfqProgram = cvg.programs().getRfq();
@@ -18,32 +22,28 @@ test('[collateralModule] it can initialize collateral', async () => {
     [Buffer.from('protocol')],
     rfqProgram.address
   );
-
-  const user = cvg.identity();
-
   const [collateralToken] = await PublicKey.findProgramAddress(
-    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
+    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
     rfqProgram.address
   );
-
   const [collateralInfo] = await PublicKey.findProgramAddress(
-    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
+    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
     rfqProgram.address
   );
 
-  await cvg.collateral().initializeCollateral({
-    user,
+  const { collateral } = await cvg.collateral().initializeCollateral({
+    user: cvg.identity(),
     protocol,
     collateralToken,
     collateralInfo,
     collateralMint: collateralMint.address,
   });
 
-  //spok(t, collateral, {
-  //  $topic: 'Initialize Collateral',
-  //  model: 'collateral',
-  //  address: spokSamePubkey(collateral.address),
-  //});
+  spok(t, collateral, {
+    $topic: 'Initialize Collateral',
+    model: 'collateral',
+    address: spokSamePubkey(collateral.address),
+  });
 });
 
 //test('[collateralModule] it can fund collateral', async (t: Test) => {

@@ -1,4 +1,5 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
+import { CollateralAccount } from '../accounts';
 import { assert } from '@/utils';
 
 /**
@@ -21,11 +22,11 @@ export const isCollateral = (value: any): value is Collateral =>
 
 /** @group Model Helpers */
 export function assertCollateral(value: any): asserts value is Collateral {
-  assert(isCollateral(value), `Expected Rfq model`);
+  assert(isCollateral(value), `Expected collateral model`);
 }
 
 /** @group Model Helpers */
-export const toCollateral = (address: PublicKey): Collateral => ({
+export const toCollateral = (collateral: CollateralAccount): Collateral => ({
   model: 'collateral',
-  address: Keypair.generate().publicKey,
+  address: collateral.publicKey,
 });

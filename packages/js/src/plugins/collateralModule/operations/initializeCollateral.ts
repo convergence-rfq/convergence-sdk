@@ -1,7 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-//import { Collateral, toCollateral } from '../models';
+import { assertCollateral, Collateral, toCollateral } from '../models';
+import { toCollateralAccount } from '../accounts';
 import {
   Operation,
   OperationHandler,
@@ -71,7 +72,7 @@ export type InitializeCollateralOutput = {
   response: SendAndConfirmTransactionResponse;
 
   /** The newly created Collateral account */
-  //collateral: Collateral;
+  collateral: Collateral;
 };
 
 /**
@@ -85,6 +86,7 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       convergence: Convergence,
       scope: OperationScope
     ) => {
+      const { commitment } = scope;
       scope.throwIfCanceled();
 
       const builder = await initializeCollateralBuilder(
@@ -102,9 +104,15 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      //const collateral = toCollateral(operation.input.collateralInfo);
+      const account = await convergence
+        .rpc()
+        .getAccount(operation.input.collateralInfo, commitment);
+      scope.throwIfCanceled();
 
-      return { ...output };
+      const collateral = toCollateral(toCollateralAccount(account));
+      assertCollateral(collateral);
+
+      return { ...output, collateral };
     },
   };
 
