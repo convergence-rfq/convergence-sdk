@@ -185,6 +185,21 @@ export class RpcClient {
     return this.getUnparsedMaybeAccount(publicKey, accountInfo);
   }
 
+  async getAccounts(publicKeys: PublicKey[], commitment?: Commitment) {
+    let accountInfos: UnparsedMaybeAccount[] = [];
+
+    for (const publicKey of publicKeys) {
+      const accountInfo = await this.convergence.connection.getAccountInfo(
+        publicKey,
+        commitment
+      );
+
+      accountInfos.push(this.getUnparsedMaybeAccount(publicKey, accountInfo));
+    }
+
+    return accountInfos;
+  }
+
   async accountExists(publicKey: PublicKey, commitment?: Commitment) {
     const balance = await this.convergence.connection.getBalance(
       publicKey,

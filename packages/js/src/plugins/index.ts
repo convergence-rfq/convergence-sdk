@@ -1,5 +1,6 @@
 export * from './corePlugins';
 export * from './bundlrStorage';
+export * from './collateralModule';
 export * from './guestIdentity';
 export * from './identityModule';
 export * from './keypairIdentity';
