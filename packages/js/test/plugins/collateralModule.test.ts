@@ -1,11 +1,12 @@
 import test from 'tape';
 //import test, { Test } from 'tape';
 //import spok from 'spok';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 //import { bignum } from '@metaplex-foundation/beet';
 //import { convergence, killStuckProcess, spokSamePubkey } from '../helpers';
 import { convergence, killStuckProcess, initializeProtocol } from '../helpers';
-import { Signer } from '@/types';
+//import { token } from '@/index';
+//import { Signer } from '@/types';
 
 killStuckProcess();
 
@@ -22,7 +23,8 @@ test('[collateralModule] it can initialize collateral', async () => {
     rfqProgram.address
   );
 
-  const user: Signer = new Keypair();
+  const user = cvg.identity();
+  //const user: Signer = new Keypair();
 
   const [collateralToken] = await PublicKey.findProgramAddress(
     [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
@@ -34,15 +36,14 @@ test('[collateralModule] it can initialize collateral', async () => {
     rfqProgram.address
   );
 
-  // TODO: Mint must be protocol collateral mint!!!
-  //const { token: toToken } = await cvg
-  //  .tokens()
-  //  //.createToken({ mint: mint.address, token: user, owner: user.publicKey });
-  //  .createToken({ mint: mint.address, owner: user.publicKey });
+  //const { token: toToken } = await cvg.tokens().createToken({
+  //  mint: collateralMint.address,
+  //  owner: user.publicKey,
+  //});
 
   //await cvg.tokens().mint({
-  //  mintAddress: mint.address,
-  //  amount: token(42),
+  //  mintAddress: collateralMint.address,
+  //  amount: token(1_000_000_000),
   //  toToken: toToken.address,
   //});
 
