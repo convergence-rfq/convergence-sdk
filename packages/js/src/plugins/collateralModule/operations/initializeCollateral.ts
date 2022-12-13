@@ -134,7 +134,7 @@ export const initializeCollateralBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
 
   const {
-    user, // = convergence.identity(),
+    user = convergence.identity(),
     protocol,
     collateralToken,
     collateralMint,
