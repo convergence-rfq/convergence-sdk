@@ -36,6 +36,6 @@ yarn build
 **TDD**
 
 ```bash
-yarn amman:watch
+yarn amman:start # Run this in a separate tab and do not forget to restart when rerunning tests
 yarn test
 ```

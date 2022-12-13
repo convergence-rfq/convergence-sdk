@@ -15,7 +15,7 @@ export type Protocol = {
   /** The address of the protocol. */
   readonly address: PublicKey;
 
-  /** The address of the protocol. */
+  /** The address of the collateral mint. */
   readonly collateralMint: PublicKey;
 };
 
