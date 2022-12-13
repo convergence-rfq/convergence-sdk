@@ -1,16 +1,17 @@
 import { PublicKey } from '@solana/web3.js';
+import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+//import { Collateral, toCollateral } from '../models';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
+  Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Signer, makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
-import { Collateral, toCollateral } from '../models';
 
 const Key = 'InitializeCollateralOperation' as const;
 
@@ -49,8 +50,9 @@ export type InitializeCollateralInput = {
    *
    * @defaultValue `convergence.identity().publicKey`
    */
-  user?: Signer;
-  /** The address of the protocol*/
+  user: Signer;
+
+  /** The address of the protocol */
   protocol: PublicKey;
 
   collateralInfo: PublicKey;
@@ -67,8 +69,9 @@ export type InitializeCollateralInput = {
 export type InitializeCollateralOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
   /** The newly created Collateral account */
-  collateral: Collateral;
+  //collateral: Collateral;
 };
 
 /**
@@ -99,9 +102,9 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      const collateral = toCollateral(operation.input.collateralInfo);
+      //const collateral = toCollateral(operation.input.collateralInfo);
 
-      return { ...output, collateral };
+      return { ...output };
     },
   };
 
@@ -131,11 +134,11 @@ export const initializeCollateralBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
 
   const {
-    user = convergence.identity(),
+    user, // = convergence.identity(),
     protocol,
-    collateralInfo,
     collateralToken,
     collateralMint,
+    collateralInfo,
   } = params;
 
   return TransactionBuilder.make()
