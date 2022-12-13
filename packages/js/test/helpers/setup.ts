@@ -1,7 +1,13 @@
-import { Commitment, Connection, Keypair } from '@solana/web3.js';
+import { Commitment, PublicKey, Connection, Keypair } from '@solana/web3.js';
 import { LOCALHOST } from '@metaplex-foundation/amman-client';
 import { amman } from './amman';
-import { Convergence, keypairIdentity, KeypairSigner } from '@/index';
+import {
+  Convergence,
+  token,
+  keypairIdentity,
+  KeypairSigner,
+  Mint,
+} from '@/index';
 
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
@@ -29,4 +35,56 @@ export const createWallet = async (
   const wallet = Keypair.generate();
   await amman.airdrop(cvg.connection, wallet.publicKey, solsToAirdrop);
   return wallet;
+};
+
+export const initializeProtocol = async (cvg: Convergence) => {
+  const { mint: collateralMint } = await cvg.tokens().createMint();
+  const signer = Keypair.generate();
+
+  const { token: toToken } = await cvg
+    .tokens()
+    .createToken({ mint: collateralMint.address, token: signer });
+
+  await cvg.tokens().mint({
+    mintAddress: collateralMint.address,
+    amount: token(42),
+    toToken: toToken.address,
+  });
+
+  const { protocol } = await cvg.protocol().initialize({
+    collateralMint: collateralMint.address,
+  });
+
+  return { protocol, collateralMint };
+};
+
+export const initializeCollateral = async (
+  cvg: Convergence,
+  collateralMint: Mint
+) => {
+  const rfqProgram = cvg.programs().getRfq();
+
+  // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
+  const [protocol] = await PublicKey.findProgramAddress(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+  const [collateralToken] = await PublicKey.findProgramAddress(
+    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralInfo] = await PublicKey.findProgramAddress(
+    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  const { collateral } = await cvg.collateral().initializeCollateral({
+    user: cvg.identity(),
+    protocol,
+    collateralToken,
+    collateralInfo,
+    collateralMint: collateralMint.address,
+  });
+
+  return { collateral };
 };

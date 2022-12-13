@@ -1,4 +1,4 @@
-import { createCancelRfqInstruction } from '@convergence-rfq/rfq';
+import { createCleanUpRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -8,50 +8,53 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
-const Key = 'CancelRfqOperation' as const;
+const Key = 'CleanUpRfqOperation' as const;
 
 /**
- * Cancels an existing Rfq.
+ * Cleans up an Rfq.
  *
  * ```ts
  * await convergence
  *   .rfqs()
- *   .cancel({ address };
+ *   .cleanUpRfq({ address };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const cancelRfqOperation = useOperation<CancelRfqOperation>(Key);
+export const cleanUpRfqOperation = useOperation<CleanUpRfqOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CancelRfqOperation = Operation<
+export type CleanUpRfqOperation = Operation<
   typeof Key,
-  CancelRfqInput,
-  CancelRfqOutput
+  CleanUpRfqInput,
+  CleanUpRfqOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CancelRfqInput = {
+export type CleanUpRfqInput = {
   /**
-   * The Taker of the Rfq as a Signer.
+   * The Taker as a Signer
    *
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
-  /** The address of the protocol account */
+
+  /**
+   * The address of the protocol
+   */
   protocol: PublicKey;
-  /** The address of the Rfq account. */
+
+  /** The address of the Rfq account */
   rfq: PublicKey;
 };
 
@@ -59,7 +62,7 @@ export type CancelRfqInput = {
  * @group Operations
  * @category Outputs
  */
-export type CancelRfqOutput = {
+export type CleanUpRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
@@ -68,50 +71,47 @@ export type CancelRfqOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
-  handle: async (
-    operation: CancelRfqOperation,
-    convergence: Convergence,
-    scope: OperationScope
-  ) => {
-    const builder = await cancelRfqBuilder(convergence, operation.input, scope);
-    scope.throwIfCanceled();
+export const cleanUpRfqOperationHandler: OperationHandler<CleanUpRfqOperation> =
+  {
+    handle: async (
+      operation: CleanUpRfqOperation,
+      convergence: Convergence,
+      scope: OperationScope
+    ): Promise<CleanUpRfqOutput> => {
+      scope.throwIfCanceled();
 
-    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-      convergence,
-      scope.confirmOptions
-    );
-    const output = await builder.sendAndConfirm(convergence, confirmOptions);
-    scope.throwIfCanceled();
-
-    return output;
-  },
-};
+      return cleanUpRfqBuilder(
+        convergence,
+        operation.input,
+        scope
+      ).sendAndConfirm(convergence, scope.confirmOptions);
+    },
+  };
 
 /**
  * @group Transaction Builders
  * @category Inputs
  */
-export type CancelRfqBuilderParams = CancelRfqInput;
+export type CleanUpRfqBuilderParams = CleanUpRfqInput;
 
 /**
- * Cancels an existing Rfq.
+ * Cancels an existing Response.
  *
  * ```ts
  * const transactionBuilder = convergence
  *   .rfqs()
  *   .builders()
- *   .cancel({ address });
+ *   .cleanUpRfq({ address });
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const cancelRfqBuilder = async (
+export const cleanUpRfqBuilder = (
   convergence: Convergence,
-  params: CancelRfqBuilderParams,
+  params: CleanUpRfqBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
+): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { taker = convergence.identity(), protocol, rfq } = params;
 
@@ -120,7 +120,7 @@ export const cancelRfqBuilder = async (
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
-      instruction: createCancelRfqInstruction(
+      instruction: createCleanUpRfqInstruction(
         {
           taker: taker.publicKey,
           protocol,
@@ -129,6 +129,6 @@ export const cancelRfqBuilder = async (
         rfqProgram.address
       ),
       signers: [taker],
-      key: 'cancelRfq',
+      key: 'cleanUpRfq',
     });
 };
