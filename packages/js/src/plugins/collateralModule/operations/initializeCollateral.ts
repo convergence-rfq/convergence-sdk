@@ -1,9 +1,10 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
+  Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -50,7 +51,7 @@ export type InitializeCollateralInput = {
    *
    * @defaultValue `convergence.identity().publicKey`
    */
-  user?: PublicKey;
+  user: Signer;
   /** The address of the protocol*/
   protocol: PublicKey;
 
@@ -80,7 +81,7 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       scope: OperationScope
     ) => {
       const { commitment } = scope;
-      const { user = convergence.identity().publicKey } = operation.input;
+      const { user } = operation.input;
       scope.throwIfCanceled();
 
       const builder = await initializeCollateralBuilder(
@@ -103,7 +104,7 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       const rfqProgram = convergence.programs().getRfq();
 
       const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('collateral_info'), user.toBuffer()],
+        [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
         rfqProgram.address
       );
 
@@ -122,6 +123,15 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
 export type InitializeCollateralBuilderParams = InitializeCollateralInput;
 
 /**
+ * @group Transaction Builders
+ * @category Contexts
+ */
+export type InitializeCollateralBuilderContext = Omit<
+  InitializeCollateralOutput,
+  'collateral'
+>;
+
+/**
  * Initializes a collateral account.
  *
  * ```ts
@@ -138,45 +148,35 @@ export const initializeCollateralBuilder = async (
   convergence: Convergence,
   params: InitializeCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+): Promise<TransactionBuilder<InitializeCollateralBuilderContext>> => {
+  const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-  const tokenProgram = convergence.programs().getToken(programs);
-  const systemProgram = convergence.programs().getSystem(programs);
 
-  const {
-    user = convergence.identity().publicKey,
-    protocol,
-    collateralMint,
-  } = params;
-  const rent = Keypair.generate().publicKey;
+  const { user, protocol, collateralMint } = params;
 
-  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), user.toBuffer()],
+  const [collateralInfo] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
     rfqProgram.address
   );
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), user.toBuffer()],
+  const [collateralToken] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
     rfqProgram.address
   );
 
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
+  return TransactionBuilder.make<InitializeCollateralBuilderContext>()
+    .setFeePayer(user)
     .add({
       instruction: createInitializeCollateralInstruction(
         {
-          user: payer.publicKey,
+          user: user.publicKey,
           protocol,
-          collateralInfo: collateralInfoPda,
-          collateralToken: collateralTokenPda,
+          collateralInfo,
+          collateralToken,
           collateralMint,
-          systemProgram: systemProgram.address,
-          tokenProgram: tokenProgram.address,
-          rent,
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [user],
       key: 'initializeCollateral',
     });
 };

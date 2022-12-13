@@ -19,11 +19,11 @@ export type Collateral = {
 
 /** @group Model Helpers */
 export const isCollateral = (value: any): value is Collateral =>
-  typeof value === 'object' && value.model === 'rfq';
+  typeof value === 'object' && value.model === 'collateral';
 
 /** @group Model Helpers */
 export function assertCollateral(value: any): asserts value is Collateral {
-  assert(isCollateral(value), `Expected Rfq model`);
+  assert(isCollateral(value), `Expected Collateral model`);
 }
 
 /** @group Model Helpers */

@@ -1,24 +1,44 @@
+import { PublicKey } from '@solana/web3.js';
+// import test from 'tape';
+import test, { Test } from 'tape';
+import spok from 'spok';
+import { spokSamePubkey } from '../helpers';
 // import { Keypair } from '@solana/web3.js';
-import test from 'tape';
-//import test, { Test } from 'tape';
-//import spok from 'spok';
-import { Keypair } from '@solana/web3.js';
 //import { bignum } from '@metaplex-foundation/beet';
-import { convergence, killStuckProcess, initializeProtocol } from '../helpers';
-// import { Signer } from '@/types';
+import {
+  convergence,
+  killStuckProcess,
+  initializeProtocol,
+  //   createWallet,
+} from '../helpers';
+import { sol } from '@/types';
 
 killStuckProcess();
 
-//test('[collateralModule] it can initialize collateral', async (t: Test) => {
-test('[collateralModule] it can initialize collateral', async () => {
+test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const cvg = await convergence();
-  const { collateralMint, protocol } = await initializeProtocol(cvg);
-  const user = Keypair.generate();
+  const { collateralMint } = await initializeProtocol(cvg);
+  const user = cvg.identity();
 
-  await cvg.collateral().initializeCollateral({
-    user: user.publicKey,
-    protocol: protocol.address,
+  const rfqProgram = cvg.programs().getRfq();
+
+  const [protocol] = await PublicKey.findProgramAddress(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+
+  await cvg.rpc().airdrop(user.publicKey, sol(5), 'confirmed');
+
+  const { collateral } = await cvg.collateral().initializeCollateral({
+    user,
+    protocol,
     collateralMint: collateralMint.address,
+  });
+
+  spok(t, collateral, {
+    $topic: 'Fund Collateral',
+    model: 'collateral',
+    address: spokSamePubkey(collateral.address),
   });
 });
 
@@ -40,8 +60,6 @@ test('[collateralModule] it can initialize collateral', async () => {
 //  const { collateral } = await cvg.collateral().initializeCollateral({
 //    user,
 //    protocol: protocol.address,
-//    collateralInfo: collateralInfo.publicKey,
-//    collateralToken: collateralToken.publicKey,
 //    collateralMint: collateralMint.publicKey,
 //  });
 //
