@@ -288,7 +288,7 @@ export class RfqClient {
   ): Promise<T extends Metadata | PublicKey ? Rfq : T> {
     return this.findByAddress(
       {
-        rfq: 'model' in model ? model.address : model,
+        address: 'model' in model ? model.address : model,
       },
       options
     ) as Promise<T extends Metadata | PublicKey ? Rfq : T>;

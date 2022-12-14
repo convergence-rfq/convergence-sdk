@@ -4,7 +4,7 @@ import {
   FixedSize,
   Leg,
 } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -55,11 +55,11 @@ export type CreateRfqInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   taker?: Signer;
+
   /** The pubkey address of the protocol account. */
   protocol: PublicKey;
-  /** The pubkey address of the Rfq account. */
-  rfq: PublicKey;
-  /** The pubkey address of the quote_mint account. */
+
+  /** The pubkey address of the quote mint account. */
   quoteMint: PublicKey;
 
   /*
@@ -91,6 +91,7 @@ export type CreateRfqInput = {
 export type CreateRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
   /** The newly created Rfq. */
   rfq: Rfq;
 };
@@ -173,7 +174,6 @@ export const createRfqBuilder = async (
   const {
     taker = convergence.identity(),
     protocol,
-    rfq,
     quoteMint,
     expectedLegSize = 0,
     legs = [],
@@ -186,6 +186,8 @@ export const createRfqBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
+  const rfq = new Keypair();
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -193,7 +195,7 @@ export const createRfqBuilder = async (
         {
           taker: taker.publicKey,
           protocol,
-          rfq,
+          rfq: rfq.publicKey,
           quoteMint,
           systemProgram: systemProgram.address,
         },
@@ -207,7 +209,7 @@ export const createRfqBuilder = async (
         },
         rfqProgram.address
       ),
-      signers: [taker],
+      signers: [taker, rfq],
       key: 'createRfq',
     });
 };

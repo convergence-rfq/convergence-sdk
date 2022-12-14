@@ -7,6 +7,7 @@ import {
   keypairIdentity,
   KeypairSigner,
   Mint,
+  Protocol,
 } from '@/index';
 
 export type ConvergenceTestOptions = {
@@ -87,4 +88,13 @@ export const initializeCollateral = async (
   });
 
   return { collateral };
+};
+
+export const createRfq = async (cvg: Convergence, protocol: Protocol) => {
+  const { rfq } = await cvg.rfqs().create({
+    quoteMint: protocol.collateralMint,
+    protocol: protocol.address,
+  });
+
+  return { rfq };
 };
