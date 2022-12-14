@@ -7,11 +7,9 @@ import {
   initializeProtocol,
   initializeCollateral,
   // fundCollateral,
-  // spokSameAmount,
 } from '../helpers';
 // import { PublicKey } from '@solana/web3.js';
 // import { token } from '@/index';
-// import { sol, amount } from '@/types';
 
 killStuckProcess();
 
@@ -32,8 +30,9 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 //   const rfqProgram = cvg.programs().getRfq();
 
 //   const { collateralMint } = await initializeProtocol(cvg);
+
 //   await initializeCollateral(cvg, collateralMint);
-//   await fundCollateral(cvg, collateralMint);
+//   const amount = await fundCollateral(cvg, collateralMint);
 
 //   const [collateralToken] = PublicKey.findProgramAddressSync(
 //     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
@@ -46,10 +45,10 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 //     .tokens()
 //     .findTokenByAddress({ address: maybeAccount.publicKey });
 
-//   const balance = await cvg.rpc().getBalance(collateralToken, 'confirmed');
-
 //   spok(t, tokenAccount, {
 //     $topic: 'Fund Collateral',
-//     amount: spokSameAmount(token(balance.basisPoints)),
+//     model: 'token',
+//     mintAddress: spokSamePubkey(collateralMint.address),
+//     amount: token(amount),
 //   });
 // });

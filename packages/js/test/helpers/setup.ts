@@ -125,4 +125,6 @@ export const fundCollateral = async (
     collateralToken,
     amount,
   });
+
+  return amount;
 };

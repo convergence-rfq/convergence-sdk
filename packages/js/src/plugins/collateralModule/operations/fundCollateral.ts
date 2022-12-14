@@ -10,7 +10,6 @@ import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Signer, makeConfirmOptionsFinalizedOnMainnet } from '@/types';
 import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
-// import { bignum } from '@metaplex-foundation/beet';
 
 const Key = 'FundCollateralOperation' as const;
 
