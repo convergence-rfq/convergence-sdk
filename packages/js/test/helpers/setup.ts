@@ -85,3 +85,44 @@ export const initializeCollateral = async (
 
   return { collateral };
 };
+
+export const fundCollateral = async (
+  cvg: Convergence,
+  collateralMint: Mint
+) => {
+  const rfqProgram = cvg.programs().getRfq();
+
+  const [protocol] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+  const [collateralInfo] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralToken] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  const { token: userTokens } = await cvg
+    .tokens()
+    .createToken({ mint: collateralMint.address });
+
+  await cvg.tokens().mint({
+    mintAddress: collateralMint.address,
+    amount: token(42),
+    toToken: userTokens.address,
+  });
+
+  const amount = 25;
+
+  await cvg.collateral().fundCollateral({
+    user: cvg.identity(),
+    userTokens: userTokens.address,
+    protocol,
+    collateralInfo,
+    collateralToken,
+    amount,
+  });
+};

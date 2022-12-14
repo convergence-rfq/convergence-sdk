@@ -91,8 +91,7 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       const builder = await initializeCollateralBuilder(
         convergence,
         {
-          ...operation.input,
-          user,
+          ...operation.input
         },
         scope
       );
