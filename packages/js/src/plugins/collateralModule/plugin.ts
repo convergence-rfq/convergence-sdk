@@ -4,6 +4,8 @@ import {
   initializeCollateralOperationHandler,
   fundCollateralOperation,
   fundCollateralOperationHandler,
+  withdrawCollateralOperation,
+  withdrawCollateralOperationHandler,
 } from './operations';
 import { ConvergencePlugin } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -19,8 +21,8 @@ export const collateralModule = (): ConvergencePlugin => ({
     );
     op.register(fundCollateralOperation, fundCollateralOperationHandler);
     op.register(
-      initializeCollateralOperation,
-      initializeCollateralOperationHandler
+      withdrawCollateralOperation,
+      withdrawCollateralOperationHandler
     );
 
     convergence.collateral = function () {

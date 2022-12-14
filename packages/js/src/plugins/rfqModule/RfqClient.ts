@@ -55,8 +55,6 @@ import {
   UnlockResponseCollateralInput,
   unlockRfqCollateralOperation,
   UnlockRfqCollateralInput,
-  withdrawCollateralOperation,
-  WithdrawCollateralInput,
 } from './operations';
 import { PartialKeys } from '@/utils';
 import { OperationOptions, token } from '@/types';
@@ -346,16 +344,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(unlockRfqCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc withdrawCollateralOperation} */
-  withdrawCollateral(
-    input: WithdrawCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(withdrawCollateralOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */

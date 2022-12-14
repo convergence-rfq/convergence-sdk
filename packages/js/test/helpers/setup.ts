@@ -88,7 +88,8 @@ export const initializeCollateral = async (
 
 export const fundCollateral = async (
   cvg: Convergence,
-  collateralMint: Mint
+  collateralMint: Mint,
+  amount: number,
 ) => {
   const rfqProgram = cvg.programs().getRfq();
 
@@ -115,8 +116,6 @@ export const fundCollateral = async (
     toToken: userTokens.address,
   });
 
-  const amount = 25;
-
   await cvg.collateral().fundCollateral({
     user: cvg.identity(),
     userTokens: userTokens.address,
@@ -126,5 +125,5 @@ export const fundCollateral = async (
     amount,
   });
 
-  return amount;
+  return { userTokens };
 };
