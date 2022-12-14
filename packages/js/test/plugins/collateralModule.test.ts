@@ -7,17 +7,33 @@ import {
   initializeProtocol,
   initializeCollateral,
 } from '../helpers';
+import { PublicKey } from '@solana/web3.js';
+import { sol } from '@/types';
 
 killStuckProcess();
 
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const cvg = await convergence();
-
   const { collateralMint } = await initializeProtocol(cvg);
-  const { collateral } = await initializeCollateral(cvg, collateralMint);
+  const user = cvg.identity();
+
+  const rfqProgram = cvg.programs().getRfq();
+
+  const [protocol] = await PublicKey.findProgramAddress(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+
+  await cvg.rpc().airdrop(user.publicKey, sol(5), 'confirmed');
+
+  const { collateral } = await cvg.collateral().initializeCollateral({
+    user,
+    protocol,
+    collateralMint: collateralMint.address,
+  });
 
   spok(t, collateral, {
-    $topic: 'Initialize Collateral',
+    $topic: 'Fund Collateral',
     model: 'collateral',
     address: spokSamePubkey(collateral.address),
   });
@@ -41,8 +57,6 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 //  const { collateral } = await cvg.collateral().initializeCollateral({
 //    user,
 //    protocol: protocol.address,
-//    collateralInfo: collateralInfo.publicKey,
-//    collateralToken: collateralToken.publicKey,
 //    collateralMint: collateralMint.publicKey,
 //  });
 //
