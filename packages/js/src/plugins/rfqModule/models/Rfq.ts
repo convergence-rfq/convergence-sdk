@@ -1,6 +1,6 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
-import type { Leg } from './Leg';
+import { PublicKey } from '@solana/web3.js';
 import { assert } from '@/utils';
+import { RfqAccount } from '../accounts';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -8,7 +8,7 @@ import { assert } from '@/utils';
  *
  * @group Models
  */
-export type Rfq = Omit<Leg, 'model' | 'address' | 'mintAddress'> & {
+export type Rfq = {
   /** A model identifier to distinguish models in the SDK. */
   readonly model: 'rfq';
 
@@ -26,7 +26,7 @@ export function assertRfq(value: any): asserts value is Rfq {
 }
 
 /** @group Model Helpers */
-export const toRfq = (): Rfq => ({
+export const toRfq = (account: RfqAccount): Rfq => ({
   model: 'rfq',
-  address: Keypair.generate().publicKey,
+  address: account.publicKey,
 });

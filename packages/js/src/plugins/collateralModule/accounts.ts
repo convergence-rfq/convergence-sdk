@@ -6,12 +6,11 @@ import {
 } from '@/types';
 
 /** @group Accounts */
-export type CollateralInfoAccount = Account<CollateralInfo>;
+export type CollateralAccount = Account<CollateralInfo>;
 
 /** @group Account Helpers */
-export const parseCollateralInfoAccount =
-  getAccountParsingFunction(CollateralInfo);
+export const parseCollateralAccount = getAccountParsingFunction(CollateralInfo);
 
 /** @group Account Helpers */
-export const toCollateralInfoAccount =
+export const toCollateralAccount =
   getAccountParsingAndAssertingFunction(CollateralInfo);

@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { assert } from '@/utils';
-import { CollateralInfoAccount } from '../accounts';
 import { Pda } from '@/types';
+import { CollateralAccount } from '../accounts';
 
 /**
  * This model captures all the relevant information about a Collateral account
@@ -19,15 +19,15 @@ export type Collateral = {
 
 /** @group Model Helpers */
 export const isCollateral = (value: any): value is Collateral =>
-  typeof value === 'object' && value.model === 'rfq';
+  typeof value === 'object' && value.model === 'collateral';
 
 /** @group Model Helpers */
 export function assertCollateral(value: any): asserts value is Collateral {
-  assert(isCollateral(value), `Expected Rfq model`);
+  assert(isCollateral(value), `Expected collateral model`);
 }
 
 /** @group Model Helpers */
-export const toCollateral = (account: CollateralInfoAccount): Collateral => ({
+export const toCollateral = (account: CollateralAccount): Collateral => ({
   model: 'collateral',
   address: Pda.find(account.owner, [
     Buffer.from('collateral_info', 'utf8'),

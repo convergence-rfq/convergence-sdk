@@ -118,10 +118,7 @@ export const createAccountOperationHandler: OperationHandler<CreateAccountOperat
  * @group Transaction Builders
  * @category Inputs
  */
-export type CreateAccountBuilderParams = Omit<
-  CreateAccountInput,
-  'confirmOptions'
-> & {
+export type CreateAccountBuilderParams = CreateAccountInput & {
   /** A key to distinguish the instruction that creates the account. */
   instructionKey?: string;
 };

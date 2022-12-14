@@ -1,24 +1,25 @@
-// import { Keypair } from '@solana/web3.js';
-import test from 'tape';
-//import test, { Test } from 'tape';
-//import spok from 'spok';
-import { Keypair } from '@solana/web3.js';
-//import { bignum } from '@metaplex-foundation/beet';
-import { convergence, killStuckProcess, initializeProtocol } from '../helpers';
-// import { Signer } from '@/types';
+import test, { Test } from 'tape';
+import spok from 'spok';
+import {
+  convergence,
+  killStuckProcess,
+  spokSamePubkey,
+  initializeProtocol,
+  initializeCollateral,
+} from '../helpers';
 
 killStuckProcess();
 
-//test('[collateralModule] it can initialize collateral', async (t: Test) => {
-test('[collateralModule] it can initialize collateral', async () => {
+test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const cvg = await convergence();
-  const { collateralMint, protocol } = await initializeProtocol(cvg);
-  const user = Keypair.generate();
 
-  await cvg.collateral().initializeCollateral({
-    user: user.publicKey,
-    protocol: protocol.address,
-    collateralMint: collateralMint.address,
+  const { collateralMint } = await initializeProtocol(cvg);
+  const { collateral } = await initializeCollateral(cvg, collateralMint);
+
+  spok(t, collateral, {
+    $topic: 'Initialize Collateral',
+    model: 'collateral',
+    address: spokSamePubkey(collateral.address),
   });
 });
 
@@ -58,4 +59,4 @@ test('[collateralModule] it can initialize collateral', async () => {
 //    model: 'collateral',
 //    address: spokSamePubkey(collateral.address),
 //  });
-// });
+//});

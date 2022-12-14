@@ -1,4 +1,4 @@
-import { createCancelRfqInstruction } from '@convergence-rfq/rfq';
+import { createAddLegsToRfqInstruction, Leg } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -8,58 +8,63 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
-const Key = 'CancelRfqOperation' as const;
+const Key = 'AddLegsToRfqOperation' as const;
 
 /**
- * Cancels an existing Rfq.
+ * Adds Legs to an existing Rfq.
  *
  * ```ts
  * await convergence
  *   .rfqs()
- *   .cancel({ address };
+ *   .addLegsTo({ address };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const cancelRfqOperation = useOperation<CancelRfqOperation>(Key);
+export const addLegsToRfqOperation = useOperation<AddLegsToRfqOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CancelRfqOperation = Operation<
+export type AddLegsToRfqOperation = Operation<
   typeof Key,
-  CancelRfqInput,
-  CancelRfqOutput
+  AddLegsToRfqInput,
+  AddLegsToRfqOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CancelRfqInput = {
+export type AddLegsToRfqInput = {
   /**
-   * The Taker of the Rfq as a Signer.
+   * The owner of the Rfq as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
-  /** The address of the protocol account */
+
   protocol: PublicKey;
-  /** The address of the Rfq account. */
+
   rfq: PublicKey;
+
+  /*
+   * Args
+   */
+
+  legs: Leg[];
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type CancelRfqOutput = {
+export type AddLegsToRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
@@ -68,67 +73,67 @@ export type CancelRfqOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
-  handle: async (
-    operation: CancelRfqOperation,
-    convergence: Convergence,
-    scope: OperationScope
-  ) => {
-    const builder = await cancelRfqBuilder(convergence, operation.input, scope);
-    scope.throwIfCanceled();
+export const addLegsToRfqOperationHandler: OperationHandler<AddLegsToRfqOperation> =
+  {
+    handle: async (
+      operation: AddLegsToRfqOperation,
+      convergence: Convergence,
+      scope: OperationScope
+    ): Promise<AddLegsToRfqOutput> => {
+      scope.throwIfCanceled();
 
-    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-      convergence,
-      scope.confirmOptions
-    );
-    const output = await builder.sendAndConfirm(convergence, confirmOptions);
-    scope.throwIfCanceled();
-
-    return output;
-  },
-};
+      return addLegsToRfqBuilder(
+        convergence,
+        operation.input,
+        scope
+      ).sendAndConfirm(convergence, scope.confirmOptions);
+    },
+  };
 
 /**
  * @group Transaction Builders
  * @category Inputs
  */
-export type CancelRfqBuilderParams = CancelRfqInput;
+export type AddLegsToRfqBuilderParams = AddLegsToRfqInput;
 
 /**
- * Cancels an existing Rfq.
+ * Adds Legs to an existing Rfq.
  *
  * ```ts
- * const transactionBuilder = convergence
+ * const transactionBuilder = convergences
  *   .rfqs()
  *   .builders()
- *   .cancel({ address });
+ *   .addLegsTo({ address });
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const cancelRfqBuilder = async (
+export const addLegsToRfqBuilder = (
   convergence: Convergence,
-  params: CancelRfqBuilderParams,
+  params: AddLegsToRfqBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
+): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { taker = convergence.identity(), protocol, rfq } = params;
+  const { taker = convergence.identity(), protocol, rfq, legs } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
-      instruction: createCancelRfqInstruction(
+      instruction: createAddLegsToRfqInstruction(
         {
           taker: taker.publicKey,
           protocol,
           rfq,
         },
+        {
+          legs,
+        },
         rfqProgram.address
       ),
       signers: [taker],
-      key: 'cancelRfq',
+      key: 'addLegsToRfq',
     });
 };

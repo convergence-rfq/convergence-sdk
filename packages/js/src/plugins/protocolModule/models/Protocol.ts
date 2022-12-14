@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 import { ProtocolAccount } from '../accounts';
-import { Pda } from '@/types';
 import { assert } from '@/utils';
 
 /**
@@ -32,9 +31,6 @@ export function assertProtocol(value: any): asserts value is Protocol {
 /** @group Model Helpers */
 export const toProtocol = (account: ProtocolAccount): Protocol => ({
   model: 'protocol',
-  address: Pda.find(account.owner, [
-    Buffer.from('protocol', 'utf8'),
-    account.owner.toBuffer(),
-  ]),
+  address: account.publicKey,
   collateralMint: account.data.collateralMint,
 });

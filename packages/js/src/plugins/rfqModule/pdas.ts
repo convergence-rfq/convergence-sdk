@@ -5,7 +5,7 @@ import { BigNumber, Pda, toBigNumber } from '@/types';
 
 /**
  * @group Pdas
- * @deprecated Please use `convergence.rfqs()().pdas().metadata(...)` instead.
+ * @deprecated Please use `convergence.rfqs().pdas().metadata(...)` instead.
  */
 export const findMetadataPda = (
   mint: PublicKey,
@@ -20,7 +20,7 @@ export const findMetadataPda = (
 
 /**
  * @group Pdas
- * @deprecated Please use `convergence.rfqs()().pdas().masterEdition(...)` instead.
+ * @deprecated Please use `convergence.rfqs().pdas().masterEdition(...)` instead.
  */
 export const findMasterEditionV2Pda = (
   mint: PublicKey,
@@ -36,7 +36,7 @@ export const findMasterEditionV2Pda = (
 
 /**
  * @group Pdas
- * @deprecated Please use `convergence.rfqs()().pdas().edition(...)` instead.
+ * @deprecated Please use `convergence.rfqs().pdas().edition(...)` instead.
  */
 export const findEditionPda = (
   mint: PublicKey,
@@ -52,7 +52,7 @@ export const findEditionPda = (
 
 /**
  * @group Pdas
- * @deprecated Please use `convergence.rfqs()().pdas().editionMarker(...)` instead.
+ * @deprecated Please use `convergence.rfqs().pdas().editionMarker(...)` instead.
  */
 export const findEditionMarkerPda = (
   mint: PublicKey,
@@ -70,7 +70,7 @@ export const findEditionMarkerPda = (
 
 /**
  * @group Pdas
- * @deprecated Please use `convergence.rfqs()().pdas().collectionAuthorityRecord(...)` instead.
+ * @deprecated Please use `convergence.rfqs().pdas().collectionAuthorityRecord(...)` instead.
  */
 export const findCollectionAuthorityRecordPda = (
   mint: PublicKey,
@@ -88,7 +88,7 @@ export const findCollectionAuthorityRecordPda = (
 
 /**
  * @group Pdas
- * @deprecated Please use `convergence.rfqs()().pdas().useAuthorityRecord(...)` instead.
+ * @deprecated Please use `convergence.rfqs().pdas().useAuthorityRecord(...)` instead.
  */
 export const findUseAuthorityRecordPda = (
   mint: PublicKey,
@@ -106,7 +106,7 @@ export const findUseAuthorityRecordPda = (
 
 /**
  * @group Pdas
- * @deprecated Please use `convergence.rfqs()().pdas().burner(...)` instead.
+ * @deprecated Please use `convergence.rfqs().pdas().burner(...)` instead.
  */
 export const findProgramAsBurnerPda = (
   programId: PublicKey = PROGRAM_ID
