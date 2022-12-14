@@ -4,7 +4,6 @@ import {
   convergence,
   killStuckProcess,
   spokSamePubkey,
-  initializeProtocol,
   initializeCollateral,
 } from '../helpers';
 
@@ -13,8 +12,7 @@ killStuckProcess();
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const cvg = await convergence();
 
-  const { collateralMint } = await initializeProtocol(cvg);
-  const { collateral } = await initializeCollateral(cvg, collateralMint);
+  const { collateral } = await initializeCollateral(cvg);
 
   spok(t, collateral, {
     $topic: 'Initialize Collateral',

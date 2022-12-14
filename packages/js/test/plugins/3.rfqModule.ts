@@ -3,7 +3,6 @@ import spok from 'spok';
 import {
   convergence,
   killStuckProcess,
-  initializeProtocol,
   createRfq,
   spokSamePubkey,
 } from '../helpers';
@@ -13,8 +12,7 @@ killStuckProcess();
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const cvg = await convergence();
 
-  const { protocol } = await initializeProtocol(cvg);
-  const { rfq } = await createRfq(cvg, protocol);
+  const { rfq } = await createRfq(cvg);
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
   spok(t, rfq, {
