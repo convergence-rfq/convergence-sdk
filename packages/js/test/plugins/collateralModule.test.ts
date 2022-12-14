@@ -6,9 +6,10 @@ import {
   spokSamePubkey,
   initializeProtocol,
   initializeCollateral,
+  // spokSameAmount,
 } from '../helpers';
 import { PublicKey } from '@solana/web3.js';
-import { sol } from '@/types';
+import { token } from '@/index';
 
 killStuckProcess();
 
@@ -19,58 +20,82 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 
   const rfqProgram = cvg.programs().getRfq();
 
-  const [protocol] = await PublicKey.findProgramAddress(
+  const [protocol] = PublicKey.findProgramAddressSync(
     [Buffer.from('protocol')],
     rfqProgram.address
   );
-
-  await cvg.rpc().airdrop(user.publicKey, sol(5), 'confirmed');
+  const [collateralInfo] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralToken] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
+    rfqProgram.address
+  );
 
   const { collateral } = await cvg.collateral().initializeCollateral({
     user,
     protocol,
     collateralMint: collateralMint.address,
+    collateralInfo,
+    collateralToken,
   });
 
   spok(t, collateral, {
-    $topic: 'Fund Collateral',
+    $topic: 'Initialize Collateral',
     model: 'collateral',
     address: spokSamePubkey(collateral.address),
   });
 });
 
-//test('[collateralModule] it can fund collateral', async (t: Test) => {
-//  const cvg = await convergence();
-//
-//  const user: Signer = new Keypair();
-//  const collateralMint = new Keypair();
-//  const userTokens = new Keypair();
-//  const collateralInfo = new Keypair();
-//  const collateralToken = new Keypair();
-//  const amount: bignum = 1000;
-//
-//  const { protocol } = await cvg.protocol().initialize({
-//    owner: user.publicKey,
-//    collateralMint: collateralMint.publicKey,
-//  });
-//
-//  const { collateral } = await cvg.collateral().initializeCollateral({
-//    user,
-//    protocol: protocol.address,
-//    collateralMint: collateralMint.publicKey,
-//  });
-//
-//  await cvg.collateral().fundCollateral({
-//    userTokens: userTokens.publicKey,
-//    protocol: protocol.address,
-//    collateralInfo: collateral.address,
-//    collateralToken: collateralToken.publicKey,
-//    amount,
-//  });
-//
-//  spok(t, collateral, {
-//    $topic: 'Fund Collateral',
-//    model: 'collateral',
-//    address: spokSamePubkey(collateral.address),
-//  });
-//});
+test('[collateralModule] it can fund collateral', async (t: Test) => {
+  const cvg = await convergence();
+  const user = cvg.identity();
+  const { collateralMint } = await initializeProtocol(cvg);
+  const rfqProgram = cvg.programs().getRfq();
+
+  const {} = await initializeCollateral(cvg, collateralMint);
+
+  const [protocol] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+  const [collateralInfo] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralToken] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  const { token: userTokens } = await cvg
+    .tokens()
+    .createToken({ mint: collateralMint.address });
+
+  await cvg.tokens().mint({
+    mintAddress: collateralMint.address,
+    amount: token(42),
+    toToken: userTokens.address,
+  });
+
+  const amount = 25;
+
+  await cvg.collateral().fundCollateral({
+    user,
+    userTokens: userTokens.address,
+    protocol,
+    collateralInfo,
+    collateralToken,
+    amount,
+  });
+
+  // const balance = await cvg.rpc().getBalance(collateralToken, 'confirmed');
+
+  // spok(t, collateral, {
+  //   $topic: 'Fund Collateral',
+  //   model: 'collateral',
+  //   address: spokSamePubkey(collateral.address),
+  //   lockedTokensAmount: spokSameAmount(balance),
+  // });
+});

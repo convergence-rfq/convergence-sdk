@@ -56,6 +56,10 @@ export type InitializeCollateralInput = {
   protocol: PublicKey;
 
   collateralMint: PublicKey;
+
+  collateralToken: PublicKey;
+
+  collateralInfo: PublicKey;
 };
 
 /**
@@ -152,16 +156,8 @@ export const initializeCollateralBuilder = async (
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const { user, protocol, collateralMint } = params;
-
-  const [collateralInfo] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralToken] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
-    rfqProgram.address
-  );
+  const { user, protocol, collateralMint, collateralInfo, collateralToken } =
+    params;
 
   return TransactionBuilder.make<InitializeCollateralBuilderContext>()
     .setFeePayer(user)
@@ -170,9 +166,9 @@ export const initializeCollateralBuilder = async (
         {
           user: user.publicKey,
           protocol,
-          collateralInfo,
-          collateralToken,
           collateralMint,
+          collateralToken,
+          collateralInfo,
         },
         rfqProgram.address
       ),

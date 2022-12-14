@@ -1,5 +1,4 @@
 import type { Convergence } from '../../Convergence';
-import { collateralModule } from '../collateralModule';
 import { identityModule } from '../identityModule';
 import { storageModule } from '../storageModule';
 import { rpcModule } from '../rpcModule';

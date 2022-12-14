@@ -10,7 +10,7 @@ import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Signer, makeConfirmOptionsFinalizedOnMainnet } from '@/types';
 import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
-import { bignum } from '@metaplex-foundation/beet';
+// import { bignum } from '@metaplex-foundation/beet';
 
 const Key = 'FundCollateralOperation' as const;
 
@@ -49,7 +49,7 @@ export type FundCollateralInput = {
    *
    * @defaultValue `convergence.identity().publicKey`
    */
-  user?: Signer;
+  user: Signer;
   /** Token account of user's token */
   userTokens: PublicKey;
   /** The address of the protocol account. */
@@ -63,7 +63,7 @@ export type FundCollateralInput = {
    * Args
    */
 
-  amount: bignum;
+  amount: number;
 };
 
 /**
@@ -89,7 +89,9 @@ export const fundCollateralOperationHandler: OperationHandler<FundCollateralOper
 
       const builder = await fundCollateralBuilder(
         convergence,
-        operation.input,
+        {
+          ...operation.input,
+        },
         scope
       );
       scope.throwIfCanceled();
@@ -126,9 +128,8 @@ export const fundCollateralBuilder = async (
   params: FundCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+  const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-  const tokenProgram = convergence.programs().getToken(programs);
 
   const {
     user = convergence.identity(),
@@ -140,7 +141,7 @@ export const fundCollateralBuilder = async (
   } = params;
 
   return TransactionBuilder.make()
-    .setFeePayer(payer)
+    .setFeePayer(user)
     .add({
       instruction: createFundCollateralInstruction(
         {
@@ -149,10 +150,9 @@ export const fundCollateralBuilder = async (
           protocol,
           collateralInfo,
           collateralToken,
-          tokenProgram: tokenProgram.address,
         },
         {
-          amount,
+          amount: amount,
         },
         rfqProgram.address
       ),
