@@ -1,14 +1,7 @@
 import { Commitment, PublicKey, Connection, Keypair } from '@solana/web3.js';
 import { LOCALHOST } from '@metaplex-foundation/amman-client';
 import { amman } from './amman';
-import {
-  Convergence,
-  token,
-  keypairIdentity,
-  KeypairSigner,
-  Mint,
-  Protocol,
-} from '@/index';
+import { Convergence, token, keypairIdentity, KeypairSigner } from '@/index';
 
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
@@ -59,11 +52,10 @@ export const initializeProtocol = async (cvg: Convergence) => {
   return { protocol, collateralMint };
 };
 
-export const initializeCollateral = async (
-  cvg: Convergence,
-  collateralMint: Mint
-) => {
+export const initializeCollateral = async (cvg: Convergence) => {
   const rfqProgram = cvg.programs().getRfq();
+
+  const { collateralMint } = await cvg.protocol().get({});
 
   // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
   const [protocol] = await PublicKey.findProgramAddress(
@@ -84,13 +76,14 @@ export const initializeCollateral = async (
     protocol,
     collateralToken,
     collateralInfo,
-    collateralMint: collateralMint.address,
+    collateralMint,
   });
 
   return { collateral };
 };
 
-export const createRfq = async (cvg: Convergence, protocol: Protocol) => {
+export const createRfq = async (cvg: Convergence) => {
+  const protocol = await cvg.protocol().get({});
   const { rfq } = await cvg.rfqs().create({
     quoteMint: protocol.collateralMint,
     protocol: protocol.address,
