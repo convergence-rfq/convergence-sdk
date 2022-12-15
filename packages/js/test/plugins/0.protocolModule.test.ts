@@ -12,7 +12,7 @@ killStuckProcess();
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const cvg = await convergence();
-  const { protocol, authority } = await initializeProtocol(cvg);
+  const { protocol } = await initializeProtocol(cvg);
 
   spok(t, protocol, {
     $topic: 'Initialize Protocol',
@@ -20,12 +20,14 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
     address: spokSamePubkey(protocol.address),
   });
 
+  const authority = cvg.rpc().getDefaultFeePayer();
+
   const instrumentProgram = Keypair.generate();
-  const validateDataAccountAmount = 0;
-  const prepareToSettleAccountAmount = 0;
-  const settleAccountAmount = 0;
-  const revertPreparationAccountAmount = 0;
-  const cleanUpAccountAmount = 0;
+  const validateDataAccountAmount = 1;
+  const prepareToSettleAccountAmount = 1;
+  const settleAccountAmount = 1;
+  const revertPreparationAccountAmount = 1;
+  const cleanUpAccountAmount = 1;
 
   await cvg.protocol().addInstrument({
     authority,
