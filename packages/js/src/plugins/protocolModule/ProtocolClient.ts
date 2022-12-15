@@ -1,4 +1,6 @@
 import {
+  AddInstrumentInput,
+  addInstrumentOperation,
   InitializeProtocolInput,
   initializeProtocolOperation,
   GetProtocolInput,
@@ -35,6 +37,12 @@ export class ProtocolClient {
     return this.convergence
       .operations()
       .execute(initializeProtocolOperation(input), options);
+  }
+  /** {@inheritDoc addInstrumentOperation} */
+  addInstrument(input: AddInstrumentInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(addInstrumentOperation(input), options);
   }
 
   /** {@inheritDoc getProtocolOperation} */

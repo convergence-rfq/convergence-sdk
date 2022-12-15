@@ -33,11 +33,12 @@ export const createWallet = async (
 
 export const initializeProtocol = async (cvg: Convergence) => {
   const { mint: collateralMint } = await cvg.tokens().createMint();
-  const signer = Keypair.generate();
+
+  const authority = Keypair.generate();
 
   const { token: toToken } = await cvg
     .tokens()
-    .createToken({ mint: collateralMint.address, token: signer });
+    .createToken({ mint: collateralMint.address, token: authority });
 
   await cvg.tokens().mint({
     mintAddress: collateralMint.address,
@@ -49,7 +50,7 @@ export const initializeProtocol = async (cvg: Convergence) => {
     collateralMint: collateralMint.address,
   });
 
-  return { protocol, collateralMint };
+  return { protocol, collateralMint, authority };
 };
 
 export const initializeCollateral = async (cvg: Convergence) => {

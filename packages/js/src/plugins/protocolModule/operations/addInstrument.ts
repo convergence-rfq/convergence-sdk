@@ -43,20 +43,23 @@ export type AddInstrumentOperation = Operation<
  */
 export type AddInstrumentInput = {
   /**
-   * The owner of the Rfq as a Signer.
-   *
-   * @defaultValue `convergence.identity()`
+   * The owner of the protocol.
    */
-  authority?: Signer;
+  authority: Signer;
 
+  /**
+   * The protocol to add the instrument to.
+   */
   protocol: PublicKey;
 
+  /**
+   * The instrument program to add to the protocol.
+   */
   instrumentProgram: PublicKey;
 
   /*
-   * Args
+   * The amount of lamports to allocate for the validate data account.
    */
-
   validateDataAccountAmount: number;
 
   prepareToSettleAccountAmount: number;
@@ -124,7 +127,7 @@ export const addInstrumentBuilder = (
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
-    authority = convergence.identity(),
+    authority,
     protocol,
     instrumentProgram,
     validateDataAccountAmount,
