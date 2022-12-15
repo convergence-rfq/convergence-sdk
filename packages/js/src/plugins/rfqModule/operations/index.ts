@@ -1,9 +1,9 @@
-export * from './addInstrument';
+export * from '../../protocolModule/operations/addInstrument';
 export * from './addLegsToRfq';
 export * from './cancelResponse';
 export * from './cancelRfq';
 export * from './cleanUpResponse';
-export * from './cleanUpResponseLegs'
+export * from './cleanUpResponseLegs';
 export * from './cleanUpRfq';
 export * from './confirmResponse';
 export * from './createRfq';
@@ -24,7 +24,3 @@ export * from './settleTwoPartyDefault';
 export * from './unlockResponseCollateral';
 export * from './unlockRfqCollateral';
 export * from './withdrawCollateral';
-
-
-
-
