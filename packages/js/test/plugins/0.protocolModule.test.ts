@@ -1,6 +1,8 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-import { Keypair } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
+import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
+//import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
 import {
   convergence,
   killStuckProcess,
@@ -22,17 +24,16 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
 
   const authority = cvg.rpc().getDefaultFeePayer();
 
-  const instrumentProgram = Keypair.generate();
   const validateDataAccountAmount = 1;
-  const prepareToSettleAccountAmount = 1;
-  const settleAccountAmount = 1;
-  const revertPreparationAccountAmount = 1;
-  const cleanUpAccountAmount = 1;
+  const prepareToSettleAccountAmount = 7;
+  const settleAccountAmount = 3;
+  const revertPreparationAccountAmount = 3;
+  const cleanUpAccountAmount = 4;
 
   await cvg.protocol().addInstrument({
     authority,
     protocol: protocol.address,
-    instrumentProgram: instrumentProgram.publicKey,
+    instrumentProgram: new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS),
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
     settleAccountAmount,
@@ -44,5 +45,18 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   //  $topic: 'Add Instrument',
   //  model: 'protocol',
   //  address: spokSamePubkey(protocol.address),
+  //});
+
+  //await cvg.protocol().addInstrument({
+  //  authority,
+  //  protocol: protocol.address,
+  //  instrumentProgram: new PublicKey(
+  //    PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS
+  //  ),
+  //  validateDataAccountAmount,
+  //  prepareToSettleAccountAmount,
+  //  settleAccountAmount,
+  //  revertPreparationAccountAmount,
+  //  cleanUpAccountAmount,
   //});
 });

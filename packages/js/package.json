@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@bundlr-network/client": "^0.8.8",
+    "@convergence-rfq/psyoptions-european-instrument": "^1.0.0",
     "@convergence-rfq/rfq": "2.0.8",
     "@convergence-rfq/risk-engine": "2.0.5",
     "@convergence-rfq/spot-instrument": "2.0.2",
