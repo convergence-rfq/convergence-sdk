@@ -5,6 +5,8 @@ import {
   InitializeCollateralInput,
   withdrawCollateralOperation,
   WithdrawCollateralInput,
+  findCollateralByAddressOperation,
+  FindCollateralByAddressInput,
 } from './operations';
 import { OperationOptions } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -37,5 +39,15 @@ export class CollateralClient {
     return this.convergence
       .operations()
       .execute(withdrawCollateralOperation(input), options);
+  }
+
+  /** {@inheritDoc findRfqByAddressOperation} */
+  findByAddress(
+    input: FindCollateralByAddressInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(findCollateralByAddressOperation(input), options);
   }
 }
