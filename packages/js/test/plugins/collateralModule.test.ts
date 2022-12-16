@@ -1,15 +1,16 @@
 import test, { Test } from 'tape';
+import { PublicKey } from '@solana/web3.js';
 import spok from 'spok';
 import {
   convergence,
   killStuckProcess,
-  // spokSamePubkey,
+  spokSamePubkey,
   initializeProtocol,
   initializeCollateral,
   fundCollateral,
+  withdrawCollateral,
 } from '../helpers';
-import { PublicKey } from '@solana/web3.js';
-// import { token } from '@/index';
+import { token } from '@/index';
 
 killStuckProcess();
 
@@ -28,24 +29,28 @@ killStuckProcess();
 // test('[collateralModule] it can fund collateral', async (t: Test) => {
 //   const cvg = await convergence();
 //   const rfqProgram = cvg.programs().getRfq();
+//   const amount = 25;
 
 //   const { collateralMint } = await initializeProtocol(cvg);
 
 //   await initializeCollateral(cvg, collateralMint);
-//   const amount = await fundCollateral(cvg, collateralMint);
+
+//   await fundCollateral(cvg, collateralMint, amount);
 
 //   const [collateralToken] = PublicKey.findProgramAddressSync(
 //     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
 //     rfqProgram.address
 //   );
 
-//   const maybeAccount = await cvg.rpc().getAccount(collateralToken, 'confirmed');
+//   const collateralTokenMaybeAccount = await cvg
+//     .rpc()
+//     .getAccount(collateralToken, 'confirmed');
 
-//   const tokenAccount = await cvg
+//   const collateralTokenAccount = await cvg
 //     .tokens()
-//     .findTokenByAddress({ address: maybeAccount.publicKey });
+//     .findTokenByAddress({ address: collateralTokenMaybeAccount.publicKey });
 
-//   spok(t, tokenAccount, {
+//   spok(t, collateralTokenAccount, {
 //     $topic: 'Fund Collateral',
 //     model: 'token',
 //     mintAddress: spokSamePubkey(collateralMint.address),
@@ -56,42 +61,49 @@ killStuckProcess();
 test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   const cvg = await convergence();
   const rfqProgram = cvg.programs().getRfq();
+
   const amount = 25;
 
   const { collateralMint } = await initializeProtocol(cvg);
+
   await initializeCollateral(cvg, collateralMint);
+
   const { userTokens } = await fundCollateral(cvg, collateralMint, amount);
 
-  const [protocol] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
-  const [collateralInfo] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
+  await withdrawCollateral(cvg, userTokens, amount);
+
+  const userTokensMaybeAccount = await cvg
+    .rpc()
+    .getAccount(userTokens.address, 'confirmed');
+
+  const userTokensAccountAfterWithdraw = await cvg
+    .tokens()
+    .findTokenByAddress({ address: userTokensMaybeAccount.publicKey });
+
+  spok(t, userTokensAccountAfterWithdraw, {
+    $topic: 'Withdraw Collateral',
+    address: spokSamePubkey(userTokens.address),
+    mintAddress: spokSamePubkey(collateralMint.address),
+    amount: token(amount),
+  });
+
   const [collateralToken] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
     rfqProgram.address
   );
 
-  await cvg.collateral().withdrawCollateral({
-    user: cvg.identity(),
-    userTokens: userTokens.address,
-    protocol,
-    collateralInfo,
-    collateralToken,
-    amount: amount,
-  });
+  const collateralTokenMaybeAccount = await cvg
+    .rpc()
+    .getAccount(collateralToken, 'confirmed');
 
-  // spok(t, userTokens, {
-  //   $topic: 'Withdraw Collateral',
-  //   model: 'token',
-  //   amount: token(amount - 1),
-  // });
+  const collateralTokenAccount = await cvg
+    .tokens()
+    .findTokenByAddress({ address: collateralTokenMaybeAccount.publicKey });
 
-  spok(t, userTokens.amount, {
+  spok(t, collateralTokenAccount, {
     $topic: 'Withdraw Collateral',
-    basisPoints: amount,
+    address: spokSamePubkey(collateralToken),
+    mintAddress: spokSamePubkey(collateralMint.address),
+    amount: token(0),
   });
 });

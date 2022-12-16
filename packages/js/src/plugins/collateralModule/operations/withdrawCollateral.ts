@@ -50,7 +50,7 @@ export type WithdrawCollateralInput = {
    *
    * @defaultValue `convergence.identity().publicKey`
    */
-  user: Signer;
+  user?: Signer;
   /** The address of the protocol*/
   userTokens: PublicKey;
 
@@ -140,7 +140,7 @@ export const withdrawCollateralBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const {
-    user,
+    user = convergence.identity(),
     protocol,
     userTokens,
     collateralInfo,
