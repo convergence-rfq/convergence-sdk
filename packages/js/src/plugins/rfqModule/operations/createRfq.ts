@@ -4,7 +4,7 @@ import {
   FixedSize,
   Leg,
 } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -55,11 +55,14 @@ export type CreateRfqInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   taker?: Signer;
+
+  /** Optional Rfq keypair */
+  keypair?: Keypair;
+
   /** The pubkey address of the protocol account. */
   protocol: PublicKey;
-  /** The pubkey address of the Rfq account. */
-  rfq: PublicKey;
-  /** The pubkey address of the quote_mint account. */
+
+  /** The pubkey address of the quote mint account. */
   quoteMint: PublicKey;
 
   /*
@@ -91,6 +94,7 @@ export type CreateRfqInput = {
 export type CreateRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
   /** The newly created Rfq. */
   rfq: Rfq;
 };
@@ -105,7 +109,16 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
-    const builder = await createRfqBuilder(convergence, operation.input, scope);
+    const { keypair = Keypair.generate() } = operation.input;
+
+    const builder = await createRfqBuilder(
+      convergence,
+      {
+        ...operation.input,
+        keypair,
+      },
+      scope
+    );
     scope.throwIfCanceled();
 
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
@@ -116,13 +129,9 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
-    const rfq = await convergence.rfqs().create(
-      {
-        ...operation.input,
-      },
-      scope
-    );
-
+    const rfq = await convergence
+      .rfqs()
+      .findByAddress({ address: keypair.publicKey });
     assertRfq(rfq);
 
     return { ...output, rfq };
@@ -148,7 +157,7 @@ export type CreateRfqBuilderParams = CreateRfqInput;
  * @group Transaction Builders
  * @category Contexts
  */
-export type CreateRfqBuilderContext = SendAndConfirmTransactionResponse;
+export type CreateRfqBuilderContext = Omit<CreateRfqOutput, 'response' | 'rfq'>;
 
 /**
  * Creates a new Rfq.
@@ -168,12 +177,12 @@ export const createRfqBuilder = async (
   params: CreateRfqBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
+  const { keypair = Keypair.generate() } = params;
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
   const {
     taker = convergence.identity(),
     protocol,
-    rfq,
     quoteMint,
     expectedLegSize = 0,
     legs = [],
@@ -186,14 +195,17 @@ export const createRfqBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  return TransactionBuilder.make()
+  return TransactionBuilder.make<CreateRfqBuilderContext>()
     .setFeePayer(payer)
+    .setContext({
+      keypair,
+    })
     .add({
       instruction: createCreateRfqInstruction(
         {
           taker: taker.publicKey,
           protocol,
-          rfq,
+          rfq: keypair.publicKey,
           quoteMint,
           systemProgram: systemProgram.address,
         },
@@ -207,7 +219,7 @@ export const createRfqBuilder = async (
         },
         rfqProgram.address
       ),
-      signers: [taker],
+      signers: [taker, keypair],
       key: 'createRfq',
     });
 };

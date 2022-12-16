@@ -1,6 +1,10 @@
 import {
+  AddInstrumentInput,
+  addInstrumentOperation,
   InitializeProtocolInput,
   initializeProtocolOperation,
+  GetProtocolInput,
+  getProtocolOperation,
 } from './operations';
 import { OperationOptions } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -33,5 +37,18 @@ export class ProtocolClient {
     return this.convergence
       .operations()
       .execute(initializeProtocolOperation(input), options);
+  }
+  /** {@inheritDoc addInstrumentOperation} */
+  addInstrument(input: AddInstrumentInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(addInstrumentOperation(input), options);
+  }
+
+  /** {@inheritDoc getProtocolOperation} */
+  get(input: GetProtocolInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(getProtocolOperation(input), options);
   }
 }

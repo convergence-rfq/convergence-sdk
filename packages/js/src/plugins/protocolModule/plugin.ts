@@ -2,6 +2,10 @@ import { ProtocolClient } from './ProtocolClient';
 import {
   initializeProtocolOperation,
   initializeProtocolOperationHandler,
+  getProtocolOperation,
+  getProtocolOperationHandler,
+  addInstrumentOperation,
+  addInstrumentOperationHandler,
 } from './operations';
 import { Protocol } from './models';
 import { ConvergencePlugin } from '@/types';
@@ -15,6 +19,9 @@ export const protocolModule = (): ConvergencePlugin => ({
       initializeProtocolOperation,
       initializeProtocolOperationHandler
     );
+    op.register(getProtocolOperation, getProtocolOperationHandler);
+    op.register(addInstrumentOperation, addInstrumentOperationHandler);
+
     convergence.protocol = function () {
       return new ProtocolClient(this);
     };

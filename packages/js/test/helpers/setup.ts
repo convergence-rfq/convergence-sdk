@@ -157,3 +157,14 @@ export const withdrawCollateral = async (
     amount,
   });
 };
+
+
+export const createRfq = async (cvg: Convergence) => {
+  const protocol = await cvg.protocol().get({});
+  const { rfq } = await cvg.rfqs().create({
+    quoteMint: protocol.collateralMint,
+    protocol: protocol.address,
+  });
+
+  return { rfq };
+};
