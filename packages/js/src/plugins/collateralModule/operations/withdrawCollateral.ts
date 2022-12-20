@@ -4,72 +4,73 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
+  Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Signer, makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
+import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
+import { createWithdrawCollateralInstruction } from '@convergence-rfq/rfq';
+import { bignum } from '@metaplex-foundation/beet';
 
-const Key = 'FundCollateralOperation' as const;
+const Key = 'WithdrawCollateralOperation' as const;
 
 /**
- * Funds a collateral account.
+ * withdraws a collateral account.
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .fundCollateral({ address };
+ *   .withdrawCollateral({ address };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const fundCollateralOperation =
-  useOperation<FundCollateralOperation>(Key);
+export const withdrawCollateralOperation =
+  useOperation<WithdrawCollateralOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type FundCollateralOperation = Operation<
+export type WithdrawCollateralOperation = Operation<
   typeof Key,
-  FundCollateralInput,
-  FundCollateralOutput
+  WithdrawCollateralInput,
+  WithdrawCollateralOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type FundCollateralInput = {
+export type WithdrawCollateralInput = {
   /**
-   * The user for whom collateral is funded.
+   * The user for whom collateral is withdrawd.
    *
-   * @defaultValue `convergence.identity()`
+   * @defaultValue `convergence.identity().publicKey`
    */
   user?: Signer;
-  /** Token account of user's token */
+  /** The address of the protocol*/
   userTokens: PublicKey;
-  /** The address of the protocol account. */
-  protocol: PublicKey;
-  /** The address of the user's collateral_info account. */
-  collateralInfo: PublicKey;
-  /** The Token account of the user's collateral */
-  collateralToken: PublicKey;
 
+  protocol: PublicKey;
+
+  collateralInfo: PublicKey;
+
+  collateralToken: PublicKey;
   /*
    * Args
    */
-
-  amount: number;
+  amount: bignum;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FundCollateralOutput = {
+export type WithdrawCollateralOutput = {
+  /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
 
@@ -77,16 +78,16 @@ export type FundCollateralOutput = {
  * @group Operations
  * @category Handlers
  */
-export const fundCollateralOperationHandler: OperationHandler<FundCollateralOperation> =
+export const withdrawCollateralOperationHandler: OperationHandler<WithdrawCollateralOperation> =
   {
     handle: async (
-      operation: FundCollateralOperation,
+      operation: WithdrawCollateralOperation,
       convergence: Convergence,
       scope: OperationScope
     ) => {
       scope.throwIfCanceled();
 
-      const builder = await fundCollateralBuilder(
+      const builder = await withdrawCollateralBuilder(
         convergence,
         {
           ...operation.input,
@@ -99,7 +100,6 @@ export const fundCollateralOperationHandler: OperationHandler<FundCollateralOper
         convergence,
         scope.confirmOptions
       );
-
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
@@ -107,42 +107,51 @@ export const fundCollateralOperationHandler: OperationHandler<FundCollateralOper
     },
   };
 
-export type FundCollateralBuilderParams = FundCollateralInput;
+export type WithdrawCollateralBuilderParams = WithdrawCollateralInput;
 
 /**
- * Funds a collateral account.
+ * @group Transaction Builders
+ * @category Contexts
+ */
+export type WithdrawCollateralBuilderContext = Omit<
+  WithdrawCollateralOutput,
+  'collateral'
+>;
+
+/**
+ * withdraws a collateral account.
  *
  * ```ts
  * const transactionBuilder = await convergence
  *   .rfqs()
  *   .builders()
- *   .fundCollateral();
+ *   .withdrawCollateral();
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const fundCollateralBuilder = async (
+export const withdrawCollateralBuilder = async (
   convergence: Convergence,
-  params: FundCollateralBuilderParams,
+  params: WithdrawCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
+): Promise<TransactionBuilder<WithdrawCollateralBuilderContext>> => {
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const {
     user = convergence.identity(),
-    userTokens,
     protocol,
+    userTokens,
     collateralInfo,
     collateralToken,
     amount,
   } = params;
 
-  return TransactionBuilder.make()
+  return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)
     .add({
-      instruction: createFundCollateralInstruction(
+      instruction: createWithdrawCollateralInstruction(
         {
           user: user.publicKey,
           userTokens,
@@ -151,11 +160,11 @@ export const fundCollateralBuilder = async (
           collateralToken,
         },
         {
-          amount: amount,
+          amount,
         },
         rfqProgram.address
       ),
       signers: [user],
-      key: 'fundCollateral',
+      key: 'withdrawCollateral',
     });
 };

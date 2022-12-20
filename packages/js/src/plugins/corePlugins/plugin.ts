@@ -1,5 +1,4 @@
 import type { Convergence } from '../../Convergence';
-import { collateralModule } from '../collateralModule';
 import { identityModule } from '../identityModule';
 import { storageModule } from '../storageModule';
 import { rpcModule } from '../rpcModule';
@@ -7,6 +6,7 @@ import { operationModule } from '../operationModule';
 import { programModule } from '../programModule';
 import { guestIdentity } from '../guestIdentity';
 import { bundlrStorage } from '../bundlrStorage';
+import { collateralModule } from '../collateralModule';
 import { systemModule } from '../systemModule';
 import { tokenModule } from '../tokenModule';
 import { rfqModule } from '../rfqModule';
@@ -30,6 +30,7 @@ export const corePlugins = () => ({
     convergence.use(systemModule());
     convergence.use(tokenModule());
     convergence.use(protocolModule());
+    convergence.use(collateralModule());
     convergence.use(rfqModule());
     convergence.use(collateralModule());
     convergence.use(riskEngineModule());

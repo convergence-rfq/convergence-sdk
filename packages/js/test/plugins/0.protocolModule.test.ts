@@ -8,13 +8,14 @@ import {
   killStuckProcess,
   spokSamePubkey,
   initializeProtocol,
+  mintAuthority,
 } from '../helpers';
 
 killStuckProcess();
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const cvg = await convergence();
-  const { protocol } = await initializeProtocol(cvg);
+  const { protocol } = await initializeProtocol(cvg, mintAuthority);
 
   spok(t, protocol, {
     $topic: 'Initialize Protocol',

@@ -30,6 +30,8 @@ import { TokenBuildersClient } from './TokenBuildersClient';
 import { TokenPdasClient } from './TokenPdasClient';
 import type { Convergence } from '@/Convergence';
 import { OperationOptions } from '@/types';
+import { Mint, Token } from './models';
+import { PublicKey } from '@/types';
 
 /**
  * This is a client for the Token module.
@@ -156,6 +158,30 @@ export class TokenClient {
   // -----------------
   // Update
   // -----------------
+
+  refreshMint<T extends Mint | PublicKey>(
+    model: T,
+    options?: OperationOptions
+  ): Promise<T extends PublicKey ? Mint : T> {
+    return this.findMintByAddress(
+      {
+        address: 'model' in model ? model.address : model,
+      },
+      options
+    ) as Promise<T extends PublicKey ? Mint : T>;
+  }
+
+  refreshToken<T extends Token | PublicKey>(
+    model: T,
+    options?: OperationOptions
+  ): Promise<T extends PublicKey ? Token : T> {
+    return this.findTokenByAddress(
+      {
+        address: 'model' in model ? model.address : model,
+      },
+      options
+    ) as Promise<T extends PublicKey ? Token : T>;
+  }
 
   /** {@inheritDoc mintTokensOperation} */
   mint(input: MintTokensInput, options?: OperationOptions) {

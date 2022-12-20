@@ -53,8 +53,6 @@ import {
   unlockResponseCollateralOperationHandler,
   unlockRfqCollateralOperation,
   unlockRfqCollateralOperationHandler,
-  withdrawCollateralOperation,
-  withdrawCollateralOperationHandler,
 } from './operations';
 import { ErrorWithLogs, ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -136,10 +134,6 @@ export const rfqModule = (): ConvergencePlugin => ({
     op.register(
       unlockRfqCollateralOperation,
       unlockRfqCollateralOperationHandler
-    );
-    op.register(
-      withdrawCollateralOperation,
-      withdrawCollateralOperationHandler
     );
 
     convergence.rfqs = function () {
