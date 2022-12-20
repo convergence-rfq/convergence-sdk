@@ -10,6 +10,9 @@ import {
   Token,
 } from '@/index';
 
+export const mintAuthority = Keypair.generate();
+export let ut: Token;
+
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
   rpcEndpoint?: string;
@@ -35,8 +38,17 @@ export const createWallet = async (
   return wallet;
 };
 
-export const initializeProtocol = async (cvg: Convergence) => {
-  const { mint: collateralMint } = await cvg.tokens().createMint();
+/*
+ * PROTOCOL
+ */
+export const initializeProtocol = async (
+  cvg: Convergence,
+  mintAuthority: Keypair
+) => {
+  const { mint: collateralMint } = await cvg
+    .tokens()
+    .createMint({ mintAuthority: mintAuthority.publicKey });
+
   const signer = Keypair.generate();
 
   const { token: toToken } = await cvg
@@ -47,6 +59,7 @@ export const initializeProtocol = async (cvg: Convergence) => {
     mintAddress: collateralMint.address,
     amount: token(42),
     toToken: toToken.address,
+    mintAuthority,
   });
 
   const { protocol } = await cvg.protocol().initialize({
@@ -56,6 +69,10 @@ export const initializeProtocol = async (cvg: Convergence) => {
   return { protocol, collateralMint };
 };
 
+/*
+ * COLLATERAL
+ */
+
 export const initializeCollateral = async (
   cvg: Convergence,
   collateralMint: Mint
@@ -63,21 +80,20 @@ export const initializeCollateral = async (
   const rfqProgram = cvg.programs().getRfq();
 
   // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
-  const [protocol] = await PublicKey.findProgramAddress(
+  const [protocol] = PublicKey.findProgramAddressSync(
     [Buffer.from('protocol')],
     rfqProgram.address
   );
-  const [collateralToken] = await PublicKey.findProgramAddress(
+  const [collateralToken] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
     rfqProgram.address
   );
-  const [collateralInfo] = await PublicKey.findProgramAddress(
+  const [collateralInfo] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
     rfqProgram.address
   );
 
   const { collateral } = await cvg.collateral().initializeCollateral({
-    user: cvg.identity(),
     protocol,
     collateralToken,
     collateralInfo,
@@ -90,6 +106,7 @@ export const initializeCollateral = async (
 export const fundCollateral = async (
   cvg: Convergence,
   collateralMint: Mint,
+  mintAuthority: Keypair,
   amount: number
 ) => {
   const rfqProgram = cvg.programs().getRfq();
@@ -98,12 +115,12 @@ export const fundCollateral = async (
     [Buffer.from('protocol')],
     rfqProgram.address
   );
-  const [collateralInfo] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
   const [collateralToken] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralInfo] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
     rfqProgram.address
   );
 
@@ -115,16 +132,18 @@ export const fundCollateral = async (
     mintAddress: collateralMint.address,
     amount: token(amount),
     toToken: userTokens.address,
+    mintAuthority,
   });
 
   await cvg.collateral().fundCollateral({
-    user: cvg.identity(),
     userTokens: userTokens.address,
     protocol,
     collateralInfo,
     collateralToken,
     amount,
   });
+
+  ut = userTokens;
 
   return { userTokens };
 };
@@ -158,6 +177,9 @@ export const withdrawCollateral = async (
   });
 };
 
+/*
+ * RFQ
+ */
 
 export const createRfq = async (cvg: Convergence) => {
   const protocol = await cvg.protocol().get({});

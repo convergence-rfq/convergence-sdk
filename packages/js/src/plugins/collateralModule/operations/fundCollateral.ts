@@ -46,9 +46,9 @@ export type FundCollateralInput = {
   /**
    * The user for whom collateral is funded.
    *
-   * @defaultValue `convergence.identity().publicKey`
+   * @defaultValue `convergence.identity()`
    */
-  user: Signer;
+  user?: Signer;
   /** Token account of user's token */
   userTokens: PublicKey;
   /** The address of the protocol account. */

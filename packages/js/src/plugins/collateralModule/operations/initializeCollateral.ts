@@ -49,9 +49,9 @@ export type InitializeCollateralInput = {
   /**
    * The user for whom collateral is initialized.
    *
-   * @defaultValue `convergence.identity().publicKey`
+   * @defaultValue `convergence.identity()`
    */
-  user: Signer;
+  user?: Signer;
   /** The address of the protocol*/
   protocol: PublicKey;
 
@@ -85,13 +85,13 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       scope: OperationScope
     ) => {
       const { commitment } = scope;
-      const { user } = operation.input;
+      const { user = convergence.identity() } = operation.input;
       scope.throwIfCanceled();
 
       const builder = await initializeCollateralBuilder(
         convergence,
         {
-          ...operation.input
+          ...operation.input,
         },
         scope
       );
@@ -155,8 +155,13 @@ export const initializeCollateralBuilder = async (
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const { user, protocol, collateralMint, collateralInfo, collateralToken } =
-    params;
+  const {
+    user = convergence.identity(),
+    protocol,
+    collateralMint,
+    collateralInfo,
+    collateralToken,
+  } = params;
 
   return TransactionBuilder.make<InitializeCollateralBuilderContext>()
     .setFeePayer(user)
