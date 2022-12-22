@@ -50,3 +50,27 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     address: spokSamePubkey(foundRfq3.address),
   });
 });
+
+
+// test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
+//   const cvg = await convergence();
+
+//   const { rfq: rfq1 } = await createRfq(cvg);
+//   // const { rfq: rfq2 } = await createRfq(cvg);
+
+//   const [
+//     foundRfq1,
+//     // foundRfq2
+//   ] = await cvg.rfqs().findAllByOwner({ owner: cvg.identity().publicKey });
+
+//   spok(t, rfq1, {
+//     $topic: 'Created RFQ',
+//     model: 'rfq',
+//     address: spokSamePubkey(foundRfq1.address),
+//   });
+//   // spok(t, rfq2, {
+//   //   $topic: 'Created RFQ',
+//   //   model: 'rfq',
+//   //   address: spokSamePubkey(foundRfq2.address),
+//   // });
+// });
