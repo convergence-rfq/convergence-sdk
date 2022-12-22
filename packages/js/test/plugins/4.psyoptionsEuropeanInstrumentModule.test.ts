@@ -1,4 +1,5 @@
-import test, { Test } from 'tape';
+//import test, { Test } from 'tape';
+import test from 'tape';
 //import spok from 'spok';
 import {
   convergence,
