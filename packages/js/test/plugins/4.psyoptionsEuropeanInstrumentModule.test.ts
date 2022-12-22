@@ -9,7 +9,8 @@ import {
 
 killStuckProcess();
 
-test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async (t: Test) => {
+//test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async (t: Test) => {
+test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {
   const cvg = await convergence();
 
   //const { rfq } = await createRfq(cvg);
