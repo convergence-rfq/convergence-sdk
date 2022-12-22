@@ -2,7 +2,7 @@ import {
   createPrepareSettlementInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
-import { PublicKey, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -52,20 +52,15 @@ export type PrepareSettlementInput = {
    * @defaultValue `convergence.identity()`
    */
   caller?: Signer;
-  /** The address of quoteToken Token account */
-  quoteTokens: PublicKey;
+
   /** The address of the protocol */
   protocol: PublicKey;
+
   /** The address of the Rfq account */
   rfq: PublicKey;
+
   /** The address of the response account */
   response: PublicKey;
-  /** The Mint address of the quote token */
-  quoteMint: PublicKey;
-  /** The address of the quote escrow TokenAccount */
-  quoteEscrow: PublicKey;
-  /** The rent sysvar */
-  rent?: PublicKey;
 
   /*
    * Args
@@ -130,20 +125,14 @@ export const respondBuilder = (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     caller = convergence.identity(),
-    quoteTokens,
     protocol,
     rfq,
     response,
-    quoteMint,
-    quoteEscrow,
-    rent = SYSVAR_RENT_PUBKEY,
     side,
     legAmountToPrepare,
   } = params;
 
   const rfqProgram = convergence.programs().getToken(programs);
-  const systemProgram = convergence.programs().getSystem(programs);
-  const tokenProgram = convergence.programs().getToken(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -151,15 +140,9 @@ export const respondBuilder = (
       instruction: createPrepareSettlementInstruction(
         {
           caller: caller.publicKey,
-          quoteTokens,
           protocol,
           rfq,
           response,
-          quoteMint,
-          quoteEscrow,
-          systemProgram: systemProgram.address,
-          tokenProgram: tokenProgram.address,
-          rent,
         },
         {
           side,

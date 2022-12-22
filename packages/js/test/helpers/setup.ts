@@ -1,4 +1,5 @@
 import { Commitment, PublicKey, Connection, Keypair } from '@solana/web3.js';
+import { QuoteAsset } from '@convergence-rfq/rfq';
 import { LOCALHOST } from '@metaplex-foundation/amman-client';
 import { amman } from './amman';
 import {
@@ -181,12 +182,11 @@ export const withdrawCollateral = async (
  * RFQ
  */
 
-export const createRfq = async (cvg: Convergence) => {
+export const createRfq = async (cvg: Convergence, quoteAsset?: QuoteAsset) => {
   const protocol = await cvg.protocol().get({});
   const { rfq } = await cvg.rfqs().create({
-    quoteMint: protocol.collateralMint,
     protocol: protocol.address,
+    quoteAsset,
   });
-
   return { rfq };
 };
