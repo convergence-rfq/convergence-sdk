@@ -102,10 +102,10 @@ export const settleBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { protocol, rfq, response, quoteReceiverTokens, quoteEscrow } = params;
+  const { protocol, rfq, response } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const tokenProgram = convergence.programs().getToken(programs);
+  // const tokenProgram = convergence.programs().getToken(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -115,9 +115,9 @@ export const settleBuilder = (
           protocol,
           rfq,
           response,
-          quoteReceiverTokens,
-          quoteEscrow,
-          tokenProgram: tokenProgram.address,
+          // quoteReceiverTokens,
+          // quoteEscrow,
+          // tokenProgram: tokenProgram.address,
         },
         rfqProgram.address
       ),

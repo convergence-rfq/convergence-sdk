@@ -118,16 +118,16 @@ export const cleanUpResponseBuilder = (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     maker,
-    firstToPrepareQuote,
+    // firstToPrepareQuote,
     protocol,
     rfq,
     response,
-    quoteEscrow,
-    quoteBackupTokens,
+    // quoteEscrow,
+    // quoteBackupTokens,
   } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const tokenProgram = convergence.programs().getToken(programs);
+  // const tokenProgram = convergence.programs().getToken(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -135,13 +135,13 @@ export const cleanUpResponseBuilder = (
       instruction: createCleanUpResponseInstruction(
         {
           maker,
-          firstToPrepareQuote,
+          // firstToPrepareQuote,
           protocol,
           rfq,
           response,
-          quoteEscrow,
-          quoteBackupTokens,
-          tokenProgram: tokenProgram.address,
+          // quoteEscrow,
+          // quoteBackupTokens,
+          // tokenProgram: tokenProgram.address,
         },
         rfqProgram.address
       ),

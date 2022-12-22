@@ -57,6 +57,8 @@ export type AddInstrumentInput = {
    */
   instrumentProgram: PublicKey;
 
+  canBeUsedAsQuote: boolean;
+
   /*
    * The amount of lamports to allocate for the validate data account.
    */
@@ -130,6 +132,7 @@ export const addInstrumentBuilder = (
     authority,
     protocol,
     instrumentProgram,
+    canBeUsedAsQuote,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
     settleAccountAmount,
@@ -149,6 +152,7 @@ export const addInstrumentBuilder = (
           instrumentProgram,
         },
         {
+          canBeUsedAsQuote,
           validateDataAccountAmount,
           prepareToSettleAccountAmount,
           settleAccountAmount,

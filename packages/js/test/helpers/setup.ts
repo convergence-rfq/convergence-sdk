@@ -9,6 +9,7 @@ import {
   Mint,
   Token,
 } from '@/index';
+import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
 
 export const mintAuthority = Keypair.generate();
 export let ut: Token;
@@ -183,9 +184,13 @@ export const withdrawCollateral = async (
 
 export const createRfq = async (cvg: Convergence) => {
   const protocol = await cvg.protocol().get({});
+
+  const instrumentProgram = new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS);
+
   const { rfq } = await cvg.rfqs().create({
-    quoteMint: protocol.collateralMint,
     protocol: protocol.address,
+    quoteMint: protocol.collateralMint,
+    instrumentProgram,
   });
 
   return { rfq };

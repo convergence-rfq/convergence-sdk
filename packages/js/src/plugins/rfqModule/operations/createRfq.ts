@@ -65,6 +65,12 @@ export type CreateRfqInput = {
   /** The pubkey address of the quote mint account. */
   quoteMint: PublicKey;
 
+  instrumentProgram: PublicKey;
+
+  instrumentData?: Uint8Array;
+
+  instrumentDecimals?: number;
+
   /*
    * Args
    */
@@ -183,7 +189,10 @@ export const createRfqBuilder = async (
   const {
     taker = convergence.identity(),
     protocol,
+    instrumentProgram,
     quoteMint,
+    // instrumentData,
+    instrumentDecimals = 0,
     expectedLegSize = 0,
     legs = [],
     orderType = OrderType.TwoWay,
@@ -206,13 +215,17 @@ export const createRfqBuilder = async (
           taker: taker.publicKey,
           protocol,
           rfq: keypair.publicKey,
-          quoteMint,
           systemProgram: systemProgram.address,
         },
         {
           expectedLegSize,
           legs,
           orderType,
+          quoteAsset: {
+            instrumentProgram,
+            instrumentData: Buffer.from(quoteMint.toBytes()),
+            instrumentDecimals,
+          },
           fixedSize,
           activeWindow,
           settlingWindow,
@@ -223,3 +236,13 @@ export const createRfqBuilder = async (
       key: 'createRfq',
     });
 };
+
+// serializeInstrumentData(): Buffer {
+// return Buffer.from(this.mint.publicKey.toBytes());
+// }
+
+// (alias) type QuoteAsset = {
+//   instrumentProgram: web3.PublicKey;
+//   instrumentData: Uint8Array;
+//   instrumentDecimals: number;
+// }

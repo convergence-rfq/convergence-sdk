@@ -35,6 +35,7 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
     authority,
     protocol: protocol.address,
     instrumentProgram: new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS),
+    canBeUsedAsQuote: true,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
     settleAccountAmount,
