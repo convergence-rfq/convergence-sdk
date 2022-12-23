@@ -179,11 +179,13 @@ export const createRfqBuilder = async (
   const { keypair = Keypair.generate() } = params;
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
+  const spotInstrument = convergence.programs().getSpotInstrument(programs);
+
   const {
     taker = convergence.identity(),
     protocol,
     quoteAsset = {
-      instrumentProgram: Keypair.generate().publicKey,
+      instrumentProgram: spotInstrument.address,
       instrumentData: new Uint8Array(),
       instrumentDecimals: 0,
     },
