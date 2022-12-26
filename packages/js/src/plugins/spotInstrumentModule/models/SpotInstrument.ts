@@ -19,6 +19,8 @@ export type SpotInstrument = {
   readonly decimals: number;
 
   readonly side: Side;
+
+  readonly data: Buffer;
 };
 
 /** @group Model Helpers */

@@ -32,7 +32,7 @@ export class SpotInstrumentClient {
     return {
       instrumentProgram: spotInstrumentProgram.address,
       baseAssetIndex: { value: 0 },
-      instrumentData: Buffer.from(''),
+      instrumentData: spotInstrument.data,
       instrumentAmount: spotInstrument.amount,
       instrumentDecimals: spotInstrument.decimals,
       side: spotInstrument.side,

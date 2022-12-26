@@ -194,6 +194,7 @@ export const createRfq = async (cvg: Convergence) => {
     side: Side.Bid,
     amount: 1,
     decimals: 0,
+    data: new Uint8Array(''),
   };
   const { rfq } = await cvg.rfqs().create({
     protocol: protocol.address,
