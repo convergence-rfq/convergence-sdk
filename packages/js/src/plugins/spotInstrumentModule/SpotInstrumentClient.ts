@@ -3,7 +3,7 @@ import { SpotInstrument } from './models';
 import type { Convergence } from '@/Convergence';
 
 /**
- * This is a client for the spotInstrumentmodule.
+ * This is a client for the spotInstrumentModule.
  *
  * It enables us to manage the spot instrument.
  *
@@ -15,9 +15,10 @@ import type { Convergence } from '@/Convergence';
  *
  * @example
  * ```ts
- * const { spotInstrument } = await convergence
+ * const spotInstrumet = { ... };
+ * const spotInstrumentLeg = await convergence
  *   .spotInstrument()
- *   .createLeg();
+ *   .createLeg(spotInstrument);
  * ```
  *
  * @group Modules
@@ -29,12 +30,11 @@ export class SpotInstrumentClient {
     const spotInstrumentProgram = this.convergence
       .programs()
       .getSpotInstrument();
-    const quoteAsset: QuoteAsset = {
+    return {
       instrumentProgram: spotInstrumentProgram.address,
       instrumentData: spotInstrument.data,
       instrumentDecimals: spotInstrument.decimals,
     };
-    return quoteAsset;
   }
 
   createLeg(spotInstrument: SpotInstrument): Leg {

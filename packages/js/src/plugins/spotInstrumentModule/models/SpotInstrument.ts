@@ -1,6 +1,7 @@
 import { Side } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { assert } from '@/utils';
+import { BigNumber } from '@/types';
 
 /**
  * This model captures all the relevant information about a Psyoptions European
@@ -14,7 +15,7 @@ export type SpotInstrument = {
 
   readonly mint: PublicKey;
 
-  readonly amount: number;
+  readonly amount: BigNumber;
 
   readonly decimals: number;
 

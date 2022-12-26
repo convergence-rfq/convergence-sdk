@@ -9,6 +9,7 @@ import {
   Mint,
   Token,
   SpotInstrument,
+  toBigNumber,
 } from '@/index';
 import { Side } from '@convergence-rfq/rfq';
 
@@ -193,7 +194,7 @@ export const createRfq = async (cvg: Convergence) => {
     model: 'spotInstrument',
     mint,
     side: Side.Bid,
-    amount: 1,
+    amount: toBigNumber(1),
     decimals: 0,
     data: Buffer.from(mint.toBytes()),
   };
