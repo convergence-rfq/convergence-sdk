@@ -1,4 +1,4 @@
-import { Leg } from '@convergence-rfq/rfq';
+import { Leg, QuoteAsset } from '@convergence-rfq/rfq';
 import { SpotInstrument } from './models';
 import type { Convergence } from '@/Convergence';
 
@@ -24,6 +24,18 @@ import type { Convergence } from '@/Convergence';
  */
 export class SpotInstrumentClient {
   constructor(protected readonly convergence: Convergence) {}
+
+  createQuoteAsset(spotInstrument: SpotInstrument): QuoteAsset {
+    const spotInstrumentProgram = this.convergence
+      .programs()
+      .getSpotInstrument();
+    const quoteAsset: QuoteAsset = {
+      instrumentProgram: spotInstrumentProgram.address,
+      instrumentData: spotInstrument.data,
+      instrumentDecimals: spotInstrument.decimals,
+    };
+    return quoteAsset;
+  }
 
   createLeg(spotInstrument: SpotInstrument): Leg {
     const spotInstrumentProgram = this.convergence

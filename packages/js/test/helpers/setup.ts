@@ -188,13 +188,14 @@ export const withdrawCollateral = async (
 
 export const createRfq = async (cvg: Convergence) => {
   const protocol = await cvg.protocol().get({});
+  const mint = protocol.collateralMint;
   const spotInstrument: SpotInstrument = {
     model: 'spotInstrument',
-    mint: protocol.collateralMint,
+    mint,
     side: Side.Bid,
     amount: 1,
     decimals: 0,
-    data: new Uint8Array(''),
+    data: Buffer.from(mint.toBytes()),
   };
   const { rfq } = await cvg.rfqs().create({
     protocol: protocol.address,
