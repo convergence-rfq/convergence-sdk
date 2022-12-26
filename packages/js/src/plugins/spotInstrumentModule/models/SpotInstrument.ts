@@ -1,6 +1,5 @@
-//import { BN } from '@project-serum/anchor';
+import { Side } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
-import { BN } from '@types';
 import { assert } from '@/utils';
 
 /**
@@ -13,14 +12,11 @@ export type SpotInstrument = {
   /** A model identifier to distinguish models in the SDK. */
   readonly model: 'spotInstrument';
 
-  /** The address of the instrument. */
-  readonly address: PublicKey;
+  readonly mint: PublicKey;
 
-  readonly underlyingMint: PublicKey;
+  readonly amount: number;
 
-  readonly stableMint: PublicKey;
-
-  readonly callWriterMint: PublicKey;
+  readonly side: Side;
 };
 
 /** @group Model Helpers */
@@ -32,24 +28,4 @@ export function assertSpotInstrument(
   value: any
 ): asserts value is SpotInstrument {
   assert(isSpotInstrument(value), `Expected SpotInstrument model`);
-}
-
-export type Leg = {
-    readonly instrumentProgram: PublicKey;
-
-    readonly baseAssetIndex: number;
-
-    readonly instrumentData: Buffer | Uint8Array;
-    
-    readonly instrumentAmount: BN;
-    
-    readonly instrumentDecimals: number;
-
-    readonly side: Side;
-}
-
-export const createLeg(): Leg => {
-    return {
-
-    }
 }

@@ -1,14 +1,10 @@
-//import {
-//  initializeSpotInstrumentOperation,
-//  InitializeSpotInstrumentInput,
-//} from './operations';
-//import { OperationOptions } from '@/types';
+import { Leg, Side } from '@convergence-rfq/rfq';
 import type { Convergence } from '@/Convergence';
 
 /**
  * This is a client for the spotInstrumentmodule.
  *
- * It enables us to manage the Psyoptions European instrument.
+ * It enables us to manage the spot instrument.
  *
  * You may access this client via the `spotInstrument()` method of your `Convergence` instance.
  *
@@ -20,7 +16,7 @@ import type { Convergence } from '@/Convergence';
  * ```ts
  * const { spotInstrument } = await convergence
  *   .spotInstrument()
- *   .initialize();
+ *   .createLeg();
  * ```
  *
  * @group Modules
@@ -28,10 +24,17 @@ import type { Convergence } from '@/Convergence';
 export class SpotInstrumentClient {
   constructor(protected readonly convergence: Convergence) {}
 
-  /** {@inheritDoc initializeSpotInstrumentOperation} */
-  //initialize(input: InitializeSpotInstrumentInput, options?: OperationOptions) {
-  //  return this.convergence
-  //    .operations()
-  //    .execute(initializeSpotInstrumentOperation(input), options);
-  //}
+  createLeg(): Leg {
+    const spotInstrumentProgram = this.convergence
+      .programs()
+      .getSpotInstrument();
+    return {
+      instrumentProgram: spotInstrumentProgram.address,
+      baseAssetIndex: { value: 0 },
+      instrumentData: Buffer.from(''),
+      instrumentAmount: 1,
+      instrumentDecimals: 0,
+      side: Side.Bid,
+    };
+  }
 }

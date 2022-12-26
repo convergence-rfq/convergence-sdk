@@ -70,7 +70,7 @@ export type CreateRfqInput = {
   expectedLegSize?: number;
 
   /** The legs of the order. */
-  legs?: Leg[];
+  legs: Leg[];
 
   /**
    * The type of order.
@@ -190,8 +190,7 @@ export const createRfqBuilder = async (
       instrumentDecimals: 0,
     },
     orderType = OrderType.TwoWay,
-    expectedLegSize = 0,
-    legs = [],
+    legs,
     fixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 },
     activeWindow = 1,
     settlingWindow = 1,
@@ -212,9 +211,10 @@ export const createRfqBuilder = async (
           protocol,
           rfq: keypair.publicKey,
           systemProgram: systemProgram.address,
+          anchorRemainingAccounts: [], //legs.map((leg) => ({ mint: leg.mint ),
         },
         {
-          expectedLegSize,
+          expectedLegSize: legs.length,
           legs,
           fixedSize,
           orderType,

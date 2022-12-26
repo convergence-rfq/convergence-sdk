@@ -8,6 +8,7 @@ import {
   KeypairSigner,
   Mint,
   Token,
+  SpotInstrument,
 } from '@/index';
 
 export const mintAuthority = Keypair.generate();
@@ -18,17 +19,20 @@ export type ConvergenceTestOptions = {
   rpcEndpoint?: string;
   solsToAirdrop?: number;
 };
+
 export const convergenceGuest = (options: ConvergenceTestOptions = {}) => {
   const connection = new Connection(options.rpcEndpoint ?? LOCALHOST, {
     commitment: options.commitment ?? 'confirmed',
   });
   return Convergence.make(connection);
 };
+
 export const convergence = async (options: ConvergenceTestOptions = {}) => {
   const cvg = convergenceGuest(options);
   const wallet = await createWallet(cvg, options.solsToAirdrop);
   return cvg.use(keypairIdentity(wallet as Keypair));
 };
+
 export const createWallet = async (
   cvg: Convergence,
   solsToAirdrop = 100
@@ -183,8 +187,11 @@ export const withdrawCollateral = async (
 
 export const createRfq = async (cvg: Convergence) => {
   const protocol = await cvg.protocol().get({});
+  const spotInstrumentClient = cvg.spotInstrument();
+  const legs = [spotInstrumentClient.createLeg()];
   const { rfq } = await cvg.rfqs().create({
     protocol: protocol.address,
+    legs,
   });
   return { rfq };
 };
