@@ -17,10 +17,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import {
-  SpotInstrument,
-  spotInstrumentProgram,
-} from '@/plugins/spotInstrumentModule';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -198,6 +195,22 @@ export const createRfqBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
+  const anchorRemainingAccounts: AccountMeta[] = [
+    {
+      pubkey: quoteAsset.instrumentProgram,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+
+  instruments.map((leg) => {
+    anchorRemainingAccounts.push({
+      pubkey: leg.mint,
+      isSigner: false,
+      isWritable: false,
+    });
+  });
+
   return TransactionBuilder.make<CreateRfqBuilderContext>()
     .setFeePayer(payer)
     .setContext({
@@ -210,14 +223,7 @@ export const createRfqBuilder = async (
           protocol,
           rfq: keypair.publicKey,
           systemProgram: systemProgram.address,
-          anchorRemainingAccounts: instruments.map(() => {
-            const accountMeta: AccountMeta = {
-              pubkey: spotInstrumentProgram.address,
-              isSigner: false,
-              isWritable: false,
-            };
-            return accountMeta;
-          }),
+          anchorRemainingAccounts,
         },
         {
           expectedLegSize: instruments.length,
