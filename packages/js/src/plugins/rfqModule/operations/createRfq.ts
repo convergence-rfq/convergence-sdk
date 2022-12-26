@@ -3,6 +3,7 @@ import {
   OrderType,
   FixedSize,
   Leg,
+  QuoteAsset,
 } from '@convergence-rfq/rfq';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -62,21 +63,13 @@ export type CreateRfqInput = {
   /** The pubkey address of the protocol account. */
   protocol: PublicKey;
 
-  /** The pubkey address of the quote mint account. */
-  quoteMint: PublicKey;
+  /** The quote asset account. */
+  quoteAsset?: QuoteAsset;
 
-  instrumentProgram: PublicKey;
-
-  instrumentData?: Uint8Array;
-
-  instrumentDecimals?: number;
-
-  /*
-   * Args
-   */
-
+  /** Expected leg size in quote asset units. */
   expectedLegSize?: number;
 
+  /** The legs of the order. */
   legs?: Leg[];
 
   /**
@@ -189,13 +182,14 @@ export const createRfqBuilder = async (
   const {
     taker = convergence.identity(),
     protocol,
-    instrumentProgram,
-    quoteMint,
-    // instrumentData,
-    instrumentDecimals = 0,
+    quoteAsset = {
+      instrumentProgram: Keypair.generate().publicKey,
+      instrumentData: new Uint8Array(),
+      instrumentDecimals: 0,
+    },
+    orderType = OrderType.TwoWay,
     expectedLegSize = 0,
     legs = [],
-    orderType = OrderType.TwoWay,
     fixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 },
     activeWindow = 1,
     settlingWindow = 1,
@@ -220,13 +214,9 @@ export const createRfqBuilder = async (
         {
           expectedLegSize,
           legs,
-          orderType,
-          quoteAsset: {
-            instrumentProgram,
-            instrumentData: Buffer.from(quoteMint.toBytes()),
-            instrumentDecimals,
-          },
           fixedSize,
+          orderType,
+          quoteAsset,
           activeWindow,
           settlingWindow,
         },

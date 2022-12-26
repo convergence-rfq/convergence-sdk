@@ -30,6 +30,7 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const settleAccountAmount = 3;
   const revertPreparationAccountAmount = 3;
   const cleanUpAccountAmount = 4;
+  const canBeUsedAsQuote = true;
 
   await cvg.protocol().addInstrument({
     authority,
@@ -37,6 +38,7 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
     instrumentProgram: new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS),
     canBeUsedAsQuote: true,
     validateDataAccountAmount,
+    canBeUsedAsQuote,
     prepareToSettleAccountAmount,
     settleAccountAmount,
     revertPreparationAccountAmount,

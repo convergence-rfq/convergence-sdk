@@ -12,7 +12,7 @@ import { tokenModule } from '../tokenModule';
 import { rfqModule } from '../rfqModule';
 import { protocolModule } from '../protocolModule';
 import { riskEngineModule } from '../riskEngineModule';
-// import { psyoptionsEuropeanInstrumentModule } from '../psyoptionsEuropeanInstrumentModule';
+import { psyoptionsEuropeanInstrumentModule } from '../psyoptionsEuropeanInstrumentModule';
 
 export const corePlugins = () => ({
   install(convergence: Convergence) {
@@ -37,6 +37,6 @@ export const corePlugins = () => ({
     convergence.use(riskEngineModule());
 
     // Integrations
-    // convergence.use(psyoptionsEuropeanInstrumentModule());
+    convergence.use(psyoptionsEuropeanInstrumentModule());
   },
 });
