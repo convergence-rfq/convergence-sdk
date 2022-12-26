@@ -10,6 +10,7 @@ import {
   Token,
   SpotInstrument,
 } from '@/index';
+import { Side } from '@convergence-rfq/rfq';
 
 export const mintAuthority = Keypair.generate();
 export let ut: Token;
@@ -187,11 +188,16 @@ export const withdrawCollateral = async (
 
 export const createRfq = async (cvg: Convergence) => {
   const protocol = await cvg.protocol().get({});
-  const spotInstrumentClient = cvg.spotInstrument();
-  const legs = [spotInstrumentClient.createLeg()];
+  const spotInstrument: SpotInstrument = {
+    model: 'spotInstrument',
+    mint: protocol.collateralMint,
+    side: Side.Bid,
+    amount: 1,
+    decimals: 0,
+  };
   const { rfq } = await cvg.rfqs().create({
     protocol: protocol.address,
-    legs,
+    instruments: [spotInstrument],
   });
   return { rfq };
 };

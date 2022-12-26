@@ -16,6 +16,8 @@ export type SpotInstrument = {
 
   readonly amount: number;
 
+  readonly decimals: number;
+
   readonly side: Side;
 };
 

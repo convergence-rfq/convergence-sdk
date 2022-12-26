@@ -2,10 +2,9 @@ import {
   createCreateRfqInstruction,
   OrderType,
   FixedSize,
-  Leg,
   QuoteAsset,
 } from '@convergence-rfq/rfq';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -18,6 +17,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -70,7 +70,7 @@ export type CreateRfqInput = {
   expectedLegSize?: number;
 
   /** The legs of the order. */
-  legs: Leg[];
+  instruments: SpotInstrument[];
 
   /**
    * The type of order.
@@ -180,6 +180,7 @@ export const createRfqBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
   const spotInstrument = convergence.programs().getSpotInstrument(programs);
+  const spotInstrumentClient = convergence.spotInstrument();
 
   const {
     taker = convergence.identity(),
@@ -190,7 +191,7 @@ export const createRfqBuilder = async (
       instrumentDecimals: 0,
     },
     orderType = OrderType.TwoWay,
-    legs,
+    instruments,
     fixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 },
     activeWindow = 1,
     settlingWindow = 1,
@@ -211,11 +212,20 @@ export const createRfqBuilder = async (
           protocol,
           rfq: keypair.publicKey,
           systemProgram: systemProgram.address,
-          anchorRemainingAccounts: [], //legs.map((leg) => ({ mint: leg.mint ),
+          anchorRemainingAccounts: instruments.map((leg) => {
+            const accountMeta: AccountMeta = {
+              pubkey: leg.mint,
+              isSigner: false,
+              isWritable: false,
+            };
+            return accountMeta;
+          }),
         },
         {
-          expectedLegSize: legs.length,
-          legs,
+          expectedLegSize: instruments.length,
+          legs: instruments.map((instrument) => {
+            return spotInstrumentClient.createLeg(instrument);
+          }),
           fixedSize,
           orderType,
           quoteAsset,

@@ -1,4 +1,5 @@
-import { Leg, Side } from '@convergence-rfq/rfq';
+import { Leg } from '@convergence-rfq/rfq';
+import { SpotInstrument } from './models';
 import type { Convergence } from '@/Convergence';
 
 /**
@@ -24,7 +25,7 @@ import type { Convergence } from '@/Convergence';
 export class SpotInstrumentClient {
   constructor(protected readonly convergence: Convergence) {}
 
-  createLeg(): Leg {
+  createLeg(spotInstrument: SpotInstrument): Leg {
     const spotInstrumentProgram = this.convergence
       .programs()
       .getSpotInstrument();
@@ -32,9 +33,9 @@ export class SpotInstrumentClient {
       instrumentProgram: spotInstrumentProgram.address,
       baseAssetIndex: { value: 0 },
       instrumentData: Buffer.from(''),
-      instrumentAmount: 1,
-      instrumentDecimals: 0,
-      side: Side.Bid,
+      instrumentAmount: spotInstrument.amount,
+      instrumentDecimals: spotInstrument.decimals,
+      side: spotInstrument.side,
     };
   }
 }
