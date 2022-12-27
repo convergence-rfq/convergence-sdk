@@ -57,8 +57,6 @@ export type AddBaseAssetInput = {
    */
   protocol: PublicKey;
 
-  mint: PublicKey;
-
   /*
    * ARGS
    */
@@ -67,7 +65,7 @@ export type AddBaseAssetInput = {
 
   ticker: string;
 
-  riskCategory?: RiskCategory;
+  riskCategory: RiskCategory;
 
   priceOracle: PriceOracle;
 };
@@ -80,6 +78,12 @@ export type AddBaseAssetOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
+
+export function toLittleEndian(value: number, bytes: number) {
+  const buf = Buffer.allocUnsafe(bytes);
+  buf.writeUIntLE(value, 0, bytes);
+  return buf;
+}
 
 /**
  * @group Operations
@@ -127,20 +131,13 @@ export const addBaseAssetBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const {
-    authority,
-    protocol,
-    mint,
-    index,
-    ticker,
-    riskCategory = RiskCategory.Medium,
-    priceOracle,
-  } = params;
+  const { authority, protocol, index, ticker, riskCategory, priceOracle } =
+    params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), mint.toBuffer()],
+    [Buffer.from('base_asset'), toLittleEndian(index.value, 2)],
     rfqProgram.address
   );
 

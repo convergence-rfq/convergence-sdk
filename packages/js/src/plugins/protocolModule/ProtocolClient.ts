@@ -50,7 +50,7 @@ export class ProtocolClient {
   }
 
   /** {@inheritDoc getProtocolOperation} */
-  get(input: GetProtocolInput, options?: OperationOptions) {
+  get(input?: GetProtocolInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(getProtocolOperation(input), options);

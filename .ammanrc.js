@@ -11,6 +11,10 @@ function localDeployPath(programName) {
   return path.join(__dirname, 'programs', `${programName}.so`);
 }
 
+function localJsonPath(programName) {
+  return path.join(__dirname, 'programs', `${programName}.json`);
+}
+
 const programs = [
   {
     label: 'RFQ',
@@ -31,6 +35,16 @@ const programs = [
     label: 'PsyOptions European Instrument',
     programId: psyoptionsEuropeanInstrument.PROGRAM_ADDRESS,
     deployPath: localDeployPath('psyoptions_european_instrument'),
+  },
+  {
+    label: 'Switchboard BTC Oracle',
+    programId: '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee',
+    deployPath: localJsonPath('btc_20000_oracle_switchboard'),
+  },
+  {
+    label: 'Switchboard SOL Oracle',
+    programId: 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR',
+    deployPath: localJsonPath('sol_30_oracle_switchboard'),
   }
 ];
 

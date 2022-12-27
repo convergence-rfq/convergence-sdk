@@ -1,11 +1,11 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-//import { PublicKey, Keypair } from '@solana/web3.js';
 import { PublicKey } from '@solana/web3.js';
 import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
-//import { RiskCategory } from '@convergence-rfq/rfq';
+import { RiskCategory } from '@convergence-rfq/rfq';
 import {
+  SWITCHBOARD_BTC_ORACLE,
   convergence,
   killStuckProcess,
   spokSamePubkey,
@@ -30,7 +30,6 @@ test('[setup] it can create Convergence instance', async () => {
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const { protocol } = await initializeProtocol(cvg, mintAuthority);
-
   spok(t, protocol, {
     $topic: 'Initialize Protocol',
     model: 'protocol',
@@ -40,7 +39,7 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
 
 test('[protocolModule] it can add the spot instrument', async (t: Test) => {
   const authority = cvg.rpc().getDefaultFeePayer();
-  const protocol = await cvg.protocol().get({});
+  const protocol = await cvg.protocol().get();
 
   const validateDataAccountAmount = 1;
   const prepareToSettleAccountAmount = 7;
@@ -70,7 +69,7 @@ test('[protocolModule] it can add the spot instrument', async (t: Test) => {
 
 test('[protocolModule] it can add the PsyOptions instrument', async (t: Test) => {
   const authority = cvg.rpc().getDefaultFeePayer();
-  const protocol = await cvg.protocol().get({});
+  const protocol = await cvg.protocol().get();
 
   const validateDataAccountAmount = 2;
   const prepareToSettleAccountAmount = 7;
@@ -100,28 +99,26 @@ test('[protocolModule] it can add the PsyOptions instrument', async (t: Test) =>
   });
 });
 
-test('[riskEngineModule] it can initialize risk engine config', async () => {
+test('[riskEngineModule] it can initialize the default risk engine config', async () => {
   await initializeRiskEngineConfig(cvg);
 });
 
-//test('[protocolModule] it can add a base asset', async () => {
-//  const protocol = await cvg.protocol().get({});
-//  const authority = cvg.rpc().getDefaultFeePayer();
-//  const oracleAddress = Keypair.generate().publicKey;
-//
-//  await cvg.protocol().addBaseAsset({
-//    authority,
-//    protocol: protocol.address,
-//    mint: protocol.collateralMint,
-//    index: { value: 0 },
-//    ticker: 'USDC',
-//    riskCategory: RiskCategory.Medium,
-//    priceOracle: { __kind: 'Switchboard', address: oracleAddress },
-//  });
-//});
-//
+test('[protocolModule] it can add a base asset', async () => {
+  const protocol = await cvg.protocol().get();
+  const authority = cvg.rpc().getDefaultFeePayer();
+
+  await cvg.protocol().addBaseAsset({
+    authority,
+    protocol: protocol.address,
+    index: { value: 0 },
+    ticker: 'BTC',
+    riskCategory: RiskCategory.VeryLow,
+    priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_BTC_ORACLE },
+  });
+});
+
 //test('[protocolModule] it can register mint', async () => {
-//  const protocol = await cvg.protocol().get({});
+//  const protocol = await cvg.protocol().get();
 //  const authority = cvg.rpc().getDefaultFeePayer();
 //
 //  await cvg.protocol().registerMint({
@@ -134,7 +131,7 @@ test('[riskEngineModule] it can initialize risk engine config', async () => {
 test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {});
 
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
-  const protocol = await cvg.protocol().get({});
+  const protocol = await cvg.protocol().get();
 
   const collateralMint = await cvg
     .tokens()
@@ -156,7 +153,7 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 test('[collateralModule] it can fund collateral', async (t: Test) => {
   const AMOUNT = 25;
 
-  const protocol = await cvg.protocol().get({});
+  const protocol = await cvg.protocol().get();
 
   const collateralMint = await cvg
     .tokens()
@@ -188,7 +185,7 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   const FUND_AMOUNT = 25;
   const WITHDRAW_AMOUNT = 10;
 
-  const protocol = await cvg.protocol().get({});
+  const protocol = await cvg.protocol().get();
 
   const collateralMint = await cvg
     .tokens()

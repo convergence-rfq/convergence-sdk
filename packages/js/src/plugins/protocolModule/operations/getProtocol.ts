@@ -39,7 +39,7 @@ export type GetProtocolOperation = Operation<
  * @group Operations
  * @category Inputs
  */
-export type GetProtocolInput = {};
+export type GetProtocolInput = {} | undefined;
 
 /**
  * @group Operations
