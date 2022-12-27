@@ -177,14 +177,15 @@ export const createRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { keypair = Keypair.generate() } = params;
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+  //const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+  const { programs } = options;
 
   const spotInstrumentClient = convergence.spotInstrument();
 
   const {
     taker = convergence.identity(),
     protocol,
-    orderType = OrderType.TwoWay,
+    orderType = OrderType.Sell,
     instruments,
     quoteAsset = spotInstrumentClient.createQuoteAsset(instruments[0]),
     fixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 },
@@ -195,50 +196,82 @@ export const createRfqBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const anchorRemainingAccounts: AccountMeta[] = [
+  const anchorRemainingAccounts: AccountMeta[] = [];
+
+  const MINT_INFO_SEED = 'mint_info';
+
+  const [quotePda] = PublicKey.findProgramAddressSync(
+    [Buffer.from(MINT_INFO_SEED), instruments[0].mint.toBuffer()],
+    rfqProgram.address
+  );
+
+  const quoteAccounts = [
     {
       pubkey: quoteAsset.instrumentProgram,
       isSigner: false,
       isWritable: false,
     },
+    {
+      pubkey: quotePda,
+      isSigner: false,
+      isWritable: false,
+    },
   ];
 
-  instruments.map((leg) => {
+  const legAccounts: AccountMeta[] = [
+    {
+      pubkey: quoteAsset.instrumentProgram,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: instruments[0].mint,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+
+  anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
+
+  instruments.map((instrument) => {
     anchorRemainingAccounts.push({
-      pubkey: leg.mint,
+      pubkey: instrument.mint,
       isSigner: false,
       isWritable: false,
     });
   });
 
-  return TransactionBuilder.make<CreateRfqBuilderContext>()
-    .setFeePayer(payer)
-    .setContext({
-      keypair,
-    })
-    .add({
-      instruction: createCreateRfqInstruction(
-        {
-          taker: taker.publicKey,
-          protocol,
-          rfq: keypair.publicKey,
-          systemProgram: systemProgram.address,
-          anchorRemainingAccounts,
-        },
-        {
-          expectedLegSize: instruments.length,
-          legs: instruments.map((instrument) => {
-            return spotInstrumentClient.createLeg(instrument);
-          }),
-          fixedSize,
-          orderType,
-          quoteAsset,
-          activeWindow,
-          settlingWindow,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker, keypair],
-      key: 'createRfq',
-    });
+  return (
+    TransactionBuilder.make<CreateRfqBuilderContext>()
+      //.setFeePayer(payer)
+      .setFeePayer(taker)
+      .setContext({
+        keypair,
+      })
+      .add({
+        instruction: createCreateRfqInstruction(
+          {
+            taker: taker.publicKey,
+            protocol,
+            rfq: keypair.publicKey,
+            systemProgram: systemProgram.address,
+            anchorRemainingAccounts,
+          },
+          {
+            expectedLegSize: instruments.length,
+            legs: instruments.map((instrument) => {
+              return spotInstrumentClient.createLeg(instrument);
+            }),
+            fixedSize,
+            orderType,
+            quoteAsset,
+            activeWindow,
+            settlingWindow,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker, keypair],
+        key: 'createRfq',
+      })
+  );
 };
