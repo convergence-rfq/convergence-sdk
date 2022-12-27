@@ -1,4 +1,5 @@
 import { Commitment, PublicKey, Connection, Keypair } from '@solana/web3.js';
+import { Side } from '@convergence-rfq/rfq';
 import { LOCALHOST } from '@metaplex-foundation/amman-client';
 import { amman } from './amman';
 import {
@@ -11,7 +12,6 @@ import {
   SpotInstrument,
   toBigNumber,
 } from '@/index';
-import { Side } from '@convergence-rfq/rfq';
 // import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
 
 export const mintAuthority = Keypair.generate();
@@ -22,17 +22,20 @@ export type ConvergenceTestOptions = {
   rpcEndpoint?: string;
   solsToAirdrop?: number;
 };
+
 export const convergenceGuest = (options: ConvergenceTestOptions = {}) => {
   const connection = new Connection(options.rpcEndpoint ?? LOCALHOST, {
     commitment: options.commitment ?? 'confirmed',
   });
   return Convergence.make(connection);
 };
+
 export const convergence = async (options: ConvergenceTestOptions = {}) => {
   const cvg = convergenceGuest(options);
   const wallet = await createWallet(cvg, options.solsToAirdrop);
   return cvg.use(keypairIdentity(wallet as Keypair));
 };
+
 export const createWallet = async (
   cvg: Convergence,
   solsToAirdrop = 100
@@ -189,6 +192,8 @@ export const createRfq = async (cvg: Convergence) => {
   await amman.airdrop(cvg.connection, taker, 1);
 
   const protocol = await cvg.protocol().get({});
+
+  // const instrumentProgram = new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS);
   const mint = protocol.collateralMint;
   const spotInstrument: SpotInstrument = {
     model: 'spotInstrument',
