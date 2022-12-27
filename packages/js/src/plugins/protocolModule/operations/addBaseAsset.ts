@@ -79,7 +79,7 @@ export type AddBaseAssetOutput = {
   response: SendAndConfirmTransactionResponse;
 };
 
-export function toLittleEndian(value: number, bytes: number) {
+function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
   buf.writeUIntLE(value, 0, bytes);
   return buf;

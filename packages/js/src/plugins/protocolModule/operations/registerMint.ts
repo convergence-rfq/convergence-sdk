@@ -101,6 +101,12 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
     },
   };
 
+export function toLittleEndian(value: number, bytes: number) {
+  const buf = Buffer.allocUnsafe(bytes);
+  buf.writeUIntLE(value, 0, bytes);
+  return buf;
+}
+
 /**
  * @group Transaction Builders
  * @category Inputs
@@ -147,8 +153,9 @@ export const registerMintBuilder = async (
     rfqProgram.address
   );
 
+  const baseAssetIndex = 0;
   const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), mint.toBuffer()],
+    [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex, 2)],
     rfqProgram.address
   );
 

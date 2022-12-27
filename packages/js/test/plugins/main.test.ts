@@ -121,6 +121,7 @@ test('[protocolModule] it can register mint', async () => {
   const protocol = await cvg.protocol().get();
   const authority = cvg.rpc().getDefaultFeePayer();
 
+  // TODO: ?
   await cvg.protocol().registerMint({
     protocol: protocol.address,
     authority,
