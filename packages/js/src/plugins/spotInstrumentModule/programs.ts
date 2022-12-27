@@ -6,7 +6,6 @@ import { Program } from '@/types';
 export const spotInstrumentProgram: Program = {
   name: 'SpotInstrumentProgram',
   address: DEFAULT_SPOT_INSTRUMENT_PROGRAM_ID,
-  //errorResolver: (error: ErrorWithLogs) => error.logs,
 };
 
 /** @group Programs */
@@ -30,7 +29,5 @@ export function assertSpotInstrumentProgram(
 export const defaultSpotInstrumentProgram: SpotInstrumentProgram = {
   name: 'SpotInstrumentProgram',
   address: DEFAULT_SPOT_INSTRUMENT_PROGRAM_ID,
-  //errorResolver: (error: ErrorWithLogs) =>
-  //  defaultSpotInstrumentCusper.errorFromProgramLogs(error.logs, false),
   availableGuards: [],
 };
