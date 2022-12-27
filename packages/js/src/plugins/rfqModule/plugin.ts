@@ -11,8 +11,6 @@ import {
   findRfqsByTokenOperationHandler,
   findRfqsByOwnerOperation,
   findRfqsByOwnerOperationHandler,
-  addInstrumentOperation,
-  addInstrumentOperationHandler,
   cancelRfqOperation,
   cancelRfqOperationHandler,
   respondOperationHandler,
@@ -76,7 +74,6 @@ export const rfqModule = (): ConvergencePlugin => ({
 
     const op = convergence.operations();
 
-    op.register(addInstrumentOperation, addInstrumentOperationHandler);
     op.register(addLegsToRfqOperation, addLegsToRfqOperationHandler);
     op.register(cancelResponseOperation, cancelResponseOperationHandler);
     op.register(cancelRfqOperation, cancelRfqOperationHandler);

@@ -14,6 +14,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const cvg = await convergence();
 
   const { rfq } = await createRfq(cvg);
+  // await createRfq(cvg);
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
   spok(t, rfq, {
@@ -50,7 +51,6 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
 //     address: spokSamePubkey(foundRfq3.address),
 //   });
 // });
-
 
 // test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
 //   const cvg = await convergence();

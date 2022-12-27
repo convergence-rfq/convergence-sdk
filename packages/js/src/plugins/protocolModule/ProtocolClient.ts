@@ -5,6 +5,10 @@ import {
   initializeProtocolOperation,
   GetProtocolInput,
   getProtocolOperation,
+  RegisterMintInput,
+  registerMintOperation,
+  AddBaseAssetInput,
+  addBaseAssetOperation,
 } from './operations';
 import { OperationOptions } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -50,5 +54,19 @@ export class ProtocolClient {
     return this.convergence
       .operations()
       .execute(getProtocolOperation(input), options);
+  }
+
+  /** {@inheritDoc addBaseAssetOperation} */
+  addBaseAsset(input: AddBaseAssetInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(addBaseAssetOperation(input), options);
+  }
+
+  /** {@inheritDoc registerMintOperation} */
+  registerMint(input: RegisterMintInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(registerMintOperation(input), options);
   }
 }

@@ -2,9 +2,9 @@ import {
   createCreateRfqInstruction,
   OrderType,
   FixedSize,
-  Leg,
+  QuoteAsset,
 } from '@convergence-rfq/rfq';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -17,6 +17,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -62,22 +63,14 @@ export type CreateRfqInput = {
   /** The pubkey address of the protocol account. */
   protocol: PublicKey;
 
-  /** The pubkey address of the quote mint account. */
-  quoteMint: PublicKey;
+  /** The quote asset account. */
+  quoteAsset?: QuoteAsset;
 
-  instrumentProgram: PublicKey;
-
-  instrumentData?: Uint8Array;
-
-  instrumentDecimals?: number;
-
-  /*
-   * Args
-   */
-
+  /** Expected leg size in quote asset units. */
   expectedLegSize?: number;
 
-  legs?: Leg[];
+  /** The legs of the order. */
+  instruments: SpotInstrument[];
 
   /**
    * The type of order.
@@ -184,18 +177,17 @@ export const createRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { keypair = Keypair.generate() } = params;
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+  //const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+  const { programs } = options;
+
+  const spotInstrumentClient = convergence.spotInstrument();
 
   const {
     taker = convergence.identity(),
     protocol,
-    instrumentProgram,
-    quoteMint,
-    // instrumentData,
-    instrumentDecimals = 0,
-    expectedLegSize = 0,
-    legs = [],
-    orderType = OrderType.TwoWay,
+    orderType = OrderType.Sell,
+    instruments,
+    quoteAsset = spotInstrumentClient.createQuoteAsset(instruments[0]),
     fixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 },
     activeWindow = 1,
     settlingWindow = 1,
@@ -204,45 +196,82 @@ export const createRfqBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  return TransactionBuilder.make<CreateRfqBuilderContext>()
-    .setFeePayer(payer)
-    .setContext({
-      keypair,
-    })
-    .add({
-      instruction: createCreateRfqInstruction(
-        {
-          taker: taker.publicKey,
-          protocol,
-          rfq: keypair.publicKey,
-          systemProgram: systemProgram.address,
-        },
-        {
-          expectedLegSize,
-          legs,
-          orderType,
-          quoteAsset: {
-            instrumentProgram,
-            instrumentData: Buffer.from(quoteMint.toBytes()),
-            instrumentDecimals,
-          },
-          fixedSize,
-          activeWindow,
-          settlingWindow,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker, keypair],
-      key: 'createRfq',
+  const anchorRemainingAccounts: AccountMeta[] = [];
+
+  const MINT_INFO_SEED = 'mint_info';
+
+  const [quotePda] = PublicKey.findProgramAddressSync(
+    [Buffer.from(MINT_INFO_SEED), instruments[0].mint.toBuffer()],
+    rfqProgram.address
+  );
+
+  const quoteAccounts = [
+    {
+      pubkey: quoteAsset.instrumentProgram,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: quotePda,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+
+  const legAccounts: AccountMeta[] = [
+    {
+      pubkey: quoteAsset.instrumentProgram,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: instruments[0].mint,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+
+  anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
+
+  instruments.map((instrument) => {
+    anchorRemainingAccounts.push({
+      pubkey: instrument.mint,
+      isSigner: false,
+      isWritable: false,
     });
+  });
+
+  return (
+    TransactionBuilder.make<CreateRfqBuilderContext>()
+      //.setFeePayer(payer)
+      .setFeePayer(taker)
+      .setContext({
+        keypair,
+      })
+      .add({
+        instruction: createCreateRfqInstruction(
+          {
+            taker: taker.publicKey,
+            protocol,
+            rfq: keypair.publicKey,
+            systemProgram: systemProgram.address,
+            anchorRemainingAccounts,
+          },
+          {
+            expectedLegSize: instruments.length,
+            legs: instruments.map((instrument) => {
+              return spotInstrumentClient.createLeg(instrument);
+            }),
+            fixedSize,
+            orderType,
+            quoteAsset,
+            activeWindow,
+            settlingWindow,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker, keypair],
+        key: 'createRfq',
+      })
+  );
 };
-
-// serializeInstrumentData(): Buffer {
-// return Buffer.from(this.mint.publicKey.toBytes());
-// }
-
-// (alias) type QuoteAsset = {
-//   instrumentProgram: web3.PublicKey;
-//   instrumentData: Uint8Array;
-//   instrumentDecimals: number;
-// }
