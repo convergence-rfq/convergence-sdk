@@ -1,23 +1,29 @@
 import { PROGRAM_ID } from '@convergence-rfq/risk-engine';
 import { ProgramClient } from '../programModule';
 import { RiskEngineClient } from './RiskEngineClient';
+import {
+  initializeConfigOperation,
+  initializeConfigOperationHandler,
+} from './operations';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
 
 /** @group Plugins */
 export const riskEngineModule = (): ConvergencePlugin => ({
   install(convergence: Convergence) {
-    const rfqProgram = {
+    const riskEngineProgram = {
       name: 'RiskEngineProgram',
       address: PROGRAM_ID,
     };
-    convergence.programs().register(rfqProgram);
+    convergence.programs().register(riskEngineProgram);
     convergence.programs().getRiskEngine = function (
       this: ProgramClient,
       programs?: Program[]
     ) {
-      return this.get(rfqProgram.name, programs);
+      return this.get(riskEngineProgram.name, programs);
     };
+    const op = convergence.operations();
+    op.register(initializeConfigOperation, initializeConfigOperationHandler);
 
     convergence.riskEngine = function () {
       return new RiskEngineClient(this);
@@ -33,6 +39,6 @@ declare module '../../Convergence' {
 
 declare module '../programModule/ProgramClient' {
   interface ProgramClient {
-    getRiskEngine(): Program;
+    getRiskEngine(programs?: Program[]): Program;
   }
 }

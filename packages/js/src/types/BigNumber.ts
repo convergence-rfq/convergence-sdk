@@ -1,8 +1,8 @@
-import type { Buffer } from "buffer";
-import BN from "bn.js";
-import { assert, Opaque, Option } from "@/utils";
+import type { Buffer } from 'buffer';
+import BN from 'bn.js';
+import { assert, Opaque, Option } from '@/utils';
 
-export type BigNumber = Opaque<BN, "BigNumber">;
+export type BigNumber = Opaque<BN, 'BigNumber'>;
 export type BigNumberValues =
   | number
   | string
@@ -25,9 +25,22 @@ export const toOptionBigNumber = (
 };
 
 export const isBigNumber = (value: any): value is BigNumber => {
-  return value?.__opaque__ === "BigNumber";
+  return value?.__opaque__ === 'BigNumber';
 };
 
 export function assertBigNumber(value: any): asserts value is BigNumber {
-  assert(isBigNumber(value), "Expected BigNumber type");
+  assert(isBigNumber(value), 'Expected BigNumber type');
 }
+
+export type Fraction = {
+  mantissa: BN;
+  decimals: number;
+};
+
+export const toFractional = (mantissa: BN | number, decimals = 0): Fraction => {
+  if (typeof mantissa === 'number') {
+    mantissa = new BN(mantissa);
+  }
+
+  return { mantissa: mantissa as BN, decimals };
+};
