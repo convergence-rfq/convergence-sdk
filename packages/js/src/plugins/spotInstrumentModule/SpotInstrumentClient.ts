@@ -1,6 +1,7 @@
 import { Leg, QuoteAsset } from '@convergence-rfq/rfq';
 import { SpotInstrument } from './models';
 import type { Convergence } from '@/Convergence';
+import { Mint } from '@/plugins/tokenModule';
 
 /**
  * This is a client for the spotInstrumentModule.
@@ -26,14 +27,14 @@ import type { Convergence } from '@/Convergence';
 export class SpotInstrumentClient {
   constructor(protected readonly convergence: Convergence) {}
 
-  createQuoteAsset(spotInstrument: SpotInstrument): QuoteAsset {
+  createQuoteAsset(mint: Mint): QuoteAsset {
     const spotInstrumentProgram = this.convergence
       .programs()
       .getSpotInstrument();
     return {
       instrumentProgram: spotInstrumentProgram.address,
-      instrumentData: spotInstrument.data,
-      instrumentDecimals: spotInstrument.decimals,
+      instrumentData: mint.address.toBuffer(),
+      instrumentDecimals: mint.decimals,
     };
   }
 
@@ -43,6 +44,7 @@ export class SpotInstrumentClient {
       .getSpotInstrument();
     return {
       instrumentProgram: spotInstrumentProgram.address,
+      // TODO: Is this right?
       baseAssetIndex: { value: 0 },
       instrumentData: spotInstrument.data,
       instrumentAmount: spotInstrument.amount,

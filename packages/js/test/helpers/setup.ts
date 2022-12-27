@@ -1,5 +1,4 @@
 import { Commitment, PublicKey, Connection, Keypair } from '@solana/web3.js';
-import { Side } from '@convergence-rfq/rfq';
 import { LOCALHOST } from '@metaplex-foundation/amman-client';
 import { amman } from './amman';
 import {
@@ -10,7 +9,6 @@ import {
   Mint,
   Token,
   SpotInstrument,
-  toBigNumber,
 } from '@/index';
 
 export const mintAuthority = Keypair.generate();
@@ -55,7 +53,7 @@ export const initializeProtocol = async (
   cvg: Convergence,
   mintAuthority: Keypair
 ) => {
-  const { mint: collateralMint } = await cvg
+  const { mint: usdcMint } = await cvg
     .tokens()
     .createMint({ mintAuthority: mintAuthority.publicKey });
 
@@ -63,20 +61,20 @@ export const initializeProtocol = async (
 
   const { token: toToken } = await cvg
     .tokens()
-    .createToken({ mint: collateralMint.address, token: signer });
+    .createToken({ mint: usdcMint.address, token: signer });
 
   await cvg.tokens().mint({
-    mintAddress: collateralMint.address,
+    mintAddress: usdcMint.address,
     amount: token(42),
     toToken: toToken.address,
     mintAuthority,
   });
 
   const { protocol } = await cvg.protocol().initialize({
-    collateralMint: collateralMint.address,
+    collateralMint: usdcMint.address,
   });
 
-  return { protocol, collateralMint };
+  return { protocol, collateralMint: usdcMint };
 };
 
 /*
@@ -190,25 +188,20 @@ export const withdrawCollateral = async (
 /*
  * RFQ
  */
-export const createRfq = async (cvg: Convergence) => {
+export const createRfq = async (
+  cvg: Convergence,
+  instruments: SpotInstrument[],
+  quoteAsset: Mint
+) => {
   const taker = cvg.identity().publicKey;
   await amman.airdrop(cvg.connection, taker, 1);
 
   const protocol = await cvg.protocol().get();
-  const mint = protocol.collateralMint;
-
-  const spotInstrument: SpotInstrument = {
-    model: 'spotInstrument',
-    mint,
-    side: Side.Bid,
-    amount: toBigNumber(1),
-    decimals: 0,
-    data: Buffer.from(mint.toBytes()),
-  };
 
   const { rfq } = await cvg.rfqs().create({
     protocol: protocol.address,
-    instruments: [spotInstrument],
+    instruments,
+    quoteAsset,
   });
 
   return { rfq };

@@ -2,7 +2,6 @@ import {
   createCreateRfqInstruction,
   OrderType,
   FixedSize,
-  QuoteAsset,
 } from '@convergence-rfq/rfq';
 import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -17,7 +16,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { Mint, SpotInstrument } from '@/index';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -63,10 +62,10 @@ export type CreateRfqInput = {
   /** The pubkey address of the protocol account. */
   protocol: PublicKey;
 
-  /** The quote asset account. */
-  quoteAsset?: QuoteAsset;
+  /** Optional quote asset account. */
+  quoteAsset: Mint;
 
-  /** Expected leg size in quote asset units. */
+  /** Optional expected leg size in quote asset units. */
   expectedLegSize?: number;
 
   /** The legs of the order. */
@@ -187,7 +186,7 @@ export const createRfqBuilder = async (
     protocol,
     orderType = OrderType.Sell,
     instruments,
-    quoteAsset = spotInstrumentClient.createQuoteAsset(instruments[0]),
+    quoteAsset,
     fixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 },
     activeWindow = 1,
     settlingWindow = 1,
@@ -195,19 +194,22 @@ export const createRfqBuilder = async (
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
+  const spotInstrumentProgram = convergence
+    .programs()
+    .getSpotInstrument(programs);
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const MINT_INFO_SEED = 'mint_info';
 
   const [quotePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from(MINT_INFO_SEED), instruments[0].mint.toBuffer()],
+    [Buffer.from(MINT_INFO_SEED), quoteAsset.address.toBuffer()],
     rfqProgram.address
   );
 
   const quoteAccounts = [
     {
-      pubkey: quoteAsset.instrumentProgram,
+      pubkey: spotInstrumentProgram.address,
       isSigner: false,
       isWritable: false,
     },
@@ -220,7 +222,7 @@ export const createRfqBuilder = async (
 
   const legAccounts: AccountMeta[] = [
     {
-      pubkey: quoteAsset.instrumentProgram,
+      pubkey: spotInstrumentProgram.address,
       isSigner: false,
       isWritable: false,
     },
@@ -232,14 +234,6 @@ export const createRfqBuilder = async (
   ];
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
-
-  instruments.map((instrument) => {
-    anchorRemainingAccounts.push({
-      pubkey: instrument.mint,
-      isSigner: false,
-      isWritable: false,
-    });
-  });
 
   return (
     TransactionBuilder.make<CreateRfqBuilderContext>()
@@ -264,7 +258,7 @@ export const createRfqBuilder = async (
             }),
             fixedSize,
             orderType,
-            quoteAsset,
+            quoteAsset: spotInstrumentClient.createQuoteAsset(quoteAsset),
             activeWindow,
             settlingWindow,
           },

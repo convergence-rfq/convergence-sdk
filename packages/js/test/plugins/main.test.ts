@@ -1,9 +1,9 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
-import { RiskCategory } from '@convergence-rfq/rfq';
+import { Side, RiskCategory } from '@convergence-rfq/rfq';
 import {
   SWITCHBOARD_BTC_ORACLE,
   convergence,
@@ -15,26 +15,53 @@ import {
   initializeCollateral,
   withdrawCollateral,
   fundCollateral,
+  createRfq,
   ut,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
-import { token } from '@/index';
+import { Mint, token, SpotInstrument, toBigNumber } from '@/index';
 
 killStuckProcess();
 
 let cvg: Convergence;
+let usdcMint: Mint;
+let btcMint: Mint;
 
 test('[setup] it can create Convergence instance', async () => {
   cvg = await convergence();
+
+  const { mint } = await cvg
+    .tokens()
+    .createMint({ mintAuthority: mintAuthority.publicKey });
+
+  const signer = Keypair.generate();
+
+  const { token: toToken } = await cvg
+    .tokens()
+    .createToken({ mint: mint.address, token: signer });
+
+  await cvg.tokens().mint({
+    mintAddress: mint.address,
+    amount: token(42),
+    toToken: toToken.address,
+    mintAuthority,
+  });
+
+  btcMint = mint;
 });
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
-  const { protocol } = await initializeProtocol(cvg, mintAuthority);
+  const { protocol, collateralMint } = await initializeProtocol(
+    cvg,
+    mintAuthority
+  );
   spok(t, protocol, {
     $topic: 'Initialize Protocol',
     model: 'protocol',
     address: spokSamePubkey(protocol.address),
   });
+
+  usdcMint = collateralMint;
 });
 
 test('[protocolModule] it can add the spot instrument', async (t: Test) => {
@@ -103,7 +130,7 @@ test('[riskEngineModule] it can initialize the default risk engine config', asyn
   await initializeRiskEngineConfig(cvg);
 });
 
-test('[protocolModule] it can add a base asset', async () => {
+test('[protocolModule] it can add a BTC base asset', async () => {
   const protocol = await cvg.protocol().get();
   const authority = cvg.rpc().getDefaultFeePayer();
 
@@ -117,19 +144,29 @@ test('[protocolModule] it can add a base asset', async () => {
   });
 });
 
-test('[protocolModule] it can register mint', async () => {
+test('[protocolModule] it can register USDC mint', async () => {
   const protocol = await cvg.protocol().get();
   const authority = cvg.rpc().getDefaultFeePayer();
 
-  // TODO: ?
   await cvg.protocol().registerMint({
     protocol: protocol.address,
     authority,
-    mint: protocol.collateralMint,
+    baseAssetIndex: 0,
+    mint: usdcMint.address,
   });
 });
 
-test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {});
+test('[protocolModule] it can register BTC mint', async () => {
+  const protocol = await cvg.protocol().get();
+  const authority = cvg.rpc().getDefaultFeePayer();
+
+  await cvg.protocol().registerMint({
+    protocol: protocol.address,
+    authority,
+    baseAssetIndex: 1,
+    mint: btcMint.address,
+  });
+});
 
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const protocol = await cvg.protocol().get();
@@ -220,20 +257,24 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   });
 });
 
-//test('[rfqModule] it can create a RFQ', async (t: Test) => {
-// test('[rfqModule] it can create a RFQ', async () => {
-// const cvg = await convergence();
+test('[rfqModule] it can create a RFQ', async (t: Test) => {
+  const spotInstrument: SpotInstrument = {
+    model: 'spotInstrument',
+    mint: btcMint.address,
+    side: Side.Bid,
+    amount: toBigNumber(1),
+    decimals: 9,
+    data: Buffer.from(btcMint.address.toBytes()),
+  };
+  const { rfq } = await createRfq(cvg, [spotInstrument], usdcMint);
+  const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
-//const { rfq } = await createRfq(cvg);
-// await createRfq(cvg);
-//const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
-
-//spok(t, rfq, {
-//  $topic: 'Created RFQ',
-//  model: 'rfq',
-//  address: spokSamePubkey(foundRfq.address),
-//});
-// });
+  spok(t, rfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq.address),
+  });
+});
 
 // test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 //   const cvg = await convergence();
@@ -285,3 +326,5 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
 //   //   address: spokSamePubkey(foundRfq2.address),
 //   // });
 // });
+
+test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {});

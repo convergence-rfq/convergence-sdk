@@ -57,6 +57,11 @@ export type RegisterMintInput = {
    * The protocol collateral token mint.
    */
   mint: PublicKey;
+
+  /**
+   * The base asset index.
+   */
+  baseAssetIndex: number;
 };
 
 /**
@@ -138,7 +143,7 @@ export const registerMintBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<RegisterMintBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { authority = convergence.identity(), mint } = params;
+  const { authority = convergence.identity(), mint, baseAssetIndex } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq();
@@ -153,7 +158,6 @@ export const registerMintBuilder = async (
     rfqProgram.address
   );
 
-  const baseAssetIndex = 0;
   const [baseAsset] = PublicKey.findProgramAddressSync(
     [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex, 2)],
     rfqProgram.address
