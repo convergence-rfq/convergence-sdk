@@ -6,6 +6,10 @@ import {
   getProtocolOperationHandler,
   addInstrumentOperation,
   addInstrumentOperationHandler,
+  addBaseAssetOperation,
+  addBaseAssetOperationHandler,
+  registerMintOperation,
+  registerMintOperationHandler,
 } from './operations';
 import { Protocol } from './models';
 import { ConvergencePlugin } from '@/types';
@@ -21,6 +25,8 @@ export const protocolModule = (): ConvergencePlugin => ({
     );
     op.register(getProtocolOperation, getProtocolOperationHandler);
     op.register(addInstrumentOperation, addInstrumentOperationHandler);
+    op.register(addBaseAssetOperation, addBaseAssetOperationHandler);
+    op.register(registerMintOperation, registerMintOperationHandler);
 
     convergence.protocol = function () {
       return new ProtocolClient(this);

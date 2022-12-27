@@ -3,6 +3,8 @@ const { LOCALHOST, tmpLedgerDir } = require('@metaplex-foundation/amman');
 const rfq = require('@convergence-rfq/rfq');
 const riskEngine = require('@convergence-rfq/risk-engine');
 const spotInstrument = require('@convergence-rfq/spot-instrument');
+const psyoptionsEuropeanInstrument = require('@convergence-rfq/psyoptions-european-instrument');
+
 const MOCK_STORAGE_ID = 'js-next-sdk';
 
 function localDeployPath(programName) {
@@ -24,6 +26,11 @@ const programs = [
     label: 'Spot Instrument',
     programId: spotInstrument.PROGRAM_ADDRESS,
     deployPath: localDeployPath('spot_instrument'),
+  },
+  {
+    label: 'PsyOptions European Instrument',
+    programId: psyoptionsEuropeanInstrument.PROGRAM_ADDRESS,
+    deployPath: localDeployPath('psyoptions_european_instrument'),
   }
 ];
 
