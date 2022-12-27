@@ -57,7 +57,7 @@ export type AddBaseAssetInput = {
    */
   protocol: PublicKey;
 
-  baseAsset: PublicKey;
+  mint: PublicKey;
 
   /*
    * ARGS
@@ -130,7 +130,7 @@ export const addBaseAssetBuilder = (
   const {
     authority,
     protocol,
-    baseAsset,
+    mint,
     index,
     ticker,
     riskCategory = RiskCategory.Medium,
@@ -138,6 +138,11 @@ export const addBaseAssetBuilder = (
   } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
+
+  const [baseAsset] = PublicKey.findProgramAddressSync(
+    [Buffer.from('base_asset'), mint.toBuffer()],
+    rfqProgram.address
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

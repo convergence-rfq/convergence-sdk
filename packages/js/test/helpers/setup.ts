@@ -210,3 +210,25 @@ export const createRfq = async (cvg: Convergence) => {
   });
   return { rfq };
 };
+
+/**
+ * RISK ENGINE
+ */
+export const initializeRiskEngineConfig = async (cvg: Convergence) => {
+  return await cvg.riskEngine().initializeConfig({});
+};
+
+/**
+ * PSYOPTIONS EUROPEAN
+ */
+export const intializePsyoptionsEuropeanInstrument = async () => {
+  //const psyoptionsEuropeanInstrument = await cvg
+  //await cvg.psyoptionsEuropeanInstrument().initialize({
+  //  collateralMint: cvg.identity().publicKey,
+  //});
+  //spok(t, psyoptionsEuropeanInstrument, {
+  //  $topic: 'Created PsyOptions European instrument',
+  //  model: 'psyoptionsEuropeanInstrument',
+  //  address: spokSamePubkey(psyoptionsEuropeanInstrument.address),
+  //});
+};
