@@ -145,25 +145,15 @@ test('[protocolModule] it can add a BTC base asset', async () => {
 });
 
 test('[protocolModule] it can register USDC mint', async () => {
-  const protocol = await cvg.protocol().get();
-  const authority = cvg.rpc().getDefaultFeePayer();
-
   await cvg.protocol().registerMint({
-    protocol: protocol.address,
-    authority,
     baseAssetIndex: 0,
     mint: usdcMint.address,
   });
 });
 
 test('[protocolModule] it can register BTC mint', async () => {
-  const protocol = await cvg.protocol().get();
-  const authority = cvg.rpc().getDefaultFeePayer();
-
   await cvg.protocol().registerMint({
-    protocol: protocol.address,
-    authority,
-    baseAssetIndex: 1,
+    baseAssetIndex: 0, // TODO: Is this correct?
     mint: btcMint.address,
   });
 });
@@ -218,8 +208,6 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can withdraw collateral', async (t: Test) => {
-  const rfqProgram = cvg.programs().getRfq();
-
   const FUND_AMOUNT = 25;
   const WITHDRAW_AMOUNT = 10;
 
@@ -239,6 +227,8 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     mintAddress: spokSamePubkey(collateralMint.address),
     amount: token(WITHDRAW_AMOUNT),
   });
+
+  const rfqProgram = cvg.programs().getRfq();
 
   const [collateralToken] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],

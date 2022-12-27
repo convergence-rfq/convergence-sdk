@@ -46,15 +46,15 @@ export type RegisterMintInput = {
   /**
    * The owner of the protocol.
    */
-  authority: Signer;
+  authority?: Signer;
 
   /**
    * The protocol to add the instrument to.
    */
-  protocol: PublicKey;
+  protocol?: PublicKey;
 
   /**
-   * The protocol collateral token mint.
+   * The protocol token mint.
    */
   mint: PublicKey;
 
@@ -84,8 +84,6 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       convergence: Convergence,
       scope: OperationScope
     ) => {
-      //   const { owner = convergence.identity().publicKey } = operation.input;
-
       const builder = await registerMintBuilder(
         convergence,
         {
@@ -181,13 +179,3 @@ export const registerMintBuilder = async (
       key: 'registerMint',
     });
 };
-
-//   type RegisterMintInstructionAccounts = {
-//     authority: web3.PublicKey;
-//     protocol: web3.PublicKey;
-//     mintInfo: web3.PublicKey;
-//     baseAsset: web3.PublicKey;
-//     mint: web3.PublicKey;
-//     systemProgram?: web3.PublicKey | undefined;
-//     anchorRemainingAccounts?: web3.AccountMeta[] | undefined;
-// }

@@ -49,6 +49,7 @@ export const createWallet = async (
 /*
  * PROTOCOL
  */
+
 export const initializeProtocol = async (
   cvg: Convergence,
   mintAuthority: Keypair
@@ -193,17 +194,10 @@ export const createRfq = async (
   instruments: SpotInstrument[],
   quoteAsset: Mint
 ) => {
-  const taker = cvg.identity().publicKey;
-  await amman.airdrop(cvg.connection, taker, 1);
-
-  const protocol = await cvg.protocol().get();
-
   const { rfq } = await cvg.rfqs().create({
-    protocol: protocol.address,
     instruments,
     quoteAsset,
   });
-
   return { rfq };
 };
 

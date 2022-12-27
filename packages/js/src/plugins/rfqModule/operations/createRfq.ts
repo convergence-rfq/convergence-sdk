@@ -60,7 +60,7 @@ export type CreateRfqInput = {
   keypair?: Keypair;
 
   /** The pubkey address of the protocol account. */
-  protocol: PublicKey;
+  protocol?: PublicKey;
 
   /** Optional quote asset account. */
   quoteAsset: Mint;
@@ -176,14 +176,10 @@ export const createRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { keypair = Keypair.generate() } = params;
-  //const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { programs } = options;
-
-  const spotInstrumentClient = convergence.spotInstrument();
+  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
   const {
     taker = convergence.identity(),
-    protocol,
     orderType = OrderType.Sell,
     instruments,
     quoteAsset,
@@ -235,37 +231,37 @@ export const createRfqBuilder = async (
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
 
-  return (
-    TransactionBuilder.make<CreateRfqBuilderContext>()
-      //.setFeePayer(payer)
-      .setFeePayer(taker)
-      .setContext({
-        keypair,
-      })
-      .add({
-        instruction: createCreateRfqInstruction(
-          {
-            taker: taker.publicKey,
-            protocol,
-            rfq: keypair.publicKey,
-            systemProgram: systemProgram.address,
-            anchorRemainingAccounts,
-          },
-          {
-            expectedLegSize: instruments.length,
-            legs: instruments.map((instrument) => {
-              return spotInstrumentClient.createLeg(instrument);
-            }),
-            fixedSize,
-            orderType,
-            quoteAsset: spotInstrumentClient.createQuoteAsset(quoteAsset),
-            activeWindow,
-            settlingWindow,
-          },
-          rfqProgram.address
-        ),
-        signers: [taker, keypair],
-        key: 'createRfq',
-      })
-  );
+  const spotInstrumentClient = convergence.spotInstrument();
+  const protocol = await convergence.protocol().get();
+
+  return TransactionBuilder.make<CreateRfqBuilderContext>()
+    .setFeePayer(payer)
+    .setContext({
+      keypair,
+    })
+    .add({
+      instruction: createCreateRfqInstruction(
+        {
+          taker: taker.publicKey,
+          protocol: protocol.address,
+          rfq: keypair.publicKey,
+          systemProgram: systemProgram.address,
+          anchorRemainingAccounts,
+        },
+        {
+          expectedLegSize: instruments.length,
+          legs: instruments.map((instrument) => {
+            return spotInstrumentClient.createLeg(instrument);
+          }),
+          fixedSize,
+          orderType,
+          quoteAsset: spotInstrumentClient.createQuoteAsset(quoteAsset),
+          activeWindow,
+          settlingWindow,
+        },
+        rfqProgram.address
+      ),
+      signers: [taker, keypair],
+      key: 'createRfq',
+    });
 };
