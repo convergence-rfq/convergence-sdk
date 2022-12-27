@@ -24,7 +24,7 @@ killStuckProcess();
 
 let cvg: Convergence;
 
-test('[Convergence] it can create Convergence instance', async () => {
+test('[setup] it can create Convergence instance', async () => {
   cvg = await convergence();
 });
 
@@ -130,9 +130,9 @@ test('[riskEngineModule] it can initialize risk engine config', async () => {
 //    mint: protocol.collateralMint,
 //  });
 //});
-//
-//test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {});
-//
+
+test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {});
+
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const protocol = await cvg.protocol().get({});
 
@@ -154,7 +154,6 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can fund collateral', async (t: Test) => {
-  const rfqProgram = cvg.programs().getRfq();
   const AMOUNT = 25;
 
   const protocol = await cvg.protocol().get({});
@@ -163,9 +162,9 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
 
-  await initializeCollateral(cvg, collateralMint);
   await fundCollateral(cvg, collateralMint, mintAuthority, AMOUNT);
 
+  const rfqProgram = cvg.programs().getRfq();
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
     rfqProgram.address
@@ -184,7 +183,6 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can withdraw collateral', async (t: Test) => {
-  const cvg = await convergence();
   const rfqProgram = cvg.programs().getRfq();
 
   const FUND_AMOUNT = 25;
@@ -195,10 +193,6 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   const collateralMint = await cvg
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
-
-  await initializeCollateral(cvg, collateralMint);
-
-  await fundCollateral(cvg, collateralMint, mintAuthority, FUND_AMOUNT);
 
   await withdrawCollateral(cvg, ut, WITHDRAW_AMOUNT);
 
