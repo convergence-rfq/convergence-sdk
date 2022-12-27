@@ -110,23 +110,23 @@ test('[protocolModule] it can add a base asset', async () => {
   await cvg.protocol().addBaseAsset({
     authority,
     protocol: protocol.address,
-    index: { value: 0 }, // BTC
+    index: { value: 0 },
     ticker: 'BTC',
     riskCategory: RiskCategory.VeryLow,
     priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_BTC_ORACLE },
   });
 });
 
-//test('[protocolModule] it can register mint', async () => {
-//  const protocol = await cvg.protocol().get();
-//  const authority = cvg.rpc().getDefaultFeePayer();
-//
-//  await cvg.protocol().registerMint({
-//    protocol: protocol.address,
-//    authority,
-//    mint: protocol.collateralMint,
-//  });
-//});
+test('[protocolModule] it can register mint', async () => {
+  const protocol = await cvg.protocol().get();
+  const authority = cvg.rpc().getDefaultFeePayer();
+
+  await cvg.protocol().registerMint({
+    protocol: protocol.address,
+    authority,
+    mint: protocol.collateralMint,
+  });
+});
 
 test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {});
 
