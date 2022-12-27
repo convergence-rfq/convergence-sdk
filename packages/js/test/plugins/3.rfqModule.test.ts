@@ -1,10 +1,10 @@
 //import test, { Test } from 'tape';
-import test from 'tape';
+// import test from 'tape';
 //import spok from 'spok';
 import {
-  convergence,
+  // convergence,
   killStuckProcess,
-  createRfq,
+  // createRfq,
   //spokSamePubkey,
 } from '../helpers';
 // import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
@@ -12,11 +12,11 @@ import {
 killStuckProcess();
 
 //test('[rfqModule] it can create a RFQ', async (t: Test) => {
-test('[rfqModule] it can create a RFQ', async () => {
-  const cvg = await convergence();
+// test('[rfqModule] it can create a RFQ', async () => {
+  // const cvg = await convergence();
 
   //const { rfq } = await createRfq(cvg);
-  await createRfq(cvg);
+  // await createRfq(cvg);
   //const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
   //spok(t, rfq, {
@@ -24,7 +24,7 @@ test('[rfqModule] it can create a RFQ', async () => {
   //  model: 'rfq',
   //  address: spokSamePubkey(foundRfq.address),
   //});
-});
+// });
 
 // test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 //   const cvg = await convergence();

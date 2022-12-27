@@ -1,6 +1,6 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { PublicKey, /*Keypair*/ } from '@solana/web3.js';
 import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
 //import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
 import {
@@ -11,7 +11,7 @@ import {
   mintAuthority,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
-import { RiskCategory } from '@convergence-rfq/rfq';
+// import { RiskCategory } from '@convergence-rfq/rfq';
 
 killStuckProcess();
 
@@ -72,31 +72,31 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   //});
 });
 
-test('[protocolModule] it can add a base asset', async () => {
-  const protocol = await cvg.protocol().get({});
-  const authority = cvg.rpc().getDefaultFeePayer();
-  const rfqProgram = cvg.programs().getRfq();
-  const oracleAddress = Keypair.generate().publicKey;
-  // const index = 12;
-  const indexLe = Buffer.from([0x2, 0x1]);
+// test('[protocolModule] it can add a base asset', async () => {
+//   const protocol = await cvg.protocol().get({});
+//   const authority = cvg.rpc().getDefaultFeePayer();
+//   const rfqProgram = cvg.programs().getRfq();
+//   const oracleAddress = Keypair.generate().publicKey;
+//   // const index = 12;
+//   const indexLe = Buffer.from([0x2, 0x1]);
 
-  //TODO: one of the seeds is the `index`.to_le_bytes(): &u16::from(index).to_le_bytes()
-  //  where index: BaseAssetIndex = { value: u16 }
-  const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), Buffer.from(indexLe)],
-    rfqProgram.address
-  );
+//   //TODO: one of the seeds is the `index`.to_le_bytes(): &u16::from(index).to_le_bytes()
+//   //  where index: BaseAssetIndex = { value: u16 }
+//   const [baseAsset] = PublicKey.findProgramAddressSync(
+//     [Buffer.from('base_asset'), Buffer.from(indexLe)],
+//     rfqProgram.address
+//   );
 
-  await cvg.protocol().addBaseAsset({
-    authority,
-    protocol: protocol.address,
-    baseAsset,
-    index: { value: 0 },
-    ticker: 'USDC',
-    riskCategory: RiskCategory.Medium,
-    priceOracle: { __kind: 'Switchboard', address: oracleAddress },
-  });
-});
+//   await cvg.protocol().addBaseAsset({
+//     authority,
+//     protocol: protocol.address,
+//     baseAsset,
+//     index: { value: 0 },
+//     ticker: 'USDC',
+//     riskCategory: RiskCategory.Medium,
+//     priceOracle: { __kind: 'Switchboard', address: oracleAddress },
+//   });
+// });
 
 // test('[protocolModule] it can register mint', async () => {
 //   const protocol = await cvg.protocol().get({});
