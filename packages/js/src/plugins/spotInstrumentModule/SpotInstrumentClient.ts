@@ -15,7 +15,7 @@ import type { Convergence } from '@/Convergence';
  *
  * @example
  * ```ts
- * const spotInstrumet = { ... };
+ * const spotInstrument = { ... };
  * const spotInstrumentLeg = await convergence
  *   .spotInstrument()
  *   .createLeg(spotInstrument);

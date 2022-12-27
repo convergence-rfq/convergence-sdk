@@ -12,6 +12,7 @@ import {
   SpotInstrument,
   toBigNumber,
 } from '@/index';
+// import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
 
 export const mintAuthority = Keypair.generate();
 export let ut: Token;
@@ -186,12 +187,13 @@ export const withdrawCollateral = async (
 /*
  * RFQ
  */
-
 export const createRfq = async (cvg: Convergence) => {
   const taker = cvg.identity().publicKey;
   await amman.airdrop(cvg.connection, taker, 1);
 
   const protocol = await cvg.protocol().get({});
+
+  // const instrumentProgram = new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS);
   const mint = protocol.collateralMint;
   const spotInstrument: SpotInstrument = {
     model: 'spotInstrument',
