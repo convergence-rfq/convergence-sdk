@@ -110,7 +110,7 @@ test('[protocolModule] it can add a base asset', async () => {
   await cvg.protocol().addBaseAsset({
     authority,
     protocol: protocol.address,
-    index: { value: 0 },
+    index: { value: 0 }, // BTC
     ticker: 'BTC',
     riskCategory: RiskCategory.VeryLow,
     priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_BTC_ORACLE },
