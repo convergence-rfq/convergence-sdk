@@ -1,18 +1,18 @@
 import { PublicKey } from '@solana/web3.js';
+import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { assertCollateral, Collateral, toCollateral } from '../models';
+import { toCollateralAccount } from '../accounts';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
-import { assertCollateral, Collateral, toCollateral } from '../models';
-import { toCollateralAccount } from '../accounts';
 
 const Key = 'InitializeCollateralOperation' as const;
 
@@ -52,14 +52,15 @@ export type InitializeCollateralInput = {
    * @defaultValue `convergence.identity()`
    */
   user?: Signer;
+
   /** The address of the protocol*/
-  protocol: PublicKey;
+  protocol?: PublicKey;
 
   collateralMint: PublicKey;
 
-  collateralToken: PublicKey;
+  collateralToken?: PublicKey;
 
-  collateralInfo: PublicKey;
+  collateralInfo?: PublicKey;
 };
 
 /**
@@ -69,6 +70,7 @@ export type InitializeCollateralInput = {
 export type InitializeCollateralOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
   /** The newly created Collateral account */
   collateral: Collateral;
 };
@@ -155,13 +157,21 @@ export const initializeCollateralBuilder = async (
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const {
-    user = convergence.identity(),
-    protocol,
-    collateralMint,
-    collateralInfo,
-    collateralToken,
-  } = params;
+  const { user = convergence.identity(), collateralMint } = params;
+
+  // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
+  const [protocol] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+  const [collateralToken] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralInfo] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
+    rfqProgram.address
+  );
 
   return TransactionBuilder.make<InitializeCollateralBuilderContext>()
     .setFeePayer(user)

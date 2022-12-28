@@ -7,13 +7,14 @@ import {
   killStuckProcess,
   spokSamePubkey,
   initializeProtocol,
-  mintAuthority,
   initializeRiskEngineConfig,
   initializeCollateral,
   withdrawCollateral,
   fundCollateral,
   createRfq,
   ut,
+  BTC_DECIMALS,
+  USDC_DECIMALS,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
@@ -32,43 +33,60 @@ let cvg: Convergence;
 let usdcMint: Mint;
 let btcMint: Mint;
 
+const mintAuthority = Keypair.generate();
+
 test('[setup] it can create Convergence instance', async () => {
   cvg = await convergence();
 
-  // TODO: Use constant for decimals
-  const { mint } = await cvg
-    .tokens()
-    .createMint({ mintAuthority: mintAuthority.publicKey, decimals: 9 });
+  const { mint: newBTCMint } = await cvg.tokens().createMint({
+    mintAuthority: mintAuthority.publicKey,
+    decimals: BTC_DECIMALS,
+  });
 
-  const signer = Keypair.generate();
+  btcMint = newBTCMint;
 
-  // TODO: Verify token account for taker
-  const { token: toToken } = await cvg
+  const maker = Keypair.generate();
+
+  const { mint: newUSDCMint } = await cvg.tokens().createMint({
+    mintAuthority: mintAuthority.publicKey,
+    decimals: USDC_DECIMALS,
+  });
+
+  usdcMint = newUSDCMint;
+
+  const { token: toUSDCToken } = await cvg
     .tokens()
-    .createToken({ mint: mint.address, token: signer });
+    .createToken({ mint: usdcMint.address, token: maker });
 
   await cvg.tokens().mint({
-    mintAddress: mint.address,
+    mintAddress: usdcMint.address,
     amount: token(42),
-    toToken: toToken.address,
+    toToken: toUSDCToken.address,
     mintAuthority,
   });
 
-  btcMint = mint;
+  const taker = Keypair.generate();
+
+  const { token: toBTCToken } = await cvg
+    .tokens()
+    .createToken({ mint: btcMint.address, token: taker });
+
+  await cvg.tokens().mint({
+    mintAddress: btcMint.address,
+    amount: token(42),
+    toToken: toBTCToken.address,
+    mintAuthority,
+  });
 });
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
-  const { protocol, collateralMint } = await initializeProtocol(
-    cvg,
-    mintAuthority
-  );
+  const { protocol } = await initializeProtocol(cvg, usdcMint);
+
   spok(t, protocol, {
     $topic: 'Initialize Protocol',
     model: 'protocol',
     address: spokSamePubkey(protocol.address),
   });
-
-  usdcMint = collateralMint;
 });
 
 test('[protocolModule] it can add the spot instrument', async (t: Test) => {
@@ -138,11 +156,11 @@ test('[riskEngineModule] it can initialize the default risk engine config', asyn
 });
 
 test('[protocolModule] it can add a BTC base asset', async () => {
+  const dao = cvg.rpc().getDefaultFeePayer();
   const protocol = await cvg.protocol().get();
-  const authority = cvg.rpc().getDefaultFeePayer();
 
   await cvg.protocol().addBaseAsset({
-    authority,
+    authority: dao,
     protocol: protocol.address,
     index: { value: 0 },
     ticker: 'BTC',

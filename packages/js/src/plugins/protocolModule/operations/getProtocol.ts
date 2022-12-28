@@ -62,10 +62,11 @@ export const getProtocolOperationHandler: OperationHandler<GetProtocolOperation>
       scope.throwIfCanceled();
 
       const rfqProgram = convergence.programs().getRfq();
-      const [address] = await PublicKey.findProgramAddress(
+      const [address] = PublicKey.findProgramAddressSync(
         [Buffer.from('protocol')],
         rfqProgram.address
       );
+
       const account = await convergence.rpc().getAccount(address, commitment);
       const protocol = toProtocol(toProtocolAccount(account));
       scope.throwIfCanceled();

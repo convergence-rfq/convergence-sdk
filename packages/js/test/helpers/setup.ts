@@ -11,7 +11,6 @@ import {
   SpotInstrument,
 } from '@/index';
 
-export const mintAuthority = Keypair.generate();
 export let ut: Token;
 
 export const SWITCHBOARD_BTC_ORACLE = new PublicKey(
@@ -47,35 +46,24 @@ export const createWallet = async (
 };
 
 /*
+ * CONSTANTS
+ */
+
+export const BTC_DECIMALS = 9;
+export const USDC_DECIMALS = 6;
+
+/*
  * PROTOCOL
  */
 
 export const initializeProtocol = async (
   cvg: Convergence,
-  mintAuthority: Keypair
+  collateralMint: Mint
 ) => {
-  const { mint: usdcMint } = await cvg
-    .tokens()
-    .createMint({ mintAuthority: mintAuthority.publicKey, decimals: 6 });
-
-  const signer = Keypair.generate();
-
-  const { token: toToken } = await cvg
-    .tokens()
-    .createToken({ mint: usdcMint.address, token: signer });
-
-  await cvg.tokens().mint({
-    mintAddress: usdcMint.address,
-    amount: token(42),
-    toToken: toToken.address,
-    mintAuthority,
-  });
-
   const { protocol } = await cvg.protocol().initialize({
-    collateralMint: usdcMint.address,
+    collateralMint: collateralMint.address,
   });
-
-  return { protocol, collateralMint: usdcMint };
+  return { protocol };
 };
 
 /*
@@ -86,29 +74,9 @@ export const initializeCollateral = async (
   cvg: Convergence,
   collateralMint: Mint
 ) => {
-  const rfqProgram = cvg.programs().getRfq();
-
-  // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
-  const [protocol] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
-  const [collateralToken] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralInfo] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-
   const { collateral } = await cvg.collateral().initializeCollateral({
-    protocol,
-    collateralToken,
-    collateralInfo,
     collateralMint: collateralMint.address,
   });
-
   return { collateral };
 };
 
@@ -189,6 +157,7 @@ export const withdrawCollateral = async (
 /*
  * RFQ
  */
+
 export const createRfq = async (
   cvg: Convergence,
   instruments: SpotInstrument[],
@@ -204,6 +173,7 @@ export const createRfq = async (
 /**
  * RISK ENGINE
  */
+
 export const initializeRiskEngineConfig = async (cvg: Convergence) => {
   return await cvg.riskEngine().initializeConfig({});
 };
@@ -211,6 +181,7 @@ export const initializeRiskEngineConfig = async (cvg: Convergence) => {
 /**
  * PSYOPTIONS EUROPEAN
  */
+
 export const intializePsyoptionsEuropeanInstrument = async () => {
   //const psyoptionsEuropeanInstrument = await cvg
   //await cvg.psyoptionsEuropeanInstrument().initialize({
