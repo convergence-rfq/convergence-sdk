@@ -7,7 +7,6 @@ import {
   killStuckProcess,
   spokSamePubkey,
   withdrawCollateral,
-  fundCollateral,
   BTC_DECIMALS,
   USDC_DECIMALS,
 } from '../helpers';
@@ -29,7 +28,7 @@ let cvg: Convergence;
 let usdcMint: Mint;
 let btcMint: Mint;
 
-let ut: Token;
+let userTokens: Token;
 
 const mintAuthority = Keypair.generate();
 
@@ -213,13 +212,23 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
 
-  const { userTokens: newUserTokens } = await fundCollateral(
-    cvg,
-    collateralMint,
+  const { token: newUserTokens } = await cvg.tokens().createToken({
+    mint: collateralMint.address,
+  });
+
+  userTokens = newUserTokens;
+
+  await cvg.tokens().mint({
+    mintAddress: collateralMint.address,
+    amount: token(AMOUNT),
+    toToken: newUserTokens.address,
     mintAuthority,
-    AMOUNT
-  );
-  ut = newUserTokens;
+  });
+
+  await cvg.collateral().fundCollateral({
+    userTokens: newUserTokens.address,
+    amount: AMOUNT,
+  });
 
   const rfqProgram = cvg.programs().getRfq();
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
@@ -249,13 +258,15 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
 
-  await withdrawCollateral(cvg, ut, WITHDRAW_AMOUNT);
+  await withdrawCollateral(cvg, userTokens, WITHDRAW_AMOUNT);
 
-  const userTokensAccountAfterWithdraw = await cvg.tokens().refreshToken(ut);
+  const userTokensAccountAfterWithdraw = await cvg
+    .tokens()
+    .refreshToken(userTokens);
 
   spok(t, userTokensAccountAfterWithdraw, {
     $topic: 'Withdraw Collateral',
-    address: spokSamePubkey(ut.address),
+    address: spokSamePubkey(userTokens.address),
     mintAddress: spokSamePubkey(collateralMint.address),
     amount: token(WITHDRAW_AMOUNT),
   });

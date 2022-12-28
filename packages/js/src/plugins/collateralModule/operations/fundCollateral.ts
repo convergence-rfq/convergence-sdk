@@ -1,15 +1,16 @@
+import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
+  Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-import { Convergence } from '@/Convergence';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Signer, makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
+import { Convergence } from '@/Convergence';
 
 const Key = 'FundCollateralOperation' as const;
 
@@ -49,14 +50,18 @@ export type FundCollateralInput = {
    * @defaultValue `convergence.identity()`
    */
   user?: Signer;
+
   /** Token account of user's token */
   userTokens: PublicKey;
+
   /** The address of the protocol account. */
-  protocol: PublicKey;
+  protocol?: PublicKey;
+
   /** The address of the user's collateral_info account. */
-  collateralInfo: PublicKey;
+  collateralInfo?: PublicKey;
+
   /** The Token account of the user's collateral */
-  collateralToken: PublicKey;
+  collateralToken?: PublicKey;
 
   /*
    * Args
@@ -128,14 +133,34 @@ export const fundCollateralBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs } = options;
+
   const rfqProgram = convergence.programs().getRfq(programs);
+
+  const [protocolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from('collateral_token'),
+      convergence.identity().publicKey.toBuffer(),
+    ],
+    rfqProgram.address
+  );
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from('collateral_info'),
+      convergence.identity().publicKey.toBuffer(),
+    ],
+    rfqProgram.address
+  );
 
   const {
     user = convergence.identity(),
     userTokens,
-    protocol,
-    collateralInfo,
-    collateralToken,
+    protocol = protocolPda,
+    collateralInfo = collateralInfoPda,
+    collateralToken = collateralTokenPda,
     amount,
   } = params;
 
@@ -151,7 +176,7 @@ export const fundCollateralBuilder = async (
           collateralToken,
         },
         {
-          amount: amount,
+          amount,
         },
         rfqProgram.address
       ),

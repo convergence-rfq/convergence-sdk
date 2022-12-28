@@ -1,14 +1,7 @@
 import { Commitment, PublicKey, Connection, Keypair } from '@solana/web3.js';
 import { LOCALHOST } from '@metaplex-foundation/amman-client';
 import { amman } from './amman';
-import {
-  Convergence,
-  token,
-  keypairIdentity,
-  KeypairSigner,
-  Mint,
-  Token,
-} from '@/index';
+import { Convergence, keypairIdentity, KeypairSigner, Token } from '@/index';
 
 export const SWITCHBOARD_BTC_ORACLE = new PublicKey(
   '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
@@ -52,48 +45,6 @@ export const USDC_DECIMALS = 6;
 /*
  * COLLATERAL
  */
-export const fundCollateral = async (
-  cvg: Convergence,
-  collateralMint: Mint,
-  mintAuthority: Keypair,
-  amount: number
-) => {
-  const rfqProgram = cvg.programs().getRfq();
-
-  const [protocol] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
-  const [collateralToken] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralInfo] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-
-  const { token: userTokens } = await cvg.tokens().createToken({
-    mint: collateralMint.address,
-  });
-
-  await cvg.tokens().mint({
-    mintAddress: collateralMint.address,
-    amount: token(amount),
-    toToken: userTokens.address,
-    mintAuthority,
-  });
-
-  await cvg.collateral().fundCollateral({
-    userTokens: userTokens.address,
-    protocol,
-    collateralInfo,
-    collateralToken,
-    amount,
-  });
-
-  return { userTokens };
-};
 
 export const withdrawCollateral = async (
   cvg: Convergence,
