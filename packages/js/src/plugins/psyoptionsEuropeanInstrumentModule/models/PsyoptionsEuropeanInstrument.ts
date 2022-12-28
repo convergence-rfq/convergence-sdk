@@ -1,6 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
-import { PsyoptionsEuropeanInstrumentAccount } from '../accounts';
+import { Side } from '@convergence-rfq/rfq';
+import { Instrument } from '../../instrumentModule/models/Instrument';
+import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
+import { Convergence } from '@/Convergence';
+import { BigNumber, toBigNumber } from '@/types';
 
 /**
  * This model captures all the relevant information about a Psyoptions European
@@ -8,29 +12,104 @@ import { assert } from '@/utils';
  *
  * @group Models
  */
-export type PsyoptionsEuropeanInstrument = {
-  /** A model identifier to distinguish models in the SDK. */
-  readonly model: 'psyoptionsEuropeanInstrument';
+export class PsyoptionsEuropeanInstrument implements Instrument {
+  readonly model = 'psyoptionsEuropeanInstrument';
 
-  /** The address of the instrument. */
-  readonly address: PublicKey;
+  constructor(
+    readonly convergence: Convergence,
+    protected mint: PublicKey,
+    protected legInfo: {
+      amount: BigNumber;
+      side: Side;
+      baseAssetIndex: number;
+    } | null
+  ) {
+    this.convergence = convergence;
+    this.legInfo = legInfo;
+  }
 
-  //readonly meta: PublicKey;
+  static createForLeg(
+    convergence: Convergence,
+    { mint = PublicKey.default, amount = 0, side = Side.Bid } = {}
+  ): InstrumentClient {
+    const baseAssetIndex = 0;
+    const decimals = 0;
+    const instrument = new PsyoptionsEuropeanInstrument(convergence, mint, {
+      amount: toBigNumber(amount),
+      side,
+      baseAssetIndex,
+    });
 
-  //readonly metaKey: PublicKey;
+    return new InstrumentClient(
+      convergence,
+      instrument,
+      {
+        amount: toBigNumber(amount),
+        side,
+        baseAssetIndex,
+      },
+      decimals
+    );
+  }
 
-  readonly underlyingMint: PublicKey;
+  async getValidationAccounts() {
+    return [{ pubkey: PublicKey.default, isSigner: false, isWritable: false }];
+  }
 
-  readonly stableMint: PublicKey;
+  //static createForQuote(
+  //  context: Context,
+  //  mint = context.assetToken
+  //): InstrumentController {
+  //  const instrument = new SpotInstrument(context, mint);
+  //  mint.assertRegistered();
+  //  return new InstrumentController(instrument, null, mint.decimals);
+  //}
 
-  //readonly callMint: PublicKey;
+  //static async addInstrument(context: Context) {
+  //  await context.addInstrument(
+  //    getSpotInstrumentProgram().programId,
+  //    true,
+  //    1,
+  //    7,
+  //    3,
+  //    3,
+  //    4
+  //  );
+  //  await context.riskEngine.setInstrumentType(
+  //    getSpotInstrumentProgram().programId,
+  //    InstrumentType.Spot
+  //  );
+  //}
 
-  readonly callWriterMint: PublicKey;
+  serializeInstrumentData(): Buffer {
+    return Buffer.from(this.mint.toBytes());
+  }
 
-  //readonly putMint: PublicKey;
+  getProgramId(): PublicKey {
+    return this.convergence.programs().getPsyoptionsEuropeanInstrument()
+      .address;
+  }
 
-  //readonly putWriterMint: PublicKey;
-};
+  //calculateLegSize(instrument: PsyoptionsEuropeanInstrument): number {
+  //  return instrument.data.length;
+  //}
+
+  //createInstrument(
+  //  mint: PublicKey,
+  //  decimals: number,
+  //  side: Side,
+  //  amount: number
+  //): PsyoptionsEuropeanInstrument {
+  //  return {
+  //    model: 'psyoptionsEuropeanInstrument',
+  //    mint,
+  //    side,
+  //    amount: toBigNumber(amount),
+  //    decimals,
+  //    data: mint.toBuffer(),
+  //  };
+  //}
+}
 
 /** @group Model Helpers */
 export const isPsyoptionsEuropeanInstrument = (
@@ -47,19 +126,3 @@ export function assertPsyoptionsEuropeanInstrument(
     `Expected PsyoptionsEuropeanInstrument model`
   );
 }
-
-/** @group Model Helpers */
-export const toPsyoptionsEuropeanInstrument = (
-  account: PsyoptionsEuropeanInstrumentAccount
-): PsyoptionsEuropeanInstrument => ({
-  model: 'psyoptionsEuropeanInstrument',
-  address: account.publicKey,
-  //meta: account.data.meta,
-  //metaKey: account.data.metaKey,
-  underlyingMint: account.data.underlyingMint,
-  stableMint: account.data.stableMint,
-  //callMint: account.data.callMint,
-  callWriterMint: account.data.callWriterMint,
-  //putMint: account.data.putMint,
-  //putWriterMint: account.data.putwriterMint,
-});

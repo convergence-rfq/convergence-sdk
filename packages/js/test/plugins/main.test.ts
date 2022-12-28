@@ -383,14 +383,31 @@ test('[rfqModule] it can find RFQs by owner', async () => {
   // });
 });
 
-test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async () => {
-  //const psyoptionsEuropeanInstrument = await cvg
-  //await cvg.psyoptionsEuropeanInstrument().initialize({
-  //  collateralMint: cvg.identity().publicKey,
-  //});
-  //spok(t, psyoptionsEuropeanInstrument, {
-  //  $topic: 'Created PsyOptions European instrument',
-  //  model: 'psyoptionsEuropeanInstrument',
-  //  address: spokSamePubkey(psyoptionsEuropeanInstrument.address),
-  //});
+test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async (t: Test) => {
+  const spotInstrumentClient = cvg.spotInstrument();
+  const spotInstrument = spotInstrumentClient.createInstrument(
+    btcMint.address,
+    btcMint.decimals,
+    Side.Bid,
+    1
+  );
+  //const psyoptionsEuropeanInstrumentClient = cvg.psyoptionsEuropeanInstrument();
+  //const psyoptionsEuropeanInstrument =
+  //  psyoptionsEuropeanInstrumentClient.createInstrument(
+  //    btcMint.address,
+  //    btcMint.decimals,
+  //    Side.Bid,
+  //    1
+  //  );
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [spotInstrument],
+    quoteAsset: usdcMint,
+  });
+  const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
+
+  spok(t, rfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq.address),
+  });
 });

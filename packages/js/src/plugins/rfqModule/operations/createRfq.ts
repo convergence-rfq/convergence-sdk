@@ -16,7 +16,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { Mint, SpotInstrument } from '@/index';
+import { Mint, PsyoptionsEuropeanInstrument, SpotInstrument } from '@/index';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -66,7 +66,7 @@ export type CreateRfqInput = {
   quoteAsset: Mint;
 
   /** The legs of the order. */
-  instruments: SpotInstrument[];
+  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
 
   /**
    * The type of order.

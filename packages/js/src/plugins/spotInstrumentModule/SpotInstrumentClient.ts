@@ -1,7 +1,7 @@
 import { Leg, QuoteAsset, Side } from '@convergence-rfq/rfq';
+import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { Mint } from '../tokenModule/models/Mint';
 import { SpotInstrument } from './models';
-//import { EMPTY_LEG_SIZE } from './constants';
 import type { Convergence } from '@/Convergence';
 import { PublicKey, toBigNumber } from '@/types';
 
@@ -60,7 +60,9 @@ export class SpotInstrumentClient {
     };
   }
 
-  createLeg(spotInstrument: SpotInstrument): Leg {
+  createLeg(
+    spotInstrument: SpotInstrument | PsyoptionsEuropeanInstrument
+  ): Leg {
     const spotInstrumentProgram = this.convergence
       .programs()
       .getSpotInstrument();

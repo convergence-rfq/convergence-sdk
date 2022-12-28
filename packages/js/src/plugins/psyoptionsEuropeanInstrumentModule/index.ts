@@ -1,5 +1,4 @@
 export * from './models';
-export * from './operations';
-export * from './PsyoptionsEuropeanInstrumentClient';
 export * from './plugin';
 export * from './types';
+export * from './programs';

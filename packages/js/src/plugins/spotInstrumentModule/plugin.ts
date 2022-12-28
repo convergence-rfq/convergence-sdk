@@ -1,5 +1,4 @@
 import { PROGRAM_ID } from '@convergence-rfq/spot-instrument';
-//import { cusper } from '@metaplex-foundation/mpl-token-metadata';
 import { ProgramClient } from '../programModule';
 import { SpotInstrumentClient } from './SpotInstrumentClient';
 import { ConvergencePlugin, Program } from '@/types';
@@ -11,8 +10,6 @@ export const spotInstrumentModule = (): ConvergencePlugin => ({
     const spotInstrumentProgram = {
       name: 'SpotInstrumentProgram',
       address: PROGRAM_ID,
-      //errorResolver: (error: ErrorWithLogs) =>
-      //  cusper.errorFromProgramLogs(error.logs, false),
     };
     convergence.programs().register(spotInstrumentProgram);
 
