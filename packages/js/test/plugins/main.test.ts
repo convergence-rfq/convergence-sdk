@@ -383,7 +383,7 @@ test('[rfqModule] it can find RFQs by owner', async () => {
   // });
 });
 
-test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {
+test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async () => {
   //const psyoptionsEuropeanInstrument = await cvg
   //await cvg.psyoptionsEuropeanInstrument().initialize({
   //  collateralMint: cvg.identity().publicKey,

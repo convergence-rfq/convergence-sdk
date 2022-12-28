@@ -74,11 +74,17 @@ import type { Convergence } from '@/Convergence';
  *
  * @example
  * ```ts
- * const { rfq } = await convergence
- *   .rfqs()
- *   .create({
- *     side: 'buy',
- *   });
+ * const spotInstrumentClient = cvg.spotInstrument();
+ * const spotInstrument = spotInstrumentClient.createInstrument(
+ *   btcMint.address,
+ *   btcMint.decimals,
+ *   Side.Bid,
+ *   1
+ * );
+ * const { rfq } = await cvg.rfqs().create({
+ *   instruments: [spotInstrument],
+ *   quoteAsset: usdcMint,
+ * });
  * ```
  *
  * @group Modules
