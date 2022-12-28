@@ -6,10 +6,8 @@ import {
   convergence,
   killStuckProcess,
   spokSamePubkey,
-  initializeRiskEngineConfig,
   withdrawCollateral,
   fundCollateral,
-  createRfq,
   ut,
   BTC_DECIMALS,
   USDC_DECIMALS,
@@ -152,7 +150,7 @@ test('[protocolModule] it can add the PsyOptions instrument', async (t: Test) =>
 });
 
 test('[riskEngineModule] it can initialize the default risk engine config', async () => {
-  await initializeRiskEngineConfig(cvg);
+  await cvg.riskEngine().initializeConfig({});
 });
 
 test('[protocolModule] it can add a BTC base asset', async () => {
@@ -281,8 +279,10 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
     Side.Bid,
     1
   );
-
-  const { rfq } = await createRfq(cvg, [spotInstrument], usdcMint);
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [spotInstrument],
+    quoteAsset: usdcMint,
+  });
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
   spok(t, rfq, {

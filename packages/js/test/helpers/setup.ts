@@ -52,6 +52,9 @@ export const createWallet = async (
 export const BTC_DECIMALS = 9;
 export const USDC_DECIMALS = 6;
 
+/*
+ * COLLATERAL
+ */
 export const fundCollateral = async (
   cvg: Convergence,
   collateralMint: Mint,
@@ -124,30 +127,6 @@ export const withdrawCollateral = async (
     collateralToken,
     amount,
   });
-};
-
-/*
- * RFQ
- */
-
-export const createRfq = async (
-  cvg: Convergence,
-  instruments: SpotInstrument[],
-  quoteAsset: Mint
-) => {
-  const { rfq } = await cvg.rfqs().create({
-    instruments,
-    quoteAsset,
-  });
-  return { rfq };
-};
-
-/**
- * RISK ENGINE
- */
-
-export const initializeRiskEngineConfig = async (cvg: Convergence) => {
-  return await cvg.riskEngine().initializeConfig({});
 };
 
 /**
