@@ -1,17 +1,17 @@
 import { PublicKey } from '@solana/web3.js';
+import { createWithdrawCollateralInstruction } from '@convergence-rfq/rfq';
+import { bignum } from '@metaplex-foundation/beet';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import { createWithdrawCollateralInstruction } from '@convergence-rfq/rfq';
-import { bignum } from '@metaplex-foundation/beet';
 
 const Key = 'WithdrawCollateralOperation' as const;
 
@@ -51,14 +51,16 @@ export type WithdrawCollateralInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   user?: Signer;
+
   /** The address of the protocol*/
   userTokens: PublicKey;
 
-  protocol: PublicKey;
+  protocol?: PublicKey;
 
-  collateralInfo: PublicKey;
+  collateralInfo?: PublicKey;
 
-  collateralToken: PublicKey;
+  collateralToken?: PublicKey;
+
   /*
    * Args
    */
@@ -139,12 +141,31 @@ export const withdrawCollateralBuilder = async (
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
+  const [protocolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from('collateral_info'),
+      convergence.identity().publicKey.toBuffer(),
+    ],
+    rfqProgram.address
+  );
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from('collateral_token'),
+      convergence.identity().publicKey.toBuffer(),
+    ],
+    rfqProgram.address
+  );
+
   const {
     user = convergence.identity(),
-    protocol,
+    protocol = protocolPda,
     userTokens,
-    collateralInfo,
-    collateralToken,
+    collateralInfo = collateralInfoPda,
+    collateralToken = collateralTokenPda,
     amount,
   } = params;
 

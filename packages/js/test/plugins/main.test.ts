@@ -6,7 +6,6 @@ import {
   convergence,
   killStuckProcess,
   spokSamePubkey,
-  withdrawCollateral,
   BTC_DECIMALS,
   USDC_DECIMALS,
 } from '../helpers';
@@ -258,7 +257,10 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
 
-  await withdrawCollateral(cvg, userTokens, WITHDRAW_AMOUNT);
+  await cvg.collateral().withdrawCollateral({
+    userTokens: userTokens.address,
+    amount: WITHDRAW_AMOUNT,
+  });
 
   const userTokensAccountAfterWithdraw = await cvg
     .tokens()
@@ -272,19 +274,18 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   });
 
   const rfqProgram = cvg.programs().getRfq();
-
-  const [collateralToken] = PublicKey.findProgramAddressSync(
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
     rfqProgram.address
   );
 
   const collateralTokenAccount = await cvg
     .tokens()
-    .findTokenByAddress({ address: collateralToken });
+    .findTokenByAddress({ address: collateralTokenPda });
 
   spok(t, collateralTokenAccount, {
     $topic: 'Withdraw Collateral',
-    address: spokSamePubkey(collateralToken),
+    address: spokSamePubkey(collateralTokenPda),
     mintAddress: spokSamePubkey(collateralMint.address),
     amount: token(FUND_AMOUNT - WITHDRAW_AMOUNT),
   });
