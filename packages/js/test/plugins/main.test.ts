@@ -24,18 +24,21 @@ import { Mint, token, SpotInstrument, toBigNumber } from '@/index';
 killStuckProcess();
 
 let cvg: Convergence;
+
 let usdcMint: Mint;
 let btcMint: Mint;
 
 test('[setup] it can create Convergence instance', async () => {
   cvg = await convergence();
 
+  // TODO: Use constant for decimals
   const { mint } = await cvg
     .tokens()
-    .createMint({ mintAuthority: mintAuthority.publicKey });
+    .createMint({ mintAuthority: mintAuthority.publicKey, decimals: 9 });
 
   const signer = Keypair.generate();
 
+  // TODO: Verify token account for taker
   const { token: toToken } = await cvg
     .tokens()
     .createToken({ mint: mint.address, token: signer });
@@ -65,7 +68,7 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
 });
 
 test('[protocolModule] it can add the spot instrument', async (t: Test) => {
-  const authority = cvg.rpc().getDefaultFeePayer();
+  const dao = cvg.rpc().getDefaultFeePayer();
   const protocol = await cvg.protocol().get();
 
   const validateDataAccountAmount = 1;
@@ -76,7 +79,7 @@ test('[protocolModule] it can add the spot instrument', async (t: Test) => {
   const canBeUsedAsQuote = true;
 
   await cvg.protocol().addInstrument({
-    authority,
+    authority: dao,
     protocol: protocol.address,
     instrumentProgram: new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS),
     canBeUsedAsQuote,
@@ -95,7 +98,7 @@ test('[protocolModule] it can add the spot instrument', async (t: Test) => {
 });
 
 test('[protocolModule] it can add the PsyOptions instrument', async (t: Test) => {
-  const authority = cvg.rpc().getDefaultFeePayer();
+  const dao = cvg.rpc().getDefaultFeePayer();
   const protocol = await cvg.protocol().get();
 
   const validateDataAccountAmount = 2;
@@ -106,7 +109,7 @@ test('[protocolModule] it can add the PsyOptions instrument', async (t: Test) =>
   const canBeUsedAsQuote = true;
 
   await cvg.protocol().addInstrument({
-    authority,
+    authority: dao,
     protocol: protocol.address,
     instrumentProgram: new PublicKey(
       PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS
@@ -144,18 +147,16 @@ test('[protocolModule] it can add a BTC base asset', async () => {
   });
 });
 
-test('[protocolModule] it can register USDC mint', async () => {
+test('[protocolModule] it can register BTC mint', async () => {
   await cvg.protocol().registerMint({
     baseAssetIndex: 0,
-    mint: usdcMint.address,
-    isStablecoin: true,
+    mint: btcMint.address,
   });
 });
 
-test('[protocolModule] it can register BTC mint', async () => {
+test('[protocolModule] it can register USDC mint', async () => {
   await cvg.protocol().registerMint({
-    baseAssetIndex: 0, // TODO: Is this correct?
-    mint: btcMint.address,
+    mint: usdcMint.address,
   });
 });
 
@@ -253,11 +254,13 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
     model: 'spotInstrument',
     mint: btcMint.address,
     side: Side.Bid,
-    amount: toBigNumber(1),
+    amount: toBigNumber(2),
     decimals: 9,
-    data: Buffer.from(btcMint.address.toBytes()),
+    data: btcMint.address.toBuffer(),
   };
+
   const { rfq } = await createRfq(cvg, [spotInstrument], usdcMint);
+
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
   spok(t, rfq, {

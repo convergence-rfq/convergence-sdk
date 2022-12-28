@@ -56,7 +56,7 @@ export const initializeProtocol = async (
 ) => {
   const { mint: usdcMint } = await cvg
     .tokens()
-    .createMint({ mintAuthority: mintAuthority.publicKey });
+    .createMint({ mintAuthority: mintAuthority.publicKey, decimals: 6 });
 
   const signer = Keypair.generate();
 

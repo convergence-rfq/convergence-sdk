@@ -44,7 +44,7 @@ export class SpotInstrumentClient {
       .getSpotInstrument();
     return {
       instrumentProgram: spotInstrumentProgram.address,
-      // TODO: Is this right?
+      // TODO: Do not hardcode
       baseAssetIndex: { value: 0 },
       instrumentData: spotInstrument.data,
       instrumentAmount: spotInstrument.amount,

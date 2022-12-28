@@ -142,6 +142,12 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
  */
 export type CreateRfqBuilderParams = CreateRfqInput;
 
+//function calculateLegsSize(legs: SpotInstrument[]) {
+//  return legs
+//    .map((leg) => EMPTY_LEG_SIZE + leg.getInstrumendDataSize())
+//    .reduce((x, y) => x + y, 4);
+//}
+
 /**
  * Creates a new Rfq.
  *
@@ -181,13 +187,20 @@ export const createRfqBuilder = async (
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
+  // TODO: Use PDA client
   const MINT_INFO_SEED = 'mint_info';
 
   const [quotePda] = PublicKey.findProgramAddressSync(
     [Buffer.from(MINT_INFO_SEED), quoteAsset.address.toBuffer()],
     rfqProgram.address
   );
+  const [mintInfoPda] = PublicKey.findProgramAddressSync(
+    // TODO: Do not hardcode
+    [Buffer.from(MINT_INFO_SEED), instruments[0].mint.toBuffer()],
+    rfqProgram.address
+  );
 
+  // TODO: Do not hardcode
   const quoteAccounts: AccountMeta[] = [
     {
       pubkey: spotInstrumentProgram.address,
@@ -201,6 +214,7 @@ export const createRfqBuilder = async (
     },
   ];
 
+  // TODO: Do not hardcode
   const legAccounts: AccountMeta[] = [
     {
       pubkey: spotInstrumentProgram.address,
@@ -208,7 +222,7 @@ export const createRfqBuilder = async (
       isWritable: false,
     },
     {
-      pubkey: instruments[0].mint,
+      pubkey: mintInfoPda,
       isSigner: false,
       isWritable: false,
     },
@@ -234,7 +248,8 @@ export const createRfqBuilder = async (
           anchorRemainingAccounts,
         },
         {
-          expectedLegSize: instruments.length,
+          // TODO: Do not hardcode, instead get leg size
+          expectedLegSize: instruments[0].data.length,
           legs: instruments.map((instrument) => {
             return spotInstrumentClient.createLeg(instrument);
           }),

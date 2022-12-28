@@ -61,9 +61,7 @@ export type RegisterMintInput = {
   /**
    * The base asset index.
    */
-  baseAssetIndex: number;
-
-  isStablecoin?: boolean;
+  baseAssetIndex?: number;
 };
 
 /**
@@ -106,7 +104,7 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
     },
   };
 
-export function toLittleEndian(value: number, bytes: number) {
+function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
   buf.writeUIntLE(value, 0, bytes);
   return buf;
@@ -146,8 +144,7 @@ export const registerMintBuilder = async (
   const {
     authority = convergence.identity(),
     mint,
-    baseAssetIndex,
-    isStablecoin = false,
+    baseAssetIndex = -1,
   } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
@@ -163,10 +160,16 @@ export const registerMintBuilder = async (
     rfqProgram.address
   );
 
-  const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex, 2)],
-    rfqProgram.address
-  );
+  let baseAsset: PublicKey;
+
+  if (baseAssetIndex >= 0) {
+    [baseAsset] = PublicKey.findProgramAddressSync(
+      [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex, 2)],
+      rfqProgram.address
+    );
+  } else {
+    baseAsset = PublicKey.default;
+  }
 
   return TransactionBuilder.make<RegisterMintBuilderContext>()
     .setFeePayer(payer)
@@ -176,7 +179,7 @@ export const registerMintBuilder = async (
           authority: authority.publicKey,
           protocol,
           mintInfo,
-          baseAsset: isStablecoin ? PublicKey.default : baseAsset,
+          baseAsset: baseAssetIndex >= 0 ? baseAsset : PublicKey.default,
           mint,
           systemProgram: systemProgram.address,
         },
