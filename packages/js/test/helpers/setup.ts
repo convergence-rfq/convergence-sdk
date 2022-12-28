@@ -123,19 +123,3 @@ export const withdrawCollateral = async (
     amount,
   });
 };
-
-/**
- * PSYOPTIONS EUROPEAN
- */
-
-export const intializePsyoptionsEuropeanInstrument = async () => {
-  //const psyoptionsEuropeanInstrument = await cvg
-  //await cvg.psyoptionsEuropeanInstrument().initialize({
-  //  collateralMint: cvg.identity().publicKey,
-  //});
-  //spok(t, psyoptionsEuropeanInstrument, {
-  //  $topic: 'Created PsyOptions European instrument',
-  //  model: 'psyoptionsEuropeanInstrument',
-  //  address: spokSamePubkey(psyoptionsEuropeanInstrument.address),
-  //});
-};

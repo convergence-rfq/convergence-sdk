@@ -342,27 +342,43 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   });
 });
 
-// test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
-//   const cvg = await convergence();
+test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
+  //const spotInstrumentClient = cvg.spotInstrument();
+  //const spotInstrument = spotInstrumentClient.createInstrument(
+  //  btcMint.address,
+  //  btcMint.decimals,
+  //  Side.Bid,
+  //  1
+  //);
+  //const { rfq: rfq1 } = await cvg.rfqs().create({
+  //  instruments: [spotInstrument],
+  //  quoteAsset: usdcMint,
+  //});
+  // const { rfq: rfq2 } = await createRfq(cvg);
+  //const [
+  //  foundRfq1,
+  //  // foundRfq2
+  //] = await cvg.rfqs().findAllByOwner({ owner: cvg.identity().publicKey });
+  //spok(t, rfq1, {
+  //  $topic: 'Created RFQ',
+  //  model: 'rfq',
+  //  address: spokSamePubkey(foundRfq1.address),
+  //});
+  // spok(t, rfq2, {
+  //   $topic: 'Created RFQ',
+  //   model: 'rfq',
+  //   address: spokSamePubkey(foundRfq2.address),
+  // });
+});
 
-//   const { rfq: rfq1 } = await createRfq(cvg);
-//   // const { rfq: rfq2 } = await createRfq(cvg);
-
-//   const [
-//     foundRfq1,
-//     // foundRfq2
-//   ] = await cvg.rfqs().findAllByOwner({ owner: cvg.identity().publicKey });
-
-//   spok(t, rfq1, {
-//     $topic: 'Created RFQ',
-//     model: 'rfq',
-//     address: spokSamePubkey(foundRfq1.address),
-//   });
-//   // spok(t, rfq2, {
-//   //   $topic: 'Created RFQ',
-//   //   model: 'rfq',
-//   //   address: spokSamePubkey(foundRfq2.address),
-//   // });
-// });
-
-test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {});
+test('[psyoptionsEuropeanInstrumentModule] it can create a PsyOptions European instrument', async () => {
+  //const psyoptionsEuropeanInstrument = await cvg
+  //await cvg.psyoptionsEuropeanInstrument().initialize({
+  //  collateralMint: cvg.identity().publicKey,
+  //});
+  //spok(t, psyoptionsEuropeanInstrument, {
+  //  $topic: 'Created PsyOptions European instrument',
+  //  model: 'psyoptionsEuropeanInstrument',
+  //  address: spokSamePubkey(psyoptionsEuropeanInstrument.address),
+  //});
+});
