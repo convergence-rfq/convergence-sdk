@@ -19,7 +19,7 @@ import {
   ut,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
-import { Mint, token, SpotInstrument, toBigNumber } from '@/index';
+import { Mint, token } from '@/index';
 
 killStuckProcess();
 
@@ -250,17 +250,15 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
 });
 
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
-  const spotInstrument: SpotInstrument = {
-    model: 'spotInstrument',
-    mint: btcMint.address,
-    side: Side.Bid,
-    amount: toBigNumber(2),
-    decimals: 9,
-    data: btcMint.address.toBuffer(),
-  };
+  const spotInstrumentClient = cvg.spotInstrument();
+  const spotInstrument = spotInstrumentClient.createInstrument(
+    btcMint.address,
+    btcMint.decimals,
+    Side.Bid,
+    1
+  );
 
   const { rfq } = await createRfq(cvg, [spotInstrument], usdcMint);
-
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
   spok(t, rfq, {

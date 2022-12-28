@@ -1,7 +1,9 @@
-import { Leg, QuoteAsset } from '@convergence-rfq/rfq';
+import { Leg, QuoteAsset, Side } from '@convergence-rfq/rfq';
+import { Mint } from '../tokenModule/models/Mint';
 import { SpotInstrument } from './models';
+//import { EMPTY_LEG_SIZE } from './constants';
 import type { Convergence } from '@/Convergence';
-import { Mint } from '@/plugins/tokenModule';
+import { PublicKey, toBigNumber } from '@/types';
 
 /**
  * This is a client for the spotInstrumentModule.
@@ -35,6 +37,26 @@ export class SpotInstrumentClient {
       instrumentProgram: spotInstrumentProgram.address,
       instrumentData: mint.address.toBuffer(),
       instrumentDecimals: mint.decimals,
+    };
+  }
+
+  calculateLegSize(instrument: SpotInstrument): number {
+    return instrument.data.length;
+  }
+
+  createInstrument(
+    mint: PublicKey,
+    decimals: number,
+    side: Side,
+    amount: number
+  ): SpotInstrument {
+    return {
+      model: 'spotInstrument',
+      mint,
+      side,
+      amount: toBigNumber(amount),
+      decimals,
+      data: mint.toBuffer(),
     };
   }
 

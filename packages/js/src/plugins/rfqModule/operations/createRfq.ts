@@ -65,9 +65,6 @@ export type CreateRfqInput = {
   /** Optional quote asset account. */
   quoteAsset: Mint;
 
-  /** Optional expected leg size in quote asset units. */
-  expectedLegSize?: number;
-
   /** The legs of the order. */
   instruments: SpotInstrument[];
 
@@ -141,12 +138,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
  * @category Inputs
  */
 export type CreateRfqBuilderParams = CreateRfqInput;
-
-//function calculateLegsSize(legs: SpotInstrument[]) {
-//  return legs
-//    .map((leg) => EMPTY_LEG_SIZE + leg.getInstrumendDataSize())
-//    .reduce((x, y) => x + y, 4);
-//}
 
 /**
  * Creates a new Rfq.
@@ -233,6 +224,8 @@ export const createRfqBuilder = async (
   const spotInstrumentClient = convergence.spotInstrument();
   const protocol = await convergence.protocol().get();
 
+  const expectedLegSize = spotInstrumentClient.calculateLegSize(instruments[0]);
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({
@@ -248,8 +241,7 @@ export const createRfqBuilder = async (
           anchorRemainingAccounts,
         },
         {
-          // TODO: Do not hardcode, instead get leg size
-          expectedLegSize: instruments[0].data.length,
+          expectedLegSize,
           legs: instruments.map((instrument) => {
             return spotInstrumentClient.createLeg(instrument);
           }),
