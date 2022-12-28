@@ -141,21 +141,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
  * @category Inputs
  */
 export type CreateRfqBuilderParams = CreateRfqInput;
-// & {
-//   /**
-//    * Whether or not the provided token account already exists.
-//    * If `false`, we'll add another instruction to create it.
-//    *
-//    * @defaultValue `true`
-//    */
-//   tokenExists?: boolean;
-// };
-
-/**
- * @group Transaction Builders
- * @category Contexts
- */
-export type CreateRfqBuilderContext = Omit<CreateRfqOutput, 'response' | 'rfq'>;
 
 /**
  * Creates a new Rfq.
@@ -203,7 +188,7 @@ export const createRfqBuilder = async (
     rfqProgram.address
   );
 
-  const quoteAccounts = [
+  const quoteAccounts: AccountMeta[] = [
     {
       pubkey: spotInstrumentProgram.address,
       isSigner: false,
@@ -234,7 +219,7 @@ export const createRfqBuilder = async (
   const spotInstrumentClient = convergence.spotInstrument();
   const protocol = await convergence.protocol().get();
 
-  return TransactionBuilder.make<CreateRfqBuilderContext>()
+  return TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({
       keypair,

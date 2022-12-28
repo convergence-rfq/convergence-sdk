@@ -148,6 +148,7 @@ test('[protocolModule] it can register USDC mint', async () => {
   await cvg.protocol().registerMint({
     baseAssetIndex: 0,
     mint: usdcMint.address,
+    isStablecoin: true,
   });
 });
 

@@ -62,6 +62,8 @@ export type RegisterMintInput = {
    * The base asset index.
    */
   baseAssetIndex: number;
+
+  isStablecoin?: boolean;
 };
 
 /**
@@ -141,7 +143,12 @@ export const registerMintBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<RegisterMintBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { authority = convergence.identity(), mint, baseAssetIndex } = params;
+  const {
+    authority = convergence.identity(),
+    mint,
+    baseAssetIndex,
+    isStablecoin = false,
+  } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq();
@@ -169,7 +176,7 @@ export const registerMintBuilder = async (
           authority: authority.publicKey,
           protocol,
           mintInfo,
-          baseAsset,
+          baseAsset: isStablecoin ? PublicKey.default : baseAsset,
           mint,
           systemProgram: systemProgram.address,
         },
