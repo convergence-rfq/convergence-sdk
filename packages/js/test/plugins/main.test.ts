@@ -354,7 +354,7 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
+test('[rfqModule] it can find RFQs by owner', async () => {
   //const spotInstrumentClient = cvg.spotInstrument();
   //const spotInstrument = spotInstrumentClient.createInstrument(
   //  btcMint.address,
