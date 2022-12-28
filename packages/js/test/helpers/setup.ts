@@ -52,34 +52,6 @@ export const createWallet = async (
 export const BTC_DECIMALS = 9;
 export const USDC_DECIMALS = 6;
 
-/*
- * PROTOCOL
- */
-
-export const initializeProtocol = async (
-  cvg: Convergence,
-  collateralMint: Mint
-) => {
-  const { protocol } = await cvg.protocol().initialize({
-    collateralMint: collateralMint.address,
-  });
-  return { protocol };
-};
-
-/*
- * COLLATERAL
- */
-
-export const initializeCollateral = async (
-  cvg: Convergence,
-  collateralMint: Mint
-) => {
-  const { collateral } = await cvg.collateral().initializeCollateral({
-    collateralMint: collateralMint.address,
-  });
-  return { collateral };
-};
-
 export const fundCollateral = async (
   cvg: Convergence,
   collateralMint: Mint,

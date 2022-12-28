@@ -6,9 +6,7 @@ import {
   convergence,
   killStuckProcess,
   spokSamePubkey,
-  initializeProtocol,
   initializeRiskEngineConfig,
-  initializeCollateral,
   withdrawCollateral,
   fundCollateral,
   createRfq,
@@ -80,7 +78,9 @@ test('[setup] it can create Convergence instance', async () => {
 });
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
-  const { protocol } = await initializeProtocol(cvg, usdcMint);
+  const { protocol } = await cvg.protocol().initialize({
+    collateralMint: usdcMint.address,
+  });
 
   spok(t, protocol, {
     $topic: 'Initialize Protocol',
@@ -189,7 +189,9 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
 
-  const { collateral } = await initializeCollateral(cvg, collateralMint);
+  const { collateral } = await cvg.collateral().initializeCollateral({
+    collateralMint: collateralMint.address,
+  });
 
   const collateralAccount = await cvg
     .collateral()
