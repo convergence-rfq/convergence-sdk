@@ -4,7 +4,6 @@ import {
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-//import { assertProtocol, PsyoptionsEuropeanInstrument } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -103,9 +102,6 @@ export const initializePsyoptionsEuropeanInstrumentOperationHandler: OperationHa
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      //const protocol = await convergence.protocol().get({});
-      //assertProtocol(protocol);
-
       return { ...output };
     },
   };
@@ -114,7 +110,7 @@ export const initializePsyoptionsEuropeanInstrumentOperationHandler: OperationHa
  * @group Transaction Builders
  * @category Inputs
  */
-export type CreateProtocolBuilderParams = Omit<
+export type InitializePsyoptionsEuropeanInstrumentBuilderParams = Omit<
   InitializePsyoptionsEuropeanInstrumentInput,
   'confirmOptions'
 > & {
@@ -151,7 +147,7 @@ export type InitializePsyoptionsEuropeanInstrumentBuilderContext = Omit<
  */
 export const createPsyoptionsEuropeanInstrumentBuilder = async (
   convergence: Convergence,
-  params: CreateProtocolBuilderParams,
+  params: InitializePsyoptionsEuropeanInstrumentBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<
   TransactionBuilder<InitializePsyoptionsEuropeanInstrumentBuilderContext>

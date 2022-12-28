@@ -1,9 +1,6 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { PublicKey, Keypair } from '@solana/web3.js';
-import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
-import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
-import { Side, RiskCategory } from '@convergence-rfq/rfq';
 import {
   SWITCHBOARD_BTC_ORACLE,
   convergence,
@@ -19,7 +16,14 @@ import {
   ut,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
-import { Mint, token } from '@/index';
+import {
+  Mint,
+  token,
+  Side,
+  RiskCategory,
+  SPOT_INSTRUMENT_PROGRAM_ADDRESS,
+  PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
+} from '@/index';
 
 killStuckProcess();
 

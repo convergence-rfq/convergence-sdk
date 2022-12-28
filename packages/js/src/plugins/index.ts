@@ -11,6 +11,7 @@ export * from './rfqModule';
 export * from './riskEngineModule';
 export * from './rpcModule';
 export * from './spotInstrumentModule';
+export * from './psyoptionsEuropeanInstrumentModule';
 export * from './protocolModule';
 export * from './storageModule';
 export * from './systemModule';

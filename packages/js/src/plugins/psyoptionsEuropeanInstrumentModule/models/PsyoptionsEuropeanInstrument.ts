@@ -33,18 +33,23 @@ export type PsyoptionsEuropeanInstrument = {
 };
 
 /** @group Model Helpers */
-export const isProtocol = (value: any): value is PsyoptionsEuropeanInstrument =>
+export const isPsyoptionsEuropeanInstrument = (
+  value: any
+): value is PsyoptionsEuropeanInstrument =>
   typeof value === 'object' && value.model === 'psyoptionsEuropeanInstrument';
 
 /** @group Model Helpers */
-export function assertProtocol(
+export function assertPsyoptionsEuropeanInstrument(
   value: any
 ): asserts value is PsyoptionsEuropeanInstrument {
-  assert(isProtocol(value), `Expected PsyoptionsEuropeanInstrument model`);
+  assert(
+    isPsyoptionsEuropeanInstrument(value),
+    `Expected PsyoptionsEuropeanInstrument model`
+  );
 }
 
 /** @group Model Helpers */
-export const toProtocol = (
+export const toPsyoptionsEuropeanInstrument = (
   account: PsyoptionsEuropeanInstrumentAccount
 ): PsyoptionsEuropeanInstrument => ({
   model: 'psyoptionsEuropeanInstrument',
