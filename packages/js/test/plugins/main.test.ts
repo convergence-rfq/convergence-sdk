@@ -8,7 +8,6 @@ import {
   spokSamePubkey,
   withdrawCollateral,
   fundCollateral,
-  ut,
   BTC_DECIMALS,
   USDC_DECIMALS,
 } from '../helpers';
@@ -20,6 +19,7 @@ import {
   RiskCategory,
   SPOT_INSTRUMENT_PROGRAM_ADDRESS,
   PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
+  Token,
 } from '@/index';
 
 killStuckProcess();
@@ -28,6 +28,8 @@ let cvg: Convergence;
 
 let usdcMint: Mint;
 let btcMint: Mint;
+
+let ut: Token;
 
 const mintAuthority = Keypair.generate();
 
@@ -211,7 +213,13 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
 
-  await fundCollateral(cvg, collateralMint, mintAuthority, AMOUNT);
+  const { userTokens: newUserTokens } = await fundCollateral(
+    cvg,
+    collateralMint,
+    mintAuthority,
+    AMOUNT
+  );
+  ut = newUserTokens;
 
   const rfqProgram = cvg.programs().getRfq();
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
