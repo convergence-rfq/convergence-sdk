@@ -8,7 +8,6 @@ import {
   KeypairSigner,
   Mint,
   Token,
-  SpotInstrument,
 } from '@/index';
 
 export let ut: Token;
