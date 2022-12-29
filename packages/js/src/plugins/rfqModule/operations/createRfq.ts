@@ -209,13 +209,14 @@ export const createRfqBuilder = async (
     legs.push(instrumentClient.toLegData());
 
     let mintInfoPda;
+
     if (instrument instanceof SpotInstrument) {
-      const spot = instrument as SpotInstrument;
       [mintInfoPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from(MINT_INFO_SEED), spot.mint.toBuffer()],
+        [Buffer.from(MINT_INFO_SEED), instrument.mint.toBuffer()],
         rfqProgram.address
       );
     } else if (instrument instanceof PsyoptionsEuropeanInstrument) {
+      // TODO: Finish
       [mintInfoPda] = PublicKey.findProgramAddressSync(
         [Buffer.from(MINT_INFO_SEED), PublicKey.default.toBuffer()],
         rfqProgram.address

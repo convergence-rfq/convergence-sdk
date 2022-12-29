@@ -18,13 +18,14 @@ export class SpotInstrument implements Instrument {
   constructor(
     readonly convergence: Convergence,
     readonly mint: PublicKey,
-    protected legInfo: {
+    readonly legInfo: {
       amount: BigNumber;
       side: Side;
       baseAssetIndex: number;
-    } | null
+    } | null = null
   ) {
     this.convergence = convergence;
+    this.mint = mint;
     this.legInfo = legInfo;
   }
 

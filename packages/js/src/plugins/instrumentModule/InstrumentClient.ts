@@ -30,9 +30,14 @@ export class InstrumentClient {
       amount: BigNumber;
       side: Side;
       baseAssetIndex: number;
-    } | null,
-    protected decimals: number
-  ) {}
+    } | null = null,
+    protected decimals: number | null = null
+  ) {
+    this.convergence = convergence;
+    this.instrument = instrument;
+    this.legInfo = legInfo;
+    this.decimals = decimals;
+  }
 
   getBaseAssetIndex(): number {
     if (this.legInfo === null) {
@@ -45,6 +50,10 @@ export class InstrumentClient {
   toLegData(): Leg {
     if (this.legInfo === null) {
       throw Error('Instrument is used for quote');
+    }
+
+    if (this.decimals === null) {
+      throw Error('Instrument decimals is not set');
     }
 
     return {

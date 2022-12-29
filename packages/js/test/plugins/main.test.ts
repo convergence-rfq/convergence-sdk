@@ -306,7 +306,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
     baseAssetIndex: 0,
   });
 
-  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+  const quoteAsset = cvg.instrument(quoteInstrument, null, null).toQuoteData();
 
   const { rfq } = await cvg.rfqs().create({
     instruments: [spotInstrument],
@@ -324,18 +324,14 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
 });
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
-  const quoteInstrument = new SpotInstrument(cvg, usdcMint.address, {
-    amount: toBigNumber(1),
-    side: Side.Bid,
-    baseAssetIndex: 0,
-  });
+  const quoteInstrument = new SpotInstrument(cvg, usdcMint.address);
   const spotInstrument = new SpotInstrument(cvg, btcMint.address, {
     amount: toBigNumber(1),
     side: Side.Bid,
     baseAssetIndex: 0,
   });
 
-  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+  const quoteAsset = cvg.instrument(quoteInstrument, null, 0).toQuoteData();
 
   const { rfq: rfq1 } = await cvg.rfqs().create({
     instruments: [spotInstrument],
