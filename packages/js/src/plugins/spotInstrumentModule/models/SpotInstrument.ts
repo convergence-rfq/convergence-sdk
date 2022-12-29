@@ -17,7 +17,7 @@ export class SpotInstrument implements Instrument {
 
   constructor(
     readonly convergence: Convergence,
-    protected mint: PublicKey,
+    readonly mint: PublicKey,
     protected legInfo: {
       amount: BigNumber;
       side: Side;

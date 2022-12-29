@@ -1,6 +1,9 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { Instrument } from '../../instrumentModule';
+import { SpotInstrument } from '../../spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -13,7 +16,6 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { Instrument } from '@/index';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -23,7 +25,12 @@ const Key = 'CreateRfqOperation' as const;
  * ```ts
  * const { rfq } = await convergence
  *   .rfqs()
- *   .create();
+ *   .create({
+ *     instruments: [spotInstrument],
+ *     orderType: OrderType.Sell,
+ *     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+ *     quoteAsset,
+ *   });
  * ```
  *
  * @group Operations
@@ -201,12 +208,22 @@ export const createRfqBuilder = async (
     expectedLegSizes.push(instrumentClient.getInstrumendDataSize());
     legs.push(instrumentClient.toLegData());
 
-    const [mintInfoPda] = PublicKey.findProgramAddressSync(
-      // TODO: Do not hardcode
-      //[Buffer.from(MINT_INFO_SEED), instruments[0].mint.toBuffer()],
-      [Buffer.from(MINT_INFO_SEED), PublicKey.default.toBuffer()],
-      rfqProgram.address
-    );
+    let mintInfoPda;
+    if (instrument instanceof SpotInstrument) {
+      const spot = instrument as SpotInstrument;
+      [mintInfoPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from(MINT_INFO_SEED), spot.mint.toBuffer()],
+        rfqProgram.address
+      );
+    } else if (instrument instanceof PsyoptionsEuropeanInstrument) {
+      [mintInfoPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from(MINT_INFO_SEED), PublicKey.default.toBuffer()],
+        rfqProgram.address
+      );
+    } else {
+      throw new Error('Unsupported instrument type');
+    }
+
     legAccounts.push(
       {
         pubkey: spotInstrumentProgram.address,
@@ -220,8 +237,6 @@ export const createRfqBuilder = async (
       }
     );
   }
-
-  const expectedLegSize = expectedLegSizes.reduce((a, b) => a + b, 0);
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
 
@@ -240,7 +255,7 @@ export const createRfqBuilder = async (
           anchorRemainingAccounts,
         },
         {
-          expectedLegSize,
+          expectedLegSize: expectedLegSizes.reduce((a, b) => a + b, 0),
           legs,
           fixedSize,
           orderType,
