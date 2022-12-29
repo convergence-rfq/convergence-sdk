@@ -1,13 +1,8 @@
-import {
-  createCreateRfqInstruction,
-  OrderType,
-  FixedSize,
-  QuoteAsset,
-  Leg,
-} from '@convergence-rfq/rfq';
+import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
+import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -18,7 +13,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { PsyoptionsEuropeanInstrument, SpotInstrument } from '@/index';
+import { Instrument } from '@/index';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -61,23 +56,20 @@ export type CreateRfqInput = {
   /** Optional Rfq keypair */
   keypair?: Keypair;
 
-  /** The pubkey address of the protocol account. */
-  protocol?: PublicKey;
-
   /** Optional quote asset account. */
   quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
-  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
+  instruments: Instrument[];
 
   /**
    * The type of order.
    *
    * @defaultValue Defaults to creating a two-way order
    */
-  orderType?: OrderType;
+  orderType: OrderType;
 
-  fixedSize?: FixedSize;
+  fixedSize: FixedSize;
 
   activeWindow?: number;
 
@@ -164,10 +156,10 @@ export const createRfqBuilder = async (
 
   const {
     taker = convergence.identity(),
-    orderType = OrderType.Sell,
+    orderType,
     instruments,
     quoteAsset,
-    fixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 },
+    fixedSize,
     activeWindow = 1,
     settlingWindow = 1,
   } = params;

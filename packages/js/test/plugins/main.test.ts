@@ -20,6 +20,7 @@ import {
   Token,
   SpotInstrument,
   toBigNumber,
+  OrderType,
 } from '@/index';
 
 killStuckProcess();
@@ -304,10 +305,13 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
     side: Side.Bid,
     baseAssetIndex: 0,
   });
+
   const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
 
   const { rfq } = await cvg.rfqs().create({
     instruments: [spotInstrument],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
   });
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
@@ -330,17 +334,25 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     side: Side.Bid,
     baseAssetIndex: 0,
   });
+
   const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+
   const { rfq: rfq1 } = await cvg.rfqs().create({
     instruments: [spotInstrument],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
   });
   const { rfq: rfq2 } = await cvg.rfqs().create({
     instruments: [spotInstrument],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
   });
   const { rfq: rfq3 } = await cvg.rfqs().create({
     instruments: [spotInstrument],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
   });
 

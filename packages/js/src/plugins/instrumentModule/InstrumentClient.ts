@@ -36,7 +36,7 @@ export class InstrumentClient {
 
   getBaseAssetIndex(): number {
     if (this.legInfo === null) {
-      throw Error('Instrument is used for quote!');
+      throw Error('Instrument is used for base asset index');
     }
 
     return this.legInfo.baseAssetIndex;
@@ -44,7 +44,7 @@ export class InstrumentClient {
 
   toLegData(): Leg {
     if (this.legInfo === null) {
-      throw Error('Instrument is used for quote!');
+      throw Error('Instrument is used for quote');
     }
 
     return {
@@ -59,7 +59,7 @@ export class InstrumentClient {
 
   toQuoteData() {
     if (this.legInfo !== null) {
-      throw Error('Instrument is used for leg!');
+      throw Error('Instrument is used for leg');
     }
 
     return {
