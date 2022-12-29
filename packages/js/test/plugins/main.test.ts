@@ -291,7 +291,7 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can create a RFQ', async (t: Test) => {
+test('[rfqModule] it can create an RFQ', async (t: Test) => {
   const spotInstrumentClient = cvg.spotInstrument();
   const spotInstrument = spotInstrumentClient.createInstrument(
     btcMint.address,
@@ -338,17 +338,17 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     .findByAddresses({ addresses: [rfq1.address, rfq2.address, rfq3.address] });
 
   spok(t, rfq1, {
-    $topic: 'Created RFQ',
+    $topic: 'Found RFQ#1 by address',
     model: 'rfq',
     address: spokSamePubkey(foundRfq1.address),
   });
   spok(t, rfq2, {
-    $topic: 'Created RFQ',
+    $topic: 'Found RFQ#2 by address',
     model: 'rfq',
     address: spokSamePubkey(foundRfq2.address),
   });
   spok(t, rfq3, {
-    $topic: 'Created RFQ',
+    $topic: 'Found RFQ#3 by address',
     model: 'rfq',
     address: spokSamePubkey(foundRfq3.address),
   });
@@ -366,15 +366,24 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
     instruments: [spotInstrument],
     quoteAsset: usdcMint,
   });
+  const { rfq: rfq2 } = await cvg.rfqs().create({
+    instruments: [spotInstrument],
+    quoteAsset: usdcMint,
+  });
 
-  const [foundRfq1] = await cvg
+  const [foundRfq1, foundRfq2] = await cvg
     .rfqs()
     .findAllByOwner({ owner: cvg.identity().publicKey });
 
   spok(t, rfq1, {
-    $topic: 'Created RFQ',
+    $topic: 'Found RFQ#1 by owner',
     model: 'rfq',
     address: spokSamePubkey(foundRfq1.address),
+  });
+  spok(t, rfq2, {
+    $topic: 'Found RFQ#2 by owner',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq2.address),
   });
 });
 

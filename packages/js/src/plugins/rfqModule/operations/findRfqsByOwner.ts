@@ -77,7 +77,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         .programs()
         .getGpaBuilder(rfqProgram.address)
         .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
-        .where(64, owner);
+        .where(8, owner);
 
       const unparsedRfqs = await rfqGpaBuilder.get();
       scope.throwIfCanceled();
