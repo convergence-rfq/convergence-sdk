@@ -180,6 +180,10 @@ test('[protocolModule] it can register USDC mint', async () => {
   });
 });
 
+/*
+ * COLLATERAL
+ */
+
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const protocol = await cvg.protocol().get();
 
@@ -291,6 +295,10 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   });
 });
 
+/*
+ * RFQ
+ */
+
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const spotInstrumentClient = cvg.spotInstrument();
   const spotInstrument = spotInstrumentClient.createInstrument(
@@ -309,6 +317,40 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
     $topic: 'Created RFQ',
     model: 'rfq',
     address: spokSamePubkey(foundRfq.address),
+  });
+});
+
+test('[rfqModule] it can finalize RFQ construction', async () => {
+  const spotInstrumentClient = cvg.spotInstrument();
+  //expected leg size is the length of btcMint serialized byte array
+  const spotInstrument = spotInstrumentClient.createInstrument(
+    btcMint.address,
+    btcMint.decimals,
+    Side.Bid,
+    1
+  );
+  const riskEngineProgram = cvg.programs().getRiskEngine();
+  const rfqProgram = cvg.programs().getRfq();
+
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [spotInstrument],
+    quoteAsset: usdcMint,
+  });
+
+  await cvg.rfqs().finalizeRfqConstruction({
+    rfq: rfq.address,
+    collateralInfo: collateralInfoPda,
+    collateralToken: collateralTokenPda,
+    riskEngine: riskEngineProgram.address,
   });
 });
 

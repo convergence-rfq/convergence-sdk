@@ -51,7 +51,7 @@ export type FinalizeRfqConstructionInput = {
    */
   taker?: Signer;
   /** The address of the protocol account */
-  protocol: PublicKey;
+  protocol?: PublicKey;
   /** The address of the Rfq account */
   rfq: PublicKey;
   /** The address of the Taker's collateral_info account */
@@ -137,7 +137,7 @@ export const finalizeRfqConstructionBuilder = async (
 
   const {
     taker = convergence.identity(),
-    protocol,
+    // protocol,
     rfq,
     collateralInfo,
     collateralToken,
@@ -146,13 +146,18 @@ export const finalizeRfqConstructionBuilder = async (
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
+  const [protocolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+
   return TransactionBuilder.make<FinalizeRfqConstructionBuilderContext>()
     .setFeePayer(payer)
     .add({
       instruction: createFinalizeRfqConstructionInstruction(
         {
           taker: taker.publicKey,
-          protocol,
+          protocol: protocolPda,
           rfq,
           collateralInfo,
           collateralToken,
