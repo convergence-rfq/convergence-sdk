@@ -2,6 +2,8 @@ import {
   createCreateRfqInstruction,
   OrderType,
   FixedSize,
+  QuoteAsset,
+  Leg,
 } from '@convergence-rfq/rfq';
 import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -16,7 +18,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { Mint, PsyoptionsEuropeanInstrument, SpotInstrument } from '@/index';
+import { PsyoptionsEuropeanInstrument, SpotInstrument } from '@/index';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -63,7 +65,7 @@ export type CreateRfqInput = {
   protocol?: PublicKey;
 
   /** Optional quote asset account. */
-  quoteAsset: Mint;
+  quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
   instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
@@ -180,18 +182,10 @@ export const createRfqBuilder = async (
 
   // TODO: Use PDA client
   const MINT_INFO_SEED = 'mint_info';
-
   const [quotePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from(MINT_INFO_SEED), quoteAsset.address.toBuffer()],
+    [Buffer.from(MINT_INFO_SEED), quoteAsset.instrumentData],
     rfqProgram.address
   );
-  const [mintInfoPda] = PublicKey.findProgramAddressSync(
-    // TODO: Do not hardcode
-    [Buffer.from(MINT_INFO_SEED), instruments[0].mint.toBuffer()],
-    rfqProgram.address
-  );
-
-  // TODO: Do not hardcode
   const quoteAccounts: AccountMeta[] = [
     {
       pubkey: spotInstrumentProgram.address,
@@ -205,26 +199,39 @@ export const createRfqBuilder = async (
     },
   ];
 
-  // TODO: Do not hardcode
-  const legAccounts: AccountMeta[] = [
-    {
-      pubkey: spotInstrumentProgram.address,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: mintInfoPda,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
+  const legAccounts: AccountMeta[] = [];
+  const legs: Leg[] = [];
+  const protocol = await convergence.protocol().get();
+  const expectedLegSizes = [];
+
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(instrument);
+    expectedLegSizes.push(instrumentClient.getInstrumendDataSize());
+    legs.push(instrumentClient.toLegData());
+
+    const [mintInfoPda] = PublicKey.findProgramAddressSync(
+      // TODO: Do not hardcode
+      //[Buffer.from(MINT_INFO_SEED), instruments[0].mint.toBuffer()],
+      [Buffer.from(MINT_INFO_SEED), PublicKey.default.toBuffer()],
+      rfqProgram.address
+    );
+    legAccounts.push(
+      {
+        pubkey: spotInstrumentProgram.address,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: mintInfoPda,
+        isSigner: false,
+        isWritable: false,
+      }
+    );
+  }
+
+  const expectedLegSize = expectedLegSizes.reduce((a, b) => a + b, 0);
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
-
-  const spotInstrumentClient = convergence.spotInstrument();
-  const protocol = await convergence.protocol().get();
-
-  const expectedLegSize = spotInstrumentClient.calculateLegSize(instruments[0]);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -242,12 +249,10 @@ export const createRfqBuilder = async (
         },
         {
           expectedLegSize,
-          legs: instruments.map((instrument) => {
-            return spotInstrumentClient.createLeg(instrument);
-          }),
+          legs,
           fixedSize,
           orderType,
-          quoteAsset: spotInstrumentClient.createQuoteAsset(quoteAsset),
+          quoteAsset,
           activeWindow,
           settlingWindow,
         },

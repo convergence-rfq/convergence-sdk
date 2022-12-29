@@ -6,8 +6,11 @@ import { assert } from '@/utils';
 
 export interface InstrumentData {
   instrument: PublicKey;
+
   instrumentData: Buffer | Uint8Array;
+
   instrumentAmount: BigNumber;
+
   side: Side;
 }
 

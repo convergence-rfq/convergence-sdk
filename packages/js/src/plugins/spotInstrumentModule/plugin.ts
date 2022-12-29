@@ -1,6 +1,5 @@
 import { PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { ProgramClient } from '../programModule';
-import { SpotInstrumentClient } from './SpotInstrumentClient';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
 
@@ -13,10 +12,6 @@ export const spotInstrumentModule = (): ConvergencePlugin => ({
     };
     convergence.programs().register(spotInstrumentProgram);
 
-    convergence.spotInstrument = function () {
-      return new SpotInstrumentClient(this);
-    };
-
     convergence.programs().getSpotInstrument = function (
       this: ProgramClient,
       programs?: Program[]
@@ -25,12 +20,6 @@ export const spotInstrumentModule = (): ConvergencePlugin => ({
     };
   },
 });
-
-declare module '../../Convergence' {
-  interface Convergence {
-    spotInstrument(): SpotInstrumentClient;
-  }
-}
 
 declare module '../programModule/ProgramClient' {
   interface ProgramClient {

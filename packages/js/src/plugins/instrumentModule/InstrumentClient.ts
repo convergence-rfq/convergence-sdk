@@ -1,7 +1,7 @@
 import { Leg, Side } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
-//import { SpotInstrument } from '../spotInstrumentModule';
+import { SpotInstrument } from '../spotInstrumentModule';
 import type { Convergence } from '@/Convergence';
 import { toBigNumber, BigNumber } from '@/types';
 
@@ -25,7 +25,7 @@ import { toBigNumber, BigNumber } from '@/types';
 export class InstrumentClient {
   constructor(
     protected convergence: Convergence,
-    protected instrument: PsyoptionsEuropeanInstrument,
+    protected instrument: PsyoptionsEuropeanInstrument | SpotInstrument,
     protected legInfo: {
       amount: BigNumber;
       side: Side;
