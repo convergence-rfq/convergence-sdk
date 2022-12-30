@@ -47,8 +47,8 @@ export class InstrumentClient {
   }
 
   toLegData(): Leg {
-    if (this.legInfo === null || this.instrument.decimals === null) {
-      throw Error('Instrument is used for quote');
+    if (this.legInfo === null) {
+      throw Error('Instrument is used for leg');
     }
 
     return {
@@ -56,20 +56,20 @@ export class InstrumentClient {
       baseAssetIndex: { value: this.legInfo.baseAssetIndex },
       instrumentData: this.instrument.serializeInstrumentData(),
       instrumentAmount: toBigNumber(this.legInfo.amount),
-      instrumentDecimals: this.instrument.decimals,
+      instrumentDecimals: this.instrument?.mint.decimals,
       side: this.legInfo.side,
     };
   }
 
   toQuoteData() {
     if (this.legInfo !== null) {
-      throw Error('Instrument is used for leg');
+      throw Error('Instrument is used for quote');
     }
 
     return {
       instrumentProgram: this.instrument.getProgramId(),
       instrumentData: this.instrument.serializeInstrumentData(),
-      instrumentDecimals: this.instrument.decimals,
+      instrumentDecimals: this.instrument.mint.decimals,
     };
   }
 

@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { Side } from '@convergence-rfq/rfq';
+import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
@@ -17,35 +18,33 @@ export class SpotInstrument implements Instrument {
 
   constructor(
     readonly convergence: Convergence,
-    readonly mint: PublicKey,
+    readonly mint: Mint,
     readonly legInfo: {
       amount: BigNumber;
       side: Side;
       baseAssetIndex: number;
-    } | null = null,
-    readonly decimals = 0
+    } | null = null
   ) {
     this.convergence = convergence;
     this.mint = mint;
     this.legInfo = legInfo;
-    this.decimals = decimals;
   }
 
   static createForLeg(
     convergence: Convergence,
-    { mint = PublicKey.default, amount = 0, side = Side.Bid } = {}
+    leg: { mint: Mint; amount: number; side: Side }
   ): InstrumentClient {
     // TODO: Get the base asset index from the program
     const baseAssetIndex = 0;
-    const instrument = new SpotInstrument(convergence, mint, {
-      amount: toBigNumber(amount),
-      side,
+    const instrument = new SpotInstrument(convergence, leg.mint, {
+      amount: toBigNumber(leg.amount),
+      side: leg.side,
       baseAssetIndex,
     });
 
     return new InstrumentClient(convergence, instrument, {
-      amount: toBigNumber(amount),
-      side,
+      amount: toBigNumber(leg.amount),
+      side: leg.side,
       baseAssetIndex,
     });
   }
@@ -80,7 +79,7 @@ export class SpotInstrument implements Instrument {
   //}
 
   serializeInstrumentData(): Buffer {
-    return Buffer.from(this.mint.toBytes());
+    return Buffer.from(this.mint.address.toBytes());
   }
 
   getProgramId(): PublicKey {

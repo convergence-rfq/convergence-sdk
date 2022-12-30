@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { Side } from '@convergence-rfq/rfq';
+import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
@@ -17,7 +18,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
 
   constructor(
     readonly convergence: Convergence,
-    readonly mint: PublicKey,
+    readonly mint: Mint,
     readonly legInfo: {
       amount: BigNumber;
       side: Side;
@@ -32,24 +33,18 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
 
   static createForLeg(
     convergence: Convergence,
-    { mint = PublicKey.default, amount = 0, side = Side.Bid } = {},
-    decimals = 0
+    leg: { mint: Mint; amount: number; side: Side }
   ): InstrumentClient {
     const baseAssetIndex = 0;
-    const instrument = new PsyoptionsEuropeanInstrument(
-      convergence,
-      mint,
-      {
-        amount: toBigNumber(amount),
-        side,
-        baseAssetIndex,
-      },
-      decimals
-    );
+    const instrument = new PsyoptionsEuropeanInstrument(convergence, leg.mint, {
+      amount: toBigNumber(leg.amount),
+      side: leg.side,
+      baseAssetIndex,
+    });
 
     return new InstrumentClient(convergence, instrument, {
-      amount: toBigNumber(amount),
-      side,
+      amount: toBigNumber(leg.amount),
+      side: leg.side,
       baseAssetIndex,
     });
   }
@@ -84,7 +79,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   //}
 
   serializeInstrumentData(): Buffer {
-    return Buffer.from(this.mint.toBytes());
+    return Buffer.from(this.mint.address.toBytes());
   }
 
   getProgramId(): PublicKey {

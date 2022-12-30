@@ -211,11 +211,10 @@ export const createRfqBuilder = async (
       const spotInstrument = instrument as SpotInstrument;
       instrumentClient = convergence.instrument(
         spotInstrument,
-        spotInstrument.legInfo,
-        spotInstrument.decimals
+        spotInstrument.legInfo
       );
       [mintInfoPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from(MINT_INFO_SEED), instrument.mint.toBuffer()],
+        [Buffer.from(MINT_INFO_SEED), instrument.mint.address.toBuffer()],
         rfqProgram.address
       );
     } else {

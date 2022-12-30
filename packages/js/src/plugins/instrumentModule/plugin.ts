@@ -25,8 +25,7 @@ declare module '../../Convergence' {
   interface Convergence {
     instrument(
       instrument: Instrument,
-      legInfo: { amount: BigNumber; side: Side; baseAssetIndex: number } | null,
-      decimals: number | null
+      legInfo: { amount: BigNumber; side: Side; baseAssetIndex: number } | null
     ): InstrumentClient;
   }
 }

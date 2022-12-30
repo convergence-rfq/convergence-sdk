@@ -295,28 +295,18 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
 });
 
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
-  const quoteInstrument = new SpotInstrument(
-    cvg,
-    usdcMint.address,
-    {
-      amount: toBigNumber(1),
-      side: Side.Bid,
-      baseAssetIndex: 0,
-    },
-    USDC_DECIMALS
-  );
-  const spotInstrument = new SpotInstrument(
-    cvg,
-    btcMint.address,
-    {
-      amount: toBigNumber(1),
-      side: Side.Bid,
-      baseAssetIndex: 0,
-    },
-    BTC_DECIMALS
-  );
+  const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
+    amount: toBigNumber(1),
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
+  const spotInstrument = new SpotInstrument(cvg, btcMint, {
+    amount: toBigNumber(1),
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
 
-  const quoteAsset = cvg.instrument(quoteInstrument, null, null).toQuoteData();
+  const quoteAsset = cvg.instrument(quoteInstrument, null).toQuoteData();
 
   const { rfq } = await cvg.rfqs().create({
     instruments: [spotInstrument],
@@ -334,14 +324,14 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
 });
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
-  const quoteInstrument = new SpotInstrument(cvg, usdcMint.address);
-  const spotInstrument = new SpotInstrument(cvg, btcMint.address, {
+  const quoteInstrument = new SpotInstrument(cvg, usdcMint);
+  const spotInstrument = new SpotInstrument(cvg, btcMint, {
     amount: toBigNumber(1),
     side: Side.Bid,
     baseAssetIndex: 0,
   });
 
-  const quoteAsset = cvg.instrument(quoteInstrument, null, 0).toQuoteData();
+  const quoteAsset = cvg.instrument(quoteInstrument, null).toQuoteData();
 
   const { rfq: rfq1 } = await cvg.rfqs().create({
     instruments: [spotInstrument],
