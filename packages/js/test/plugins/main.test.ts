@@ -19,7 +19,6 @@ import {
   PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
   Token,
   SpotInstrument,
-  toBigNumber,
   OrderType,
 } from '@/index';
 
@@ -296,12 +295,12 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
 
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
-    amount: toBigNumber(1),
+    amount: 1,
     side: Side.Bid,
     baseAssetIndex: 0,
   });
   const spotInstrument = new SpotInstrument(cvg, btcMint, {
-    amount: toBigNumber(1),
+    amount: 1,
     side: Side.Bid,
     baseAssetIndex: 0,
   });
@@ -326,7 +325,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   const quoteInstrument = new SpotInstrument(cvg, usdcMint);
   const spotInstrument = new SpotInstrument(cvg, btcMint, {
-    amount: toBigNumber(1),
+    amount: 1,
     side: Side.Bid,
     baseAssetIndex: 0,
   });

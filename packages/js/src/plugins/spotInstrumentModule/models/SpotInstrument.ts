@@ -5,7 +5,6 @@ import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
 import { Convergence } from '@/Convergence';
-import { BigNumber, toBigNumber } from '@/types';
 
 /**
  * This model captures all the relevant information about a spot
@@ -20,7 +19,7 @@ export class SpotInstrument implements Instrument {
     readonly convergence: Convergence,
     readonly mint: Mint,
     readonly legInfo: {
-      amount: BigNumber;
+      amount: number;
       side: Side;
       baseAssetIndex: number;
     } | null = null
@@ -37,13 +36,13 @@ export class SpotInstrument implements Instrument {
     // TODO: Get the base asset index from the program
     const baseAssetIndex = 0;
     const instrument = new SpotInstrument(convergence, leg.mint, {
-      amount: toBigNumber(leg.amount),
+      amount: leg.amount,
       side: leg.side,
       baseAssetIndex,
     });
 
     return new InstrumentClient(convergence, instrument, {
-      amount: toBigNumber(leg.amount),
+      amount: leg.amount,
       side: leg.side,
       baseAssetIndex,
     });

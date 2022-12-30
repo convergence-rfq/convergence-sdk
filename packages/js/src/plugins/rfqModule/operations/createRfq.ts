@@ -198,9 +198,10 @@ export const createRfqBuilder = async (
     },
   ];
 
+  const protocol = await convergence.protocol().get();
+
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
-  const protocol = await convergence.protocol().get();
   const expectedLegSizes = [];
 
   for (const instrument of instruments) {

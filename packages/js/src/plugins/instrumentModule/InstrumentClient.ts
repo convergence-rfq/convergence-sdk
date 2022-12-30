@@ -3,7 +3,7 @@ import { AccountMeta } from '@solana/web3.js';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';
 import type { Convergence } from '@/Convergence';
-import { toBigNumber, BigNumber } from '@/types';
+import { toBigNumber } from '@/types';
 
 /**
  * This is a client for the instrumentModule.
@@ -28,7 +28,7 @@ export class InstrumentClient {
     protected convergence: Convergence,
     protected instrument: PsyoptionsEuropeanInstrument | SpotInstrument,
     protected legInfo: {
-      amount: BigNumber;
+      amount: number;
       side: Side;
       baseAssetIndex: number;
     } | null = null
