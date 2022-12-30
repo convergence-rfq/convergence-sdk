@@ -18,6 +18,7 @@ import {
   SPOT_INSTRUMENT_PROGRAM_ADDRESS,
   PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
   Token,
+  // toRfqAccount,
 } from '@/index';
 
 killStuckProcess();
@@ -207,7 +208,7 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can fund collateral', async (t: Test) => {
-  const AMOUNT = 25;
+  const AMOUNT = 2000000010;
 
   const protocol = await cvg.protocol().get();
 
@@ -252,7 +253,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can withdraw collateral', async (t: Test) => {
-  const FUND_AMOUNT = 25;
+  const FUND_AMOUNT = 2000000010;
   const WITHDRAW_AMOUNT = 10;
 
   const protocol = await cvg.protocol().get();
@@ -320,9 +321,9 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can finalize RFQ construction', async () => {
+test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
   const spotInstrumentClient = cvg.spotInstrument();
-  //expected leg size is the length of btcMint serialized byte array
+
   const spotInstrument = spotInstrumentClient.createInstrument(
     btcMint.address,
     btcMint.decimals,
@@ -351,7 +352,17 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
     collateralInfo: collateralInfoPda,
     collateralToken: collateralTokenPda,
     riskEngine: riskEngineProgram.address,
+    baseAssetIndex: { value: 0 },
   });
+
+  // const account = await cvg.rpc().getAccount(rfq.address, 'confirmed');
+  // const rfqAccount = toRfqAccount(account);
+
+  // spok(t, rfq, {
+  //   $topic: 'Created RFQ',
+  //   model: 'rfq',
+  //   address: spokSamePubkey(foundRfq.address),
+  // });
 });
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {

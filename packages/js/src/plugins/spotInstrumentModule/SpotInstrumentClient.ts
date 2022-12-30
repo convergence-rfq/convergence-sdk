@@ -4,7 +4,8 @@ import {
   Side,
   sideBeet,
   baseAssetIndexBeet,
-  legBeet,
+  // BaseAssetIndex,
+  // legBeet,
 } from '@convergence-rfq/rfq';
 import { Mint } from '../tokenModule/models/Mint';
 import { SpotInstrument } from './models';
@@ -49,31 +50,24 @@ export class SpotInstrumentClient {
     };
   }
 
-  // calculateLegSize(instrument: SpotInstrument): number {
-  //   return instrument.data.length;
-  // }
-
   calculateLegSize(instrument: SpotInstrument): number {
-    // const legBeet = new beet.FixableBeetArgsStruct<Leg>(
-    //   [
-    //     ['instrumentProgram', beetSolana.publicKey],
-    //     ['baseAssetIndex', baseAssetIndexBeet],
-    //     ['instrumentData', beet.bytes],
-    //     ['instrumentAmount', beet.u64],
-    //     ['instrumentDecimals', beet.u8],
-    //     ['side', sideBeet],
-    //   ],
-    //   'Leg'
-    // );
+    const legBeet = new beet.FixableBeetArgsStruct<Leg>(
+      [
+        ['instrumentProgram', beetSolana.publicKey],
+        ['baseAssetIndex', baseAssetIndexBeet],
+        ['instrumentData', beet.bytes],
+        ['instrumentAmount', beet.u64],
+        ['instrumentDecimals', beet.u8],
+        ['side', sideBeet],
+      ],
+      'Leg'
+    );
 
     const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
-
     const leg = this.createLeg(instrument);
-
-    // const b = serialize(leg, legSerializer);
     const buf = legSerializer.serialize(leg);
 
-    return buf.length;
+    return buf.length + 4;
   }
 
   createInstrument(
