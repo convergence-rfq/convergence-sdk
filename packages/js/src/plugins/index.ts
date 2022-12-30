@@ -10,6 +10,7 @@ export * from './programModule';
 export * from './rfqModule';
 export * from './riskEngineModule';
 export * from './rpcModule';
+export * from './instrumentModule';
 export * from './spotInstrumentModule';
 export * from './psyoptionsEuropeanInstrumentModule';
 export * from './protocolModule';

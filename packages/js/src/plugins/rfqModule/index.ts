@@ -9,3 +9,4 @@ export * from './RfqPdasClient';
 export * from './operations';
 export * from './pdas';
 export * from './plugin';
+export * from './types';
