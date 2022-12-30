@@ -14,10 +14,9 @@ export const instrumentModule = (): ConvergencePlugin => ({
         amount: BigNumber;
         side: Side;
         baseAssetIndex: number;
-      } | null,
-      decimals: number | 0
+      } | null
     ) {
-      return new InstrumentClient(this, instrument, legInfo, decimals);
+      return new InstrumentClient(this, instrument, legInfo);
     };
   },
 });

@@ -295,16 +295,26 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
 });
 
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
-  const quoteInstrument = new SpotInstrument(cvg, usdcMint.address, {
-    amount: toBigNumber(1),
-    side: Side.Bid,
-    baseAssetIndex: 0,
-  });
-  const spotInstrument = new SpotInstrument(cvg, btcMint.address, {
-    amount: toBigNumber(1),
-    side: Side.Bid,
-    baseAssetIndex: 0,
-  });
+  const quoteInstrument = new SpotInstrument(
+    cvg,
+    usdcMint.address,
+    {
+      amount: toBigNumber(1),
+      side: Side.Bid,
+      baseAssetIndex: 0,
+    },
+    USDC_DECIMALS
+  );
+  const spotInstrument = new SpotInstrument(
+    cvg,
+    btcMint.address,
+    {
+      amount: toBigNumber(1),
+      side: Side.Bid,
+      baseAssetIndex: 0,
+    },
+    BTC_DECIMALS
+  );
 
   const quoteAsset = cvg.instrument(quoteInstrument, null, null).toQuoteData();
 

@@ -17,32 +17,28 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
 
   constructor(
     readonly convergence: Convergence,
-    protected mint: PublicKey,
-    protected legInfo: {
+    readonly mint: PublicKey,
+    readonly legInfo: {
       amount: BigNumber;
       side: Side;
       baseAssetIndex: number;
-    } | null
+    } | null,
+    readonly decimals = 0
   ) {
     this.convergence = convergence;
     this.legInfo = legInfo;
+    this.decimals = decimals;
   }
 
   static createForLeg(
     convergence: Convergence,
-    { mint = PublicKey.default, amount = 0, side = Side.Bid } = {}
+    { mint = PublicKey.default, amount = 0, side = Side.Bid } = {},
+    decimals = 0
   ): InstrumentClient {
     const baseAssetIndex = 0;
-    const decimals = 0;
-    const instrument = new PsyoptionsEuropeanInstrument(convergence, mint, {
-      amount: toBigNumber(amount),
-      side,
-      baseAssetIndex,
-    });
-
-    return new InstrumentClient(
+    const instrument = new PsyoptionsEuropeanInstrument(
       convergence,
-      instrument,
+      mint,
       {
         amount: toBigNumber(amount),
         side,
@@ -50,6 +46,12 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
       },
       decimals
     );
+
+    return new InstrumentClient(convergence, instrument, {
+      amount: toBigNumber(amount),
+      side,
+      baseAssetIndex,
+    });
   }
 
   async getValidationAccounts() {

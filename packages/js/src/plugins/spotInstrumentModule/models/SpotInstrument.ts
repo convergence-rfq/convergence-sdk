@@ -22,35 +22,32 @@ export class SpotInstrument implements Instrument {
       amount: BigNumber;
       side: Side;
       baseAssetIndex: number;
-    } | null = null
+    } | null = null,
+    readonly decimals = 0
   ) {
     this.convergence = convergence;
     this.mint = mint;
     this.legInfo = legInfo;
+    this.decimals = decimals;
   }
 
   static createForLeg(
     convergence: Convergence,
     { mint = PublicKey.default, amount = 0, side = Side.Bid } = {}
   ): InstrumentClient {
+    // TODO: Get the base asset index from the program
     const baseAssetIndex = 0;
-    const decimals = 0;
     const instrument = new SpotInstrument(convergence, mint, {
       amount: toBigNumber(amount),
       side,
       baseAssetIndex,
     });
 
-    return new InstrumentClient(
-      convergence,
-      instrument,
-      {
-        amount: toBigNumber(amount),
-        side,
-        baseAssetIndex,
-      },
-      decimals
-    );
+    return new InstrumentClient(convergence, instrument, {
+      amount: toBigNumber(amount),
+      side,
+      baseAssetIndex,
+    });
   }
 
   async getValidationAccounts() {

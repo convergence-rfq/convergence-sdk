@@ -23,6 +23,8 @@ export interface InstrumentData {
 export interface Instrument {
   readonly convergence: Convergence;
 
+  readonly decimals: number;
+
   serializeInstrumentData: () => Buffer;
 
   getProgramId: () => PublicKey;

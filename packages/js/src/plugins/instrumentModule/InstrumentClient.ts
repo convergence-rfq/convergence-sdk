@@ -13,7 +13,8 @@ import { toBigNumber, BigNumber } from '@/types';
  * You may access this client via the `instrument()` method of your `Convergence` instance.
  *
  * ```ts
- * const instrumentClient = convergence.instrument();
+ * const instrument = new SpotInstrument({ ... });
+ * const instrumentClient = convergence.instrument(instrument);
  * ```
  *
  * @example
@@ -30,13 +31,11 @@ export class InstrumentClient {
       amount: BigNumber;
       side: Side;
       baseAssetIndex: number;
-    } | null = null,
-    protected decimals: number | null = null
+    } | null = null
   ) {
     this.convergence = convergence;
     this.instrument = instrument;
     this.legInfo = legInfo;
-    this.decimals = decimals;
   }
 
   getBaseAssetIndex(): number {
@@ -48,12 +47,8 @@ export class InstrumentClient {
   }
 
   toLegData(): Leg {
-    if (this.legInfo === null) {
+    if (this.legInfo === null || this.instrument.decimals === null) {
       throw Error('Instrument is used for quote');
-    }
-
-    if (this.decimals === null) {
-      throw Error('Instrument decimals is not set');
     }
 
     return {
@@ -61,7 +56,7 @@ export class InstrumentClient {
       baseAssetIndex: { value: this.legInfo.baseAssetIndex },
       instrumentData: this.instrument.serializeInstrumentData(),
       instrumentAmount: toBigNumber(this.legInfo.amount),
-      instrumentDecimals: this.decimals,
+      instrumentDecimals: this.instrument.decimals,
       side: this.legInfo.side,
     };
   }
@@ -74,7 +69,7 @@ export class InstrumentClient {
     return {
       instrumentProgram: this.instrument.getProgramId(),
       instrumentData: this.instrument.serializeInstrumentData(),
-      instrumentDecimals: this.decimals,
+      instrumentDecimals: this.instrument.decimals,
     };
   }
 

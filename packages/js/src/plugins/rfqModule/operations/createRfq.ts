@@ -3,7 +3,7 @@ import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Instrument } from '../../instrumentModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+//import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -204,26 +204,26 @@ export const createRfqBuilder = async (
   const expectedLegSizes = [];
 
   for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(instrument);
-    expectedLegSizes.push(instrumentClient.getInstrumendDataSize());
-    legs.push(instrumentClient.toLegData());
-
+    let instrumentClient;
     let mintInfoPda;
 
     if (instrument instanceof SpotInstrument) {
+      const spotInstrument = instrument as SpotInstrument;
+      instrumentClient = convergence.instrument(
+        spotInstrument,
+        spotInstrument.legInfo,
+        spotInstrument.decimals
+      );
       [mintInfoPda] = PublicKey.findProgramAddressSync(
         [Buffer.from(MINT_INFO_SEED), instrument.mint.toBuffer()],
-        rfqProgram.address
-      );
-    } else if (instrument instanceof PsyoptionsEuropeanInstrument) {
-      // TODO: Finish
-      [mintInfoPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from(MINT_INFO_SEED), PublicKey.default.toBuffer()],
         rfqProgram.address
       );
     } else {
       throw new Error('Unsupported instrument type');
     }
+
+    expectedLegSizes.push(instrumentClient.getInstrumendDataSize());
+    legs.push(instrumentClient.toLegData());
 
     legAccounts.push(
       {
