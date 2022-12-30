@@ -18,11 +18,11 @@ export class SpotInstrument implements Instrument {
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
-    readonly legInfo: {
+    readonly legInfo?: {
       amount: number;
       side: Side;
       baseAssetIndex: number;
-    } | null = null
+    }
   ) {
     this.convergence = convergence;
     this.mint = mint;
@@ -31,19 +31,21 @@ export class SpotInstrument implements Instrument {
 
   static createForLeg(
     convergence: Convergence,
-    leg: { mint: Mint; amount: number; side: Side }
+    mint: Mint,
+    amount: number,
+    side: Side
   ): InstrumentClient {
     // TODO: Get the base asset index from the program
     const baseAssetIndex = 0;
-    const instrument = new SpotInstrument(convergence, leg.mint, {
-      amount: leg.amount,
-      side: leg.side,
+    const instrument = new SpotInstrument(convergence, mint, {
+      amount,
+      side,
       baseAssetIndex,
     });
 
     return new InstrumentClient(convergence, instrument, {
-      amount: leg.amount,
-      side: leg.side,
+      amount,
+      side,
       baseAssetIndex,
     });
   }

@@ -27,11 +27,11 @@ export class InstrumentClient {
   constructor(
     protected convergence: Convergence,
     protected instrument: PsyoptionsEuropeanInstrument | SpotInstrument,
-    protected legInfo: {
+    protected legInfo?: {
       amount: number;
       side: Side;
       baseAssetIndex: number;
-    } | null = null
+    }
   ) {
     this.convergence = convergence;
     this.instrument = instrument;
@@ -39,30 +39,28 @@ export class InstrumentClient {
   }
 
   getBaseAssetIndex(): number {
-    if (this.legInfo === null) {
-      throw Error('Instrument is used for base asset index');
+    if (this.legInfo) {
+      return this.legInfo.baseAssetIndex;
     }
-
-    return this.legInfo.baseAssetIndex;
+    throw Error('Instrument is used for base asset index');
   }
 
   toLegData(): Leg {
-    if (this.legInfo === null) {
-      throw Error('Instrument is used for leg');
+    if (this.legInfo) {
+      return {
+        instrumentProgram: this.instrument.getProgramId(),
+        baseAssetIndex: { value: this.legInfo.baseAssetIndex },
+        instrumentData: this.instrument.serializeInstrumentData(),
+        instrumentAmount: toBigNumber(this.legInfo.amount),
+        instrumentDecimals: this.instrument?.mint.decimals,
+        side: this.legInfo.side,
+      };
     }
-
-    return {
-      instrumentProgram: this.instrument.getProgramId(),
-      baseAssetIndex: { value: this.legInfo.baseAssetIndex },
-      instrumentData: this.instrument.serializeInstrumentData(),
-      instrumentAmount: toBigNumber(this.legInfo.amount),
-      instrumentDecimals: this.instrument?.mint.decimals,
-      side: this.legInfo.side,
-    };
+    throw Error('Instrument is used for leg');
   }
 
   toQuoteData() {
-    if (this.legInfo !== null) {
+    if (this.legInfo) {
       throw Error('Instrument is used for quote');
     }
 
