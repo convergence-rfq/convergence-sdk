@@ -50,7 +50,7 @@ export type CancelRfqInput = {
    */
   taker?: Signer;
   /** The address of the protocol account */
-  protocol: PublicKey;
+  protocol?: PublicKey;
   /** The address of the Rfq account. */
   rfq: PublicKey;
 };
@@ -113,9 +113,14 @@ export const cancelRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { taker = convergence.identity(), protocol, rfq } = params;
+  const { taker = convergence.identity(), rfq } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
+
+  const [protocolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -123,7 +128,7 @@ export const cancelRfqBuilder = async (
       instruction: createCancelRfqInstruction(
         {
           taker: taker.publicKey,
-          protocol,
+          protocol: protocolPda,
           rfq,
         },
         rfqProgram.address

@@ -20,6 +20,7 @@ import {
   Token,
   // toRfqAccount,
 } from '@/index';
+import { Rfq } from '@/index';
 
 killStuckProcess();
 
@@ -29,6 +30,8 @@ let usdcMint: Mint;
 let btcMint: Mint;
 
 let userTokens: Token;
+
+let finalizedRfq: Rfq;
 
 const mintAuthority = Keypair.generate();
 
@@ -355,6 +358,8 @@ test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
     baseAssetIndex: { value: 0 },
   });
 
+  finalizedRfq = rfq;
+
   // const account = await cvg.rpc().getAccount(rfq.address, 'confirmed');
   // const rfqAccount = toRfqAccount(account);
 
@@ -363,6 +368,12 @@ test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
   //   model: 'rfq',
   //   address: spokSamePubkey(foundRfq.address),
   // });
+});
+
+test('[rfqModule] it cancel an rfq', async () => {
+  await cvg.rfqs().cancelRfq({
+    rfq: finalizedRfq.address,
+  });
 });
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
