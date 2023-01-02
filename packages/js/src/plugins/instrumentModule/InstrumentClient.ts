@@ -32,11 +32,7 @@ export class InstrumentClient {
       side: Side;
       baseAssetIndex: number;
     }
-  ) {
-    this.convergence = convergence;
-    this.instrument = instrument;
-    this.legInfo = legInfo;
-  }
+  ) {}
 
   getBaseAssetIndex(): number {
     if (this.legInfo) {
@@ -52,7 +48,7 @@ export class InstrumentClient {
         baseAssetIndex: { value: this.legInfo.baseAssetIndex },
         instrumentData: this.instrument.serializeInstrumentData(),
         instrumentAmount: toBigNumber(this.legInfo.amount),
-        instrumentDecimals: this.instrument?.mint.decimals,
+        instrumentDecimals: this.instrument.mint.decimals,
         side: this.legInfo.side,
       };
     }
@@ -63,7 +59,6 @@ export class InstrumentClient {
     if (this.legInfo) {
       throw Error('Instrument is used for quote');
     }
-
     return {
       instrumentProgram: this.instrument.getProgramId(),
       instrumentData: this.instrument.serializeInstrumentData(),
@@ -75,7 +70,7 @@ export class InstrumentClient {
     return this.instrument.serializeInstrumentData().length;
   }
 
-  private getProgramAccount(): AccountMeta {
+  getProgramAccount(): AccountMeta {
     return {
       pubkey: this.instrument.getProgramId(),
       isSigner: false,
@@ -83,9 +78,9 @@ export class InstrumentClient {
     };
   }
 
-  async getValidationAccounts() {
+  getValidationAccounts() {
     return [this.getProgramAccount()].concat(
-      await this.instrument.getValidationAccounts()
+      this.instrument.getValidationAccounts()
     );
   }
 }

@@ -1,9 +1,8 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Instrument } from '../../instrumentModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
-//import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -67,7 +66,7 @@ export type CreateRfqInput = {
   quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
-  instruments: Instrument[];
+  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
 
   /**
    * The type of order.
@@ -205,38 +204,14 @@ export const createRfqBuilder = async (
   const expectedLegSizes = [];
 
   for (const instrument of instruments) {
-    let instrumentClient;
-    let mintInfoPda;
-
-    if (instrument instanceof SpotInstrument) {
-      const spotInstrument = instrument as SpotInstrument;
-      instrumentClient = convergence.instrument(
-        spotInstrument,
-        spotInstrument.legInfo
-      );
-      [mintInfoPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from(MINT_INFO_SEED), instrument.mint.address.toBuffer()],
-        rfqProgram.address
-      );
-    } else {
-      throw new Error('Unsupported instrument type');
-    }
-
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
     expectedLegSizes.push(instrumentClient.getInstrumendDataSize());
     legs.push(instrumentClient.toLegData());
-
-    legAccounts.push(
-      {
-        pubkey: spotInstrumentProgram.address,
-        isSigner: false,
-        isWritable: false,
-      },
-      {
-        pubkey: mintInfoPda,
-        isSigner: false,
-        isWritable: false,
-      }
-    );
+    console.error(JSON.stringify(instrumentClient.getValidationAccounts()));
+    legAccounts.push(...instrumentClient.getValidationAccounts());
   }
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);

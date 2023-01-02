@@ -1,10 +1,13 @@
 import { PublicKey } from '@solana/web3.js';
 import { Side } from '@convergence-rfq/rfq';
+import { EuroMeta } from '@convergence-rfq/psyoptions-european-instrument';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
 import { Convergence } from '@/Convergence';
+import { toBigNumber } from '@/types';
 
 /**
  * This model captures all the relevant information about a Psyoptions European
@@ -17,68 +20,93 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
 
   constructor(
     readonly convergence: Convergence,
-    readonly mint: Mint,
-    readonly legInfo: {
+    public mint: Mint,
+    public optionType: OptionType,
+    public meta: EuroMeta,
+    public metaKey: PublicKey,
+    public underlyingMint: Mint,
+    public stableMint: Mint,
+    public callMint: Mint,
+    public callWriterMint: Mint,
+    public putMint: Mint,
+    public putWriterMint: Mint,
+    readonly legInfo?: {
       amount: number;
       side: Side;
       baseAssetIndex: number;
-    } | null,
-    readonly decimals = 0
-  ) {
-    this.convergence = convergence;
-    this.legInfo = legInfo;
-    this.decimals = decimals;
-  }
+    }
+  ) {}
 
   static createForLeg(
     convergence: Convergence,
-    leg: { mint: Mint; amount: number; side: Side }
+    mint: Mint,
+    optionType: OptionType,
+    meta: EuroMeta,
+    metaKey: PublicKey,
+    underlyingMint: Mint,
+    stableMint: Mint,
+    callMint: Mint,
+    callWriterMint: Mint,
+    putMint: Mint,
+    putWriterMint: Mint,
+    amount: number,
+    side: Side
   ): InstrumentClient {
     const baseAssetIndex = 0;
-    const instrument = new PsyoptionsEuropeanInstrument(convergence, leg.mint, {
-      amount: leg.amount,
-      side: leg.side,
-      baseAssetIndex,
-    });
+    const instrument = new PsyoptionsEuropeanInstrument(
+      convergence,
+      mint,
+      optionType,
+      meta,
+      metaKey,
+      underlyingMint,
+      stableMint,
+      callMint,
+      callWriterMint,
+      putMint,
+      putWriterMint,
+      {
+        amount,
+        side,
+        baseAssetIndex,
+      }
+    );
 
     return new InstrumentClient(convergence, instrument, {
-      amount: leg.amount,
-      side: leg.side,
+      amount,
+      side,
       baseAssetIndex,
     });
   }
 
-  async getValidationAccounts() {
-    return [{ pubkey: PublicKey.default, isSigner: false, isWritable: false }];
+  getValidationAccounts() {
+    const rfqProgram = this.convergence.programs().getRfq();
+    const [mintInfoPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('mint_info'), this.underlyingMint.address.toBuffer()],
+      rfqProgram.address
+    );
+    return [
+      { pubkey: this.metaKey, isSigner: false, isWritable: false },
+      {
+        pubkey: mintInfoPda,
+        isSigner: false,
+        isWritable: false,
+      },
+    ];
   }
 
-  //static createForQuote(
-  //  context: Context,
-  //  mint = context.assetToken
-  //): InstrumentController {
-  //  const instrument = new SpotInstrument(context, mint);
-  //  mint.assertRegistered();
-  //  return new InstrumentController(instrument, null, mint.decimals);
-  //}
-
-  //static async addInstrument(context: Context) {
-  //  await context.addInstrument(
-  //    getSpotInstrumentProgram().programId,
-  //    true,
-  //    1,
-  //    7,
-  //    3,
-  //    3,
-  //    4
-  //  );
-  //  await context.riskEngine.setInstrumentType(
-  //    getSpotInstrumentProgram().programId,
-  //    InstrumentType.Spot
-  //  );
-  //}
-
   serializeInstrumentData(): Buffer {
-    return Buffer.from(this.mint.address.toBytes());
+    const { strikePrice, expiration, underlyingAmountPerContract } = this.meta;
+    return Buffer.from(
+      new Uint8Array([
+        this.optionType == OptionType.CALL ? 0 : 1,
+        ...toBigNumber(underlyingAmountPerContract).toBuffer('le', 8),
+        ...toBigNumber(strikePrice).toBuffer('le', 8),
+        ...toBigNumber(expiration).toBuffer('le', 8),
+        ...this.mint.address.toBytes(),
+        ...this.metaKey.toBytes(),
+      ])
+    );
   }
 
   getProgramId(): PublicKey {

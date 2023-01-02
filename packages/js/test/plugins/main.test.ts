@@ -1,4 +1,11 @@
 import test, { Test } from 'tape';
+//import {
+//  createProgram,
+//  instructions,
+//  parseTranactionError,
+//  ExpirationData,
+//  EuroPrimitive,
+//} from '@mithraic-labs/tokenized-euros';
 import spok from 'spok';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import {
@@ -19,7 +26,10 @@ import {
   PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
   Token,
   SpotInstrument,
+  EuroMeta,
   OrderType,
+  PsyoptionsEuropeanInstrument,
+  OptionType,
 } from '@/index';
 
 killStuckProcess();
@@ -401,31 +411,73 @@ test('[rfqModule] it can find RFQs by owner', async () => {
   // });
 });
 
-//test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async (t: Test) => {
-//const spotInstrumentClient = cvg.spotInstrument();
-//const spotInstrument = spotInstrumentClient.createInstrument(
-//  btcMint.address,
-//  btcMint.decimals,
-//  Side.Bid,
-//  1
-//);
-//const psyoptionsEuropeanInstrumentClient = cvg.psyoptionsEuropeanInstrument();
-//const psyoptionsEuropeanInstrument =
-//  psyoptionsEuropeanInstrumentClient.createInstrument(
-//    btcMint.address,
-//    btcMint.decimals,
-//    Side.Bid,
-//    1
-//  );
-//const { rfq } = await cvg.rfqs().create({
-//  instruments: [spotInstrument],
-//  quoteAsset: usdcMint,
-//});
-//const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
+test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async (t: Test) => {
+  const meta: EuroMeta = {
+    underlyingMint: PublicKey.default,
+    underlyingDecimals: BTC_DECIMALS,
+    underlyingAmountPerContract: 1,
+    stableMint: usdcMint.address,
+    stableDecimals: USDC_DECIMALS,
+    strikePrice: 10_000,
+    stablePool: PublicKey.default,
+    oracle: PublicKey.default,
+    priceDecimals: USDC_DECIMALS,
+    callOptionMint: PublicKey.default,
+    callWriterMint: PublicKey.default,
+    putOptionMint: PublicKey.default,
+    putWriterMint: PublicKey.default,
+    underlyingPool: PublicKey.default,
+    expiration: 1,
+    bumpSeed: 1,
+    expirationData: PublicKey.default,
+    oracleProviderId: 1,
+  };
+  const metaKey = PublicKey.default;
+  const callMint = usdcMint;
+  const underlyingMint = btcMint; // TODO: Update
+  const callWriterMint = btcMint; // TODO: Update
+  const putMint = btcMint; // TODO: Update
+  const putWriterMint = btcMint; // TODO: Update
+  const optionType = OptionType.CALL;
+  const stableMint = usdcMint;
 
-//spok(t, rfq, {
-//  $topic: 'Created RFQ',
-//  model: 'rfq',
-//  address: spokSamePubkey(foundRfq.address),
-//});
-//});
+  const psyoptionsEuropeanInstrument = new PsyoptionsEuropeanInstrument(
+    cvg,
+    btcMint,
+    optionType,
+    meta,
+    metaKey,
+    underlyingMint,
+    stableMint,
+    callMint,
+    callWriterMint,
+    putMint,
+    putWriterMint,
+    {
+      amount: 1,
+      side: Side.Bid,
+      baseAssetIndex: 0,
+    }
+  );
+
+  const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
+  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [psyoptionsEuropeanInstrument],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset,
+  });
+  const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
+
+  spok(t, rfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq.address),
+  });
+});

@@ -23,11 +23,7 @@ export class SpotInstrument implements Instrument {
       side: Side;
       baseAssetIndex: number;
     }
-  ) {
-    this.convergence = convergence;
-    this.mint = mint;
-    this.legInfo = legInfo;
-  }
+  ) {}
 
   static createForLeg(
     convergence: Convergence,
@@ -50,8 +46,13 @@ export class SpotInstrument implements Instrument {
     });
   }
 
-  async getValidationAccounts() {
-    return [{ pubkey: PublicKey.default, isSigner: false, isWritable: false }];
+  getValidationAccounts() {
+    const rfqProgram = this.convergence.programs().getRfq();
+    const [mintInfoPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('mint_info'), this.mint.address.toBuffer()],
+      rfqProgram.address
+    );
+    return [{ pubkey: mintInfoPda, isSigner: false, isWritable: false }];
   }
 
   //static createForQuote(
