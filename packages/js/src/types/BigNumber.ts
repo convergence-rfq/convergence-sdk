@@ -1,4 +1,3 @@
-import type { Buffer } from 'buffer';
 import BN from 'bn.js';
 import { assert, Opaque, Option } from '@/utils';
 

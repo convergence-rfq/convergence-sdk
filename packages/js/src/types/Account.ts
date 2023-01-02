@@ -1,12 +1,11 @@
-import { Buffer } from "buffer";
-import { PublicKey } from "@solana/web3.js";
-import { SolAmount } from "./Amount";
+import { PublicKey } from '@solana/web3.js';
+import { SolAmount } from './Amount';
 import {
   createSerializerFromSolitaType,
   deserializeAccount,
   SolitaType,
-} from "./Serializer";
-import { AccountNotFoundError } from "@/errors";
+} from './Serializer';
+import { AccountNotFoundError } from '@/errors';
 
 export type AccountInfo = {
   readonly executable: boolean;
@@ -45,7 +44,7 @@ export function getAccountParsingFunction<T>(
   function parse(
     account: UnparsedAccount | UnparsedMaybeAccount
   ): Account<T> | MaybeAccount<T> {
-    if ("exists" in account && !account.exists) {
+    if ('exists' in account && !account.exists) {
       return account;
     }
 
@@ -65,7 +64,7 @@ export function getAccountParsingAndAssertingFunction<T>(
     unparsedAccount: UnparsedAccount | UnparsedMaybeAccount,
     solution?: string
   ) => {
-    if ("exists" in unparsedAccount) {
+    if ('exists' in unparsedAccount) {
       assertAccountExists(unparsedAccount, parser.name, solution);
     }
 
