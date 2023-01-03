@@ -359,15 +359,6 @@ test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
   });
 
   finalizedRfq = rfq;
-
-  // const account = await cvg.rpc().getAccount(rfq.address, 'confirmed');
-  // const rfqAccount = toRfqAccount(account);
-
-  // spok(t, rfq, {
-  //   $topic: 'Created RFQ',
-  //   model: 'rfq',
-  //   address: spokSamePubkey(foundRfq.address),
-  // });
 });
 
 test('[rfqModule] it cancel an rfq', async () => {

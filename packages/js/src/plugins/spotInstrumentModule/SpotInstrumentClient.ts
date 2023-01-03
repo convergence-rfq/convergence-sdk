@@ -67,7 +67,7 @@ export class SpotInstrumentClient {
     const leg = this.createLeg(instrument);
     const buf = legSerializer.serialize(leg);
 
-    return buf.length + 2 + 2;
+    return buf.length + 4;
   }
 
   createInstrument(

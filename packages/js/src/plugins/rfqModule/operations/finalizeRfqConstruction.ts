@@ -145,7 +145,7 @@ export const finalizeRfqConstructionBuilder = async (
   convergence: Convergence,
   params: FinalizeRfqConstructionBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder<FinalizeRfqConstructionBuilderContext>> => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
   const {
@@ -203,10 +203,10 @@ export const finalizeRfqConstructionBuilder = async (
   anchorRemainingAccounts.push(
     configAccount,
     ...baseAssetAccounts,
-    ...oracleAccounts,
+    ...oracleAccounts
   );
 
-  return TransactionBuilder.make<FinalizeRfqConstructionBuilderContext>()
+  return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createFinalizeRfqConstructionInstruction(
