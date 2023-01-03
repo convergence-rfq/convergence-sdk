@@ -67,6 +67,7 @@ module.exports = {
     websocketUrl: '',
     commitment: 'confirmed',
     ledgerDir: tmpLedgerDir(),
+    limitLedgerSize: 300_000_000,
     resetLedger: true,
     verifyFees: false,
   },
@@ -75,6 +76,7 @@ module.exports = {
       ...rfq.accountProviders,
       ...riskEngine.accountProviders,
       ...spotInstrument.accountProviders,
+      ...psyoptionsEuropeanInstrument.accountProviders,
     },
   },
   storage: {

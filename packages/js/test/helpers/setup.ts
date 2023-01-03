@@ -1,4 +1,10 @@
-import { Commitment, PublicKey, Connection, Keypair } from '@solana/web3.js';
+import {
+  Commitment,
+  PublicKey,
+  Connection,
+  LAMPORTS_PER_SOL,
+  Keypair,
+} from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
 import {
@@ -6,12 +12,10 @@ import {
   programId as psyoptionsEuropeanProgramId,
   instructions,
 } from '@mithraic-labs/tokenized-euros';
-import { LOCALHOST } from '@metaplex-foundation/amman-client';
 import {
   IDL as PseudoPythIdl,
   Pyth,
 } from '../../../../programs/pseudo_pyth_idl';
-import { amman } from './amman';
 import {
   Convergence,
   keypairIdentity,
@@ -34,9 +38,12 @@ export type ConvergenceTestOptions = {
 };
 
 export const convergenceGuest = (options: ConvergenceTestOptions = {}) => {
-  const connection = new Connection(options.rpcEndpoint ?? LOCALHOST, {
-    commitment: options.commitment ?? 'confirmed',
-  });
+  const connection = new Connection(
+    options.rpcEndpoint ?? 'http://127.0.0.1:8899',
+    {
+      commitment: options.commitment ?? 'confirmed',
+    }
+  );
   return Convergence.make(connection);
 };
 
@@ -51,7 +58,11 @@ export const createWallet = async (
   solsToAirdrop = 100
 ): Promise<KeypairSigner> => {
   const wallet = Keypair.generate();
-  await amman.airdrop(cvg.connection, wallet.publicKey, solsToAirdrop);
+  const tx = await cvg.connection.requestAirdrop(
+    wallet.publicKey,
+    solsToAirdrop * LAMPORTS_PER_SOL
+  );
+  await cvg.connection.confirmTransaction(tx);
   return wallet;
 };
 
@@ -103,7 +114,8 @@ export const initializeNewOptionMeta = async (
   underlyingMint: Mint,
   stableMint: Mint,
   strikePrice: number,
-  underlyingAmountPerContract: number
+  underlyingAmountPerContract: number,
+  expiresIn: number
 ) => {
   const payer = convergence.rpc().getDefaultFeePayer();
   const { connection } = convergenceGuest();
@@ -122,10 +134,13 @@ export const initializeNewOptionMeta = async (
     provider
   );
 
-  const oracle = await createPriceFeed(pseudoPythProgram, 50_000, -4);
+  const oracle = await createPriceFeed(
+    pseudoPythProgram,
+    17_000,
+    BTC_DECIMALS * -1
+  );
 
-  const expireIn = 1_000;
-  const expiration = new anchor.BN(Date.now() / 1000 + expireIn);
+  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
   const { instructions } = await initializeAllAccountsInstructions(
     psyoptionsEuropeanProgram,
@@ -133,28 +148,28 @@ export const initializeNewOptionMeta = async (
     stableMint.address,
     oracle,
     expiration,
-    8
+    USDC_DECIMALS
   );
   const { instruction, euroMeta, euroMetaKey } =
     await createEuroMetaInstruction(
       psyoptionsEuropeanProgram,
       underlyingMint.address,
-      8,
+      BTC_DECIMALS,
       stableMint.address,
-      8,
+      USDC_DECIMALS,
       expiration,
       toBigNumber(underlyingAmountPerContract),
       toBigNumber(strikePrice),
-      8,
+      USDC_DECIMALS,
       oracle
     );
   const transaction = new web3.Transaction().add(...instructions, instruction);
 
-  const tx = await provider.sendAndConfirm(transaction);
-  console.error(tx);
+  await provider.sendAndConfirm(transaction);
 
   return {
     euroMeta,
     euroMetaKey,
+    oracle,
   };
 };
