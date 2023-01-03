@@ -67,6 +67,7 @@ module.exports = {
     websocketUrl: '',
     commitment: 'confirmed',
     ledgerDir: tmpLedgerDir(),
+    limitLedgerSize: 9_000_000,
     resetLedger: true,
     verifyFees: false,
   },
