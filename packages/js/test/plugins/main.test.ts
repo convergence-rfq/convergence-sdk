@@ -20,7 +20,6 @@ import {
   PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
   Token,
   SpotInstrument,
-  EuroMeta,
   OrderType,
   PsyoptionsEuropeanInstrument,
   OptionType,
@@ -421,61 +420,26 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 //});
 
 test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async (t: Test) => {
-  const {
-    euroMetaKey,
-    callOptionMint,
-    callWriterMint,
-    putOptionMint,
-    putWriterMint,
-    underlyingPool,
-    expirationData,
-    stablePool,
-    oracle,
-  } = await initializeNewOptionMeta(cvg, btcMint, usdcMint, 17_000, 1_000);
-
-  const meta: EuroMeta = {
-    underlyingMint: btcMint.address,
-    underlyingDecimals: BTC_DECIMALS,
-    underlyingAmountPerContract: 1,
-    stableMint: usdcMint.address,
-    stableDecimals: USDC_DECIMALS,
-    strikePrice: 10_000,
-    stablePool,
-    oracle,
-    priceDecimals: USDC_DECIMALS,
-    callOptionMint,
-    callWriterMint,
-    putOptionMint,
-    putWriterMint,
-    underlyingPool,
-    expiration: 1,
-    bumpSeed: 1,
-    expirationData,
-    oracleProviderId: 1,
-  };
-  const stableMint = usdcMint;
-  const underlyingMint = btcMint;
-  const optionType = OptionType.CALL;
+  const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    cvg,
+    btcMint,
+    usdcMint,
+    17_000,
+    1_000
+  );
 
   const psyoptionsEuropeanInstrument = new PsyoptionsEuropeanInstrument(
     cvg,
     btcMint,
-    optionType,
-    meta,
+    OptionType.CALL,
+    euroMeta,
     euroMetaKey,
-    underlyingMint,
-    stableMint,
-    callOptionMint,
-    callWriterMint,
-    putOptionMint,
-    putWriterMint,
     {
       amount: 1,
       side: Side.Bid,
       baseAssetIndex: 0,
     }
   );
-
   const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
     amount: 1,
     side: Side.Bid,

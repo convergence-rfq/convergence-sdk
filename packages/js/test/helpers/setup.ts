@@ -122,10 +122,14 @@ export const initializeNewOptionMeta = async (
     provider
   );
 
-  const oracle = await createPriceFeed(pseudoPythProgram, 50_000, -4);
+  const oracle = await createPriceFeed(
+    pseudoPythProgram,
+    17_000,
+    BTC_DECIMALS * -1
+  );
 
   const expireIn = 1_000;
-  const expiration = new anchor.BN(Date.now() / 1000 + expireIn);
+  const expiration = new anchor.BN(Date.now() / 1_000 + expireIn);
 
   const { instructions } = await initializeAllAccountsInstructions(
     psyoptionsEuropeanProgram,
@@ -139,9 +143,9 @@ export const initializeNewOptionMeta = async (
     await createEuroMetaInstruction(
       psyoptionsEuropeanProgram,
       underlyingMint.address,
-      8,
+      BTC_DECIMALS,
       stableMint.address,
-      8,
+      USDC_DECIMALS,
       expiration,
       toBigNumber(underlyingAmountPerContract),
       toBigNumber(strikePrice),
@@ -152,24 +156,9 @@ export const initializeNewOptionMeta = async (
 
   await provider.sendAndConfirm(transaction);
 
-  const callOptionMint = PublicKey.default;
-  const callWriterMint = PublicKey.default;
-  const putOptionMint = PublicKey.default;
-  const putWriterMint = PublicKey.default;
-  const underlyingPool = PublicKey.default;
-  const expirationData = PublicKey.default;
-  const stablePool = PublicKey.default;
-
   return {
     euroMeta,
     euroMetaKey,
-    callOptionMint,
-    callWriterMint,
-    putOptionMint,
-    putWriterMint,
-    underlyingPool,
-    expirationData,
-    stablePool,
     oracle,
   };
 };
