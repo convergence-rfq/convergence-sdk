@@ -18,7 +18,8 @@ import {
   SPOT_INSTRUMENT_PROGRAM_ADDRESS,
   PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
   Token,
-  // toRfqAccount,
+  SpotInstrument,
+  OrderType,
 } from '@/index';
 import { Rfq } from '@/index';
 
@@ -304,16 +305,24 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
  */
 
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
-  const spotInstrumentClient = cvg.spotInstrument();
-  const spotInstrument = spotInstrumentClient.createInstrument(
-    btcMint.address,
-    btcMint.decimals,
-    Side.Bid,
-    1
-  );
+  const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
+  const spotInstrument = new SpotInstrument(cvg, btcMint, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
+
+  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+
   const { rfq } = await cvg.rfqs().create({
     instruments: [spotInstrument],
-    quoteAsset: usdcMint,
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset,
   });
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
@@ -368,24 +377,32 @@ test('[rfqModule] it cancel an rfq', async () => {
 });
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
-  const spotInstrumentClient = cvg.spotInstrument();
-  const spotInstrument = spotInstrumentClient.createInstrument(
-    btcMint.address,
-    btcMint.decimals,
-    Side.Bid,
-    1
-  );
+  const quoteInstrument = new SpotInstrument(cvg, usdcMint);
+  const spotInstrument = new SpotInstrument(cvg, btcMint, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
+
+  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+
   const { rfq: rfq1 } = await cvg.rfqs().create({
     instruments: [spotInstrument],
-    quoteAsset: usdcMint,
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset,
   });
   const { rfq: rfq2 } = await cvg.rfqs().create({
     instruments: [spotInstrument],
-    quoteAsset: usdcMint,
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset,
   });
   const { rfq: rfq3 } = await cvg.rfqs().create({
     instruments: [spotInstrument],
-    quoteAsset: usdcMint,
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset,
   });
 
   const [foundRfq1, foundRfq2, foundRfq3] = await cvg
@@ -438,14 +455,31 @@ test('[rfqModule] it can find RFQs by owner', async () => {
   // });
 });
 
-test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async () => {
-  //const psyoptionsEuropeanInstrument = await cvg
-  //await cvg.psyoptionsEuropeanInstrument().initialize({
-  //  collateralMint: cvg.identity().publicKey,
-  //});
-  //spok(t, psyoptionsEuropeanInstrument, {
-  //  $topic: 'Created PsyOptions European instrument',
-  //  model: 'psyoptionsEuropeanInstrument',
-  //  address: spokSamePubkey(psyoptionsEuropeanInstrument.address),
-  //});
-});
+//test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async (t: Test) => {
+//const spotInstrumentClient = cvg.spotInstrument();
+//const spotInstrument = spotInstrumentClient.createInstrument(
+//  btcMint.address,
+//  btcMint.decimals,
+//  Side.Bid,
+//  1
+//);
+//const psyoptionsEuropeanInstrumentClient = cvg.psyoptionsEuropeanInstrument();
+//const psyoptionsEuropeanInstrument =
+//  psyoptionsEuropeanInstrumentClient.createInstrument(
+//    btcMint.address,
+//    btcMint.decimals,
+//    Side.Bid,
+//    1
+//  );
+//const { rfq } = await cvg.rfqs().create({
+//  instruments: [spotInstrument],
+//  quoteAsset: usdcMint,
+//});
+//const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
+
+//spok(t, rfq, {
+//  $topic: 'Created RFQ',
+//  model: 'rfq',
+//  address: spokSamePubkey(foundRfq.address),
+//});
+//});
