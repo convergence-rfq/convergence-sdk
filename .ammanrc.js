@@ -51,6 +51,11 @@ const programs = [
     label: 'PsyOptions European Primitive',
     programId: psyoptionsEuropeanPrimitive.programId,
     deployPath: localDeployPath('euro_primitive'),
+  },
+  {
+    label: 'Pseudo Pyth Oracle',
+    programId: 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH',
+    deployPath: localDeployPath('pseudo_pyth'),
   }
 ];
 
