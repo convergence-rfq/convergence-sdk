@@ -26,10 +26,10 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     public metaKey: PublicKey,
     public underlyingMint: Mint,
     public stableMint: Mint,
-    public callMint: Mint,
-    public callWriterMint: Mint,
-    public putMint: Mint,
-    public putWriterMint: Mint,
+    public callMint: PublicKey,
+    public callWriterMint: PublicKey,
+    public putMint: PublicKey,
+    public putWriterMint: PublicKey,
     readonly legInfo?: {
       amount: number;
       side: Side;
@@ -45,10 +45,10 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     metaKey: PublicKey,
     underlyingMint: Mint,
     stableMint: Mint,
-    callMint: Mint,
-    callWriterMint: Mint,
-    putMint: Mint,
-    putWriterMint: Mint,
+    callMint: PublicKey,
+    callWriterMint: PublicKey,
+    putMint: PublicKey,
+    putWriterMint: PublicKey,
     amount: number,
     side: Side
   ): InstrumentClient {

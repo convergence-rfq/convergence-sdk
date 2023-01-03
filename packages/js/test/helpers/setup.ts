@@ -150,11 +150,26 @@ export const initializeNewOptionMeta = async (
     );
   const transaction = new web3.Transaction().add(...instructions, instruction);
 
-  const tx = await provider.sendAndConfirm(transaction);
-  console.error(tx);
+  await provider.sendAndConfirm(transaction);
+
+  const callOptionMint = PublicKey.default;
+  const callWriterMint = PublicKey.default;
+  const putOptionMint = PublicKey.default;
+  const putWriterMint = PublicKey.default;
+  const underlyingPool = PublicKey.default;
+  const expirationData = PublicKey.default;
+  const stablePool = PublicKey.default;
 
   return {
     euroMeta,
     euroMetaKey,
+    callOptionMint,
+    callWriterMint,
+    putOptionMint,
+    putWriterMint,
+    underlyingPool,
+    expirationData,
+    stablePool,
+    oracle,
   };
 };
