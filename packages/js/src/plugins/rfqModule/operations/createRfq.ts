@@ -22,12 +22,18 @@ const Key = 'CreateRfqOperation' as const;
  * Creates a new Rfq.
  *
  * ```ts
+ * const spotInstrument = new SpotInstrument(...);
+ * const psyoptionsEuropeanInstrument = new PsyOptionsEuropeanInstrument(...);
+ * const quoteAsset = instrumentClient.createQuote(new SpotInstrument(...));
+ *
  * const { rfq } = await convergence
  *   .rfqs()
  *   .create({
- *     instruments: [spotInstrument],
+ *     instruments: [spotInstrument, psyoptionsEuropeanInstrument],
  *     orderType: OrderType.Sell,
  *     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+ *     activeWindow: 100,
+ *     settlingWindow: 100,
  *     quoteAsset,
  *   });
  * ```
@@ -201,18 +207,19 @@ export const createRfqBuilder = async (
 
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
-  const expectedLegSizes = [];
+  let expectedLegSize = 0;
 
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
       instrument,
       instrument.legInfo
     );
-    expectedLegSizes.push(instrumentClient.getInstrumendDataSize());
     legs.push(instrumentClient.toLegData());
-    console.error(JSON.stringify(instrumentClient.getValidationAccounts()));
     legAccounts.push(...instrumentClient.getValidationAccounts());
+    expectedLegSize += instrumentClient.getInstrumentDataSize();
   }
+
+  console.error(JSON.stringify(legAccounts));
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
 
@@ -231,7 +238,7 @@ export const createRfqBuilder = async (
           anchorRemainingAccounts,
         },
         {
-          expectedLegSize: expectedLegSizes.reduce((a, b) => a + b, 0),
+          expectedLegSize,
           legs,
           fixedSize,
           orderType,

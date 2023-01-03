@@ -82,7 +82,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   getValidationAccounts() {
     const rfqProgram = this.convergence.programs().getRfq();
     const [mintInfoPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('mint_info'), this.underlyingMint.address.toBuffer()],
+      [Buffer.from('mint_info'), this.mint.address.toBuffer()],
       rfqProgram.address
     );
     return [

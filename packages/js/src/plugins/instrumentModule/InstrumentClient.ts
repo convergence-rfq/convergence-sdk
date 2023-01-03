@@ -66,7 +66,7 @@ export class InstrumentClient {
     };
   }
 
-  getInstrumendDataSize(): number {
+  getInstrumentDataSize(): number {
     return this.instrument.serializeInstrumentData().length;
   }
 
