@@ -73,9 +73,6 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         106, 19, 109, 78, 169, 13, 234, 58,
       ]);
 
-      //TODO: we pretend the taker pubkey is at byte 8 in the Rfq.
-      //this might actually be correct as the Rfq struct in programlibrary
-      //has `taker` as the first field, and fields are serialized in order of declaration?
       const rfqGpaBuilder = convergence
         .programs()
         .getGpaBuilder(rfqProgram.address)

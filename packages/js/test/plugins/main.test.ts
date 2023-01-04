@@ -321,7 +321,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
     instruments: [spotInstrument],
     orderType: OrderType.Sell,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
     quoteAsset,
   });
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
@@ -334,14 +334,19 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
 });
 
 test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
-  const spotInstrumentClient = cvg.spotInstrument();
+  const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
+  const spotInstrument = new SpotInstrument(cvg, btcMint, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
 
-  const spotInstrument = spotInstrumentClient.createInstrument(
-    btcMint.address,
-    btcMint.decimals,
-    Side.Bid,
-    1
-  );
+  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+  
   const riskEngineProgram = cvg.programs().getRiskEngine();
   const rfqProgram = cvg.programs().getRfq();
 
@@ -356,7 +361,9 @@ test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
 
   const { rfq } = await cvg.rfqs().create({
     instruments: [spotInstrument],
-    quoteAsset: usdcMint,
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset,
   });
 
   await cvg.rfqs().finalizeRfqConstruction({
@@ -427,27 +434,27 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 });
 
 test('[rfqModule] it can find RFQs by owner', async () => {
-  //const spotInstrumentClient = cvg.spotInstrument();
-  //const spotInstrument = spotInstrumentClient.createInstrument(
+  // const spotInstrumentClient = cvg.spotInstrument();
+  // const spotInstrument = spotInstrumentClient.createInstrument(
   //  btcMint.address,
   //  btcMint.decimals,
   //  Side.Bid,
   //  1
-  //);
-  //const { rfq: rfq1 } = await cvg.rfqs().create({
+  // );
+  // const { rfq: rfq1 } = await cvg.rfqs().create({
   //  instruments: [spotInstrument],
   //  quoteAsset: usdcMint,
-  //});
+  // });
   // const { rfq: rfq2 } = await createRfq(cvg);
-  //const [
+  // const [
   //  foundRfq1,
   //  // foundRfq2
-  //] = await cvg.rfqs().findAllByOwner({ owner: cvg.identity().publicKey });
-  //spok(t, rfq1, {
+  // ] = await cvg.rfqs().findAllByOwner({ owner: cvg.identity().publicKey });
+  // spok(t, rfq1, {
   //  $topic: 'Created RFQ',
   //  model: 'rfq',
   //  address: spokSamePubkey(foundRfq1.address),
-  //});
+  // });
   // spok(t, rfq2, {
   //   $topic: 'Created RFQ',
   //   model: 'rfq',

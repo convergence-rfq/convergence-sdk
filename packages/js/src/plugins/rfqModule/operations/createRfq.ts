@@ -222,7 +222,8 @@ export const createRfqBuilder = async (
       throw new Error('Unsupported instrument type');
     }
 
-    expectedLegSizes.push(instrumentClient.getInstrumendDataSize());
+    // expectedLegSizes.push(instrumentClient.getInstrumentDataSize());
+    expectedLegSizes.push(instrumentClient.getLegDataSize());
     legs.push(instrumentClient.toLegData());
 
     legAccounts.push(
