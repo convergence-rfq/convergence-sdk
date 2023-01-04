@@ -424,8 +424,9 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOpti
     cvg,
     btcMint,
     usdcMint,
-    17_000,
-    1_000
+    17_500,
+    1_000,
+    3_600
   );
 
   const psyoptionsEuropeanInstrument = new PsyoptionsEuropeanInstrument(

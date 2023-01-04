@@ -103,7 +103,8 @@ export const initializeNewOptionMeta = async (
   underlyingMint: Mint,
   stableMint: Mint,
   strikePrice: number,
-  underlyingAmountPerContract: number
+  underlyingAmountPerContract: number,
+  expiresIn: number
 ) => {
   const payer = convergence.rpc().getDefaultFeePayer();
   const { connection } = convergenceGuest();
@@ -128,8 +129,7 @@ export const initializeNewOptionMeta = async (
     BTC_DECIMALS * -1
   );
 
-  const expireIn = 1_000;
-  const expiration = new anchor.BN(Date.now() / 1_000 + expireIn);
+  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
   const { instructions } = await initializeAllAccountsInstructions(
     psyoptionsEuropeanProgram,
@@ -137,7 +137,7 @@ export const initializeNewOptionMeta = async (
     stableMint.address,
     oracle,
     expiration,
-    8
+    USDC_DECIMALS
   );
   const { instruction, euroMeta, euroMetaKey } =
     await createEuroMetaInstruction(
@@ -149,7 +149,7 @@ export const initializeNewOptionMeta = async (
       expiration,
       toBigNumber(underlyingAmountPerContract),
       toBigNumber(strikePrice),
-      8,
+      USDC_DECIMALS,
       oracle
     );
   const transaction = new web3.Transaction().add(...instructions, instruction);

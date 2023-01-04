@@ -62,9 +62,10 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   }
 
   getValidationAccounts() {
-    const rfqProgram = this.convergence.programs().getRfq();
+    const programs = this.convergence.programs().all();
+    const rfqProgram = this.convergence.programs().getRfq(programs);
     const [mintInfoPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('mint_info'), this.meta.underlyingMint.toBuffer()],
+      [Buffer.from('mint_info'), this.mint.address.toBuffer()],
       rfqProgram.address
     );
     return [
@@ -78,13 +79,12 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   }
 
   serializeInstrumentData(): Buffer {
-    const { strikePrice, expiration, underlyingAmountPerContract } = this.meta;
     return Buffer.from(
       new Uint8Array([
         this.optionType == OptionType.CALL ? 0 : 1,
-        ...toBigNumber(underlyingAmountPerContract).toBuffer('le', 8),
-        ...toBigNumber(strikePrice).toBuffer('le', 8),
-        ...toBigNumber(expiration).toBuffer('le', 8),
+        ...toBigNumber(this.meta.underlyingAmountPerContract).toBuffer('le', 8),
+        ...toBigNumber(this.meta.strikePrice).toBuffer('le', 8),
+        ...toBigNumber(this.meta.expiration).toBuffer('le', 8),
         ...this.meta.underlyingMint.toBytes(),
         ...this.metaKey.toBytes(),
       ])

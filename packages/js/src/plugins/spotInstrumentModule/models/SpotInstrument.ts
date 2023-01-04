@@ -47,7 +47,8 @@ export class SpotInstrument implements Instrument {
   }
 
   getValidationAccounts() {
-    const rfqProgram = this.convergence.programs().getRfq();
+    const programs = this.convergence.programs().all();
+    const rfqProgram = this.convergence.programs().getRfq(programs);
     const [mintInfoPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('mint_info'), this.mint.address.toBuffer()],
       rfqProgram.address
