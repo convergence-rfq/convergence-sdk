@@ -36,7 +36,20 @@ yarn build
 
 **TDD**
 
+Run this in a separate tab and do not forget to restart when rerunning tests.
+
 ```bash
-yarn validator # Run this in a separate tab and do not forget to restart when rerunning tests
-yarn test
+yarn validator:run 
+```
+
+In a separate tab to see validator logs.
+
+```bash
+yarn validator:logs
+```
+
+To run the actual tests.
+
+```bash
+yarn test:all
 ```
