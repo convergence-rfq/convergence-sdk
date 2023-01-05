@@ -1,8 +1,9 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { Instrument } from '../../instrumentModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+//import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -22,18 +23,12 @@ const Key = 'CreateRfqOperation' as const;
  * Creates a new Rfq.
  *
  * ```ts
- * const spotInstrument = new SpotInstrument(...);
- * const psyoptionsEuropeanInstrument = new PsyOptionsEuropeanInstrument(...);
- * const quoteAsset = instrumentClient.createQuote(new SpotInstrument(...));
- *
  * const { rfq } = await convergence
  *   .rfqs()
  *   .create({
- *     instruments: [spotInstrument, psyoptionsEuropeanInstrument],
+ *     instruments: [spotInstrument],
  *     orderType: OrderType.Sell,
  *     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
- *     activeWindow: 100,
- *     settlingWindow: 100,
  *     quoteAsset,
  *   });
  * ```
@@ -72,7 +67,7 @@ export type CreateRfqInput = {
   quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
-  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
+  instruments: Instrument[];
 
   /**
    * The type of order.
@@ -207,12 +202,9 @@ export const createRfqBuilder = async (
 
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
-  let expectedLegSize = 0;
+  const expectedLegSizes = [];
 
   for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
     let instrumentClient;
     let mintInfoPda;
 
@@ -246,12 +238,7 @@ export const createRfqBuilder = async (
         isWritable: false,
       }
     );
-    legs.push(instrumentClient.toLegData());
-    legAccounts.push(...instrumentClient.getValidationAccounts());
-    expectedLegSize += instrumentClient.getInstrumentDataSize();
   }
-
-  console.error(JSON.stringify(legAccounts));
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
 
@@ -270,7 +257,7 @@ export const createRfqBuilder = async (
           anchorRemainingAccounts,
         },
         {
-          expectedLegSize,
+          expectedLegSize: expectedLegSizes.reduce((a, b) => a + b, 0),
           legs,
           fixedSize,
           orderType,

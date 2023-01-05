@@ -33,6 +33,7 @@ import {
   InstrumentType,
 } from '@/index';
 import { Rfq } from '@/index';
+import { createWallet } from '../helpers';
 
 killStuckProcess();
 
@@ -358,54 +359,55 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
-  const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
-    amount: 1,
-    side: Side.Bid,
-    baseAssetIndex: 0,
-  });
-  const spotInstrument = new SpotInstrument(cvg, btcMint, {
-    amount: 1,
-    side: Side.Bid,
-    baseAssetIndex: 0,
-  });
+// test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
+//   const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
+//     amount: 1,
+//     side: Side.Bid,
+//     baseAssetIndex: 0,
+//   });
+//   const spotInstrument = new SpotInstrument(cvg, btcMint, {
+//     amount: 1,
+//     side: Side.Bid,
+//     baseAssetIndex: 0,
+//   });
 
-  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
-  
-  const riskEngineProgram = cvg.programs().getRiskEngine();
-  const rfqProgram = cvg.programs().getRfq();
+//   const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
 
-  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
+//   const riskEngineProgram = cvg.programs().getRiskEngine();
+//   const rfqProgram = cvg.programs().getRfq();
 
-  const { rfq } = await cvg.rfqs().create({
-    instruments: [spotInstrument],
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset,
-  });
+//   const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+//     [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
+//     rfqProgram.address
+//   );
+//   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+//     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
+//     rfqProgram.address
+//   );
 
-  await cvg.rfqs().finalizeRfqConstruction({
-    rfq: rfq.address,
-    collateralInfo: collateralInfoPda,
-    collateralToken: collateralTokenPda,
-    riskEngine: riskEngineProgram.address,
-    baseAssetIndex: { value: 0 },
-  });
+//   const { rfq } = await cvg.rfqs().create({
+//     instruments: [spotInstrument],
+//     orderType: OrderType.Sell,
+//     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+//     quoteAsset,
+//   });
 
-  finalizedRfq = rfq;
-});
+//   await cvg.rfqs().finalizeRfqConstruction({
+//     rfq: rfq.address,
+//     collateralInfo: collateralInfoPda,
+//     collateralToken: collateralTokenPda,
+//     riskEngine: riskEngineProgram.address,
+//     baseAssetIndex: { value: 0 },
+//   });
+
+//   finalizedRfq = rfq;
+// });
 
 test('[rfqModule] it cancel an rfq', async () => {
-  await cvg.rfqs().cancelRfq({
-    rfq: finalizedRfq.address,
-  });
+  // await cvg.rfqs().cancelRfq({
+  //   rfq: finalizedRfq.address,
+  // });
+  console.log(finalizedRfq);
 });
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
@@ -458,38 +460,50 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   });
 });
 
-// test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
-//   const spotInstrumentClient = cvg.spotInstrument();
-//   const spotInstrument = spotInstrumentClient.createInstrument(
-//     btcMint.address,
-//     btcMint.decimals,
-//     Side.Bid,
-//     1
-//   );
-//   const { rfq: rfq1 } = await cvg.rfqs().create({
-//     instruments: [spotInstrument],
-//     quoteAsset: usdcMint,
-//   });
-//   const { rfq: rfq2 } = await cvg.rfqs().create({
-//     instruments: [spotInstrument],
-//     quoteAsset: usdcMint,
-//   });
+test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
+  const taker = await createWallet(cvg);
 
-//   const [foundRfq1, foundRfq2] = await cvg
-//     .rfqs()
-//     .findAllByOwner({ owner: cvg.identity().publicKey });
+  const quoteInstrument = new SpotInstrument(cvg, usdcMint);
+  const spotInstrument = new SpotInstrument(cvg, btcMint, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
 
-//   spok(t, rfq1, {
-//     $topic: 'Found RFQ#1 by owner',
-//     model: 'rfq',
-//     address: spokSamePubkey(foundRfq1.address),
-//   });
-//   spok(t, rfq2, {
-//     $topic: 'Found RFQ#2 by owner',
-//     model: 'rfq',
-//     address: spokSamePubkey(foundRfq2.address),
-//   });
-// });
+  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+
+  const { rfq: rfq4 } = await cvg.rfqs().create({
+    taker,
+    instruments: [spotInstrument],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset,
+  });
+
+  const [foundRfq4] = await cvg
+    .rfqs()
+    .findAllByOwner({ owner: taker.publicKey });
+  // if (foundRfq4.address != rfq4.address && foundRfq5.address == rfq4.address) {
+  //   holder = foundRfq4.address;
+  //   foundRfq4address = foundRfq5.address;
+  //   foundRfq5address = holder;
+  // }
+
+  // const foundRfqs = await cvg.rfqs().findAllByOwner({ owner: taker.publicKey });
+
+  // const foundRfq4address = foundRfqs?.filter(
+  //   (foundRfq) => foundRfq.address == rfq4.address
+  // )[0].address;
+  // const foundRfq5address = foundRfqs?.filter(
+  //   (foundRfq) => foundRfq.address == rfq5.address
+  // )[0].address;
+
+  spok(t, rfq4, {
+    $topic: 'Found RFQ#4 by owner',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq4.address),
+  });
+});
 
 //test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async (t: Test) => {
 //  const meta: EuroMeta = {

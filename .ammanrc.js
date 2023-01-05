@@ -67,6 +67,7 @@ module.exports = {
     verifyFees: false,
   },
   relay: {
+    enabled: true,
     accountProviders: {
       ...rfq.accountProviders,
       ...riskEngine.accountProviders,
