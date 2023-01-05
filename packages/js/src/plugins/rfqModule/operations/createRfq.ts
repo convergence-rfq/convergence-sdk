@@ -213,6 +213,38 @@ export const createRfqBuilder = async (
     const instrumentClient = convergence.instrument(
       instrument,
       instrument.legInfo
+    let instrumentClient;
+    let mintInfoPda;
+
+    if (instrument instanceof SpotInstrument) {
+      const spotInstrument = instrument as SpotInstrument;
+      instrumentClient = convergence.instrument(
+        spotInstrument,
+        spotInstrument.legInfo
+      );
+      [mintInfoPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from(MINT_INFO_SEED), instrument.mint.address.toBuffer()],
+        rfqProgram.address
+      );
+    } else {
+      throw new Error('Unsupported instrument type');
+    }
+
+    // expectedLegSizes.push(instrumentClient.getInstrumentDataSize());
+    expectedLegSizes.push(instrumentClient.getLegDataSize());
+    legs.push(instrumentClient.toLegData());
+
+    legAccounts.push(
+      {
+        pubkey: spotInstrumentProgram.address,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: mintInfoPda,
+        isSigner: false,
+        isWritable: false,
+      }
     );
     legs.push(instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());

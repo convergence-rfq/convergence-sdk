@@ -1,9 +1,12 @@
-import { Leg, Side } from '@convergence-rfq/rfq';
+import { Leg, Side, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';
 import type { Convergence } from '@/Convergence';
 import { toBigNumber } from '@/types';
+import * as beet from '@metaplex-foundation/beet';
+import * as beetSolana from '@metaplex-foundation/beet-solana';
+import { createSerializerFromFixableBeetArgsStruct } from '@/types';
 
 /**
  * This is a client for the instrumentModule.
@@ -71,6 +74,30 @@ export class InstrumentClient {
   }
 
   getProgramAccount(): AccountMeta {
+  getLegDataSize(): number {
+      return this.serializeLegData(this.toLegData()).length + 4;
+  }
+
+  serializeLegData(leg: Leg): Buffer {
+    const legBeet = new beet.FixableBeetArgsStruct<Leg>(
+      [
+        ['instrumentProgram', beetSolana.publicKey],
+        ['baseAssetIndex', baseAssetIndexBeet],
+        ['instrumentData', beet.bytes],
+        ['instrumentAmount', beet.u64],
+        ['instrumentDecimals', beet.u8],
+        ['side', sideBeet],
+      ],
+      'Leg'
+    );
+
+    const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
+    const buf = legSerializer.serialize(leg);
+
+    return buf;
+  }
+
+  private getProgramAccount(): AccountMeta {
     return {
       pubkey: this.instrument.getProgramId(),
       isSigner: false,
