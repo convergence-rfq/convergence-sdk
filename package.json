@@ -27,9 +27,10 @@
     "lint:test": "nx run-many --all --target=lint:test",
     "lint:fix": "nx run-many --all --target=lint:fix",
     "format": "prettier --write packages/",
+    "validator": "./packages/js/test/run-validator.sh",
     "docs": "typedoc",
     "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles",
-    "amman:start": "DEBUG='amman:(info|error|debug)' npx --node-options='--max-old-space-size=8192 --inspect' amman start",
+    "amman:start": "npx --node-options='--trace-sigint --max-old-space-size=8192 --inspect' amman start",
     "amman:stop": "amman stop"
   },
   "devDependencies": {

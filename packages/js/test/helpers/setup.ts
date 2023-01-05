@@ -1,4 +1,10 @@
-import { Commitment, PublicKey, Connection, Keypair } from '@solana/web3.js';
+import {
+  Commitment,
+  PublicKey,
+  Connection,
+  LAMPORTS_PER_SOL,
+  Keypair,
+} from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
 import {
@@ -6,18 +12,17 @@ import {
   programId as psyoptionsEuropeanProgramId,
   instructions,
 } from '@mithraic-labs/tokenized-euros';
-import { LOCALHOST } from '@metaplex-foundation/amman-client';
 import {
   IDL as PseudoPythIdl,
   Pyth,
 } from '../../../../programs/pseudo_pyth_idl';
-import { amman } from './amman';
 import {
   Convergence,
   keypairIdentity,
   KeypairSigner,
   Mint,
   toBigNumber,
+  guestIdentity,
 } from '@/index';
 
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
@@ -34,9 +39,12 @@ export type ConvergenceTestOptions = {
 };
 
 export const convergenceGuest = (options: ConvergenceTestOptions = {}) => {
-  const connection = new Connection(options.rpcEndpoint ?? LOCALHOST, {
-    commitment: options.commitment ?? 'confirmed',
-  });
+  const connection = new Connection(
+    options.rpcEndpoint ?? 'http://127.0.0.1:8899',
+    {
+      commitment: options.commitment ?? 'confirmed',
+    }
+  );
   return Convergence.make(connection);
 };
 
@@ -51,7 +59,11 @@ export const createWallet = async (
   solsToAirdrop = 100
 ): Promise<KeypairSigner> => {
   const wallet = Keypair.generate();
-  await amman.airdrop(cvg.connection, wallet.publicKey, solsToAirdrop);
+  const tx = await cvg.connection.requestAirdrop(
+    wallet.publicKey,
+    solsToAirdrop * LAMPORTS_PER_SOL
+  );
+  await cvg.connection.confirmTransaction(tx);
   return wallet;
 };
 
