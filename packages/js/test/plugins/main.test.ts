@@ -25,6 +25,7 @@ import {
   OptionType,
   InstrumentType,
 } from '@/index';
+import { Rfq } from '@/index';
 
 killStuckProcess();
 
@@ -34,6 +35,8 @@ let usdcMint: Mint;
 let btcMint: Mint;
 
 let userTokens: Token;
+
+let finalizedRfq: Rfq;
 
 const mintAuthority = Keypair.generate();
 
@@ -200,6 +203,10 @@ test('[protocolModule] it can register USDC mint', async () => {
   });
 });
 
+/*
+ * COLLATERAL
+ */
+
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const protocol = await cvg.protocol().get();
 
@@ -223,7 +230,7 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can fund collateral', async (t: Test) => {
-  const AMOUNT = 25;
+  const AMOUNT = 2000000010;
 
   const protocol = await cvg.protocol().get();
 
@@ -268,7 +275,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can withdraw collateral', async (t: Test) => {
-  const FUND_AMOUNT = 25;
+  const FUND_AMOUNT = 2000000010;
   const WITHDRAW_AMOUNT = 10;
 
   const protocol = await cvg.protocol().get();
@@ -311,6 +318,10 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   });
 });
 
+/*
+ * RFQ
+ */
+
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
     amount: 1,
@@ -328,7 +339,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
     instruments: [spotInstrument],
     orderType: OrderType.Sell,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
     quoteAsset,
   });
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
@@ -337,6 +348,56 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
     $topic: 'Created RFQ',
     model: 'rfq',
     address: spokSamePubkey(foundRfq.address),
+  });
+});
+
+test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
+  const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
+  const spotInstrument = new SpotInstrument(cvg, btcMint, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
+
+  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+  
+  const riskEngineProgram = cvg.programs().getRiskEngine();
+  const rfqProgram = cvg.programs().getRfq();
+
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [spotInstrument],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset,
+  });
+
+  await cvg.rfqs().finalizeRfqConstruction({
+    rfq: rfq.address,
+    collateralInfo: collateralInfoPda,
+    collateralToken: collateralTokenPda,
+    riskEngine: riskEngineProgram.address,
+    baseAssetIndex: { value: 0 },
+  });
+
+  finalizedRfq = rfq;
+});
+
+test('[rfqModule] it cancel an rfq', async () => {
+  await cvg.rfqs().cancelRfq({
+    rfq: finalizedRfq.address,
   });
 });
 
