@@ -24,8 +24,8 @@ import {
   PsyoptionsEuropeanInstrument,
   OptionType,
   InstrumentType,
+  Rfq,
 } from '@/index';
-import { Rfq } from '@/index';
 
 killStuckProcess();
 
@@ -364,7 +364,7 @@ test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
   });
 
   const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
-  
+
   const riskEngineProgram = cvg.programs().getRiskEngine();
   const rfqProgram = cvg.programs().getRfq();
 
