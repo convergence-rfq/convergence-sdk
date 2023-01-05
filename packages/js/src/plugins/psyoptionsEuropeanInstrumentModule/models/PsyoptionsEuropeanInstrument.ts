@@ -1,6 +1,13 @@
 import { PublicKey } from '@solana/web3.js';
-import { PsyoptionsEuropeanInstrumentAccount } from '../accounts';
+import { Side } from '@convergence-rfq/rfq';
+import { EuroMeta } from '@convergence-rfq/psyoptions-european-instrument';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
+import { Mint } from '../../tokenModule';
+import { Instrument } from '../../instrumentModule/models/Instrument';
+import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
+import { Convergence } from '@/Convergence';
+import { toBigNumber } from '@/types';
 
 /**
  * This model captures all the relevant information about a Psyoptions European
@@ -8,29 +15,125 @@ import { assert } from '@/utils';
  *
  * @group Models
  */
-export type PsyoptionsEuropeanInstrument = {
-  /** A model identifier to distinguish models in the SDK. */
-  readonly model: 'psyoptionsEuropeanInstrument';
+export class PsyoptionsEuropeanInstrument implements Instrument {
+  readonly model = 'psyoptionsEuropeanInstrument';
 
-  /** The address of the instrument. */
-  readonly address: PublicKey;
+  constructor(
+    readonly convergence: Convergence,
+    public mint: Mint,
+    public optionType: OptionType,
+    public meta: EuroMeta,
+    public metaKey: PublicKey,
+    public underlyingMint: Mint,
+    public stableMint: Mint,
+    public callMint: Mint,
+    public callWriterMint: Mint,
+    public putMint: Mint,
+    public putWriterMint: Mint,
+    readonly legInfo?: {
+      amount: number;
+      side: Side;
+      baseAssetIndex: number;
+    }
+  ) {}
 
-  //readonly meta: PublicKey;
+  static createForLeg(
+    convergence: Convergence,
+    mint: Mint,
+    optionType: OptionType,
+    meta: EuroMeta,
+    metaKey: PublicKey,
+    underlyingMint: Mint,
+    stableMint: Mint,
+    callMint: Mint,
+    callWriterMint: Mint,
+    putMint: Mint,
+    putWriterMint: Mint,
+    amount: number,
+    side: Side
+  ): InstrumentClient {
+    const baseAssetIndex = 0;
+    const instrument = new PsyoptionsEuropeanInstrument(
+      convergence,
+      mint,
+      optionType,
+      meta,
+      metaKey,
+      underlyingMint,
+      stableMint,
+      callMint,
+      callWriterMint,
+      putMint,
+      putWriterMint,
+      {
+        amount,
+        side,
+        baseAssetIndex,
+      }
+    );
 
-  //readonly metaKey: PublicKey;
+    return new InstrumentClient(convergence, instrument, {
+      amount,
+      side,
+      baseAssetIndex,
+    });
+  }
 
-  readonly underlyingMint: PublicKey;
+  getValidationAccounts() {
+    const rfqProgram = this.convergence.programs().getRfq();
+    const [mintInfoPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('mint_info'), this.mint.address.toBuffer()],
+      rfqProgram.address
+    );
+    return [
+      { pubkey: this.metaKey, isSigner: false, isWritable: false },
+      {
+        pubkey: mintInfoPda,
+        isSigner: false,
+        isWritable: false,
+      },
+    ];
+  }
 
-  readonly stableMint: PublicKey;
+  serializeInstrumentData(): Buffer {
+    const { strikePrice, expiration, underlyingAmountPerContract } = this.meta;
+    return Buffer.from(
+      new Uint8Array([
+        this.optionType == OptionType.CALL ? 0 : 1,
+        ...toBigNumber(underlyingAmountPerContract).toBuffer('le', 8),
+        ...toBigNumber(strikePrice).toBuffer('le', 8),
+        ...toBigNumber(expiration).toBuffer('le', 8),
+        ...this.mint.address.toBytes(),
+        ...this.metaKey.toBytes(),
+      ])
+    );
+  }
 
-  //readonly callMint: PublicKey;
+  getProgramId(): PublicKey {
+    return this.convergence.programs().getPsyoptionsEuropeanInstrument()
+      .address;
+  }
 
-  readonly callWriterMint: PublicKey;
+  //calculateLegSize(instrument: PsyoptionsEuropeanInstrument): number {
+  //  return instrument.data.length;
+  //}
 
-  //readonly putMint: PublicKey;
-
-  //readonly putWriterMint: PublicKey;
-};
+  //createInstrument(
+  //  mint: PublicKey,
+  //  decimals: number,
+  //  side: Side,
+  //  amount: number
+  //): PsyoptionsEuropeanInstrument {
+  //  return {
+  //    model: 'psyoptionsEuropeanInstrument',
+  //    mint,
+  //    side,
+  //    amount: toBigNumber(amount),
+  //    decimals,
+  //    data: mint.toBuffer(),
+  //  };
+  //}
+}
 
 /** @group Model Helpers */
 export const isPsyoptionsEuropeanInstrument = (
@@ -47,19 +150,3 @@ export function assertPsyoptionsEuropeanInstrument(
     `Expected PsyoptionsEuropeanInstrument model`
   );
 }
-
-/** @group Model Helpers */
-export const toPsyoptionsEuropeanInstrument = (
-  account: PsyoptionsEuropeanInstrumentAccount
-): PsyoptionsEuropeanInstrument => ({
-  model: 'psyoptionsEuropeanInstrument',
-  address: account.publicKey,
-  //meta: account.data.meta,
-  //metaKey: account.data.metaKey,
-  underlyingMint: account.data.underlyingMint,
-  stableMint: account.data.stableMint,
-  //callMint: account.data.callMint,
-  callWriterMint: account.data.callWriterMint,
-  //putMint: account.data.putMint,
-  //putWriterMint: account.data.putwriterMint,
-});

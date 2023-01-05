@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/sdk",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "sideEffects": false,
   "module": "dist/esm/index.mjs",
   "main": "dist/cjs/index.cjs",
@@ -46,12 +46,13 @@
   },
   "dependencies": {
     "@bundlr-network/client": "^0.8.8",
+    "@convergence-rfq/psyoptions-european-instrument": "2.0.5",
     "@convergence-rfq/rfq": "2.0.12",
     "@convergence-rfq/risk-engine": "2.0.9",
     "@convergence-rfq/spot-instrument": "2.0.11",
-    "@convergence-rfq/psyoptions-european-instrument": "2.0.5",
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/mpl-token-metadata": "^2.3.3",
+    "@mithraic-labs/tokenized-euros": "^0.2.2",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.3",
     "@solana/spl-token": "^0.3.5",

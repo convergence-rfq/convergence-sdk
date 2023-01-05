@@ -1,11 +1,10 @@
-import {
-  createCreateRfqInstruction,
-  OrderType,
-  FixedSize,
-} from '@convergence-rfq/rfq';
+import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { SpotInstrument } from '../../spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
+import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -16,7 +15,6 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { Mint, SpotInstrument } from '@/index';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -24,9 +22,20 @@ const Key = 'CreateRfqOperation' as const;
  * Creates a new Rfq.
  *
  * ```ts
+ * const spotInstrument = new SpotInstrument(...);
+ * const psyoptionsEuropeanInstrument = new PsyOptionsEuropeanInstrument(...);
+ * const quoteAsset = instrumentClient.createQuote(new SpotInstrument(...));
+ *
  * const { rfq } = await convergence
  *   .rfqs()
- *   .create();
+ *   .create({
+ *     instruments: [spotInstrument, psyoptionsEuropeanInstrument],
+ *     orderType: OrderType.Sell,
+ *     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+ *     activeWindow: 100,
+ *     settlingWindow: 100,
+ *     quoteAsset,
+ *   });
  * ```
  *
  * @group Operations
@@ -59,23 +68,20 @@ export type CreateRfqInput = {
   /** Optional Rfq keypair */
   keypair?: Keypair;
 
-  /** The pubkey address of the protocol account. */
-  protocol?: PublicKey;
-
   /** Optional quote asset account. */
-  quoteAsset: Mint;
+  quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
-  instruments: SpotInstrument[];
+  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
 
   /**
    * The type of order.
    *
    * @defaultValue Defaults to creating a two-way order
    */
-  orderType?: OrderType;
+  orderType: OrderType;
 
-  fixedSize?: FixedSize;
+  fixedSize: FixedSize;
 
   activeWindow?: number;
 
@@ -162,10 +168,10 @@ export const createRfqBuilder = async (
 
   const {
     taker = convergence.identity(),
-    orderType = OrderType.Sell,
+    orderType,
     instruments,
     quoteAsset,
-    fixedSize = { __kind: 'QuoteAsset', quoteAmount: 1 },
+    fixedSize,
     activeWindow = 1,
     settlingWindow = 1,
   } = params;
@@ -180,18 +186,10 @@ export const createRfqBuilder = async (
 
   // TODO: Use PDA client
   const MINT_INFO_SEED = 'mint_info';
-
   const [quotePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from(MINT_INFO_SEED), quoteAsset.address.toBuffer()],
+    [Buffer.from(MINT_INFO_SEED), quoteAsset.instrumentData],
     rfqProgram.address
   );
-  const [mintInfoPda] = PublicKey.findProgramAddressSync(
-    // TODO: Do not hardcode
-    [Buffer.from(MINT_INFO_SEED), instruments[0].mint.toBuffer()],
-    rfqProgram.address
-  );
-
-  // TODO: Do not hardcode
   const quoteAccounts: AccountMeta[] = [
     {
       pubkey: spotInstrumentProgram.address,
@@ -205,26 +203,25 @@ export const createRfqBuilder = async (
     },
   ];
 
-  // TODO: Do not hardcode
-  const legAccounts: AccountMeta[] = [
-    {
-      pubkey: spotInstrumentProgram.address,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: mintInfoPda,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
-
-  anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
-
-  const spotInstrumentClient = convergence.spotInstrument();
   const protocol = await convergence.protocol().get();
 
-  const expectedLegSize = spotInstrumentClient.calculateLegSize(instruments[0]);
+  const legAccounts: AccountMeta[] = [];
+  const legs: Leg[] = [];
+  let expectedLegSize = 0;
+
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+    legs.push(instrumentClient.toLegData());
+    legAccounts.push(...instrumentClient.getValidationAccounts());
+    expectedLegSize += instrumentClient.getInstrumentDataSize();
+  }
+
+  console.error(JSON.stringify(legAccounts));
+
+  anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -242,12 +239,10 @@ export const createRfqBuilder = async (
         },
         {
           expectedLegSize,
-          legs: instruments.map((instrument) => {
-            return spotInstrumentClient.createLeg(instrument);
-          }),
+          legs,
           fixedSize,
           orderType,
-          quoteAsset: spotInstrumentClient.createQuoteAsset(quoteAsset),
+          quoteAsset,
           activeWindow,
           settlingWindow,
         },

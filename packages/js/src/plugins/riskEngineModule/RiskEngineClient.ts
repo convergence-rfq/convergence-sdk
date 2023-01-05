@@ -1,4 +1,9 @@
-import { initializeConfigOperation, InitializeConfigInput } from './operations';
+import {
+  initializeConfigOperation,
+  InitializeConfigInput,
+  SetInstrumentTypeInput,
+  setInstrumentTypeOperation,
+} from './operations';
 import type { Convergence } from '@/Convergence';
 import { OperationOptions } from '@/types';
 
@@ -22,5 +27,12 @@ export class RiskEngineClient {
     return this.convergence
       .operations()
       .execute(initializeConfigOperation(input), options);
+  }
+
+  /** {@inheritDoc setInstrumentTypeOperation} */
+  setInstrumentType(input: SetInstrumentTypeInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(setInstrumentTypeOperation(input), options);
   }
 }
