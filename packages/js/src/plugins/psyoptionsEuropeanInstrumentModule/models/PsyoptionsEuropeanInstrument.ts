@@ -20,10 +20,10 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
 
   constructor(
     readonly convergence: Convergence,
-    public mint: Mint,
-    public optionType: OptionType,
-    public meta: EuroMeta,
-    public metaKey: PublicKey,
+    readonly mint: Mint,
+    readonly optionType: OptionType,
+    readonly meta: EuroMeta,
+    readonly metaKey: PublicKey,
     readonly legInfo?: {
       amount: number;
       side: Side;
@@ -53,7 +53,6 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
         baseAssetIndex,
       }
     );
-
     return new InstrumentClient(convergence, instrument, {
       amount,
       side,
@@ -79,13 +78,18 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   }
 
   serializeInstrumentData(): Buffer {
+    const optionMint =
+      this.optionType == OptionType.CALL
+        ? this.meta.callOptionMint.toBytes()
+        : this.meta.putOptionMint.toBytes();
+
     return Buffer.from(
       new Uint8Array([
         this.optionType == OptionType.CALL ? 0 : 1,
         ...toBigNumber(this.meta.underlyingAmountPerContract).toBuffer('le', 8),
         ...toBigNumber(this.meta.strikePrice).toBuffer('le', 8),
         ...toBigNumber(this.meta.expiration).toBuffer('le', 8),
-        ...this.meta.underlyingMint.toBytes(),
+        ...optionMint,
         ...this.metaKey.toBytes(),
       ])
     );

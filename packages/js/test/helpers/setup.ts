@@ -182,8 +182,8 @@ export const initializeNewOptionMeta = async (
       USDC_DECIMALS,
       oracle
     );
-  const transaction = new web3.Transaction().add(...instructions, instruction);
 
+  const transaction = new web3.Transaction().add(...instructions, instruction);
   await provider.sendAndConfirm(transaction);
 
   return {

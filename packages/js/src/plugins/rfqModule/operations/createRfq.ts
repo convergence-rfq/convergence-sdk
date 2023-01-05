@@ -218,10 +218,6 @@ export const createRfqBuilder = async (
     expectedLegSize += instrumentClient.getInstrumentDataSize();
   }
 
-  console.error(JSON.stringify(quoteAccounts));
-  console.error(JSON.stringify(legAccounts));
-  console.error(JSON.stringify(legs));
-
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
 
   return TransactionBuilder.make()

@@ -323,18 +323,14 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
  */
 
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
-  const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
-    amount: 1,
-    side: Side.Bid,
-    baseAssetIndex: 0,
-  });
   const spotInstrument = new SpotInstrument(cvg, btcMint, {
     amount: 1,
     side: Side.Bid,
     baseAssetIndex: 0,
   });
-
-  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+  const quoteAsset = cvg
+    .instrument(new SpotInstrument(cvg, usdcMint))
+    .toQuoteData();
 
   const { rfq } = await cvg.rfqs().create({
     instruments: [spotInstrument],
@@ -352,18 +348,14 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
 });
 
 test('[rfqModule] it can finalize RFQ construction', async () => {
-  const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
-    amount: 1,
-    side: Side.Bid,
-    baseAssetIndex: 0,
-  });
   const spotInstrument = new SpotInstrument(cvg, btcMint, {
     amount: 1,
     side: Side.Bid,
     baseAssetIndex: 0,
   });
-
-  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+  const quoteAsset = cvg
+    .instrument(new SpotInstrument(cvg, usdcMint))
+    .toQuoteData();
 
   const riskEngineProgram = cvg.programs().getRiskEngine();
   const rfqProgram = cvg.programs().getRfq();
@@ -402,14 +394,14 @@ test('[rfqModule] it can cancel an rfq', async () => {
 });
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
-  const quoteInstrument = new SpotInstrument(cvg, usdcMint);
   const spotInstrument = new SpotInstrument(cvg, btcMint, {
     amount: 1,
     side: Side.Bid,
     baseAssetIndex: 0,
   });
-
-  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+  const quoteAsset = cvg
+    .instrument(new SpotInstrument(cvg, usdcMint))
+    .toQuoteData();
 
   const { rfq: rfq1 } = await cvg.rfqs().create({
     instruments: [spotInstrument],
@@ -502,12 +494,9 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOpti
       baseAssetIndex: 0,
     }
   );
-  const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
-    amount: 1,
-    side: Side.Bid,
-    baseAssetIndex: 0,
-  });
-  const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
+  const quoteAsset = cvg
+    .instrument(new SpotInstrument(cvg, usdcMint))
+    .toQuoteData();
 
   const { rfq } = await cvg.rfqs().create({
     instruments: [psyoptionsEuropeanInstrument],
