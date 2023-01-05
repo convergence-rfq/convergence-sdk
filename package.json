@@ -29,7 +29,7 @@
     "format": "prettier --write packages/",
     "docs": "typedoc",
     "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles",
-    "amman:start": "NODE_OPTIONS='--max-old-space-size=8192' DEBUG='amman:(info|error|debug)' amman start",
+    "amman:start": "DEBUG='amman:(info|error|debug)' npx --node-options='--max-old-space-size=8192 --inspect' amman start",
     "amman:stop": "amman stop"
   },
   "devDependencies": {
