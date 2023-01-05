@@ -134,14 +134,17 @@ export const initializeNewOptionMeta = async (
   expiresIn: number
 ) => {
   const payer = convergence.rpc().getDefaultFeePayer();
-  const { connection } = createCvg();
 
   const wallet = new anchor.Wallet(payer as Keypair);
-  const provider = new anchor.AnchorProvider(connection, wallet, {});
+  const provider = new anchor.AnchorProvider(
+    convergence.connection,
+    wallet,
+    {}
+  );
 
   const psyoptionsEuropeanProgram = createProgram(
     payer as Keypair,
-    connection.rpcEndpoint,
+    convergence.connection.rpcEndpoint,
     new PublicKey(psyoptionsEuropeanProgramId)
   );
   const pseudoPythProgram = new Program(

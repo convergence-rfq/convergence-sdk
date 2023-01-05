@@ -395,7 +395,7 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
   finalizedRfq = rfq;
 });
 
-test('[rfqModule] it cancel an rfq', async () => {
+test('[rfqModule] it can cancel an rfq', async () => {
   await cvg.rfqs().cancelRfq({
     rfq: finalizedRfq.address,
   });
