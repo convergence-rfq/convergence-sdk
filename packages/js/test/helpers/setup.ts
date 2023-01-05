@@ -22,6 +22,7 @@ import {
   KeypairSigner,
   Mint,
   toBigNumber,
+  walletAdapterIdentity,
 } from '@/index';
 
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
@@ -51,6 +52,14 @@ export const convergence = async (options: ConvergenceTestOptions = {}) => {
   const cvg = convergenceGuest(options);
   const wallet = await createWallet(cvg, options.solsToAirdrop);
   return cvg.use(keypairIdentity(wallet as Keypair));
+};
+
+export const convergenceUi = async (
+  options: ConvergenceTestOptions = {},
+  wallet: PublicKey
+) => {
+  const cvg = convergenceGuest(options);
+  return cvg.use(walletAdapterIdentity({ publicKey: wallet }));
 };
 
 export const createWallet = async (
