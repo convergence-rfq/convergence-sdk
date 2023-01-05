@@ -21,6 +21,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
+    readonly decimals: number,
     readonly optionType: OptionType,
     readonly meta: EuroMeta,
     readonly metaKey: PublicKey,
@@ -34,6 +35,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   static createForLeg(
     convergence: Convergence,
     mint: Mint,
+    decimals: number,
     optionType: OptionType,
     meta: EuroMeta,
     metaKey: PublicKey,
@@ -44,6 +46,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     const instrument = new PsyoptionsEuropeanInstrument(
       convergence,
       mint,
+      decimals,
       optionType,
       meta,
       metaKey,
@@ -61,11 +64,9 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   }
 
   getValidationAccounts() {
-    const programs = this.convergence.programs().all();
-    const rfqProgram = this.convergence.programs().getRfq(programs);
     const [mintInfoPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('mint_info'), this.mint.address.toBuffer()],
-      rfqProgram.address
+      this.convergence.programs().getRfq().address
     );
     return [
       { pubkey: this.metaKey, isSigner: false, isWritable: false },
@@ -78,18 +79,15 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   }
 
   serializeInstrumentData(): Buffer {
-    const optionMint =
-      this.optionType == OptionType.CALL
-        ? this.meta.callOptionMint.toBytes()
-        : this.meta.putOptionMint.toBytes();
-
     return Buffer.from(
       new Uint8Array([
         this.optionType == OptionType.CALL ? 0 : 1,
         ...toBigNumber(this.meta.underlyingAmountPerContract).toBuffer('le', 8),
         ...toBigNumber(this.meta.strikePrice).toBuffer('le', 8),
         ...toBigNumber(this.meta.expiration).toBuffer('le', 8),
-        ...optionMint,
+        ...(this.optionType == OptionType.CALL
+          ? this.meta.callOptionMint.toBytes()
+          : this.meta.putOptionMint.toBytes()),
         ...this.metaKey.toBytes(),
       ])
     );

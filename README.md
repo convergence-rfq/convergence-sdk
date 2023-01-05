@@ -13,10 +13,12 @@ The entry point to the JavaScript SDK is a Convergence instance that will give y
 ```ts
 import { Convergence, walletAdapterIdentity } from '@convergence-rfq/sdk';
 import { Connection, clusterApiUrl } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
 
+const wallet = useWallet();
 const connection = new Connection(clusterApiUrl('devnet'));
 const cvg = new Convergence(connection);
-cvg.use(walletAdapterIdentity({ publicKey: wallet.publicKey }));
+cvg.use(walletAdapterIdentity(wallet));
 ```
 
 ## Development

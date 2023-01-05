@@ -84,7 +84,7 @@ export const createWallet = async (
  */
 
 export const BTC_DECIMALS = 9;
-export const USDC_DECIMALS = 6;
+export const USDC_DECIMALS = 9;
 
 /**
  *  PSYOPTIONS EUROPEAN
@@ -135,10 +135,9 @@ export const initializeNewOptionMeta = async (
 ) => {
   const payer = convergence.rpc().getDefaultFeePayer();
 
-  const wallet = new anchor.Wallet(payer as Keypair);
   const provider = new anchor.AnchorProvider(
     convergence.connection,
-    wallet,
+    new anchor.Wallet(payer as Keypair),
     {}
   );
 
@@ -156,7 +155,7 @@ export const initializeNewOptionMeta = async (
   const oracle = await createPriceFeed(
     pseudoPythProgram,
     17_000,
-    BTC_DECIMALS * -1
+    stableMint.decimals * -1
   );
 
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
@@ -167,19 +166,19 @@ export const initializeNewOptionMeta = async (
     stableMint.address,
     oracle,
     expiration,
-    USDC_DECIMALS
+    stableMint.decimals
   );
   const { instruction, euroMeta, euroMetaKey } =
     await createEuroMetaInstruction(
       psyoptionsEuropeanProgram,
       underlyingMint.address,
-      BTC_DECIMALS,
+      underlyingMint.decimals,
       stableMint.address,
-      USDC_DECIMALS,
+      stableMint.decimals,
       expiration,
       toBigNumber(underlyingAmountPerContract),
       toBigNumber(strikePrice),
-      USDC_DECIMALS,
+      stableMint.decimals,
       oracle
     );
 

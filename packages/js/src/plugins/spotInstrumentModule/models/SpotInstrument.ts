@@ -21,6 +21,7 @@ export class SpotInstrument implements Instrument {
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
+    readonly decimals: number,
     readonly legInfo?: {
       amount: number;
       side: Side;
@@ -31,17 +32,17 @@ export class SpotInstrument implements Instrument {
   static createForLeg(
     convergence: Convergence,
     mint: Mint,
+    decimals: number,
     amount: number,
     side: Side
   ): InstrumentClient {
     // TODO: Get the base asset index from the program
     const baseAssetIndex = 0;
-    const instrument = new SpotInstrument(convergence, mint, {
+    const instrument = new SpotInstrument(convergence, mint, decimals, {
       amount,
       side,
       baseAssetIndex,
     });
-
     return new InstrumentClient(convergence, instrument, {
       amount,
       side,

@@ -1,12 +1,14 @@
 import { Leg, Side, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
+import * as beet from '@metaplex-foundation/beet';
+import * as beetSolana from '@metaplex-foundation/beet-solana';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';
 import type { Convergence } from '@/Convergence';
-import { toBigNumber } from '@/types';
-import * as beet from '@metaplex-foundation/beet';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
-import { createSerializerFromFixableBeetArgsStruct } from '@/types';
+import {
+  toBigNumber,
+  createSerializerFromFixableBeetArgsStruct,
+} from '@/types';
 
 /**
  * This is a client for the instrumentModule.
@@ -51,7 +53,7 @@ export class InstrumentClient {
         baseAssetIndex: { value: this.legInfo.baseAssetIndex },
         instrumentData: this.instrument.serializeInstrumentData(),
         instrumentAmount: toBigNumber(this.legInfo.amount),
-        instrumentDecimals: this.instrument.mint.decimals,
+        instrumentDecimals: this.instrument.decimals,
         side: this.legInfo.side,
       };
     }
@@ -74,7 +76,7 @@ export class InstrumentClient {
   }
 
   getLegDataSize(): number {
-      return this.serializeLegData(this.toLegData()).length + 4;
+    return this.serializeLegData(this.toLegData()).length + 4;
   }
 
   serializeLegData(leg: Leg): Buffer {
@@ -91,9 +93,7 @@ export class InstrumentClient {
     );
 
     const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
-    const buf = legSerializer.serialize(leg);
-
-    return buf;
+    return legSerializer.serialize(leg);
   }
 
   getProgramAccount(): AccountMeta {
