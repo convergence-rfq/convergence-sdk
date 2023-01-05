@@ -351,7 +351,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
+test('[rfqModule] it can finalize RFQ construction', async () => {
   const quoteInstrument = new SpotInstrument(cvg, usdcMint, {
     amount: 1,
     side: Side.Bid,
