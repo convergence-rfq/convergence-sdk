@@ -20,10 +20,17 @@ import {
   Token,
   SpotInstrument,
   OrderType,
+  toRfq,
+  toRfqAccount,
 } from '@/index';
 import { Rfq } from '@/index';
+import { createWallet } from '../helpers';
 
 killStuckProcess();
+
+const RFQ_ACCOUNT_DISCRIMINATOR = Buffer.from([
+  106, 19, 109, 78, 169, 13, 234, 58,
+]);
 
 let cvg: Convergence;
 
@@ -346,7 +353,7 @@ test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
   });
 
   const quoteAsset = cvg.instrument(quoteInstrument).toQuoteData();
-  
+
   const riskEngineProgram = cvg.programs().getRiskEngine();
   const rfqProgram = cvg.programs().getRfq();
 
@@ -375,11 +382,46 @@ test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
   });
 
   finalizedRfq = rfq;
+
+  const rfqGpaBuilder = cvg
+    .programs()
+    .getGpaBuilder(rfqProgram.address)
+    .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
+    .where(8, cvg.identity().publicKey)
+    .where(169, 1);
+
+  const unparsedRfq = await rfqGpaBuilder.get();
+  const pulledRfq = toRfq(toRfqAccount(unparsedRfq[0]));
+
+  spok(t, finalizedRfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(pulledRfq.address),
+  });
 });
 
-test('[rfqModule] it cancel an rfq', async () => {
+test('[rfqModule] it cancel an rfq', async (t: Test) => {
+  const taker = await createWallet(cvg);
+  const rfqProgram = cvg.programs().getRfq();
+
   await cvg.rfqs().cancelRfq({
     rfq: finalizedRfq.address,
+  });
+
+  const rfqGpaBuilder = cvg
+    .programs()
+    .getGpaBuilder(rfqProgram.address)
+    .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
+    .where(8, taker.publicKey)
+    .where(169, 2);
+
+  const unparsedRfq = await rfqGpaBuilder.get();
+  const cancelledRfq = toRfq(toRfqAccount(unparsedRfq[0]));
+
+  spok(t, finalizedRfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(cancelledRfq.address),
   });
 });
 
