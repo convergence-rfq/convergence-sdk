@@ -29,9 +29,7 @@
     "format": "prettier --write packages/",
     "validator": "./packages/js/test/run-validator.sh",
     "docs": "typedoc",
-    "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles",
-    "amman:start": "npx --node-options='--trace-sigint --max-old-space-size=8192 --inspect' amman start",
-    "amman:stop": "amman stop"
+    "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",
