@@ -4,6 +4,7 @@ const rfq = require('@convergence-rfq/rfq');
 const riskEngine = require('@convergence-rfq/risk-engine');
 const spotInstrument = require('@convergence-rfq/spot-instrument');
 const psyoptionsEuropeanInstrument = require('@convergence-rfq/psyoptions-european-instrument');
+const psyoptionsEuropeanPrimitive = require('@mithraic-labs/tokenized-euros');
 
 const MOCK_STORAGE_ID = 'js-next-sdk';
 
@@ -45,6 +46,16 @@ const programs = [
     label: 'Switchboard SOL Oracle',
     programId: 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR',
     deployPath: localJsonPath('sol_30_oracle_switchboard'),
+  },
+  {
+    label: 'PsyOptions European Primitive',
+    programId: psyoptionsEuropeanPrimitive.programId,
+    deployPath: localDeployPath('euro_primitive'),
+  },
+  {
+    label: 'Pseudo Pyth Oracle',
+    programId: 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH',
+    deployPath: localDeployPath('pseudo_pyth'),
   }
 ];
 
@@ -65,6 +76,7 @@ module.exports = {
       ...rfq.accountProviders,
       ...riskEngine.accountProviders,
       ...spotInstrument.accountProviders,
+      ...psyoptionsEuropeanInstrument.accountProviders,
     },
   },
   storage: {
