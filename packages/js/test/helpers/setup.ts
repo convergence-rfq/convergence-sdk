@@ -22,7 +22,6 @@ import {
   KeypairSigner,
   Mint,
   toBigNumber,
-  guestIdentity,
 } from '@/index';
 
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
