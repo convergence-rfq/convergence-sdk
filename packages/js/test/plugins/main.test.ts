@@ -3,7 +3,7 @@ import spok from 'spok';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import {
   SWITCHBOARD_BTC_ORACLE,
-  convergence,
+  convergenceCli,
   killStuckProcess,
   spokSamePubkey,
   BTC_DECIMALS,
@@ -38,7 +38,7 @@ let userTokens: Token;
 const mintAuthority = Keypair.generate();
 
 test('[setup] it can create Convergence instance', async () => {
-  cvg = await convergence();
+  cvg = await convergenceCli();
 
   const { mint: newBTCMint } = await cvg.tokens().createMint({
     mintAuthority: mintAuthority.publicKey,

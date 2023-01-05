@@ -32,13 +32,17 @@ export const SWITCHBOARD_BTC_ORACLE = new PublicKey(
   '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
 );
 
-export type ConvergenceTestOptions = {
+/**
+ * HELPERS
+ */
+
+export type ConvergenceOptions = {
   commitment?: Commitment;
   rpcEndpoint?: string;
   solsToAirdrop?: number;
 };
 
-export const convergenceGuest = (options: ConvergenceTestOptions = {}) => {
+export const createCvg = (options: ConvergenceOptions = {}) => {
   const connection = new Connection(
     options.rpcEndpoint ?? 'http://127.0.0.1:8899',
     {
@@ -48,17 +52,17 @@ export const convergenceGuest = (options: ConvergenceTestOptions = {}) => {
   return Convergence.make(connection);
 };
 
-export const convergence = async (options: ConvergenceTestOptions = {}) => {
-  const cvg = convergenceGuest(options);
+export const convergenceCli = async (options: ConvergenceOptions = {}) => {
+  const cvg = createCvg(options);
   const wallet = await createWallet(cvg, options.solsToAirdrop);
   return cvg.use(keypairIdentity(wallet as Keypair));
 };
 
 export const convergenceUi = async (
-  options: ConvergenceTestOptions = {},
+  options: ConvergenceOptions = {},
   wallet: PublicKey
 ) => {
-  const cvg = convergenceGuest(options);
+  const cvg = createCvg(options);
   return cvg.use(walletAdapterIdentity({ publicKey: wallet }));
 };
 
@@ -75,13 +79,16 @@ export const createWallet = async (
   return wallet;
 };
 
-/*
+/**
  * CONSTANTS
  */
 
 export const BTC_DECIMALS = 9;
 export const USDC_DECIMALS = 6;
 
+/**
+ *  PSYOPTIONS EUROPEAN
+ */
 const createPriceFeed = async (
   oracleProgram: Program<Pyth>,
   initPrice: number,
@@ -127,7 +134,7 @@ export const initializeNewOptionMeta = async (
   expiresIn: number
 ) => {
   const payer = convergence.rpc().getDefaultFeePayer();
-  const { connection } = convergenceGuest();
+  const { connection } = createCvg();
 
   const wallet = new anchor.Wallet(payer as Keypair);
   const provider = new anchor.AnchorProvider(connection, wallet, {});

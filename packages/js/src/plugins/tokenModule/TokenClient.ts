@@ -28,10 +28,9 @@ import {
 } from './operations';
 import { TokenBuildersClient } from './TokenBuildersClient';
 import { TokenPdasClient } from './TokenPdasClient';
-import type { Convergence } from '@/Convergence';
-import { OperationOptions } from '@/types';
 import { Mint, Token } from './models';
-import { PublicKey } from '@/types';
+import type { Convergence } from '@/Convergence';
+import { OperationOptions , PublicKey } from '@/types';
 
 /**
  * This is a client for the Token module.
