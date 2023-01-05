@@ -60,10 +60,10 @@ export const convergenceCli = async (options: ConvergenceOptions = {}) => {
 
 export const convergenceUi = async (
   options: ConvergenceOptions = {},
-  wallet: PublicKey
+  publicKey: PublicKey
 ) => {
   const cvg = createCvg(options);
-  return cvg.use(walletAdapterIdentity({ publicKey: wallet }));
+  return cvg.use(walletAdapterIdentity({ publicKey }));
 };
 
 export const createWallet = async (
