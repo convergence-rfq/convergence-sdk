@@ -37,6 +37,6 @@ yarn build
 **TDD**
 
 ```bash
-yarn amman:start # Run this in a separate tab and do not forget to restart when rerunning tests
+yarn validator # Run this in a separate tab and do not forget to restart when rerunning tests
 yarn test
 ```
