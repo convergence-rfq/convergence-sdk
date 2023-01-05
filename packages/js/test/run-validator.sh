@@ -18,3 +18,5 @@ solana-test-validator --bpf-program ${RFQ} programs/rfq.so \
     --bpf-program ${PSYOPTIONS_EURO_PRIMITIVE} programs/euro_primitive.so \
     --bpf-program ${PSEUDO_PYTH_ORACLE} programs/pseudo_pyth.so \
     --reset
+
+run_validator 

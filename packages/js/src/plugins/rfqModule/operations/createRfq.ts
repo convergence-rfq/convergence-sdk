@@ -215,7 +215,7 @@ export const createRfqBuilder = async (
     );
     legs.push(instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());
-    expectedLegSize += instrumentClient.getInstrumentDataSize();
+    expectedLegSize += instrumentClient.getLegDataSize();
   }
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
