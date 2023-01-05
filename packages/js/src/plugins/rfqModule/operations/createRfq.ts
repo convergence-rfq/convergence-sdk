@@ -185,9 +185,8 @@ export const createRfqBuilder = async (
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   // TODO: Use PDA client
-  const MINT_INFO_SEED = 'mint_info';
   const [quotePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from(MINT_INFO_SEED), quoteAsset.instrumentData],
+    [Buffer.from('mint_info'), quoteAsset.instrumentData],
     rfqProgram.address
   );
   const quoteAccounts: AccountMeta[] = [
@@ -219,7 +218,9 @@ export const createRfqBuilder = async (
     expectedLegSize += instrumentClient.getInstrumentDataSize();
   }
 
+  console.error(JSON.stringify(quoteAccounts));
   console.error(JSON.stringify(legAccounts));
+  console.error(JSON.stringify(legs));
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
 

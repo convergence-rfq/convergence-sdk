@@ -24,12 +24,6 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     public optionType: OptionType,
     public meta: EuroMeta,
     public metaKey: PublicKey,
-    public underlyingMint: Mint,
-    public stableMint: Mint,
-    public callMint: Mint,
-    public callWriterMint: Mint,
-    public putMint: Mint,
-    public putWriterMint: Mint,
     readonly legInfo?: {
       amount: number;
       side: Side;
@@ -43,12 +37,6 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     optionType: OptionType,
     meta: EuroMeta,
     metaKey: PublicKey,
-    underlyingMint: Mint,
-    stableMint: Mint,
-    callMint: Mint,
-    callWriterMint: Mint,
-    putMint: Mint,
-    putWriterMint: Mint,
     amount: number,
     side: Side
   ): InstrumentClient {
@@ -59,12 +47,6 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
       optionType,
       meta,
       metaKey,
-      underlyingMint,
-      stableMint,
-      callMint,
-      callWriterMint,
-      putMint,
-      putWriterMint,
       {
         amount,
         side,
@@ -80,7 +62,8 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   }
 
   getValidationAccounts() {
-    const rfqProgram = this.convergence.programs().getRfq();
+    const programs = this.convergence.programs().all();
+    const rfqProgram = this.convergence.programs().getRfq(programs);
     const [mintInfoPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('mint_info'), this.mint.address.toBuffer()],
       rfqProgram.address
@@ -96,14 +79,13 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   }
 
   serializeInstrumentData(): Buffer {
-    const { strikePrice, expiration, underlyingAmountPerContract } = this.meta;
     return Buffer.from(
       new Uint8Array([
         this.optionType == OptionType.CALL ? 0 : 1,
-        ...toBigNumber(underlyingAmountPerContract).toBuffer('le', 8),
-        ...toBigNumber(strikePrice).toBuffer('le', 8),
-        ...toBigNumber(expiration).toBuffer('le', 8),
-        ...this.mint.address.toBytes(),
+        ...toBigNumber(this.meta.underlyingAmountPerContract).toBuffer('le', 8),
+        ...toBigNumber(this.meta.strikePrice).toBuffer('le', 8),
+        ...toBigNumber(this.meta.expiration).toBuffer('le', 8),
+        ...this.meta.underlyingMint.toBytes(),
         ...this.metaKey.toBytes(),
       ])
     );
@@ -113,26 +95,6 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     return this.convergence.programs().getPsyoptionsEuropeanInstrument()
       .address;
   }
-
-  //calculateLegSize(instrument: PsyoptionsEuropeanInstrument): number {
-  //  return instrument.data.length;
-  //}
-
-  //createInstrument(
-  //  mint: PublicKey,
-  //  decimals: number,
-  //  side: Side,
-  //  amount: number
-  //): PsyoptionsEuropeanInstrument {
-  //  return {
-  //    model: 'psyoptionsEuropeanInstrument',
-  //    mint,
-  //    side,
-  //    amount: toBigNumber(amount),
-  //    decimals,
-  //    data: mint.toBuffer(),
-  //  };
-  //}
 }
 
 /** @group Model Helpers */

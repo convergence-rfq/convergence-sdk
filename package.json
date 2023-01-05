@@ -29,7 +29,7 @@
     "format": "prettier --write packages/",
     "docs": "typedoc",
     "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles",
-    "amman:start": "DEBUG='amman:(info|error|debug)' amman start",
+    "amman:start": "DEBUG='amman:(info|error|debug)' npx --node-options='--max-old-space-size=8192 --inspect' amman start",
     "amman:stop": "amman stop"
   },
   "devDependencies": {
@@ -47,6 +47,7 @@
     "@nrwl/js": "^14.7.5",
     "@nrwl/linter": "14.7.5",
     "@nrwl/workspace": "14.7.5",
+    "@project-serum/anchor": "^0.25.0",
     "@rollup/plugin-babel": "^5.3.1",
     "@rollup/plugin-commonjs": "^22.0.0",
     "@rollup/plugin-json": "^4.1.0",
