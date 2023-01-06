@@ -38,19 +38,21 @@ yarn build
 
 **TDD**
 
-Run this in a separate tab and do not forget to restart when rerunning tests.
+Run the Solana test validator, Solana logs, and the tests.
 
 ```bash
-yarn validator:run 
+
+```bash
+yarn test 
 ```
 
-In a separate tab to see validator logs.
+Run the validator separately.
 
 ```bash
 yarn validator:logs
 ```
 
-To run the actual tests.
+Run the tests only.
 
 ```bash
 yarn test:all
