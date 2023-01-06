@@ -41,8 +41,6 @@ yarn build
 Run the Solana test validator, Solana logs, and the tests.
 
 ```bash
-
-```bash
 yarn test 
 ```
 
