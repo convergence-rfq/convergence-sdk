@@ -1,10 +1,10 @@
-import { SendTransactionError, TransactionError } from "@solana/web3.js";
+import { SendTransactionError, TransactionError } from '@solana/web3.js';
 import {
   ConvergenceError,
   ConvergenceErrorInputWithoutSource,
   ConvergenceErrorOptions,
-} from "./ConvergenceError";
-import type { ConfirmTransactionResponse } from "@/plugins/rpcModule";
+} from './ConvergenceError';
+import type { ConfirmTransactionResponse } from '@/plugins/rpcModule';
 
 /** @group Errors */
 export class RpcError extends ConvergenceError {
@@ -12,7 +12,7 @@ export class RpcError extends ConvergenceError {
     super({
       ...input,
       key: `rpc.${input.key}`,
-      source: "rpc",
+      source: 'rpc',
     });
   }
 }
@@ -21,13 +21,13 @@ export class RpcError extends ConvergenceError {
 export class FailedToSendTransactionError extends RpcError {
   constructor(
     cause: Error,
-    options?: Omit<ConvergenceErrorOptions, "cause" | "logs">
+    options?: Omit<ConvergenceErrorOptions, 'cause' | 'logs'>
   ) {
     super({
-      key: "failed_to_send_transaction",
-      title: "Failed to Send Transaction",
+      key: 'failed_to_send_transaction',
+      title: 'Failed to Send Transaction',
       problem: `The transaction could not be sent successfully to the network.`,
-      solution: "Check the error below for more information.",
+      solution: 'Check the error below for more information.',
       options: {
         ...options,
         logs: (cause as SendTransactionError).logs,
@@ -51,12 +51,12 @@ export class FailedToSendTransactionError extends RpcError {
 
 /** @group Errors */
 export class FailedToConfirmTransactionError extends RpcError {
-  constructor(cause: Error, options?: Omit<ConvergenceErrorOptions, "cause">) {
+  constructor(cause: Error, options?: Omit<ConvergenceErrorOptions, 'cause'>) {
     super({
-      key: "failed_to_confirm_transaction",
-      title: "Failed to Confirm Transaction",
+      key: 'failed_to_confirm_transaction',
+      title: 'Failed to Confirm Transaction',
       problem: `The transaction could not be confirmed.`,
-      solution: "Check the error below for more information.",
+      solution: 'Check the error below for more information.',
       options: { ...options, cause },
     });
   }
@@ -68,12 +68,12 @@ export class FailedToConfirmTransactionWithResponseError extends FailedToConfirm
 
   constructor(response: ConfirmTransactionResponse) {
     const getMessage = (error: TransactionError | null): string => {
-      if (!error) return "Unknown error";
-      if (typeof error === "string") return error;
+      if (!error) return 'Unknown error';
+      if (typeof error === 'string') return error;
       try {
         return JSON.stringify(error);
       } catch (error) {
-        return "Unknown error";
+        return 'Unknown error';
       }
     };
 
@@ -82,6 +82,6 @@ export class FailedToConfirmTransactionWithResponseError extends FailedToConfirm
   }
 
   public get error(): TransactionError {
-    return this.response.value.err ?? "Unknown error";
+    return this.response.value.err ?? 'Unknown error';
   }
 }

@@ -1,17 +1,17 @@
-import { Buffer } from "buffer";
-import type { Beet } from "@metaplex-foundation/beet";
-import * as beet from "@metaplex-foundation/beet";
+import { Buffer } from 'buffer';
+import type { Beet } from '@metaplex-foundation/beet';
+import * as beet from '@metaplex-foundation/beet';
 import {
   FailedToDeserializeDataError,
   FailedToSerializeDataError,
   UnexpectedAccountError,
-} from "../errors";
+} from '../errors';
 import {
   Account,
   MaybeAccount,
   UnparsedAccount,
   UnparsedMaybeAccount,
-} from "./Account";
+} from './Account';
 
 export type Serializer<T> = {
   description: string;
@@ -99,7 +99,7 @@ export const createSerializerFromSolitaType = <T>(
 
 export const serialize = <T>(
   value: T,
-  serializer: Pick<Serializer<T>, "description" | "serialize">
+  serializer: Pick<Serializer<T>, 'description' | 'serialize'>
 ): Buffer => {
   try {
     return serializer.serialize(value);
@@ -112,7 +112,7 @@ export const serialize = <T>(
 
 export const deserialize = <T>(
   value: Buffer,
-  serializer: Pick<Serializer<T>, "description" | "deserialize">
+  serializer: Pick<Serializer<T>, 'description' | 'deserialize'>
 ): [T, number] => {
   try {
     return serializer.deserialize(value);
@@ -125,17 +125,17 @@ export const deserialize = <T>(
 
 export function deserializeAccount<T>(
   account: UnparsedMaybeAccount,
-  serializer: Pick<Serializer<T>, "description" | "deserialize">
+  serializer: Pick<Serializer<T>, 'description' | 'deserialize'>
 ): MaybeAccount<T>;
 export function deserializeAccount<T>(
   account: UnparsedAccount,
-  serializer: Pick<Serializer<T>, "description" | "deserialize">
+  serializer: Pick<Serializer<T>, 'description' | 'deserialize'>
 ): Account<T>;
 export function deserializeAccount<T>(
   account: UnparsedAccount | UnparsedMaybeAccount,
-  serializer: Pick<Serializer<T>, "description" | "deserialize">
+  serializer: Pick<Serializer<T>, 'description' | 'deserialize'>
 ): Account<T> | MaybeAccount<T> {
-  if ("exists" in account && !account.exists) {
+  if ('exists' in account && !account.exists) {
     return account;
   }
 

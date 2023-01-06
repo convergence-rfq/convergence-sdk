@@ -1,4 +1,4 @@
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from '@solana/web3.js';
 
 export type Signer = KeypairSigner | IdentitySigner;
 
@@ -16,14 +16,14 @@ export type IdentitySigner = {
 
 export const isSigner = (input: any): input is Signer => {
   return (
-    typeof input === "object" &&
-    "publicKey" in input &&
-    ("secretKey" in input || "signTransaction" in input)
+    typeof input === 'object' &&
+    'publicKey' in input &&
+    ('secretKey' in input || 'signTransaction' in input)
   );
 };
 
 export const isKeypairSigner = (input: any): input is KeypairSigner => {
-  return isSigner(input) && "secretKey" in input && input.secretKey != null;
+  return isSigner(input) && 'secretKey' in input && input.secretKey != null;
 };
 
 export const isIdentitySigner = (input: any): input is IdentitySigner => {

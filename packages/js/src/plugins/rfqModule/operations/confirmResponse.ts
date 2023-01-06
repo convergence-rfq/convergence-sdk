@@ -91,10 +91,11 @@ export const confirmResponseOperationHandler: OperationHandler<ConfirmResponseOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<ConfirmResponseOutput> => {
-      return confirmResponseBuilder(convergence, operation.input, scope).sendAndConfirm(
+      return confirmResponseBuilder(
         convergence,
-        scope.confirmOptions
-      );
+        operation.input,
+        scope
+      ).sendAndConfirm(convergence, scope.confirmOptions);
     },
   };
 

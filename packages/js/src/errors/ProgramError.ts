@@ -2,8 +2,8 @@ import {
   ConvergenceError,
   ConvergenceErrorInputWithoutSource,
   ConvergenceErrorOptions,
-} from "./ConvergenceError";
-import { Program } from "@/types";
+} from './ConvergenceError';
+import { Program } from '@/types';
 
 type UnderlyingProgramError = Error & { code?: number; logs?: string[] };
 
@@ -16,7 +16,7 @@ export class ProgramError extends ConvergenceError {
       ...input,
       key: `program.${input.key}`,
       title: `${program.name} > ${input.title}`,
-      source: "program",
+      source: 'program',
       sourceDetails: `${program.name} [${program.address.toBase58()}]`,
     });
     this.program = program;
@@ -28,18 +28,18 @@ export class ParsedProgramError extends ProgramError {
   constructor(
     program: Program,
     cause: UnderlyingProgramError,
-    options?: Omit<ConvergenceErrorOptions, "cause" | "logs">
+    options?: Omit<ConvergenceErrorOptions, 'cause' | 'logs'>
   ) {
-    const ofCode = cause.code ? ` of code [${cause.code}]` : "";
+    const ofCode = cause.code ? ` of code [${cause.code}]` : '';
     super(program, {
-      key: "parsed_program_error",
+      key: 'parsed_program_error',
       title: cause.message,
       problem:
         `The program [${program.name}] ` +
         `at address [${program.address.toBase58()}] ` +
         `raised an error${ofCode} ` +
         `that translates to "${cause.message}".`,
-      solution: "Check the error message provided by the program.",
+      solution: 'Check the error message provided by the program.',
       options: {
         ...options,
         logs: cause.logs,
@@ -54,21 +54,21 @@ export class UnknownProgramError extends ProgramError {
   constructor(
     program: Program,
     cause: UnderlyingProgramError,
-    options?: Omit<ConvergenceErrorOptions, "cause" | "logs">
+    options?: Omit<ConvergenceErrorOptions, 'cause' | 'logs'>
   ) {
-    const ofCode = cause.code ? ` of code [${cause.code}]` : "";
+    const ofCode = cause.code ? ` of code [${cause.code}]` : '';
     super(program, {
-      key: "unknown_program_error",
-      title: "Unknown Program Error",
+      key: 'unknown_program_error',
+      title: 'Unknown Program Error',
       problem:
         `The program [${
           program.name
         }] at address [${program.address.toBase58()}] ` +
         `raised an error${ofCode} that is not recognized by the programs registered by the SDK.`,
       solution:
-        "Unfortunately, you will need to check the unparsed " +
-        "error below to investigate what went wrong. " +
-        "To get more helpful error messages, ensure the program that failed is " +
+        'Unfortunately, you will need to check the unparsed ' +
+        'error below to investigate what went wrong. ' +
+        'To get more helpful error messages, ensure the program that failed is ' +
         'registered by the SDK and provides an "errorResolver" method.',
       options: {
         ...options,
