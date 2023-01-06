@@ -3,6 +3,7 @@ export * from './bundlrStorage';
 export * from './collateralModule';
 export * from './guestIdentity';
 export * from './identityModule';
+export * from './walletAdapterIdentity';
 export * from './keypairIdentity';
 export * from './mockStorage';
 export * from './operationModule';

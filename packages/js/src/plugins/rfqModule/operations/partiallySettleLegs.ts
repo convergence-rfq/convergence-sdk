@@ -1,15 +1,14 @@
 import { PublicKey } from '@solana/web3.js';
+import { createPartiallySettleLegsInstruction } from '@convergence-rfq/rfq';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
+ makeConfirmOptionsFinalizedOnMainnet } from '@/types';
 import { Convergence } from '@/Convergence';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import { createPartiallySettleLegsInstruction } from '@convergence-rfq/rfq';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 

@@ -27,7 +27,7 @@ export interface Instrument {
 
   getProgramId: () => PublicKey;
 
-  getValidationAccounts(): Promise<AccountMeta[]>;
+  getValidationAccounts(): AccountMeta[];
 
   //getPrepareSettlementAccounts(side: Side): Promise<AccountMeta[]>;
 

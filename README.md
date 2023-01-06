@@ -11,11 +11,14 @@ npm install @convergence-rfq/sdk @solana/web3.js
 The entry point to the JavaScript SDK is a Convergence instance that will give you access to its API. It accepts a Connection instance from @solana/web3.js that will be used to communicate with the cluster.
 
 ```ts
-import { Convergence } from '@convergence-rfq/sdk';
+import { Convergence, walletAdapterIdentity } from '@convergence-rfq/sdk';
 import { Connection, clusterApiUrl } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
 
+const wallet = useWallet();
 const connection = new Connection(clusterApiUrl('devnet'));
-const convergence = new Convergence(connection);
+const cvg = new Convergence(connection);
+cvg.use(walletAdapterIdentity(wallet));
 ```
 
 ## Development
@@ -35,7 +38,20 @@ yarn build
 
 **TDD**
 
+Run this in a separate tab and do not forget to restart when rerunning tests.
+
 ```bash
-yarn amman:start # Run this in a separate tab and do not forget to restart when rerunning tests
-yarn test
+yarn validator:run 
+```
+
+In a separate tab to see validator logs.
+
+```bash
+yarn validator:logs
+```
+
+To run the actual tests.
+
+```bash
+yarn test:all
 ```

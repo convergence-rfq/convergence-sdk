@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { Rfq, toRfq } from '../models';
+import { toRfqAccount } from '../accounts';
 import {
   Operation,
   OperationHandler,
@@ -7,7 +8,6 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { toRfqAccount } from '../accounts';
 
 const Key = 'FindRfqsByOwnerOperation' as const;
 
@@ -82,7 +82,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       const unparsedRfqs = await rfqGpaBuilder.get();
       scope.throwIfCanceled();
 
-      let rfqs: Rfq[] = [];
+      const rfqs: Rfq[] = [];
 
       for (const unparsedRfq of unparsedRfqs) {
         const rfqAccount = toRfqAccount(unparsedRfq);
