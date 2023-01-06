@@ -379,17 +379,28 @@ test('[rfqModule] it can cancel an rfq', async () => {
 });
 
 test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
-  const spotInstrument = new SpotInstrument(cvg, btcMint, btcMint.decimals, {
-    amount: 1,
-    side: Side.Bid,
-    baseAssetIndex: 0,
-  });
   const quoteAsset = cvg
     .instrument(new SpotInstrument(cvg, usdcMint, usdcMint.decimals))
     .toQuoteData();
 
   const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [spotInstrument],
+    instruments: [
+      new SpotInstrument(cvg, btcMint, btcMint.decimals, {
+        amount: 1,
+        side: Side.Bid,
+        baseAssetIndex: 0,
+      }),
+      new SpotInstrument(cvg, btcMint, btcMint.decimals, {
+        amount: 2,
+        side: Side.Ask,
+        baseAssetIndex: 0,
+      }),
+      new SpotInstrument(cvg, btcMint, btcMint.decimals, {
+        amount: 5,
+        side: Side.Ask,
+        baseAssetIndex: 0,
+      }),
+    ],
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,

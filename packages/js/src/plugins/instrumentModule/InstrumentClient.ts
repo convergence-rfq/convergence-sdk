@@ -76,7 +76,7 @@ export class InstrumentClient {
   }
 
   getLegDataSize(): number {
-    return this.serializeLegData(this.toLegData()).length + 4;
+    return this.serializeLegData(this.toLegData()).length;
   }
 
   serializeLegData(leg: Leg): Buffer {
