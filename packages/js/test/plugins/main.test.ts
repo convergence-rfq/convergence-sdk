@@ -392,17 +392,17 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
       }),
       new SpotInstrument(cvg, btcMint, btcMint.decimals, {
         amount: 2,
-        side: Side.Ask,
+        side: Side.Bid,
         baseAssetIndex: 0,
       }),
       new SpotInstrument(cvg, btcMint, btcMint.decimals, {
         amount: 5,
-        side: Side.Ask,
+        side: Side.Bid,
         baseAssetIndex: 0,
       }),
     ],
     orderType: OrderType.Sell,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    fixedSize: { __kind: 'None', padding: 0 },
     quoteAsset,
   });
 
