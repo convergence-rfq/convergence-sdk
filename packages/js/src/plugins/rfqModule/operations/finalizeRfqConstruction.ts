@@ -58,16 +58,16 @@ export type FinalizeRfqConstructionInput = {
   rfq: PublicKey;
 
   /** The address of the Taker's collateral_info account */
-  collateralInfo: PublicKey;
+  collateralInfo?: PublicKey;
 
   /** The address of the Taker's collateral_token account */
-  collateralToken: PublicKey;
+  collateralToken?: PublicKey;
 
   /** The address of the risk_engine account */
-  riskEngine: PublicKey;
+  riskEngine?: PublicKey;
 
   /** The base asset index. */
-  baseAssetIndex: BaseAssetIndex;
+  baseAssetIndex?: BaseAssetIndex;
 };
 
 /**
@@ -149,17 +149,29 @@ export const finalizeRfqConstructionBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
+  const identity = convergence.identity();
+
+  const riskEngineProgram = convergence.programs().getRiskEngine(programs);
+  const rfqProgram = convergence.programs().getRfq(programs);
+
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), identity.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), identity.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
   const {
-    taker = convergence.identity(),
+    taker = identity,
     rfq,
-    collateralInfo,
-    collateralToken,
-    riskEngine,
-    baseAssetIndex,
+    collateralInfo = collateralInfoPda,
+    collateralToken = collateralTokenPda,
+    riskEngine = riskEngineProgram.address,
+    baseAssetIndex = { value: 0 },
   } = params;
 
-  const rfqProgram = convergence.programs().getRfq(programs);
-  const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const SWITCHBOARD_BTC_ORACLE = new PublicKey(
     '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
   );

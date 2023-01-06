@@ -355,18 +355,6 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
     .instrument(new SpotInstrument(cvg, usdcMint, usdcMint.decimals))
     .toQuoteData();
 
-  const riskEngineProgram = cvg.programs().getRiskEngine();
-  const rfqProgram = cvg.programs().getRfq();
-
-  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-
   const { rfq } = await cvg.rfqs().create({
     instruments: [spotInstrument],
     orderType: OrderType.Sell,
@@ -378,9 +366,6 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
 
   await cvg.rfqs().finalizeRfqConstruction({
     rfq: rfq.address,
-    collateralInfo: collateralInfoPda,
-    collateralToken: collateralTokenPda,
-    riskEngine: riskEngineProgram.address,
     baseAssetIndex: { value: 0 },
   });
 
@@ -403,27 +388,11 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
     .instrument(new SpotInstrument(cvg, usdcMint, usdcMint.decimals))
     .toQuoteData();
 
-  const riskEngineProgram = cvg.programs().getRiskEngine();
-  const rfqProgram = cvg.programs().getRfq();
-
-  const [collateralInfo] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralToken] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
-    rfqProgram.address
-  );
-
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [spotInstrument],
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
-    collateralInfo,
-    collateralToken,
-    riskEngine: riskEngineProgram.address,
-    baseAssetIndex: { value: 0 },
   });
 
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });

@@ -76,16 +76,16 @@ export type CreateAndFinalizeRfqConstructionInput = {
   settlingWindow?: number;
 
   /** The address of the Taker's collateral_info account */
-  collateralInfo: PublicKey;
+  collateralInfo?: PublicKey;
 
   /** The address of the Taker's collateral_token account */
-  collateralToken: PublicKey;
+  collateralToken?: PublicKey;
 
   /** The address of the risk_engine account */
-  riskEngine: PublicKey;
+  riskEngine?: PublicKey;
 
   /** The base asset index. */
-  baseAssetIndex: BaseAssetIndex;
+  baseAssetIndex?: BaseAssetIndex;
 };
 
 /**
