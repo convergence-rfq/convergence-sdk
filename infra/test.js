@@ -1,5 +1,7 @@
 const { spawn } = require('child_process');
 
+process.env.NX_TASKS_RUNNER_DYNAMIC_OUTPUT = false;
+
 const testAll = new Promise((resolve) => {
     const child = spawn("yarn", ["test:all"], {
         stdio: [process.stdin, process.stdout, process.stderr]
