@@ -39,6 +39,8 @@ let userTokens: Token;
 let finalizedRfq: Rfq;
 
 const mintAuthority = Keypair.generate();
+const maker = Keypair.generate();
+const taker = Keypair.generate();
 
 test('[setup] it can create Convergence instance', async () => {
   cvg = await convergenceCli();
@@ -49,8 +51,6 @@ test('[setup] it can create Convergence instance', async () => {
   });
 
   btcMint = newBTCMint;
-
-  const maker = Keypair.generate();
 
   const { mint: newUSDCMint } = await cvg.tokens().createMint({
     mintAuthority: mintAuthority.publicKey,
@@ -65,12 +65,10 @@ test('[setup] it can create Convergence instance', async () => {
 
   await cvg.tokens().mint({
     mintAddress: usdcMint.address,
-    amount: token(42),
+    amount: token(10_000_000_000),
     toToken: toUSDCToken.address,
     mintAuthority,
   });
-
-  const taker = Keypair.generate();
 
   const { token: toBTCToken } = await cvg
     .tokens()
@@ -78,7 +76,7 @@ test('[setup] it can create Convergence instance', async () => {
 
   await cvg.tokens().mint({
     mintAddress: btcMint.address,
-    amount: token(42),
+    amount: token(10_000_000_000),
     toToken: toBTCToken.address,
     mintAuthority,
   });
@@ -230,7 +228,7 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can fund collateral', async (t: Test) => {
-  const AMOUNT = 2000000010;
+  const AMOUNT = 10_000_000_010;
 
   const protocol = await cvg.protocol().get();
 
@@ -275,7 +273,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can withdraw collateral', async (t: Test) => {
-  const FUND_AMOUNT = 2000000010;
+  const FUND_AMOUNT = 10_000_000_010;
   const WITHDRAW_AMOUNT = 10;
 
   const protocol = await cvg.protocol().get();
@@ -374,6 +372,8 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
+    activeWindow: 5_000,
+    settlingWindow: 1_000,
   });
 
   await cvg.rfqs().finalizeRfqConstruction({
@@ -390,6 +390,48 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
 test('[rfqModule] it can cancel an rfq', async () => {
   await cvg.rfqs().cancelRfq({
     rfq: finalizedRfq.address,
+  });
+});
+
+test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
+  const spotInstrument = new SpotInstrument(cvg, btcMint, btcMint.decimals, {
+    amount: 1,
+    side: Side.Bid,
+    baseAssetIndex: 0,
+  });
+  const quoteAsset = cvg
+    .instrument(new SpotInstrument(cvg, usdcMint, usdcMint.decimals))
+    .toQuoteData();
+
+  const riskEngineProgram = cvg.programs().getRiskEngine();
+  const rfqProgram = cvg.programs().getRfq();
+
+  const [collateralInfo] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralToken] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [spotInstrument],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset,
+    collateralInfo,
+    collateralToken,
+    riskEngine: riskEngineProgram.address,
+    baseAssetIndex: { value: 0 },
+  });
+
+  const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
+
+  spok(t, rfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq.address),
   });
 });
 

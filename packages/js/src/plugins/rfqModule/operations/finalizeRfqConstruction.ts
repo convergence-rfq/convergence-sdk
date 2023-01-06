@@ -53,19 +53,20 @@ export type FinalizeRfqConstructionInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   taker?: Signer;
-  /** The address of the protocol account */
-  // protocol?: PublicKey;
+
   /** The address of the Rfq account */
   rfq: PublicKey;
+
   /** The address of the Taker's collateral_info account */
   collateralInfo: PublicKey;
+
   /** The address of the Taker's collateral_token account */
   collateralToken: PublicKey;
+
   /** The address of the risk_engine account */
   riskEngine: PublicKey;
-  /**
-   * The base asset index.
-   */
+
+  /** The base asset index. */
   baseAssetIndex: BaseAssetIndex;
 };
 
