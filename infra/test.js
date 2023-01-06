@@ -10,6 +10,7 @@ const testAll = new Promise((resolve) => {
 });
 
 const solanaLogs = new Promise((resolve) => {
+    // TODO: Find a better way to wait for the test validator to start
     const x = setTimeout(() => {
         const child = spawn("solana", ["logs", "--url", "localhost"], {
             stdio: [process.stdin, process.stdout, process.stderr]
