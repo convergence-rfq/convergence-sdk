@@ -33,7 +33,5 @@ jobs:
       run: yarn install --frozen-lockfile
     - name: Build
       run: npx nx affected --target=build
-    - name: Start local validator using Amman
-      run: yarn validator:run
     - name: Run tests
       run: yarn test

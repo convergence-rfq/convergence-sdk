@@ -1,6 +1,6 @@
 const { spawn } = require('child_process');
 
-const ls = new Promise((resolve) => {
+const testAll = new Promise((resolve) => {
     const child = spawn("yarn", ["test:all"], {
         stdio: [process.stdin, process.stdout, process.stderr]
     });
@@ -25,7 +25,7 @@ const solanaTestValidator = new Promise((resolve) => {
 });
 
 async function main() {
-    await Promise.all([ls, solanaLogs, solanaTestValidator]);
+    await Promise.all([testAll, solanaLogs, solanaTestValidator]);
 }
 
 main().then().catch(console.error);
