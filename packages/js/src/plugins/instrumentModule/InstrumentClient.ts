@@ -35,13 +35,13 @@ export class InstrumentClient {
     protected legInfo?: {
       amount: number;
       side: Side;
-      baseAssetIndex: number;
     }
   ) {}
 
   getBaseAssetIndex(): number {
     if (this.legInfo) {
-      return this.legInfo.baseAssetIndex;
+      // TODO: Get base asset correctly
+      return 0;
     }
     throw Error('Instrument is used for base asset index');
   }
@@ -50,7 +50,7 @@ export class InstrumentClient {
     if (this.legInfo) {
       return {
         instrumentProgram: this.instrument.getProgramId(),
-        baseAssetIndex: { value: this.legInfo.baseAssetIndex },
+        baseAssetIndex: { value: this.getBaseAssetIndex() },
         instrumentData: this.instrument.serializeInstrumentData(),
         instrumentAmount: toBigNumber(this.legInfo.amount),
         instrumentDecimals: this.instrument.decimals,

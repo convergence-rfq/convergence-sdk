@@ -17,18 +17,17 @@ import { toBigNumber } from '@/types';
  */
 export class PsyoptionsEuropeanInstrument implements Instrument {
   readonly model = 'psyoptionsEuropeanInstrument';
+  readonly decimals = 4;
 
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
-    readonly decimals: number,
     readonly optionType: OptionType,
     readonly meta: EuroMeta,
     readonly metaKey: PublicKey,
     readonly legInfo?: {
       amount: number;
       side: Side;
-      baseAssetIndex: number;
     }
   ) {}
 
@@ -42,24 +41,20 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     amount: number,
     side: Side
   ): InstrumentClient {
-    const baseAssetIndex = 0;
     const instrument = new PsyoptionsEuropeanInstrument(
       convergence,
       mint,
-      decimals,
       optionType,
       meta,
       metaKey,
       {
         amount,
         side,
-        baseAssetIndex,
       }
     );
     return new InstrumentClient(convergence, instrument, {
       amount,
       side,
-      baseAssetIndex,
     });
   }
 
