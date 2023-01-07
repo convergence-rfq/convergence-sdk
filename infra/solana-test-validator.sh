@@ -1,5 +1,7 @@
 #!/bin/sh
 
+pkill solana-test-validator
+
 RFQ="6k3nypehfxd4tqCGRxNEZBMiT4xUPdQCkothLVz3JK6D"
 RISK_ENGINE="76TdqS9cEb8tYKUWKMzXBMwgCtXJiYMcrHxmzrYthjUm"
 SPOT_INSTRUMENT="6pyiZyPDi7a6vMymw5NFTvtFBZJbDrNsgrcYK5jGEH4K"
