@@ -69,7 +69,7 @@ export class PsyoptionsAmericanInstrument implements Instrument {
       this.convergence.programs().getRfq().address
     );
     return [
-      { pubkey: this.metaKey, isSigner: false, isWritable: false },
+      { pubkey: this.optionMetaPubKey, isSigner: false, isWritable: false },
       {
         pubkey: mintInfoPda,
         isSigner: false,
@@ -115,23 +115,23 @@ export class PsyoptionsAmericanInstrument implements Instrument {
   }
 
   getProgramId(): PublicKey {
-    return this.convergence.programs().getPsyoptionsEuropeanInstrument()
+    return this.convergence.programs().getPsyoptionsAmericanInstrument()
       .address;
   }
 }
 
 /** @group Model Helpers */
-export const isPsyoptionsEuropeanInstrument = (
+export const isPsyoptionsAmericanInstrument = (
   value: any
 ): value is PsyoptionsAmericanInstrument =>
-  typeof value === 'object' && value.model === 'psyoptionsEuropeanInstrument';
+  typeof value === 'object' && value.model === 'psyoptionsAmeicanInstrument';
 
 /** @group Model Helpers */
-export function assertPsyoptionsEuropeanInstrument(
+export function assertPsyoptionsAmericanInstrument(
   value: any
 ): asserts value is PsyoptionsAmericanInstrument {
   assert(
-    isPsyoptionsEuropeanInstrument(value),
-    `Expected PsyoptionsEuropeanInstrument model`
+    isPsyoptionsAmericanInstrument(value),
+    `Expected PsyoptionsAmericanInstrument model`
   );
 }
