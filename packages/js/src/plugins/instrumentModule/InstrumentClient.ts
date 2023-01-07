@@ -1,9 +1,15 @@
-import { Leg, Side } from '@convergence-rfq/rfq';
+import { Leg, Side, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
+import * as beet from '@metaplex-foundation/beet';
+import * as beetSolana from '@metaplex-foundation/beet-solana';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';
 import type { Convergence } from '@/Convergence';
-import { toBigNumber } from '@/types';
+import {
+  toBigNumber,
+  createSerializerFromFixableBeetArgsStruct,
+} from '@/types';
 
 /**
  * This is a client for the instrumentModule.
@@ -26,17 +32,16 @@ import { toBigNumber } from '@/types';
 export class InstrumentClient {
   constructor(
     protected convergence: Convergence,
-    protected instrument: PsyoptionsEuropeanInstrument | SpotInstrument,
+    protected instrument:
+      | PsyoptionsEuropeanInstrument
+      | SpotInstrument
+      | PsyoptionsAmericanInstrument,
     protected legInfo?: {
       amount: number;
       side: Side;
       baseAssetIndex: number;
     }
-  ) {
-    this.convergence = convergence;
-    this.instrument = instrument;
-    this.legInfo = legInfo;
-  }
+  ) {}
 
   getBaseAssetIndex(): number {
     if (this.legInfo) {
@@ -52,7 +57,7 @@ export class InstrumentClient {
         baseAssetIndex: { value: this.legInfo.baseAssetIndex },
         instrumentData: this.instrument.serializeInstrumentData(),
         instrumentAmount: toBigNumber(this.legInfo.amount),
-        instrumentDecimals: this.instrument?.mint.decimals,
+        instrumentDecimals: this.instrument.decimals,
         side: this.legInfo.side,
       };
     }
@@ -63,7 +68,6 @@ export class InstrumentClient {
     if (this.legInfo) {
       throw Error('Instrument is used for quote');
     }
-
     return {
       instrumentProgram: this.instrument.getProgramId(),
       instrumentData: this.instrument.serializeInstrumentData(),
@@ -71,11 +75,32 @@ export class InstrumentClient {
     };
   }
 
-  getInstrumendDataSize(): number {
+  getInstrumentDataSize(): number {
     return this.instrument.serializeInstrumentData().length;
   }
 
-  private getProgramAccount(): AccountMeta {
+  getLegDataSize(): number {
+    return this.serializeLegData(this.toLegData()).length;
+  }
+
+  serializeLegData(leg: Leg): Buffer {
+    const legBeet = new beet.FixableBeetArgsStruct<Leg>(
+      [
+        ['instrumentProgram', beetSolana.publicKey],
+        ['baseAssetIndex', baseAssetIndexBeet],
+        ['instrumentData', beet.bytes],
+        ['instrumentAmount', beet.u64],
+        ['instrumentDecimals', beet.u8],
+        ['side', sideBeet],
+      ],
+      'Leg'
+    );
+
+    const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
+    return legSerializer.serialize(leg);
+  }
+
+  getProgramAccount(): AccountMeta {
     return {
       pubkey: this.instrument.getProgramId(),
       isSigner: false,
@@ -83,9 +108,9 @@ export class InstrumentClient {
     };
   }
 
-  async getValidationAccounts() {
+  getValidationAccounts() {
     return [this.getProgramAccount()].concat(
-      await this.instrument.getValidationAccounts()
+      this.instrument.getValidationAccounts()
     );
   }
 }

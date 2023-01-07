@@ -4,6 +4,7 @@ export * from './cancelResponse';
 export * from './cancelRfq';
 export * from './cleanUpResponse';
 export * from './cleanUpResponseLegs';
+export * from './createAndFinalizeRfqConstruction';
 export * from './cleanUpRfq';
 export * from './confirmResponse';
 export * from './createRfq';

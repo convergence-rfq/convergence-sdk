@@ -1,9 +1,8 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Instrument } from '../../instrumentModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
-//import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -23,12 +22,18 @@ const Key = 'CreateRfqOperation' as const;
  * Creates a new Rfq.
  *
  * ```ts
+ * const spotInstrument = new SpotInstrument(...);
+ * const psyoptionsEuropeanInstrument = new PsyOptionsEuropeanInstrument(...);
+ * const quoteAsset = instrumentClient.createQuote(new SpotInstrument(...));
+ *
  * const { rfq } = await convergence
  *   .rfqs()
  *   .create({
- *     instruments: [spotInstrument],
+ *     instruments: [spotInstrument, psyoptionsEuropeanInstrument],
  *     orderType: OrderType.Sell,
  *     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+ *     activeWindow: 100,
+ *     settlingWindow: 100,
  *     quoteAsset,
  *   });
  * ```
@@ -67,7 +72,7 @@ export type CreateRfqInput = {
   quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
-  instruments: Instrument[];
+  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
 
   /**
    * The type of order.
@@ -180,9 +185,8 @@ export const createRfqBuilder = async (
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   // TODO: Use PDA client
-  const MINT_INFO_SEED = 'mint_info';
   const [quotePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from(MINT_INFO_SEED), quoteAsset.instrumentData],
+    [Buffer.from('mint_info'), quoteAsset.instrumentData],
     rfqProgram.address
   );
   const quoteAccounts: AccountMeta[] = [
@@ -202,41 +206,16 @@ export const createRfqBuilder = async (
 
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
-  const expectedLegSizes = [];
+  let expectedLegSize = 4;
 
   for (const instrument of instruments) {
-    let instrumentClient;
-    let mintInfoPda;
-
-    if (instrument instanceof SpotInstrument) {
-      const spotInstrument = instrument as SpotInstrument;
-      instrumentClient = convergence.instrument(
-        spotInstrument,
-        spotInstrument.legInfo
-      );
-      [mintInfoPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from(MINT_INFO_SEED), instrument.mint.address.toBuffer()],
-        rfqProgram.address
-      );
-    } else {
-      throw new Error('Unsupported instrument type');
-    }
-
-    expectedLegSizes.push(instrumentClient.getInstrumendDataSize());
-    legs.push(instrumentClient.toLegData());
-
-    legAccounts.push(
-      {
-        pubkey: spotInstrumentProgram.address,
-        isSigner: false,
-        isWritable: false,
-      },
-      {
-        pubkey: mintInfoPda,
-        isSigner: false,
-        isWritable: false,
-      }
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
     );
+    legs.push(instrumentClient.toLegData());
+    legAccounts.push(...instrumentClient.getValidationAccounts());
+    expectedLegSize += instrumentClient.getLegDataSize();
   }
 
   anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
@@ -256,7 +235,7 @@ export const createRfqBuilder = async (
           anchorRemainingAccounts,
         },
         {
-          expectedLegSize: expectedLegSizes.reduce((a, b) => a + b, 0),
+          expectedLegSize,
           legs,
           fixedSize,
           orderType,

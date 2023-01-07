@@ -23,6 +23,8 @@ import {
   ConfirmResponseInput,
   createRfqOperation,
   CreateRfqInput,
+  createAndFinalizeRfqConstructionOperation,
+  CreateAndFinalizeRfqConstructionInput,
   finalizeRfqConstructionOperation,
   FinalizeRfqConstructionInput,
   findRfqsByAddressesOperation,
@@ -187,6 +189,16 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(createRfqOperation(input), options);
+  }
+
+  /** {@inheritDoc createAndFinalizeRfqConstructionOperation} */
+  createAndFinalize(
+    input: CreateAndFinalizeRfqConstructionInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(createAndFinalizeRfqConstructionOperation(input), options);
   }
 
   /** {@inheritDoc finalizeRfqConstructionOperation} */

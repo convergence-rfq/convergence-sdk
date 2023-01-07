@@ -4,6 +4,8 @@ import { RiskEngineClient } from './RiskEngineClient';
 import {
   initializeConfigOperation,
   initializeConfigOperationHandler,
+  setInstrumentTypeOperation,
+  setInstrumentTypeOperationHandler,
 } from './operations';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -16,14 +18,17 @@ export const riskEngineModule = (): ConvergencePlugin => ({
       address: PROGRAM_ID,
     };
     convergence.programs().register(riskEngineProgram);
+
     convergence.programs().getRiskEngine = function (
       this: ProgramClient,
       programs?: Program[]
     ) {
       return this.get(riskEngineProgram.name, programs);
     };
+
     const op = convergence.operations();
     op.register(initializeConfigOperation, initializeConfigOperationHandler);
+    op.register(setInstrumentTypeOperation, setInstrumentTypeOperationHandler);
 
     convergence.riskEngine = function () {
       return new RiskEngineClient(this);

@@ -1,5 +1,5 @@
-import EventEmitterPackage from "eventemitter3";
-import type EventEmitter from "eventemitter3";
+import EventEmitterPackage from 'eventemitter3';
+import type EventEmitter from 'eventemitter3';
 
 export type DisposableScope = {
   signal: AbortSignal | undefined;
@@ -19,10 +19,10 @@ export class Disposable {
     this.eventEmitter = new EventEmitterPackage.EventEmitter();
     this.abortListener = (error: unknown) => {
       this.cancelationError = error;
-      this.eventEmitter.emit("cancel", error);
+      this.eventEmitter.emit('cancel', error);
       this.close();
     };
-    this.signal.addEventListener("abort", this.abortListener);
+    this.signal.addEventListener('abort', this.abortListener);
   }
 
   async run<T>(
@@ -60,13 +60,13 @@ export class Disposable {
   }
 
   onCancel(callback: (reason: unknown) => unknown): Disposable {
-    this.eventEmitter.on("cancel", callback);
+    this.eventEmitter.on('cancel', callback);
 
     return this;
   }
 
   close() {
-    this.signal.removeEventListener("abort", this.abortListener);
+    this.signal.removeEventListener('abort', this.abortListener);
     this.eventEmitter.removeAllListeners();
   }
 }

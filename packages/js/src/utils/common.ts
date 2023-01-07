@@ -1,10 +1,10 @@
-import mime from "mime";
+import mime from 'mime';
 
 // eslint-disable-next-line no-control-regex
-export const removeEmptyChars = (value: string) => value.replace(/\u0000/g, "");
+export const removeEmptyChars = (value: string) => value.replace(/\u0000/g, '');
 
 export const padEmptyChars = (value: string, chars: number) =>
-  value.padEnd(chars, "\u0000");
+  value.padEnd(chars, '\u0000');
 
 export const tryOr = <T, U>(callback: () => T, defaultValue: U): T | U => {
   try {
@@ -37,9 +37,9 @@ export const zipMap = <T, U, V>(
 
 export const randomStr = (
   length = 20,
-  alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+  alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 ) => {
-  let result = "";
+  let result = '';
   const alphabetLength = alphabet.length;
   for (var i = 0; i < length; i++) {
     result += alphabet.charAt(Math.floor(Math.random() * alphabetLength));
@@ -52,7 +52,7 @@ export const getContentType = (fileName: string): string | null =>
   mime.getType(fileName);
 
 export const getExtension = (fileName: string): string | null => {
-  const lastDotIndex = fileName.lastIndexOf(".");
+  const lastDotIndex = fileName.lastIndexOf('.');
 
   return lastDotIndex < 0 ? null : fileName.slice(lastDotIndex + 1);
 };
@@ -77,7 +77,7 @@ export const walk = (
     parent.forEach((child, index) => {
       cb(recursiveWalk, child, index, parent);
     });
-  } else if (parent && typeof parent === "object") {
+  } else if (parent && typeof parent === 'object') {
     const keys = Object.keys(parent);
 
     if (options?.sortObjectKeys ?? true) {

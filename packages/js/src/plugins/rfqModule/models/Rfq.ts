@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
-import { assert } from '@/utils';
 import { RfqAccount } from '../accounts';
+import { assert } from '@/utils';
 
 /**
  * This model captures all the relevant information about an RFQ

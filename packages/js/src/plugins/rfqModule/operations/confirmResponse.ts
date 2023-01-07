@@ -1,5 +1,6 @@
 import { createConfirmResponseInstruction, Side } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+import { bignum, COption } from '@metaplex-foundation/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -10,7 +11,6 @@ import {
   Signer,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { bignum, COption } from '@metaplex-foundation/beet';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -91,10 +91,11 @@ export const confirmResponseOperationHandler: OperationHandler<ConfirmResponseOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<ConfirmResponseOutput> => {
-      return confirmResponseBuilder(convergence, operation.input, scope).sendAndConfirm(
+      return confirmResponseBuilder(
         convergence,
-        scope.confirmOptions
-      );
+        operation.input,
+        scope
+      ).sendAndConfirm(convergence, scope.confirmOptions);
     },
   };
 

@@ -1,4 +1,4 @@
-import { ConvergenceError } from "../errors";
+import { ConvergenceError } from '../errors';
 
 /**
  * Error indicating that an assertion failed.
@@ -7,7 +7,7 @@ import { ConvergenceError } from "../errors";
 export class AssertionError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "AssertionError";
+    this.name = 'AssertionError';
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);
     }
@@ -23,7 +23,7 @@ export function assert(
   message?: string
 ): asserts condition {
   if (!condition) {
-    throw new AssertionError(message ?? "Assertion failed");
+    throw new AssertionError(message ?? 'Assertion failed');
   }
 }
 
@@ -37,7 +37,7 @@ assert.equal = function assertEqual<T>(
   message?: string
 ): asserts actual is T {
   if (actual !== expected) {
-    throw new AssertionError((message ?? "") + ` ${actual} !== ${expected}`);
+    throw new AssertionError((message ?? '') + ` ${actual} !== ${expected}`);
   }
 };
 

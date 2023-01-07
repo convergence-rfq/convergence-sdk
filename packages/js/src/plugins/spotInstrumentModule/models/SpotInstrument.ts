@@ -1,10 +1,13 @@
 import { PublicKey } from '@solana/web3.js';
-import { Side } from '@convergence-rfq/rfq';
+import { Side, Leg, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
+import * as beet from '@metaplex-foundation/beet';
+import * as beetSolana from '@metaplex-foundation/beet-solana';
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
 import { Convergence } from '@/Convergence';
+import { createSerializerFromFixableBeetArgsStruct } from '@/types';
 
 /**
  * This model captures all the relevant information about a spot
@@ -18,31 +21,28 @@ export class SpotInstrument implements Instrument {
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
+    readonly decimals: number,
     readonly legInfo?: {
       amount: number;
       side: Side;
       baseAssetIndex: number;
     }
-  ) {
-    this.convergence = convergence;
-    this.mint = mint;
-    this.legInfo = legInfo;
-  }
+  ) {}
 
   static createForLeg(
     convergence: Convergence,
     mint: Mint,
+    decimals: number,
     amount: number,
     side: Side
   ): InstrumentClient {
     // TODO: Get the base asset index from the program
     const baseAssetIndex = 0;
-    const instrument = new SpotInstrument(convergence, mint, {
+    const instrument = new SpotInstrument(convergence, mint, decimals, {
       amount,
       side,
       baseAssetIndex,
     });
-
     return new InstrumentClient(convergence, instrument, {
       amount,
       side,
@@ -50,8 +50,14 @@ export class SpotInstrument implements Instrument {
     });
   }
 
-  async getValidationAccounts() {
-    return [{ pubkey: PublicKey.default, isSigner: false, isWritable: false }];
+  getValidationAccounts() {
+    const programs = this.convergence.programs().all();
+    const rfqProgram = this.convergence.programs().getRfq(programs);
+    const [mintInfoPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('mint_info'), this.mint.address.toBuffer()],
+      rfqProgram.address
+    );
+    return [{ pubkey: mintInfoPda, isSigner: false, isWritable: false }];
   }
 
   //static createForQuote(
@@ -81,6 +87,25 @@ export class SpotInstrument implements Instrument {
 
   serializeInstrumentData(): Buffer {
     return Buffer.from(this.mint.address.toBytes());
+  }
+
+  serializeLegData(leg: Leg): Buffer {
+    const legBeet = new beet.FixableBeetArgsStruct<Leg>(
+      [
+        ['instrumentProgram', beetSolana.publicKey],
+        ['baseAssetIndex', baseAssetIndexBeet],
+        ['instrumentData', beet.bytes],
+        ['instrumentAmount', beet.u64],
+        ['instrumentDecimals', beet.u8],
+        ['side', sideBeet],
+      ],
+      'Leg'
+    );
+
+    const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
+    const buf = legSerializer.serialize(leg);
+
+    return buf;
   }
 
   getProgramId(): PublicKey {

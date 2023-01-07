@@ -1,18 +1,18 @@
 import { PublicKey } from '@solana/web3.js';
 import {
+  createPartlyRevertSettlementPreparationInstruction,
+  AuthoritySide,
+} from '@convergence-rfq/rfq';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import {
-  createPartlyRevertSettlementPreparationInstruction,
-  AuthoritySide,
-} from '@convergence-rfq/rfq';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 

@@ -15,18 +15,26 @@
 <li><a href="../modules.html">API References</a></li>
 <li><a href="CreateRfqBuilderParams.html">CreateRfqBuilderParams</a></li></ul>
 <h1>Type alias CreateRfqBuilderParams</h1></div>
-<div class="tsd-signature">Create<wbr/>Rfq<wbr/>Builder<wbr/>Params<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>quoteAsset<span class="tsd-signature-symbol">: </span><a href="Mint.html" class="tsd-signature-type" data-tsd-kind="Type alias">Mint</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>instruments<span class="tsd-signature-symbol">: </span><a href="SpotInstrument.html" class="tsd-signature-type" data-tsd-kind="Type alias">SpotInstrument</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>taker<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="Signer.html" class="tsd-signature-type" data-tsd-kind="Type alias">Signer</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>keypair<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Keypair</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>protocol<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>orderType<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">OrderType</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>fixedSize<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">FixedSize</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>activeWindow<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>settlingWindow<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
+<div class="tsd-signature">Create<wbr/>Rfq<wbr/>Builder<wbr/>Params<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>quoteAsset<span class="tsd-signature-symbol">: </span><a href="QuoteAsset.html" class="tsd-signature-type" data-tsd-kind="Type alias">QuoteAsset</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>instruments<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><a href="../classes/PsyoptionsEuropeanInstrument.html" class="tsd-signature-type" data-tsd-kind="Class">PsyoptionsEuropeanInstrument</a><span class="tsd-signature-symbol"> | </span><a href="../classes/SpotInstrument.html" class="tsd-signature-type" data-tsd-kind="Class">SpotInstrument</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>orderType<span class="tsd-signature-symbol">: </span><a href="../enums/OrderType.html" class="tsd-signature-type" data-tsd-kind="Enumeration">OrderType</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>fixedSize<span class="tsd-signature-symbol">: </span><a href="FixedSize.html" class="tsd-signature-type" data-tsd-kind="Type alias">FixedSize</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>taker<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="Signer.html" class="tsd-signature-type" data-tsd-kind="Type alias">Signer</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>keypair<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Keypair</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>activeWindow<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>settlingWindow<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
 <div class="tsd-type-declaration">
 <h4>Type declaration</h4>
 <ul class="tsd-parameters">
 <li class="tsd-parameter">
-<h5>quote<wbr/>Asset<span class="tsd-signature-symbol">: </span><a href="Mint.html" class="tsd-signature-type" data-tsd-kind="Type alias">Mint</a></h5>
+<h5>quote<wbr/>Asset<span class="tsd-signature-symbol">: </span><a href="QuoteAsset.html" class="tsd-signature-type" data-tsd-kind="Type alias">QuoteAsset</a></h5>
 <div class="tsd-comment tsd-typography"><p>Optional quote asset account.</p>
 </div></li>
 <li class="tsd-parameter">
-<h5>instruments<span class="tsd-signature-symbol">: </span><a href="SpotInstrument.html" class="tsd-signature-type" data-tsd-kind="Type alias">SpotInstrument</a><span class="tsd-signature-symbol">[]</span></h5>
+<h5>instruments<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><a href="../classes/PsyoptionsEuropeanInstrument.html" class="tsd-signature-type" data-tsd-kind="Class">PsyoptionsEuropeanInstrument</a><span class="tsd-signature-symbol"> | </span><a href="../classes/SpotInstrument.html" class="tsd-signature-type" data-tsd-kind="Class">SpotInstrument</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span></h5>
 <div class="tsd-comment tsd-typography"><p>The legs of the order.</p>
 </div></li>
+<li class="tsd-parameter">
+<h5>order<wbr/>Type<span class="tsd-signature-symbol">: </span><a href="../enums/OrderType.html" class="tsd-signature-type" data-tsd-kind="Enumeration">OrderType</a></h5>
+<div class="tsd-comment tsd-typography"><p>The type of order.</p>
+
+<h3>Default Value</h3><p>Defaults to creating a two-way order</p>
+</div></li>
+<li class="tsd-parameter">
+<h5>fixed<wbr/>Size<span class="tsd-signature-symbol">: </span><a href="FixedSize.html" class="tsd-signature-type" data-tsd-kind="Type alias">FixedSize</a></h5></li>
 <li class="tsd-parameter">
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> taker<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="Signer.html" class="tsd-signature-type" data-tsd-kind="Type alias">Signer</a></h5>
 <div class="tsd-comment tsd-typography"><p>The taker of the Rfq to create.</p>
@@ -38,23 +46,11 @@
 <div class="tsd-comment tsd-typography"><p>Optional Rfq keypair</p>
 </div></li>
 <li class="tsd-parameter">
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> protocol<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a></h5>
-<div class="tsd-comment tsd-typography"><p>The pubkey address of the protocol account.</p>
-</div></li>
-<li class="tsd-parameter">
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> order<wbr/>Type<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">OrderType</span></h5>
-<div class="tsd-comment tsd-typography"><p>The type of order.</p>
-
-<h3>Default Value</h3><p>Defaults to creating a two-way order</p>
-</div></li>
-<li class="tsd-parameter">
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> fixed<wbr/>Size<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">FixedSize</span></h5></li>
-<li class="tsd-parameter">
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> active<wbr/>Window<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5></li>
 <li class="tsd-parameter">
 <h5><code class="tsd-tag ts-flagOptional">Optional</code> settling<wbr/>Window<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/d003ed3/packages/js/src/plugins/rfqModule/operations/createRfq.ts#L140">packages/js/src/plugins/rfqModule/operations/createRfq.ts:140</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/417d2b1/packages/js/src/plugins/rfqModule/operations/createRfq.ts#L146">packages/js/src/plugins/rfqModule/operations/createRfq.ts:146</a></li></ul></aside></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">

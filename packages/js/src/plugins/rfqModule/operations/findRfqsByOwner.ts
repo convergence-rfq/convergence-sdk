@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { Rfq, toRfq } from '../models';
+import { toRfqAccount } from '../accounts';
 import {
   Operation,
   OperationHandler,
@@ -7,7 +8,6 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { toRfqAccount } from '../accounts';
 
 const Key = 'FindRfqsByOwnerOperation' as const;
 
@@ -73,9 +73,6 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         106, 19, 109, 78, 169, 13, 234, 58,
       ]);
 
-      //TODO: we pretend the taker pubkey is at byte 8 in the Rfq.
-      //this might actually be correct as the Rfq struct in programlibrary
-      //has `taker` as the first field, and fields are serialized in order of declaration?
       const rfqGpaBuilder = convergence
         .programs()
         .getGpaBuilder(rfqProgram.address)
@@ -85,7 +82,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       const unparsedRfqs = await rfqGpaBuilder.get();
       scope.throwIfCanceled();
 
-      let rfqs: Rfq[] = [];
+      const rfqs: Rfq[] = [];
 
       for (const unparsedRfq of unparsedRfqs) {
         const rfqAccount = toRfqAccount(unparsedRfq);

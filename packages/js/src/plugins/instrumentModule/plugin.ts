@@ -1,7 +1,7 @@
 import { Side } from '../rfqModule';
+import { SpotInstrument } from '../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { InstrumentClient } from './InstrumentClient';
-import { Instrument } from './models';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
 
@@ -9,7 +9,7 @@ import type { Convergence } from '@/Convergence';
 export const instrumentModule = (): ConvergencePlugin => ({
   install(convergence: Convergence) {
     convergence.instrument = function (
-      instrument: PsyoptionsEuropeanInstrument,
+      instrument: SpotInstrument | PsyoptionsEuropeanInstrument,
       legInfo?: {
         amount: number;
         side: Side;
@@ -24,7 +24,7 @@ export const instrumentModule = (): ConvergencePlugin => ({
 declare module '../../Convergence' {
   interface Convergence {
     instrument(
-      instrument: Instrument,
+      instrument: SpotInstrument | PsyoptionsEuropeanInstrument,
       legInfo?: { amount: number; side: Side; baseAssetIndex: number }
     ): InstrumentClient;
   }
