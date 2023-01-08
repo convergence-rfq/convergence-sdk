@@ -165,10 +165,13 @@ export const finalizeRfqConstructionBuilder = async (
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
-  const [protocolPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
+  // const [protocolPda] = PublicKey.findProgramAddressSync(
+  //   [Buffer.from('protocol')],
+  //   rfqProgram.address
+  // );
+
+  const protocol = await convergence.protocol().get();
+
   const [config] = PublicKey.findProgramAddressSync(
     [Buffer.from('config')],
     riskEngineProgram.address
@@ -212,7 +215,7 @@ export const finalizeRfqConstructionBuilder = async (
       instruction: createFinalizeRfqConstructionInstruction(
         {
           taker: taker.publicKey,
-          protocol: protocolPda,
+          protocol: protocol.address,
           rfq,
           collateralInfo,
           collateralToken,

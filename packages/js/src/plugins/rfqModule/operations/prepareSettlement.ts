@@ -91,10 +91,11 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
-      return respondBuilder(convergence, operation.input, scope).sendAndConfirm(
+      return prepareSettlementBuilder(
         convergence,
-        scope.confirmOptions
-      );
+        operation.input,
+        scope
+      ).sendAndConfirm(convergence, scope.confirmOptions);
     },
   };
 
@@ -117,7 +118,7 @@ export type PrepareSettlementBuilderParams = PrepareSettlementInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const respondBuilder = (
+export const prepareSettlementBuilder = (
   convergence: Convergence,
   params: PrepareSettlementBuilderParams,
   options: TransactionBuilderOptions = {}

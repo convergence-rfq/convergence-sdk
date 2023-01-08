@@ -1,5 +1,5 @@
 import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -8,6 +8,7 @@ import {
   OperationScope,
   useOperation,
   Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions, Option } from '@/utils';
 
@@ -49,11 +50,16 @@ export type RespondInput = {
    */
   maker?: Signer;
   /** The address of the protocol account. */
-  protocol: PublicKey;
+  protocol?: PublicKey;
   /** The address of the Rfq account. */
   rfq: PublicKey;
-  /** The address of the response account. */
-  response: PublicKey;
+  
+  // /** The address of the response account. */
+  // response: PublicKey;
+
+  /** Optional Rfq keypair */
+  keypair?: Keypair;
+
   /** The address of the Maker's collateral_info account. */
   collateralInfo: PublicKey;
   /** The address of the Maker's collateral_token account. */
@@ -85,10 +91,30 @@ export const respondOperationHandler: OperationHandler<RespondOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ): Promise<RespondOutput> => {
-    return RespondBuilder(convergence, operation.input, scope).sendAndConfirm(
+    // const { keypair = Keypair.generate() } = operation.input;
+
+    const builder = await respondBuilder(
+      convergence,
+      {
+        ...operation.input,
+      },
+      scope
+    );
+    scope.throwIfCanceled();
+
+    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
       convergence,
       scope.confirmOptions
     );
+
+    const output = await builder.sendAndConfirm(convergence, confirmOptions);
+    scope.throwIfCanceled();
+
+    return { ...output };
+    // return RespondBuilder(convergence, operation.input, scope).sendAndConfirm(
+    //   convergence,
+    //   scope.confirmOptions
+    // );
   },
 };
 
@@ -111,24 +137,25 @@ export type RespondBuilderParams = RespondInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const RespondBuilder = (
+export const respondBuilder = async (
   convergence: Convergence,
   params: RespondBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+  const { keypair = Keypair.generate() } = params;
 
   const {
-    maker = convergence.identity() || convergence.rpc().getDefaultFeePayer(),
-    protocol,
+    maker = convergence.identity(),
     rfq,
-    response,
     collateralInfo,
     collateralToken,
     riskEngine,
     bid = null,
     ask = null,
   } = params;
+
+  const protocol = await convergence.protocol().get();
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getToken(programs);
@@ -139,9 +166,9 @@ export const RespondBuilder = (
       instruction: createRespondToRfqInstruction(
         {
           maker: maker.publicKey,
-          protocol,
+          protocol: protocol.address,
           rfq,
-          response,
+          response: keypair.publicKey,
           collateralInfo,
           collateralToken,
           riskEngine,
@@ -153,7 +180,7 @@ export const RespondBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [maker],
+      signers: [maker, keypair],
       key: 'respond',
     });
 };

@@ -33,6 +33,12 @@ import {
 
 killStuckProcess();
 
+// function toLittleEndian(value: number, bytes: number) {
+//   const buf = Buffer.allocUnsafe(bytes);
+//   buf.writeUIntLE(value, 0, bytes);
+//   return buf;
+// }
+
 // const RFQ_ACCOUNT_DISCRIMINATOR = Buffer.from([
 //   106, 19, 109, 78, 169, 13, 234, 58,
 // ]);
@@ -412,11 +418,59 @@ test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
   // });
 });
 
-test('[rfqModule] it can cancel an Rfq', async (t: Test) => {
-  // const rfqProgram = cvg.programs().getRfq();
+// test('[rfqModule] it can cancel an Rfq', async (t: Test) => {
+//   const rfqProgram = cvg.programs().getRfq();
 
-  await cvg.rfqs().cancelRfq({
+//   await cvg.rfqs().cancelRfq({
+//     rfq: finalizedRfq.address,
+//   });
+
+//   const ACTIVE_WINDOW = toLittleEndian(10, 2);
+
+//   const rfqGpaBuilder = cvg
+//     .programs()
+//     .getGpaBuilder(rfqProgram.address)
+//     .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
+//     .where(8, cvg.identity().publicKey)
+//     // .where(41, 0);
+//     // .where(159, ACTIVE_WINDOW); //active_window: 10
+//   // .where(40, 0);
+//   // .where(169, 2); //StoredRfqState::Canceled
+
+//   const [unparsedRfq] = await rfqGpaBuilder.get();
+//   const cancelledRfq = toRfq(toRfqAccount(unparsedRfq));
+
+//   spok(t, finalizedRfq, {
+//     $topic: 'Cancelled RFQ',
+//     model: 'rfq',
+//     address: spokSamePubkey(cancelledRfq.address),
+//   });
+// });
+
+test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
+  const rfqProgram = cvg.programs().getRfq();
+  const riskEngineProgram = cvg.programs().getRiskEngine();
+
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  await cvg.rfqs().respond({
     rfq: finalizedRfq.address,
+    collateralInfo: collateralInfoPda,
+    collateralToken: collateralTokenPda,
+    riskEngine: riskEngineProgram.address,
+    // bid: null, //can't be null
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
+    },
+    ask: null,
   });
 
   // const rfqGpaBuilder = cvg
