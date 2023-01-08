@@ -10,7 +10,8 @@ import {
   OperationScope,
   useOperation,
   Signer,
- makeConfirmOptionsFinalizedOnMainnet } from '@/types';
+  makeConfirmOptionsFinalizedOnMainnet,
+} from '@/types';
 import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 

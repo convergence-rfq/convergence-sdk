@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         node: ["16.x", "18.x"]
-        solana: ["1.10.34"]
+        solana: ["1.14.11"]
     steps:
     - name: Git checkout
       uses: actions/checkout@v3
@@ -33,7 +33,5 @@ jobs:
       run: yarn install --frozen-lockfile
     - name: Build
       run: npx nx affected --target=build
-    - name: Start local validator using Amman
-      run: yarn validator:run
     - name: Run tests
       run: yarn test

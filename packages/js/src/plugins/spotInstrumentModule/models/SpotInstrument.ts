@@ -17,36 +17,30 @@ import { createSerializerFromFixableBeetArgsStruct } from '@/types';
  */
 export class SpotInstrument implements Instrument {
   readonly model = 'spotInstrument';
+  readonly decimals = this.mint.decimals;
 
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
-    readonly decimals: number,
     readonly legInfo?: {
       amount: number;
       side: Side;
-      baseAssetIndex: number;
     }
   ) {}
 
   static createForLeg(
     convergence: Convergence,
     mint: Mint,
-    decimals: number,
     amount: number,
     side: Side
   ): InstrumentClient {
-    // TODO: Get the base asset index from the program
-    const baseAssetIndex = 0;
-    const instrument = new SpotInstrument(convergence, mint, decimals, {
+    const instrument = new SpotInstrument(convergence, mint, {
       amount,
       side,
-      baseAssetIndex,
     });
     return new InstrumentClient(convergence, instrument, {
       amount,
       side,
-      baseAssetIndex,
     });
   }
 
@@ -59,31 +53,6 @@ export class SpotInstrument implements Instrument {
     );
     return [{ pubkey: mintInfoPda, isSigner: false, isWritable: false }];
   }
-
-  //static createForQuote(
-  //  context: Context,
-  //  mint = context.assetToken
-  //): InstrumentController {
-  //  const instrument = new SpotInstrument(context, mint);
-  //  mint.assertRegistered();
-  //  return new InstrumentController(instrument, null, mint.decimals);
-  //}
-
-  //static async addInstrument(context: Context) {
-  //  await context.addInstrument(
-  //    getSpotInstrumentProgram().programId,
-  //    true,
-  //    1,
-  //    7,
-  //    3,
-  //    3,
-  //    4
-  //  );
-  //  await context.riskEngine.setInstrumentType(
-  //    getSpotInstrumentProgram().programId,
-  //    InstrumentType.Spot
-  //  );
-  //}
 
   serializeInstrumentData(): Buffer {
     return Buffer.from(this.mint.address.toBytes());
@@ -103,34 +72,12 @@ export class SpotInstrument implements Instrument {
     );
 
     const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
-    const buf = legSerializer.serialize(leg);
-
-    return buf;
+    return legSerializer.serialize(leg);
   }
 
   getProgramId(): PublicKey {
     return this.convergence.programs().getSpotInstrument().address;
   }
-
-  //calculateLegSize(instrument: SpotInstrument): number {
-  //  return instrument.data.length;
-  //}
-
-  //createInstrument(
-  //  mint: PublicKey,
-  //  decimals: number,
-  //  side: Side,
-  //  amount: number
-  //): SpotInstrument {
-  //  return {
-  //    model: 'spotInstrument',
-  //    mint,
-  //    side,
-  //    amount: toBigNumber(amount),
-  //    decimals,
-  //    data: mint.toBuffer(),
-  //  };
-  //}
 }
 
 /** @group Model Helpers */

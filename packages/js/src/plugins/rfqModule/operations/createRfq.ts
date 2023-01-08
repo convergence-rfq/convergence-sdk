@@ -206,7 +206,7 @@ export const createRfqBuilder = async (
 
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
-  let expectedLegSize = 0;
+  let expectedLegSize = 4;
 
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
