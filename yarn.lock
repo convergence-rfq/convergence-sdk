@@ -1216,10 +1216,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/risk-engine@2.0.9":
-  version "2.0.9"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.0.9.tgz#04b80b8f0f1d2add9eae1594836ba74c95741793"
-  integrity sha512-x9HVN6tWLPzO+YNLK+l04f6E5No5VTYu6RdiVJ14EkRzBrGo1rZec3vtbB+joLlvkhSPohC/zvKBXNSkdVT3Xg==
+"@convergence-rfq/risk-engine@2.0.11":
+  version "2.0.11"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.0.11.tgz#cf79e0eba29978e42e7557f1d5c05bdd4f5136ee"
+  integrity sha512-V+Nh2NZRqiyeCSa2WGXD9VVaYZwH60z8xZksyR2w9Hn12SpPqEgu6RObG5TAlSe+xB0CgCBjWtB6ijJjQLXsag==
   dependencies:
     "@metaplex-foundation/beet" "^0.6.1"
     "@metaplex-foundation/beet-solana" "^0.3.1"
