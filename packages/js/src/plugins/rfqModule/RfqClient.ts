@@ -45,8 +45,8 @@ import {
   PrepareMoreLegsSettlementInput,
   prepareSettlementOperation,
   PrepareSettlementInput,
-  respondOperation,
-  RespondInput,
+  respondToRfqOperation,
+  RespondToRfqInput,
   settleOperation,
   SettleInput,
   settleOnePartyDefaultOperation,
@@ -310,11 +310,11 @@ export class RfqClient {
     ) as Promise<T extends Metadata | PublicKey ? Rfq : T>;
   }
 
-  /** {@inheritDoc respondOperation} */
-  respond(input: RespondInput, options?: OperationOptions) {
+  /** {@inheritDoc respondToRfqOperation} */
+  respond(input: RespondToRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(respondOperation(input), options);
+      .execute(respondToRfqOperation(input), options);
   }
 
   /** {@inheritDoc settleOperation} */

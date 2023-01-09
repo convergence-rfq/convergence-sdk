@@ -12,7 +12,7 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions, Option } from '@/utils';
 
-const Key = 'RespondOperation' as const;
+const Key = 'RespondToRfqOperation' as const;
 
 /**
  * Responds to an Rfq.
@@ -26,23 +26,23 @@ const Key = 'RespondOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const respondOperation = useOperation<RespondOperation>(Key);
+export const respondToRfqOperation = useOperation<RespondToRfqOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type RespondOperation = Operation<
+export type RespondToRfqOperation = Operation<
   typeof Key,
-  RespondInput,
-  RespondOutput
+  RespondToRfqInput,
+  RespondToRfqOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type RespondInput = {
+export type RespondToRfqInput = {
   /**
    * The maker of the Response as a Signer.
    */
@@ -71,7 +71,7 @@ export type RespondInput = {
  * @group Operations
  * @category Outputs
  */
-export type RespondOutput = {
+export type RespondToRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
@@ -80,15 +80,15 @@ export type RespondOutput = {
  * @group Operations
  * @category Handlers
  */
-export const respondOperationHandler: OperationHandler<RespondOperation> = {
+export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperation> = {
   handle: async (
-    operation: RespondOperation,
+    operation: RespondToRfqOperation,
     convergence: Convergence,
     scope: OperationScope
-  ): Promise<RespondOutput> => {
+  ): Promise<RespondToRfqOutput> => {
     // const { keypair = Keypair.generate() } = operation.input;
 
-    const builder = await respondBuilder(
+    const builder = await respondToRfqBuilder(
       convergence,
       {
         ...operation.input,
@@ -113,7 +113,7 @@ export const respondOperationHandler: OperationHandler<RespondOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type RespondBuilderParams = RespondInput;
+export type RespondToRfqBuilderParams = RespondToRfqInput;
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -134,9 +134,9 @@ function toLittleEndian(value: number, bytes: number) {
  * @group Transaction Builders
  * @category Constructors
  */
-export const respondBuilder = async (
+export const respondToRfqBuilder = async (
   convergence: Convergence,
-  params: RespondBuilderParams,
+  params: RespondToRfqBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, /*payer = convergence.rpc().getDefaultFeePayer()*/ } = options;
@@ -229,6 +229,6 @@ export const respondBuilder = async (
         rfqProgram.address
       ),
       signers: [maker, keypair],
-      key: 'respond',
+      key: 'respondToRfq',
     });
 };

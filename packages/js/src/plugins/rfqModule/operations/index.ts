@@ -18,7 +18,7 @@ export * from './partiallySettleLegs';
 export * from './partlyRevertSettlementPreparation';
 export * from './prepareMoreLegsSettlement';
 export * from './prepareSettlement';
-export * from './respond';
+export * from './respondToRfq';
 export * from './settle';
 export * from './settleOnePartyDefault';
 export * from './settleTwoPartyDefault';

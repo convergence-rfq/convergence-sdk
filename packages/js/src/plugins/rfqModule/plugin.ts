@@ -13,8 +13,8 @@ import {
   findRfqsByOwnerOperationHandler,
   cancelRfqOperation,
   cancelRfqOperationHandler,
-  respondOperationHandler,
-  respondOperation,
+  respondToRfqOperationHandler,
+  respondToRfqOperation,
   addLegsToRfqOperation,
   addLegsToRfqOperationHandler,
   cleanUpResponseLegsOperation,
@@ -115,7 +115,7 @@ export const rfqModule = (): ConvergencePlugin => ({
       prepareMoreLegsSettlementOperationHandler
     );
     op.register(prepareSettlementOperation, prepareSettlementOperationHandler);
-    op.register(respondOperation, respondOperationHandler);
+    op.register(respondToRfqOperation, respondToRfqOperationHandler);
     op.register(settleOperation, settleOperationHandler);
     op.register(
       settleOnePartyDefaultOperation,
