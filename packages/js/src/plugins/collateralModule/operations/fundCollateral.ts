@@ -83,34 +83,34 @@ export type FundCollateralOutput = {
  * @category Handlers
  */
 export const fundCollateralOperationHandler: OperationHandler<FundCollateralOperation> =
-  {
-    handle: async (
-      operation: FundCollateralOperation,
-      convergence: Convergence,
-      scope: OperationScope
-    ) => {
-      scope.throwIfCanceled();
+{
+  handle: async (
+    operation: FundCollateralOperation,
+    convergence: Convergence,
+    scope: OperationScope
+  ) => {
+    scope.throwIfCanceled();
 
-      const builder = await fundCollateralBuilder(
-        convergence,
-        {
-          ...operation.input,
-        },
-        scope
-      );
-      scope.throwIfCanceled();
+    const builder = await fundCollateralBuilder(
+      convergence,
+      {
+        ...operation.input,
+      },
+      scope
+    );
+    scope.throwIfCanceled();
 
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-        convergence,
-        scope.confirmOptions
-      );
+    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+      convergence,
+      scope.confirmOptions
+    );
 
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
-      scope.throwIfCanceled();
+    const output = await builder.sendAndConfirm(convergence, confirmOptions);
+    scope.throwIfCanceled();
 
-      return output;
-    },
-  };
+    return output;
+  },
+};
 
 export type FundCollateralBuilderParams = FundCollateralInput;
 
@@ -133,6 +133,7 @@ export const fundCollateralBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs } = options;
+  const { user = convergence.identity() } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
@@ -143,20 +144,19 @@ export const fundCollateralBuilder = async (
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
     [
       Buffer.from('collateral_token'),
-      convergence.identity().publicKey.toBuffer(),
+      user.publicKey.toBuffer(),
     ],
     rfqProgram.address
   );
   const [collateralInfoPda] = PublicKey.findProgramAddressSync(
     [
       Buffer.from('collateral_info'),
-      convergence.identity().publicKey.toBuffer(),
+      user.publicKey.toBuffer(),
     ],
     rfqProgram.address
   );
 
   const {
-    user = convergence.identity(),
     userTokens,
     protocol = protocolPda,
     collateralInfo = collateralInfoPda,

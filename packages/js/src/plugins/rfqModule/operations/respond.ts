@@ -44,22 +44,15 @@ export type RespondOperation = Operation<
  */
 export type RespondInput = {
   /**
-   * The maker of the Rfq as a Signer.
-   *
-   * @defaultValue `convergence.identity()`
+   * The maker of the Response as a Signer.
    */
   maker?: Signer;
   /** The address of the protocol account. */
   protocol?: PublicKey;
   /** The address of the Rfq account. */
   rfq: PublicKey;
-
-  // /** The address of the response account. */
-  // response: PublicKey;
-
   /** Optional Response keypair */
   keypair?: Keypair;
-
   /** The address of the Maker's collateral_info account. */
   collateralInfo?: PublicKey;
   /** The address of the Maker's collateral_token account. */
@@ -113,10 +106,6 @@ export const respondOperationHandler: OperationHandler<RespondOperation> = {
     scope.throwIfCanceled();
 
     return { ...output };
-    // return RespondBuilder(convergence, operation.input, scope).sendAndConfirm(
-    //   convergence,
-    //   scope.confirmOptions
-    // );
   },
 };
 
@@ -150,23 +139,21 @@ export const respondBuilder = async (
   params: RespondBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { keypair = Keypair.generate(), baseAssetIndex = { value: 0 } } = params;
+  const { programs, /*payer = convergence.rpc().getDefaultFeePayer()*/ } = options;
+  const { maker = convergence.identity(), keypair = Keypair.generate(), baseAssetIndex = { value: 0 } } = params;
 
   const protocol = await convergence.protocol().get();
 
-  const identity = convergence.identity();
-
-  const systemProgram = convergence.programs().getSystem(programs);
+  // const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getToken(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
   const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), identity.publicKey.toBuffer()],
+    [Buffer.from('collateral_info'), maker.publicKey.toBuffer()],
     rfqProgram.address
   );
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), identity.publicKey.toBuffer()],
+    [Buffer.from('collateral_token'), maker.publicKey.toBuffer()],
     rfqProgram.address
   );
 
@@ -207,13 +194,12 @@ export const respondBuilder = async (
   ];
 
   const {
-    maker = convergence.identity(),
     rfq,
     collateralInfo = collateralInfoPda,
     collateralToken = collateralTokenPda,
     riskEngine = riskEngineProgram.address,
     bid,
-    ask = null,
+    ask,
   } = params;
 
   anchorRemainingAccounts.push(
@@ -223,7 +209,7 @@ export const respondBuilder = async (
   );
 
   return TransactionBuilder.make()
-    .setFeePayer(payer)
+    .setFeePayer(maker)
     .add({
       instruction: createRespondToRfqInstruction(
         {
@@ -234,7 +220,6 @@ export const respondBuilder = async (
           collateralInfo,
           collateralToken,
           riskEngine,
-          systemProgram: systemProgram.address,
           anchorRemainingAccounts
         },
         {

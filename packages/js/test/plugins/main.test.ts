@@ -8,6 +8,7 @@ import {
   spokSamePubkey,
   BTC_DECIMALS,
   USDC_DECIMALS,
+  createWallet,
   // initializeNewOptionMeta,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
@@ -27,6 +28,7 @@ import {
   // OptionType,
   InstrumentType,
   Rfq,
+  KeypairSigner,
   // KeypairSigner,
 } from '@/index';
 // import { createWallet } from '../helpers';
@@ -55,6 +57,8 @@ let finalizedRfq: Rfq;
 const mintAuthority = Keypair.generate();
 const maker = Keypair.generate();
 const taker = Keypair.generate();
+
+let newMaker: KeypairSigner;
 
 test('[setup] it can create Convergence instance', async () => {
   cvg = await convergenceCli();
@@ -241,6 +245,32 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
   });
 });
 
+
+test('[collateralModule] it can initialize maker collateral', async (t: Test) => {
+  const protocol = await cvg.protocol().get();
+  newMaker = await createWallet(cvg, 10);
+
+  const collateralMint = await cvg
+    .tokens()
+    .findMintByAddress({ address: protocol.collateralMint });
+
+  const { collateral } = await cvg.collateral().initializeCollateral({
+    user: newMaker,
+    collateralMint: collateralMint.address,
+  });
+
+  const collateralAccount = await cvg
+    .collateral()
+    .findByAddress({ address: collateral.address });
+
+  spok(t, collateral, {
+    $topic: 'Initialize Collateral',
+    model: 'collateral',
+    address: spokSamePubkey(collateralAccount.address),
+  });
+});
+
+
 test('[collateralModule] it can fund collateral', async (t: Test) => {
   const AMOUNT = 10_000_000_010;
 
@@ -264,6 +294,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   });
 
   await cvg.collateral().fundCollateral({
+    // user: taker,
     userTokens: newUserTokens.address,
     amount: AMOUNT,
   });
@@ -271,6 +302,55 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   const rfqProgram = cvg.programs().getRfq();
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_token'), cvg.identity().publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  const collateralTokenAccount = await cvg
+    .tokens()
+    .findTokenByAddress({ address: collateralTokenPda });
+
+  spok(t, collateralTokenAccount, {
+    $topic: 'Fund Collateral',
+    model: 'token',
+    mintAddress: spokSamePubkey(collateralMint.address),
+    amount: token(AMOUNT),
+  });
+});
+
+
+test('[collateralModule] it can fund maker collateral', async (t: Test) => {
+  const AMOUNT = 10_000_000_010;
+
+  const protocol = await cvg.protocol().get();
+
+  const collateralMint = await cvg
+    .tokens()
+    .findMintByAddress({ address: protocol.collateralMint });
+
+  const { token: newUserTokens } = await cvg.tokens().createToken({
+    owner: newMaker.publicKey,
+    mint: collateralMint.address,
+  });
+
+  userTokens = newUserTokens;
+
+  await cvg.tokens().mint({
+    mintAddress: collateralMint.address,
+    amount: token(AMOUNT),
+    toOwner: newMaker.publicKey,
+    toToken: newUserTokens.address,
+    mintAuthority,
+  });
+
+  await cvg.collateral().fundCollateral({
+    user: newMaker,
+    userTokens: newUserTokens.address,
+    amount: AMOUNT,
+  });
+
+  const rfqProgram = cvg.programs().getRfq();
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), newMaker.publicKey.toBuffer()],
     rfqProgram.address
   );
 
@@ -383,6 +463,7 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
   });
 
   finalizedRfq = rfq;
+  console.log(finalizedRfq)
 
   // const rfqGpaBuilder = cvg
   //   .programs()
@@ -398,6 +479,37 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
   //   $topic: 'Created RFQ',
   //   model: 'rfq',
   //   address: spokSamePubkey(pulledRfq.address),
+  // });
+});
+
+test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
+  await cvg.rfqs().respond({
+    rfq: finalizedRfq.address,
+    maker: newMaker,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+  });
+
+  // const rfqGpaBuilder = cvg
+  //   .programs()
+  //   .getGpaBuilder(rfqProgram.address)
+  //   .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
+  //   .where(8, cvg.identity().publicKey)
+  //   .where(41, 0);
+  //   // .where(159, 10); //active_window: 10
+  // // .where(40, 0);
+  // // .where(169, 2); //StoredRfqState::Canceled
+
+  // const [unparsedRfq] = await rfqGpaBuilder.get();
+  // const cancelledRfq = toRfq(toRfqAccount(unparsedRfq));
+
+  // spok(t, finalizedRfq, {
+  //   $topic: 'Cancelled RFQ',
+  //   model: 'rfq',
+  //   address: spokSamePubkey(fetchedRfq.address),
   // });
 });
 
@@ -430,69 +542,40 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
 //   });
 // });
 
-test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
-  await cvg.rfqs().respond({
-    rfq: finalizedRfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    ask: null,
+
+test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
+  const quoteAsset = cvg
+    .instrument(new SpotInstrument(cvg, usdcMint))
+    .toQuoteData();
+
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 2,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+    ],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'None', padding: 0 },
+    quoteAsset,
   });
 
-  // const rfqGpaBuilder = cvg
-  //   .programs()
-  //   .getGpaBuilder(rfqProgram.address)
-  //   .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
-  //   .where(8, cvg.identity().publicKey)
-  //   .where(41, 0);
-  //   // .where(159, 10); //active_window: 10
-  // // .where(40, 0);
-  // // .where(169, 2); //StoredRfqState::Canceled
+  const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
-  // const [unparsedRfq] = await rfqGpaBuilder.get();
-  // const cancelledRfq = toRfq(toRfqAccount(unparsedRfq));
-
-  // spok(t, finalizedRfq, {
-  //   $topic: 'Cancelled RFQ',
-  //   model: 'rfq',
-  //   address: spokSamePubkey(fetchedRfq.address),
-  // });
+  spok(t, rfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq.address),
+  });
 });
-
-// test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
-//   const quoteAsset = cvg
-//     .instrument(new SpotInstrument(cvg, usdcMint))
-//     .toQuoteData();
-
-//   const { rfq } = await cvg.rfqs().createAndFinalize({
-//     instruments: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 1,
-//         side: Side.Bid,
-//       }),
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 2,
-//         side: Side.Bid,
-//       }),
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Bid,
-//       }),
-//     ],
-//     orderType: OrderType.Sell,
-//     fixedSize: { __kind: 'None', padding: 0 },
-//     quoteAsset,
-//   });
-
-//   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
-
-//   spok(t, rfq, {
-//     $topic: 'Created RFQ',
-//     model: 'rfq',
-//     address: spokSamePubkey(foundRfq.address),
-//   });
-// });
 
 // test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 //   const spotInstrument = new SpotInstrument(cvg, btcMint, {
