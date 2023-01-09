@@ -1,5 +1,5 @@
-import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { createRespondToRfqInstruction, Quote, BaseAssetIndex } from '@convergence-rfq/rfq';
+import { PublicKey, Keypair, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -53,23 +53,25 @@ export type RespondInput = {
   protocol?: PublicKey;
   /** The address of the Rfq account. */
   rfq: PublicKey;
-  
+
   // /** The address of the response account. */
   // response: PublicKey;
 
-  /** Optional Rfq keypair */
+  /** Optional Response keypair */
   keypair?: Keypair;
 
   /** The address of the Maker's collateral_info account. */
-  collateralInfo: PublicKey;
+  collateralInfo?: PublicKey;
   /** The address of the Maker's collateral_token account. */
-  collateralToken: PublicKey;
+  collateralToken?: PublicKey;
   /** The address of the risk_engine account. */
-  riskEngine: PublicKey;
+  riskEngine?: PublicKey;
   /** The optional Bid side */
   bid: Option<Quote>;
   /** The optional Ask side */
   ask: Option<Quote>;
+  /** The base asset index. */
+  baseAssetIndex?: BaseAssetIndex;
 };
 
 /**
@@ -124,6 +126,12 @@ export const respondOperationHandler: OperationHandler<RespondOperation> = {
  */
 export type RespondBuilderParams = RespondInput;
 
+function toLittleEndian(value: number, bytes: number) {
+  const buf = Buffer.allocUnsafe(bytes);
+  buf.writeUIntLE(value, 0, bytes);
+  return buf;
+}
+
 /**
  * Responds to an Rfq.
  *
@@ -143,22 +151,76 @@ export const respondBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { keypair = Keypair.generate() } = params;
+  const { keypair = Keypair.generate(), baseAssetIndex = { value: 0 } } = params;
+
+  const protocol = await convergence.protocol().get();
+
+  const identity = convergence.identity();
+
+  const systemProgram = convergence.programs().getSystem(programs);
+  const rfqProgram = convergence.programs().getToken(programs);
+  const riskEngineProgram = convergence.programs().getRiskEngine(programs);
+
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), identity.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), identity.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
+    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
+  );
+
+  const anchorRemainingAccounts: AccountMeta[] = [];
+
+  const [config] = PublicKey.findProgramAddressSync(
+    [Buffer.from('config')],
+    riskEngineProgram.address
+  );
+  const configAccount: AccountMeta = {
+    pubkey: config,
+    isSigner: false,
+    isWritable: true,
+  };
+
+  const [baseAsset] = PublicKey.findProgramAddressSync(
+    [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex.value, 2)],
+    rfqProgram.address
+  );
+
+  const baseAssetAccounts: AccountMeta[] = [
+    {
+      pubkey: baseAsset,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+  const oracleAccounts: AccountMeta[] = [
+    {
+      pubkey: SWITCHBOARD_BTC_ORACLE,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
 
   const {
     maker = convergence.identity(),
     rfq,
-    collateralInfo,
-    collateralToken,
-    riskEngine,
-    bid = null,
+    collateralInfo = collateralInfoPda,
+    collateralToken = collateralTokenPda,
+    riskEngine = riskEngineProgram.address,
+    bid,
     ask = null,
   } = params;
 
-  const protocol = await convergence.protocol().get();
-
-  const systemProgram = convergence.programs().getSystem(programs);
-  const rfqProgram = convergence.programs().getToken(programs);
+  anchorRemainingAccounts.push(
+    configAccount,
+    ...baseAssetAccounts,
+    ...oracleAccounts
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -173,6 +235,7 @@ export const respondBuilder = async (
           collateralToken,
           riskEngine,
           systemProgram: systemProgram.address,
+          anchorRemainingAccounts
         },
         {
           bid,
