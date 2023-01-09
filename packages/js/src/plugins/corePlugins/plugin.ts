@@ -14,6 +14,7 @@ import { protocolModule } from '../protocolModule';
 import { riskEngineModule } from '../riskEngineModule';
 import { instrumentModule } from '../instrumentModule';
 import { psyoptionsEuropeanInstrumentModule } from '../psyoptionsEuropeanInstrumentModule';
+import { psyoptionsAmericanInstrumentModule } from '../psyoptionsAmericanInstrumentModule';
 import { spotInstrumentModule } from '../spotInstrumentModule';
 
 export const corePlugins = () => ({
@@ -42,5 +43,6 @@ export const corePlugins = () => ({
     convergence.use(instrumentModule());
     convergence.use(spotInstrumentModule());
     convergence.use(psyoptionsEuropeanInstrumentModule());
+    convergence.use(psyoptionsAmericanInstrumentModule());
   },
 });

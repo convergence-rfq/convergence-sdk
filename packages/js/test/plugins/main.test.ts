@@ -25,6 +25,7 @@ import {
   OptionType,
   InstrumentType,
   Rfq,
+  //assert,
 } from '@/index';
 
 killStuckProcess();
@@ -124,7 +125,7 @@ test('[protocolModule] it can add the spot instrument', async (t: Test) => {
   });
 });
 
-test('[protocolModule] it can add the PsyOptions instrument', async (t: Test) => {
+test('[protocolModule] it can add the PsyOptions European instrument', async (t: Test) => {
   const dao = cvg.rpc().getDefaultFeePayer();
   const protocol = await cvg.protocol().get();
 
@@ -141,6 +142,40 @@ test('[protocolModule] it can add the PsyOptions instrument', async (t: Test) =>
     instrumentProgram: new PublicKey(
       PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS
     ),
+    canBeUsedAsQuote,
+    validateDataAccountAmount,
+    prepareToSettleAccountAmount,
+    settleAccountAmount,
+    revertPreparationAccountAmount,
+    cleanUpAccountAmount,
+  });
+
+  spok(t, protocol, {
+    $topic: 'Add Instrument',
+    model: 'protocol',
+    address: spokSamePubkey(protocol.address),
+  });
+});
+
+test('[protocolModule] it can add the PsyOptions American instrument', async (t: Test) => {
+  const dao = cvg.rpc().getDefaultFeePayer();
+  const protocol = await cvg.protocol().get();
+
+  const validateDataAccountAmount = 2;
+  const prepareToSettleAccountAmount = 7;
+  const settleAccountAmount = 3;
+  const revertPreparationAccountAmount = 3;
+  const cleanUpAccountAmount = 4;
+  const canBeUsedAsQuote = true;
+
+  const psyoptionsAmericanInstrument = cvg
+    .programs()
+    .getPsyoptionsAmericanInstrument();
+
+  await cvg.protocol().addInstrument({
+    authority: dao,
+    protocol: protocol.address,
+    instrumentProgram: psyoptionsAmericanInstrument.address,
     canBeUsedAsQuote,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
@@ -460,6 +495,22 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     address: spokSamePubkey(foundRfq3.address),
   });
 });
+
+//test('[rfqModule] it can find RFQs by instrument', async () => {
+//  const spotInstrument = new SpotInstrument(cvg, btcMint, {
+//    amount: 0,
+//    side: Side.Bid,
+//  });
+//  const rfqs = await cvg.rfqs().findByInstrument({
+//    instrument: spotInstrument,
+//  });
+//  assert(rfqs.length > 0);
+//spok(t, rfq3, {
+//  $topic: 'Created RFQ',
+//  model: 'rfq',
+//  address: spokSamePubkey(foundRfq3.address),
+//});
+//});
 
 //test('[rfqModule] it can find RFQs by owner', async () => {
 //  const spotInstrumentClient = cvg.spotInstrument();

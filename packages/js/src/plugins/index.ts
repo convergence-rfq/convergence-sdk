@@ -14,6 +14,7 @@ export * from './rpcModule';
 export * from './instrumentModule';
 export * from './spotInstrumentModule';
 export * from './psyoptionsEuropeanInstrumentModule';
+export * from './psyoptionsAmericanInstrumentModule';
 export * from './protocolModule';
 export * from './storageModule';
 export * from './systemModule';
