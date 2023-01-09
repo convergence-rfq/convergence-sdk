@@ -139,13 +139,12 @@ export const respondToRfqBuilder = async (
   params: RespondToRfqBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  const { programs, /*payer = convergence.rpc().getDefaultFeePayer()*/ } = options;
+  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { maker = convergence.identity(), keypair = Keypair.generate(), baseAssetIndex = { value: 0 } } = params;
 
   const protocol = await convergence.protocol().get();
 
-  // const systemProgram = convergence.programs().getSystem(programs);
-  const rfqProgram = convergence.programs().getToken(programs);
+  const rfqProgram = convergence.programs().getRfq(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
   const [collateralInfoPda] = PublicKey.findProgramAddressSync(
@@ -209,7 +208,10 @@ export const respondToRfqBuilder = async (
   );
 
   return TransactionBuilder.make()
-    .setFeePayer(maker)
+    .setFeePayer(payer)
+    .setContext({
+      keypair,
+    })
     .add({
       instruction: createRespondToRfqInstruction(
         {
