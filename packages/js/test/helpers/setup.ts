@@ -38,6 +38,7 @@ export const SWITCHBOARD_BTC_ORACLE = new PublicKey(
 
 export type ConvergenceOptions = {
   commitment?: Commitment;
+  skipPreflight?: boolean;
   rpcEndpoint?: string;
   solsToAirdrop?: number;
 };
