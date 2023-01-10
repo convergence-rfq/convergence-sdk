@@ -1,4 +1,3 @@
-import { PublicKey } from '@solana/web3.js';
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
 import {
@@ -8,6 +7,9 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { InstrumentClient } from '@/plugins/instrumentModule';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
@@ -17,7 +19,7 @@ const Key = 'FindRfqsByInstrumentOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByInstrument({ instrument };
+ *   .findByInstrument({ instrument: SpotInstrument };
  * ```
  *
  * @group Operations
@@ -42,7 +44,7 @@ export type FindRfqsByInstrumentOperation = Operation<
  */
 export type FindRfqsByInstrumentInput = {
   /** The address of the token account. */
-  instrument: PublicKey;
+  instrument: SpotInstrument | PsyoptionsEuropeanInstrument;
 };
 
 /**
@@ -69,13 +71,13 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         106, 19, 109, 78, 169, 13, 234, 58,
       ]);
 
+      const instrumentClient = new InstrumentClient(convergence, instrument);
       const rfqProgram = convergence.programs().getRfq(programs);
-
       const rfqGpaBuilder = convergence
         .programs()
         .getGpaBuilder(rfqProgram.address)
         .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
-        .where(8, instrument);
+        .where(8, instrumentClient.getProgramAccount().pubkey.toBuffer());
 
       const unparsedRfqs = await rfqGpaBuilder.get();
       scope.throwIfCanceled();

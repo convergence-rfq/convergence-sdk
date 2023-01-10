@@ -13,13 +13,13 @@ import {
 /**
  * This is a client for the instrumentModule.
  *
- * It enables us to manage the spot instrument.
+ * It enables us to manage the instruments.
  *
  * You may access this client via the `instrument()` method of your `Convergence` instance.
  *
  * ```ts
  * const instrument = new SpotInstrument({ ... });
- * const instrumentClient = convergence.instrument(instrument);
+ * const instrumentClient = convergence.instrument(instrument, { amount: 1, side: Side.Bid });
  * ```
  *
  * @example

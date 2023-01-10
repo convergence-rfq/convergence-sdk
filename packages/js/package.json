@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/sdk",
-  "version": "2.0.2",
+  "version": "2.0.7",
   "sideEffects": false,
   "module": "dist/esm/index.mjs",
   "main": "dist/cjs/index.cjs",
@@ -46,9 +46,10 @@
   },
   "dependencies": {
     "@bundlr-network/client": "^0.8.8",
+    "@convergence-rfq/psyoptions-american-instrument": "2.0.2",
     "@convergence-rfq/psyoptions-european-instrument": "2.0.5",
     "@convergence-rfq/rfq": "2.0.12",
-    "@convergence-rfq/risk-engine": "2.0.9",
+    "@convergence-rfq/risk-engine": "2.0.11",
     "@convergence-rfq/spot-instrument": "2.0.11",
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/beet-solana": "0.4.0",

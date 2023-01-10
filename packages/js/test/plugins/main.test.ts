@@ -17,8 +17,6 @@ import {
   token,
   Side,
   RiskCategory,
-  SPOT_INSTRUMENT_PROGRAM_ADDRESS,
-  PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
   Token,
   SpotInstrument,
   OrderType,
@@ -56,6 +54,8 @@ let userTokens: Token;
 let finalizedRfq: Rfq;
 
 const mintAuthority = Keypair.generate();
+
+// TODO: Grab keypairs from Phantom wallet 1 and 2 so that browser testing is possible
 const maker = Keypair.generate();
 const taker = Keypair.generate();
 
@@ -127,10 +127,12 @@ test('[protocolModule] it can add the spot instrument', async (t: Test) => {
   const cleanUpAccountAmount = 4;
   const canBeUsedAsQuote = true;
 
+  const spotInstrument = cvg.programs().getSpotInstrument();
+
   await cvg.protocol().addInstrument({
     authority: dao,
     protocol: protocol.address,
-    instrumentProgram: new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS),
+    instrumentProgram: spotInstrument.address,
     canBeUsedAsQuote,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
@@ -146,7 +148,7 @@ test('[protocolModule] it can add the spot instrument', async (t: Test) => {
   });
 });
 
-test('[protocolModule] it can add the PsyOptions instrument', async (t: Test) => {
+test('[protocolModule] it can add the PsyOptions European instrument', async (t: Test) => {
   const dao = cvg.rpc().getDefaultFeePayer();
   const protocol = await cvg.protocol().get();
 
@@ -157,12 +159,48 @@ test('[protocolModule] it can add the PsyOptions instrument', async (t: Test) =>
   const cleanUpAccountAmount = 4;
   const canBeUsedAsQuote = true;
 
+  const psyoptionsEuropeanInstrument = cvg
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+
   await cvg.protocol().addInstrument({
     authority: dao,
     protocol: protocol.address,
-    instrumentProgram: new PublicKey(
-      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS
-    ),
+    instrumentProgram: psyoptionsEuropeanInstrument.address,
+    canBeUsedAsQuote,
+    validateDataAccountAmount,
+    prepareToSettleAccountAmount,
+    settleAccountAmount,
+    revertPreparationAccountAmount,
+    cleanUpAccountAmount,
+  });
+
+  spok(t, protocol, {
+    $topic: 'Add Instrument',
+    model: 'protocol',
+    address: spokSamePubkey(protocol.address),
+  });
+});
+
+test('[protocolModule] it can add the PsyOptions American instrument', async (t: Test) => {
+  const dao = cvg.rpc().getDefaultFeePayer();
+  const protocol = await cvg.protocol().get();
+
+  const validateDataAccountAmount = 2;
+  const prepareToSettleAccountAmount = 7;
+  const settleAccountAmount = 3;
+  const revertPreparationAccountAmount = 3;
+  const cleanUpAccountAmount = 4;
+  const canBeUsedAsQuote = true;
+
+  const psyoptionsAmericanInstrument = cvg
+    .programs()
+    .getPsyoptionsAmericanInstrument();
+
+  await cvg.protocol().addInstrument({
+    authority: dao,
+    protocol: protocol.address,
+    instrumentProgram: psyoptionsAmericanInstrument.address,
     canBeUsedAsQuote,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
@@ -183,15 +221,24 @@ test('[riskEngineModule] it can initialize the default risk engine config', asyn
 });
 
 test('[riskEngineModule] it can set spot and option instrument type', async () => {
-  await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS),
-    instrumentType: InstrumentType.Spot,
-  });
+  const spotInstrument = cvg.programs().getSpotInstrument();
+  const psyoptionsEuropeanInstrument = cvg
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanInstrument = cvg
+    .programs()
+    .getPsyoptionsAmericanInstrument();
 
   await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: new PublicKey(
-      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS
-    ),
+    instrumentProgram: spotInstrument.address,
+    instrumentType: InstrumentType.Spot,
+  });
+  await cvg.riskEngine().setInstrumentType({
+    instrumentProgram: psyoptionsAmericanInstrument.address,
+    instrumentType: InstrumentType.Option,
+  });
+  await cvg.riskEngine().setInstrumentType({
+    instrumentProgram: psyoptionsEuropeanInstrument.address,
     instrumentType: InstrumentType.Option,
   });
 });
@@ -437,16 +484,17 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
 });
 
 test('[rfqModule] it can finalize RFQ construction', async () => {
-  const spotInstrument = new SpotInstrument(cvg, btcMint, {
-    amount: 1,
-    side: Side.Bid,
-  });
   const quoteAsset = cvg
     .instrument(new SpotInstrument(cvg, usdcMint))
     .toQuoteData();
 
   const { rfq } = await cvg.rfqs().create({
-    instruments: [spotInstrument],
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
@@ -626,6 +674,7 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
 //   });
 // });
 
+<<<<<<< HEAD
 // //test('[rfqModule] it can find RFQs by owner', async () => {
 // //  const spotInstrumentClient = cvg.spotInstrument();
 // //  const spotInstrument = spotInstrumentClient.createInstrument(
@@ -654,6 +703,52 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
 // //    address: spokSamePubkey(foundRfq2.address),
 // //  });
 // //});
+=======
+//test('[rfqModule] it can find RFQs by instrument', async () => {
+//  const spotInstrument = new SpotInstrument(cvg, btcMint, {
+//    amount: 0,
+//    side: Side.Bid,
+//  });
+//  const rfqs = await cvg.rfqs().findByInstrument({
+//    instrument: spotInstrument,
+//  });
+//  assert(rfqs.length > 0);
+//spok(t, rfq3, {
+//  $topic: 'Created RFQ',
+//  model: 'rfq',
+//  address: spokSamePubkey(foundRfq3.address),
+//});
+//});
+
+//test('[rfqModule] it can find RFQs by owner', async () => {
+//  const spotInstrumentClient = cvg.spotInstrument();
+//  const spotInstrument = spotInstrumentClient.createInstrument(
+//    btcMint.address,
+//    btcMint.decimals,
+//    Side.Bid,
+//    1
+//  );
+//  const { rfq: rfq1 } = await cvg.rfqs().create({
+//    instruments: [spotInstrument],
+//    quoteAsset: usdcMint,
+//  });
+//  const { rfq: rfq2 } = await createRfq(cvg);
+//  const [
+//    foundRfq1,
+//    // foundRfq2
+//  ] = await cvg.rfqs().findAllByOwner({ owner: cvg.identity().publicKey });
+//  spok(t, rfq1, {
+//    $topic: 'Created RFQ',
+//    model: 'rfq',
+//    address: spokSamePubkey(foundRfq1.address),
+//  });
+//  spok(t, rfq2, {
+//    $topic: 'Created RFQ',
+//    model: 'rfq',
+//    address: spokSamePubkey(foundRfq2.address),
+//  });
+//});
+>>>>>>> 725dcfc81af78048a1a415ee3a5f4a8055e9aef1
 
 // test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async (t: Test) => {
 //   const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
