@@ -31,7 +31,10 @@
     "validator:run": "./infra/solana-test-validator.sh",
     "validator:logs": "solana logs --url localhost",
     "docs": "typedoc",
-    "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles"
+    "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles",
+    "packages:change": "changeset",
+    "packages:version": "changeset version",
+    "packages:publish": "turbo run lint build && changeset publish"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",
