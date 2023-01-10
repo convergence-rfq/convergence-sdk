@@ -17,7 +17,7 @@ import { createSerializerFromFixableBeetArgsStruct } from '@/types';
  */
 export class SpotInstrument implements Instrument {
   readonly model = 'spotInstrument';
-  readonly decimals = this.mint.decimals;
+  readonly decimals: number;
 
   constructor(
     readonly convergence: Convergence,
@@ -26,7 +26,12 @@ export class SpotInstrument implements Instrument {
       amount: number;
       side: Side;
     }
-  ) {}
+  ) {
+    this.convergence = convergence;
+    this.mint = mint;
+    this.decimals = mint.decimals;
+    this.legInfo = legInfo;
+  }
 
   static createForLeg(
     convergence: Convergence,
