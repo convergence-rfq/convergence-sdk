@@ -1,4 +1,8 @@
-import { createRespondToRfqInstruction, Quote, BaseAssetIndex } from '@convergence-rfq/rfq';
+import {
+  createRespondToRfqInstruction,
+  Quote,
+  BaseAssetIndex,
+} from '@convergence-rfq/rfq';
 import { PublicKey, Keypair, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -46,7 +50,7 @@ export type RespondToRfqInput = {
   /**
    * The maker of the Response as a Signer.
    */
-  maker?: Signer;
+  maker: Signer;
   /** The address of the protocol account. */
   protocol?: PublicKey;
   /** The address of the Rfq account. */
@@ -80,34 +84,35 @@ export type RespondToRfqOutput = {
  * @group Operations
  * @category Handlers
  */
-export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperation> = {
-  handle: async (
-    operation: RespondToRfqOperation,
-    convergence: Convergence,
-    scope: OperationScope
-  ): Promise<RespondToRfqOutput> => {
-    // const { keypair = Keypair.generate() } = operation.input;
+export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperation> =
+  {
+    handle: async (
+      operation: RespondToRfqOperation,
+      convergence: Convergence,
+      scope: OperationScope
+    ): Promise<RespondToRfqOutput> => {
+      // const { keypair = Keypair.generate() } = operation.input;
 
-    const builder = await respondToRfqBuilder(
-      convergence,
-      {
-        ...operation.input,
-      },
-      scope
-    );
-    scope.throwIfCanceled();
+      const builder = await respondToRfqBuilder(
+        convergence,
+        {
+          ...operation.input,
+        },
+        scope
+      );
+      scope.throwIfCanceled();
 
-    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-      convergence,
-      scope.confirmOptions
-    );
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+        convergence,
+        scope.confirmOptions
+      );
 
-    const output = await builder.sendAndConfirm(convergence, confirmOptions);
-    scope.throwIfCanceled();
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
 
-    return { ...output };
-  },
-};
+      return { ...output };
+    },
+  };
 
 /**
  * @group Transaction Builders
@@ -139,11 +144,18 @@ export const respondToRfqBuilder = async (
   params: RespondToRfqBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { maker = convergence.identity(), keypair = Keypair.generate(), baseAssetIndex = { value: 0 } } = params;
+  const { programs } = options;
+  const {
+    rfq,
+    // maker = convergence.identity(),
+    maker,
+    keypair = Keypair.generate(),
+    baseAssetIndex = { value: 0 },
+  } = params;
 
   const protocol = await convergence.protocol().get();
 
+  const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
@@ -176,6 +188,7 @@ export const respondToRfqBuilder = async (
     [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex.value, 2)],
     rfqProgram.address
   );
+  // const baseAsset = PublicKey.default;
 
   const baseAssetAccounts: AccountMeta[] = [
     {
@@ -193,7 +206,6 @@ export const respondToRfqBuilder = async (
   ];
 
   const {
-    rfq,
     collateralInfo = collateralInfoPda,
     collateralToken = collateralTokenPda,
     riskEngine = riskEngineProgram.address,
@@ -207,30 +219,33 @@ export const respondToRfqBuilder = async (
     ...oracleAccounts
   );
 
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
-    .setContext({
-      keypair,
-    })
-    .add({
-      instruction: createRespondToRfqInstruction(
-        {
-          maker: maker.publicKey,
-          protocol: protocol.address,
-          rfq,
-          response: keypair.publicKey,
-          collateralInfo,
-          collateralToken,
-          riskEngine,
-          anchorRemainingAccounts
-        },
-        {
-          bid,
-          ask,
-        },
-        rfqProgram.address
-      ),
-      signers: [maker, keypair],
-      key: 'respondToRfq',
-    });
+  return (
+    TransactionBuilder.make()
+      .setFeePayer(maker)
+      // .setContext({
+      //   keypair,
+      // })
+      .add({
+        instruction: createRespondToRfqInstruction(
+          {
+            maker: maker.publicKey,
+            protocol: protocol.address,
+            rfq,
+            response: keypair.publicKey,
+            collateralInfo,
+            collateralToken,
+            riskEngine,
+            systemProgram: systemProgram.address,
+            anchorRemainingAccounts,
+          },
+          {
+            bid,
+            ask,
+          },
+          rfqProgram.address
+        ),
+        signers: [maker, keypair],
+        key: 'respondToRfq',
+      })
+  );
 };

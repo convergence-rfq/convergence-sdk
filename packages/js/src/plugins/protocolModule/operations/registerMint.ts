@@ -150,10 +150,7 @@ export const registerMintBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq();
 
-  const [protocol] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
+  const protocol = await convergence.protocol().get();
 
   const [mintInfo] = PublicKey.findProgramAddressSync(
     [Buffer.from('mint_info'), mint.toBuffer()],
@@ -177,7 +174,7 @@ export const registerMintBuilder = async (
       instruction: createRegisterMintInstruction(
         {
           authority: authority.publicKey,
-          protocol,
+          protocol: protocol.address,
           mintInfo,
           baseAsset: baseAssetIndex >= 0 ? baseAsset : PublicKey.default,
           mint,

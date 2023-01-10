@@ -148,23 +148,21 @@ export const finalizeRfqConstructionBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-
-  const identity = convergence.identity();
+  const { taker = convergence.identity() } = params;
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), identity.publicKey.toBuffer()],
+    [Buffer.from('collateral_info'), taker.publicKey.toBuffer()],
     rfqProgram.address
   );
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), identity.publicKey.toBuffer()],
+    [Buffer.from('collateral_token'), taker.publicKey.toBuffer()],
     rfqProgram.address
   );
 
   const {
-    taker = identity,
     rfq,
     collateralInfo = collateralInfoPda,
     collateralToken = collateralTokenPda,
@@ -177,11 +175,6 @@ export const finalizeRfqConstructionBuilder = async (
   );
 
   const anchorRemainingAccounts: AccountMeta[] = [];
-
-  // const [protocolPda] = PublicKey.findProgramAddressSync(
-  //   [Buffer.from('protocol')],
-  //   rfqProgram.address
-  // );
 
   const protocol = await convergence.protocol().get();
 
@@ -224,6 +217,9 @@ export const finalizeRfqConstructionBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    // .setContext({
+    //   rfq,
+    // })
     .add({
       instruction: createFinalizeRfqConstructionInstruction(
         {

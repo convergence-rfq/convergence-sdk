@@ -54,9 +54,6 @@ export type FundCollateralInput = {
   /** Token account of user's token */
   userTokens: PublicKey;
 
-  /** The address of the protocol account. */
-  protocol?: PublicKey;
-
   /** The address of the user's collateral_info account. */
   collateralInfo?: PublicKey;
 
@@ -83,34 +80,34 @@ export type FundCollateralOutput = {
  * @category Handlers
  */
 export const fundCollateralOperationHandler: OperationHandler<FundCollateralOperation> =
-{
-  handle: async (
-    operation: FundCollateralOperation,
-    convergence: Convergence,
-    scope: OperationScope
-  ) => {
-    scope.throwIfCanceled();
+  {
+    handle: async (
+      operation: FundCollateralOperation,
+      convergence: Convergence,
+      scope: OperationScope
+    ) => {
+      scope.throwIfCanceled();
 
-    const builder = await fundCollateralBuilder(
-      convergence,
-      {
-        ...operation.input,
-      },
-      scope
-    );
-    scope.throwIfCanceled();
+      const builder = await fundCollateralBuilder(
+        convergence,
+        {
+          ...operation.input,
+        },
+        scope
+      );
+      scope.throwIfCanceled();
 
-    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-      convergence,
-      scope.confirmOptions
-    );
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+        convergence,
+        scope.confirmOptions
+      );
 
-    const output = await builder.sendAndConfirm(convergence, confirmOptions);
-    scope.throwIfCanceled();
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
 
-    return output;
-  },
-};
+      return output;
+    },
+  };
 
 export type FundCollateralBuilderParams = FundCollateralInput;
 
@@ -132,46 +129,37 @@ export const fundCollateralBuilder = async (
   params: FundCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  const { programs } = options;
+  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { user = convergence.identity() } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const [protocolPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
+  const protocol = await convergence.protocol().get();
+
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from('collateral_token'),
-      user.publicKey.toBuffer(),
-    ],
+    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
     rfqProgram.address
   );
   const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from('collateral_info'),
-      user.publicKey.toBuffer(),
-    ],
+    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
     rfqProgram.address
   );
 
   const {
     userTokens,
-    protocol = protocolPda,
     collateralInfo = collateralInfoPda,
     collateralToken = collateralTokenPda,
     amount,
   } = params;
 
   return TransactionBuilder.make()
-    .setFeePayer(user)
+    .setFeePayer(payer)
     .add({
       instruction: createFundCollateralInstruction(
         {
           user: user.publicKey,
           userTokens,
-          protocol,
+          protocol: protocol.address,
           collateralInfo,
           collateralToken,
         },

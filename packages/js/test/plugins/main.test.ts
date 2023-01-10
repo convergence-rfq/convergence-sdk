@@ -29,9 +29,9 @@ import {
   InstrumentType,
   Rfq,
   KeypairSigner,
-  // KeypairSigner,
 } from '@/index';
 // import { createWallet } from '../helpers';
+import { SKIP_PREFLIGHT } from '../helpers';
 
 killStuckProcess();
 
@@ -50,6 +50,7 @@ let cvg: Convergence;
 let usdcMint: Mint;
 let btcMint: Mint;
 
+//@ts-ignore
 let userTokens: Token;
 
 let finalizedRfq: Rfq;
@@ -61,7 +62,8 @@ const taker = Keypair.generate();
 let newMaker: KeypairSigner;
 
 test('[setup] it can create Convergence instance', async () => {
-  cvg = await convergenceCli();
+  cvg = await convergenceCli(SKIP_PREFLIGHT);
+  newMaker = await createWallet(cvg, 1_000);
 
   const { mint: newBTCMint } = await cvg.tokens().createMint({
     mintAuthority: mintAuthority.publicKey,
@@ -77,9 +79,11 @@ test('[setup] it can create Convergence instance', async () => {
 
   usdcMint = newUSDCMint;
 
-  const { token: toUSDCToken } = await cvg
-    .tokens()
-    .createToken({ mint: usdcMint.address, token: maker });
+  const { token: toUSDCToken } = await cvg.tokens().createToken({
+    mint: usdcMint.address,
+    // owner: newMaker.publicKey,
+    token: maker,
+  });
 
   await cvg.tokens().mint({
     mintAddress: usdcMint.address,
@@ -245,10 +249,8 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
   });
 });
 
-
 test('[collateralModule] it can initialize maker collateral', async (t: Test) => {
   const protocol = await cvg.protocol().get();
-  newMaker = await createWallet(cvg, 10);
 
   const collateralMint = await cvg
     .tokens()
@@ -269,7 +271,6 @@ test('[collateralModule] it can initialize maker collateral', async (t: Test) =>
     address: spokSamePubkey(collateralAccount.address),
   });
 });
-
 
 test('[collateralModule] it can fund collateral', async (t: Test) => {
   const AMOUNT = 10_000_000_010;
@@ -294,7 +295,6 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   });
 
   await cvg.collateral().fundCollateral({
-    // user: taker,
     userTokens: newUserTokens.address,
     amount: AMOUNT,
   });
@@ -317,7 +317,6 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   });
 });
 
-
 test('[collateralModule] it can fund maker collateral', async (t: Test) => {
   const AMOUNT = 10_000_000_010;
 
@@ -327,24 +326,22 @@ test('[collateralModule] it can fund maker collateral', async (t: Test) => {
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
 
-  const { token: newUserTokens } = await cvg.tokens().createToken({
-    owner: newMaker.publicKey,
+  const { token: newMakerUserTokens } = await cvg.tokens().createToken({
     mint: collateralMint.address,
+    owner: newMaker.publicKey,
   });
-
-  userTokens = newUserTokens;
 
   await cvg.tokens().mint({
     mintAddress: collateralMint.address,
     amount: token(AMOUNT),
     toOwner: newMaker.publicKey,
-    toToken: newUserTokens.address,
+    toToken: newMakerUserTokens.address,
     mintAuthority,
   });
 
   await cvg.collateral().fundCollateral({
     user: newMaker,
-    userTokens: newUserTokens.address,
+    userTokens: newMakerUserTokens.address,
     amount: AMOUNT,
   });
 
@@ -463,7 +460,7 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
   });
 
   finalizedRfq = rfq;
-  console.log(finalizedRfq)
+  console.log(finalizedRfq);
 
   // const rfqGpaBuilder = cvg
   //   .programs()
@@ -482,16 +479,49 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
   // });
 });
 
+// test('[rfqModule] it can cancel an Rfq', async (t: Test) => {
+//   // const rfqProgram = cvg.programs().getRfq();
+
+//   await cvg.rfqs().cancelRfq({
+//     rfq: finalizedRfq.address,
+//   });
+
+//   // const ACTIVE_WINDOW = toLittleEndian(10, 2);
+
+//   // const rfqGpaBuilder = cvg
+//   //   .programs()
+//   //   .getGpaBuilder(rfqProgram.address)
+//   //   .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
+//   //   .where(8, cvg.identity().publicKey)
+//   //   // .where(41, 0);
+//   //   // .where(159, ACTIVE_WINDOW); //active_window: 10
+//   // // .where(40, 0);
+//   // // .where(169, 2); //StoredRfqState::Canceled
+
+//   // const [unparsedRfq] = await rfqGpaBuilder.get();
+//   // const cancelledRfq = toRfq(toRfqAccount(unparsedRfq));
+
+//   // spok(t, finalizedRfq, {
+//   //   $topic: 'Cancelled RFQ',
+//   //   model: 'rfq',
+//   //   address: spokSamePubkey(cancelledRfq.address),
+//   // });
+// });
+
 test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
-  await cvg.rfqs().respond({
-    rfq: finalizedRfq.address,
-    maker: newMaker,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    ask: null,
-  });
+  // try {
+    await cvg.rfqs().respond({
+      maker: newMaker,
+      rfq: finalizedRfq.address,
+      bid: {
+        __kind: 'FixedSize',
+        priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+      },
+      ask: null,
+    });
+  // } catch (e) {
+  //   console.log(e);
+  // }
 
   // const rfqGpaBuilder = cvg
   //   .programs()
@@ -512,36 +542,6 @@ test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
   //   address: spokSamePubkey(fetchedRfq.address),
   // });
 });
-
-// test('[rfqModule] it can cancel an Rfq', async (t: Test) => {
-//   const rfqProgram = cvg.programs().getRfq();
-
-//   await cvg.rfqs().cancelRfq({
-//     rfq: finalizedRfq.address,
-//   });
-
-//   const ACTIVE_WINDOW = toLittleEndian(10, 2);
-
-//   const rfqGpaBuilder = cvg
-//     .programs()
-//     .getGpaBuilder(rfqProgram.address)
-//     .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
-//     .where(8, cvg.identity().publicKey)
-//     // .where(41, 0);
-//     // .where(159, ACTIVE_WINDOW); //active_window: 10
-//   // .where(40, 0);
-//   // .where(169, 2); //StoredRfqState::Canceled
-
-//   const [unparsedRfq] = await rfqGpaBuilder.get();
-//   const cancelledRfq = toRfq(toRfqAccount(unparsedRfq));
-
-//   spok(t, finalizedRfq, {
-//     $topic: 'Cancelled RFQ',
-//     model: 'rfq',
-//     address: spokSamePubkey(cancelledRfq.address),
-//   });
-// });
-
 
 test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
   const quoteAsset = cvg
