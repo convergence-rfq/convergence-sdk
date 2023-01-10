@@ -1,0 +1,8 @@
+$ yarn clean && tsc && tsc-alias && tsc -p test/tsconfig.json && tsc-alias -p test/tsconfig.json && rollup -c
+$ rimraf dist
+[36m
+[1msrc/index.ts[22m → [1mdist/esm[22m...[39m
+[32mcreated [1mdist/esm[22m in [1m1.5s[22m[39m
+[36m
+[1msrc/index.ts[22m → [1mdist/cjs[22m...[39m
+[32mcreated [1mdist/cjs[22m in [1m1s[22m[39m
