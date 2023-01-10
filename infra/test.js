@@ -5,7 +5,7 @@ process.env.NX_TASKS_RUNNER_DYNAMIC_OUTPUT = false;
 const solanaLogs = new Promise((resolve) => {
   // Logs are not available immediately after starting the test validator
   setTimeout(() => {
-    const child = spawn('solana', ['logs', '--url', 'localhost'], {
+    const child = spawn('solana', ['logs', '--url', 'localhost', '--verbose'], {
       stdio: [process.stdin, process.stdout, process.stderr],
     });
     resolve(child);

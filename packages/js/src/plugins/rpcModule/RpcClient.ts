@@ -119,6 +119,9 @@ export class RpcClient {
     transaction = await this.signTransaction(transaction, signers);
     const rawTransaction = transaction.serialize();
 
+    // TODO: Make this configurable.
+    sendOptions.skipPreflight = true;
+
     try {
       return await this.convergence.connection.sendRawTransaction(
         rawTransaction,

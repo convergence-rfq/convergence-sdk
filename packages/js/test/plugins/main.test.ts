@@ -9,6 +9,7 @@ import {
   BTC_DECIMALS,
   USDC_DECIMALS,
   createWallet,
+  SKIP_PREFLIGHT,
   // initializeNewOptionMeta,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
@@ -29,7 +30,6 @@ import {
   KeypairSigner,
 } from '@/index';
 // import { createWallet } from '../helpers';
-import { SKIP_PREFLIGHT } from '../helpers';
 
 killStuckProcess();
 
@@ -558,15 +558,15 @@ test('[rfqModule] it can finalize RFQ construction', async () => {
 
 test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
   // try {
-    await cvg.rfqs().respond({
-      maker: newMaker,
-      rfq: finalizedRfq.address,
-      bid: {
-        __kind: 'FixedSize',
-        priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-      },
-      ask: null,
-    });
+  await cvg.rfqs().respond({
+    maker: newMaker,
+    rfq: finalizedRfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+  });
   // } catch (e) {
   //   console.log(e);
   // }
@@ -674,7 +674,6 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
 //   });
 // });
 
-<<<<<<< HEAD
 // //test('[rfqModule] it can find RFQs by owner', async () => {
 // //  const spotInstrumentClient = cvg.spotInstrument();
 // //  const spotInstrument = spotInstrumentClient.createInstrument(
@@ -703,52 +702,6 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
 // //    address: spokSamePubkey(foundRfq2.address),
 // //  });
 // //});
-=======
-//test('[rfqModule] it can find RFQs by instrument', async () => {
-//  const spotInstrument = new SpotInstrument(cvg, btcMint, {
-//    amount: 0,
-//    side: Side.Bid,
-//  });
-//  const rfqs = await cvg.rfqs().findByInstrument({
-//    instrument: spotInstrument,
-//  });
-//  assert(rfqs.length > 0);
-//spok(t, rfq3, {
-//  $topic: 'Created RFQ',
-//  model: 'rfq',
-//  address: spokSamePubkey(foundRfq3.address),
-//});
-//});
-
-//test('[rfqModule] it can find RFQs by owner', async () => {
-//  const spotInstrumentClient = cvg.spotInstrument();
-//  const spotInstrument = spotInstrumentClient.createInstrument(
-//    btcMint.address,
-//    btcMint.decimals,
-//    Side.Bid,
-//    1
-//  );
-//  const { rfq: rfq1 } = await cvg.rfqs().create({
-//    instruments: [spotInstrument],
-//    quoteAsset: usdcMint,
-//  });
-//  const { rfq: rfq2 } = await createRfq(cvg);
-//  const [
-//    foundRfq1,
-//    // foundRfq2
-//  ] = await cvg.rfqs().findAllByOwner({ owner: cvg.identity().publicKey });
-//  spok(t, rfq1, {
-//    $topic: 'Created RFQ',
-//    model: 'rfq',
-//    address: spokSamePubkey(foundRfq1.address),
-//  });
-//  spok(t, rfq2, {
-//    $topic: 'Created RFQ',
-//    model: 'rfq',
-//    address: spokSamePubkey(foundRfq2.address),
-//  });
-//});
->>>>>>> 725dcfc81af78048a1a415ee3a5f4a8055e9aef1
 
 // test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async (t: Test) => {
 //   const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
