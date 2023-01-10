@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/sdk",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "sideEffects": false,
   "module": "dist/esm/index.mjs",
   "main": "dist/cjs/index.cjs",
@@ -34,15 +34,12 @@
     "url": "https://github.com/convergence-rfq/convergence-sdk.git"
   },
   "scripts": {
-    "lint:test": "yarn eslint --ext js,ts,tsx src",
-    "lint:fix": "yarn eslint --fix --ext js,ts,tsx src",
+    "lint": "eslint --ext js,ts,tsx src",
+    "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
-    "build": "yarn clean && tsc && tsc-alias && tsc -p test/tsconfig.json && tsc-alias -p test/tsconfig.json && rollup -c",
-    "test": "tape dist/test/**/*.test.js",
-    "test:all": "tape dist/test/**/*.test.js && yarn test:exports",
-    "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs",
-    "preversion": "yarn build",
-    "postversion": "git push --follow-tags"
+    "build": "pnpm clean && tsc && tsc-alias && tsc -p test/tsconfig.json && tsc-alias -p test/tsconfig.json && rollup -c",
+    "test": "tape dist/test/**/*.test.js && pnpm test:exports",
+    "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs"
   },
   "dependencies": {
     "@bundlr-network/client": "^0.8.8",
