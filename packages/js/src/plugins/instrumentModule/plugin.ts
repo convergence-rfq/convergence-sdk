@@ -13,7 +13,6 @@ export const instrumentModule = (): ConvergencePlugin => ({
       legInfo?: {
         amount: number;
         side: Side;
-        baseAssetIndex: number;
       }
     ) {
       return new InstrumentClient(this, instrument, legInfo);
@@ -25,7 +24,7 @@ declare module '../../Convergence' {
   interface Convergence {
     instrument(
       instrument: SpotInstrument | PsyoptionsEuropeanInstrument,
-      legInfo?: { amount: number; side: Side; baseAssetIndex: number }
+      legInfo?: { amount: number; side: Side }
     ): InstrumentClient;
   }
 }

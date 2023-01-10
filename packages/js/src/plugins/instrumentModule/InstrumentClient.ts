@@ -14,13 +14,13 @@ import {
 /**
  * This is a client for the instrumentModule.
  *
- * It enables us to manage the spot instrument.
+ * It enables us to manage the instruments.
  *
  * You may access this client via the `instrument()` method of your `Convergence` instance.
  *
  * ```ts
  * const instrument = new SpotInstrument({ ... });
- * const instrumentClient = convergence.instrument(instrument);
+ * const instrumentClient = convergence.instrument(instrument, { amount: 1, side: Side.Bid });
  * ```
  *
  * @example
@@ -39,13 +39,13 @@ export class InstrumentClient {
     protected legInfo?: {
       amount: number;
       side: Side;
-      baseAssetIndex: number;
     }
   ) {}
 
   getBaseAssetIndex(): number {
     if (this.legInfo) {
-      return this.legInfo.baseAssetIndex;
+      // TODO: Get base asset correctly
+      return 0;
     }
     throw Error('Instrument is used for base asset index');
   }
@@ -54,7 +54,7 @@ export class InstrumentClient {
     if (this.legInfo) {
       return {
         instrumentProgram: this.instrument.getProgramId(),
-        baseAssetIndex: { value: this.legInfo.baseAssetIndex },
+        baseAssetIndex: { value: this.getBaseAssetIndex() },
         instrumentData: this.instrument.serializeInstrumentData(),
         instrumentAmount: toBigNumber(this.legInfo.amount),
         instrumentDecimals: this.instrument.decimals,

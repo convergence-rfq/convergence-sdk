@@ -1173,6 +1173,18 @@
     human-id "^1.0.2"
     prettier "^2.7.1"
 
+"@convergence-rfq/psyoptions-american-instrument@2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-american-instrument/-/psyoptions-american-instrument-2.0.2.tgz#24f418de3252a11ad567e9fc1e71d88214912db5"
+  integrity sha512-digSlHLlTMxM73uJ3+1HNliU3MsXUqRQOONQsTraUcCq0PWVrRUueqju1DR6cReCk3mW9iG8W37Lg9tuSuApOw==
+  dependencies:
+    "@metaplex-foundation/beet" "^0.6.1"
+    "@metaplex-foundation/beet-solana" "^0.3.1"
+    "@metaplex-foundation/cusper" "^0.0.2"
+    "@solana/spl-token" "^0.3.5"
+    "@solana/web3.js" "^1.56.2"
+    bn.js "^5.2.0"
+
 "@convergence-rfq/psyoptions-european-instrument@2.0.5":
   version "2.0.5"
   resolved "https://registry.npmjs.org/@convergence-rfq/psyoptions-european-instrument/-/psyoptions-european-instrument-2.0.5.tgz"
@@ -1199,7 +1211,7 @@
 
 "@convergence-rfq/risk-engine@2.0.9":
   version "2.0.9"
-  resolved "https://registry.npmjs.org/@convergence-rfq/risk-engine/-/risk-engine-2.0.9.tgz"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.0.9.tgz#04b80b8f0f1d2add9eae1594836ba74c95741793"
   integrity sha512-x9HVN6tWLPzO+YNLK+l04f6E5No5VTYu6RdiVJ14EkRzBrGo1rZec3vtbB+joLlvkhSPohC/zvKBXNSkdVT3Xg==
   dependencies:
     "@metaplex-foundation/beet" "^0.6.1"
