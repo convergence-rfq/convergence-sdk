@@ -349,11 +349,13 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
 
   await cvg.collateral().fundCollateral({
     userTokens: takerUSDCWallet.address,
+    user: taker,
     amount: COLLATERAL_AMOUNT,
   });
 
   await cvg.collateral().fundCollateral({
     userTokens: makerUSDCWallet.address,
+    user: maker,
     amount: COLLATERAL_AMOUNT,
   });
 
