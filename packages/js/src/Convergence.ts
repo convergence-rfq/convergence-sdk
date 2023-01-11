@@ -8,15 +8,18 @@ import { corePlugins } from './plugins/corePlugins';
 
 export type ConvergenceOptions = {
   cluster?: Cluster;
+  skipPreflight?: boolean;
 };
 
 export class Convergence {
   public readonly connection: Connection;
   public readonly cluster: Cluster;
+  public readonly skipPreflight: boolean;
 
   constructor(connection: Connection, options: ConvergenceOptions = {}) {
     this.connection = connection;
     this.cluster = options.cluster ?? resolveClusterFromConnection(connection);
+    this.skipPreflight = options.skipPreflight ?? false;
     this.use(corePlugins());
   }
 
