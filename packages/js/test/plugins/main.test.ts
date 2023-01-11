@@ -9,6 +9,7 @@ import {
   BTC_DECIMALS,
   USDC_DECIMALS,
   initializeNewOptionMeta,
+  SKIP_PREFLIGHT,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
@@ -16,8 +17,6 @@ import {
   token,
   Side,
   RiskCategory,
-  SPOT_INSTRUMENT_PROGRAM_ADDRESS,
-  PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
   Token,
   SpotInstrument,
   OrderType,
@@ -40,11 +39,13 @@ let userTokens: Token;
 let finalizedRfq: Rfq;
 
 const mintAuthority = Keypair.generate();
+
+// TODO: Grab keypairs from Phantom wallet 1 and 2 so that browser testing is possible
 const maker = Keypair.generate();
 const taker = Keypair.generate();
 
 test('[setup] it can create Convergence instance', async () => {
-  cvg = await convergenceCli();
+  cvg = await convergenceCli(SKIP_PREFLIGHT);
 
   const { mint: newBTCMint } = await cvg.tokens().createMint({
     mintAuthority: mintAuthority.publicKey,
@@ -106,10 +107,12 @@ test('[protocolModule] it can add the spot instrument', async (t: Test) => {
   const cleanUpAccountAmount = 4;
   const canBeUsedAsQuote = true;
 
+  const spotInstrument = cvg.programs().getSpotInstrument();
+
   await cvg.protocol().addInstrument({
     authority: dao,
     protocol: protocol.address,
-    instrumentProgram: new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS),
+    instrumentProgram: spotInstrument.address,
     canBeUsedAsQuote,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
@@ -136,12 +139,14 @@ test('[protocolModule] it can add the PsyOptions European instrument', async (t:
   const cleanUpAccountAmount = 4;
   const canBeUsedAsQuote = true;
 
+  const psyoptionsEuropeanInstrument = cvg
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+
   await cvg.protocol().addInstrument({
     authority: dao,
     protocol: protocol.address,
-    instrumentProgram: new PublicKey(
-      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS
-    ),
+    instrumentProgram: psyoptionsEuropeanInstrument.address,
     canBeUsedAsQuote,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
@@ -196,15 +201,24 @@ test('[riskEngineModule] it can initialize the default risk engine config', asyn
 });
 
 test('[riskEngineModule] it can set spot and option instrument type', async () => {
-  await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: new PublicKey(SPOT_INSTRUMENT_PROGRAM_ADDRESS),
-    instrumentType: InstrumentType.Spot,
-  });
+  const spotInstrument = cvg.programs().getSpotInstrument();
+  const psyoptionsEuropeanInstrument = cvg
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanInstrument = cvg
+    .programs()
+    .getPsyoptionsAmericanInstrument();
 
   await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: new PublicKey(
-      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS
-    ),
+    instrumentProgram: spotInstrument.address,
+    instrumentType: InstrumentType.Spot,
+  });
+  await cvg.riskEngine().setInstrumentType({
+    instrumentProgram: psyoptionsAmericanInstrument.address,
+    instrumentType: InstrumentType.Option,
+  });
+  await cvg.riskEngine().setInstrumentType({
+    instrumentProgram: psyoptionsEuropeanInstrument.address,
     instrumentType: InstrumentType.Option,
   });
 });

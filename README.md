@@ -55,3 +55,11 @@ Run the tests only.
 ```bash
 yarn test:all
 ```
+
+### NPM
+
+```bash
+yarn changeset:change
+yarn changeset:version
+yarn changeset:publish
+```

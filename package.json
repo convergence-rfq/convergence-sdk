@@ -28,10 +28,13 @@
     "lint:test": "nx run-many --all --target=lint:test",
     "lint:fix": "nx run-many --all --target=lint:fix",
     "format": "prettier --write packages/",
-    "validator:run": "./packages/js/test/run-validator.sh",
+    "validator:run": "pkill solana-test-validator | echo 'Skipping...' && ./infra/solana-test-validator.sh",
     "validator:logs": "solana logs --url localhost",
     "docs": "typedoc",
-    "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles"
+    "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles",
+    "packages:change": "changeset",
+    "packages:version": "changeset version",
+    "packages:publish": "turbo run lint build && changeset publish"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",
@@ -86,6 +89,7 @@
     "spok": "^1.4.3",
     "tape": "^5.5.2",
     "tsc-alias": "^1.7.0",
+    "turbo": "^1.7.0",
     "typedoc": "^0.23.0",
     "typescript": "^4.5.4"
   }

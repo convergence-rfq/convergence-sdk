@@ -36,30 +36,31 @@ export const SWITCHBOARD_BTC_ORACLE = new PublicKey(
  * HELPERS
  */
 
-export type ConvergenceOptions = {
+export type ConvergenceTestOptions = {
   commitment?: Commitment;
+  skipPreflight?: boolean;
   rpcEndpoint?: string;
   solsToAirdrop?: number;
 };
 
-export const createCvg = (options: ConvergenceOptions = {}) => {
+export const createCvg = (options: ConvergenceTestOptions = {}) => {
   const connection = new Connection(
     options.rpcEndpoint ?? 'http://127.0.0.1:8899',
     {
       commitment: options.commitment ?? 'confirmed',
     }
   );
-  return Convergence.make(connection);
+  return Convergence.make(connection, { skipPreflight: options.skipPreflight });
 };
 
-export const convergenceCli = async (options: ConvergenceOptions = {}) => {
+export const convergenceCli = async (options: ConvergenceTestOptions = {}) => {
   const cvg = createCvg(options);
   const wallet = await createWallet(cvg, options.solsToAirdrop);
   return cvg.use(keypairIdentity(wallet as Keypair));
 };
 
 export const convergenceUi = async (
-  options: ConvergenceOptions = {},
+  options: ConvergenceTestOptions = {},
   publicKey: PublicKey
 ) => {
   const cvg = createCvg(options);
