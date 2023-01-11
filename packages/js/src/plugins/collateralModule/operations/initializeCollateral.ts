@@ -51,7 +51,7 @@ export type InitializeCollateralInput = {
    *
    * @defaultValue `convergence.identity()`
    */
-  user?: Signer;
+  user: Signer;
 
   /** The address of the protocol*/
   protocol?: PublicKey;
@@ -87,7 +87,7 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       scope: OperationScope
     ) => {
       const { commitment } = scope;
-      const { user = convergence.identity() } = operation.input;
+      const { user } = operation.input;
       scope.throwIfCanceled();
 
       const builder = await initializeCollateralBuilder(
@@ -156,8 +156,7 @@ export const initializeCollateralBuilder = async (
 ): Promise<TransactionBuilder<InitializeCollateralBuilderContext>> => {
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-
-  const { user = convergence.identity(), collateralMint } = params;
+  const { user, collateralMint } = params;
 
   // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
   const [protocol] = PublicKey.findProgramAddressSync(
