@@ -156,7 +156,6 @@ export const initializeCollateralBuilder = async (
 ): Promise<TransactionBuilder<InitializeCollateralBuilderContext>> => {
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-
   const { user = convergence.identity(), collateralMint } = params;
 
   // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
