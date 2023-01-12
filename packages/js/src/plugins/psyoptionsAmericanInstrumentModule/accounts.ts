@@ -1,1 +1,2 @@
-import { Account } from '@/types';
+// import { Account } from '@/types';
+export{}

@@ -1,13 +1,12 @@
 import { PublicKey } from '@solana/web3.js';
 import { Side } from '@convergence-rfq/rfq';
+import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
 import { Convergence } from '@/Convergence';
-import { toBigNumber } from '@/types';
-import { OptionMarket, OptionMarketWithKey } from '@mithraic-labs/psy-american';
 
 /**
  * This model captures all the relevant information about a Psyoptions European
@@ -59,7 +58,6 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     return new InstrumentClient(convergence, instrument, {
       amount,
       side,
-      baseAssetIndex,
     });
   }
 

@@ -594,3 +594,14 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOpti
     address: spokSamePubkey(foundRfq.address),
   });
 });
+
+test('[riskEngineModule] it can calculate collateral for rfq', async (t: Test) => {
+  const rfq = finalizedRfq;
+  await cvg.riskEngine().calculateCollateralForRfq({ rfq: rfq.address });
+
+  spok(t, rfq, {
+    $topic: 'Calculated Collateral for Rfq',
+    model: 'rfq',
+    address: spokSamePubkey(rfq.address),
+  });
+});

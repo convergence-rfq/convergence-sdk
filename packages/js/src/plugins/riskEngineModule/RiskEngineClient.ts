@@ -3,6 +3,12 @@ import {
   InitializeConfigInput,
   SetInstrumentTypeInput,
   setInstrumentTypeOperation,
+  calculateCollateralForConfirmationOperation,
+  calculateCollateralForResponseOperation,
+  calculateCollateralForRfqOperation,
+  CalculateCollateralForConfirmationIntput,
+  CalculateCollateralForRfqIntput,
+  CalculateCollateralForResponseIntput,
 } from './operations';
 import type { Convergence } from '@/Convergence';
 import { OperationOptions } from '@/types';
@@ -34,5 +40,33 @@ export class RiskEngineClient {
     return this.convergence
       .operations()
       .execute(setInstrumentTypeOperation(input), options);
+  }
+  /** {@inheritDoc  calculateCollateralForRfq} */
+  calculateCollateralForRfq(
+    input: CalculateCollateralForRfqIntput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(calculateCollateralForRfqOperation(input), options);
+  }
+  /** {@inheritDoc calculateCollateralForResponse} */
+  calculateCollateralForResponse(
+    input: CalculateCollateralForResponseIntput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(calculateCollateralForResponseOperation(input), options);
+  }
+
+  /** {@inheritDoc calculateCollateralForConfirmation} */
+  calculateCollateralForConfirmation(
+    input: CalculateCollateralForConfirmationIntput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(calculateCollateralForConfirmationOperation(input), options);
   }
 }
