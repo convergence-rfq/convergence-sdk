@@ -79,12 +79,6 @@ export type AddBaseAssetOutput = {
   response: SendAndConfirmTransactionResponse;
 };
 
-function toLittleEndian(value: number, bytes: number) {
-  const buf = Buffer.allocUnsafe(bytes);
-  buf.writeUIntLE(value, 0, bytes);
-  return buf;
-}
-
 /**
  * @group Operations
  * @category Handlers
@@ -97,7 +91,6 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
       scope: OperationScope
     ): Promise<AddBaseAssetOutput> => {
       scope.throwIfCanceled();
-
       return addBaseAssetBuilder(
         convergence,
         operation.input,
@@ -142,10 +135,7 @@ export const addBaseAssetBuilder = (
     priceOracle,
   } = params;
 
-  const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), toLittleEndian(index.value, 2)],
-    rfqProgram.address
-  );
+  const baseAsset = convergence.protocol().pdas().baseAsset({ index });
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

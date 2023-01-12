@@ -104,12 +104,6 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
     },
   };
 
-function toLittleEndian(value: number, bytes: number) {
-  const buf = Buffer.allocUnsafe(bytes);
-  buf.writeUIntLE(value, 0, bytes);
-  return buf;
-}
-
 /**
  * @group Transaction Builders
  * @category Inputs
@@ -158,12 +152,11 @@ export const registerMintBuilder = async (
   );
 
   let baseAsset: PublicKey;
-
   if (baseAssetIndex >= 0) {
-    [baseAsset] = PublicKey.findProgramAddressSync(
-      [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex, 2)],
-      rfqProgram.address
-    );
+    baseAsset = convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value: baseAssetIndex } });
   } else {
     baseAsset = PublicKey.default;
   }
