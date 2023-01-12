@@ -33,15 +33,19 @@ let btcMint: Mint;
 
 // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let maker: Keypair;
+// BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
 let taker: Keypair;
 
 let makerUSDCWallet: Token;
+let makerBTCWallet: Token;
+
 let takerUSDCWallet: Token;
+let takerBTCWallet: Token;
 
 const WALLET_AMOUNT = 9_000_000_000_000;
 const COLLATERAL_AMOUNT = 100_000_000_000;
 
-test('[setup] it can create Convergence instance', async () => {
+test('[setup] it can create Convergence instance', async (t: Test) => {
   cvg = await convergenceCli(SKIP_PREFLIGHT);
 
   const context = await setupAccounts(cvg, WALLET_AMOUNT);
@@ -50,7 +54,22 @@ test('[setup] it can create Convergence instance', async () => {
   usdcMint = context.usdcMint;
   btcMint = context.btcMint;
   makerUSDCWallet = context.makerUSDCWallet;
+  makerBTCWallet = context.makerBTCWallet;
   takerUSDCWallet = context.takerUSDCWallet;
+  takerBTCWallet = context.takerBTCWallet;
+
+  console.log(taker.publicKey.toString());
+
+  spok(t, makerBTCWallet, {
+    $topic: 'Wallet',
+    model: 'token',
+    ownerAddress: spokSamePubkey(maker.publicKey),
+  });
+  spok(t, takerBTCWallet, {
+    $topic: 'Wallet',
+    model: 'token',
+    ownerAddress: spokSamePubkey(taker.publicKey),
+  });
 });
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
