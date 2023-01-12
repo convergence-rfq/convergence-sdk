@@ -1,15 +1,14 @@
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
+import { RfqGpaBuilder } from '../gpaBuilders';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
+  Program,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
-import { InstrumentClient } from '@/plugins/instrumentModule';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
@@ -44,7 +43,7 @@ export type FindRfqsByInstrumentOperation = Operation<
  */
 export type FindRfqsByInstrumentInput = {
   /** The address of the token account. */
-  instrument: SpotInstrument | PsyoptionsEuropeanInstrument;
+  instrumentProgram: Program;
 };
 
 /**
@@ -64,33 +63,27 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByInstrumentOutput> => {
-      const { programs } = scope;
-      const { instrument } = operation.input;
+      const { instrumentProgram } = operation.input;
 
-      const RFQ_ACCOUNT_DISCRIMINATOR = Buffer.from([
-        106, 19, 109, 78, 169, 13, 234, 58,
-      ]);
-
-      const instrumentClient = new InstrumentClient(convergence, instrument);
-      const rfqProgram = convergence.programs().getRfq(programs);
-      const rfqGpaBuilder = convergence
-        .programs()
-        .getGpaBuilder(rfqProgram.address)
-        .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
-        .where(8, instrumentClient.getProgramAccount().pubkey.toBuffer());
-
-      const unparsedRfqs = await rfqGpaBuilder.get();
+      const rfqProgram = convergence.programs().getRfq(scope.programs);
+      const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
+      const rfqs = await rfqGpaBuilder
+        .whereInstrument(instrumentProgram.address)
+        .get();
       scope.throwIfCanceled();
 
-      const rfqs: Rfq[] = [];
+      return rfqs
+        .map<Rfq | null>((account) => {
+          if (account === null) {
+            return null;
+          }
 
-      for (const unparsedRfq of unparsedRfqs) {
-        const rfqAccount = toRfqAccount(unparsedRfq);
-        const rfq = toRfq(rfqAccount);
-
-        rfqs.push(rfq);
-      }
-
-      return rfqs;
+          try {
+            return toRfq(toRfqAccount(account));
+          } catch (e) {
+            return null;
+          }
+        })
+        .filter((rfq): rfq is Rfq => rfq !== null);
     },
   };
