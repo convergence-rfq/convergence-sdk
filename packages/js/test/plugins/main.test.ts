@@ -58,12 +58,10 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   takerUSDCWallet = context.takerUSDCWallet;
   takerBTCWallet = context.takerBTCWallet;
 
-  console.log(taker.publicKey.toString());
-
   spok(t, makerBTCWallet, {
     $topic: 'Wallet',
     model: 'token',
-    ownerAddress: spokSamePubkey(maker.publicKey),
+    ownerAddress: spokSamePubkey(maker.publicKey).toString(),
   });
   spok(t, takerBTCWallet, {
     $topic: 'Wallet',
