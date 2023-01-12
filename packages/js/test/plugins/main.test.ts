@@ -301,9 +301,6 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
  */
 
 test('[rfqModule] it can create a RFQ', async (t: Test) => {
-  const quoteAsset = cvg
-    .instrument(new SpotInstrument(cvg, usdcMint))
-    .toQuoteData();
   const { rfq } = await cvg.rfqs().create({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -314,7 +311,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
     orderType: OrderType.Sell,
     taker,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset,
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
   });
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
@@ -326,9 +323,6 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
 });
 
 test('[rfqModule] it can finalize RFQ construction and cancel RFQ', async () => {
-  const quoteAsset = cvg
-    .instrument(new SpotInstrument(cvg, usdcMint))
-    .toQuoteData();
   const { rfq } = await cvg.rfqs().create({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -339,7 +333,7 @@ test('[rfqModule] it can finalize RFQ construction and cancel RFQ', async () => 
     taker,
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset,
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
     activeWindow: 5_000,
     settlingWindow: 1_000,
   });
@@ -357,9 +351,6 @@ test('[rfqModule] it can finalize RFQ construction and cancel RFQ', async () => 
 });
 
 test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
-  const quoteAsset = cvg
-    .instrument(new SpotInstrument(cvg, usdcMint))
-    .toQuoteData();
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -378,7 +369,7 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
     taker,
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'None', padding: 0 },
-    quoteAsset,
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
   });
 
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
@@ -391,36 +382,49 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
 });
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
-  const spotInstrument = new SpotInstrument(cvg, btcMint, {
-    amount: 1,
-    side: Side.Bid,
-  });
   const quoteAsset = cvg
     .instrument(new SpotInstrument(cvg, usdcMint))
     .toQuoteData();
-
   const { rfq: rfq1 } = await cvg.rfqs().create({
-    instruments: [spotInstrument],
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
     orderType: OrderType.Sell,
+    taker,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
   });
   const { rfq: rfq2 } = await cvg.rfqs().create({
-    instruments: [spotInstrument],
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
   });
   const { rfq: rfq3 } = await cvg.rfqs().create({
-    instruments: [spotInstrument],
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
     orderType: OrderType.Sell,
+    taker,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
   });
 
-  const [foundRfq1, foundRfq2, foundRfq3] = await cvg
-    .rfqs()
-    .findByAddresses({ addresses: [rfq1.address, rfq2.address, rfq3.address] });
+  const [foundRfq1, foundRfq2, foundRfq3] = await cvg.rfqs().findByAddresses({
+    addresses: [rfq1.address, rfq2.address, rfq3.address],
+  });
 
   spok(t, rfq1, {
     $topic: 'Created RFQ',
@@ -439,50 +443,32 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   });
 });
 
-//test('[rfqModule] it can find RFQs by instrument', async () => {
-//  const spotInstrument = new SpotInstrument(cvg, btcMint, {
-//    amount: 0,
-//    side: Side.Bid,
-//  });
-//  const rfqs = await cvg.rfqs().findByInstrument({
-//    instrument: spotInstrument,
-//  });
-//  assert(rfqs.length > 0);
-//spok(t, rfq3, {
-//  $topic: 'Created RFQ',
-//  model: 'rfq',
-//  address: spokSamePubkey(foundRfq3.address),
-//});
-//});
+test('[rfqModule] it can find RFQs by instrument', async () => {
+  const rfqs = await cvg.rfqs().findByInstrument({
+    instrumentProgram: cvg.programs().getSpotInstrument(),
+  });
+  console.error(rfqs.length);
+});
 
-//test('[rfqModule] it can find RFQs by owner', async () => {
-//  const spotInstrumentClient = cvg.spotInstrument();
-//  const spotInstrument = spotInstrumentClient.createInstrument(
-//    btcMint.address,
-//    btcMint.decimals,
-//    Side.Bid,
-//    1
-//  );
-//  const { rfq: rfq1 } = await cvg.rfqs().create({
-//    instruments: [spotInstrument],
-//    quoteAsset: usdcMint,
-//  });
-//  const { rfq: rfq2 } = await createRfq(cvg);
-//  const [
-//    foundRfq1,
-//    // foundRfq2
-//  ] = await cvg.rfqs().findAllByOwner({ owner: cvg.identity().publicKey });
-//  spok(t, rfq1, {
-//    $topic: 'Created RFQ',
-//    model: 'rfq',
-//    address: spokSamePubkey(foundRfq1.address),
-//  });
-//  spok(t, rfq2, {
-//    $topic: 'Created RFQ',
-//    model: 'rfq',
-//    address: spokSamePubkey(foundRfq2.address),
-//  });
-//});
+test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+  });
+  const foundRfqs = await cvg.rfqs().findAllByOwner({ owner: taker.publicKey });
+  spok(t, rfq, {
+    $topic: 'Created RFQ',
+    taker: spokSamePubkey(foundRfqs[0].taker),
+  });
+});
 
 test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions Europeans', async (t: Test) => {
   const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
