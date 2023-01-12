@@ -133,7 +133,7 @@ export const prepareSettlementBuilder = (
     legAmountToPrepare,
   } = params;
 
-  const rfqProgram = convergence.programs().getToken(programs);
+  const rfqProgram = convergence.programs().getRfq(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

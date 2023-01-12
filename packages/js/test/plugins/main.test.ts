@@ -594,7 +594,15 @@ test('[rfqModule] it can confirm a response', async (t: Test) => {
     rfq: finalizedRfq.address,
     response: response.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null, //correct bc rfq.fixedSize != fixedSize::none
+    overrideLegMultiplierBps: null,
+  });
+
+  const confirmedResponse = await cvg.rfqs().refreshResponse(response);
+
+  spok(t, confirmedResponse, {
+    $topic: 'Responded to Rfq',
+    model: 'response',
+    state: StoredResponseState.SettlingPreparations,
   });
 });
 

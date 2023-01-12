@@ -63,6 +63,7 @@ import {
 import { PartialKeys } from '@/utils';
 import { OperationOptions, token } from '@/types';
 import type { Convergence } from '@/Convergence';
+import { Response } from './models/Response';
 
 /**
  * This is a client for the Rfq module.
@@ -214,7 +215,10 @@ export class RfqClient {
   }
 
   /** {@inheritDoc findResponseByAddressOperation} */
-  findResponseByAddress(input: FindResponseByAddressInput, options?: OperationOptions) {
+  findResponseByAddress(
+    input: FindResponseByAddressInput,
+    options?: OperationOptions
+  ) {
     return this.convergence
       .operations()
       .execute(findResponseByAddressOperation(input), options);
@@ -334,17 +338,17 @@ export class RfqClient {
   //  * rfq = await convergence.rfqs().refreshResponse(response);
   //  * ```
   //  */
-  // refreshResponse<T extends Response | PublicKey>(
-  //   model: T,
-  //   options?: OperationOptions
-  // ): Promise<T extends Metadata | PublicKey ? Response : T> {
-  //   return this.findResponseByAddress(
-  //     {
-  //       address: 'model' in model ? model.address : model,
-  //     },
-  //     options
-  //   ) as Promise<T extends Metadata | PublicKey ? Response : T>;
-  // }
+  refreshResponse<T extends Response | PublicKey>(
+    model: T,
+    options?: OperationOptions
+  ): Promise<T extends PublicKey ? Response : T> {
+    return this.findResponseByAddress(
+      {
+        address: 'model' in model ? model.address : model,
+      },
+      options
+    ) as Promise<T extends PublicKey ? Response : T>;
+  }
 
   /** {@inheritDoc respondToRfqOperation} */
   respond(input: RespondToRfqInput, options?: OperationOptions) {
