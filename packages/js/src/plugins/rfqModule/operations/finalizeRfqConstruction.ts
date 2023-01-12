@@ -186,7 +186,7 @@ export const finalizeRfqConstructionBuilder = async (
   const configAccount: AccountMeta = {
     pubkey: config,
     isSigner: false,
-    isWritable: true,
+    isWritable: false,
   };
 
   const [baseAsset] = PublicKey.findProgramAddressSync(
@@ -215,25 +215,24 @@ export const finalizeRfqConstructionBuilder = async (
     ...oracleAccounts
   );
 
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
-    // .setContext({
-    //   rfq,
-    // })
-    .add({
-      instruction: createFinalizeRfqConstructionInstruction(
-        {
-          taker: taker.publicKey,
-          protocol: protocol.address,
-          rfq,
-          collateralInfo,
-          collateralToken,
-          riskEngine,
-          anchorRemainingAccounts,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker],
-      key: 'finalizeRfqConstruction',
-    });
+  return (
+    TransactionBuilder.make()
+      .setFeePayer(payer)
+      .add({
+        instruction: createFinalizeRfqConstructionInstruction(
+          {
+            taker: taker.publicKey,
+            protocol: protocol.address,
+            rfq,
+            collateralInfo,
+            collateralToken,
+            riskEngine,
+            anchorRemainingAccounts,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker],
+        key: 'finalizeRfqConstruction',
+      })
+  );
 };

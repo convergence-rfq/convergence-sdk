@@ -50,7 +50,7 @@ export type RespondToRfqInput = {
   /**
    * The maker of the Response as a Signer.
    */
-  maker: Signer;
+  maker?: Signer;
   /** The address of the protocol account. */
   protocol?: PublicKey;
   /** The address of the Rfq account. */
@@ -91,8 +91,6 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<RespondToRfqOutput> => {
-      // const { keypair = Keypair.generate() } = operation.input;
-
       const builder = await respondToRfqBuilder(
         convergence,
         {
@@ -147,8 +145,7 @@ export const respondToRfqBuilder = async (
   const { programs } = options;
   const {
     rfq,
-    // maker = convergence.identity(),
-    maker,
+    maker = convergence.identity(),
     keypair = Keypair.generate(),
     baseAssetIndex = { value: 0 },
   } = params;
@@ -181,14 +178,13 @@ export const respondToRfqBuilder = async (
   const configAccount: AccountMeta = {
     pubkey: config,
     isSigner: false,
-    isWritable: true,
+    isWritable: false,
   };
 
   const [baseAsset] = PublicKey.findProgramAddressSync(
     [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex.value, 2)],
     rfqProgram.address
   );
-  // const baseAsset = PublicKey.default;
 
   const baseAssetAccounts: AccountMeta[] = [
     {
@@ -219,33 +215,28 @@ export const respondToRfqBuilder = async (
     ...oracleAccounts
   );
 
-  return (
-    TransactionBuilder.make()
-      .setFeePayer(maker)
-      // .setContext({
-      //   keypair,
-      // })
-      .add({
-        instruction: createRespondToRfqInstruction(
-          {
-            maker: maker.publicKey,
-            protocol: protocol.address,
-            rfq,
-            response: keypair.publicKey,
-            collateralInfo,
-            collateralToken,
-            riskEngine,
-            systemProgram: systemProgram.address,
-            anchorRemainingAccounts,
-          },
-          {
-            bid,
-            ask,
-          },
-          rfqProgram.address
-        ),
-        signers: [maker, keypair],
-        key: 'respondToRfq',
-      })
-  );
+  return TransactionBuilder.make()
+    .setFeePayer(maker)
+    .add({
+      instruction: createRespondToRfqInstruction(
+        {
+          maker: maker.publicKey,
+          protocol: protocol.address,
+          rfq,
+          response: keypair.publicKey,
+          collateralInfo,
+          collateralToken,
+          riskEngine,
+          systemProgram: systemProgram.address,
+          anchorRemainingAccounts,
+        },
+        {
+          bid,
+          ask,
+        },
+        rfqProgram.address
+      ),
+      signers: [maker, keypair],
+      key: 'respondToRfq',
+    });
 };
