@@ -22,6 +22,7 @@ import {
   OptionType,
   InstrumentType,
   Token,
+  Signer,
 } from '@/index';
 
 killStuckProcess();
@@ -30,6 +31,8 @@ let cvg: Convergence;
 
 let usdcMint: Mint;
 let btcMint: Mint;
+
+let dao: Signer;
 
 // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let maker: Keypair;
@@ -57,6 +60,8 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   makerBTCWallet = context.makerBTCWallet;
   takerUSDCWallet = context.takerUSDCWallet;
   takerBTCWallet = context.takerBTCWallet;
+
+  dao = cvg.rpc().getDefaultFeePayer();
 
   spok(t, makerBTCWallet, {
     $topic: 'Wallet',
@@ -86,8 +91,6 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
 });
 
 test('[protocolModule] it can add the spot instrument', async () => {
-  const dao = cvg.rpc().getDefaultFeePayer();
-
   const validateDataAccountAmount = 1;
   const prepareToSettleAccountAmount = 7;
   const settleAccountAmount = 3;
@@ -108,8 +111,6 @@ test('[protocolModule] it can add the spot instrument', async () => {
 });
 
 test('[protocolModule] it can add the PsyOptions European instrument', async () => {
-  const dao = cvg.rpc().getDefaultFeePayer();
-
   const validateDataAccountAmount = 2;
   const prepareToSettleAccountAmount = 7;
   const settleAccountAmount = 3;
@@ -130,8 +131,6 @@ test('[protocolModule] it can add the PsyOptions European instrument', async () 
 });
 
 test('[protocolModule] it can add the PsyOptions American instrument', async () => {
-  const dao = cvg.rpc().getDefaultFeePayer();
-
   const validateDataAccountAmount = 2;
   const prepareToSettleAccountAmount = 7;
   const settleAccountAmount = 3;
@@ -171,7 +170,6 @@ test('[riskEngineModule] it can set spot and option instrument type', async () =
 });
 
 test('[protocolModule] it can add a BTC base asset', async () => {
-  const dao = cvg.rpc().getDefaultFeePayer();
   await cvg.protocol().addBaseAsset({
     authority: dao,
     index: { value: 0 },
@@ -199,22 +197,14 @@ test('[protocolModule] it can register USDC mint', async () => {
  */
 
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
-  const protocol = await cvg.protocol().get();
-
-  const collateralMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: protocol.collateralMint });
-
   const { collateral: takerCollateral } = await cvg
     .collateral()
     .initializeCollateral({
-      collateralMint: collateralMint.address,
       user: taker,
     });
   const { collateral: makerCollateral } = await cvg
     .collateral()
     .initializeCollateral({
-      collateralMint: collateralMint.address,
       user: maker,
     });
 
