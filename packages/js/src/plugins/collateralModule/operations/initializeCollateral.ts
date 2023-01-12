@@ -53,13 +53,20 @@ export type InitializeCollateralInput = {
    */
   user?: Signer;
 
-  /** The address of the protocol*/
+  /**
+   * The address of the protocol.
+   *
+   * @defaultValue `convergence.programs().getRfq().address`
+   */
   protocol?: PublicKey;
 
+  /** The address of the collateral mint. */
   collateralMint?: PublicKey;
 
+  /** The collateral token account address. */
   collateralToken?: PublicKey;
 
+  /** The collateral token info account address. */
   collateralInfo?: PublicKey;
 };
 
@@ -154,22 +161,27 @@ export const initializeCollateralBuilder = async (
   params: InitializeCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<InitializeCollateralBuilderContext>> => {
-  const protocol = await convergence.protocol().get();
+  const protocolModel = await convergence.protocol().get();
   const { programs } = options;
   const {
     user = convergence.identity(),
-    collateralMint = protocol.collateralMint,
+    collateralMint = protocolModel.collateralMint,
+    protocol = protocolModel.address,
   } = params;
+  let { collateralInfo, collateralToken } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const [collateralToken] = PublicKey.findProgramAddressSync(
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
     rfqProgram.address
   );
-  const [collateralInfo] = PublicKey.findProgramAddressSync(
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
     rfqProgram.address
   );
+
+  collateralInfo = collateralInfo ?? collateralInfoPda;
+  collateralToken = collateralToken ?? collateralTokenPda;
 
   return TransactionBuilder.make<InitializeCollateralBuilderContext>()
     .setFeePayer(user)
@@ -177,7 +189,7 @@ export const initializeCollateralBuilder = async (
       instruction: createInitializeCollateralInstruction(
         {
           user: user.publicKey,
-          protocol: protocol.address,
+          protocol,
           collateralMint,
           collateralToken,
           collateralInfo,
