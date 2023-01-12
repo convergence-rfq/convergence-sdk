@@ -29,6 +29,7 @@ import {
 } from '@/index';
 //@ts-ignore
 import { StoredResponseState } from '@convergence-rfq/rfq';
+import { Response } from '@/plugins/rfqModule/models/Response';
 
 killStuckProcess();
 
@@ -41,6 +42,8 @@ let userTokens: Token;
 
 //@ts-ignore
 let finalizedRfq: Rfq;
+
+let response: Response;
 
 let keypair: Keypair = Keypair.generate();
 
@@ -499,22 +502,6 @@ test('[rfqModule] it can finalize RFQ construction with BaseAsset', async () => 
     rfq: rfq.address,
     baseAssetIndex: { value: 0 },
   });
-
-  // const rfqGpaBuilder = cvg
-  //   .programs()
-  //   .getGpaBuilder(rfqProgram.address)
-  //   .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
-  //   .where(8, cvg.identity().publicKey)
-  //   .where(170, 1);
-
-  // const [unparsedRfq] = await rfqGpaBuilder.get();
-  // const pulledRfq = toRfq(toRfqAccount(unparsedRfq));
-
-  // spok(t, finalizedRfq, {
-  //   $topic: 'Created RFQ',
-  //   model: 'rfq',
-  //   address: spokSamePubkey(pulledRfq.address),
-  // });
 });
 
 test('[rfqModule] it can finalize RFQ construction with QuoteAsset', async () => {
@@ -575,7 +562,7 @@ test('[rfqModule] it can finalize RFQ construction with QuoteAsset', async () =>
 
 test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
   //@ts-ignore
-  const { rfqResponse } = await cvg.rfqs().respond({
+  const { rfqResponse: newRfqResponse } = await cvg.rfqs().respond({
     maker: newMaker,
     rfq: finalizedRfq.address,
     bid: {
@@ -586,34 +573,28 @@ test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
     keypair,
   });
 
-  // const respondedToRfq = await cvg.rfqs().refresh(finalizedRfq);
+  response = newRfqResponse;
 
-  // const userTokensAccountAfterWithdraw = await cvg
-  //   .tokens()
-  //   .refreshToken(userTokens);
+  const respondedToRfq = await cvg.rfqs().refreshRfq(finalizedRfq);
 
-  // const rfqGpaBuilder = cvg
-  //   .programs()
-  //   .getGpaBuilder(rfqProgram.address)
-  //   .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
-  //   .where(8, cvg.identity().publicKey)
-  //   .where(41, 0);
-  //   // .where(159, 10); //active_window: 10
-  // // .where(40, 0);
-  // // .where(169, 2); //StoredRfqState::Canceled
-
-  // const [unparsedRfq] = await rfqGpaBuilder.get();
-  // const cancelledRfq = toRfq(toRfqAccount(unparsedRfq));
-
-  // spok(t, finalizedRfq, {
-  //   $topic: 'Finalized Rfq',
-  //   model: 'rfq',
-  //   address: spokSamePubkey(respondedToRfq.address),
-  // });
-  spok(t, rfqResponse, {
+  spok(t, finalizedRfq, {
+    $topic: 'Finalized Rfq',
+    model: 'rfq',
+    address: spokSamePubkey(respondedToRfq.address),
+  });
+  spok(t, newRfqResponse, {
     $topic: 'Responded to Rfq',
     model: 'response',
     state: StoredResponseState.Active,
+  });
+});
+
+test('[rfqModule] it can confirm a response', async (t: Test) => {
+  await cvg.rfqs().confirmResponse({
+    rfq: finalizedRfq.address,
+    response: response.address,
+    side: Side.Bid,
+    overrideLegMultiplierBps: null, //correct bc rfq.fixedSize != fixedSize::none
   });
 });
 
@@ -681,7 +662,9 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 
   const [foundRfq1, foundRfq2, foundRfq3] = await cvg
     .rfqs()
-    .findRfqsByAddresses({ addresses: [rfq1.address, rfq2.address, rfq3.address] });
+    .findRfqsByAddresses({
+      addresses: [rfq1.address, rfq2.address, rfq3.address],
+    });
 
   spok(t, rfq1, {
     $topic: 'Created RFQ',

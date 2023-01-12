@@ -1,5 +1,9 @@
-import { createConfirmResponseInstruction, Side } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import {
+  createConfirmResponseInstruction,
+  Side,
+  BaseAssetIndex,
+} from '@convergence-rfq/rfq';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { bignum, COption } from '@metaplex-foundation/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -9,6 +13,7 @@ import {
   OperationScope,
   useOperation,
   Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
@@ -51,24 +56,26 @@ export type ConfirmResponseInput = {
    */
   taker?: Signer;
   /** The address of the protocol */
-  protocol: PublicKey;
+  protocol?: PublicKey;
   /** The address of the Rfq account. */
   rfq: PublicKey;
   /** The address of the response */
   response: PublicKey;
   /** The address of the Taker's collateral info account */
-  collateralInfo: PublicKey;
+  collateralInfo?: PublicKey;
   /** The address of the Maker's collateral info account */
-  makerCollateralInfo: PublicKey;
+  makerCollateralInfo?: PublicKey;
   /** The address of the collateral token */
-  collateralToken: PublicKey;
+  collateralToken?: PublicKey;
   /** The address of the risk engine */
-  riskEngine: PublicKey;
+  riskEngine?: PublicKey;
 
   /** The side */
   side: Side;
   /** ??? */
   overrideLegMultiplierBps: COption<bignum>;
+  /** The base asset index. */
+  baseAssetIndex?: BaseAssetIndex;
 };
 
 /**
@@ -91,11 +98,24 @@ export const confirmResponseOperationHandler: OperationHandler<ConfirmResponseOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<ConfirmResponseOutput> => {
-      return confirmResponseBuilder(
+      const builder = await confirmResponseBuilder(
         convergence,
-        operation.input,
+        {
+          ...operation.input,
+        },
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      scope.throwIfCanceled();
+
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+        convergence,
+        scope.confirmOptions
+      );
+
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+
+      return { ...output };
     },
   };
 
@@ -104,6 +124,12 @@ export const confirmResponseOperationHandler: OperationHandler<ConfirmResponseOp
  * @category Inputs
  */
 export type ConfirmResponseBuilderParams = ConfirmResponseInput;
+
+function toLittleEndian(value: number, bytes: number) {
+  const buf = Buffer.allocUnsafe(bytes);
+  buf.writeUIntLE(value, 0, bytes);
+  return buf;
+}
 
 /**
  * Confirms a response
@@ -118,26 +144,84 @@ export type ConfirmResponseBuilderParams = ConfirmResponseInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const confirmResponseBuilder = (
+export const confirmResponseBuilder = async (
   convergence: Convergence,
   params: ConfirmResponseBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     taker = convergence.identity(),
-    protocol,
     rfq,
     response,
-    collateralInfo,
-    makerCollateralInfo,
-    collateralToken,
-    riskEngine,
     side,
     overrideLegMultiplierBps,
+    baseAssetIndex = { value: 0 },
   } = params;
 
-  const rfqProgram = convergence.programs().getToken(programs);
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
+
+  const protocol = await convergence.protocol().get();
+
+  const rfqProgram = convergence.programs().getRfq(programs);
+  const riskEngineProgram = convergence.programs().getRiskEngine(programs);
+
+  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
+    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
+  );
+
+  const [takerCollateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), taker.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [makerCollateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), responseModel.maker.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), taker.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  const anchorRemainingAccounts: AccountMeta[] = [];
+
+  const [config] = PublicKey.findProgramAddressSync(
+    [Buffer.from('config')],
+    riskEngineProgram.address
+  );
+  const configAccount: AccountMeta = {
+    pubkey: config,
+    isSigner: false,
+    isWritable: false,
+  };
+
+  const [baseAsset] = PublicKey.findProgramAddressSync(
+    [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex.value, 2)],
+    rfqProgram.address
+  );
+
+  const baseAssetAccounts: AccountMeta[] = [
+    {
+      pubkey: baseAsset,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+  const oracleAccounts: AccountMeta[] = [
+    {
+      pubkey: SWITCHBOARD_BTC_ORACLE,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+
+  anchorRemainingAccounts.push(
+    configAccount,
+    ...baseAssetAccounts,
+    ...oracleAccounts
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -145,13 +229,14 @@ export const confirmResponseBuilder = (
       instruction: createConfirmResponseInstruction(
         {
           taker: taker.publicKey,
-          protocol,
+          protocol: protocol.address,
           rfq,
           response,
-          collateralInfo,
-          makerCollateralInfo,
-          collateralToken,
-          riskEngine,
+          collateralInfo: takerCollateralInfoPda,
+          makerCollateralInfo: makerCollateralInfoPda,
+          collateralToken: collateralTokenPda,
+          riskEngine: riskEngineProgram.address,
+          anchorRemainingAccounts,
         },
         {
           side,
