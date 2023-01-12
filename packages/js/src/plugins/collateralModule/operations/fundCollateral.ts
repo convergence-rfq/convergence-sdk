@@ -135,11 +135,7 @@ export const fundCollateralBuilder = async (
   const { programs } = options;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-
-  const [protocolPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
+  const protocolPda = convergence.protocol().pdas().protocol();
 
   const {
     user = convergence.identity(),

@@ -79,14 +79,10 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const { protocol } = await cvg.protocol().initialize({
     collateralMint: usdcMint.address,
   });
-  const [protocolPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    cvg.programs().getRfq().address
-  );
   spok(t, protocol, {
     $topic: 'Initialize Protocol',
     model: 'protocol',
-    address: spokSamePubkey(protocolPda),
+    address: spokSamePubkey(cvg.protocol().pdas().protocol()),
   });
 });
 

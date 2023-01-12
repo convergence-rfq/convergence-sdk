@@ -161,11 +161,7 @@ export const createProtocolBuilder = async (
   const rfqProgram = convergence.programs().getRfq();
   const riskEngineProgram = convergence.programs().getRiskEngine();
 
-  // TODO: Swap out with a real PDA client, also, is there a way to get this from Solita?
-  const [protocol] = await PublicKey.findProgramAddress(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
+  const protocol = convergence.protocol().pdas().protocol();
 
   // TODO: Make this configurable
   const settleFees: FeeParameters = { takerBps: 0, makerBps: 0 };

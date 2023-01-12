@@ -132,10 +132,7 @@ export const addBaseAssetBuilder = (
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-  const [protocolPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
+  const protocolPda = convergence.protocol().pdas().protocol();
   const {
     protocol = protocolPda,
     authority,
