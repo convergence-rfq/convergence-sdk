@@ -22,7 +22,7 @@ const Key = 'InitializeCollateralOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .initializeCollateral({ address };
+ *   .initializeCollateral({ user });
  * ```
  *
  * @group Operations
@@ -56,17 +56,35 @@ export type InitializeCollateralInput = {
   /**
    * The address of the protocol.
    *
-   * @defaultValue `convergence.programs().getRfq().address`
+   * @defaultValue `(await convergence.protocol().get()).address`
    */
   protocol?: PublicKey;
 
-  /** The address of the collateral mint. */
+  /**
+   * The address of the collateral mint.
+   *
+   * @defaultValue `(await convergence.protocol().get()).collateralMint`
+   */
   collateralMint?: PublicKey;
 
-  /** The collateral token account address. */
+  /**
+   *  The collateral token account address.
+   *
+   * @defaultValue `PublicKey.findProgramAddressSync(
+   *     [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
+   * .   rfqProgram.address
+   * );
+   */
   collateralToken?: PublicKey;
 
-  /** The collateral token info account address. */
+  /**
+   *  The collateral token info account address.
+   *
+   * @defaultValue `PublicKey.findProgramAddressSync(
+   *     [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
+   * .   rfqProgram.address
+   * );
+   */
   collateralInfo?: PublicKey;
 };
 
