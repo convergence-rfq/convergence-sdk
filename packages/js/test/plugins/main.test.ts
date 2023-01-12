@@ -1,6 +1,6 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { Keypair } from '@solana/web3.js';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SKIP_PREFLIGHT,
@@ -236,11 +236,10 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   });
 
   const protocol = await cvg.protocol().get();
-  const rfqProgram = cvg.programs().getRfq();
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), taker.publicKey.toBuffer()],
-    rfqProgram.address
-  );
+  const collateralTokenPda = cvg
+    .collateral()
+    .pdas()
+    .collateralToken({ user: taker.publicKey });
   const collateralMint = await cvg
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
@@ -280,11 +279,10 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     //amount: token(COLLATERAL_AMOUNT - amount),
   });
 
-  const rfqProgram = cvg.programs().getRfq();
-  const [makerCollateral] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), maker.publicKey.toBuffer()],
-    rfqProgram.address
-  );
+  const makerCollateral = cvg
+    .collateral()
+    .pdas()
+    .collateralToken({ user: maker.publicKey });
   const makerCollateralInfo = await cvg
     .tokens()
     .findTokenByAddress({ address: makerCollateral });
