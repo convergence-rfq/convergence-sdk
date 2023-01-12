@@ -484,7 +484,7 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 //  });
 //});
 
-test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOptions European instrument', async (t: Test) => {
+test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions Europeans', async (t: Test) => {
   const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
     cvg,
     btcMint,
@@ -494,26 +494,23 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOpti
     3_600
   );
 
-  const psyoptionsEuropeanInstrument = new PsyoptionsEuropeanInstrument(
-    cvg,
-    btcMint,
-    OptionType.PUT,
-    euroMeta,
-    euroMetaKey,
-    {
-      amount: 1,
-      side: Side.Bid,
-    }
-  );
-  const quoteAsset = cvg
-    .instrument(new SpotInstrument(cvg, usdcMint))
-    .toQuoteData();
-
   const { rfq } = await cvg.rfqs().create({
-    instruments: [psyoptionsEuropeanInstrument],
+    instruments: [
+      new PsyoptionsEuropeanInstrument(
+        cvg,
+        btcMint,
+        OptionType.PUT,
+        euroMeta,
+        euroMetaKey,
+        {
+          amount: 1,
+          side: Side.Bid,
+        }
+      ),
+    ],
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset,
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
   });
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
