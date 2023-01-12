@@ -11,6 +11,7 @@ import {
   setupAccounts,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
+
 import {
   Mint,
   token,
@@ -23,6 +24,7 @@ import {
   InstrumentType,
   Token,
   Signer,
+  Rfq,
 } from '@/index';
 
 killStuckProcess();
@@ -33,7 +35,7 @@ let usdcMint: Mint;
 let btcMint: Mint;
 
 let dao: Signer;
-
+let finalisedRfq: Rfq;
 // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let maker: Keypair;
 // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
@@ -522,7 +524,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOpti
     quoteAsset,
   });
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
-
+  finalisedRfq = foundRfq;
   spok(t, rfq, {
     $topic: 'Created RFQ',
     model: 'rfq',
@@ -531,7 +533,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOpti
 });
 
 test('[riskEngineModule] it can calculate collateral for rfq', async (t: Test) => {
-  const rfq = finalizedRfq;
+  const rfq = finalisedRfq;
   await cvg.riskEngine().calculateCollateralForRfq({ rfq: rfq.address });
 
   spok(t, rfq, {
