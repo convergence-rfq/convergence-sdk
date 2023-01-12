@@ -74,16 +74,19 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const { protocol } = await cvg.protocol().initialize({
     collateralMint: usdcMint.address,
   });
+  const [protocolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    cvg.programs().getRfq().address
+  );
   spok(t, protocol, {
     $topic: 'Initialize Protocol',
     model: 'protocol',
-    address: spokSamePubkey(protocol.address),
+    address: spokSamePubkey(protocolPda),
   });
 });
 
-test('[protocolModule] it can add the spot instrument', async (t: Test) => {
+test('[protocolModule] it can add the spot instrument', async () => {
   const dao = cvg.rpc().getDefaultFeePayer();
-  const protocol = await cvg.protocol().get();
 
   const validateDataAccountAmount = 1;
   const prepareToSettleAccountAmount = 7;
@@ -92,12 +95,9 @@ test('[protocolModule] it can add the spot instrument', async (t: Test) => {
   const cleanUpAccountAmount = 4;
   const canBeUsedAsQuote = true;
 
-  const spotInstrument = cvg.programs().getSpotInstrument();
-
   await cvg.protocol().addInstrument({
     authority: dao,
-    protocol: protocol.address,
-    instrumentProgram: spotInstrument.address,
+    instrumentProgram: cvg.programs().getSpotInstrument().address,
     canBeUsedAsQuote,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
@@ -105,17 +105,10 @@ test('[protocolModule] it can add the spot instrument', async (t: Test) => {
     revertPreparationAccountAmount,
     cleanUpAccountAmount,
   });
-
-  spok(t, protocol, {
-    $topic: 'Add Instrument',
-    model: 'protocol',
-    address: spokSamePubkey(protocol.address),
-  });
 });
 
-test('[protocolModule] it can add the PsyOptions European instrument', async (t: Test) => {
+test('[protocolModule] it can add the PsyOptions European instrument', async () => {
   const dao = cvg.rpc().getDefaultFeePayer();
-  const protocol = await cvg.protocol().get();
 
   const validateDataAccountAmount = 2;
   const prepareToSettleAccountAmount = 7;
@@ -124,14 +117,9 @@ test('[protocolModule] it can add the PsyOptions European instrument', async (t:
   const cleanUpAccountAmount = 4;
   const canBeUsedAsQuote = true;
 
-  const psyoptionsEuropeanInstrument = cvg
-    .programs()
-    .getPsyoptionsEuropeanInstrument();
-
   await cvg.protocol().addInstrument({
     authority: dao,
-    protocol: protocol.address,
-    instrumentProgram: psyoptionsEuropeanInstrument.address,
+    instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument().address,
     canBeUsedAsQuote,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
@@ -139,17 +127,10 @@ test('[protocolModule] it can add the PsyOptions European instrument', async (t:
     revertPreparationAccountAmount,
     cleanUpAccountAmount,
   });
-
-  spok(t, protocol, {
-    $topic: 'Add Instrument',
-    model: 'protocol',
-    address: spokSamePubkey(protocol.address),
-  });
 });
 
-test('[protocolModule] it can add the PsyOptions American instrument', async (t: Test) => {
+test('[protocolModule] it can add the PsyOptions American instrument', async () => {
   const dao = cvg.rpc().getDefaultFeePayer();
-  const protocol = await cvg.protocol().get();
 
   const validateDataAccountAmount = 2;
   const prepareToSettleAccountAmount = 7;
@@ -158,26 +139,15 @@ test('[protocolModule] it can add the PsyOptions American instrument', async (t:
   const cleanUpAccountAmount = 4;
   const canBeUsedAsQuote = true;
 
-  const psyoptionsAmericanInstrument = cvg
-    .programs()
-    .getPsyoptionsAmericanInstrument();
-
   await cvg.protocol().addInstrument({
     authority: dao,
-    protocol: protocol.address,
-    instrumentProgram: psyoptionsAmericanInstrument.address,
+    instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument().address,
     canBeUsedAsQuote,
     validateDataAccountAmount,
     prepareToSettleAccountAmount,
     settleAccountAmount,
     revertPreparationAccountAmount,
     cleanUpAccountAmount,
-  });
-
-  spok(t, protocol, {
-    $topic: 'Add Instrument',
-    model: 'protocol',
-    address: spokSamePubkey(protocol.address),
   });
 });
 
@@ -186,35 +156,24 @@ test('[riskEngineModule] it can initialize the default risk engine config', asyn
 });
 
 test('[riskEngineModule] it can set spot and option instrument type', async () => {
-  const spotInstrument = cvg.programs().getSpotInstrument();
-  const psyoptionsEuropeanInstrument = cvg
-    .programs()
-    .getPsyoptionsEuropeanInstrument();
-  const psyoptionsAmericanInstrument = cvg
-    .programs()
-    .getPsyoptionsAmericanInstrument();
-
   await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: spotInstrument.address,
+    instrumentProgram: cvg.programs().getSpotInstrument().address,
     instrumentType: InstrumentType.Spot,
   });
   await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: psyoptionsAmericanInstrument.address,
+    instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument().address,
     instrumentType: InstrumentType.Option,
   });
   await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: psyoptionsEuropeanInstrument.address,
+    instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument().address,
     instrumentType: InstrumentType.Option,
   });
 });
 
 test('[protocolModule] it can add a BTC base asset', async () => {
   const dao = cvg.rpc().getDefaultFeePayer();
-  const protocol = await cvg.protocol().get();
-
   await cvg.protocol().addBaseAsset({
     authority: dao,
-    protocol: protocol.address,
     index: { value: 0 },
     ticker: 'BTC',
     riskCategory: RiskCategory.VeryLow,
@@ -279,12 +238,6 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can fund collateral', async (t: Test) => {
-  const protocol = await cvg.protocol().get();
-
-  const collateralMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: protocol.collateralMint });
-
   await cvg.collateral().fundCollateral({
     userTokens: takerUSDCWallet.address,
     user: taker,
@@ -296,12 +249,15 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     amount: COLLATERAL_AMOUNT,
   });
 
+  const protocol = await cvg.protocol().get();
   const rfqProgram = cvg.programs().getRfq();
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_token'), taker.publicKey.toBuffer()],
     rfqProgram.address
   );
-
+  const collateralMint = await cvg
+    .tokens()
+    .findMintByAddress({ address: protocol.collateralMint });
   const collateralTokenAccount = await cvg
     .tokens()
     .findTokenByAddress({ address: collateralTokenPda });
@@ -316,13 +272,6 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
 
 test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   const amount = 10;
-
-  const protocol = await cvg.protocol().get();
-
-  const collateralMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: protocol.collateralMint });
-
   await cvg.collateral().withdrawCollateral({
     userTokens: makerUSDCWallet.address,
     user: maker,
@@ -332,6 +281,10 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   const refreshedMakerUSDCWallet = await cvg
     .tokens()
     .refreshToken(makerUSDCWallet);
+  const protocol = await cvg.protocol().get();
+  const collateralMint = await cvg
+    .tokens()
+    .findMintByAddress({ address: protocol.collateralMint });
 
   spok(t, refreshedMakerUSDCWallet, {
     $topic: 'Withdraw Collateral',
@@ -367,7 +320,6 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
   const quoteAsset = cvg
     .instrument(new SpotInstrument(cvg, usdcMint))
     .toQuoteData();
-
   const { rfq } = await cvg.rfqs().create({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -393,7 +345,6 @@ test('[rfqModule] it can finalize RFQ construction and cancel RFQ', async () => 
   const quoteAsset = cvg
     .instrument(new SpotInstrument(cvg, usdcMint))
     .toQuoteData();
-
   const { rfq } = await cvg.rfqs().create({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -425,7 +376,6 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
   const quoteAsset = cvg
     .instrument(new SpotInstrument(cvg, usdcMint))
     .toQuoteData();
-
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {

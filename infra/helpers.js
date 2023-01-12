@@ -53,7 +53,7 @@ module.exports.solanaTestValidator = new Promise((resolve) => {
     PSEUDO_PYTH_ORACLE,
     'programs/pseudo_pyth.so',
     '--ledger',
-    '~',
+    './test-ledger',
     '--quiet',
     '--reset',
   ];

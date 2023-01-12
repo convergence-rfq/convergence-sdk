@@ -50,7 +50,7 @@ export type AddInstrumentInput = {
   /**
    * The protocol to add the instrument to.
    */
-  protocol: PublicKey;
+  protocol?: PublicKey;
 
   /**
    * The instrument program to add to the protocol.
@@ -128,9 +128,14 @@ export const addInstrumentBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+  const rfqProgram = convergence.programs().getRfq(programs);
+  const [protocolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
   const {
+    protocol = protocolPda,
     authority,
-    protocol,
     instrumentProgram,
     canBeUsedAsQuote,
     validateDataAccountAmount,
@@ -139,8 +144,6 @@ export const addInstrumentBuilder = (
     revertPreparationAccountAmount,
     cleanUpAccountAmount,
   } = params;
-
-  const rfqProgram = convergence.programs().getRfq(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
