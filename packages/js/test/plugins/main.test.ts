@@ -61,7 +61,7 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   spok(t, makerBTCWallet, {
     $topic: 'Wallet',
     model: 'token',
-    ownerAddress: spokSamePubkey(maker.publicKey).toString(),
+    ownerAddress: spokSamePubkey(maker.publicKey),
   });
   spok(t, takerBTCWallet, {
     $topic: 'Wallet',
