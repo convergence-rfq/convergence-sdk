@@ -55,7 +55,7 @@ export type AddBaseAssetInput = {
   /**
    * The protocol to add the BaseAsset to.
    */
-  protocol: PublicKey;
+  protocol?: PublicKey;
 
   /*
    * ARGS
@@ -131,10 +131,19 @@ export const addBaseAssetBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { authority, protocol, index, ticker, riskCategory, priceOracle } =
-    params;
-
   const rfqProgram = convergence.programs().getRfq(programs);
+  const [protocolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('protocol')],
+    rfqProgram.address
+  );
+  const {
+    protocol = protocolPda,
+    authority,
+    index,
+    ticker,
+    riskCategory,
+    priceOracle,
+  } = params;
 
   const [baseAsset] = PublicKey.findProgramAddressSync(
     [Buffer.from('base_asset'), toLittleEndian(index.value, 2)],

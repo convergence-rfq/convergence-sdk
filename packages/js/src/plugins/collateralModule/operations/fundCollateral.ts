@@ -140,29 +140,26 @@ export const fundCollateralBuilder = async (
     [Buffer.from('protocol')],
     rfqProgram.address
   );
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from('collateral_token'),
-      convergence.identity().publicKey.toBuffer(),
-    ],
-    rfqProgram.address
-  );
-  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from('collateral_info'),
-      convergence.identity().publicKey.toBuffer(),
-    ],
-    rfqProgram.address
-  );
 
   const {
     user = convergence.identity(),
-    userTokens,
     protocol = protocolPda,
-    collateralInfo = collateralInfoPda,
-    collateralToken = collateralTokenPda,
+    userTokens,
     amount,
   } = params;
+  let { collateralInfo, collateralToken } = params;
+
+  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
+    rfqProgram.address
+  );
+
+  collateralInfo = collateralInfo ?? collateralInfoPda;
+  collateralToken = collateralToken ?? collateralTokenPda;
 
   return TransactionBuilder.make()
     .setFeePayer(user)

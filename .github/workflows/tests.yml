@@ -34,4 +34,4 @@ jobs:
     - name: Build
       run: npx nx affected --target=build
     - name: Run tests
-      run: yarn test
+      run: yarn test:all

@@ -149,28 +149,28 @@ export const finalizeRfqConstructionBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
-  const identity = convergence.identity();
-
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
+  const {
+    taker = convergence.identity(),
+    riskEngine = riskEngineProgram.address,
+    baseAssetIndex = { value: 0 },
+    rfq,
+  } = params;
+  let { collateralInfo, collateralToken } = params;
+
   const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), identity.publicKey.toBuffer()],
+    [Buffer.from('collateral_info'), taker.publicKey.toBuffer()],
     rfqProgram.address
   );
   const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), identity.publicKey.toBuffer()],
+    [Buffer.from('collateral_token'), taker.publicKey.toBuffer()],
     rfqProgram.address
   );
 
-  const {
-    taker = identity,
-    rfq,
-    collateralInfo = collateralInfoPda,
-    collateralToken = collateralTokenPda,
-    riskEngine = riskEngineProgram.address,
-    baseAssetIndex = { value: 0 },
-  } = params;
+  collateralInfo = collateralInfo ?? collateralInfoPda;
+  collateralToken = collateralToken ?? collateralTokenPda;
 
   const SWITCHBOARD_BTC_ORACLE = new PublicKey(
     '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'

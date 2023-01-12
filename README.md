@@ -41,7 +41,7 @@ yarn build
 Run the Solana test validator, Solana logs, and the tests.
 
 ```bash
-yarn test 
+yarn test:all
 ```
 
 Run the validator separately.
@@ -53,7 +53,7 @@ yarn validator:logs
 Run the tests only.
 
 ```bash
-yarn test:all
+yarn test
 ```
 
 ### NPM

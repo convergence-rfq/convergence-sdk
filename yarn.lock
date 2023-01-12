@@ -7490,6 +7490,11 @@ plimit-lit@^1.2.6:
   dependencies:
     queue-lit "^1.5.0"
 
+pnpm@^7.24.3:
+  version "7.24.3"
+  resolved "https://registry.yarnpkg.com/pnpm/-/pnpm-7.24.3.tgz#48094934266041ab123b3c269b64afc9b67c5f7b"
+  integrity sha512-0fpP1l16xOY8YwsATSLodNNBa7bitV1cNY475fioVLR7Thx5tkCtdp3xIlvZYX8ZoPtedLhGn3fICC409HQSNQ==
+
 port-pid@^0.0.7:
   version "0.0.7"
   resolved "https://registry.npmjs.org/port-pid/-/port-pid-0.0.7.tgz"
