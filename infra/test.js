@@ -15,8 +15,8 @@ async function main() {
 
   child.on('close', (code) => {
     if (code === 0) {
-      process.kill(solanaValidatorChild.pid, 'SIGTERM');
-      process.kill(solanaLogsChild.pid, 'SIGTERM');
+      solanaValidatorChild.kill('SIGTERM');
+      solanaLogsChild.kill('SIGTERM');
       process.exit(0);
     }
   });
