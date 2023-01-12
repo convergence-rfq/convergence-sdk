@@ -27,6 +27,8 @@ import {
   Rfq,
   KeypairSigner,
 } from '@/index';
+//@ts-ignore
+import { StoredResponseState } from '@convergence-rfq/rfq';
 
 killStuckProcess();
 
@@ -465,7 +467,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
     quoteAsset,
   });
-  const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
+  const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
 
   spok(t, rfq, {
     $topic: 'Created RFQ',
@@ -572,8 +574,8 @@ test('[rfqModule] it can finalize RFQ construction with QuoteAsset', async () =>
 // });
 
 test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
-  //TODO: should be const { response } = await cvg.rfqs().respond(...)
-  await cvg.rfqs().respond({
+  //@ts-ignore
+  const { rfqResponse } = await cvg.rfqs().respond({
     maker: newMaker,
     rfq: finalizedRfq.address,
     bid: {
@@ -584,7 +586,7 @@ test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
     keypair,
   });
 
-  const respondedToRfq = await cvg.rfqs().refresh(finalizedRfq)
+  // const respondedToRfq = await cvg.rfqs().refresh(finalizedRfq);
 
   // const userTokensAccountAfterWithdraw = await cvg
   //   .tokens()
@@ -603,16 +605,16 @@ test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
   // const [unparsedRfq] = await rfqGpaBuilder.get();
   // const cancelledRfq = toRfq(toRfqAccount(unparsedRfq));
 
-  spok(t, finalizedRfq, {
-    $topic: 'Cancelled RFQ',
-    model: 'rfq',
-    address: spokSamePubkey(respondedToRfq.address),
-  });
-  // spok(t, response, {
-  //   $topic: 'Cancelled RFQ',
+  // spok(t, finalizedRfq, {
+  //   $topic: 'Finalized Rfq',
   //   model: 'rfq',
-  //   state: StoredRfqState.
+  //   address: spokSamePubkey(respondedToRfq.address),
   // });
+  spok(t, rfqResponse, {
+    $topic: 'Responded to Rfq',
+    model: 'response',
+    state: StoredResponseState.Active,
+  });
 });
 
 test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
@@ -640,7 +642,7 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
     quoteAsset,
   });
 
-  const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
+  const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
 
   spok(t, rfq, {
     $topic: 'Created RFQ',
@@ -679,7 +681,7 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 
   const [foundRfq1, foundRfq2, foundRfq3] = await cvg
     .rfqs()
-    .findByAddresses({ addresses: [rfq1.address, rfq2.address, rfq3.address] });
+    .findRfqsByAddresses({ addresses: [rfq1.address, rfq2.address, rfq3.address] });
 
   spok(t, rfq1, {
     $topic: 'Created RFQ',
@@ -758,7 +760,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with the PsyOpti
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset,
   });
-  const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
+  const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
 
   spok(t, rfq, {
     $topic: 'Created RFQ',

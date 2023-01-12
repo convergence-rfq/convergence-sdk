@@ -14,6 +14,7 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
+import { assertResponse, Response } from '../models/Response';
 import { TransactionBuilder, TransactionBuilderOptions, Option } from '@/utils';
 
 const Key = 'RespondToRfqOperation' as const;
@@ -78,6 +79,9 @@ export type RespondToRfqInput = {
 export type RespondToRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
+  /** The newly created Rfq. */
+  rfqResponse: Response;
 };
 
 /**
@@ -91,6 +95,8 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<RespondToRfqOutput> => {
+      const { keypair = Keypair.generate() } = operation.input;
+
       const builder = await respondToRfqBuilder(
         convergence,
         {
@@ -108,7 +114,12 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      return { ...output };
+      const rfqResponse = await convergence
+        .rfqs()
+        .findResponseByAddress({ address: keypair.publicKey });
+      assertResponse(rfqResponse);
+
+      return { ...output, rfqResponse };
     },
   };
 
@@ -217,6 +228,9 @@ export const respondToRfqBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(maker)
+    .setContext({
+      keypair,
+    })
     .add({
       instruction: createRespondToRfqInstruction(
         {

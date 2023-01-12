@@ -25,3 +25,4 @@ export * from './settleTwoPartyDefault';
 export * from './unlockResponseCollateral';
 export * from './unlockRfqCollateral';
 export * from './withdrawCollateral';
+export * from './findResponseByAddress';

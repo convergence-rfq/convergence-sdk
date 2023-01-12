@@ -128,7 +128,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       const rfq = await convergence
         .rfqs()
-        .findByAddress({ address: keypair.publicKey });
+        .findRfqByAddress({ address: keypair.publicKey });
 
       return { ...output, rfq };
     },

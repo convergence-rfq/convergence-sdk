@@ -29,6 +29,8 @@ import {
   cancelResponseOperationHandler,
   confirmResponseOperation,
   confirmResponseOperationHandler,
+  findResponseByAddressOperation,
+  findResponseByAddressOperationHandler,
   findRfqByAddressOperation,
   findRfqByAddressOperationHandler,
   findRfqsByAddressesOperation,
@@ -90,6 +92,7 @@ export const rfqModule = (): ConvergencePlugin => ({
       finalizeRfqConstructionOperation,
       finalizeRfqConstructionOperationHandler
     );
+    op.register(findResponseByAddressOperation, findResponseByAddressOperationHandler);
     op.register(findRfqByAddressOperation, findRfqByAddressOperationHandler);
     op.register(
       findRfqsByAddressesOperation,
