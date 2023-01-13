@@ -26,7 +26,11 @@ import {
   Rfq,
   Token,
 } from '@/index';
-import { StoredResponseState, StoredRfqState } from '@convergence-rfq/rfq';
+import {
+  StoredResponseState,
+  StoredRfqState,
+  AuthoritySide,
+} from '@convergence-rfq/rfq';
 import { Response } from '@/plugins/rfqModule/models/Response';
 
 killStuckProcess();
@@ -618,7 +622,9 @@ test('[rfqModule] it can confirm a response', async (t: Test) => {
 
   const confirmedResponse = await cvg.rfqs().refreshResponse(response);
 
-  spok(t, confirmedResponse, {
+  response = confirmedResponse;
+
+  spok(t, response, {
     $topic: 'Responded to Rfq',
     model: 'response',
     state: StoredResponseState.SettlingPreparations,
@@ -669,6 +675,43 @@ test('[rfqModule] it can finalize RFQ construction with QuoteAsset and cancel RF
     state: StoredRfqState.Canceled,
   });
 });
+
+test('[rfqModule] it can prepare settlement', async (t: Test) => {
+  //TODO: we have to pass the baseAssetMints manually
+  //  we need a method with type (baseAssetIndex) -> Mint or MintPubkey
+  //  then the baseAssetMints could be extracted from the rfq's legs
+  await cvg.rfqs().prepareSettlement({
+    caller: taker,
+    rfq: finalizedRfq.address,
+    response: response.address,
+    side: AuthoritySide.Taker,
+    legAmountToPrepare: 3,
+    quoteMint: usdcMint,
+    baseAssetMints: [btcMint, btcMint, btcMint],
+  });
+
+  await cvg.rfqs().prepareSettlement({
+    caller: maker,
+    rfq: finalizedRfq.address,
+    response: response.address,
+    side: AuthoritySide.Maker,
+    legAmountToPrepare: 3,
+    quoteMint: usdcMint,
+    baseAssetMints: [btcMint, btcMint, btcMint],
+  });
+
+  const refreshedResponse = await cvg.rfqs().refreshResponse(response);
+
+  spok(t, refreshedResponse, {
+    $topic: 'Prepared Settlement',
+    model: 'response',
+    state: StoredResponseState.ReadyForSettling,
+  });
+});
+
+/*
+ * UTILS
+ */
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   const spotInstrument = new SpotInstrument(cvg, btcMint, {
