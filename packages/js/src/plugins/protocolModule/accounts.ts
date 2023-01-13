@@ -1,4 +1,4 @@
-import { ProtocolState, BaseAssetInfo } from '@convergence-rfq/rfq';
+import { ProtocolState, BaseAssetInfo, MintInfo } from '@convergence-rfq/rfq';
 import {
   Account,
   getAccountParsingAndAssertingFunction,
@@ -24,3 +24,13 @@ export const parseBaseAssetAccount = getAccountParsingFunction(BaseAssetInfo);
 /** @group Account Helpers */
 export const toBaseAssetAccount =
   getAccountParsingAndAssertingFunction(BaseAssetInfo);
+
+/** @group Accounts */
+export type RegisteredMintAccount = Account<MintInfo>;
+
+/** @group Account Helpers */
+export const parseRegisteredMintAccount = getAccountParsingFunction(MintInfo);
+
+/** @group Account Helpers */
+export const toRegisteredMintAccount =
+  getAccountParsingAndAssertingFunction(MintInfo);

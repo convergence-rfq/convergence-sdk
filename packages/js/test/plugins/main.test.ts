@@ -149,13 +149,39 @@ test('[protocolModule] it can add BTC and SOL base assets', async () => {
   baseAssets.push(baseSOLAsset);
 });
 
-test('[protocolModule] it can register mints', async () => {
-  await cvg.protocol().registerMint({
-    baseAssetIndex: 0,
-    mint: btcMint.address,
+test('[protocolModule] it can register mints', async (t: Test) => {
+  const { registeredMint: btcRegisteredMint } = await cvg
+    .protocol()
+    .registerMint({
+      baseAssetIndex: 0,
+      mint: btcMint.address,
+    });
+  //const { registeredMint: solRegisteredMint } = await cvg
+  //  .protocol()
+  //  .registerMint({
+  //    baseAssetIndex: 1,
+  //    mint: solMint.address,
+  //  });
+  const { registeredMint: usdcRegisteredMint } = await cvg
+    .protocol()
+    .registerMint({
+      mint: usdcMint.address,
+    });
+
+  spok(t, usdcRegisteredMint, {
+    $topic: 'Register Mint',
+    model: 'registeredMint',
+    address: spokSamePubkey(usdcRegisteredMint.address),
   });
-  await cvg.protocol().registerMint({
-    mint: usdcMint.address,
+  //spok(t, solRegisteredMint, {
+  //  $topic: 'Register Mint',
+  //  model: 'registeredMint',
+  //  address: spokSamePubkey(solRegisteredMint.address),
+  //});
+  spok(t, btcRegisteredMint, {
+    $topic: 'Register Mint',
+    model: 'registeredMint',
+    address: spokSamePubkey(btcRegisteredMint.address),
   });
 });
 
