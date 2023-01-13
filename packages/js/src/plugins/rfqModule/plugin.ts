@@ -1,5 +1,5 @@
-import { cusper } from '@metaplex-foundation/mpl-token-metadata';
-import { PROGRAM_ID } from '@convergence-rfq/rfq';
+// import { cusper } from '@metaplex-foundation/mpl-token-metadata';
+// import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { ProgramClient } from '../programModule';
 import { RfqClient } from './RfqClient';
 import {
@@ -13,8 +13,8 @@ import {
   findRfqsByOwnerOperationHandler,
   cancelRfqOperation,
   cancelRfqOperationHandler,
-  respondOperationHandler,
-  respondOperation,
+  respondToRfqOperationHandler,
+  respondToRfqOperation,
   addLegsToRfqOperation,
   addLegsToRfqOperationHandler,
   cleanUpResponseLegsOperation,
@@ -29,6 +29,8 @@ import {
   cancelResponseOperationHandler,
   confirmResponseOperation,
   confirmResponseOperationHandler,
+  findResponseByAddressOperation,
+  findResponseByAddressOperationHandler,
   findRfqByAddressOperation,
   findRfqByAddressOperationHandler,
   findRfqsByAddressesOperation,
@@ -54,18 +56,13 @@ import {
   createAndFinalizeRfqConstructionOperation,
   createAndFinalizeRfqConstructionOperationHandler,
 } from './operations';
-import { ErrorWithLogs, ConvergencePlugin, Program } from '@/types';
+import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
+import { rfqProgram } from './program';
 
 /** @group Plugins */
 export const rfqModule = (): ConvergencePlugin => ({
   install(convergence: Convergence) {
-    const rfqProgram = {
-      name: 'RfqProgram',
-      address: PROGRAM_ID,
-      errorResolver: (error: ErrorWithLogs) =>
-        cusper.errorFromProgramLogs(error.logs, false),
-    };
     convergence.programs().register(rfqProgram);
     convergence.programs().getRfq = function (
       this: ProgramClient,
@@ -95,6 +92,7 @@ export const rfqModule = (): ConvergencePlugin => ({
       finalizeRfqConstructionOperation,
       finalizeRfqConstructionOperationHandler
     );
+    op.register(findResponseByAddressOperation, findResponseByAddressOperationHandler);
     op.register(findRfqByAddressOperation, findRfqByAddressOperationHandler);
     op.register(
       findRfqsByAddressesOperation,
@@ -120,7 +118,7 @@ export const rfqModule = (): ConvergencePlugin => ({
       prepareMoreLegsSettlementOperationHandler
     );
     op.register(prepareSettlementOperation, prepareSettlementOperationHandler);
-    op.register(respondOperation, respondOperationHandler);
+    op.register(respondToRfqOperation, respondToRfqOperationHandler);
     op.register(settleOperation, settleOperationHandler);
     op.register(
       settleOnePartyDefaultOperation,

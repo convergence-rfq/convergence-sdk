@@ -31,6 +31,8 @@ import {
   FindRfqsByAddressesInput,
   FindRfqByAddressInput,
   findRfqByAddressOperation,
+  FindResponseByAddressInput,
+  findResponseByAddressOperation,
   findRfqsByInstrumentOperation,
   FindRfqsByInstrumentInput,
   findRfqsByOwnerOperation,
@@ -45,8 +47,8 @@ import {
   PrepareMoreLegsSettlementInput,
   prepareSettlementOperation,
   PrepareSettlementInput,
-  respondOperation,
-  RespondInput,
+  respondToRfqOperation,
+  RespondToRfqInput,
   settleOperation,
   SettleInput,
   settleOnePartyDefaultOperation,
@@ -61,6 +63,7 @@ import {
 import { PartialKeys } from '@/utils';
 import { OperationOptions, token } from '@/types';
 import type { Convergence } from '@/Convergence';
+import { Response } from './models/Response';
 
 /**
  * This is a client for the Rfq module.
@@ -203,15 +206,28 @@ export class RfqClient {
       .execute(finalizeRfqConstructionOperation(input), options);
   }
 
+  /** {@inheritDoc findResponseByAddressOperation} */
+  findResponseByAddress(
+    input: FindResponseByAddressInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(findResponseByAddressOperation(input), options);
+  }
+
   /** {@inheritDoc findRfqByAddressOperation} */
-  findByAddress(input: FindRfqByAddressInput, options?: OperationOptions) {
+  findRfqByAddress(input: FindRfqByAddressInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findRfqByAddressOperation(input), options);
   }
 
   /** {@inheritDoc findRfqsByAddressesOperation} */
-  findByAddresses(input: FindRfqsByAddressesInput, options?: OperationOptions) {
+  findRfqsByAddresses(
+    input: FindRfqsByAddressesInput,
+    options?: OperationOptions
+  ) {
     return this.convergence
       .operations()
       .execute(findRfqsByAddressesOperation(input), options);
@@ -283,18 +299,18 @@ export class RfqClient {
    * and returns an instance of the same type.
    *
    * If the model we pass is an `Rfq`, we extract the pubkey and
-   * pass to `findByAddress`. Else, it's a pubkey and we pass
+   * pass to `findRfqByAddress`. Else, it's a pubkey and we pass
    * it directly.
    *
    * ```ts
    * rfq = await convergence.rfqs().refresh(rfq);
    * ```
    */
-  refresh<T extends Rfq | PublicKey>(
+  refreshRfq<T extends Rfq | PublicKey>(
     model: T,
     options?: OperationOptions
   ): Promise<T extends Metadata | PublicKey ? Rfq : T> {
-    return this.findByAddress(
+    return this.findRfqByAddress(
       {
         address: 'model' in model ? model.address : model,
       },
@@ -302,11 +318,35 @@ export class RfqClient {
     ) as Promise<T extends Metadata | PublicKey ? Rfq : T>;
   }
 
-  /** {@inheritDoc respondOperation} */
-  respond(input: RespondInput, options?: OperationOptions) {
+  // /**
+  //  * Helper method that refetches a given model
+  //  * and returns an instance of the same type.
+  //  *
+  //  * If the model we pass is an `Response`, we extract the pubkey and
+  //  * pass to `findResponseByAddress`. Else, it's a pubkey and we pass
+  //  * it directly.
+  //  *
+  //  * ```ts
+  //  * rfq = await convergence.rfqs().refreshResponse(response);
+  //  * ```
+  //  */
+  refreshResponse<T extends Response | PublicKey>(
+    model: T,
+    options?: OperationOptions
+  ): Promise<T extends PublicKey ? Response : T> {
+    return this.findResponseByAddress(
+      {
+        address: 'model' in model ? model.address : model,
+      },
+      options
+    ) as Promise<T extends PublicKey ? Response : T>;
+  }
+
+  /** {@inheritDoc respondToRfqOperation} */
+  respond(input: RespondToRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(respondOperation(input), options);
+      .execute(respondToRfqOperation(input), options);
   }
 
   /** {@inheritDoc settleOperation} */
