@@ -16,11 +16,11 @@ import { Convergence } from '@/Convergence';
  */
 export class PsyoptionsAmericanInstrument implements Instrument {
   readonly model = 'psyoptionsAmericanInstrument';
+  readonly decimals = 0;
 
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
-    readonly decimals: number,
     readonly optionType: OptionType,
     readonly optionMeta: OptionMarketWithKey,
     readonly optionMetaPubKey: PublicKey,
@@ -45,7 +45,6 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     const instrument = new PsyoptionsAmericanInstrument(
       convergence,
       mint,
-      decimals,
       optionType,
       optionMeta,
       optionMetaPubkey,
@@ -75,21 +74,6 @@ export class PsyoptionsAmericanInstrument implements Instrument {
       },
     ];
   }
-
-  // serializeInstrumentData(): Buffer {
-  //   return Buffer.from(
-  //     new Uint8Array([
-  //       this.optionType == OptionType.CALL ? 0 : 1,
-  //       ...toBigNumber(this.meta.underlyingAmountPerContract).toBuffer('le', 8),
-  //       ...toBigNumber(this.meta.strikePrice).toBuffer('le', 8),
-  //       ...toBigNumber(this.meta.expiration).toBuffer('le', 8),
-  //       ...(this.optionType == OptionType.CALL
-  //         ? this.meta.callOptionMint.toBytes()
-  //         : this.meta.putOptionMint.toBytes()),
-  //       ...this.metaKey.toBytes(),
-  //     ])
-  //   );
-  // }
 
   serializeInstrumentData(): Buffer {
     const { optionMeta } = this;
