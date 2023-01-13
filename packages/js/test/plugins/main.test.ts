@@ -162,7 +162,7 @@ test('[protocolModule] it can register mints', async () => {
 // RISK ENGINE
 
 test('[riskEngineModule] it can initialize the default risk engine config', async () => {
-  await cvg.riskEngine().initializeConfig({});
+  await cvg.riskEngine().initializeConfig();
 });
 
 test('[riskEngineModule] it can set spot, American and European option instrument types', async () => {
@@ -206,8 +206,8 @@ test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) =
 // PROTOCOL UTILS
 
 test('[protocolModule] it can get base assets', async (t: Test) => {
-  const baseAssets = await cvg.protocol().getBaseAssets();
-  spok(t, baseAssets[1], {
+  const gottenBaseAssets = await cvg.protocol().getBaseAssets();
+  spok(t, gottenBaseAssets[1], {
     $topic: 'Get Base Assets',
     model: 'baseAsset',
     index: {
@@ -216,7 +216,7 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
     ticker: 'BTC',
     riskCategory: 0,
   });
-  spok(t, baseAssets[0], {
+  spok(t, gottenBaseAssets[0], {
     $topic: 'Get Base Assets',
     model: 'baseAsset',
     index: {
@@ -339,8 +339,7 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     $topic: 'Withdraw Collateral',
     address: spokSamePubkey(takerUSDCWallet.address),
     mintAddress: spokSamePubkey(collateralMint.address),
-    // TODO: Add back in
-    // amount: token(COLLATERAL_AMOUNT - AMOUNT),
+    //amount: token(COLLATERAL_AMOUNT - AMOUNT),
   });
   spok(t, refreshedMakerUSDCWallet, {
     $topic: 'Withdraw Collateral',
