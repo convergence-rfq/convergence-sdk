@@ -1,14 +1,17 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-import { Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Keypair } from '@solana/web3.js';
+import {
+  StoredResponseState,
+  StoredRfqState,
+  AuthoritySide,
+} from '@convergence-rfq/rfq';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SKIP_PREFLIGHT,
   convergenceCli,
   killStuckProcess,
   spokSamePubkey,
-  BTC_DECIMALS,
-  USDC_DECIMALS,
   initializeNewOptionMeta,
   setupAccounts,
 } from '../helpers';
@@ -27,11 +30,6 @@ import {
   Token,
   Signer,
 } from '@/index';
-import {
-  StoredResponseState,
-  StoredRfqState,
-  AuthoritySide,
-} from '@convergence-rfq/rfq';
 import { Response } from '@/plugins/rfqModule/models/Response';
 
 killStuckProcess();
@@ -51,7 +49,7 @@ let taker: Keypair;
 let finalizedRfq: Rfq;
 let response: Response;
 
-let keypair: Keypair = Keypair.generate();
+const keypair: Keypair = Keypair.generate();
 
 let makerUSDCWallet: Token;
 let makerBTCWallet: Token;
@@ -64,85 +62,6 @@ const COLLATERAL_AMOUNT = 100_000_000_000;
 
 test('[setup] it can create Convergence instance', async (t: Test) => {
   cvg = await convergenceCli(SKIP_PREFLIGHT);
-
-  // newMaker = await createWallet(cvg, 1_000);
-  const mintAuthority = Keypair.generate();
-
-  // Setup wallets
-  const makerTx = await cvg.connection.requestAirdrop(
-    maker.publicKey,
-    1 * LAMPORTS_PER_SOL
-  );
-  await cvg.connection.confirmTransaction(makerTx);
-
-  const takerTx = await cvg.connection.requestAirdrop(
-    taker.publicKey,
-    1 * LAMPORTS_PER_SOL
-  );
-  await cvg.connection.confirmTransaction(takerTx);
-
-  // Setup mints
-  const { mint: newBTCMint } = await cvg.tokens().createMint({
-    mintAuthority: mintAuthority.publicKey,
-    decimals: BTC_DECIMALS,
-  });
-  btcMint = newBTCMint;
-
-  const { mint: newUSDCMint } = await cvg.tokens().createMint({
-    mintAuthority: mintAuthority.publicKey,
-    decimals: USDC_DECIMALS,
-  });
-
-  usdcMint = newUSDCMint;
-
-  // Setup USDC wallets
-  const { token: newTakerUSDCWallet } = await cvg
-    .tokens()
-    .createToken({ mint: usdcMint.address, owner: taker.publicKey });
-  takerUSDCWallet = newTakerUSDCWallet;
-
-  const { token: newMakerUSDCWallet } = await cvg
-    .tokens()
-    .createToken({ mint: usdcMint.address, owner: maker.publicKey });
-  makerUSDCWallet = newMakerUSDCWallet;
-
-  await cvg.tokens().mint({
-    mintAddress: usdcMint.address,
-    amount: token(WALLET_AMOUNT),
-    toToken: makerUSDCWallet.address,
-    mintAuthority,
-  });
-  await cvg.tokens().mint({
-    mintAddress: usdcMint.address,
-    amount: token(WALLET_AMOUNT),
-    toToken: takerUSDCWallet.address,
-    mintAuthority,
-  });
-
-  // Setup BTC wallets
-  const { token: newMakerBTCWallet } = await cvg
-    .tokens()
-    .createToken({ mint: btcMint.address, owner: maker.publicKey });
-  makerBTCWallet = newMakerBTCWallet;
-
-  const { token: newTakerBTCWallet } = await cvg
-    .tokens()
-    .createToken({ mint: btcMint.address, owner: taker.publicKey });
-  takerBTCWallet = newTakerBTCWallet;
-
-  await cvg.tokens().mint({
-    mintAddress: btcMint.address,
-    amount: token(WALLET_AMOUNT),
-    toToken: takerBTCWallet.address,
-    mintAuthority,
-  });
-
-  await cvg.tokens().mint({
-    mintAddress: btcMint.address,
-    amount: token(WALLET_AMOUNT),
-    toToken: makerBTCWallet.address,
-    mintAuthority,
-  });
 
   const context = await setupAccounts(cvg, WALLET_AMOUNT);
   maker = context.maker;
