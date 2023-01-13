@@ -51,6 +51,8 @@ export type FundCollateralInput = {
    */
   user?: Signer;
 
+  protocol?: PublicKey;
+
   /** Token account of user's token */
   userTokens: PublicKey;
 
@@ -131,25 +133,19 @@ export const fundCollateralBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { user = convergence.identity() } = params;
-
-  const rfqProgram = convergence.programs().getRfq(programs);
-
-  const protocol = await convergence.protocol().get();
-
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
-    rfqProgram.address
-  );
-
-  const { userTokens, amount } = params;
-  let { collateralInfo, collateralToken } = params;
-
-  collateralInfo = collateralInfo ?? collateralInfoPda;
-  collateralToken = collateralToken ?? collateralTokenPda;
+  const {
+    protocol = convergence.protocol().pdas().protocol(),
+    collateralToken = convergence
+      .collateral()
+      .pdas()
+      .collateralToken({ user: user.publicKey }),
+    collateralInfo = convergence
+      .collateral()
+      .pdas()
+      .collateralInfo({ user: user.publicKey }),
+    userTokens,
+    amount,
+  } = params;
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -158,14 +154,14 @@ export const fundCollateralBuilder = async (
         {
           user: user.publicKey,
           userTokens,
-          protocol: protocol.address,
+          protocol,
           collateralInfo,
           collateralToken,
         },
         {
           amount,
         },
-        rfqProgram.address
+        convergence.programs().getRfq(programs).address
       ),
       signers: [user],
       key: 'fundCollateral',

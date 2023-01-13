@@ -190,7 +190,7 @@ export const finalizeRfqConstructionBuilder = async (
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
-  const protocol = await convergence.protocol().get();
+  const protocol = convergence.protocol().pdas().protocol();
 
   const [config] = PublicKey.findProgramAddressSync(
     [Buffer.from('config')],
@@ -229,25 +229,27 @@ export const finalizeRfqConstructionBuilder = async (
     ...oracleAccounts
   );
 
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
-    // .setContext({
-    //   rfq,
-    // })
-    .add({
-      instruction: createFinalizeRfqConstructionInstruction(
-        {
-          taker: taker.publicKey,
-          protocol: protocol.address,
-          rfq,
-          collateralInfo,
-          collateralToken,
-          riskEngine,
-          anchorRemainingAccounts,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker],
-      key: 'finalizeRfqConstruction',
-    });
+  return (
+    TransactionBuilder.make()
+      .setFeePayer(payer)
+      // .setContext({
+      //   rfq,
+      // })
+      .add({
+        instruction: createFinalizeRfqConstructionInstruction(
+          {
+            taker: taker.publicKey,
+            protocol,
+            rfq,
+            collateralInfo,
+            collateralToken,
+            riskEngine,
+            anchorRemainingAccounts,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker],
+        key: 'finalizeRfqConstruction',
+      })
+  );
 };

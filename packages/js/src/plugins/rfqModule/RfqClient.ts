@@ -120,14 +120,6 @@ export class RfqClient {
     return new RfqPdasClient(this.convergence);
   }
 
-  /*
-   *                                             *
-   ***********************************************
-   **                OPERATIONS                 **
-   ***********************************************
-   *                                             *
-   */
-
   /** {@inheritDoc addInstrumentOperation} */
   addInstrument(input: AddInstrumentInput, options?: OperationOptions) {
     return this.convergence

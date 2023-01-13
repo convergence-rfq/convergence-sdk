@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
+import { RfqGpaBuilder } from '../gpaBuilders';
 import {
   Operation,
   OperationHandler,
@@ -65,32 +66,23 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       const { owner } = operation.input;
       const { programs } = scope;
 
-      scope.throwIfCanceled();
-
       const rfqProgram = convergence.programs().getRfq(programs);
-
-      const RFQ_ACCOUNT_DISCRIMINATOR = Buffer.from([
-        106, 19, 109, 78, 169, 13, 234, 58,
-      ]);
-
-      const rfqGpaBuilder = convergence
-        .programs()
-        .getGpaBuilder(rfqProgram.address)
-        .where(0, RFQ_ACCOUNT_DISCRIMINATOR)
-        .where(8, owner);
-
-      const unparsedRfqs = await rfqGpaBuilder.get();
+      const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
+      const rfqs = await rfqGpaBuilder.whereTaker(owner).get();
       scope.throwIfCanceled();
 
-      const rfqs: Rfq[] = [];
+      return rfqs
+        .map<Rfq | null>((account) => {
+          if (account === null) {
+            return null;
+          }
 
-      for (const unparsedRfq of unparsedRfqs) {
-        const rfqAccount = toRfqAccount(unparsedRfq);
-        const rfq = toRfq(rfqAccount);
-
-        rfqs.push(rfq);
-      }
-
-      return rfqs;
+          try {
+            return toRfq(toRfqAccount(account));
+          } catch (e) {
+            return null;
+          }
+        })
+        .filter((rfq): rfq is Rfq => rfq !== null);
     },
   };

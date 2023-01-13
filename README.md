@@ -21,6 +21,26 @@ const cvg = new Convergence(connection);
 cvg.use(walletAdapterIdentity(wallet));
 ```
 
+## Basic Usage
+
+To create a basic RFQ for BTC spot.
+
+```ts
+const { rfq } = await cvg.rfqs().createAndFinalize({
+  instruments: [
+    new SpotInstrument(cvg, btcMint, {
+      amount: 1,
+      side: Side.Bid,
+    }),
+  ],
+  orderType: OrderType.Buy,
+  fixedSize: { __kind: 'None', padding: 0 },
+  quoteAsset: cvg
+    .instrument(new SpotInstrument(cvg, usdcMint))
+    .toQuoteData(),
+});
+```
+
 ## Development
 
 **Requirements**

@@ -10,6 +10,7 @@ import {
   AddBaseAssetInput,
   addBaseAssetOperation,
 } from './operations';
+import { ProtocolPdasClient } from './ProtocolPdasClient';
 import { OperationOptions } from '@/types';
 import type { Convergence } from '@/Convergence';
 
@@ -35,6 +36,10 @@ import type { Convergence } from '@/Convergence';
  */
 export class ProtocolClient {
   constructor(protected readonly convergence: Convergence) {}
+
+  pdas() {
+    return new ProtocolPdasClient(this.convergence);
+  }
 
   /** {@inheritDoc initializeProtocolOperation} */
   initialize(input: InitializeProtocolInput, options?: OperationOptions) {

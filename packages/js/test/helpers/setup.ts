@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import {
   Commitment,
   PublicKey,
@@ -22,6 +23,7 @@ import {
   KeypairSigner,
   Mint,
   toBigNumber,
+  token,
   walletAdapterIdentity,
 } from '@/index';
 
@@ -78,6 +80,98 @@ export const createWallet = async (
   );
   await cvg.connection.confirmTransaction(tx);
   return wallet;
+};
+
+export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
+  const mintAuthority = Keypair.generate();
+  const maker = Keypair.fromSecretKey(
+    new Uint8Array(
+      JSON.parse(readFileSync('./test/fixtures/maker.json', 'utf8'))
+    )
+  );
+  const taker = Keypair.fromSecretKey(
+    new Uint8Array(
+      JSON.parse(readFileSync('./test/fixtures/taker.json', 'utf8'))
+    )
+  );
+
+  // Setup wallets
+  const walletTx = await cvg.connection.requestAirdrop(
+    maker.publicKey,
+    1 * LAMPORTS_PER_SOL
+  );
+  await cvg.connection.confirmTransaction(walletTx);
+
+  const takerTx = await cvg.connection.requestAirdrop(
+    taker.publicKey,
+    1 * LAMPORTS_PER_SOL
+  );
+  await cvg.connection.confirmTransaction(takerTx);
+
+  // Setup mints
+  const { mint: usdcMint } = await cvg.tokens().createMint({
+    mintAuthority: mintAuthority.publicKey,
+    decimals: USDC_DECIMALS,
+  });
+  const { mint: btcMint } = await cvg.tokens().createMint({
+    mintAuthority: mintAuthority.publicKey,
+    decimals: BTC_DECIMALS,
+  });
+
+  // Setup USDC wallets
+  const { token: takerUSDCWallet } = await cvg
+    .tokens()
+    .createToken({ mint: usdcMint.address, owner: taker.publicKey });
+  const { token: makerUSDCWallet } = await cvg
+    .tokens()
+    .createToken({ mint: usdcMint.address, owner: maker.publicKey });
+
+  // Mint USDC
+  await cvg.tokens().mint({
+    mintAddress: usdcMint.address,
+    amount: token(walletAmount),
+    toToken: makerUSDCWallet.address,
+    mintAuthority,
+  });
+  await cvg.tokens().mint({
+    mintAddress: usdcMint.address,
+    amount: token(walletAmount),
+    toToken: takerUSDCWallet.address,
+    mintAuthority,
+  });
+
+  // Setup BTC wallets
+  const { token: makerBTCWallet } = await cvg
+    .tokens()
+    .createToken({ mint: btcMint.address, owner: maker.publicKey });
+  const { token: takerBTCWallet } = await cvg
+    .tokens()
+    .createToken({ mint: btcMint.address, owner: taker.publicKey });
+
+  // Mint BTC
+  await cvg.tokens().mint({
+    mintAddress: btcMint.address,
+    amount: token(walletAmount),
+    toToken: takerBTCWallet.address,
+    mintAuthority,
+  });
+  await cvg.tokens().mint({
+    mintAddress: btcMint.address,
+    amount: token(walletAmount),
+    toToken: makerBTCWallet.address,
+    mintAuthority,
+  });
+
+  return {
+    maker,
+    taker,
+    usdcMint,
+    btcMint,
+    makerBTCWallet,
+    makerUSDCWallet,
+    takerBTCWallet,
+    takerUSDCWallet,
+  };
 };
 
 /**

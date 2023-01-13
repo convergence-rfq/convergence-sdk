@@ -8,11 +8,16 @@ import {
   findCollateralByAddressOperation,
   FindCollateralByAddressInput,
 } from './operations';
+import { CollateralPdasClient } from './CollateralPdasClient';
 import { OperationOptions } from '@/types';
 import type { Convergence } from '@/Convergence';
 
 export class CollateralClient {
   constructor(protected readonly convergence: Convergence) {}
+
+  pdas() {
+    return new CollateralPdasClient(this.convergence);
+  }
 
   /** {@inheritDoc fundCollateralOperation} */
   fundCollateral(input: FundCollateralInput, options?: OperationOptions) {
