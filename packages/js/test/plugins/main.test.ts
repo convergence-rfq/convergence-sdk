@@ -99,63 +99,36 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   });
 });
 
-test('[protocolModule] it can add the spot instrument', async () => {
-  const validateDataAccountAmount = 1;
-  const prepareToSettleAccountAmount = 7;
-  const settleAccountAmount = 3;
-  const revertPreparationAccountAmount = 3;
-  const cleanUpAccountAmount = 4;
-  const canBeUsedAsQuote = true;
-
+test('[protocolModule] it can add instruments', async () => {
   await cvg.protocol().addInstrument({
     authority: dao,
     instrumentProgram: cvg.programs().getSpotInstrument().address,
-    canBeUsedAsQuote,
-    validateDataAccountAmount,
-    prepareToSettleAccountAmount,
-    settleAccountAmount,
-    revertPreparationAccountAmount,
-    cleanUpAccountAmount,
+    canBeUsedAsQuote: true,
+    validateDataAccountAmount: 1,
+    prepareToSettleAccountAmount: 7,
+    settleAccountAmount: 3,
+    revertPreparationAccountAmount: 3,
+    cleanUpAccountAmount: 4,
   });
-});
-
-test('[protocolModule] it can add the PsyOptions European instrument', async () => {
-  const validateDataAccountAmount = 2;
-  const prepareToSettleAccountAmount = 7;
-  const settleAccountAmount = 3;
-  const revertPreparationAccountAmount = 3;
-  const cleanUpAccountAmount = 4;
-  const canBeUsedAsQuote = true;
-
   await cvg.protocol().addInstrument({
     authority: dao,
     instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument().address,
-    canBeUsedAsQuote,
-    validateDataAccountAmount,
-    prepareToSettleAccountAmount,
-    settleAccountAmount,
-    revertPreparationAccountAmount,
-    cleanUpAccountAmount,
+    canBeUsedAsQuote: true,
+    validateDataAccountAmount: 2,
+    prepareToSettleAccountAmount: 7,
+    settleAccountAmount: 3,
+    revertPreparationAccountAmount: 3,
+    cleanUpAccountAmount: 4,
   });
-});
-
-test('[protocolModule] it can add the PsyOptions American instrument', async () => {
-  const validateDataAccountAmount = 2;
-  const prepareToSettleAccountAmount = 7;
-  const settleAccountAmount = 3;
-  const revertPreparationAccountAmount = 3;
-  const cleanUpAccountAmount = 4;
-  const canBeUsedAsQuote = true;
-
   await cvg.protocol().addInstrument({
     authority: dao,
     instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument().address,
-    canBeUsedAsQuote,
-    validateDataAccountAmount,
-    prepareToSettleAccountAmount,
-    settleAccountAmount,
-    revertPreparationAccountAmount,
-    cleanUpAccountAmount,
+    canBeUsedAsQuote: true,
+    validateDataAccountAmount: 2,
+    prepareToSettleAccountAmount: 7,
+    settleAccountAmount: 3,
+    revertPreparationAccountAmount: 3,
+    cleanUpAccountAmount: 4,
   });
 });
 
@@ -217,14 +190,12 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
   });
 });
 
-test('[protocolModule] it can register BTC mint', async () => {
+test('[protocolModule] it can register mints', async () => {
   await cvg.protocol().registerMint({
     baseAssetIndex: 0,
     mint: btcMint.address,
   });
-});
 
-test('[protocolModule] it can register USDC mint', async () => {
   await cvg.protocol().registerMint({
     mint: usdcMint.address,
   });
@@ -400,12 +371,8 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
 
 // test('[rfqModule] it can finalize RFQ construction with BaseAsset', async (t: Test) => {
 test('[rfqModule] it can finalize RFQ construction and cancel RFQ', async (t: Test) => {
-  const quoteAsset = cvg
-    .instrument(new SpotInstrument(cvg, usdcMint))
-    .toQuoteData();
   const { rfq } = await cvg.rfqs().create({
-    taker,
-    quoteAsset,
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
     instruments: [
       new SpotInstrument(cvg, btcMint, {
         amount: 1,
@@ -416,6 +383,7 @@ test('[rfqModule] it can finalize RFQ construction and cancel RFQ', async (t: Te
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
     activeWindow: 5_000,
     settlingWindow: 1_000,
+    taker,
   });
 
   await cvg.rfqs().finalizeRfqConstruction({
@@ -537,13 +505,9 @@ test('[rfqModule] it can confirm a response', async (t: Test) => {
 });
 
 test('[rfqModule] it can finalize RFQ construction with QuoteAsset and cancel RFQ', async (t: Test) => {
-  const quoteAsset = cvg
-    .instrument(new SpotInstrument(cvg, usdcMint))
-    .toQuoteData();
-
   const { rfq } = await cvg.rfqs().create({
     taker,
-    quoteAsset,
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
     instruments: [
       new SpotInstrument(cvg, btcMint, {
         amount: 1,
@@ -683,10 +647,10 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 });
 
 test('[rfqModule] it can find RFQs by instrument', async () => {
-  const rfqs = await cvg.rfqs().findByInstrument({
+  await cvg.rfqs().findByInstrument({
     instrumentProgram: cvg.programs().getSpotInstrument(),
   });
-  console.error(rfqs.length);
+  // TODO: Finish
 });
 
 test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
