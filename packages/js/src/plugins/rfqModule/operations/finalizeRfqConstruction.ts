@@ -14,6 +14,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+// import { assertRfq, Rfq } from '../models';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
@@ -77,6 +78,9 @@ export type FinalizeRfqConstructionInput = {
 export type FinalizeRfqConstructionOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
+  // /** The newly finalized Rfq. */
+  // rfq: Rfq;
 };
 
 /**
@@ -90,6 +94,8 @@ export const finalizeRfqConstructionOperationHandler: OperationHandler<FinalizeR
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FinalizeRfqConstructionOutput> => {
+      // const { rfq } = operation.input;
+
       const builder = await finalizeRfqConstructionBuilder(
         convergence,
         {
@@ -106,6 +112,12 @@ export const finalizeRfqConstructionOperationHandler: OperationHandler<FinalizeR
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
+      // const foundRfq = await convergence
+      //   .rfqs()
+      //   .findRfqByAddress({ address: rfq });
+      // assertRfq(rfq);
+
+      // return { ...output, rfq: foundRfq };
       return { ...output };
     },
   };
@@ -148,10 +160,17 @@ export const finalizeRfqConstructionBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { taker = convergence.identity() } = params;
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
+
+  const {
+    taker = convergence.identity(),
+    riskEngine = riskEngineProgram.address,
+    baseAssetIndex = { value: 0 },
+    rfq,
+  } = params;
+  let { collateralInfo, collateralToken } = params;
 
   const [collateralInfoPda] = PublicKey.findProgramAddressSync(
     [Buffer.from('collateral_info'), taker.publicKey.toBuffer()],
@@ -162,13 +181,8 @@ export const finalizeRfqConstructionBuilder = async (
     rfqProgram.address
   );
 
-  const {
-    rfq,
-    collateralInfo = collateralInfoPda,
-    collateralToken = collateralTokenPda,
-    riskEngine = riskEngineProgram.address,
-    baseAssetIndex = { value: 0 },
-  } = params;
+  collateralInfo = collateralInfo ?? collateralInfoPda;
+  collateralToken = collateralToken ?? collateralTokenPda;
 
   const SWITCHBOARD_BTC_ORACLE = new PublicKey(
     '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
@@ -215,24 +229,25 @@ export const finalizeRfqConstructionBuilder = async (
     ...oracleAccounts
   );
 
-  return (
-    TransactionBuilder.make()
-      .setFeePayer(payer)
-      .add({
-        instruction: createFinalizeRfqConstructionInstruction(
-          {
-            taker: taker.publicKey,
-            protocol: protocol.address,
-            rfq,
-            collateralInfo,
-            collateralToken,
-            riskEngine,
-            anchorRemainingAccounts,
-          },
-          rfqProgram.address
-        ),
-        signers: [taker],
-        key: 'finalizeRfqConstruction',
-      })
-  );
+  return TransactionBuilder.make()
+    .setFeePayer(payer)
+    // .setContext({
+    //   rfq,
+    // })
+    .add({
+      instruction: createFinalizeRfqConstructionInstruction(
+        {
+          taker: taker.publicKey,
+          protocol: protocol.address,
+          rfq,
+          collateralInfo,
+          collateralToken,
+          riskEngine,
+          anchorRemainingAccounts,
+        },
+        rfqProgram.address
+      ),
+      signers: [taker],
+      key: 'finalizeRfqConstruction',
+    });
 };

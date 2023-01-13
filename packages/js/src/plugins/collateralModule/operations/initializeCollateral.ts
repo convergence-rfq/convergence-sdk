@@ -153,7 +153,6 @@ export const initializeCollateralBuilder = async (
 ): Promise<TransactionBuilder<InitializeCollateralBuilderContext>> => {
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-
   const { user = convergence.identity(), collateralMint } = params;
 
   const protocol = await convergence.protocol().get();
