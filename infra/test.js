@@ -13,12 +13,10 @@ async function main() {
     stdio: [process.stdin, process.stdout, process.stderr],
   });
 
-  child.on('close', (code) => {
-    if (code === 0) {
-      solanaValidatorChild.kill('SIGTERM');
-      solanaLogsChild.kill('SIGTERM');
-      process.exit(0);
-    }
+  child.on('close', () => {
+    solanaValidatorChild.kill('SIGTERM');
+    solanaLogsChild.kill('SIGTERM');
+    process.exit(0);
   });
 }
 
