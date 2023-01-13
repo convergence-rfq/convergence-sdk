@@ -609,6 +609,7 @@ test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
 
 test('[rfqModule] it can confirm a response', async (t: Test) => {
   await cvg.rfqs().confirmResponse({
+    taker,
     rfq: finalizedRfq.address,
     response: response.address,
     side: Side.Bid,
