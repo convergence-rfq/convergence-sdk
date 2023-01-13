@@ -8,6 +8,7 @@ import {
 } from '@convergence-rfq/rfq';
 import {
   SWITCHBOARD_BTC_ORACLE,
+  SWITCHBOARD_SOL_ORACLE,
   SKIP_PREFLIGHT,
   convergenceCli,
   killStuckProcess,
@@ -177,13 +178,42 @@ test('[riskEngineModule] it can set spot and option instrument type', async () =
   });
 });
 
-test('[protocolModule] it can add a BTC base asset', async () => {
+test('[protocolModule] it can add BTC and SOL base assets', async () => {
   await cvg.protocol().addBaseAsset({
     authority: dao,
     index: { value: 0 },
     ticker: 'BTC',
     riskCategory: RiskCategory.VeryLow,
     priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_BTC_ORACLE },
+  });
+  await cvg.protocol().addBaseAsset({
+    authority: dao,
+    index: { value: 1 },
+    ticker: 'SOL',
+    riskCategory: RiskCategory.VeryLow,
+    priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_SOL_ORACLE },
+  });
+});
+
+test('[protocolModule] it can get base assets', async (t: Test) => {
+  const baseAssets = await cvg.protocol().getBaseAssets();
+  spok(t, baseAssets[1], {
+    $topic: 'Get Base Assets',
+    model: 'baseAsset',
+    index: {
+      value: 0,
+    },
+    ticker: 'BTC',
+    riskCategory: 0,
+  });
+  spok(t, baseAssets[0], {
+    $topic: 'Get Base Assets',
+    model: 'baseAsset',
+    index: {
+      value: 1,
+    },
+    ticker: 'SOL',
+    riskCategory: 0,
   });
 });
 

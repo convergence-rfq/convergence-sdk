@@ -9,6 +9,8 @@ import {
   registerMintOperation,
   AddBaseAssetInput,
   addBaseAssetOperation,
+  getBaseAssetsOperation,
+  GetBaseAssetsInput,
 } from './operations';
 import { ProtocolPdasClient } from './ProtocolPdasClient';
 import { OperationOptions } from '@/types';
@@ -59,6 +61,12 @@ export class ProtocolClient {
     return this.convergence
       .operations()
       .execute(getProtocolOperation(input), options);
+  }
+  /** {@inheritDoc getBaseAssetsOperation} */
+  getBaseAssets(input?: GetBaseAssetsInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(getBaseAssetsOperation(input), options);
   }
 
   /** {@inheritDoc addBaseAssetOperation} */

@@ -22,7 +22,7 @@
     "clean:all": "nx run-many --all --target=clean",
     "build": "nx affected --all --target=build",
     "build:all": "nx run-many --all --target=build",
-    "test": "nx run-many --all --target=test --skip-nx-cache",
+    "test": "NX_TASKS_RUNNER_DYNAMIC_OUTPUT=false nx run-many --all --target=test --skip-nx-cache",
     "test:all": "pkill solana-test-validator | echo 'Skipping...' && node ./infra/test.js",
     "test:tape": "tape dist/test/**/*.test.js --skip-nx-cache",
     "lint:test": "nx run-many --all --target=lint:test",

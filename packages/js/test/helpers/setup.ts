@@ -33,6 +33,9 @@ const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
 export const SWITCHBOARD_BTC_ORACLE = new PublicKey(
   '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
 );
+export const SWITCHBOARD_SOL_ORACLE = new PublicKey(
+  'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
+);
 
 /**
  * HELPERS
