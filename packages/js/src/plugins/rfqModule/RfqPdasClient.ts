@@ -5,7 +5,7 @@ import { BigNumber, Pda, Program, PublicKey, toBigNumber } from '@/types';
 /**
  * This client allows you to build PDAs related to the NFT module.
  *
- * @see {@link NftClient}
+ * @see {@link RfqClient}
  * @group Module Pdas
  */
 export class RfqPdasClient {

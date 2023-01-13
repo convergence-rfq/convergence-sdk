@@ -120,16 +120,12 @@ export const setInstrumentTypeBuilder = (
   const { authority = payer, instrumentProgram, instrumentType } = params;
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
-  const rfqProgram = convergence.programs().getRfq(programs);
 
   const [config] = PublicKey.findProgramAddressSync(
     [Buffer.from('config')],
     riskEngineProgram.address
   );
-  const [protocol] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
+  const protocol = convergence.protocol().pdas().protocol();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

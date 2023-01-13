@@ -104,12 +104,6 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
     },
   };
 
-function toLittleEndian(value: number, bytes: number) {
-  const buf = Buffer.allocUnsafe(bytes);
-  buf.writeUIntLE(value, 0, bytes);
-  return buf;
-}
-
 /**
  * @group Transaction Builders
  * @category Inputs
@@ -150,10 +144,7 @@ export const registerMintBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq();
 
-  const [protocol] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
+  const protocol = convergence.protocol().pdas().protocol();
 
   const [mintInfo] = PublicKey.findProgramAddressSync(
     [Buffer.from('mint_info'), mint.toBuffer()],
@@ -161,12 +152,11 @@ export const registerMintBuilder = async (
   );
 
   let baseAsset: PublicKey;
-
   if (baseAssetIndex >= 0) {
-    [baseAsset] = PublicKey.findProgramAddressSync(
-      [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex, 2)],
-      rfqProgram.address
-    );
+    baseAsset = convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value: baseAssetIndex } });
   } else {
     baseAsset = PublicKey.default;
   }

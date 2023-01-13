@@ -1,4 +1,3 @@
-import { PublicKey } from '@solana/web3.js';
 import { Protocol, toProtocol } from '../models';
 import { toProtocolAccount } from '../accounts';
 import {
@@ -61,12 +60,7 @@ export const getProtocolOperationHandler: OperationHandler<GetProtocolOperation>
       const { commitment } = scope;
       scope.throwIfCanceled();
 
-      const rfqProgram = convergence.programs().getRfq();
-      const [address] = PublicKey.findProgramAddressSync(
-        [Buffer.from('protocol')],
-        rfqProgram.address
-      );
-
+      const address = convergence.protocol().pdas().protocol();
       const account = await convergence.rpc().getAccount(address, commitment);
       const protocol = toProtocol(toProtocolAccount(account));
       scope.throwIfCanceled();

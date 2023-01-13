@@ -131,16 +131,15 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      const rfqProgram = convergence.programs().getRfq();
-
-      const [collateralPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
-        rfqProgram.address
-      );
-
       const account = await convergence
         .rpc()
-        .getAccount(collateralPda, commitment);
+        .getAccount(
+          convergence
+            .collateral()
+            .pdas()
+            .collateralInfo({ user: user.publicKey }),
+          commitment
+        );
       scope.throwIfCanceled();
 
       const collateral = toCollateral(toCollateralAccount(account));
