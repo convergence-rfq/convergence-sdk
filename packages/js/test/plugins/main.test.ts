@@ -609,8 +609,6 @@ test('[rfqModule] it can respond to an Rfq', async (t: Test) => {
   });
 });
 
-//confirm response
-
 test('[rfqModule] it can confirm a response', async (t: Test) => {
   await cvg.rfqs().confirmResponse({
     taker,
@@ -709,6 +707,25 @@ test('[rfqModule] it can prepare settlement', async (t: Test) => {
   });
 });
 
+test('[rfqModule] it can settle', async (t: Test) => {
+  await cvg.rfqs().settle({
+    maker: maker.publicKey,
+    taker: taker.publicKey,
+    rfq: finalizedRfq.address,
+    response: response.address,
+    baseAssetMints: [btcMint, btcMint, btcMint],
+    quoteMint: usdcMint,
+  });
+
+  const refreshedResponse = await cvg.rfqs().refreshResponse(response);
+
+  spok(t, refreshedResponse, {
+    $topic: 'Settled',
+    model: 'response',
+    state: StoredResponseState.Settled,
+  });
+});
+
 /*
  * UTILS
  */
@@ -718,6 +735,7 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     amount: 1,
     side: Side.Bid,
   });
+
   const quoteAsset = cvg
     .instrument(new SpotInstrument(cvg, usdcMint))
     .toQuoteData();
