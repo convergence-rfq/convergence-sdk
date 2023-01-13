@@ -50,13 +50,11 @@ export class SpotInstrument implements Instrument {
   }
 
   getValidationAccounts() {
-    const programs = this.convergence.programs().all();
-    const rfqProgram = this.convergence.programs().getRfq(programs);
-    const [mintInfoPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('mint_info'), this.mint.address.toBuffer()],
-      rfqProgram.address
-    );
-    return [{ pubkey: mintInfoPda, isSigner: false, isWritable: false }];
+    const mintInfo = this.convergence
+      .rfqs()
+      .pdas()
+      .mintInfo({ mint: this.mint.address });
+    return [{ pubkey: mintInfo, isSigner: false, isWritable: false }];
   }
 
   serializeInstrumentData(): Buffer {

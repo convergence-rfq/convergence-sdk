@@ -29,6 +29,7 @@ import {
   InstrumentType,
   Token,
   Signer,
+  BaseAsset,
 } from '@/index';
 
 killStuckProcess();
@@ -40,10 +41,8 @@ let btcMint: Mint;
 
 let dao: Signer;
 
-// LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
-let maker: Keypair;
-// BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
-let taker: Keypair;
+let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
+let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
 
 let makerUSDCWallet: Token;
 let makerBTCWallet: Token;
@@ -53,6 +52,8 @@ let takerBTCWallet: Token;
 
 const WALLET_AMOUNT = 9_000_000_000_000;
 const COLLATERAL_AMOUNT = 100_000_000_000;
+
+const baseAssets: BaseAsset[] = [];
 
 // SETUP
 
@@ -130,20 +131,22 @@ test('[protocolModule] it can add instruments', async () => {
 });
 
 test('[protocolModule] it can add BTC and SOL base assets', async () => {
-  await cvg.protocol().addBaseAsset({
+  const { baseAsset: baseBTCAsset } = await cvg.protocol().addBaseAsset({
     authority: dao,
     index: { value: 0 },
     ticker: 'BTC',
     riskCategory: RiskCategory.VeryLow,
     priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_BTC_ORACLE },
   });
-  await cvg.protocol().addBaseAsset({
+  baseAssets.push(baseBTCAsset);
+  const { baseAsset: baseSOLAsset } = await cvg.protocol().addBaseAsset({
     authority: dao,
     index: { value: 1 },
     ticker: 'SOL',
     riskCategory: RiskCategory.VeryLow,
     priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_SOL_ORACLE },
   });
+  baseAssets.push(baseSOLAsset);
 });
 
 test('[protocolModule] it can register mints', async () => {
@@ -151,7 +154,6 @@ test('[protocolModule] it can register mints', async () => {
     baseAssetIndex: 0,
     mint: btcMint.address,
   });
-
   await cvg.protocol().registerMint({
     mint: usdcMint.address,
   });

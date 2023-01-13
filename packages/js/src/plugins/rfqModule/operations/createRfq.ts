@@ -1,5 +1,5 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
-import { Keypair, PublicKey, AccountMeta } from '@solana/web3.js';
+import { Keypair, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
@@ -182,13 +182,6 @@ export const createRfqBuilder = async (
     .programs()
     .getSpotInstrument(programs);
 
-  const anchorRemainingAccounts: AccountMeta[] = [];
-
-  // TODO: Use PDA client
-  const [quotePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('mint_info'), quoteAsset.instrumentData],
-    rfqProgram.address
-  );
   const quoteAccounts: AccountMeta[] = [
     {
       pubkey: spotInstrumentProgram.address,
@@ -196,18 +189,15 @@ export const createRfqBuilder = async (
       isWritable: false,
     },
     {
-      pubkey: quotePda,
+      pubkey: convergence.rfqs().pdas().quote({ quoteAsset }),
       isSigner: false,
       isWritable: false,
     },
   ];
 
-  const protocol = await convergence.protocol().get();
-
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
   let expectedLegSize = 4;
-
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
       instrument,
@@ -218,8 +208,6 @@ export const createRfqBuilder = async (
     expectedLegSize += instrumentClient.getLegDataSize();
   }
 
-  anchorRemainingAccounts.push(...quoteAccounts, ...legAccounts);
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({
@@ -229,10 +217,10 @@ export const createRfqBuilder = async (
       instruction: createCreateRfqInstruction(
         {
           taker: taker.publicKey,
-          protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq: keypair.publicKey,
           systemProgram: systemProgram.address,
-          anchorRemainingAccounts,
+          anchorRemainingAccounts: [...quoteAccounts, ...legAccounts],
         },
         {
           expectedLegSize,
