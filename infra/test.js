@@ -1,23 +1,7 @@
 const { spawn } = require('child_process');
+const { solanaTestValidator, solanaLogs } = require('./helpers');
 
 process.env.NX_TASKS_RUNNER_DYNAMIC_OUTPUT = false;
-
-const solanaLogs = new Promise((resolve) => {
-  // Logs are not available immediately after starting the test validator
-  setTimeout(() => {
-    const child = spawn('solana', ['logs', '--url', 'localhost', '--verbose'], {
-      stdio: [process.stdin, process.stdout, process.stderr],
-    });
-    resolve(child);
-  }, 1_000);
-});
-
-const solanaTestValidator = new Promise((resolve) => {
-  const child = spawn('./infra/solana-test-validator.sh', [], {
-    stdio: [process.stdin, process.stdout, process.stderr],
-  });
-  resolve(child);
-});
 
 async function main() {
   const [solanaValidatorChild, solanaLogsChild] = await Promise.all([
@@ -25,14 +9,14 @@ async function main() {
     solanaLogs,
   ]);
 
-  const child = spawn('yarn', ['test:all'], {
+  const child = spawn('yarn', ['test'], {
     stdio: [process.stdin, process.stdout, process.stderr],
   });
 
   child.on('close', (code) => {
     if (code === 0) {
-      process.kill(solanaValidatorChild.pid, 'SIGTERM');
-      process.kill(solanaLogsChild.pid, 'SIGTERM');
+      solanaValidatorChild.kill('SIGTERM');
+      solanaLogsChild.kill('SIGTERM');
       process.exit(0);
     }
   });

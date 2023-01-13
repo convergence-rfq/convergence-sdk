@@ -145,12 +145,11 @@ export const fundCollateralBuilder = async (
     rfqProgram.address
   );
 
-  const {
-    userTokens,
-    collateralInfo = collateralInfoPda,
-    collateralToken = collateralTokenPda,
-    amount,
-  } = params;
+  const { userTokens, amount } = params;
+  let { collateralInfo, collateralToken } = params;
+
+  collateralInfo = collateralInfo ?? collateralInfoPda;
+  collateralToken = collateralToken ?? collateralTokenPda;
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
