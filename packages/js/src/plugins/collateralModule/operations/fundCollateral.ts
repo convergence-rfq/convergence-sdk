@@ -51,11 +51,10 @@ export type FundCollateralInput = {
    */
   user?: Signer;
 
+  protocol?: PublicKey;
+
   /** Token account of user's token */
   userTokens: PublicKey;
-
-  /** The address of the protocol account. */
-  protocol?: PublicKey;
 
   /** The address of the user's collateral_info account. */
   collateralInfo?: PublicKey;
@@ -132,7 +131,7 @@ export const fundCollateralBuilder = async (
   params: FundCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  const { programs } = options;
+  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { user = convergence.identity() } = params;
   const {
     protocol = convergence.protocol().pdas().protocol(),
@@ -149,7 +148,7 @@ export const fundCollateralBuilder = async (
   } = params;
 
   return TransactionBuilder.make()
-    .setFeePayer(user)
+    .setFeePayer(payer)
     .add({
       instruction: createFundCollateralInstruction(
         {

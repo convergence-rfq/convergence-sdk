@@ -14,6 +14,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+// import { assertRfq, Rfq } from '../models';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
@@ -77,6 +78,9 @@ export type FinalizeRfqConstructionInput = {
 export type FinalizeRfqConstructionOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
+  // /** The newly finalized Rfq. */
+  // rfq: Rfq;
 };
 
 /**
@@ -90,6 +94,8 @@ export const finalizeRfqConstructionOperationHandler: OperationHandler<FinalizeR
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FinalizeRfqConstructionOutput> => {
+      // const { rfq } = operation.input;
+
       const builder = await finalizeRfqConstructionBuilder(
         convergence,
         {
@@ -106,6 +112,12 @@ export const finalizeRfqConstructionOperationHandler: OperationHandler<FinalizeR
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
+      // const foundRfq = await convergence
+      //   .rfqs()
+      //   .findRfqByAddress({ address: rfq });
+      // assertRfq(rfq);
+
+      // return { ...output, rfq: foundRfq };
       return { ...output };
     },
   };
@@ -178,7 +190,8 @@ export const finalizeRfqConstructionBuilder = async (
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
-  const protocolPda = convergence.protocol().pdas().protocol();
+  const protocol = convergence.protocol().pdas().protocol();
+
   const [config] = PublicKey.findProgramAddressSync(
     [Buffer.from('config')],
     riskEngineProgram.address
@@ -187,7 +200,7 @@ export const finalizeRfqConstructionBuilder = async (
   const configAccount: AccountMeta = {
     pubkey: config,
     isSigner: false,
-    isWritable: true,
+    isWritable: false,
   };
 
   const [baseAsset] = PublicKey.findProgramAddressSync(
@@ -216,22 +229,27 @@ export const finalizeRfqConstructionBuilder = async (
     ...oracleAccounts
   );
 
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
-    .add({
-      instruction: createFinalizeRfqConstructionInstruction(
-        {
-          taker: taker.publicKey,
-          protocol: protocolPda,
-          rfq,
-          collateralInfo,
-          collateralToken,
-          riskEngine,
-          anchorRemainingAccounts,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker],
-      key: 'finalizeRfqConstruction',
-    });
+  return (
+    TransactionBuilder.make()
+      .setFeePayer(payer)
+      // .setContext({
+      //   rfq,
+      // })
+      .add({
+        instruction: createFinalizeRfqConstructionInstruction(
+          {
+            taker: taker.publicKey,
+            protocol,
+            rfq,
+            collateralInfo,
+            collateralToken,
+            riskEngine,
+            anchorRemainingAccounts,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker],
+        key: 'finalizeRfqConstruction',
+      })
+  );
 };

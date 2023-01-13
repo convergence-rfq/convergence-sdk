@@ -8,6 +8,7 @@ export * from './keypairIdentity';
 export * from './mockStorage';
 export * from './operationModule';
 export * from './programModule';
+export * from './protocolModule';
 export * from './rfqModule';
 export * from './riskEngineModule';
 export * from './rpcModule';

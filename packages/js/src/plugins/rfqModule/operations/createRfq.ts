@@ -132,7 +132,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     const rfq = await convergence
       .rfqs()
-      .findByAddress({ address: keypair.publicKey });
+      .findRfqByAddress({ address: keypair.publicKey });
     assertRfq(rfq);
 
     return { ...output, rfq };

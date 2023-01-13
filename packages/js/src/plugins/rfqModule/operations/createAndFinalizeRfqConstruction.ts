@@ -128,7 +128,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       const rfq = await convergence
         .rfqs()
-        .findByAddress({ address: keypair.publicKey });
+        .findRfqByAddress({ address: keypair.publicKey });
 
       return { ...output, rfq };
     },
@@ -175,8 +175,8 @@ export const createAndFinalizeRfqConstructionBuilder = async (
     instruments,
     quoteAsset,
     fixedSize,
-    activeWindow = 1,
-    settlingWindow = 1,
+    activeWindow = 5_000,
+    settlingWindow = 1_000,
     collateralInfo,
     collateralToken,
     riskEngine,

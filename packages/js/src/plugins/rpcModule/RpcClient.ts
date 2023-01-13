@@ -120,6 +120,9 @@ export class RpcClient {
     const rawTransaction = transaction.serialize();
     sendOptions.skipPreflight = this.convergence.skipPreflight;
 
+    // TODO: Make this configurable.
+    sendOptions.skipPreflight = true;
+
     try {
       return await this.convergence.connection.sendRawTransaction(
         rawTransaction,
