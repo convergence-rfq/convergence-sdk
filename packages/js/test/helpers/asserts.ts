@@ -5,6 +5,12 @@ import { Specification, Specifications } from 'spok';
 import { Test } from 'tape';
 import { Amount, BigNumber, sameAmounts } from '@/types';
 
+const concatKey = (key: string | undefined) => {
+  return key
+    ? [key?.substring(0, 4), key?.substring(key.length - 4)].join('...')
+    : 'undefined';
+};
+
 export function spokSamePubkey(
   a: PublicKey | string | null | undefined
 ): Specifications<PublicKey> {
@@ -13,8 +19,8 @@ export function spokSamePubkey(
   const same = (b: PublicKey | null | undefined) =>
     b != null && !!key?.equals(b);
 
-  same.$spec = `spokSamePubkey(${keyStr})`;
-  same.$description = `${keyStr} equal`;
+  same.$spec = concatKey(keyStr);
+  same.$description = `${concatKey(keyStr)} equal`;
   return same;
 }
 
