@@ -275,7 +275,6 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     $topic: 'Withdraw Collateral',
     address: spokSamePubkey(makerUSDCWallet.address),
     mintAddress: spokSamePubkey(collateralMint.address),
-    // TODO: Add back in
     //amount: token(COLLATERAL_AMOUNT - amount),
   });
 
@@ -291,7 +290,6 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     $topic: 'Withdraw Collateral',
     address: spokSamePubkey(makerCollateral),
     mintAddress: spokSamePubkey(collateralMint.address),
-    // TODO: Add back in
     //amount: token(COLLATERAL_AMOUNT - amount),
   });
 });
@@ -313,6 +311,7 @@ test('[rfqModule] it can create a RFQ', async (t: Test) => {
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
   });
+
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
 
   spok(t, rfq, {
