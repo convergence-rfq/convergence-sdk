@@ -3,6 +3,7 @@ import { AccountMeta } from '@solana/web3.js';
 import * as beet from '@metaplex-foundation/beet';
 import * as beetSolana from '@metaplex-foundation/beet-solana';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';
 import type { Convergence } from '@/Convergence';
 import {
@@ -31,7 +32,10 @@ import {
 export class InstrumentClient {
   constructor(
     protected convergence: Convergence,
-    protected instrument: PsyoptionsEuropeanInstrument | SpotInstrument,
+    protected instrument:
+      | PsyoptionsEuropeanInstrument
+      | SpotInstrument
+      | PsyoptionsAmericanInstrument,
     protected legInfo?: {
       amount: number;
       side: Side;

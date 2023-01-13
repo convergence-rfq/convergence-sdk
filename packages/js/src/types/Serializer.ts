@@ -1,4 +1,3 @@
-import { Buffer } from 'buffer';
 import type { Beet } from '@metaplex-foundation/beet';
 import * as beet from '@metaplex-foundation/beet';
 import {
@@ -33,7 +32,7 @@ export const mapSerializer = <T, U>(
 });
 
 export const createSerializerFromBeet = <T>(
-  beetArg: Beet<T>
+  beetArg: Beet<T, unknown>
 ): Serializer<T> => ({
   description: beetArg.description,
   serialize: (value: T) => {

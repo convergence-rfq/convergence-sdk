@@ -17,6 +17,7 @@ import {
   setupAccounts,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
+
 import {
   Mint,
   token,
@@ -715,3 +716,36 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
     address: spokSamePubkey(foundRfq.address),
   });
 });
+
+test('[riskEngineModule] it can calculate collateral for rfq', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+  });
+
+  await cvg.riskEngine().calculateCollateralForRfq({ rfq: rfq.address });
+  spok(t, rfq, {
+    $topic: 'Calculated Collateral for Rfq',
+    model: 'rfq',
+    address: spokSamePubkey(rfq.address),
+  });
+});
+
+// test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
+//   const rfq = finalisedRfq;
+//   await cvg.rfqs().addLegsToRfq(taker,rfq,)
+
+//   spok(t, rfq, {
+//     $topic: 'Calculated Collateral for Rfq',
+//     model: 'rfq',
+//     address: spokSamePubkey(rfq.address),
+//   });
+// });

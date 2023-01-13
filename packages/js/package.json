@@ -51,6 +51,7 @@
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/beet-solana": "0.4.0",
     "@metaplex-foundation/mpl-token-metadata": "^2.3.3",
+    "@mithraic-labs/psy-american": "^0.2.3",
     "@mithraic-labs/tokenized-euros": "^0.2.2",
     "@noble/ed25519": "^1.7.1",
     "@noble/hashes": "^1.1.3",

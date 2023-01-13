@@ -10,7 +10,7 @@ import {
   Signer,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-
+import { ProtocolPdasClient } from '@/plugins/protocolModule';
 const Key = 'AddLegsToRfqOperation' as const;
 
 /**
@@ -48,8 +48,6 @@ export type AddLegsToRfqInput = {
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
-
-  protocol: PublicKey;
 
   rfq: PublicKey;
 
@@ -115,7 +113,9 @@ export const addLegsToRfqBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { taker = convergence.identity(), protocol, rfq, legs } = params;
+  const protocolPdaClient = new ProtocolPdasClient(convergence);
+  const protocol = protocolPdaClient.protocol();
+  const { taker = convergence.identity(), rfq, legs } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
