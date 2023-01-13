@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 2.0.11
+
+### Patch Changes
+
+- Minor updates to all modules including updated API interfaces and more complete models
+
 ## 2.0.10
 
 ### Patch Changes

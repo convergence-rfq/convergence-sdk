@@ -1,6 +1,6 @@
 import { PROGRAM_ID } from '@convergence-rfq/rfq';
-import { ErrorWithLogs, Program } from '@/types';
 import { cusper } from '@metaplex-foundation/mpl-token-metadata';
+import { ErrorWithLogs, Program } from '@/types';
 import { Convergence } from '@/index';
 import { GpaBuilder } from '@/utils'
 
