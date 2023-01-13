@@ -24,7 +24,6 @@ import {
   InstrumentType,
   Token,
   Signer,
-  Rfq,
 } from '@/index';
 
 killStuckProcess();
@@ -35,7 +34,7 @@ let usdcMint: Mint;
 let btcMint: Mint;
 
 let dao: Signer;
-let finalisedRfq: Rfq;
+
 // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let maker: Keypair;
 // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
@@ -500,7 +499,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
   });
   const foundRfq = await cvg.rfqs().findByAddress({ address: rfq.address });
-  finalisedRfq = foundRfq;
+
   spok(t, rfq, {
     $topic: 'Created RFQ',
     model: 'rfq',
@@ -509,9 +508,20 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
 });
 
 test('[riskEngineModule] it can calculate collateral for rfq', async (t: Test) => {
-  const rfq = finalisedRfq;
-  await cvg.riskEngine().calculateCollateralForRfq({ rfq: rfq.address });
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+  });
 
+  await cvg.riskEngine().calculateCollateralForRfq({ rfq: rfq.address });
   spok(t, rfq, {
     $topic: 'Calculated Collateral for Rfq',
     model: 'rfq',
@@ -519,4 +529,13 @@ test('[riskEngineModule] it can calculate collateral for rfq', async (t: Test) =
   });
 });
 
+// test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
+//   const rfq = finalisedRfq;
+//   await cvg.rfqs().addLegsToRfq(taker,rfq,)
 
+//   spok(t, rfq, {
+//     $topic: 'Calculated Collateral for Rfq',
+//     model: 'rfq',
+//     address: spokSamePubkey(rfq.address),
+//   });
+// });

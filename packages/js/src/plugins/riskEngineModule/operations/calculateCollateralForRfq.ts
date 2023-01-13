@@ -2,7 +2,9 @@ import { createCalculateCollateralForRfqInstruction } from '@convergence-rfq/ris
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { BaseAssetIndex } from '@convergence-rfq/rfq';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { RiskEnginePdasClient } from '../RiskEnginePdasClient';
 import { Convergence } from '@/Convergence';
+import { ProtocolPdasClient } from '@/plugins/protocolModule';
 
 import {
   Operation,
@@ -65,20 +67,14 @@ export const calculateCollateralForRfqbuilder = (
 
   const { rfq, baseAssetIndex = { value: 0 } } = params;
 
-  const rfqProgram = convergence.programs().getRfq(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
+  const config = new RiskEnginePdasClient(convergence).config();
 
-  const [config] = PublicKey.findProgramAddressSync(
-    [Buffer.from('config')],
-    riskEngineProgram.address
-  );
-
+  const baseAsset = new ProtocolPdasClient(convergence).baseAsset({
+    index: baseAssetIndex,
+  });
   const SWITCHBOARD_BTC_ORACLE = new PublicKey(
     '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
-  );
-  const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex.value, 2)],
-    rfqProgram.address
   );
 
   const baseAssetAccounts: AccountMeta[] = [
@@ -114,9 +110,3 @@ export const calculateCollateralForRfqbuilder = (
       key: 'CalculateCollateralForRfqOperation',
     });
 };
-
-function toLittleEndian(value: number, bytes: number) {
-  const buf = Buffer.allocUnsafe(bytes);
-  buf.writeUIntLE(value, 0, bytes);
-  return buf;
-}
