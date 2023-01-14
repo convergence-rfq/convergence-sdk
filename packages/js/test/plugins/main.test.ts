@@ -246,29 +246,6 @@ test('[riskEngineModule] it can set spot, American and European option instrumen
   });
 });
 
-test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().create({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 1,
-        side: Side.Bid,
-      }),
-    ],
-    taker,
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
-  });
-
-  await cvg.riskEngine().calculateCollateralForRfq({ rfq: rfq.address });
-
-  spok(t, rfq, {
-    $topic: 'Calculated Collateral for Rfq',
-    model: 'rfq',
-    address: spokSamePubkey(rfq.address),
-  });
-});
-
 // COLLATERAL
 
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
@@ -758,46 +735,9 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
   });
 });
 
-// PSYOPTIONS EUROPEANS
+// RISK ENGINE UTILS
 
-test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions Europeans', async (t: Test) => {
-  const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
-    cvg,
-    btcMint,
-    usdcMint,
-    17_500,
-    1_000,
-    3_600
-  );
-
-  const { rfq } = await cvg.rfqs().create({
-    instruments: [
-      new PsyoptionsEuropeanInstrument(
-        cvg,
-        btcMint,
-        OptionType.PUT,
-        euroMeta,
-        euroMetaKey,
-        {
-          amount: 1,
-          side: Side.Bid,
-        }
-      ),
-    ],
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
-  });
-
-  const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
-
-  spok(t, rfq, {
-    $topic: 'Created RFQ',
-    model: 'rfq',
-    address: spokSamePubkey(foundRfq.address),
-  });
-});
-test('[riskEngineModule] it can calculate collateral for rfq', async (t: Test) => {
+test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -812,6 +752,7 @@ test('[riskEngineModule] it can calculate collateral for rfq', async (t: Test) =
   });
 
   await cvg.riskEngine().calculateCollateralForRfq({ rfq: rfq.address });
+
   spok(t, rfq, {
     $topic: 'Calculated Collateral for Rfq',
     model: 'rfq',
@@ -903,6 +844,46 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
   await cvg.riskEngine().calculateCollateralForConfirmation({
     rfq: rfq.address,
     response: refreshedResponse.address,
+  });
+});
+
+// PSYOPTIONS EUROPEANS
+
+test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions Europeans', async (t: Test) => {
+  const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    cvg,
+    btcMint,
+    usdcMint,
+    17_500,
+    1_000,
+    3_600
+  );
+
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [
+      new PsyoptionsEuropeanInstrument(
+        cvg,
+        btcMint,
+        OptionType.PUT,
+        euroMeta,
+        euroMetaKey,
+        {
+          amount: 1,
+          side: Side.Bid,
+        }
+      ),
+    ],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+  });
+
+  const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
+
+  spok(t, rfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq.address),
   });
 });
 
