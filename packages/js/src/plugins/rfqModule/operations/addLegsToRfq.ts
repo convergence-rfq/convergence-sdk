@@ -1,6 +1,8 @@
 import { createAddLegsToRfqInstruction, Leg } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { SpotInstrument } from '../../spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -9,6 +11,8 @@ import {
   useOperation,
   Signer,
 } from '@/types';
+import { InstrumentClient } from '@/plugins/instrumentModule';
+
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { ProtocolPdasClient } from '@/plugins/protocolModule';
 const Key = 'AddLegsToRfqOperation' as const;
@@ -55,7 +59,7 @@ export type AddLegsToRfqInput = {
    * Args
    */
 
-  legs: Leg[];
+  legs: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
 };
 
 /**
@@ -118,7 +122,19 @@ export const addLegsToRfqBuilder = (
   const { taker = convergence.identity(), rfq, legs } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
+  const anchorRemainingAccounts: AccountMeta[] = [];
+  legs.forEach((leg) => {
+    const accountMeta = new InstrumentClient(
+      convergence,
+      leg,
+      leg.legInfo
+    ).getValidationAccounts();
+    anchorRemainingAccounts.push(...accountMeta);
+  });
 
+  const legsArray = legs.map((leg) =>
+    new InstrumentClient(convergence, leg, leg.legInfo).toLegData()
+  );
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -127,9 +143,10 @@ export const addLegsToRfqBuilder = (
           taker: taker.publicKey,
           protocol,
           rfq,
+          anchorRemainingAccounts,
         },
         {
-          legs,
+          legs: legsArray,
         },
         rfqProgram.address
       ),

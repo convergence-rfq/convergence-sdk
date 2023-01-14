@@ -896,8 +896,46 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
   });
 });
 
+test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions American', async (t: Test) => {
+  const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    cvg,
+    btcMint,
+    usdcMint,
+    17_500,
+    1_000,
+    3_600
+  );
+
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [
+      new PsyoptionsEuropeanInstrument(
+        cvg,
+        btcMint,
+        OptionType.PUT,
+        euroMeta,
+        euroMetaKey,
+        {
+          amount: 1,
+          side: Side.Bid,
+        }
+      ),
+    ],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+  });
+
+  const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
+
+  spok(t, rfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq.address),
+  });
+});
+
 // test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
-//   const rfq = finalisedRfq;
+  
 //   await cvg.rfqs().addLegsToRfq(taker,rfq,)
 
 //   spok(t, rfq, {
