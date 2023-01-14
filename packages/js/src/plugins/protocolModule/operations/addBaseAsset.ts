@@ -6,6 +6,7 @@ import {
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { BaseAsset } from '../models/BaseAsset';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -77,6 +78,8 @@ export type AddBaseAssetInput = {
 export type AddBaseAssetOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
+  baseAsset: BaseAsset;
 };
 
 /**
@@ -90,12 +93,16 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<AddBaseAssetOutput> => {
+      const { index } = operation.input;
       scope.throwIfCanceled();
-      return addBaseAssetBuilder(
+
+      const builder = addBaseAssetBuilder(convergence, operation.input, scope);
+      const { response } = await builder.sendAndConfirm(
         convergence,
-        operation.input,
-        scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+        scope.confirmOptions
+      );
+      const baseAssets = await convergence.protocol().getBaseAssets();
+      return { response, baseAsset: baseAssets[index.value] };
     },
   };
 

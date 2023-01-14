@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
 import type { Convergence } from '@/Convergence';
-import { BigNumber, Pda, Program, PublicKey, toBigNumber } from '@/types';
+import { Pda, Program, PublicKey } from '@/types';
+import { QuoteAsset } from '@convergence-rfq/rfq';
 
 /**
  * This client allows you to build PDAs related to the NFT module.
@@ -11,113 +12,19 @@ import { BigNumber, Pda, Program, PublicKey, toBigNumber } from '@/types';
 export class RfqPdasClient {
   constructor(protected readonly convergence: Convergence) {}
 
-  /** Finds the Metadata PDA of a given mint address. */
-  metadata({ mint, programs }: MintAddressPdaInput): Pda {
-    const programId = this.programId(programs);
+  mintInfo({ mint }: MintInfoInput): Pda {
+    const programId = this.programId();
     return Pda.find(programId, [
-      Buffer.from('metadata', 'utf8'),
-      programId.toBuffer(),
+      Buffer.from('mint_info', 'utf8'),
       mint.toBuffer(),
     ]);
   }
 
-  /** Finds the Master Edition PDA of a given mint address. */
-  masterEdition({ mint, programs }: MintAddressPdaInput): Pda {
-    const programId = this.programId(programs);
+  quote({ quoteAsset }: QuoteInput): Pda {
+    const programId = this.programId();
     return Pda.find(programId, [
-      Buffer.from('metadata', 'utf8'),
-      programId.toBuffer(),
-      mint.toBuffer(),
-      Buffer.from('edition', 'utf8'),
-    ]);
-  }
-
-  /** Finds the Edition PDA of a given mint address. */
-  edition(input: MintAddressPdaInput): Pda {
-    return this.masterEdition(input);
-  }
-
-  /** Finds the Edition Marker PDA of a given edition number. */
-  editionMarker({
-    mint,
-    edition,
-    programs,
-  }: {
-    /** The address of the mint account of the edition NFT. */
-    mint: PublicKey;
-    /** The edition number of the NFT. */
-    edition: BigNumber;
-    /** An optional set of programs that override the registered ones. */
-    programs?: Program[];
-  }): Pda {
-    const programId = this.programId(programs);
-    return Pda.find(programId, [
-      Buffer.from('metadata', 'utf8'),
-      programId.toBuffer(),
-      mint.toBuffer(),
-      Buffer.from('edition', 'utf8'),
-      Buffer.from(edition.div(toBigNumber(248)).toString()),
-    ]);
-  }
-
-  /** Finds the collection authority PDA for a given NFT and authority. */
-  collectionAuthorityRecord({
-    mint,
-    collectionAuthority,
-    programs,
-  }: {
-    /** The address of the NFT's mint account. */
-    mint: PublicKey;
-    /** The address of the collection authority. */
-    collectionAuthority: PublicKey;
-    /** An optional set of programs that override the registered ones. */
-    programs?: Program[];
-  }): Pda {
-    const programId = this.programId(programs);
-    return Pda.find(programId, [
-      Buffer.from('metadata', 'utf8'),
-      programId.toBuffer(),
-      mint.toBuffer(),
-      Buffer.from('collection_authority', 'utf8'),
-      collectionAuthority.toBuffer(),
-    ]);
-  }
-
-  /** Finds the use authority PDA for a given NFT and user. */
-  useAuthorityRecord({
-    mint,
-    useAuthority,
-    programs,
-  }: {
-    /** The address of the NFT's mint account. */
-    mint: PublicKey;
-    /** The address of the use authority. */
-    useAuthority: PublicKey;
-    /** An optional set of programs that override the registered ones. */
-    programs?: Program[];
-  }): Pda {
-    const programId = this.programId(programs);
-    return Pda.find(programId, [
-      Buffer.from('metadata', 'utf8'),
-      programId.toBuffer(),
-      mint.toBuffer(),
-      Buffer.from('user', 'utf8'),
-      useAuthority.toBuffer(),
-    ]);
-  }
-
-  /** Finds the burner PDA of the Token Metadata program. */
-  burner({
-    programs,
-  }: {
-    /** An optional set of programs that override the registered ones. */
-    programs?: Program[];
-  }): Pda {
-    const programId = this.programId(programs);
-    return Pda.find(programId, [
-      Buffer.from('metadata', 'utf8'),
-      programId.toBuffer(),
-      Buffer.from('burn', 'utf8'),
+      Buffer.from('mint_info', 'utf8'),
+      quoteAsset.instrumentData,
     ]);
   }
 
@@ -126,9 +33,17 @@ export class RfqPdasClient {
   }
 }
 
-type MintAddressPdaInput = {
+type MintInfoInput = {
   /** The address of the mint account. */
   mint: PublicKey;
+
+  /** An optional set of programs that override the registered ones. */
+  programs?: Program[];
+};
+
+type QuoteInput = {
+  /** The quote asset. */
+  quoteAsset: QuoteAsset;
 
   /** An optional set of programs that override the registered ones. */
   programs?: Program[];

@@ -56,9 +56,9 @@ import {
   createAndFinalizeRfqConstructionOperation,
   createAndFinalizeRfqConstructionOperationHandler,
 } from './operations';
+import { rfqProgram } from './program';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
-import { rfqProgram } from './program';
 
 /** @group Plugins */
 export const rfqModule = (): ConvergencePlugin => ({

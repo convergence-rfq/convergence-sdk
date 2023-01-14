@@ -5,6 +5,7 @@ import {
 } from '@convergence-rfq/rfq';
 import { PublicKey, Keypair, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { assertResponse, Response } from '../models/Response';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -14,7 +15,6 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-import { assertResponse, Response } from '../models/Response';
 import { TransactionBuilder, TransactionBuilderOptions, Option } from '@/utils';
 
 const Key = 'RespondToRfqOperation' as const;

@@ -1,6 +1,8 @@
 .DS_Store
 packages/js/node_modules
 packages/js/dist
+packages/js/.turbo
 examples/node_modules
 node_modules
 test-ledger
+.turbo/

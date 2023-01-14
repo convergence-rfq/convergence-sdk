@@ -1,7 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 import { bignum, COption } from '@metaplex-foundation/beet';
-import { ResponseAccount } from '../accounts';
-import { assert } from '@/utils';
 import {
   AuthoritySide,
   Confirmation,
@@ -9,6 +7,8 @@ import {
   Quote,
   StoredResponseState,
 } from '@convergence-rfq/rfq';
+import { ResponseAccount } from '../accounts';
+import { assert } from '@/utils';
 
 /**
  * This model captures all the relevant information about an Response

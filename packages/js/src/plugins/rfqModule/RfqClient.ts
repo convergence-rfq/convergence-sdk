@@ -60,10 +60,10 @@ import {
   unlockRfqCollateralOperation,
   UnlockRfqCollateralInput,
 } from './operations';
+import { Response } from './models/Response';
 import { PartialKeys } from '@/utils';
 import { OperationOptions, token } from '@/types';
 import type { Convergence } from '@/Convergence';
-import { Response } from './models/Response';
 
 /**
  * This is a client for the Rfq module.
