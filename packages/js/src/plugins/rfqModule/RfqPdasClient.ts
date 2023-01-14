@@ -1,7 +1,7 @@
 import { Buffer } from 'buffer';
+import { QuoteAsset } from '@convergence-rfq/rfq';
 import type { Convergence } from '@/Convergence';
 import { Pda, Program, PublicKey } from '@/types';
-import { QuoteAsset } from '@convergence-rfq/rfq';
 
 /**
  * This client allows you to build PDAs related to the NFT module.
