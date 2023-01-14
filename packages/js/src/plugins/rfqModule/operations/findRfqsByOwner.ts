@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
-import { RfqGpaBuilder } from '../gpaBuilders';
+import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import {
   Operation,
   OperationHandler,

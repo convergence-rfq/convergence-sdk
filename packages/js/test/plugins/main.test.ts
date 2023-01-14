@@ -249,16 +249,12 @@ test('[riskEngineModule] it can set spot, American and European option instrumen
 // COLLATERAL
 
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
-  const { collateral: takerCollateral } = await cvg
-    .collateral()
-    .initializeCollateral({
-      user: taker,
-    });
-  const { collateral: makerCollateral } = await cvg
-    .collateral()
-    .initializeCollateral({
-      user: maker,
-    });
+  const { collateral: takerCollateral } = await cvg.collateral().initialize({
+    user: taker,
+  });
+  const { collateral: makerCollateral } = await cvg.collateral().initialize({
+    user: maker,
+  });
 
   const foundTakercollateral = await cvg
     .collateral()
@@ -280,12 +276,12 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 });
 
 test('[collateralModule] it can fund collateral', async (t: Test) => {
-  await cvg.collateral().fundCollateral({
+  await cvg.collateral().fund({
     userTokens: takerUSDCWallet.address,
     user: taker,
     amount: COLLATERAL_AMOUNT,
   });
-  await cvg.collateral().fundCollateral({
+  await cvg.collateral().fund({
     userTokens: makerUSDCWallet.address,
     user: maker,
     amount: COLLATERAL_AMOUNT,
@@ -334,12 +330,12 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
 
-  await cvg.collateral().withdrawCollateral({
+  await cvg.collateral().withdraw({
     userTokens: takerUSDCWallet.address,
     user: taker,
     amount,
   });
-  await cvg.collateral().withdrawCollateral({
+  await cvg.collateral().withdraw({
     userTokens: makerUSDCWallet.address,
     user: maker,
     amount,
@@ -375,6 +371,25 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     $topic: 'Withdraw Collateral',
     address: spokSamePubkey(makerCollateral),
     mintAddress: spokSamePubkey(collateralMint.address),
+  });
+});
+
+test('[collateralModule] it can find collateral by user', async (t: Test) => {
+  const makerCollateral = await cvg.collateral().findByUser({
+    user: maker.publicKey,
+  });
+  spok(t, makerCollateral, {
+    $topic: 'Find Collateral by Owner',
+    model: 'collateral',
+    user: spokSamePubkey(maker.publicKey),
+  });
+  const takerCollateral = await cvg.collateral().findByUser({
+    user: taker.publicKey,
+  });
+  spok(t, takerCollateral, {
+    $topic: 'Find Collateral by Owner',
+    model: 'collateral',
+    address: spokSamePubkey(takerCollateral.address),
   });
 });
 
