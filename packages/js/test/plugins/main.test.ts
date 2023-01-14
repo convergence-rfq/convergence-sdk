@@ -27,6 +27,7 @@ import {
   StoredResponseState,
   AuthoritySide,
   StoredRfqState,
+  legsToInstruments,
 } from '@/index';
 
 killStuckProcess();
@@ -747,6 +748,18 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
   spok(t, rfq, {
     $topic: 'Created RFQ',
     taker: spokSamePubkey(foundRfqs[1].taker),
+  });
+});
+
+test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findAllByOwner({
+    owner: taker.publicKey,
+  });
+  await legsToInstruments(cvg, rfqs[0].legs);
+  spok(t, rfqs[0], {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    taker: spokSamePubkey(rfqs[0].taker),
   });
 });
 

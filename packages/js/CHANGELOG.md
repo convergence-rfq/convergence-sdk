@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 2.0.14
+
+### Patch Changes
+
+- Added legsToInstruments helper function for RFQ legs
+
 ## 2.0.13
 
 ### Patch Changes
