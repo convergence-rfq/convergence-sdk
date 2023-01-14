@@ -1,7 +1,8 @@
-export { OrderType, Side } from '@convergence-rfq/rfq';
-export type {
+export {
+  OrderType,
+  Side,
+  StoredResponseState,
+  AuthoritySide,
   StoredRfqState,
-  FixedSize,
-  QuoteAsset,
-  Leg,
 } from '@convergence-rfq/rfq';
+export type { FixedSize, QuoteAsset, Leg } from '@convergence-rfq/rfq';

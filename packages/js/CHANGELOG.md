@@ -1,5 +1,17 @@
 # @convergence-rfq/sdk
 
+## 2.0.13
+
+### Patch Changes
+
+- Refactoring and cleanup
+
+## 2.0.12
+
+### Patch Changes
+
+- 2257596: Added findByUser method to collateral module
+
 ## 2.0.11
 
 ### Patch Changes

@@ -8,6 +8,8 @@ import {
   withdrawCollateralOperationHandler,
   findCollateralByAddressOperation,
   findCollateralByAddressOperationHandler,
+  findCollateralByUserOperation,
+  findCollateralByUserOperationHandler,
 } from './operations';
 import { ConvergencePlugin } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -29,6 +31,10 @@ export const collateralModule = (): ConvergencePlugin => ({
     op.register(
       findCollateralByAddressOperation,
       findCollateralByAddressOperationHandler
+    );
+    op.register(
+      findCollateralByUserOperation,
+      findCollateralByUserOperationHandler
     );
 
     convergence.collateral = function () {
