@@ -2,11 +2,6 @@ import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair } from '@solana/web3.js';
 import {
-  StoredResponseState,
-  StoredRfqState,
-  AuthoritySide,
-} from '@convergence-rfq/rfq';
-import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
   SKIP_PREFLIGHT,
@@ -29,7 +24,9 @@ import {
   InstrumentType,
   Token,
   Signer,
-  BaseAsset,
+  StoredResponseState,
+  AuthoritySide,
+  StoredRfqState,
 } from '@/index';
 
 killStuckProcess();
@@ -38,6 +35,7 @@ let cvg: Convergence;
 
 let usdcMint: Mint;
 let btcMint: Mint;
+let solMint: Mint;
 
 let dao: Signer;
 
@@ -49,11 +47,10 @@ let makerBTCWallet: Token;
 
 let takerUSDCWallet: Token;
 let takerBTCWallet: Token;
+let takerSOLWallet: Token;
 
 const WALLET_AMOUNT = 9_000_000_000_000;
 const COLLATERAL_AMOUNT = 100_000_000_000;
-
-const baseAssets: BaseAsset[] = [];
 
 // SETUP
 
@@ -65,10 +62,12 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   taker = context.taker;
   usdcMint = context.usdcMint;
   btcMint = context.btcMint;
+  solMint = context.solMint;
   makerUSDCWallet = context.makerUSDCWallet;
   makerBTCWallet = context.makerBTCWallet;
   takerUSDCWallet = context.takerUSDCWallet;
   takerBTCWallet = context.takerBTCWallet;
+  takerSOLWallet = context.takerSOLWallet;
 
   dao = cvg.rpc().getDefaultFeePayer();
 
@@ -78,6 +77,11 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
     ownerAddress: spokSamePubkey(maker.publicKey),
   });
   spok(t, takerBTCWallet, {
+    $topic: 'Wallet',
+    model: 'token',
+    ownerAddress: spokSamePubkey(taker.publicKey),
+  });
+  spok(t, takerSOLWallet, {
     $topic: 'Wallet',
     model: 'token',
     ownerAddress: spokSamePubkey(taker.publicKey),
@@ -130,7 +134,7 @@ test('[protocolModule] it can add instruments', async () => {
   });
 });
 
-test('[protocolModule] it can add BTC and SOL base assets', async () => {
+test('[protocolModule] it can add BTC and SOL base assets', async (t: Test) => {
   const { baseAsset: baseBTCAsset } = await cvg.protocol().addBaseAsset({
     authority: dao,
     index: { value: 0 },
@@ -138,7 +142,13 @@ test('[protocolModule] it can add BTC and SOL base assets', async () => {
     riskCategory: RiskCategory.VeryLow,
     priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_BTC_ORACLE },
   });
-  baseAssets.push(baseBTCAsset);
+  spok(t, baseBTCAsset, {
+    $topic: 'Add Base Asset',
+    model: 'baseAsset',
+    index: { value: 0 },
+    ticker: 'BTC',
+  });
+
   const { baseAsset: baseSOLAsset } = await cvg.protocol().addBaseAsset({
     authority: dao,
     index: { value: 1 },
@@ -146,7 +156,12 @@ test('[protocolModule] it can add BTC and SOL base assets', async () => {
     riskCategory: RiskCategory.VeryLow,
     priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_SOL_ORACLE },
   });
-  baseAssets.push(baseSOLAsset);
+  spok(t, baseSOLAsset, {
+    $topic: 'Add Base Asset',
+    model: 'baseAsset',
+    index: { value: 1 },
+    ticker: 'SOL',
+  });
 });
 
 test('[protocolModule] it can register mints', async (t: Test) => {
@@ -156,32 +171,57 @@ test('[protocolModule] it can register mints', async (t: Test) => {
       baseAssetIndex: 0,
       mint: btcMint.address,
     });
-  //const { registeredMint: solRegisteredMint } = await cvg
-  //  .protocol()
-  //  .registerMint({
-  //    baseAssetIndex: 1,
-  //    mint: solMint.address,
-  //  });
+  spok(t, btcRegisteredMint, {
+    $topic: 'Register Mint',
+    model: 'registeredMint',
+    address: spokSamePubkey(btcRegisteredMint.address),
+  });
+
+  const { registeredMint: solRegisteredMint } = await cvg
+    .protocol()
+    .registerMint({
+      baseAssetIndex: 1,
+      mint: solMint.address,
+    });
+  spok(t, solRegisteredMint, {
+    $topic: 'Register Mint',
+    model: 'registeredMint',
+    address: spokSamePubkey(solRegisteredMint.address),
+  });
+
   const { registeredMint: usdcRegisteredMint } = await cvg
     .protocol()
     .registerMint({
       mint: usdcMint.address,
     });
-
   spok(t, usdcRegisteredMint, {
     $topic: 'Register Mint',
     model: 'registeredMint',
     address: spokSamePubkey(usdcRegisteredMint.address),
   });
-  //spok(t, solRegisteredMint, {
-  //  $topic: 'Register Mint',
-  //  model: 'registeredMint',
-  //  address: spokSamePubkey(solRegisteredMint.address),
-  //});
-  spok(t, btcRegisteredMint, {
-    $topic: 'Register Mint',
-    model: 'registeredMint',
-    address: spokSamePubkey(btcRegisteredMint.address),
+});
+
+// PROTOCOL UTILS
+
+test('[protocolModule] it can get base assets', async (t: Test) => {
+  const baseAssets = await cvg.protocol().getBaseAssets();
+  spok(t, baseAssets[1], {
+    $topic: 'Get Base Assets',
+    model: 'baseAsset',
+    index: {
+      value: 0,
+    },
+    ticker: 'BTC',
+    riskCategory: 0,
+  });
+  spok(t, baseAssets[0], {
+    $topic: 'Get Base Assets',
+    model: 'baseAsset',
+    index: {
+      value: 1,
+    },
+    ticker: 'SOL',
+    riskCategory: 0,
   });
 });
 
@@ -229,46 +269,18 @@ test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) =
   });
 });
 
-// PROTOCOL UTILS
-
-test('[protocolModule] it can get base assets', async (t: Test) => {
-  const gottenBaseAssets = await cvg.protocol().getBaseAssets();
-  spok(t, gottenBaseAssets[1], {
-    $topic: 'Get Base Assets',
-    model: 'baseAsset',
-    index: {
-      value: 0,
-    },
-    ticker: 'BTC',
-    riskCategory: 0,
-  });
-  spok(t, gottenBaseAssets[0], {
-    $topic: 'Get Base Assets',
-    model: 'baseAsset',
-    index: {
-      value: 1,
-    },
-    ticker: 'SOL',
-    riskCategory: 0,
-  });
-});
-
 // COLLATERAL
 
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
-  const protocol = await cvg.protocol().get();
-
   const { collateral: takerCollateral } = await cvg
     .collateral()
     .initializeCollateral({
       user: taker,
-      collateralMint: protocol.collateralMint,
     });
   const { collateral: makerCollateral } = await cvg
     .collateral()
     .initializeCollateral({
       user: maker,
-      collateralMint: protocol.collateralMint,
     });
 
   const foundTakercollateral = await cvg
@@ -302,7 +314,6 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     amount: COLLATERAL_AMOUNT,
   });
 
-  const protocol = await cvg.protocol().get();
   const takerCollateralTokenPda = cvg
     .collateral()
     .pdas()
@@ -311,9 +322,12 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     .collateral()
     .pdas()
     .collateralToken({ user: maker.publicKey });
+
+  const protocol = await cvg.protocol().get();
   const collateralMint = await cvg
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
+
   const takerCollateralTokenAccount = await cvg
     .tokens()
     .findTokenByAddress({ address: takerCollateralTokenPda });
@@ -365,13 +379,11 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     $topic: 'Withdraw Collateral',
     address: spokSamePubkey(takerUSDCWallet.address),
     mintAddress: spokSamePubkey(collateralMint.address),
-    //amount: token(COLLATERAL_AMOUNT - AMOUNT),
   });
   spok(t, refreshedMakerUSDCWallet, {
     $topic: 'Withdraw Collateral',
     address: spokSamePubkey(makerUSDCWallet.address),
     mintAddress: spokSamePubkey(collateralMint.address),
-    //amount: token(COLLATERAL_AMOUNT - amount),
   });
 
   const makerCollateral = cvg
@@ -386,7 +398,6 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     $topic: 'Withdraw Collateral',
     address: spokSamePubkey(makerCollateral),
     mintAddress: spokSamePubkey(collateralMint.address),
-    //amount: token(COLLATERAL_AMOUNT - amount),
   });
 });
 
@@ -488,7 +499,6 @@ test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
   spok(t, refreshedRfq, {
     $topic: 'Created RFQ',
     model: 'rfq',
-    // address: spokSamePubkey(foundRfq.address),
     state: StoredRfqState.Active,
   });
 });

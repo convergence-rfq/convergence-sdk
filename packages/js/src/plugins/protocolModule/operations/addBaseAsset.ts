@@ -6,7 +6,7 @@ import {
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { BaseAsset } from '../models/BaseAsset';
+import { assertBaseAsset, BaseAsset } from '../models/BaseAsset';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -102,7 +102,10 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
         scope.confirmOptions
       );
       const baseAssets = await convergence.protocol().getBaseAssets();
-      return { response, baseAsset: baseAssets[index.value] };
+      const baseAsset = baseAssets.find((ba) => ba.index.value === index.value);
+      assertBaseAsset(baseAsset);
+
+      return { response, baseAsset };
     },
   };
 
