@@ -797,6 +797,110 @@ test('[riskEngineModule] it can calculate collateral for rfq', async (t: Test) =
   });
 });
 
+test('[riskEngineModule] it can calculate collateral for response', async (t: Test) => {
+  // const quoteAsset = cvg
+  //   .instrument(new SpotInstrument(cvg, usdcMint))
+  //   .toQuoteData();
+  // const { rfq } = await cvg.rfqs().createAndFinalize({
+  //   instruments: [
+  //     new SpotInstrument(cvg, btcMint, {
+  //       amount: 1,
+  //       side: Side.Bid,
+  //     }),
+  //     new SpotInstrument(cvg, btcMint, {
+  //       amount: 2,
+  //       side: Side.Bid,
+  //     }),
+  //     new SpotInstrument(cvg, btcMint, {
+  //       amount: 5,
+  //       side: Side.Bid,
+  //     }),
+  //   ],
+  //   taker,
+  //   orderType: OrderType.Sell,
+  //   fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+  //   quoteAsset,
+  // });
+  // const { rfqResponse } = await cvg.rfqs().respond({
+  //   maker,
+  //   rfq: rfq.address,
+  //   bid: {
+  //     __kind: 'FixedSize',
+  //     priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+  //   },
+  //   ask: null,
+  //   keypair,
+  // });
+
+  await cvg.riskEngine().calculateCollateralForResponse({
+    rfq: finalizedRfq.address,
+    response: response.address,
+  });
+  spok(t, response, {
+    $topic: 'Responded to Rfq',
+    model: 'response',
+    state: StoredResponseState.Active
+  });
+});
+
+test('[riskEngineModule] it can calculate collateral for confirm response', async (t: Test) => {
+  // const quoteAsset = cvg
+  //   .instrument(new SpotInstrument(cvg, usdcMint))
+  //   .toQuoteData();
+  // const { rfq } = await cvg.rfqs().createAndFinalize({
+  //   instruments: [
+  //     new SpotInstrument(cvg, btcMint, {
+  //       amount: 1,
+  //       side: Side.Bid,
+  //     }),
+  //     new SpotInstrument(cvg, btcMint, {
+  //       amount: 2,
+  //       side: Side.Bid,
+  //     }),
+  //     new SpotInstrument(cvg, btcMint, {
+  //       amount: 5,
+  //       side: Side.Bid,
+  //     }),
+  //   ],
+  //   taker,
+  //   orderType: OrderType.Sell,
+  //   fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+  //   quoteAsset,
+  // });
+
+  // const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
+
+  // const { rfqResponse } = await cvg.rfqs().respond({
+  //   maker,
+  //   rfq: foundRfq.address,
+  //   bid: {
+  //     __kind: 'FixedSize',
+  //     priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+  //   },
+  //   ask: null,
+  //   keypair,
+  // });
+  // const confirmedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+  // await cvg.rfqs().confirmResponse({
+  //   taker,
+  //   rfq: rfq.address,
+  //   response: confirmedResponse.address,
+  //   side: Side.Bid,
+  //   overrideLegMultiplierBps: null,
+  // });
+
+  await cvg.riskEngine().calculateCollateralForConfirmation({
+    rfq: finalizedRfq.address,
+    response: response.address,
+  });
+
+  spok(t, response, {
+    $topic: 'Confirm Response',
+    model: 'response',
+    state: StoredResponseState.Active,
+  });
+});
+
 // test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
 //   const rfq = finalisedRfq;
 //   await cvg.rfqs().addLegsToRfq(taker,rfq,)
