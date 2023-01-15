@@ -6,6 +6,7 @@ import {
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { BaseAsset } from '../models/BaseAsset';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -55,7 +56,7 @@ export type AddBaseAssetInput = {
   /**
    * The protocol to add the BaseAsset to.
    */
-  protocol: PublicKey;
+  protocol?: PublicKey;
 
   /*
    * ARGS
@@ -77,13 +78,9 @@ export type AddBaseAssetInput = {
 export type AddBaseAssetOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
-};
 
-function toLittleEndian(value: number, bytes: number) {
-  const buf = Buffer.allocUnsafe(bytes);
-  buf.writeUIntLE(value, 0, bytes);
-  return buf;
-}
+  baseAsset: BaseAsset;
+};
 
 /**
  * @group Operations
@@ -96,13 +93,16 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<AddBaseAssetOutput> => {
+      const { index } = operation.input;
       scope.throwIfCanceled();
 
-      return addBaseAssetBuilder(
+      const builder = addBaseAssetBuilder(convergence, operation.input, scope);
+      const { response } = await builder.sendAndConfirm(
         convergence,
-        operation.input,
-        scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+        scope.confirmOptions
+      );
+      const baseAssets = await convergence.protocol().getBaseAssets();
+      return { response, baseAsset: baseAssets[index.value] };
     },
   };
 
@@ -131,15 +131,18 @@ export const addBaseAssetBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { authority, protocol, index, ticker, riskCategory, priceOracle } =
-    params;
-
   const rfqProgram = convergence.programs().getRfq(programs);
+  const protocolPda = convergence.protocol().pdas().protocol();
+  const {
+    protocol = protocolPda,
+    authority,
+    index,
+    ticker,
+    riskCategory,
+    priceOracle,
+  } = params;
 
-  const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), toLittleEndian(index.value, 2)],
-    rfqProgram.address
-  );
+  const baseAsset = convergence.protocol().pdas().baseAsset({ index });
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

@@ -3,13 +3,13 @@ import {
   AuthoritySide,
 } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { Convergence } from '@/Convergence';
 import {
   Operation,
   OperationHandler,

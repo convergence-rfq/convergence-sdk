@@ -116,11 +116,7 @@ export const cancelRfqBuilder = async (
   const { taker = convergence.identity(), rfq } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-
-  const [protocolPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
+  const protocolPda = convergence.protocol().pdas().protocol();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

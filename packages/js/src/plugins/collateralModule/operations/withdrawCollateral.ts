@@ -141,30 +141,20 @@ export const withdrawCollateralBuilder = async (
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const [protocolPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('protocol')],
-    rfqProgram.address
-  );
-
   const {
     user = convergence.identity(),
-    protocol = protocolPda,
+    protocol = convergence.protocol().pdas().protocol(),
+    collateralInfo = convergence
+      .collateral()
+      .pdas()
+      .collateralInfo({ user: user.publicKey }),
+    collateralToken = convergence
+      .collateral()
+      .pdas()
+      .collateralToken({ user: user.publicKey }),
     userTokens,
     amount,
   } = params;
-  let { collateralInfo, collateralToken } = params;
-
-  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), user.publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
-    rfqProgram.address
-  );
-
-  collateralInfo = collateralInfo ?? collateralInfoPda;
-  collateralToken = collateralToken ?? collateralTokenPda;
 
   return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)

@@ -1,6 +1,8 @@
 import { createRegisterMintInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { RegisteredMint, toRegisteredMint } from '../models';
+import { toRegisteredMintAccount } from '../accounts';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -71,6 +73,8 @@ export type RegisterMintInput = {
 export type RegisterMintOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
+  registeredMint: RegisteredMint;
 };
 
 /**
@@ -84,6 +88,8 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       convergence: Convergence,
       scope: OperationScope
     ) => {
+      const { mint } = operation.input;
+      const { commitment } = scope;
       const builder = await registerMintBuilder(
         convergence,
         {
@@ -100,15 +106,14 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      return { ...output };
+      const mintInfo = convergence.rfqs().pdas().mintInfo({ mint });
+      const account = await convergence.rpc().getAccount(mintInfo, commitment);
+      const registeredMint = toRegisteredMint(toRegisteredMintAccount(account));
+      scope.throwIfCanceled();
+
+      return { ...output, registeredMint };
     },
   };
-
-function toLittleEndian(value: number, bytes: number) {
-  const buf = Buffer.allocUnsafe(bytes);
-  buf.writeUIntLE(value, 0, bytes);
-  return buf;
-}
 
 /**
  * @group Transaction Builders
@@ -150,20 +155,15 @@ export const registerMintBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq();
 
-  const protocol = await convergence.protocol().get();
-
-  const [mintInfo] = PublicKey.findProgramAddressSync(
-    [Buffer.from('mint_info'), mint.toBuffer()],
-    rfqProgram.address
-  );
+  const protocol = convergence.protocol().pdas().protocol();
+  const mintInfo = convergence.rfqs().pdas().mintInfo({ mint });
 
   let baseAsset: PublicKey;
-
   if (baseAssetIndex >= 0) {
-    [baseAsset] = PublicKey.findProgramAddressSync(
-      [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex, 2)],
-      rfqProgram.address
-    );
+    baseAsset = convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value: baseAssetIndex } });
   } else {
     baseAsset = PublicKey.default;
   }
@@ -174,7 +174,7 @@ export const registerMintBuilder = async (
       instruction: createRegisterMintInstruction(
         {
           authority: authority.publicKey,
-          protocol: protocol.address,
+          protocol,
           mintInfo,
           baseAsset: baseAssetIndex >= 0 ? baseAsset : PublicKey.default,
           mint,

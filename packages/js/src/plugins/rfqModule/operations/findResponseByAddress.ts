@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { toResponseAccount } from '../accounts';
+import { Response, toResponse } from '../models/Response';
 import {
   Operation,
   OperationHandler,
@@ -7,7 +8,6 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { Response, toResponse } from '../models/Response';
 
 const Key = 'FindResponseByAddressOperation' as const;
 

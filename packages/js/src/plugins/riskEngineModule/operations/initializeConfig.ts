@@ -54,25 +54,27 @@ export type InitalizeConfigOperation = Operation<
  * @group Operations
  * @category Inputs
  */
-export type InitializeConfigInput = {
-  /**
-   * The owner of the protocol.
-   */
-  authority?: Signer;
+export type InitializeConfigInput =
+  | {
+      /**
+       * The owner of the protocol.
+       */
+      authority?: Signer;
 
-  /*
-   * ARGS
-   */
-  collateralForVariableSizeRfqCreation?: number;
+      /*
+       * ARGS
+       */
+      collateralForVariableSizeRfqCreation?: number;
 
-  collateralForFixedQuoteAmountRfqCreation?: number;
+      collateralForFixedQuoteAmountRfqCreation?: number;
 
-  collateralMintDecimals?: number;
+      collateralMintDecimals?: number;
 
-  safetyPriceShiftFactor?: Fraction;
+      safetyPriceShiftFactor?: Fraction;
 
-  overallSafetyFactor?: Fraction;
-};
+      overallSafetyFactor?: Fraction;
+    }
+  | undefined;
 
 /**
  * @group Operations
@@ -136,7 +138,7 @@ export const initializeConfigBuilder = (
     collateralMintDecimals = DEFAULT_MINT_DECIMALS,
     safetyPriceShiftFactor = DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
     overallSafetyFactor = DEFAULT_OVERALL_SAFETY_FACTOR,
-  } = params;
+  } = params ?? {};
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const systemProgram = convergence.programs().getSystem(programs);
