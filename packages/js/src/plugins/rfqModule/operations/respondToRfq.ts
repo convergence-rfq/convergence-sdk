@@ -80,7 +80,7 @@ export type RespondToRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
-  /** The newly created Rfq. */
+  /** The newly created Response. */
   rfqResponse: Response;
 };
 

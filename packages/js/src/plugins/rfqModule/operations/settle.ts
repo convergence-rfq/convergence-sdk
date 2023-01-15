@@ -1,4 +1,4 @@
-import { createSettleInstruction } from '@convergence-rfq/rfq';
+import { createSettleInstruction, Side } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -132,8 +132,23 @@ export const settleBuilder = async (
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
 
   for (let legIndex = 0; legIndex < rfqModel.legs.length; legIndex++) {
+    const leg = rfqModel.legs[legIndex];
+    const confirmationSide = responseModel.confirmed?.side;
+
+    let legTakerAmount = -1;
+
+    if (leg.side == Side.Ask) {
+      legTakerAmount *= -1;
+    }
+    if (confirmationSide == Side.Bid) {
+      legTakerAmount *= -1;
+    }
+
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[legIndex].instrumentProgram,
       isSigner: false,
@@ -146,15 +161,17 @@ export const settleBuilder = async (
     );
 
     const legAccounts: AccountMeta[] = [
+      //`escrow`
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,
         isWritable: true,
       },
+      // `receiver_tokens`
       {
         pubkey: await getAssociatedTokenAddress(
           baseAssetMints[legIndex].address,
-          maker,
+          legTakerAmount > 0 ? maker : taker,
           undefined,
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
@@ -167,6 +184,8 @@ export const settleBuilder = async (
 
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
+
+  const confirmationSide = responseModel.confirmed?.side;
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
@@ -183,16 +202,20 @@ export const settleBuilder = async (
   );
 
   const quoteAccounts: AccountMeta[] = [
+    //`escrow`
     {
       pubkey: quoteEscrowPda,
       isSigner: false,
       isWritable: true,
     },
+    // `receiver_tokens`
     {
       pubkey: await getAssociatedTokenAddress(
         quoteMint.address,
-        // assetReceiver,
-        taker,
+        rfqModel.fixedSize.__kind == 'QuoteAsset' &&
+          confirmationSide == Side.Ask
+          ? maker
+          : taker,
         undefined,
         TOKEN_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
