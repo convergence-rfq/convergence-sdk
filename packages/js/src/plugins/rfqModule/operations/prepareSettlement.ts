@@ -228,7 +228,7 @@ export const prepareSettlementBuilder = async (
 
     const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, legIndex])],
-      spotInstrumentProgram.address
+      rfqModel.legs[legIndex].instrumentProgram
     );
 
     const legAccounts: AccountMeta[] = [
@@ -248,7 +248,11 @@ export const prepareSettlementBuilder = async (
         isSigner: false,
         isWritable: true,
       },
-      { pubkey: baseAssetMints[legIndex].address, isSigner: false, isWritable: false },
+      {
+        pubkey: baseAssetMints[legIndex].address,
+        isSigner: false,
+        isWritable: false,
+      },
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,
