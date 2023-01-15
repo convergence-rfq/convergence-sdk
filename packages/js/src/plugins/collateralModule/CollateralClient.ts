@@ -7,6 +7,8 @@ import {
   WithdrawCollateralInput,
   findCollateralByAddressOperation,
   FindCollateralByAddressInput,
+  FindCollateralByUserInput,
+  findCollateralByUserOperation,
 } from './operations';
 import { CollateralPdasClient } from './CollateralPdasClient';
 import { OperationOptions } from '@/types';
@@ -20,27 +22,28 @@ export class CollateralClient {
   }
 
   /** {@inheritDoc fundCollateralOperation} */
-  fundCollateral(input: FundCollateralInput, options?: OperationOptions) {
+  fund(input: FundCollateralInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(fundCollateralOperation(input), options);
   }
 
+  /** {@inheritDoc findCollateralByUserOperation} */
+  findByUser(input: FindCollateralByUserInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(findCollateralByUserOperation(input), options);
+  }
+
   /** {@inheritDoc initializeCollateralOperation} */
-  initializeCollateral(
-    input: InitializeCollateralInput,
-    options?: OperationOptions
-  ) {
+  initialize(input: InitializeCollateralInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(initializeCollateralOperation(input), options);
   }
 
   /** {@inheritDoc withdrawCollateralOperation} */
-  withdrawCollateral(
-    input: WithdrawCollateralInput,
-    options?: OperationOptions
-  ) {
+  withdraw(input: WithdrawCollateralInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(withdrawCollateralOperation(input), options);

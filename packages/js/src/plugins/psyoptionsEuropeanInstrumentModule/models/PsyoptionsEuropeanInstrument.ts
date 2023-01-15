@@ -73,6 +73,31 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     ];
   }
 
+  //static async createFromLeg(
+  //  convergence: Convergence,
+  //  leg: Leg
+  //): Promise<PsyoptionsEuropeanInstrument> {
+  //  const { side, instrumentAmount, instrumentData } = leg;
+  //  const mint = await convergence
+  //    .tokens()
+  //    .findMintByAddress({ address: new PublicKey(instrumentData) });
+  //  let euroMeta: EuroMeta;
+  //  return new PsyoptionsEuropeanInstrument(
+  //    convergence,
+  //    mint,
+  //    OptionType.CALL,
+  //    euroMeta,
+  //    PublicKey.default,
+  //    {
+  //      amount:
+  //        typeof instrumentAmount === 'number'
+  //          ? instrumentAmount
+  //          : instrumentAmount.toNumber(),
+  //      side,
+  //    }
+  //  );
+  //}
+
   serializeInstrumentData(): Buffer {
     return Buffer.from(
       new Uint8Array([

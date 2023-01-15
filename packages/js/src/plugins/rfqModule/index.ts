@@ -1,6 +1,6 @@
 export * from './accounts';
 export * from './errors';
-export * from './gpaBuilders';
+export * from './RfqGpaBuilder';
 export * from './helpers';
 export * from './models';
 export * from './RfqBuildersClient';

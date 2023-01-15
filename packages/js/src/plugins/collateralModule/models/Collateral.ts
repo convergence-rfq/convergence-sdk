@@ -1,10 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
 import { CollateralAccount } from '../accounts';
 import { assert } from '@/utils';
-import { Pda, SolAmount } from '@/types';
+import { SolAmount } from '@/types';
 
 /**
- * This model captures all the relevant information about a Collateral account
+ * This model captures all the relevant information about a collateral account
  * on the Solana blockchain.
  *
  * @group Models
@@ -13,9 +13,19 @@ export type Collateral = {
   /** A model identifier to distinguish models in the SDK. */
   readonly model: 'collateral';
 
-  /** The mint address of the Collateral account. */
+  /** The address of the collateral account. */
   readonly address: PublicKey;
 
+  /** The bump of the collateral account. */
+  readonly bump: number;
+
+  /** The owner of the Collateral account. */
+  readonly user: PublicKey;
+
+  /** The bump of the token account. */
+  readonly tokenAccountBump: number;
+
+  /** The amount of locked tokens. */
   readonly lockedTokensAmount: SolAmount;
 };
 
@@ -31,9 +41,9 @@ export function assertCollateral(value: any): asserts value is Collateral {
 /** @group Model Helpers */
 export const toCollateral = (account: CollateralAccount): Collateral => ({
   model: 'collateral',
-  address: Pda.find(account.owner, [
-    Buffer.from('collateral_info', 'utf8'),
-    account.data.user.toBuffer(),
-  ]),
+  address: account.publicKey,
+  bump: account.data.bump,
+  user: account.data.user,
+  tokenAccountBump: account.data.tokenAccountBump,
   lockedTokensAmount: account.lamports,
 });

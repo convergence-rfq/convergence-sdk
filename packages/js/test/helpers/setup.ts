@@ -30,6 +30,8 @@ import {
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
   instructions;
 
+// CONSTANTS
+
 export const SWITCHBOARD_BTC_ORACLE = new PublicKey(
   '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
 );
@@ -37,9 +39,11 @@ export const SWITCHBOARD_SOL_ORACLE = new PublicKey(
   'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
 );
 
-/**
- * HELPERS
- */
+export const BTC_DECIMALS = 9;
+export const USDC_DECIMALS = 9;
+export const SOL_DECIMALS = 9;
+
+// HELPERS
 
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
@@ -120,6 +124,10 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
     mintAuthority: mintAuthority.publicKey,
     decimals: BTC_DECIMALS,
   });
+  const { mint: solMint } = await cvg.tokens().createMint({
+    mintAuthority: mintAuthority.publicKey,
+    decimals: SOL_DECIMALS,
+  });
 
   // Setup USDC wallets
   const { token: takerUSDCWallet } = await cvg
@@ -165,24 +173,32 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
     mintAuthority,
   });
 
+  // Setup SOL wallets
+  const { token: takerSOLWallet } = await cvg
+    .tokens()
+    .createToken({ mint: solMint.address, owner: taker.publicKey });
+
+  // Mint SOL
+  await cvg.tokens().mint({
+    mintAddress: solMint.address,
+    amount: token(walletAmount),
+    toToken: takerSOLWallet.address,
+    mintAuthority,
+  });
+
   return {
     maker,
     taker,
     usdcMint,
     btcMint,
-    makerBTCWallet,
+    solMint,
     makerUSDCWallet,
-    takerBTCWallet,
+    makerBTCWallet,
     takerUSDCWallet,
+    takerBTCWallet,
+    takerSOLWallet,
   };
 };
-
-/**
- * CONSTANTS
- */
-
-export const BTC_DECIMALS = 9;
-export const USDC_DECIMALS = 9;
 
 /**
  *  PSYOPTIONS EUROPEAN
