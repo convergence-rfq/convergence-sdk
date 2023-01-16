@@ -1,5 +1,10 @@
 import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
+import {
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+} from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -10,11 +15,6 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
@@ -158,7 +158,7 @@ export const cleanUpResponseLegsBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  let initializedLegs = responseModel.legPreparationsInitializedBy.length;
+  const initializedLegs = responseModel.legPreparationsInitializedBy.length;
   let mintIndex = 0;
 
   for (let i = initializedLegs - legAmountToClear; i < initializedLegs; i++) {

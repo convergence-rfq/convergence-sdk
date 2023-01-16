@@ -1,5 +1,10 @@
 import { createCleanUpResponseInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
+import {
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+} from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -10,11 +15,6 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
 
 const Key = 'CleanUpResponseOperation' as const;
@@ -157,7 +157,7 @@ export const cleanUpResponseBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  let initializedLegs = responseModel.legPreparationsInitializedBy.length;
+  const initializedLegs = responseModel.legPreparationsInitializedBy.length;
 
   for (let i = 0; i < initializedLegs; i++) {
     const instrumentProgramAccount: AccountMeta = {
