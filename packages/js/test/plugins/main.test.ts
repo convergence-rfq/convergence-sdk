@@ -751,18 +751,6 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
-  const rfqs = await cvg.rfqs().findAllByOwner({
-    owner: taker.publicKey,
-  });
-  await legsToInstruments(cvg, rfqs[0].legs);
-  spok(t, rfqs[0], {
-    $topic: 'Created RFQ',
-    model: 'rfq',
-    taker: spokSamePubkey(rfqs[0].taker),
-  });
-});
-
 // RISK ENGINE UTILS
 
 test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) => {
@@ -883,7 +871,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
     btcMint,
     usdcMint,
     17_500,
-    1_000,
+    1_000_000,
     3_600
   );
 
@@ -902,6 +890,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
       ),
     ],
     orderType: OrderType.Sell,
+    taker,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
   });
@@ -925,3 +914,18 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
 //     address: spokSamePubkey(rfq.address),
 //   });
 // });
+
+// RFQ HELPERS
+
+test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findAllByOwner({
+    owner: taker.publicKey,
+  });
+  const instruments = await Promise.all(
+    rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
+  );
+  spok(t, instruments[0][0], {
+    $topic: 'Convert RFQ Legs to Instruments',
+    model: 'spotInstrument',
+  });
+});
