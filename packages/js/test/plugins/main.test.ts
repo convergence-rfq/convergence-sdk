@@ -1,8 +1,6 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
-//@ts-ignore
-import BN from 'bn.js';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair } from '@solana/web3.js';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -46,9 +44,8 @@ let dao: Signer;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
-//@ts-ignore
+
 let daoBTCWallet: Token;
-//@ts-ignore
 let daoUSDCWallet: Token;
 
 let makerUSDCWallet: Token;
@@ -71,19 +68,31 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   const context = await setupAccounts(cvg, WALLET_AMOUNT, dao.publicKey);
   maker = context.maker;
   taker = context.taker;
+
   usdcMint = context.usdcMint;
   btcMint = context.btcMint;
   solMint = context.solMint;
+
+  daoUSDCWallet = context.daoUSDCWallet;
+  daoBTCWallet = context.daoBTCWallet;
+
   makerUSDCWallet = context.makerUSDCWallet;
   makerBTCWallet = context.makerBTCWallet;
+
   takerUSDCWallet = context.takerUSDCWallet;
   takerBTCWallet = context.takerBTCWallet;
   takerSOLWallet = context.takerSOLWallet;
-  daoBTCWallet = context.daoBTCWallet;
-  daoUSDCWallet = context.daoUSDCWallet;
 
-  // dao = cvg.rpc().getDefaultFeePayer();
-
+  spok(t, daoBTCWallet, {
+    $topic: 'Wallet',
+    model: 'token',
+    ownerAddress: spokSamePubkey(dao.publicKey),
+  });
+  spok(t, daoUSDCWallet, {
+    $topic: 'Wallet',
+    model: 'token',
+    ownerAddress: spokSamePubkey(dao.publicKey),
+  });
   spok(t, makerBTCWallet, {
     $topic: 'Wallet',
     model: 'token',
@@ -105,7 +114,6 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const { protocol } = await cvg.protocol().initialize({
-    // owner: dao,
     collateralMint: usdcMint.address,
   });
   spok(t, protocol, {
@@ -446,7 +454,7 @@ test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) 
 });
 
 test('[rfqModule] it can create and finalize RFQ in single method', async (t: Test) => {
-  //TODO: this rfq is returned from the createRfq ix, not finalizeRfqConstruction.
+  // TODO: this rfq is returned from the createRfq ix, not finalizeRfqConstruction.
   // this means its `state` field != StoredRfqState.Active.
   // finalizeRfqConstruction (as well as createAndFinalize) should return the updated
   // Rfq with the correct StoredRfqState (which should be `Active`)
@@ -590,7 +598,6 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
   });
 });
 
-
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlement and settle', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
@@ -718,11 +725,9 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     overrideLegMultiplierBps: null,
   });
 
-  let firstToPrepare: PublicKey;
-
-  //TODO: we have to pass the baseAssetMints manually
-  //  we need a method with type (baseAssetIndex) -> Mint or MintPubkey
-  //  then the baseAssetMints could be extracted from the rfq's legs
+  // TODO: we have to pass the baseAssetMints manually
+  // we need a method with type (baseAssetIndex) -> Mint or MintPubkey
+  // then the baseAssetMints could be extracted from the rfq's legs
   await cvg.rfqs().prepareSettlement({
     caller: taker,
     rfq: rfq.address,
@@ -732,7 +737,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     quoteMint: usdcMint,
     baseAssetMints: [btcMint, btcMint, btcMint],
   });
-  firstToPrepare = taker.publicKey;
+  const firstToPrepare = taker.publicKey;
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
@@ -796,7 +801,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
   });
 });
 
-
 test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, and clean up response', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
@@ -831,11 +835,9 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     overrideLegMultiplierBps: null,
   });
 
-  let firstToPrepare: PublicKey;
-
-  //TODO: we have to pass the baseAssetMints manually
-  //  we need a method with type (baseAssetIndex) -> Mint or MintPubkey
-  //  then the baseAssetMints could be extracted from the rfq's legs
+  // TODO: we have to pass the baseAssetMints manually
+  // we need a method with type (baseAssetIndex) -> Mint or MintPubkey
+  // then the baseAssetMints could be extracted from the rfq's legs
   await cvg.rfqs().prepareSettlement({
     caller: taker,
     rfq: rfq.address,
@@ -845,7 +847,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     quoteMint: usdcMint,
     baseAssetMints: [btcMint],
   });
-  firstToPrepare = taker.publicKey;
+  const firstToPrepare = taker.publicKey;
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
@@ -1210,6 +1212,8 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
 // RFQ HELPERS
 
 test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
+  // We we can to this after creating options so that we can test this method
+  // on all instruments
   const rfqs = await cvg.rfqs().findAllByOwner({
     owner: taker.publicKey,
   });
