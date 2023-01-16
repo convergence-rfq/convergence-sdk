@@ -140,7 +140,6 @@ export const setupAccounts = async (
   const { token: makerUSDCWallet } = await cvg
     .tokens()
     .createToken({ mint: usdcMint.address, owner: maker.publicKey });
-
   const { token: daoUSDCWallet } = await cvg
     .tokens()
     .createToken({ mint: usdcMint.address, owner: dao });
@@ -158,7 +157,6 @@ export const setupAccounts = async (
     toToken: takerUSDCWallet.address,
     mintAuthority,
   });
-
   await cvg.tokens().mint({
     mintAddress: usdcMint.address,
     amount: token(walletAmount),
@@ -173,7 +171,6 @@ export const setupAccounts = async (
   const { token: takerBTCWallet } = await cvg
     .tokens()
     .createToken({ mint: btcMint.address, owner: taker.publicKey });
-
   const { token: daoBTCWallet } = await cvg
     .tokens()
     .createToken({ mint: btcMint.address, owner: dao });
@@ -191,7 +188,6 @@ export const setupAccounts = async (
     toToken: makerBTCWallet.address,
     mintAuthority,
   });
-
   await cvg.tokens().mint({
     mintAddress: btcMint.address,
     amount: token(walletAmount),
