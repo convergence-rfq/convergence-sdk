@@ -44,11 +44,11 @@ export type UnlockRfqCollateralOperation = Operation<
  */
 export type UnlockRfqCollateralInput = {
   /** The protocol address */
-  protocol: PublicKey;
+  protocol?: PublicKey;
   /** The Rfq address */
   rfq: PublicKey;
-  /** The address of the collateralInfo account */
-  collateralInfo: PublicKey;
+  /** The address of the taker's collateralInfo account */
+  collateralInfo?: PublicKey;
 };
 
 /**
@@ -119,18 +119,26 @@ export const unlockRfqCollateralBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<UnlockRfqCollateralBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const rfqProgram = convergence.programs().getRfq(programs);
+  const { rfq } = params;
 
-  const { protocol, rfq, collateralInfo } = params;
+  const rfqProgram = convergence.programs().getRfq(programs);
+  const protocol = await convergence.protocol().get();
+
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+
+  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), rfqModel.taker.toBuffer()],
+    rfqProgram.address
+  );
 
   return TransactionBuilder.make<UnlockRfqCollateralBuilderContext>()
     .setFeePayer(payer)
     .add({
       instruction: createUnlockRfqCollateralInstruction(
         {
-          protocol,
+          protocol: protocol.address,
           rfq,
-          collateralInfo,
+          collateralInfo: collateralInfoPda,
         },
         rfqProgram.address
       ),
