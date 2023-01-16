@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 2.0.15
+
+### Patch Changes
+
+- Added helper method for converting RFQ legs into instruments
+
 ## 2.0.14
 
 ### Patch Changes

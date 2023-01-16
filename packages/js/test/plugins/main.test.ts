@@ -12,6 +12,8 @@ import {
   spokSamePubkey,
   initializeNewOptionMeta,
   setupAccounts,
+  BTC_DECIMALS,
+  USDC_DECIMALS,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
@@ -56,8 +58,8 @@ let takerUSDCWallet: Token;
 let takerBTCWallet: Token;
 let takerSOLWallet: Token;
 
-const WALLET_AMOUNT = 9_000_000_000_000;
-const COLLATERAL_AMOUNT = 100_000_000_000;
+const WALLET_AMOUNT = 9_000 * 10 ** BTC_DECIMALS;
+const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
 
 // SETUP
 
@@ -407,30 +409,7 @@ test('[collateralModule] it can find collateral by user', async (t: Test) => {
 
 // RFQ
 
-test('[rfqModule] it can create an RFQ', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().create({
-    taker,
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 1,
-        side: Side.Bid,
-      }),
-    ],
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
-  });
-
-  const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
-
-  spok(t, rfq, {
-    $topic: 'Created RFQ',
-    model: 'rfq',
-    address: spokSamePubkey(foundRfq.address),
-  });
-});
-
-test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
+test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
     instruments: [
@@ -466,7 +445,7 @@ test('[rfqModule] it can finalize RFQ construction', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can create and finalize RFQ', async (t: Test) => {
+test('[rfqModule] it can create and finalize RFQ in single method', async (t: Test) => {
   //TODO: this rfq is returned from the createRfq ix, not finalizeRfqConstruction.
   // this means its `state` field != StoredRfqState.Active.
   // finalizeRfqConstruction (as well as createAndFinalize) should return the updated
@@ -611,7 +590,8 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
   });
 });
 
-test('[rfqModule] it can create and finalize Rfq, respond, confirm response, prepare settlement, settle', async (t: Test) => {
+
+test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlement and settle', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -647,9 +627,9 @@ test('[rfqModule] it can create and finalize Rfq, respond, confirm response, pre
     overrideLegMultiplierBps: null,
   });
 
-  //TODO: we have to pass the baseAssetMints manually
-  //  we need a method with type (baseAssetIndex) -> Mint or MintPubkey
-  //  then the baseAssetMints could be extracted from the rfq's legs
+  // TODO: we have to pass the baseAssetMints manually
+  // we need a method with type (baseAssetIndex) -> Mint or MintPubkey
+  // then the baseAssetMints could be extracted from the rfq's legs
   await cvg.rfqs().prepareSettlement({
     caller: taker,
     rfq: rfq.address,
@@ -967,10 +947,6 @@ test('[rfqModule] it can create and finalize Rfq, respond, and cancel response',
   });
 });
 
-/*
- * UTILS
- */
-
 // RFQ UTILS
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
@@ -1064,18 +1040,6 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
   spok(t, rfq, {
     $topic: 'Created RFQ',
     taker: spokSamePubkey(foundRfqs[1].taker),
-  });
-});
-
-test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
-  const rfqs = await cvg.rfqs().findAllByOwner({
-    owner: taker.publicKey,
-  });
-  await legsToInstruments(cvg, rfqs[0].legs);
-  spok(t, rfqs[0], {
-    $topic: 'Created RFQ',
-    model: 'rfq',
-    taker: spokSamePubkey(rfqs[0].taker),
   });
 });
 
@@ -1199,7 +1163,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
     btcMint,
     usdcMint,
     17_500,
-    1_000,
+    1_000_000,
     3_600
   );
 
@@ -1218,6 +1182,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
       ),
     ],
     orderType: OrderType.Sell,
+    taker,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
   });
@@ -1241,3 +1206,18 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
 //     address: spokSamePubkey(rfq.address),
 //   });
 // });
+
+// RFQ HELPERS
+
+test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findAllByOwner({
+    owner: taker.publicKey,
+  });
+  const instruments = await Promise.all(
+    rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
+  );
+  spok(t, instruments[0][0], {
+    $topic: 'Convert RFQ Legs to Instruments',
+    model: 'spotInstrument',
+  });
+});

@@ -15,14 +15,14 @@
 <li><a href="../modules.html">API References</a></li>
 <li><a href="SettleBuilderParams.html">SettleBuilderParams</a></li></ul>
 <h1>Type alias SettleBuilderParams</h1></div>
-<div class="tsd-signature">Settle<wbr/>Builder<wbr/>Params<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>protocol<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>rfq<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>response<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>quoteReceiverTokens<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>quoteEscrow<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
+<div class="tsd-signature">Settle<wbr/>Builder<wbr/>Params<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span>maker<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>taker<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>rfq<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>response<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>quoteMint<span class="tsd-signature-symbol">: </span><a href="Mint.html" class="tsd-signature-type" data-tsd-kind="Type alias">Mint</a><span class="tsd-signature-symbol">; </span><br/><span>    </span>baseAssetMints<span class="tsd-signature-symbol">: </span><a href="Mint.html" class="tsd-signature-type" data-tsd-kind="Type alias">Mint</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span><br/><span>    </span>protocol<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
 <div class="tsd-type-declaration">
 <h4>Type declaration</h4>
 <ul class="tsd-parameters">
 <li class="tsd-parameter">
-<h5>protocol<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a></h5>
-<div class="tsd-comment tsd-typography"><p>The address of the protocol account.</p>
-</div></li>
+<h5>maker<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a></h5></li>
+<li class="tsd-parameter">
+<h5>taker<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a></h5></li>
 <li class="tsd-parameter">
 <h5>rfq<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a></h5>
 <div class="tsd-comment tsd-typography"><p>The address of the Rfq account.</p>
@@ -32,15 +32,15 @@
 <div class="tsd-comment tsd-typography"><p>The address of the Response account.</p>
 </div></li>
 <li class="tsd-parameter">
-<h5>quote<wbr/>Receiver<wbr/>Tokens<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a></h5>
-<div class="tsd-comment tsd-typography"><p>The address of the Token account for the quote receiver tokens</p>
-</div></li>
+<h5>quote<wbr/>Mint<span class="tsd-signature-symbol">: </span><a href="Mint.html" class="tsd-signature-type" data-tsd-kind="Type alias">Mint</a></h5></li>
 <li class="tsd-parameter">
-<h5>quote<wbr/>Escrow<span class="tsd-signature-symbol">: </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a></h5>
-<div class="tsd-comment tsd-typography"><p>The address of the quote escrow account</p>
+<h5>base<wbr/>Asset<wbr/>Mints<span class="tsd-signature-symbol">: </span><a href="Mint.html" class="tsd-signature-type" data-tsd-kind="Type alias">Mint</a><span class="tsd-signature-symbol">[]</span></h5></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> protocol<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><a href="../classes/PublicKey.html" class="tsd-signature-type" data-tsd-kind="Class">PublicKey</a></h5>
+<div class="tsd-comment tsd-typography"><p>The address of the protocol account.</p>
 </div></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/39117ad/packages/js/src/plugins/rfqModule/operations/settle.ts#L84">packages/js/src/plugins/rfqModule/operations/settle.ts:84</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/convergence-rfq/convergence-sdk/blob/7de85b9/packages/js/src/plugins/rfqModule/operations/settle.ts#L106">packages/js/src/plugins/rfqModule/operations/settle.ts:106</a></li></ul></aside></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
