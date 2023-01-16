@@ -44,15 +44,15 @@ export type UnlockResponseCollateralOperation = Operation<
  */
 export type UnlockResponseCollateralInput = {
   /** The protocol address */
-  protocol: PublicKey;
+  protocol?: PublicKey;
   /** The Rfq address */
   rfq: PublicKey;
   /** The response address */
   response: PublicKey;
   /** The address of the Taker's collateralInfo account */
-  takerCollateralInfo: PublicKey;
+  takerCollateralInfo?: PublicKey;
   /** The address of the Maker's collateralInfo account */
-  makerCollateralInfo: PublicKey;
+  makerCollateralInfo?: PublicKey;
 };
 
 /**
@@ -118,20 +118,34 @@ export const unlockResponseCollateralBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
+  const protocol = await convergence.protocol().get();
 
-  const { protocol, rfq, response, takerCollateralInfo, makerCollateralInfo } =
-    params;
+  const { rfq, response } = params;
+
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
+
+  const [takerCollateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), rfqModel.taker.toBuffer()],
+    rfqProgram.address
+  );
+  const [makerCollateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), responseModel.maker.toBuffer()],
+    rfqProgram.address
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createUnlockResponseCollateralInstruction(
         {
-          protocol,
+          protocol: protocol.address,
           rfq,
           response,
-          takerCollateralInfo,
-          makerCollateralInfo,
+          takerCollateralInfo: takerCollateralInfoPda,
+          makerCollateralInfo: makerCollateralInfoPda,
         },
         rfqProgram.address
       ),

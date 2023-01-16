@@ -8,6 +8,7 @@ import {
   OperationScope,
   useOperation,
   Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
@@ -18,8 +19,8 @@ const Key = 'CancelResponseOperation' as const;
  *
  * ```ts
  * await convergence
- *   .rfqs()
- *   .cancel({ address };
+ * .rfqs()
+ * .cancel({ address };
  * ```
  *
  * @group Operations
@@ -50,7 +51,7 @@ export type CancelResponseInput = {
    */
   maker?: Signer;
 
-  protocol: PublicKey;
+  protocol?: PublicKey;
 
   /** The address of the Rfq account. */
   rfq: PublicKey;
@@ -80,11 +81,24 @@ export const cancelResponseOperationHandler: OperationHandler<CancelResponseOper
     ): Promise<CancelResponseOutput> => {
       scope.throwIfCanceled();
 
-      return cancelResponseBuilder(
+      const builder = await cancelResponseBuilder(
         convergence,
-        operation.input,
+        {
+          ...operation.input,
+        },
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      scope.throwIfCanceled();
+
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+        convergence,
+        scope.confirmOptions
+      );
+
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+
+      return { ...output };
     },
   };
 
@@ -99,23 +113,25 @@ export type CancelResponseBuilderParams = CancelResponseInput;
  *
  * ```ts
  * const transactionBuilder = convergence
- *   .rfqs()
- *   .builders()
- *   .cancel({ address });
+ * .rfqs()
+ * .builders()
+ * .cancel({ address });
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const cancelResponseBuilder = (
+export const cancelResponseBuilder = async (
   convergence: Convergence,
   params: CancelResponseBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { maker = convergence.identity(), protocol, rfq, response } = params;
+  const { maker = convergence.identity(), rfq, response } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
+
+  const protocol = await convergence.protocol().get();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -123,7 +139,7 @@ export const cancelResponseBuilder = (
       instruction: createCancelResponseInstruction(
         {
           maker: maker.publicKey,
-          protocol,
+          protocol: protocol.address,
           rfq,
           response,
         },

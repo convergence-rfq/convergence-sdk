@@ -89,7 +89,11 @@ export const createWallet = async (
   return wallet;
 };
 
-export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
+export const setupAccounts = async (
+  cvg: Convergence,
+  walletAmount: number,
+  dao: PublicKey
+) => {
   const mintAuthority = Keypair.generate();
   const maker = Keypair.fromSecretKey(
     new Uint8Array(
@@ -136,6 +140,9 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
   const { token: makerUSDCWallet } = await cvg
     .tokens()
     .createToken({ mint: usdcMint.address, owner: maker.publicKey });
+  const { token: daoUSDCWallet } = await cvg
+    .tokens()
+    .createToken({ mint: usdcMint.address, owner: dao });
 
   // Mint USDC
   await cvg.tokens().mint({
@@ -150,6 +157,12 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
     toToken: takerUSDCWallet.address,
     mintAuthority,
   });
+  await cvg.tokens().mint({
+    mintAddress: usdcMint.address,
+    amount: token(walletAmount),
+    toToken: daoUSDCWallet.address,
+    mintAuthority,
+  });
 
   // Setup BTC wallets
   const { token: makerBTCWallet } = await cvg
@@ -158,6 +171,9 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
   const { token: takerBTCWallet } = await cvg
     .tokens()
     .createToken({ mint: btcMint.address, owner: taker.publicKey });
+  const { token: daoBTCWallet } = await cvg
+    .tokens()
+    .createToken({ mint: btcMint.address, owner: dao });
 
   // Mint BTC
   await cvg.tokens().mint({
@@ -170,6 +186,12 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
     mintAddress: btcMint.address,
     amount: token(walletAmount),
     toToken: makerBTCWallet.address,
+    mintAuthority,
+  });
+  await cvg.tokens().mint({
+    mintAddress: btcMint.address,
+    amount: token(walletAmount),
+    toToken: daoBTCWallet.address,
     mintAuthority,
   });
 
@@ -197,6 +219,8 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
     takerUSDCWallet,
     takerBTCWallet,
     takerSOLWallet,
+    daoBTCWallet,
+    daoUSDCWallet,
   };
 };
 
