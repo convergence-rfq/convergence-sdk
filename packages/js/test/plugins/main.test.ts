@@ -917,7 +917,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
 
   refreshedResponse = await cvg.rfqs().refreshResponse(refreshedResponse);
 
-  //TODO: this ix actually calls cleanUpResponseLegs, fix
   await cvg.rfqs().cleanUpResponse({
     maker: maker.publicKey,
     dao: dao.publicKey,
