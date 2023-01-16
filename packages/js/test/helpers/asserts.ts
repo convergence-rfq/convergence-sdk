@@ -21,6 +21,7 @@ export function spokSamePubkey(
 
   same.$spec = concatKey(keyStr);
   same.$description = `${concatKey(keyStr)} equal`;
+  same.objectPrintDepth = 0;
   return same;
 }
 

@@ -83,30 +83,55 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   takerBTCWallet = context.takerBTCWallet;
   takerSOLWallet = context.takerSOLWallet;
 
+  // NOTE: The `spokSameAddress` helper is incredibly noisy so using this instead
+  t.same(
+    daoBTCWallet.ownerAddress.toString(),
+    dao.publicKey.toString(),
+    'same owner'
+  );
   spok(t, daoBTCWallet, {
-    $topic: 'Wallet',
+    $topic: 'token model',
     model: 'token',
-    ownerAddress: spokSamePubkey(dao.publicKey),
   });
+
+  t.same(
+    daoUSDCWallet.ownerAddress.toString(),
+    dao.publicKey.toString(),
+    'same owner'
+  );
   spok(t, daoUSDCWallet, {
-    $topic: 'Wallet',
+    $topic: 'token model',
     model: 'token',
-    ownerAddress: spokSamePubkey(dao.publicKey),
   });
+
+  t.same(
+    makerBTCWallet.ownerAddress.toString(),
+    maker.publicKey.toString(),
+    'same owner'
+  );
   spok(t, makerBTCWallet, {
-    $topic: 'Wallet',
+    $topic: 'token model',
     model: 'token',
-    ownerAddress: spokSamePubkey(maker.publicKey),
   });
+
+  t.same(
+    takerBTCWallet.ownerAddress.toString(),
+    taker.publicKey.toString(),
+    'same owner'
+  );
   spok(t, takerBTCWallet, {
-    $topic: 'Wallet',
+    $topic: 'token model',
     model: 'token',
-    ownerAddress: spokSamePubkey(taker.publicKey),
   });
+
+  t.same(
+    takerSOLWallet.ownerAddress.toString(),
+    taker.publicKey.toString(),
+    'same owner'
+  );
   spok(t, takerSOLWallet, {
-    $topic: 'Wallet',
+    $topic: 'token model',
     model: 'token',
-    ownerAddress: spokSamePubkey(taker.publicKey),
   });
 });
 
@@ -116,10 +141,14 @@ test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const { protocol } = await cvg.protocol().initialize({
     collateralMint: usdcMint.address,
   });
+  t.same(
+    cvg.protocol().pdas().protocol().toString(),
+    protocol.address.toString(),
+    'same address'
+  );
   spok(t, protocol, {
-    $topic: 'Initialize Protocol',
+    $topic: 'protocol model',
     model: 'protocol',
-    address: spokSamePubkey(cvg.protocol().pdas().protocol()),
   });
 });
 
@@ -165,7 +194,7 @@ test('[protocolModule] it can add BTC and SOL base assets', async (t: Test) => {
     priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_BTC_ORACLE },
   });
   spok(t, baseBTCAsset, {
-    $topic: 'Add Base Asset',
+    $topic: 'baseAsset model',
     model: 'baseAsset',
     index: { value: 0 },
     ticker: 'BTC',
@@ -179,7 +208,7 @@ test('[protocolModule] it can add BTC and SOL base assets', async (t: Test) => {
     priceOracle: { __kind: 'Switchboard', address: SWITCHBOARD_SOL_ORACLE },
   });
   spok(t, baseSOLAsset, {
-    $topic: 'Add Base Asset',
+    $topic: 'baseAsset model',
     model: 'baseAsset',
     index: { value: 1 },
     ticker: 'SOL',
@@ -193,10 +222,14 @@ test('[protocolModule] it can register mints', async (t: Test) => {
       baseAssetIndex: 0,
       mint: btcMint.address,
     });
+  t.same(
+    btcRegisteredMint.mintAddress.toString(),
+    btcMint.address.toString(),
+    'same address'
+  );
   spok(t, btcRegisteredMint, {
-    $topic: 'Register Mint',
+    $topic: 'registeredMint model',
     model: 'registeredMint',
-    address: spokSamePubkey(btcRegisteredMint.address),
   });
 
   const { registeredMint: solRegisteredMint } = await cvg
@@ -205,10 +238,14 @@ test('[protocolModule] it can register mints', async (t: Test) => {
       baseAssetIndex: 1,
       mint: solMint.address,
     });
+  t.same(
+    solRegisteredMint.mintAddress.toString(),
+    solMint.address.toString(),
+    'same address'
+  );
   spok(t, solRegisteredMint, {
-    $topic: 'Register Mint',
+    $topic: 'registeredMint model',
     model: 'registeredMint',
-    address: spokSamePubkey(solRegisteredMint.address),
   });
 
   const { registeredMint: usdcRegisteredMint } = await cvg
@@ -216,10 +253,14 @@ test('[protocolModule] it can register mints', async (t: Test) => {
     .registerMint({
       mint: usdcMint.address,
     });
+  t.same(
+    usdcRegisteredMint.mintAddress.toString(),
+    usdcMint.address.toString(),
+    'same address'
+  );
   spok(t, usdcRegisteredMint, {
-    $topic: 'Register Mint',
+    $topic: 'registeredMint model',
     model: 'registeredMint',
-    address: spokSamePubkey(usdcRegisteredMint.address),
   });
 });
 
@@ -281,19 +322,27 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const foundTakercollateral = await cvg
     .collateral()
     .findByAddress({ address: takerCollateral.address });
+  t.same(
+    foundTakercollateral.address.toString(),
+    takerCollateral.address.toString(),
+    'same address'
+  );
   spok(t, takerCollateral, {
-    $topic: 'Initialize Collateral',
+    $topic: 'collateral model',
     model: 'collateral',
-    address: spokSamePubkey(foundTakercollateral.address),
   });
 
   const foundMakercollateral = await cvg
     .collateral()
     .findByAddress({ address: makerCollateral.address });
+  t.same(
+    foundMakercollateral.address.toString(),
+    makerCollateral.address.toString(),
+    'same address'
+  );
   spok(t, makerCollateral, {
     $topic: 'Initialize Collateral',
     model: 'collateral',
-    address: spokSamePubkey(foundMakercollateral.address),
   });
 });
 
@@ -330,16 +379,25 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     .tokens()
     .findTokenByAddress({ address: makerCollateralTokenPda });
 
+  t.same(
+    takerCollateralTokenAccount.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
   spok(t, takerCollateralTokenAccount, {
-    $topic: 'Fund taker Collateral',
+    $topic: 'collateral model',
     model: 'token',
-    mintAddress: spokSamePubkey(collateralMint.address),
     amount: token(COLLATERAL_AMOUNT),
   });
+
+  t.same(
+    makerCollateralTokenAccount.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
   spok(t, makerCollateralTokenAccount, {
-    $topic: 'Fund maker Collateral',
+    $topic: 'collateral model',
     model: 'token',
-    mintAddress: spokSamePubkey(collateralMint.address),
     amount: token(COLLATERAL_AMOUNT),
   });
 });
@@ -1013,10 +1071,10 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 });
 
 test('[rfqModule] it can find RFQs by instrument', async () => {
-  await cvg.rfqs().findByInstrument({
+  const instruments = await cvg.rfqs().findByInstrument({
     instrumentProgram: cvg.programs().getSpotInstrument(),
   });
-  // TODO: Finish
+  console.error(instruments);
 });
 
 test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
@@ -1130,14 +1188,17 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
   });
 
   const respondedToRfq = await cvg.rfqs().refreshRfq(rfq.address);
-
+  t.same(
+    rfq.address.toString(),
+    respondedToRfq.address.toString(),
+    'same address'
+  );
   spok(t, rfq, {
-    $topic: 'Finalized Rfq',
+    $topic: 'rfq model',
     model: 'rfq',
-    address: spokSamePubkey(respondedToRfq.address),
   });
   spok(t, rfqResponse, {
-    $topic: 'Responded to Rfq',
+    $topic: 'rfq model',
     model: 'response',
     state: StoredResponseState.Active,
   });
@@ -1190,11 +1251,10 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
   });
 
   const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
-
+  t.same(foundRfq.address.toString(), rfq.address.toString(), 'same address');
   spok(t, rfq, {
-    $topic: 'Created RFQ',
+    $topic: 'rfq model',
     model: 'rfq',
-    address: spokSamePubkey(foundRfq.address),
   });
 });
 
