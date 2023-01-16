@@ -704,14 +704,20 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
         side: Side.Bid,
       }),
       new SpotInstrument(cvg, btcMint, {
-        amount: 5,
+        amount: 3,
         side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 2,
+        side: Side.Bid,
       }),
     ],
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    activeWindow: 5_000,
+    settlingWindow: 1_000,
   });
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
@@ -742,9 +748,9 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     rfq: rfq.address,
     response: rfqResponse.address,
     side: AuthoritySide.Taker,
-    legAmountToPrepare: 2,
+    legAmountToPrepare: 3,
     quoteMint: usdcMint,
-    baseAssetMints: [btcMint, btcMint],
+    baseAssetMints: [btcMint, btcMint, btcMint],
   });
   firstToPrepare = taker.publicKey;
 
@@ -753,9 +759,9 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     rfq: rfq.address,
     response: rfqResponse.address,
     side: AuthoritySide.Maker,
-    legAmountToPrepare: 2,
+    legAmountToPrepare: 3,
     quoteMint: usdcMint,
-    baseAssetMints: [btcMint, btcMint],
+    baseAssetMints: [btcMint, btcMint, btcMint],
   });
 
   let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -771,7 +777,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     taker: taker.publicKey,
     rfq: rfq.address,
     response: refreshedResponse.address,
-    baseAssetMints: [btcMint, btcMint],
+    baseAssetMints: [btcMint, btcMint, btcMint],
     quoteMint: usdcMint,
   });
 
@@ -805,9 +811,8 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     rfq: rfq.address,
     response: refreshedResponse.address,
     firstToPrepare,
-    quoteMint: usdcMint,
-    baseAssetMints: [btcMint],
-    legAmountToClear: 1,
+    baseAssetMints: [btcMint, btcMint],
+    legAmountToClear: 2,
   });
 });
 

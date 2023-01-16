@@ -62,8 +62,6 @@ export type CleanUpResponseLegsInput = {
 
   firstToPrepare: PublicKey;
 
-  quoteMint: Mint;
-
   baseAssetMints: Mint[];
 
   /*
@@ -146,9 +144,6 @@ export const cleanUpResponseLegsBuilder = async (
     rfq,
     response,
     firstToPrepare,
-    //@ts-ignore
-    quoteMint,
-    //@ts-ignore
     baseAssetMints,
     legAmountToClear,
   } = params;
@@ -157,92 +152,55 @@ export const cleanUpResponseLegsBuilder = async (
   const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
-  //anchorRemainingAccounts.push(...legAccounts, ...quoteAccounts)
 
-  /*
-  CleanUp accounts:
-
-  protocol
-  rfq
-  response
-  <instrument program>
-  first_to_prepare
-  escrow
-  backup_receiver
-  token_program
-  */
-
-  // return [
-  //   {
-  //     pubkey: response.firstToPrepare,
-  //     isSigner: false,
-  //     isWritable: true,
-  //   },
-  //   {
-  //     pubkey: await getInstrumentEscrowPda(response.account, assetIdentifier, this.getProgramId()),
-  //     isSigner: false,
-  //     isWritable: true,
-  //   },
-  //   {
-  //     pubkey: await this.mint.getAssociatedAddress(this.context.dao.publicKey),
-  //     isSigner: false,
-  //     isWritable: true,
-  //   },
-  //   { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-
-  //@ts-ignore
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  //@ts-ignore
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
-  //@ts-ignore
-  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
-  // let initializedLegs = responseModel.legPreparationsInitializedBy.length;
-  // let i = initializedLegs - legAmountToClear;
+  let initializedLegs = responseModel.legPreparationsInitializedBy.length;
+  let mintIndex = 0;
 
-  // for (i = 0; i < initializedLegs - 1; i++) {
-  const instrumentProgramAccount: AccountMeta = {
-    // pubkey: rfqModel.legs[i].instrumentProgram,
-    pubkey: spotInstrumentProgram.address,
-    isSigner: false,
-    isWritable: false,
-  };
-
-  const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, 1])],
-    // rfqModel.legs[i].instrumentProgram
-    spotInstrumentProgram.address
-  );
-  const legAccounts: AccountMeta[] = [
-    {
-      pubkey: firstToPrepare,
+  for (let i = initializedLegs - legAmountToClear; i < initializedLegs; i++) {
+    const instrumentProgramAccount: AccountMeta = {
+      pubkey: rfqModel.legs[i].instrumentProgram,
       isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: instrumentEscrowPda,
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: await getAssociatedTokenAddress(
-        baseAssetMints[0].address,
-        dao,
-        undefined,
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      ),
-      isSigner: false,
-      isWritable: true,
-    },
-    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-  ];
+      isWritable: false,
+    };
 
-  anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
+    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
+      rfqModel.legs[i].instrumentProgram
+    );
+    const legAccounts: AccountMeta[] = [
+      {
+        pubkey: firstToPrepare,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: instrumentEscrowPda,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: await getAssociatedTokenAddress(
+          baseAssetMints[mintIndex].address,
+          dao,
+          undefined,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        ),
+        isSigner: false,
+        isWritable: true,
+      },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    ];
 
-  // }
+    anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
+
+    mintIndex++;
+  }
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
