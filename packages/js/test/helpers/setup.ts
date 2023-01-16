@@ -254,8 +254,9 @@ export const initializeNewOptionMeta = async (
     new anchor.Wallet(payer as Keypair),
     {}
   );
+  anchor.setProvider(provider);
 
-  const psyoptionsEuropeanProgram = createProgram(
+  const europeanProgram = createProgram(
     payer as Keypair,
     convergence.connection.rpcEndpoint,
     new PublicKey(psyoptionsEuropeanProgramId)
@@ -265,39 +266,45 @@ export const initializeNewOptionMeta = async (
     new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
     provider
   );
-
   const oracle = await createPriceFeed(
     pseudoPythProgram,
     17_000,
     stableMint.decimals * -1
   );
-
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
-  const { instructions } = await initializeAllAccountsInstructions(
-    psyoptionsEuropeanProgram,
-    underlyingMint.address,
-    stableMint.address,
-    oracle,
-    expiration,
-    stableMint.decimals
-  );
-  const { instruction, euroMeta, euroMetaKey } =
-    await createEuroMetaInstruction(
-      psyoptionsEuropeanProgram,
+  const { instructions: initializeIxs } =
+    await initializeAllAccountsInstructions(
+      europeanProgram,
       underlyingMint.address,
-      underlyingMint.decimals,
       stableMint.address,
-      stableMint.decimals,
+      oracle,
       expiration,
-      toBigNumber(underlyingAmountPerContract),
-      toBigNumber(strikePrice),
-      stableMint.decimals,
-      oracle
+      stableMint.decimals
     );
+  const accountSetupTx = new web3.Transaction();
+  initializeIxs.forEach((ix) => accountSetupTx.add(ix));
+  await provider.sendAndConfirm(accountSetupTx);
 
-  const transaction = new web3.Transaction().add(...instructions, instruction);
-  await provider.sendAndConfirm(transaction);
+  const {
+    instruction: createIx,
+    euroMeta,
+    euroMetaKey,
+  } = await createEuroMetaInstruction(
+    europeanProgram,
+    underlyingMint.address,
+    underlyingMint.decimals,
+    stableMint.address,
+    stableMint.decimals,
+    expiration,
+    toBigNumber(underlyingAmountPerContract),
+    toBigNumber(strikePrice),
+    stableMint.decimals,
+    oracle
+  );
+
+  const createTx = new web3.Transaction().add(createIx);
+  await provider.sendAndConfirm(createTx);
 
   return {
     euroMeta,

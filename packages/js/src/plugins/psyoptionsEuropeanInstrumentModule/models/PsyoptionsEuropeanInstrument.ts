@@ -1,13 +1,73 @@
 import { PublicKey } from '@solana/web3.js';
-import { Side } from '@convergence-rfq/rfq';
+import { Side, Leg } from '@convergence-rfq/rfq';
 import { EuroMeta } from '@convergence-rfq/psyoptions-european-instrument';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+import {
+  FixableBeetArgsStruct,
+  u8,
+  u64,
+  i64,
+  bignum,
+} from '@metaplex-foundation/beet';
+import { publicKey } from '@metaplex-foundation/beet-solana';
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
 import { Convergence } from '@/Convergence';
-import { toBigNumber } from '@/types';
+import {
+  createSerializerFromFixableBeetArgsStruct,
+  toBigNumber,
+} from '@/types';
+
+type InstrumentData = {
+  optionType: OptionType;
+  underlyingAmountPerContract: bignum;
+  strikePrice: bignum;
+  expiration: bignum;
+  optionMint: PublicKey;
+  metaKey: PublicKey;
+};
+
+const instrumentDataSerializer = createSerializerFromFixableBeetArgsStruct(
+  new FixableBeetArgsStruct<InstrumentData>(
+    [
+      ['optionType', u8],
+      ['underlyingAmountPerContract', u64],
+      ['strikePrice', u64],
+      ['expiration', u64],
+      ['optionMint', publicKey],
+      ['metaKey', publicKey],
+    ],
+    'InstrumentData'
+  )
+);
+
+const euroMetaSerializer = createSerializerFromFixableBeetArgsStruct(
+  new FixableBeetArgsStruct<EuroMeta>(
+    [
+      ['underlyingMint', publicKey],
+      ['underlyingDecimals', u8],
+      ['underlyingAmountPerContract', u64],
+      ['stableMint', publicKey],
+      ['stableDecimals', u8],
+      ['stablePool', publicKey],
+      ['oracle', publicKey],
+      ['strikePrice', u64],
+      ['priceDecimals', u8],
+      ['callOptionMint', publicKey],
+      ['callWriterMint', publicKey],
+      ['putOptionMint', publicKey],
+      ['putWriterMint', publicKey],
+      ['underlyingPool', publicKey],
+      ['expiration', i64],
+      ['bumpSeed', u8],
+      ['expirationData', publicKey],
+      ['oracleProviderId', u8],
+    ],
+    'EuroMeta'
+  )
+);
 
 /**
  * This model captures all the relevant information about a Psyoptions European
@@ -34,7 +94,6 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   static createForLeg(
     convergence: Convergence,
     mint: Mint,
-    decimals: number,
     optionType: OptionType,
     meta: EuroMeta,
     metaKey: PublicKey,
@@ -59,44 +118,57 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   }
 
   getValidationAccounts() {
-    const [mintInfoPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('mint_info'), this.mint.address.toBuffer()],
-      this.convergence.programs().getRfq().address
-    );
     return [
       { pubkey: this.metaKey, isSigner: false, isWritable: false },
       {
-        pubkey: mintInfoPda,
+        pubkey: this.convergence
+          .rfqs()
+          .pdas()
+          .mintInfo({ mint: this.mint.address }),
         isSigner: false,
         isWritable: false,
       },
     ];
   }
 
-  //static async createFromLeg(
-  //  convergence: Convergence,
-  //  leg: Leg
-  //): Promise<PsyoptionsEuropeanInstrument> {
-  //  const { side, instrumentAmount, instrumentData } = leg;
-  //  const mint = await convergence
-  //    .tokens()
-  //    .findMintByAddress({ address: new PublicKey(instrumentData) });
-  //  let euroMeta: EuroMeta;
-  //  return new PsyoptionsEuropeanInstrument(
-  //    convergence,
-  //    mint,
-  //    OptionType.CALL,
-  //    euroMeta,
-  //    PublicKey.default,
-  //    {
-  //      amount:
-  //        typeof instrumentAmount === 'number'
-  //          ? instrumentAmount
-  //          : instrumentAmount.toNumber(),
-  //      side,
-  //    }
-  //  );
-  //}
+  static async createFromLeg(
+    convergence: Convergence,
+    leg: Leg
+  ): Promise<PsyoptionsEuropeanInstrument> {
+    const { side, instrumentAmount, instrumentData } = leg;
+    const [{ metaKey, optionType }] = instrumentDataSerializer.deserialize(
+      Buffer.from(instrumentData)
+    );
+
+    const account = await convergence.rpc().getAccount(metaKey);
+    if (!account.exists) {
+      throw new Error('Account not found');
+    }
+    const [euroMeta] = euroMetaSerializer.deserialize(
+      Buffer.from(account.data),
+      8
+    );
+
+    const mint = await convergence
+      .tokens()
+      .findMintByAddress({ address: euroMeta.underlyingMint });
+    const amount =
+      typeof instrumentAmount === 'number'
+        ? instrumentAmount
+        : instrumentAmount.toNumber();
+
+    return new PsyoptionsEuropeanInstrument(
+      convergence,
+      mint,
+      optionType,
+      euroMeta,
+      metaKey,
+      {
+        amount,
+        side,
+      }
+    );
+  }
 
   serializeInstrumentData(): Buffer {
     return Buffer.from(
