@@ -40,7 +40,7 @@ export const SWITCHBOARD_SOL_ORACLE = new PublicKey(
 );
 
 export const BTC_DECIMALS = 9;
-export const USDC_DECIMALS = 9;
+export const USDC_DECIMALS = 6;
 export const SOL_DECIMALS = 9;
 
 // HELPERS
