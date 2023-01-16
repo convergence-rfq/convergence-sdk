@@ -17,7 +17,7 @@ import {
 } from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
 
-const Key = 'CleanUpResponseLegsOperation' as const;
+const Key = 'CleanUpResponseOperation' as const;
 
 /**
  * Cleans up a Response.
