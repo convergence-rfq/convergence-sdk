@@ -1,6 +1,6 @@
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import {
-  createPartlyRevertSettlementPreparationInstruction,
+  createRevertSettlementPreparationInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -20,38 +20,38 @@ import {
 } from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
 
-const Key = 'PartlyRevertSettlementPreparationOperation' as const;
+const Key = 'RevertSettlementPreparationOperation' as const;
 
 /**
- * Partially reverts settlement preparations.
+ * Reverts settlement preparations.
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .partlyRevertSettlementPreparation({ address };
+ *   .revertSettlementPreparation({ address };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const partlyRevertSettlementPreparationOperation =
-  useOperation<PartlyRevertSettlementPreparationOperation>(Key);
+export const revertSettlementPreparationOperation =
+  useOperation<RevertSettlementPreparationOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type PartlyRevertSettlementPreparationOperation = Operation<
+export type RevertSettlementPreparationOperation = Operation<
   typeof Key,
-  PartlyRevertSettlementPreparationInput,
-  PartlyRevertSettlementPreparationOutput
+  RevertSettlementPreparationInput,
+  RevertSettlementPreparationOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type PartlyRevertSettlementPreparationInput = {
+export type RevertSettlementPreparationInput = {
   /** The protocol address */
   protocol?: PublicKey;
   /** The Rfq address */
@@ -63,6 +63,8 @@ export type PartlyRevertSettlementPreparationInput = {
 
   taker: PublicKey;
 
+  quoteMint: Mint;
+
   baseAssetMints: Mint[];
 
   /*
@@ -70,15 +72,13 @@ export type PartlyRevertSettlementPreparationInput = {
    */
 
   side: AuthoritySide;
-
-  legAmountToRevert: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type PartlyRevertSettlementPreparationOutput = {
+export type RevertSettlementPreparationOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
@@ -87,14 +87,14 @@ export type PartlyRevertSettlementPreparationOutput = {
  * @group Operations
  * @category Handlers
  */
-export const partlyRevertSettlementPreparationOperationHandler: OperationHandler<PartlyRevertSettlementPreparationOperation> =
+export const revertSettlementPreparationOperationHandler: OperationHandler<RevertSettlementPreparationOperation> =
   {
     handle: async (
-      operation: PartlyRevertSettlementPreparationOperation,
+      operation: RevertSettlementPreparationOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<PartlyRevertSettlementPreparationOutput> => {
-      const builder = await partlyRevertSettlementPreparationBuilder(
+    ): Promise<RevertSettlementPreparationOutput> => {
+      const builder = await revertSettlementPreparationBuilder(
         convergence,
         {
           ...operation.input,
@@ -115,8 +115,8 @@ export const partlyRevertSettlementPreparationOperationHandler: OperationHandler
     },
   };
 
-export type PartlyRevertSettlementPreparationBuilderParams =
-  PartlyRevertSettlementPreparationInput;
+export type RevertSettlementPreparationBuilderParams =
+  RevertSettlementPreparationInput;
 
 /**
  * Partially reverts settlement preparations
@@ -131,23 +131,16 @@ export type PartlyRevertSettlementPreparationBuilderParams =
  * @group Transaction Builders
  * @category Constructors
  */
-export const partlyRevertSettlementPreparationBuilder = async (
+export const revertSettlementPreparationBuilder = async (
   convergence: Convergence,
-  params: PartlyRevertSettlementPreparationBuilderParams,
+  params: RevertSettlementPreparationBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const {
-    rfq,
-    response,
-    side,
-    maker,
-    taker,
-    baseAssetMints,
-    legAmountToRevert,
-  } = params;
+  const { rfq, response, side, maker, taker, quoteMint, baseAssetMints } =
+    params;
 
   const protocol = await convergence.protocol().get();
 
@@ -163,11 +156,9 @@ export const partlyRevertSettlementPreparationBuilder = async (
       ? parseInt(responseModel.takerPreparedLegs.toString())
       : parseInt(responseModel.makerPreparedLegs.toString());
 
-  let startIndex = sidePreparedLegs - legAmountToRevert;
-
   let j = 0;
 
-  for (let i = startIndex; i < sidePreparedLegs; i++) {
+  for (let i = 0; i < sidePreparedLegs; i++) {
     const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
       rfqModel.legs[i].instrumentProgram
@@ -206,10 +197,48 @@ export const partlyRevertSettlementPreparationBuilder = async (
     j++;
   }
 
+  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+
+  const spotInstrumentProgramAccount: AccountMeta = {
+    pubkey: spotInstrumentProgram.address,
+    isSigner: false,
+    isWritable: false,
+  };
+
+  //"quote" case so we pass Buffer.from([1, 0])
+  const [quoteEscrowPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('escrow'), response.toBuffer(), Buffer.from([1, 0])],
+    spotInstrumentProgram.address
+  );
+
+  const quoteAccounts: AccountMeta[] = [
+    //`escrow`
+    {
+      pubkey: quoteEscrowPda,
+      isSigner: false,
+      isWritable: true,
+    },
+    // `receiver_tokens`
+    {
+      pubkey: await getAssociatedTokenAddress(
+        quoteMint.address,
+        side == AuthoritySide.Maker ? maker : taker,
+        undefined,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      ),
+      isSigner: false,
+      isWritable: true,
+    },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+  ];
+
+  anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
-      instruction: createPartlyRevertSettlementPreparationInstruction(
+      instruction: createRevertSettlementPreparationInstruction(
         {
           protocol: protocol.address,
           rfq,
@@ -218,12 +247,11 @@ export const partlyRevertSettlementPreparationBuilder = async (
         },
         {
           side,
-          legAmountToRevert,
         },
         rfqProgram.address
       ),
       signers: [],
-      key: 'partlyRevertSettlementPreparation',
+      key: 'revertSettlementPreparation',
     });
 };
 //remainaing accounts: (first is instrument program)
