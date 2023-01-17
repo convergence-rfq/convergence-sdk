@@ -608,7 +608,7 @@ test('[rfqModule] it can create and finalize, then respond to RFQ and confirm re
   });
 });
 
-test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collateral', async (t: Test) => {
+test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collateral, and clean up RFQ', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
     taker,
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
@@ -653,6 +653,11 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
     $topic: 'Unlocked rfq collateral',
     model: 'rfq',
     // nonResponseTakerCollateralLocked: new BN(0),
+  });
+
+  await cvg.rfqs().cleanUpRfq({
+    rfq: rfq.address,
+    taker: taker.publicKey,
   });
 });
 
