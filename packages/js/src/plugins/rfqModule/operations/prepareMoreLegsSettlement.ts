@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, AccountMeta, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
 import {
   createPrepareMoreLegsSettlementInstruction,
   AuthoritySide,
@@ -14,6 +14,12 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+} from '@solana/spl-token';
+import { Mint } from '@/plugins/tokenModule';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 
@@ -54,7 +60,7 @@ export type PrepareMoreLegsSettlementInput = {
    */
   caller?: Signer;
   /** The protocol address */
-  protocol: PublicKey;
+  protocol?: PublicKey;
   /** The Rfq address */
   rfq: PublicKey;
   /** The response address */
@@ -67,6 +73,8 @@ export type PrepareMoreLegsSettlementInput = {
   side: AuthoritySide;
 
   legAmountToPrepare: number;
+
+  baseAssetMints: Mint[];
 };
 
 /**
@@ -88,7 +96,7 @@ export const prepareMoreLegsSettlementOperationHandler: OperationHandler<Prepare
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareMoreLegsSettlementOutput> => {
-      const builder = prepareMoreLegsSettlementBuilder(
+      const builder = await prepareMoreLegsSettlementBuilder(
         convergence,
         {
           ...operation.input,
@@ -125,22 +133,90 @@ export type PrepareMoreLegsSettlementBuilderParams =
  * @group Transaction Builders
  * @category Constructors
  */
-export const prepareMoreLegsSettlementBuilder = (
+export const prepareMoreLegsSettlementBuilder = async (
   convergence: Convergence,
   params: PrepareMoreLegsSettlementBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
+  const systemProgram = convergence.programs().getSystem(programs);
 
   const {
     caller = convergence.identity(),
-    protocol,
     rfq,
     response,
     side,
     legAmountToPrepare,
+    baseAssetMints,
   } = params;
+
+  const protocol = await convergence.protocol().get();
+
+  const anchorRemainingAccounts: AccountMeta[] = [];
+
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
+
+  const sidePreparedLegs: number =
+    side == AuthoritySide.Taker
+      ? parseInt(responseModel.takerPreparedLegs.toString())
+      : parseInt(responseModel.makerPreparedLegs.toString());
+
+  let j = 0;
+  for (
+    let i = sidePreparedLegs;
+    i < sidePreparedLegs + legAmountToPrepare;
+    i++
+  ) {
+    const instrumentProgramAccount: AccountMeta = {
+      pubkey: rfqModel.legs[i].instrumentProgram,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
+      rfqModel.legs[i].instrumentProgram
+    );
+
+    const legAccounts: AccountMeta[] = [
+      {
+        pubkey: caller.publicKey,
+        isSigner: true,
+        isWritable: true,
+      },
+      {
+        pubkey: await getAssociatedTokenAddress(
+          baseAssetMints[j].address,
+          caller.publicKey,
+          undefined,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        ),
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: baseAssetMints[j].address,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: instrumentEscrowPda,
+        isSigner: false,
+        isWritable: true,
+      },
+      { pubkey: systemProgram.address, isSigner: false, isWritable: false },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+    ];
+    anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
+
+    j++;
+  }
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -148,9 +224,10 @@ export const prepareMoreLegsSettlementBuilder = (
       instruction: createPrepareMoreLegsSettlementInstruction(
         {
           caller: caller.publicKey,
-          protocol,
+          protocol: protocol.address,
           rfq,
           response,
+          anchorRemainingAccounts,
         },
         {
           side,

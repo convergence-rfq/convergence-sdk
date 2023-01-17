@@ -47,7 +47,7 @@ export type PartlyRevertSettlementPreparationOperation = Operation<
  */
 export type PartlyRevertSettlementPreparationInput = {
   /** The protocol address */
-  protocol: PublicKey;
+  protocol?: PublicKey;
   /** The Rfq address */
   rfq: PublicKey;
   /** The response address */
@@ -119,22 +119,24 @@ export type PartlyRevertSettlementPreparationBuilderParams =
  * @group Transaction Builders
  * @category Constructors
  */
-export const partlyRevertSettlementPreparationBuilder = (
+export const partlyRevertSettlementPreparationBuilder = async (
   convergence: Convergence,
   params: PartlyRevertSettlementPreparationBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const { protocol, rfq, response, side, legAmountToRevert } = params;
+  const { rfq, response, side, legAmountToRevert } = params;
+
+  const protocol = await convergence.protocol().get();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createPartlyRevertSettlementPreparationInstruction(
         {
-          protocol,
+          protocol: protocol.address,
           rfq,
           response,
         },
@@ -144,7 +146,7 @@ export const partlyRevertSettlementPreparationBuilder = (
         },
         rfqProgram.address
       ),
-      signers: [payer],
+      signers: [],
       key: 'partlyRevertSettlementPreparation',
     });
 };
