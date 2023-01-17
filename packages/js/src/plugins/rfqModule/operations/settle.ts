@@ -136,7 +136,11 @@ export const settleBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  for (let legIndex = 0; legIndex < rfqModel.legs.length; legIndex++) {
+  const startIndex = parseInt(responseModel.settledLegs.toString());
+
+  let j = 0;
+
+  for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];
     const confirmationSide = responseModel.confirmed?.side;
 
@@ -170,7 +174,7 @@ export const settleBuilder = async (
       // `receiver_tokens`
       {
         pubkey: await getAssociatedTokenAddress(
-          baseAssetMints[legIndex].address,
+          baseAssetMints[j].address,
           legTakerAmount > 0 ? maker : taker,
           undefined,
           TOKEN_PROGRAM_ID,
@@ -183,6 +187,8 @@ export const settleBuilder = async (
     ];
 
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
+
+    j++;
   }
 
   const confirmationSide = responseModel.confirmed?.side;

@@ -7,6 +7,7 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
@@ -43,21 +44,21 @@ export type SettleTwoPartyDefaultOperation = Operation<
  */
 export type SettleTwoPartyDefaultInput = {
   /** The address of the protocol account. */
-  protocol: PublicKey;
+  protocol?: PublicKey;
   /** The address of the Rfq account. */
   rfq: PublicKey;
   /** The address of the Response account. */
   response: PublicKey;
   /** The address of the Taker's collateralInfo account. */
-  takerCollateralInfo: PublicKey;
+  takerCollateralInfo?: PublicKey;
   /** The address of the Maker's collateralInfo account. */
-  makerCollateralInfo: PublicKey;
+  makerCollateralInfo?: PublicKey;
   /** The address of the Taker's collateralTokens account. */
-  takerCollateralTokens: PublicKey;
+  takerCollateralTokens?: PublicKey;
   /** The address of the Maker's collateralTokens account. */
-  makerCollateralTokens: PublicKey;
+  makerCollateralTokens?: PublicKey;
   /** The address of the protocol's collateralTokens account. */
-  protocolCollateralTokens: PublicKey;
+  protocolCollateralTokens?: PublicKey;
 };
 
 /**
@@ -80,13 +81,24 @@ export const settleTwoPartyDefaultOperationHandler: OperationHandler<SettleTwoPa
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SettleTwoPartyDefaultOutput> => {
+      const builder = await settleTwoPartyDefaultBuilder(
+        convergence,
+        {
+          ...operation.input,
+        },
+        scope
+      );
       scope.throwIfCanceled();
 
-      return settleTwoPartyDefaultBuilder(
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
-        operation.input,
-        scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+        scope.confirmOptions
+      );
+
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+
+      return { ...output };
     },
   };
 
@@ -109,39 +121,58 @@ export type SettleTwoPartyDefaultBuilderParams = SettleTwoPartyDefaultInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const settleTwoPartyDefaultBuilder = (
+export const settleTwoPartyDefaultBuilder = async (
   convergence: Convergence,
   params: SettleTwoPartyDefaultBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const {
-    protocol,
-    rfq,
-    response,
-    takerCollateralInfo,
-    makerCollateralInfo,
-    takerCollateralTokens,
-    makerCollateralTokens,
-    protocolCollateralTokens,
-  } = params;
+  const { rfq, response } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const tokenProgram = convergence.programs().getToken(programs);
+
+  const protocol = await convergence.protocol().get();
+
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
+
+  const [takerCollateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), rfqModel.taker.toBuffer()],
+    rfqProgram.address
+  );
+  const [makerCollateralInfoPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_info'), responseModel.maker.toBuffer()],
+    rfqProgram.address
+  );
+  const [takerCollateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), rfqModel.taker.toBuffer()],
+    rfqProgram.address
+  );
+  const [makerCollateralTokenPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), responseModel.maker.toBuffer()],
+    rfqProgram.address
+  );
+  const [protocolCollateralTokensPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collateral_token'), protocol.authority.toBuffer()],
+    rfqProgram.address
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createSettleTwoPartyDefaultInstruction(
         {
-          protocol,
+          protocol: protocol.address,
           rfq,
           response,
-          takerCollateralInfo,
-          makerCollateralInfo,
-          takerCollateralTokens,
-          makerCollateralTokens,
-          protocolCollateralTokens,
+          takerCollateralInfo: takerCollateralInfoPda,
+          makerCollateralInfo: makerCollateralInfoPda,
+          takerCollateralTokens: takerCollateralTokenPda,
+          makerCollateralTokens: makerCollateralTokenPda,
+          protocolCollateralTokens: protocolCollateralTokensPda,
           tokenProgram: tokenProgram.address,
         },
         rfqProgram.address

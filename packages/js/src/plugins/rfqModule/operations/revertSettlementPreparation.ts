@@ -1,6 +1,6 @@
-import { PublicKey, AccountMeta, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 import {
-  createPrepareMoreLegsSettlementInstruction,
+  createRevertSettlementPreparationInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -9,56 +9,49 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
 
-const Key = 'PrepareMoreLegsSettlementOperation' as const;
+const Key = 'RevertSettlementPreparationOperation' as const;
 
 /**
- * Prepares more legs settlement
+ * Reverts settlement preparations.
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .prepareMoreLegsSettlement({ address };
+ *   .revertSettlementPreparation({ address };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const prepareMoreLegsSettlementOperation =
-  useOperation<PrepareMoreLegsSettlementOperation>(Key);
+export const revertSettlementPreparationOperation =
+  useOperation<RevertSettlementPreparationOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type PrepareMoreLegsSettlementOperation = Operation<
+export type RevertSettlementPreparationOperation = Operation<
   typeof Key,
-  PrepareMoreLegsSettlementInput,
-  PrepareMoreLegsSettlementOutput
+  RevertSettlementPreparationInput,
+  RevertSettlementPreparationOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type PrepareMoreLegsSettlementInput = {
-  /**
-   * The owner of the Rfq as a Signer.
-   *
-   * @defaultValue `convergence.identity()`
-   */
-  caller?: Signer;
+export type RevertSettlementPreparationInput = {
   /** The protocol address */
   protocol?: PublicKey;
   /** The Rfq address */
@@ -66,22 +59,27 @@ export type PrepareMoreLegsSettlementInput = {
   /** The response address */
   response: PublicKey;
 
+  maker: PublicKey;
+
+  taker: PublicKey;
+
+  quoteMint: Mint;
+
+  baseAssetMints: Mint[];
+
   /*
    * Args
    */
 
   side: AuthoritySide;
-
-  legAmountToPrepare: number;
-
-  baseAssetMints: Mint[];
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type PrepareMoreLegsSettlementOutput = {
+export type RevertSettlementPreparationOutput = {
+  /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 };
 
@@ -89,14 +87,14 @@ export type PrepareMoreLegsSettlementOutput = {
  * @group Operations
  * @category Handlers
  */
-export const prepareMoreLegsSettlementOperationHandler: OperationHandler<PrepareMoreLegsSettlementOperation> =
+export const revertSettlementPreparationOperationHandler: OperationHandler<RevertSettlementPreparationOperation> =
   {
     handle: async (
-      operation: PrepareMoreLegsSettlementOperation,
+      operation: RevertSettlementPreparationOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<PrepareMoreLegsSettlementOutput> => {
-      const builder = await prepareMoreLegsSettlementBuilder(
+    ): Promise<RevertSettlementPreparationOutput> => {
+      const builder = await revertSettlementPreparationBuilder(
         convergence,
         {
           ...operation.input,
@@ -117,39 +115,32 @@ export const prepareMoreLegsSettlementOperationHandler: OperationHandler<Prepare
     },
   };
 
-export type PrepareMoreLegsSettlementBuilderParams =
-  PrepareMoreLegsSettlementInput;
+export type RevertSettlementPreparationBuilderParams =
+  RevertSettlementPreparationInput;
 
 /**
- * Prepares more legs settlement
+ * Partially reverts settlement preparations
  *
  * ```ts
  * const transactionBuilder = await convergence
  *   .rfqs()
  *   .builders()
- *   .prepareMoreLegsSettlement();
+ *   .partlyRevertSettlementPreparation();
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const prepareMoreLegsSettlementBuilder = async (
+export const revertSettlementPreparationBuilder = async (
   convergence: Convergence,
-  params: PrepareMoreLegsSettlementBuilderParams,
+  params: RevertSettlementPreparationBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-  const systemProgram = convergence.programs().getSystem(programs);
 
-  const {
-    caller = convergence.identity(),
-    rfq,
-    response,
-    side,
-    legAmountToPrepare,
-    baseAssetMints,
-  } = params;
+  const { rfq, response, side, maker, taker, quoteMint, baseAssetMints } =
+    params;
 
   const protocol = await convergence.protocol().get();
 
@@ -166,32 +157,31 @@ export const prepareMoreLegsSettlementBuilder = async (
       : parseInt(responseModel.makerPreparedLegs.toString());
 
   let j = 0;
-  for (
-    let i = sidePreparedLegs;
-    i < sidePreparedLegs + legAmountToPrepare;
-    i++
-  ) {
+
+  for (let i = 0; i < sidePreparedLegs; i++) {
+    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
+      rfqModel.legs[i].instrumentProgram
+    );
+
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[i].instrumentProgram,
       isSigner: false,
       isWritable: false,
     };
 
-    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
-      rfqModel.legs[i].instrumentProgram
-    );
-
     const legAccounts: AccountMeta[] = [
+      //`escrow`
       {
-        pubkey: caller.publicKey,
-        isSigner: true,
+        pubkey: instrumentEscrowPda,
+        isSigner: false,
         isWritable: true,
       },
+      // `receiver_tokens`
       {
         pubkey: await getAssociatedTokenAddress(
           baseAssetMints[j].address,
-          caller.publicKey,
+          side == AuthoritySide.Maker ? maker : taker,
           undefined,
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
@@ -199,31 +189,57 @@ export const prepareMoreLegsSettlementBuilder = async (
         isSigner: false,
         isWritable: true,
       },
-      {
-        pubkey: baseAssetMints[j].address,
-        isSigner: false,
-        isWritable: false,
-      },
-      {
-        pubkey: instrumentEscrowPda,
-        isSigner: false,
-        isWritable: true,
-      },
-      { pubkey: systemProgram.address, isSigner: false, isWritable: false },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
     ];
+
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
 
     j++;
   }
 
+  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+
+  const spotInstrumentProgramAccount: AccountMeta = {
+    pubkey: spotInstrumentProgram.address,
+    isSigner: false,
+    isWritable: false,
+  };
+
+  //"quote" case so we pass Buffer.from([1, 0])
+  const [quoteEscrowPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('escrow'), response.toBuffer(), Buffer.from([1, 0])],
+    spotInstrumentProgram.address
+  );
+
+  const quoteAccounts: AccountMeta[] = [
+    //`escrow`
+    {
+      pubkey: quoteEscrowPda,
+      isSigner: false,
+      isWritable: true,
+    },
+    // `receiver_tokens`
+    {
+      pubkey: await getAssociatedTokenAddress(
+        quoteMint.address,
+        side == AuthoritySide.Maker ? maker : taker,
+        undefined,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      ),
+      isSigner: false,
+      isWritable: true,
+    },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+  ];
+
+  anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
-      instruction: createPrepareMoreLegsSettlementInstruction(
+      instruction: createRevertSettlementPreparationInstruction(
         {
-          caller: caller.publicKey,
           protocol: protocol.address,
           rfq,
           response,
@@ -231,11 +247,27 @@ export const prepareMoreLegsSettlementBuilder = async (
         },
         {
           side,
-          legAmountToPrepare,
         },
         rfqProgram.address
       ),
-      signers: [caller],
-      key: 'prepareMoreLegsSettlement',
+      signers: [],
+      key: 'revertSettlementPreparation',
     });
 };
+//remainaing accounts: (first is instrument program)
+/*
+  return [
+      {
+        pubkey: await getInstrumentEscrowPda(response.account, assetIdentifier, this.getProgramId()),
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: await this.mint.getAssociatedAddress(caller.publicKey),
+        isSigner: false,
+        isWritable: true,
+      },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    ];
+  }
+*/
