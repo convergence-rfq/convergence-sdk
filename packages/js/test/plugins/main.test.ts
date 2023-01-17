@@ -12,6 +12,7 @@ import {
   setupAccounts,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
+import { InstrumentClient } from '../../src/plugins/instrumentModule/InstrumentClient';
 import {
   Mint,
   token,
@@ -902,13 +903,64 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
   });
 });
 
-// test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
-  
-//   await cvg.rfqs().addLegsToRfq(taker,rfq,)
+test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
+  const Ic: (SpotInstrument | PsyoptionsEuropeanInstrument)[] = [];
+  Ic.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 5,
+      side: Side.Ask,
+    })
+  );
+  Ic.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  Ic.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  let expLegSize = 0;
+  Ic.forEach((leg) => {
+    const size = new InstrumentClient(cvg, leg, leg.legInfo).getLegDataSize();
+    expLegSize += size;
+  });
 
-//   spok(t, rfq, {
-//     $topic: 'Calculated Collateral for Rfq',
-//     model: 'rfq',
-//     address: spokSamePubkey(rfq.address),
-//   });
-// });
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    legSize: expLegSize,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+  });
+
+  await cvg.rfqs().addLegsToRfq({
+    taker,
+    rfq: rfq.address,
+    legs: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
+  });
+
+  spok(t, rfq, {
+    $topic: 'Added leg to Rfq',
+    model: 'rfq',
+    address: spokSamePubkey(rfq.address),
+  });
+});

@@ -1,8 +1,9 @@
-import { createAddLegsToRfqInstruction, Leg } from '@convergence-rfq/rfq';
+import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { Leg } from '../types';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -11,7 +12,6 @@ import {
   useOperation,
   Signer,
 } from '@/types';
-import { InstrumentClient } from '@/plugins/instrumentModule';
 
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { ProtocolPdasClient } from '@/plugins/protocolModule';
@@ -122,19 +122,30 @@ export const addLegsToRfqBuilder = (
   const { taker = convergence.identity(), rfq, legs } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const anchorRemainingAccounts: AccountMeta[] = [];
-  legs.forEach((leg) => {
-    const accountMeta = new InstrumentClient(
-      convergence,
-      leg,
-      leg.legInfo
-    ).getValidationAccounts();
-    anchorRemainingAccounts.push(...accountMeta);
-  });
+  // const anchorRemainingAccounts: AccountMeta[] = [];
+  ////
+  //   legs.forEach((leg) => {
+  //     const accountMeta = new InstrumentClient(
+  //       convergence,
+  //       leg,
+  //       leg.legInfo
+  //     ).getValidationAccounts();
+  //     anchorRemainingAccounts.push(...accountMeta);
+  //   });
+  // ////
+  //   const legsArray = legs.map((leg) =>
+  //     new InstrumentClient(convergence, leg, leg.legInfo).toLegData()
+  //   );
 
-  const legsArray = legs.map((leg) =>
-    new InstrumentClient(convergence, leg, leg.legInfo).toLegData()
-  );
+  const legAccounts: AccountMeta[] = [];
+  const legsArray: Leg[] = [];
+  // let expectedLegSize = 4;
+  for (const leg of legs) {
+    const instrumentClient = convergence.instrument(leg, leg.legInfo);
+    legsArray.push(instrumentClient.toLegData());
+    legAccounts.push(...instrumentClient.getValidationAccounts());
+    // expectedLegSize += instrumentClient.getLegDataSize();
+  }
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -143,7 +154,7 @@ export const addLegsToRfqBuilder = (
           taker: taker.publicKey,
           protocol,
           rfq,
-          anchorRemainingAccounts,
+          anchorRemainingAccounts: legAccounts,
         },
         {
           legs: legsArray,
