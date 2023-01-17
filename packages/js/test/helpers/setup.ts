@@ -40,8 +40,8 @@ export const SWITCHBOARD_SOL_ORACLE = new PublicKey(
 );
 
 export const BTC_DECIMALS = 9;
-export const USDC_DECIMALS = 9;
 export const SOL_DECIMALS = 9;
+export const USDC_DECIMALS = 6;
 
 // HELPERS
 
@@ -89,7 +89,11 @@ export const createWallet = async (
   return wallet;
 };
 
-export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
+export const setupAccounts = async (
+  cvg: Convergence,
+  walletAmount: number,
+  dao: PublicKey
+) => {
   const mintAuthority = Keypair.generate();
   const maker = Keypair.fromSecretKey(
     new Uint8Array(
@@ -136,6 +140,9 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
   const { token: makerUSDCWallet } = await cvg
     .tokens()
     .createToken({ mint: usdcMint.address, owner: maker.publicKey });
+  const { token: daoUSDCWallet } = await cvg
+    .tokens()
+    .createToken({ mint: usdcMint.address, owner: dao });
 
   // Mint USDC
   await cvg.tokens().mint({
@@ -150,6 +157,12 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
     toToken: takerUSDCWallet.address,
     mintAuthority,
   });
+  await cvg.tokens().mint({
+    mintAddress: usdcMint.address,
+    amount: token(walletAmount),
+    toToken: daoUSDCWallet.address,
+    mintAuthority,
+  });
 
   // Setup BTC wallets
   const { token: makerBTCWallet } = await cvg
@@ -158,6 +171,9 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
   const { token: takerBTCWallet } = await cvg
     .tokens()
     .createToken({ mint: btcMint.address, owner: taker.publicKey });
+  const { token: daoBTCWallet } = await cvg
+    .tokens()
+    .createToken({ mint: btcMint.address, owner: dao });
 
   // Mint BTC
   await cvg.tokens().mint({
@@ -170,6 +186,12 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
     mintAddress: btcMint.address,
     amount: token(walletAmount),
     toToken: makerBTCWallet.address,
+    mintAuthority,
+  });
+  await cvg.tokens().mint({
+    mintAddress: btcMint.address,
+    amount: token(walletAmount),
+    toToken: daoBTCWallet.address,
     mintAuthority,
   });
 
@@ -197,6 +219,8 @@ export const setupAccounts = async (cvg: Convergence, walletAmount: number) => {
     takerUSDCWallet,
     takerBTCWallet,
     takerSOLWallet,
+    daoBTCWallet,
+    daoUSDCWallet,
   };
 };
 
@@ -254,8 +278,9 @@ export const initializeNewOptionMeta = async (
     new anchor.Wallet(payer as Keypair),
     {}
   );
+  anchor.setProvider(provider);
 
-  const psyoptionsEuropeanProgram = createProgram(
+  const europeanProgram = createProgram(
     payer as Keypair,
     convergence.connection.rpcEndpoint,
     new PublicKey(psyoptionsEuropeanProgramId)
@@ -265,39 +290,45 @@ export const initializeNewOptionMeta = async (
     new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
     provider
   );
-
   const oracle = await createPriceFeed(
     pseudoPythProgram,
     17_000,
     stableMint.decimals * -1
   );
-
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
-  const { instructions } = await initializeAllAccountsInstructions(
-    psyoptionsEuropeanProgram,
-    underlyingMint.address,
-    stableMint.address,
-    oracle,
-    expiration,
-    stableMint.decimals
-  );
-  const { instruction, euroMeta, euroMetaKey } =
-    await createEuroMetaInstruction(
-      psyoptionsEuropeanProgram,
+  const { instructions: initializeIxs } =
+    await initializeAllAccountsInstructions(
+      europeanProgram,
       underlyingMint.address,
-      underlyingMint.decimals,
       stableMint.address,
-      stableMint.decimals,
+      oracle,
       expiration,
-      toBigNumber(underlyingAmountPerContract),
-      toBigNumber(strikePrice),
-      stableMint.decimals,
-      oracle
+      stableMint.decimals
     );
+  const accountSetupTx = new web3.Transaction();
+  initializeIxs.forEach((ix) => accountSetupTx.add(ix));
+  await provider.sendAndConfirm(accountSetupTx);
 
-  const transaction = new web3.Transaction().add(...instructions, instruction);
-  await provider.sendAndConfirm(transaction);
+  const {
+    instruction: createIx,
+    euroMeta,
+    euroMetaKey,
+  } = await createEuroMetaInstruction(
+    europeanProgram,
+    underlyingMint.address,
+    underlyingMint.decimals,
+    stableMint.address,
+    stableMint.decimals,
+    expiration,
+    toBigNumber(underlyingAmountPerContract),
+    toBigNumber(strikePrice),
+    stableMint.decimals,
+    oracle
+  );
+
+  const createTx = new web3.Transaction().add(createIx);
+  await provider.sendAndConfirm(createTx);
 
   return {
     euroMeta,

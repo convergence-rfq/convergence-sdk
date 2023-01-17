@@ -218,17 +218,17 @@ export const prepareSettlementBuilder = async (
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
   //TODO: extract base asset from base asset index
+  
   for (let legIndex = 0; legIndex < legAmountToPrepare; legIndex++) {
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[legIndex].instrumentProgram,
       isSigner: false,
       isWritable: false,
     };
-    //TODO: shouldn't be passing this, need some method (baseAssetIndex) -> baseAssetMint/pubkey
 
     const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, legIndex])],
-      spotInstrumentProgram.address
+      rfqModel.legs[legIndex].instrumentProgram
     );
 
     const legAccounts: AccountMeta[] = [
@@ -248,7 +248,11 @@ export const prepareSettlementBuilder = async (
         isSigner: false,
         isWritable: true,
       },
-      { pubkey: baseAssetMints[legIndex].address, isSigner: false, isWritable: false },
+      {
+        pubkey: baseAssetMints[legIndex].address,
+        isSigner: false,
+        isWritable: false,
+      },
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,

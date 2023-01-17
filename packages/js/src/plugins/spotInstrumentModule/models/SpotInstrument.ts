@@ -61,6 +61,23 @@ export class SpotInstrument implements Instrument {
     return Buffer.from(this.mint.address.toBytes());
   }
 
+  static async createFromLeg(
+    convergence: Convergence,
+    leg: Leg
+  ): Promise<SpotInstrument> {
+    const { side, instrumentAmount, instrumentData } = leg;
+    const mint = await convergence
+      .tokens()
+      .findMintByAddress({ address: new PublicKey(instrumentData) });
+    return new SpotInstrument(convergence, mint, {
+      amount:
+        typeof instrumentAmount === 'number'
+          ? instrumentAmount
+          : instrumentAmount.toNumber(),
+      side,
+    });
+  }
+
   serializeLegData(leg: Leg): Buffer {
     const legBeet = new beet.FixableBeetArgsStruct<Leg>(
       [

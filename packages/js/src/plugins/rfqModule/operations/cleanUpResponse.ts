@@ -1,5 +1,10 @@
 import { createCleanUpResponseInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
+import {
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+} from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -7,10 +12,12 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { Mint } from '@/plugins/tokenModule';
 
-const Key = 'CleanUpResponseLegsOperation' as const;
+const Key = 'CleanUpResponseOperation' as const;
 
 /**
  * Cleans up a Response.
@@ -44,21 +51,22 @@ export type CleanUpResponseOperation = Operation<
 export type CleanUpResponseInput = {
   /** The Maker of the Response */
   maker: PublicKey;
-
-  firstToPrepareQuote: PublicKey;
   /**
    * The address of the protocol
    */
-  protocol: PublicKey;
+  protocol?: PublicKey;
+
+  dao: PublicKey;
   /** The address of the Rfq account */
   rfq: PublicKey;
   /** The address of the Reponse account */
   response: PublicKey;
-  /** The address of the quote escrow account.
-   * Can be a valid escrow account or an unitialized account. */
-  quoteEscrow: PublicKey;
 
-  quoteBackupTokens: PublicKey;
+  firstToPrepare: PublicKey;
+
+  baseAssetMints: Mint[];
+
+  quoteMint: Mint;
 };
 
 /**
@@ -83,11 +91,24 @@ export const cleanUpResponseOperationHandler: OperationHandler<CleanUpResponseOp
     ): Promise<CleanUpResponseOutput> => {
       scope.throwIfCanceled();
 
-      return cleanUpResponseBuilder(
+      const builder = await cleanUpResponseBuilder(
         convergence,
-        operation.input,
+        {
+          ...operation.input,
+        },
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      scope.throwIfCanceled();
+
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+        convergence,
+        scope.confirmOptions
+      );
+
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+
+      return { ...output };
     },
   };
 
@@ -110,15 +131,115 @@ export type CleanUpResponseBuilderParams = CleanUpResponseInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const cleanUpResponseBuilder = (
+export const cleanUpResponseBuilder = async (
   convergence: Convergence,
   params: CleanUpResponseBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { maker, protocol, rfq, response } = params;
+  const {
+    maker = convergence.identity().publicKey,
+    rfq,
+    response,
+    firstToPrepare,
+    dao,
+    baseAssetMints,
+    quoteMint,
+  } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
+  const protocol = await convergence.protocol().get();
+
+  const anchorRemainingAccounts: AccountMeta[] = [];
+
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
+
+  const initializedLegs = responseModel.legPreparationsInitializedBy.length;
+
+  for (let i = 0; i < initializedLegs; i++) {
+    const instrumentProgramAccount: AccountMeta = {
+      pubkey: rfqModel.legs[i].instrumentProgram,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
+      rfqModel.legs[i].instrumentProgram
+    );
+    const legAccounts: AccountMeta[] = [
+      {
+        pubkey: firstToPrepare,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: instrumentEscrowPda,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: await getAssociatedTokenAddress(
+          baseAssetMints[i].address,
+          dao,
+          undefined,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        ),
+        isSigner: false,
+        isWritable: true,
+      },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    ];
+
+    anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
+  }
+
+  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+
+  const spotInstrumentProgramAccount: AccountMeta = {
+    pubkey: spotInstrumentProgram.address,
+    isSigner: false,
+    isWritable: false,
+  };
+
+  //"quote" case so we pass Buffer.from([1, 0])
+  const [quoteEscrowPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('escrow'), response.toBuffer(), Buffer.from([1, 0])],
+    spotInstrumentProgram.address
+  );
+
+  const quoteAccounts: AccountMeta[] = [
+    {
+      pubkey: firstToPrepare,
+      isSigner: false,
+      isWritable: true,
+    },
+    //`escrow`
+    {
+      pubkey: quoteEscrowPda,
+      isSigner: false,
+      isWritable: true,
+    },
+    // `receiver_tokens`
+    {
+      pubkey: await getAssociatedTokenAddress(
+        quoteMint.address,
+        dao,
+        undefined,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      ),
+      isSigner: false,
+      isWritable: true,
+    },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+  ];
+
+  anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -126,9 +247,10 @@ export const cleanUpResponseBuilder = (
       instruction: createCleanUpResponseInstruction(
         {
           maker,
-          protocol,
+          protocol: protocol.address,
           rfq,
           response,
+          anchorRemainingAccounts,
         },
         rfqProgram.address
       ),

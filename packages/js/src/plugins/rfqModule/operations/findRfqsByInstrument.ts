@@ -42,7 +42,7 @@ export type FindRfqsByInstrumentOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByInstrumentInput = {
-  /** The address of the token account. */
+  /** The program to search for. */
   instrumentProgram: Program;
 };
 

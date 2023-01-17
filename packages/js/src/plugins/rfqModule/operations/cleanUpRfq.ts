@@ -7,7 +7,7 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
@@ -18,8 +18,8 @@ const Key = 'CleanUpRfqOperation' as const;
  *
  * ```ts
  * await convergence
- *   .rfqs()
- *   .cleanUpRfq({ address };
+ * .rfqs()
+ * .cleanUpRfq({ address };
  * ```
  *
  * @group Operations
@@ -43,16 +43,15 @@ export type CleanUpRfqOperation = Operation<
  */
 export type CleanUpRfqInput = {
   /**
-   * The Taker as a Signer
+   * The Taker
    *
-   * @defaultValue `convergence.identity()`
    */
-  taker?: Signer;
+  taker?: PublicKey;
 
   /**
    * The address of the protocol
    */
-  protocol: PublicKey;
+  protocol?: PublicKey;
 
   /** The address of the Rfq account */
   rfq: PublicKey;
@@ -80,11 +79,24 @@ export const cleanUpRfqOperationHandler: OperationHandler<CleanUpRfqOperation> =
     ): Promise<CleanUpRfqOutput> => {
       scope.throwIfCanceled();
 
-      return cleanUpRfqBuilder(
+      const builder = await cleanUpRfqBuilder(
         convergence,
-        operation.input,
+        {
+          ...operation.input,
+        },
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      scope.throwIfCanceled();
+
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+        convergence,
+        scope.confirmOptions
+      );
+
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+
+      return { ...output };
     },
   };
 
@@ -99,36 +111,37 @@ export type CleanUpRfqBuilderParams = CleanUpRfqInput;
  *
  * ```ts
  * const transactionBuilder = convergence
- *   .rfqs()
- *   .builders()
- *   .cleanUpRfq({ address });
+ * .rfqs()
+ * .builders()
+ * .cleanUpRfq({ address });
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const cleanUpRfqBuilder = (
+export const cleanUpRfqBuilder = async (
   convergence: Convergence,
   params: CleanUpRfqBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { taker = convergence.identity(), protocol, rfq } = params;
+  const { taker = convergence.identity().publicKey, rfq } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
+  const protocol = await convergence.protocol().get();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createCleanUpRfqInstruction(
         {
-          taker: taker.publicKey,
-          protocol,
+          taker,
+          protocol: protocol.address,
           rfq,
         },
         rfqProgram.address
       ),
-      signers: [taker],
+      signers: [],
       key: 'cleanUpRfq',
     });
 };

@@ -43,6 +43,8 @@ import {
   PartiallySettleLegsInput,
   partlyRevertSettlementPreparationOperation,
   PartlyRevertSettlementPreparationInput,
+  revertSettlementPreparationOperation,
+  RevertSettlementPreparationInput,
   prepareMoreLegsSettlementOperation,
   PrepareMoreLegsSettlementInput,
   prepareSettlementOperation,
@@ -275,6 +277,16 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(partlyRevertSettlementPreparationOperation(input), options);
+  }
+
+  /** {@inheritDoc revertSettlementPreparationOperation} */
+  revertSettlementPreparation(
+    input: RevertSettlementPreparationInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(revertSettlementPreparationOperation(input), options);
   }
 
   /** {@inheritDoc prepareMoreLegsSettlementOperation} */
