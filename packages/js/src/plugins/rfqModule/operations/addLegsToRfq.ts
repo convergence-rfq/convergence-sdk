@@ -122,29 +122,14 @@ export const addLegsToRfqBuilder = (
   const { taker = convergence.identity(), rfq, legs } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  // const anchorRemainingAccounts: AccountMeta[] = [];
-  ////
-  //   legs.forEach((leg) => {
-  //     const accountMeta = new InstrumentClient(
-  //       convergence,
-  //       leg,
-  //       leg.legInfo
-  //     ).getValidationAccounts();
-  //     anchorRemainingAccounts.push(...accountMeta);
-  //   });
-  // ////
-  //   const legsArray = legs.map((leg) =>
-  //     new InstrumentClient(convergence, leg, leg.legInfo).toLegData()
-  //   );
 
   const legAccounts: AccountMeta[] = [];
   const legsArray: Leg[] = [];
-  // let expectedLegSize = 4;
+
   for (const leg of legs) {
     const instrumentClient = convergence.instrument(leg, leg.legInfo);
     legsArray.push(instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());
-    // expectedLegSize += instrumentClient.getLegDataSize();
   }
   return TransactionBuilder.make()
     .setFeePayer(payer)
