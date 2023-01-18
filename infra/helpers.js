@@ -16,9 +16,9 @@ const PSEUDO_PYTH_ORACLE = 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH';
 module.exports.solanaLogs = new Promise((resolve) => {
   const child = spawn(
     'sh',
-    ['-c', 'while true; do solana logs --url localhost; done'],
+    ['-c', 'while true; do solana logs --url localhost; sleep 1; done'],
     {
-      stdio: [process.stdin, process.stdout, process.stderr],
+      stdio: [process.stdin, process.stderr, process.stdout],
     }
   );
   resolve(child);
