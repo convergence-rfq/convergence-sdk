@@ -3,6 +3,11 @@ import {
   createPartlyRevertSettlementPreparationInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
+import {
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+} from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -13,11 +18,6 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
@@ -163,7 +163,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
       ? parseInt(responseModel.takerPreparedLegs.toString())
       : parseInt(responseModel.makerPreparedLegs.toString());
 
-  let startIndex = sidePreparedLegs - legAmountToRevert;
+  const startIndex = sidePreparedLegs - legAmountToRevert;
 
   let j = 0;
 

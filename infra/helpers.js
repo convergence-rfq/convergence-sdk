@@ -14,13 +14,14 @@ const PSYOPTIONS_EURO_PRIMITIVE =
 const PSEUDO_PYTH_ORACLE = 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH';
 
 module.exports.solanaLogs = new Promise((resolve) => {
-  // Logs are not available immediately after starting the test validator
-  setTimeout(() => {
-    const child = spawn('solana', ['logs', '--url', 'localhost'], {
+  const child = spawn(
+    'sh',
+    ['-c', 'while true; do solana logs --url localhost; done'],
+    {
       stdio: [process.stdin, process.stdout, process.stderr],
-    });
-    resolve(child);
-  }, 1_000);
+    }
+  );
+  resolve(child);
 });
 
 module.exports.solanaTestValidator = new Promise((resolve) => {

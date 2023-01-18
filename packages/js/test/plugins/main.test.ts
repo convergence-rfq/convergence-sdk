@@ -1,6 +1,7 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair } from '@solana/web3.js';
+import { sleep } from '@bundlr-network/client/build/common/utils';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -12,7 +13,6 @@ import {
   setupAccounts,
   BTC_DECIMALS,
   USDC_DECIMALS,
-  //@ts-ignore
   spokSameBignum,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
@@ -33,7 +33,6 @@ import {
   legsToInstruments,
   Signer,
 } from '@/index';
-import { sleep } from '@bundlr-network/client/build/common/utils';
 
 killStuckProcess();
 
@@ -86,7 +85,6 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   takerBTCWallet = context.takerBTCWallet;
   takerSOLWallet = context.takerSOLWallet;
 
-  // NOTE: The `spokSameAddress` helper is incredibly noisy so using this instead
   t.same(
     daoBTCWallet.ownerAddress.toString(),
     dao.publicKey.toString(),
@@ -431,15 +429,24 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     .tokens()
     .refreshToken(makerUSDCWallet);
 
+  t.same(
+    takerUSDCWallet.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
   spok(t, refreshedTakerUSDCWallet, {
-    $topic: 'Withdraw Collateral',
-    address: spokSamePubkey(takerUSDCWallet.address),
-    mintAddress: spokSamePubkey(collateralMint.address),
+    $topic: 'same model',
+    model: 'token',
   });
+
+  t.same(
+    makerUSDCWallet.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
   spok(t, refreshedMakerUSDCWallet, {
-    $topic: 'Withdraw Collateral',
-    address: spokSamePubkey(makerUSDCWallet.address),
-    mintAddress: spokSamePubkey(collateralMint.address),
+    $topic: 'same model',
+    model: 'token',
   });
 
   const makerCollateral = cvg
@@ -449,11 +456,28 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   const makerCollateralInfo = await cvg
     .tokens()
     .findTokenByAddress({ address: makerCollateral });
+  const takerCollateralInfo = await cvg
+    .tokens()
+    .findTokenByAddress({ address: makerCollateral });
 
+  t.same(
+    makerCollateralInfo.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
   spok(t, makerCollateralInfo, {
-    $topic: 'Withdraw Collateral',
-    address: spokSamePubkey(makerCollateral),
-    mintAddress: spokSamePubkey(collateralMint.address),
+    $topic: 'same model',
+    model: 'token',
+  });
+
+  t.same(
+    takerCollateralInfo.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
+  spok(t, takerCollateralInfo, {
+    $topic: 'same model',
+    model: 'token',
   });
 });
 
@@ -461,18 +485,27 @@ test('[collateralModule] it can find collateral by user', async (t: Test) => {
   const makerCollateral = await cvg.collateral().findByUser({
     user: maker.publicKey,
   });
+  t.same(
+    makerCollateral.user.toString(),
+    maker.publicKey.toString(),
+    'same address'
+  );
   spok(t, makerCollateral, {
-    $topic: 'Find Collateral by Owner',
+    $topic: 'same model',
     model: 'collateral',
-    user: spokSamePubkey(maker.publicKey),
   });
+
   const takerCollateral = await cvg.collateral().findByUser({
     user: taker.publicKey,
   });
+  t.same(
+    takerCollateral.user.toString(),
+    taker.publicKey.toString(),
+    'same address'
+  );
   spok(t, takerCollateral, {
-    $topic: 'Find Collateral by Owner',
+    $topic: 'same model',
     model: 'collateral',
-    address: spokSamePubkey(takerCollateral.address),
   });
 });
 
@@ -1498,30 +1531,28 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, par
     baseAssetMints: [btcMint],
   });
 
-  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+  const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
   const makerPreparedLegs = parseInt(
     refreshedResponse.makerPreparedLegs.toString()
   );
 
-  sleep(3001).then(async () => {
-    await cvg.rfqs().partlyRevertSettlementPreparation({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      maker: maker.publicKey,
-      taker: taker.publicKey,
-      baseAssetMints: [btcMint],
-      side: AuthoritySide.Maker,
-      legAmountToRevert: 1,
-    });
+  await sleep(3_001);
+  await cvg.rfqs().partlyRevertSettlementPreparation({
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    maker: maker.publicKey,
+    taker: taker.publicKey,
+    baseAssetMints: [btcMint],
+    side: AuthoritySide.Maker,
+    legAmountToRevert: 1,
   });
 
-  sleep(3001).then(() => {
-    spok(t, refreshedResponse, {
-      $topic: 'Partly revert settlement preparations',
-      model: 'response',
-      makerPreparedLegs: spokSameBignum(makerPreparedLegs - 1),
-    });
+  await sleep(3_001);
+  spok(t, refreshedResponse, {
+    $topic: 'Partly revert settlement preparations',
+    model: 'response',
+    makerPreparedLegs: spokSameBignum(makerPreparedLegs - 1),
   });
 });
 
@@ -1569,21 +1600,19 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
     baseAssetMints: [btcMint],
   });
 
-  sleep(3001).then(async () => {
-    await cvg.rfqs().settleOnePartyDefault({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-    });
+  await sleep(3_001);
+  await cvg.rfqs().settleOnePartyDefault({
+    rfq: rfq.address,
+    response: rfqResponse.address,
   });
 
-  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+  const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
-  sleep(3001).then(() => {
-    spok(t, refreshedResponse, {
-      $topic: 'Settle 1 party default',
-      model: 'response',
-      makerCollateralLocked: spokSameBignum(0),
-    });
+  await sleep(3_001);
+  spok(t, refreshedResponse, {
+    $topic: 'Settle 1 party default',
+    model: 'response',
+    makerCollateralLocked: spokSameBignum(0),
   });
 });
 
@@ -1625,21 +1654,19 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
     overrideLegMultiplierBps: null,
   });
 
-  sleep(3001).then(async () => {
-    await cvg.rfqs().settleTwoPartyDefault({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-    });
+  await sleep(3_001);
+  await cvg.rfqs().settleTwoPartyDefault({
+    rfq: rfq.address,
+    response: rfqResponse.address,
   });
 
-  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+  const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
-  sleep(3001).then(() => {
-    spok(t, refreshedResponse, {
-      $topic: 'Settle 2 party default',
-      model: 'response',
-      takerCollateralLocked: spokSameBignum(0),
-      makerCollateralLocked: spokSameBignum(0),
-    });
+  await sleep(3_001);
+  spok(t, refreshedResponse, {
+    $topic: 'Settle 2 party default',
+    model: 'response',
+    takerCollateralLocked: spokSameBignum(0),
+    makerCollateralLocked: spokSameBignum(0),
   });
 });

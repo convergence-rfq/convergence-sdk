@@ -3,6 +3,11 @@ import {
   createPrepareMoreLegsSettlementInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+} from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -14,11 +19,6 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
