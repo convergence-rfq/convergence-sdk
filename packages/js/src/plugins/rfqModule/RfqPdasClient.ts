@@ -4,7 +4,7 @@ import type { Convergence } from '@/Convergence';
 import { Pda, Program, PublicKey } from '@/types';
 
 /**
- * This client allows you to build PDAs related to the NFT module.
+ * This client allows you to build PDAs related to the RFQ module.
  *
  * @see {@link RfqClient}
  * @group Module Pdas
@@ -49,7 +49,7 @@ function toLittleEndian(value: number, bytes: number) {
 
 type BaseAssetInput = {
   baseAssetIndexValue: number;
-
+  /** An optional set of programs that override the registered ones. */
   programs?: Program[];
 };
 
