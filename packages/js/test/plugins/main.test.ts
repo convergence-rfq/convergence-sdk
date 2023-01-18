@@ -16,6 +16,8 @@ import {
   spokSameBignum,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
+//@ts-ignore
+import { InstrumentClient } from '../../src/plugins/instrumentModule/InstrumentClient';
 import {
   Mint,
   token,
@@ -515,7 +517,7 @@ test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) 
   const { rfq } = await cvg.rfqs().create({
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
     instruments: [
-      new SpotInstrument(cvg, btcMint, {
+      new SpotInstrument(cvg, solMint, {
         amount: 1,
         side: Side.Bid,
       }),
@@ -527,20 +529,13 @@ test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) 
     taker,
   });
 
-  await cvg.rfqs().finalizeRfqConstruction({
+  const { rfq: finalizedRfq } = await cvg.rfqs().finalizeRfqConstruction({
     taker,
     rfq: rfq.address,
-    baseAssetIndex: { value: 0 },
+    baseAssetIndex: { value: 1 },
   });
 
-  const refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
-
-  spok(t, rfq, {
-    $topic: 'Finalized RFQ',
-    model: 'rfq',
-    address: spokSamePubkey(refreshedRfq.address),
-  });
-  spok(t, refreshedRfq, {
+  spok(t, finalizedRfq, {
     $topic: 'Finalized RFQ',
     model: 'rfq',
     state: StoredRfqState.Active,
@@ -548,10 +543,6 @@ test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) 
 });
 
 test('[rfqModule] it can create and finalize RFQ in single method', async (t: Test) => {
-  // TODO: this rfq is returned from the createRfq ix, not finalizeRfqConstruction.
-  // this means its `state` field != StoredRfqState.Active.
-  // finalizeRfqConstruction (as well as createAndFinalize) should return the updated
-  // Rfq with the correct StoredRfqState (which should be `Active`)
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -573,17 +564,12 @@ test('[rfqModule] it can create and finalize RFQ in single method', async (t: Te
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
   });
 
-  const refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
   const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
 
   spok(t, rfq, {
     $topic: 'Created RFQ',
     model: 'rfq',
     address: spokSamePubkey(foundRfq.address),
-  });
-  spok(t, refreshedRfq, {
-    $topic: 'Created RFQ',
-    model: 'rfq',
     state: StoredRfqState.Active,
   });
 });
@@ -1311,6 +1297,7 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
     activeWindow: 5_000,
     settlingWindow: 1_000,
   });
+
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
     rfq: rfq.address,
@@ -1392,16 +1379,70 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
   });
 });
 
-// test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
-//   const rfq = finalisedRfq;
-//   await cvg.rfqs().addLegsToRfq(taker,rfq,)
+test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
+  const instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[] = [];
 
-//   spok(t, rfq, {
-//     $topic: 'Calculated Collateral for Rfq',
-//     model: 'rfq',
-//     address: spokSamePubkey(rfq.address),
-//   });
-// });
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 5,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+
+  let expLegSize = 4;
+
+  for (const instrument of instruments) {
+    const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
+    expLegSize += await instrumentClient.getLegDataSize();
+  }
+
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    legSize: expLegSize,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+  });
+
+  await cvg.rfqs().addLegsToRfq({
+    taker,
+    rfq: rfq.address,
+    legs: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+    ],
+  });
+
+  spok(t, rfq, {
+    $topic: 'Added leg to Rfq',
+    model: 'rfq',
+    address: spokSamePubkey(rfq.address),
+  });
+});
 
 // RFQ HELPERS
 
@@ -1468,8 +1509,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     await cvg.rfqs().revertSettlementPreparation({
       rfq: rfq.address,
       response: rfqResponse.address,
-      maker: maker.publicKey,
-      taker: taker.publicKey,
       quoteMint: usdcMint,
       baseAssetMints: [btcMint],
       side: AuthoritySide.Maker,
@@ -1541,8 +1580,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, par
   await cvg.rfqs().partlyRevertSettlementPreparation({
     rfq: rfq.address,
     response: rfqResponse.address,
-    maker: maker.publicKey,
-    taker: taker.publicKey,
     baseAssetMints: [btcMint],
     side: AuthoritySide.Maker,
     legAmountToRevert: 1,

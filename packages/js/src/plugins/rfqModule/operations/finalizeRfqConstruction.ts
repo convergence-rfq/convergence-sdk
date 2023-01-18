@@ -14,7 +14,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-// import { assertRfq, Rfq } from '../models';
+import { assertRfq, Rfq } from '../models';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
@@ -79,8 +79,7 @@ export type FinalizeRfqConstructionOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
-  // /** The newly finalized Rfq. */
-  // rfq: Rfq;
+  rfq: Rfq;
 };
 
 /**
@@ -94,7 +93,7 @@ export const finalizeRfqConstructionOperationHandler: OperationHandler<FinalizeR
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FinalizeRfqConstructionOutput> => {
-      // const { rfq } = operation.input;
+      const { rfq: inputRfq } = operation.input;
 
       const builder = await finalizeRfqConstructionBuilder(
         convergence,
@@ -112,13 +111,12 @@ export const finalizeRfqConstructionOperationHandler: OperationHandler<FinalizeR
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      // const foundRfq = await convergence
-      //   .rfqs()
-      //   .findRfqByAddress({ address: rfq });
-      // assertRfq(rfq);
+      const rfq = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: inputRfq });
+      assertRfq(rfq);
 
-      // return { ...output, rfq: foundRfq };
-      return { ...output };
+      return { ...output, rfq };
     },
   };
 
@@ -134,12 +132,6 @@ export type FinalizeRfqConstructionBuilderParams = FinalizeRfqConstructionInput;
  */
 export type FinalizeRfqConstructionBuilderContext =
   SendAndConfirmTransactionResponse;
-
-function toLittleEndian(value: number, bytes: number) {
-  const buf = Buffer.allocUnsafe(bytes);
-  buf.writeUIntLE(value, 0, bytes);
-  return buf;
-}
 
 /**
  * Finalizes an Rfq.
@@ -172,20 +164,23 @@ export const finalizeRfqConstructionBuilder = async (
   } = params;
   let { collateralInfo, collateralToken } = params;
 
-  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), taker.publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), taker.publicKey.toBuffer()],
-    rfqProgram.address
-  );
+  const collateralInfoPda = convergence.collateral().pdas().collateralInfo({
+    user: taker.publicKey,
+    programs,
+  });
+  const collateralTokenPda = convergence.collateral().pdas().collateralToken({
+    user: taker.publicKey,
+    programs,
+  });
 
   collateralInfo = collateralInfo ?? collateralInfoPda;
   collateralToken = collateralToken ?? collateralTokenPda;
 
   const SWITCHBOARD_BTC_ORACLE = new PublicKey(
     '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
+  );
+  const SWITCHBOARD_SOL_ORACLE = new PublicKey(
+    'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
   );
 
   const anchorRemainingAccounts: AccountMeta[] = [];
@@ -203,10 +198,10 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
-  const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex.value, 2)],
-    rfqProgram.address
-  );
+  const baseAsset = convergence.rfqs().pdas().baseAsset({
+    baseAssetIndexValue: baseAssetIndex.value,
+    programs,
+  });
 
   const baseAssetAccounts: AccountMeta[] = [
     {
@@ -217,7 +212,10 @@ export const finalizeRfqConstructionBuilder = async (
   ];
   const oracleAccounts: AccountMeta[] = [
     {
-      pubkey: SWITCHBOARD_BTC_ORACLE,
+      pubkey:
+        baseAssetIndex.value == 0
+          ? SWITCHBOARD_BTC_ORACLE
+          : SWITCHBOARD_SOL_ORACLE,
       isSigner: false,
       isWritable: false,
     },
@@ -229,27 +227,25 @@ export const finalizeRfqConstructionBuilder = async (
     ...oracleAccounts
   );
 
-  return (
-    TransactionBuilder.make()
-      .setFeePayer(payer)
-      // .setContext({
-      //   rfq,
-      // })
-      .add({
-        instruction: createFinalizeRfqConstructionInstruction(
-          {
-            taker: taker.publicKey,
-            protocol,
-            rfq,
-            collateralInfo,
-            collateralToken,
-            riskEngine,
-            anchorRemainingAccounts,
-          },
-          rfqProgram.address
-        ),
-        signers: [taker],
-        key: 'finalizeRfqConstruction',
-      })
-  );
+  return TransactionBuilder.make()
+    .setFeePayer(payer)
+    .setContext({
+      rfq,
+    })
+    .add({
+      instruction: createFinalizeRfqConstructionInstruction(
+        {
+          taker: taker.publicKey,
+          protocol,
+          rfq,
+          collateralInfo,
+          collateralToken,
+          riskEngine,
+          anchorRemainingAccounts,
+        },
+        rfqProgram.address
+      ),
+      signers: [taker],
+      key: 'finalizeRfqConstruction',
+    });
 };

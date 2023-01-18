@@ -127,14 +127,20 @@ export const unlockResponseCollateralBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const [takerCollateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), rfqModel.taker.toBuffer()],
-    rfqProgram.address
-  );
-  const [makerCollateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), responseModel.maker.toBuffer()],
-    rfqProgram.address
-  );
+  const takerCollateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({
+      user: rfqModel.taker,
+      programs,
+    });
+  const makerCollateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({
+      user: responseModel.maker,
+      programs,
+    });
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

@@ -16,6 +16,7 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
+import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
@@ -168,10 +169,13 @@ export const cleanUpResponseLegsBuilder = async (
       isWritable: false,
     };
 
-    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
-      rfqModel.legs[i].instrumentProgram
-    );
+    const instrumentEscrowPda = new InstrumentPdasClient(
+      convergence
+    ).instrumentEscrow({
+      response,
+      index: i,
+      rfqModel,
+    });
     const legAccounts: AccountMeta[] = [
       {
         pubkey: firstToPrepare,

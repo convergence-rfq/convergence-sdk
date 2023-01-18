@@ -117,7 +117,7 @@ export const unlockRfqCollateralBuilder = async (
   convergence: Convergence,
   params: UnlockRfqCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder<UnlockRfqCollateralBuilderContext>> => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { rfq } = params;
 
@@ -126,12 +126,15 @@ export const unlockRfqCollateralBuilder = async (
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), rfqModel.taker.toBuffer()],
-    rfqProgram.address
-  );
+  const collateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({
+      user: rfqModel.taker,
+      programs,
+    });
 
-  return TransactionBuilder.make<UnlockRfqCollateralBuilderContext>()
+  return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createUnlockRfqCollateralInstruction(
