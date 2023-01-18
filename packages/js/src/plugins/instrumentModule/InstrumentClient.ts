@@ -10,6 +10,8 @@ import {
   toBigNumber,
   createSerializerFromFixableBeetArgsStruct,
 } from '@/types';
+//@ts-ignore
+import { InstrumentPdasClient } from './InstrumentPdasClient';
 
 /**
  * This is a client for the instrumentModule.
@@ -42,19 +44,31 @@ export class InstrumentClient {
     }
   ) {}
 
-  getBaseAssetIndex(): number {
+  // pdas() {
+  //   return new InstrumentPdasClient(this.convergence);
+  // }
+
+  async getBaseAssetIndex(): Promise<number> {
     if (this.legInfo) {
-      // TODO: Get base asset correctly
-      return 0;
+      const mintInfo = await this.convergence
+        .protocol()
+        .findRegisteredMintByAddress({
+          address: this.convergence
+            .rfqs()
+            .pdas()
+            .mintInfo({ mint: this.instrument.mint.address }),
+        });
+      if (mintInfo.mintType.__kind === 'AssetWithRisk')
+        return mintInfo.mintType.baseAssetIndex.value;
     }
     throw Error('Instrument is used for base asset index');
   }
 
-  toLegData(): Leg {
+  async toLegData(): Promise<Leg> {
     if (this.legInfo) {
       return {
         instrumentProgram: this.instrument.getProgramId(),
-        baseAssetIndex: { value: this.getBaseAssetIndex() },
+        baseAssetIndex: { value: await this.getBaseAssetIndex() },
         instrumentData: this.instrument.serializeInstrumentData(),
         instrumentAmount: toBigNumber(this.legInfo.amount),
         instrumentDecimals: this.instrument.decimals,
@@ -79,8 +93,8 @@ export class InstrumentClient {
     return this.instrument.serializeInstrumentData().length;
   }
 
-  getLegDataSize(): number {
-    return this.serializeLegData(this.toLegData()).length;
+  async getLegDataSize(): Promise<number> {
+    return this.serializeLegData(await this.toLegData()).length;
   }
 
   serializeLegData(leg: Leg): Buffer {

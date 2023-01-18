@@ -130,22 +130,34 @@ export const settleOnePartyDefaultBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const [takerCollateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), rfqModel.taker.toBuffer()],
-    rfqProgram.address
-  );
-  const [makerCollateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), responseModel.maker.toBuffer()],
-    rfqProgram.address
-  );
-  const [takerCollateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), rfqModel.taker.toBuffer()],
-    rfqProgram.address
-  );
-  const [makerCollateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), responseModel.maker.toBuffer()],
-    rfqProgram.address
-  );
+  const takerCollateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({
+      user: rfqModel.taker,
+      programs,
+    });
+  const takerCollateralTokenPda = convergence
+    .collateral()
+    .pdas()
+    .collateralToken({
+      user: rfqModel.taker,
+      programs,
+    });
+  const makerCollateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({
+      user: responseModel.maker,
+      programs,
+    });
+  const makerCollateralTokenPda = convergence
+    .collateral()
+    .pdas()
+    .collateralToken({
+      user: responseModel.maker,
+      programs,
+    });
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

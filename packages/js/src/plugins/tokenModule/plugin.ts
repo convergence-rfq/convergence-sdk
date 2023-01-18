@@ -74,6 +74,10 @@ export const tokenModule = (): ConvergencePlugin => ({
       findTokenByAddressOperationHandler
     );
     op.register(
+      findTokenByAddressOperation,
+      findTokenByAddressOperationHandler
+    );
+    op.register(
       findTokenWithMintByAddressOperation,
       findTokenWithMintByAddressOperationHandler
     );

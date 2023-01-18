@@ -1,6 +1,9 @@
-import { createAddLegsToRfqInstruction, Leg } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { SpotInstrument } from '../../spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { Leg } from '../types';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -8,9 +11,9 @@ import {
   OperationScope,
   useOperation,
   Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { ProtocolPdasClient } from '@/plugins/protocolModule';
 const Key = 'AddLegsToRfqOperation' as const;
 
 /**
@@ -55,7 +58,7 @@ export type AddLegsToRfqInput = {
    * Args
    */
 
-  legs: Leg[];
+  legs: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
 };
 
 /**
@@ -78,13 +81,24 @@ export const addLegsToRfqOperationHandler: OperationHandler<AddLegsToRfqOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<AddLegsToRfqOutput> => {
+      const builder = await addLegsToRfqBuilder(
+        convergence,
+        {
+          ...operation.input,
+        },
+        scope
+      );
       scope.throwIfCanceled();
 
-      return addLegsToRfqBuilder(
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
-        operation.input,
-        scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+        scope.confirmOptions
+      );
+
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+
+      return { ...output };
     },
   };
 
@@ -107,18 +121,26 @@ export type AddLegsToRfqBuilderParams = AddLegsToRfqInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const addLegsToRfqBuilder = (
+export const addLegsToRfqBuilder = async (
   convergence: Convergence,
   params: AddLegsToRfqBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const protocolPdaClient = new ProtocolPdasClient(convergence);
+  const protocolPdaClient = convergence.protocol().pdas();
   const protocol = protocolPdaClient.protocol();
   const { taker = convergence.identity(), rfq, legs } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
+  const legAccounts: AccountMeta[] = [];
+  const legsArray: Leg[] = [];
+
+  for (const leg of legs) {
+    const instrumentClient = convergence.instrument(leg, leg.legInfo);
+    legsArray.push(await instrumentClient.toLegData());
+    legAccounts.push(...instrumentClient.getValidationAccounts());
+  }
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -127,9 +149,10 @@ export const addLegsToRfqBuilder = (
           taker: taker.publicKey,
           protocol,
           rfq,
+          anchorRemainingAccounts: legAccounts,
         },
         {
-          legs,
+          legs: legsArray,
         },
         rfqProgram.address
       ),

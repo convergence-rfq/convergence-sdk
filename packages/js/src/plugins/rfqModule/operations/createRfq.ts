@@ -86,6 +86,8 @@ export type CreateRfqInput = {
   activeWindow?: number;
 
   settlingWindow?: number;
+
+  legSize?: number;
 };
 
 /**
@@ -172,8 +174,9 @@ export const createRfqBuilder = async (
     instruments,
     quoteAsset,
     fixedSize,
-    activeWindow = 1,
+    activeWindow = 2,
     settlingWindow = 1,
+    legSize = 4,
   } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
@@ -197,15 +200,15 @@ export const createRfqBuilder = async (
 
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
-  let expectedLegSize = 4;
+  let expectedLegSize = legSize;
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
       instrument,
       instrument.legInfo
     );
-    legs.push(instrumentClient.toLegData());
+    legs.push(await instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());
-    expectedLegSize += instrumentClient.getLegDataSize();
+    expectedLegSize += await instrumentClient.getLegDataSize();
   }
 
   return TransactionBuilder.make()

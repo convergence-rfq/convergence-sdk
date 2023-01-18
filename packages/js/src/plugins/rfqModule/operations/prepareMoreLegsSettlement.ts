@@ -20,6 +20,7 @@ import {
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
+import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 
@@ -177,10 +178,13 @@ export const prepareMoreLegsSettlementBuilder = async (
       isWritable: false,
     };
 
-    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
-      rfqModel.legs[i].instrumentProgram
-    );
+    const instrumentEscrowPda = new InstrumentPdasClient(
+      convergence
+    ).instrumentEscrow({
+      response,
+      index: i,
+      rfqModel,
+    });
 
     const legAccounts: AccountMeta[] = [
       {

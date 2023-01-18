@@ -19,6 +19,7 @@ import {
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
+import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 
 const Key = 'RevertSettlementPreparationOperation' as const;
 
@@ -58,10 +59,6 @@ export type RevertSettlementPreparationInput = {
   rfq: PublicKey;
   /** The response address */
   response: PublicKey;
-
-  maker: PublicKey;
-
-  taker: PublicKey;
 
   quoteMint: Mint;
 
@@ -139,7 +136,7 @@ export const revertSettlementPreparationBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const { rfq, response, side, maker, taker, quoteMint, baseAssetMints } =
+  const { rfq, response, side, quoteMint, baseAssetMints } =
     params;
 
   const protocol = await convergence.protocol().get();
@@ -159,10 +156,13 @@ export const revertSettlementPreparationBuilder = async (
   let j = 0;
 
   for (let i = 0; i < sidePreparedLegs; i++) {
-    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
-      rfqModel.legs[i].instrumentProgram
-    );
+    const instrumentEscrowPda = new InstrumentPdasClient(
+      convergence
+    ).instrumentEscrow({
+      response,
+      index: i,
+      rfqModel,
+    });
 
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[i].instrumentProgram,
@@ -181,7 +181,8 @@ export const revertSettlementPreparationBuilder = async (
       {
         pubkey: await getAssociatedTokenAddress(
           baseAssetMints[j].address,
-          side == AuthoritySide.Maker ? maker : taker,
+          side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
+          // maker ?? taker,
           undefined,
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
@@ -205,11 +206,10 @@ export const revertSettlementPreparationBuilder = async (
     isWritable: false,
   };
 
-  //"quote" case so we pass Buffer.from([1, 0])
-  const [quoteEscrowPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('escrow'), response.toBuffer(), Buffer.from([1, 0])],
-    spotInstrumentProgram.address
-  );
+  const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
+    response,
+    program: spotInstrumentProgram.address,
+  });
 
   const quoteAccounts: AccountMeta[] = [
     //`escrow`
@@ -222,7 +222,8 @@ export const revertSettlementPreparationBuilder = async (
     {
       pubkey: await getAssociatedTokenAddress(
         quoteMint.address,
-        side == AuthoritySide.Maker ? maker : taker,
+        side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
+        // maker ?? taker,
         undefined,
         TOKEN_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
@@ -254,20 +255,3 @@ export const revertSettlementPreparationBuilder = async (
       key: 'revertSettlementPreparation',
     });
 };
-//remainaing accounts: (first is instrument program)
-/*
-  return [
-      {
-        pubkey: await getInstrumentEscrowPda(response.account, assetIdentifier, this.getProgramId()),
-        isSigner: false,
-        isWritable: true,
-      },
-      {
-        pubkey: await this.mint.getAssociatedAddress(caller.publicKey),
-        isSigner: false,
-        isWritable: true,
-      },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    ];
-  }
-*/
