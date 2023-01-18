@@ -5,13 +5,13 @@ import * as beetSolana from '@metaplex-foundation/beet-solana';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';
+import { InstrumentPdasClient } from './InstrumentPdasClient';
 import type { Convergence } from '@/Convergence';
 import {
   toBigNumber,
   createSerializerFromFixableBeetArgsStruct,
 } from '@/types';
 //@ts-ignore
-import { InstrumentPdasClient } from './InstrumentPdasClient';
 
 /**
  * This is a client for the instrumentModule.

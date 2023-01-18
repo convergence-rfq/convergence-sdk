@@ -16,8 +16,6 @@ import {
   spokSameBignum,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
-//@ts-ignore
-import { InstrumentClient } from '../../src/plugins/instrumentModule/InstrumentClient';
 import {
   Mint,
   token,
@@ -1505,14 +1503,13 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     baseAssetMints: [btcMint],
   });
 
-  sleep(3001).then(async () => {
-    await cvg.rfqs().revertSettlementPreparation({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      quoteMint: usdcMint,
-      baseAssetMints: [btcMint],
-      side: AuthoritySide.Maker,
-    });
+  await sleep(3_001);
+  await cvg.rfqs().revertSettlementPreparation({
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    quoteMint: usdcMint,
+    baseAssetMints: [btcMint],
+    side: AuthoritySide.Maker,
   });
 
   // let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
