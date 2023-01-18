@@ -63,13 +63,12 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByInstrumentOutput> => {
-      const { instrumentProgram } = operation.input;
+      //const { instrumentProgram } = operation.input;
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const rfqs = await rfqGpaBuilder
-        .whereInstrument(instrumentProgram.address)
-        .get();
+      const currentTime = new Date().getTime() / 1_000;
+      const rfqs = await rfqGpaBuilder.whereActive(currentTime).get();
       scope.throwIfCanceled();
 
       return rfqs
