@@ -11,10 +11,9 @@ import {
   OperationScope,
   useOperation,
   Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { ProtocolPdasClient } from '@/plugins/protocolModule';
 const Key = 'AddLegsToRfqOperation' as const;
 
 /**
@@ -82,13 +81,24 @@ export const addLegsToRfqOperationHandler: OperationHandler<AddLegsToRfqOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<AddLegsToRfqOutput> => {
+      const builder = await addLegsToRfqBuilder(
+        convergence,
+        {
+          ...operation.input,
+        },
+        scope
+      );
       scope.throwIfCanceled();
 
-      return addLegsToRfqBuilder(
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
-        operation.input,
-        scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+        scope.confirmOptions
+      );
+
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+
+      return { ...output };
     },
   };
 
@@ -111,13 +121,13 @@ export type AddLegsToRfqBuilderParams = AddLegsToRfqInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const addLegsToRfqBuilder = (
+export const addLegsToRfqBuilder = async (
   convergence: Convergence,
   params: AddLegsToRfqBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const protocolPdaClient = new ProtocolPdasClient(convergence);
+  const protocolPdaClient = convergence.protocol().pdas();
   const protocol = protocolPdaClient.protocol();
   const { taker = convergence.identity(), rfq, legs } = params;
 
@@ -128,7 +138,7 @@ export const addLegsToRfqBuilder = (
 
   for (const leg of legs) {
     const instrumentClient = convergence.instrument(leg, leg.legInfo);
-    legsArray.push(instrumentClient.toLegData());
+    legsArray.push(await instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
   return TransactionBuilder.make()

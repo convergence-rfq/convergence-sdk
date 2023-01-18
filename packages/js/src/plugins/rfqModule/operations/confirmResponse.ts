@@ -125,12 +125,6 @@ export const confirmResponseOperationHandler: OperationHandler<ConfirmResponseOp
  */
 export type ConfirmResponseBuilderParams = ConfirmResponseInput;
 
-function toLittleEndian(value: number, bytes: number) {
-  const buf = Buffer.allocUnsafe(bytes);
-  buf.writeUIntLE(value, 0, bytes);
-  return buf;
-}
-
 /**
  * Confirms a response
  *
@@ -172,18 +166,24 @@ export const confirmResponseBuilder = async (
     '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
   );
 
-  const [takerCollateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), taker.publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [makerCollateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), responseModel.maker.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), taker.publicKey.toBuffer()],
-    rfqProgram.address
-  );
+  const takerCollateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({
+      user: taker.publicKey,
+      programs,
+    });
+  const makerCollateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({
+      user: responseModel.maker,
+      programs,
+    });
+  const collateralTokenPda = convergence.collateral().pdas().collateralToken({
+    user: taker.publicKey,
+    programs,
+  });
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -197,10 +197,10 @@ export const confirmResponseBuilder = async (
     isWritable: false,
   };
 
-  const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex.value, 2)],
-    rfqProgram.address
-  );
+  const baseAsset = convergence.rfqs().pdas().baseAsset({
+    baseAssetIndexValue: baseAssetIndex.value,
+    programs,
+  });
 
   const baseAssetAccounts: AccountMeta[] = [
     {

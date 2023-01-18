@@ -19,6 +19,7 @@ import {
   getAssociatedTokenAddress,
 } from '@solana/spl-token';
 import { Mint } from '@/plugins/tokenModule';
+import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 
@@ -58,10 +59,6 @@ export type PartlyRevertSettlementPreparationInput = {
   rfq: PublicKey;
   /** The response address */
   response: PublicKey;
-
-  maker: PublicKey;
-
-  taker: PublicKey;
 
   baseAssetMints: Mint[];
 
@@ -143,8 +140,6 @@ export const partlyRevertSettlementPreparationBuilder = async (
     rfq,
     response,
     side,
-    maker,
-    taker,
     baseAssetMints,
     legAmountToRevert,
   } = params;
@@ -168,10 +163,13 @@ export const partlyRevertSettlementPreparationBuilder = async (
   let j = 0;
 
   for (let i = startIndex; i < sidePreparedLegs; i++) {
-    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, i])],
-      rfqModel.legs[i].instrumentProgram
-    );
+    const instrumentEscrowPda = new InstrumentPdasClient(
+      convergence
+    ).instrumentEscrow({
+      response,
+      index: i,
+      rfqModel,
+    });
 
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[i].instrumentProgram,
@@ -190,7 +188,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
       {
         pubkey: await getAssociatedTokenAddress(
           baseAssetMints[j].address,
-          side == AuthoritySide.Maker ? maker : taker,
+          side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
           undefined,
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
@@ -226,20 +224,4 @@ export const partlyRevertSettlementPreparationBuilder = async (
       key: 'partlyRevertSettlementPreparation',
     });
 };
-//remainaing accounts: (first is instrument program)
-/*
-  return [
-      {
-        pubkey: await getInstrumentEscrowPda(response.account, assetIdentifier, this.getProgramId()),
-        isSigner: false,
-        isWritable: true,
-      },
-      {
-        pubkey: await this.mint.getAssociatedAddress(caller.publicKey),
-        isSigner: false,
-        isWritable: true,
-      },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    ];
-  }
-*/
+

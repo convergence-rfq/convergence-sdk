@@ -4,6 +4,7 @@ import {
   RawAccount as SplTokenAccount,
   RawMint as SplMintAccount,
 } from '@solana/spl-token';
+import { MintInfo } from '@convergence-rfq/rfq';
 import { NotYetImplementedError } from '@/errors';
 import {
   Account,
@@ -33,6 +34,16 @@ export const parseMintAccount = getAccountParsingFunction(mintAccountParser);
 /** @group Account Helpers */
 export const toMintAccount =
   getAccountParsingAndAssertingFunction(mintAccountParser);
+
+/** @group Accounts */
+export type MintInfoAccount = Account<MintInfo>;
+
+/** @group Account Helpers */
+export const parseMintInfoAccount = getAccountParsingFunction(MintInfo);
+
+/** @group Account Helpers */
+export const toMintInfoAccount =
+  getAccountParsingAndAssertingFunction(MintInfo);
 
 const tokenAccountParser: SolitaType<SplTokenAccount> = {
   name: 'TokenAccount',

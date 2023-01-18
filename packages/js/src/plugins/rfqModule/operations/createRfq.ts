@@ -174,7 +174,7 @@ export const createRfqBuilder = async (
     instruments,
     quoteAsset,
     fixedSize,
-    activeWindow = 1,
+    activeWindow = 2,
     settlingWindow = 1,
     legSize = 4,
   } = params;
@@ -206,9 +206,9 @@ export const createRfqBuilder = async (
       instrument,
       instrument.legInfo
     );
-    legs.push(instrumentClient.toLegData());
+    legs.push(await instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());
-    expectedLegSize += instrumentClient.getLegDataSize();
+    expectedLegSize += await instrumentClient.getLegDataSize();
   }
 
   return TransactionBuilder.make()

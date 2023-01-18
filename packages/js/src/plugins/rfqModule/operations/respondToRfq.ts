@@ -129,11 +129,11 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
  */
 export type RespondToRfqBuilderParams = RespondToRfqInput;
 
-function toLittleEndian(value: number, bytes: number) {
-  const buf = Buffer.allocUnsafe(bytes);
-  buf.writeUIntLE(value, 0, bytes);
-  return buf;
-}
+// function toLittleEndian(value: number, bytes: number) {
+//   const buf = Buffer.allocUnsafe(bytes);
+//   buf.writeUIntLE(value, 0, bytes);
+//   return buf;
+// }
 
 /**
  * Responds to an Rfq.
@@ -159,6 +159,8 @@ export const respondToRfqBuilder = async (
     maker = convergence.identity(),
     keypair = Keypair.generate(),
     baseAssetIndex = { value: 0 },
+    bid,
+    ask,
   } = params;
 
   const protocol = await convergence.protocol().get();
@@ -167,14 +169,14 @@ export const respondToRfqBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
-  const [collateralInfoPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_info'), maker.publicKey.toBuffer()],
-    rfqProgram.address
-  );
-  const [collateralTokenPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('collateral_token'), maker.publicKey.toBuffer()],
-    rfqProgram.address
-  );
+  const collateralInfoPda = convergence.collateral().pdas().collateralInfo({
+    user: maker.publicKey,
+    programs,
+  });
+  const collateralTokenPda = convergence.collateral().pdas().collateralToken({
+    user: maker.publicKey,
+    programs,
+  });
 
   const SWITCHBOARD_BTC_ORACLE = new PublicKey(
     '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
@@ -192,10 +194,10 @@ export const respondToRfqBuilder = async (
     isWritable: false,
   };
 
-  const [baseAsset] = PublicKey.findProgramAddressSync(
-    [Buffer.from('base_asset'), toLittleEndian(baseAssetIndex.value, 2)],
-    rfqProgram.address
-  );
+  const baseAsset = convergence.rfqs().pdas().baseAsset({
+    baseAssetIndexValue: baseAssetIndex.value,
+    programs,
+  });
 
   const baseAssetAccounts: AccountMeta[] = [
     {
@@ -216,8 +218,6 @@ export const respondToRfqBuilder = async (
     collateralInfo = collateralInfoPda,
     collateralToken = collateralTokenPda,
     riskEngine = riskEngineProgram.address,
-    bid,
-    ask,
   } = params;
 
   anchorRemainingAccounts.push(
