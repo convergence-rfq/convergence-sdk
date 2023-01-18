@@ -1347,30 +1347,33 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
 });
 
 test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
-  const Ic: (SpotInstrument | PsyoptionsEuropeanInstrument)[] = [];
-  Ic.push(
+  const instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[] = [];
+
+  instruments.push(
     new SpotInstrument(cvg, btcMint, {
       amount: 5,
       side: Side.Ask,
     })
   );
-  Ic.push(
+  instruments.push(
     new SpotInstrument(cvg, btcMint, {
       amount: 10,
       side: Side.Ask,
     })
   );
-  Ic.push(
+  instruments.push(
     new SpotInstrument(cvg, btcMint, {
       amount: 10,
       side: Side.Ask,
     })
   );
-  let expLegSize = 0;
-  Ic.forEach(async (leg) => {
-    const size = await new InstrumentClient(cvg, leg, leg.legInfo).getLegDataSize();
-    expLegSize += size;
-  });
+
+  let expLegSize = 4;
+
+  for (const instrument of instruments) {
+    const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
+    expLegSize += await instrumentClient.getLegDataSize();
+  }
 
   const { rfq } = await cvg.rfqs().create({
     instruments: [
@@ -1391,12 +1394,12 @@ test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
     rfq: rfq.address,
     legs: [
       new SpotInstrument(cvg, btcMint, {
-        amount: 1,
-        side: Side.Bid,
+        amount: 10,
+        side: Side.Ask,
       }),
       new SpotInstrument(cvg, btcMint, {
-        amount: 1,
-        side: Side.Bid,
+        amount: 10,
+        side: Side.Ask,
       }),
     ],
   });
