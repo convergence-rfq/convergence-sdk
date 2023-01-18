@@ -16,6 +16,7 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
+import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 
 const Key = 'SettleOperation' as const;
 
@@ -159,10 +160,13 @@ export const settleBuilder = async (
       isWritable: false,
     };
 
-    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, legIndex])],
-      rfqModel.legs[legIndex].instrumentProgram
-    );
+    const instrumentEscrowPda = new InstrumentPdasClient(
+      convergence
+    ).instrumentEscrow({
+      response,
+      index: legIndex,
+      rfqModel,
+    });
 
     const legAccounts: AccountMeta[] = [
       //`escrow`
@@ -201,11 +205,10 @@ export const settleBuilder = async (
     isWritable: false,
   };
 
-  //"quote" case so we pass Buffer.from([1, 0])
-  const [quoteEscrowPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('escrow'), response.toBuffer(), Buffer.from([1, 0])],
-    spotInstrumentProgram.address
-  );
+  const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
+    response,
+    program: spotInstrumentProgram.address,
+  });
 
   const quoteAccounts: AccountMeta[] = [
     //`escrow`

@@ -12,6 +12,14 @@ import { Pda, Program, PublicKey } from '@/types';
 export class RfqPdasClient {
   constructor(protected readonly convergence: Convergence) {}
 
+  baseAsset({ baseAssetIndexValue, programs }: BaseAssetInput): Pda {
+    const programId = this.programId(programs);
+    return Pda.find(programId, [
+      Buffer.from('base_asset', 'utf8'),
+      toLittleEndian(baseAssetIndexValue, 2),
+    ]);
+  }
+
   mintInfo({ mint }: MintInfoInput): Pda {
     const programId = this.programId();
     return Pda.find(programId, [
@@ -32,6 +40,18 @@ export class RfqPdasClient {
     return this.convergence.programs().getRfq(programs).address;
   }
 }
+
+function toLittleEndian(value: number, bytes: number) {
+  const buf = Buffer.allocUnsafe(bytes);
+  buf.writeUIntLE(value, 0, bytes);
+  return buf;
+}
+
+type BaseAssetInput = {
+  baseAssetIndexValue: number;
+
+  programs?: Program[];
+};
 
 type MintInfoInput = {
   /** The address of the mint account. */

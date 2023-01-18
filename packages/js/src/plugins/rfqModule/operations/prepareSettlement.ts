@@ -20,6 +20,7 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
+import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -129,12 +130,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
  */
 export type PrepareSettlementBuilderParams = PrepareSettlementInput;
 
-// function toLittleEndian(value: number, bytes: number) {
-//   const buf = Buffer.allocUnsafe(bytes);
-//   buf.writeUIntLE(value, 0, bytes);
-//   return buf;
-// }
-
 /**
  * Prepares for settlement
  *
@@ -179,11 +174,10 @@ export const prepareSettlementBuilder = async (
 
   const systemProgram = convergence.programs().getSystem(programs);
 
-  //"quote" case so we pass Buffer.from([1, 0])
-  const [quoteEscrowPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('escrow'), response.toBuffer(), Buffer.from([1, 0])],
-    spotInstrumentProgram.address
-  );
+  const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
+    response,
+    program: spotInstrumentProgram.address,
+  });
 
   const quoteAccounts: AccountMeta[] = [
     {
@@ -195,7 +189,7 @@ export const prepareSettlementBuilder = async (
       pubkey: await getAssociatedTokenAddress(
         quoteMint.address,
         caller.publicKey,
-        undefined,
+        false,
         TOKEN_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
       ),
@@ -218,7 +212,7 @@ export const prepareSettlementBuilder = async (
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
   //TODO: extract base asset from base asset index
-  
+
   for (let legIndex = 0; legIndex < legAmountToPrepare; legIndex++) {
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[legIndex].instrumentProgram,
@@ -226,10 +220,13 @@ export const prepareSettlementBuilder = async (
       isWritable: false,
     };
 
-    const [instrumentEscrowPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('escrow'), response.toBuffer(), Buffer.from([0, legIndex])],
-      rfqModel.legs[legIndex].instrumentProgram
-    );
+    const instrumentEscrowPda = new InstrumentPdasClient(
+      convergence
+    ).instrumentEscrow({
+      response,
+      index: legIndex,
+      rfqModel,
+    });
 
     const legAccounts: AccountMeta[] = [
       {
