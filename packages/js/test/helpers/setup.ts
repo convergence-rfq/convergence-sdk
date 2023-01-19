@@ -8,11 +8,14 @@ import {
 } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
+import * as Spl from '@solana/spl-token';
 import {
   createProgram,
   programId as psyoptionsEuropeanProgramId,
   instructions,
 } from '@mithraic-labs/tokenized-euros';
+import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+
 import {
   IDL as PseudoPythIdl,
   Pyth,
@@ -334,5 +337,83 @@ export const initializeNewOptionMeta = async (
     euroMeta,
     euroMetaKey,
     oracle,
+  };
+};
+
+const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
+  'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
+);
+
+export const initializePsyoptionsAmerican = async (
+  convergence: Convergence,
+  underlyingMint: Mint,
+  quoteMint: Mint,
+  quoteAmountPerContract: anchor.BN,
+  underlyingAmountPerContract: anchor.BN,
+  expiresIn: number
+) => {
+  const payer = convergence.rpc().getDefaultFeePayer();
+
+  const provider = new anchor.AnchorProvider(
+    convergence.connection,
+    new anchor.Wallet(payer as Keypair),
+    {}
+  );
+  anchor.setProvider(provider);
+
+  const AmericanProgram = psyoptionsAmerican.createProgram(
+    psyOptionsAmericanLocalNetProgramId,
+    provider
+  );
+
+  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
+
+  const { optionMarketKey, optionMintKey, ...rest } =
+    await psyoptionsAmerican.instructions.initializeMarket(AmericanProgram, {
+      expirationUnixTimestamp: expiration,
+      quoteAmountPerContract,
+      quoteMint: quoteMint.address,
+      underlyingAmountPerContract,
+      underlyingMint: underlyingMint.address,
+    });
+
+  const payerOptionToken = await Spl.createAssociatedTokenAccount(
+    convergence.connection,
+    payer as Keypair,
+    optionMintKey,
+    payer.publicKey
+  );
+
+  const payerWriterToken = await Spl.createAssociatedTokenAccount(
+    convergence.connection,
+    payer as Keypair,
+    rest.writerMintKey,
+    payer.publicKey
+  );
+  const payerUnderlyingToken = await Spl.getAssociatedTokenAddress(
+    underlyingMint.address,
+    payer.publicKey
+  );
+
+  const op = await psyoptionsAmerican.getOptionByKey(
+    AmericanProgram,
+    optionMarketKey
+  );
+  const ix = await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+    AmericanProgram,
+    payerOptionToken,
+    payerWriterToken,
+    payerUnderlyingToken,
+    new anchor.BN(1),
+    op as psyoptionsAmerican.OptionMarketWithKey
+  );
+  ix.signers.push(payer as Keypair);
+  const tnx = new anchor.web3.Transaction();
+  tnx.add(ix.ix);
+  provider.sendAndConfirm(tnx, ix.signers);
+
+  return {
+    op,
+    optionMarketKey,
   };
 };

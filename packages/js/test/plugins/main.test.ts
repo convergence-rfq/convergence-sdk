@@ -2,6 +2,8 @@ import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair } from '@solana/web3.js';
 import { sleep } from '@bundlr-network/client/build/common/utils';
+import * as anchor from '@project-serum/anchor';
+
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -15,7 +17,10 @@ import {
   USDC_DECIMALS,
   spokSameBignum,
 } from '../helpers';
+import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
+import { initializePsyoptionsAmerican } from '../helpers/setup';
 import { Convergence } from '@/Convergence';
+
 import {
   Mint,
   token,
@@ -24,6 +29,7 @@ import {
   SpotInstrument,
   OrderType,
   PsyoptionsEuropeanInstrument,
+  PsyoptionsAmericanInstrument,
   OptionType,
   InstrumentType,
   Token,
@@ -1357,6 +1363,44 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
         OptionType.PUT,
         euroMeta,
         euroMetaKey,
+        {
+          amount: 1,
+          side: Side.Bid,
+        }
+      ),
+    ],
+    orderType: OrderType.Sell,
+    taker,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+  });
+
+  const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
+  t.same(foundRfq.address.toString(), rfq.address.toString(), 'same address');
+  spok(t, rfq, {
+    $topic: 'rfq model',
+    model: 'rfq',
+  });
+});
+
+test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions American', async (t: Test) => {
+  const { op, optionMarketKey } = await initializePsyoptionsAmerican(
+    cvg,
+    btcMint,
+    usdcMint,
+    new anchor.BN(17_500),
+    new anchor.BN(1_000_000),
+    3_600
+  );
+
+  const { rfq } = await cvg.rfqs().create({
+    instruments: [
+      new PsyoptionsAmericanInstrument(
+        cvg,
+        btcMint,
+        OptionType.CALL,
+        op as OptionMarketWithKey,
+        optionMarketKey,
         {
           amount: 1,
           side: Side.Bid,

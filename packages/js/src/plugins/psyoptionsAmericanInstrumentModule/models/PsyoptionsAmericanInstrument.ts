@@ -27,7 +27,6 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     readonly legInfo?: {
       amount: number;
       side: Side;
-      baseAssetIndex: number;
     }
   ) {}
 
@@ -41,7 +40,6 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     amount: number,
     side: Side
   ): InstrumentClient {
-    const baseAssetIndex = 0;
     const instrument = new PsyoptionsAmericanInstrument(
       convergence,
       mint,
@@ -51,7 +49,6 @@ export class PsyoptionsAmericanInstrument implements Instrument {
       {
         amount,
         side,
-        baseAssetIndex,
       }
     );
     return new InstrumentClient(convergence, instrument, {

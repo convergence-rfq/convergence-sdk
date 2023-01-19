@@ -15,6 +15,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -72,7 +73,11 @@ export type CreateRfqInput = {
   quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
-  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[];
 
   /**
    * The type of order.
