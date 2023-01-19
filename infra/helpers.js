@@ -7,6 +7,7 @@ const PSYOPTIONS_EUROPEAN_INSTRUMENT =
   '7ZD9LcvMPfurRYz2AuZPWgtSXuSxPmvZNMBFK7fhyvQA';
 const PSYOPTIONS_AMERICAN_INSTRUMENT =
   'ATtEpDQ6smvJnMSJvhLc21DBCTBKutih7KBf9Qd5b8xy';
+const PSYOPTIONS_AMERICAN = 'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs';
 const SWITCHBOARD_BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee';
 const SWITCHBOARD_SOL_ORACLE = 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR';
 const PSYOPTIONS_EURO_PRIMITIVE =
@@ -35,6 +36,9 @@ module.exports.solanaTestValidator = new Promise((resolve) => {
     '--bpf-program',
     PSYOPTIONS_EUROPEAN_INSTRUMENT,
     'programs/psyoptions_european_instrument.so',
+    '--bpf-program',
+    PSYOPTIONS_AMERICAN,
+    'programs/psy_american.so',
     '--bpf-program',
     PSYOPTIONS_AMERICAN_INSTRUMENT,
     'programs/psyoptions_american_instrument.so',
