@@ -1,5 +1,5 @@
 import {
-  BaseAssetIndex,
+  // BaseAssetIndex,
   createFinalizeRfqConstructionInstruction,
 } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
@@ -68,7 +68,7 @@ export type FinalizeRfqConstructionInput = {
   riskEngine?: PublicKey;
 
   /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
+  // baseAssetIndex?: BaseAssetIndex;
 };
 
 /**
@@ -159,7 +159,7 @@ export const finalizeRfqConstructionBuilder = async (
   const {
     taker = convergence.identity(),
     riskEngine = riskEngineProgram.address,
-    baseAssetIndex = { value: 0 },
+    // baseAssetIndex = { value: 0 },
     rfq,
   } = params;
   let { collateralInfo, collateralToken } = params;
@@ -198,28 +198,65 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
-  const baseAsset = convergence.rfqs().pdas().baseAsset({
-    baseAssetIndexValue: baseAssetIndex.value,
-    programs,
-  });
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  const baseAssetAccounts: AccountMeta[] = [
-    {
+  let baseAssetAccounts: AccountMeta[] = [];
+  let oracleAccounts: AccountMeta[] = [];
+
+  for (const leg of rfqModel.legs) {
+    const baseAsset = convergence.rfqs().pdas().baseAsset({
+      baseAssetIndexValue: leg.baseAssetIndex.value,
+      programs,
+    });
+
+    const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,
       isSigner: false,
       isWritable: false,
-    },
-  ];
-  const oracleAccounts: AccountMeta[] = [
-    {
+    };
+
+    baseAssetAccounts.push(baseAssetAccount);
+  }
+
+  for (const leg of rfqModel.legs) {
+    const oracleAccount: AccountMeta = {
       pubkey:
-        baseAssetIndex.value == 0
+        leg.baseAssetIndex.value == 0
           ? SWITCHBOARD_BTC_ORACLE
           : SWITCHBOARD_SOL_ORACLE,
       isSigner: false,
       isWritable: false,
-    },
-  ];
+    };
+
+    oracleAccounts.push(oracleAccount);
+  }
+
+  // -------
+
+  // const baseAsset = convergence.rfqs().pdas().baseAsset({
+  //   baseAssetIndexValue: 0,
+  //   programs,
+  // });
+
+  // const baseAssetAccounts: AccountMeta[] = [
+  //   {
+  //     pubkey: baseAsset,
+  //     isSigner: false,
+  //     isWritable: false,
+  //   },
+  // ];
+  // const oracleAccounts: AccountMeta[] = [
+  //   {
+  //     pubkey:
+  //       0 == 0
+  //         ? SWITCHBOARD_BTC_ORACLE
+  //         : SWITCHBOARD_SOL_ORACLE,
+  //     isSigner: false,
+  //     isWritable: false,
+  //   },
+  // ];
+
+  // -------
 
   anchorRemainingAccounts.push(
     configAccount,

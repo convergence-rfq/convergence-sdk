@@ -1,4 +1,4 @@
-import { BaseAssetIndex } from '@convergence-rfq/rfq';
+// import { BaseAssetIndex } from '@convergence-rfq/rfq';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
@@ -85,7 +85,7 @@ export type CreateAndFinalizeRfqConstructionInput = {
   riskEngine?: PublicKey;
 
   /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
+  // baseAssetIndex?: BaseAssetIndex;
 };
 
 /**
@@ -180,7 +180,7 @@ export const createAndFinalizeRfqConstructionBuilder = async (
     collateralInfo,
     collateralToken,
     riskEngine,
-    baseAssetIndex,
+    // baseAssetIndex,
   } = params;
 
   const rfqBuilder = await createRfqBuilder(
@@ -197,6 +197,7 @@ export const createAndFinalizeRfqConstructionBuilder = async (
     },
     options
   );
+
   const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(
     convergence,
     {
@@ -205,10 +206,20 @@ export const createAndFinalizeRfqConstructionBuilder = async (
       collateralInfo,
       collateralToken,
       riskEngine,
-      baseAssetIndex,
+      // baseAssetIndex,
     },
     options
   );
+
+  // return TransactionBuilder.make()
+  //   .setContext({
+  //     keypair,
+  //   })
+  //   .setFeePayer(payer)
+  //   .add(
+  //     ...rfqBuilder.getInstructionsWithSigners(),
+  //     // ...finalizeConstructionBuilder.getInstructionsWithSigners()
+  //   );
 
   return TransactionBuilder.make()
     .setContext({

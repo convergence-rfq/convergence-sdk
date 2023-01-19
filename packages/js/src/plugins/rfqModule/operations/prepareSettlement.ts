@@ -229,14 +229,16 @@ export const prepareSettlementBuilder = async (
     });
 
     const legAccounts: AccountMeta[] = [
+      // `caller`
       {
         pubkey: caller.publicKey,
         isSigner: true,
         isWritable: true,
       },
+      // `caller_tokens`
       {
         pubkey: await getAssociatedTokenAddress(
-          baseAssetMints[legIndex].address,
+          baseAssetMints[legIndex].address, //this mint acct must == mint below
           caller.publicKey,
           undefined,
           TOKEN_PROGRAM_ID,
@@ -245,6 +247,7 @@ export const prepareSettlementBuilder = async (
         isSigner: false,
         isWritable: true,
       },
+      // `mint`
       {
         pubkey: baseAssetMints[legIndex].address,
         isSigner: false,

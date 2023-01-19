@@ -26,6 +26,12 @@ module.exports.solanaLogs = new Promise((resolve) => {
 
 module.exports.solanaTestValidator = new Promise((resolve) => {
   const args = [
+    '--account',
+    SWITCHBOARD_BTC_ORACLE,
+    'programs/btc_20000_oracle_switchboard.json',
+    '--account',
+    SWITCHBOARD_SOL_ORACLE,
+    'programs/sol_30_oracle_switchboard.json',
     '--bpf-program',
     RFQ,
     'programs/rfq.so',
@@ -41,12 +47,6 @@ module.exports.solanaTestValidator = new Promise((resolve) => {
     '--bpf-program',
     RISK_ENGINE,
     'programs/risk_engine.so',
-    '--account',
-    SWITCHBOARD_BTC_ORACLE,
-    'programs/btc_20000_oracle_switchboard.json',
-    '--account',
-    SWITCHBOARD_SOL_ORACLE,
-    'programs/sol_30_oracle_switchboard.json',
     '--bpf-program',
     PSYOPTIONS_EURO_PRIMITIVE,
     'programs/euro_primitive.so',
