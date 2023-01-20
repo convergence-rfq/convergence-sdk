@@ -171,13 +171,16 @@ export const createRfqBuilder = async (
   const {
     taker = convergence.identity(),
     orderType,
+    //@ts-ignore
     instruments,
     quoteAsset,
     fixedSize,
     activeWindow = 2,
     settlingWindow = 1,
-    legSize = 4,
+    // legSize = 4,
   } = params;
+
+  let { legSize } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -200,7 +203,11 @@ export const createRfqBuilder = async (
 
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
-  let expectedLegSize = legSize;
+
+  // let expectedLegSize = legSize ? legSize : 4;
+
+  // let expectedLegSize = legSize;
+
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
       instrument,
@@ -208,7 +215,21 @@ export const createRfqBuilder = async (
     );
     legs.push(await instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());
-    expectedLegSize += await instrumentClient.getLegDataSize();
+  }
+
+  let expectedLegSize: number;
+  if (legSize) {
+    expectedLegSize = legSize;
+  } else {
+    expectedLegSize = 4;
+
+    for (const instrument of instruments) {
+      const instrumentClient = convergence.instrument(
+        instrument,
+        instrument.legInfo
+      );
+      expectedLegSize += await instrumentClient.getLegDataSize();
+    }
   }
 
   return TransactionBuilder.make()

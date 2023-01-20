@@ -182,7 +182,6 @@ export const revertSettlementPreparationBuilder = async (
         pubkey: await getAssociatedTokenAddress(
           baseAssetMints[j].address,
           side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
-          // maker ?? taker,
           undefined,
           TOKEN_PROGRAM_ID,
           ASSOCIATED_TOKEN_PROGRAM_ID
@@ -223,7 +222,6 @@ export const revertSettlementPreparationBuilder = async (
       pubkey: await getAssociatedTokenAddress(
         quoteMint.address,
         side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
-        // maker ?? taker,
         undefined,
         TOKEN_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID

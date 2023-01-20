@@ -12,7 +12,6 @@ import {
   createProgram,
   programId as psyoptionsEuropeanProgramId,
   instructions,
-  //@ts-ignore
   OptionType,
 } from '@mithraic-labs/tokenized-euros';
 import {
@@ -29,17 +28,10 @@ import {
   token,
   walletAdapterIdentity,
 } from '@/index';
-//@ts-ignore
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
 
 const {
   initializeAllAccountsInstructions,
   createEuroMetaInstruction,
-  //@ts-ignore
   mintOptions,
 } = instructions;
 
@@ -286,7 +278,6 @@ export const initializeNewOptionMeta = async (
   takerUSDCWallet: Token,
   makerUSDCWallet: Token
 ) => {
-  //@ts-ignore
   const maker = Keypair.fromSecretKey(
     new Uint8Array(
       JSON.parse(readFileSync('./test/fixtures/maker.json', 'utf8'))
@@ -357,9 +348,6 @@ export const initializeNewOptionMeta = async (
   const createTx = new web3.Transaction().add(createIx);
   await provider.sendAndConfirm(createTx);
 
-  //mintOptions
-
-  //@ts-ignore
   const { token: takerOptionDest } = await convergence
     .tokens()
     .createToken({ mint: euroMeta.putOptionMint, owner: taker.publicKey });
@@ -373,55 +361,6 @@ export const initializeNewOptionMeta = async (
   const { token: makerWriterDest } = await convergence
     .tokens()
     .createToken({ mint: euroMeta.putWriterMint, owner: maker.publicKey });
-
-  // //@ts-ignore
-  // const { token: makerOptionDest } = await convergence
-  //   .tokens()
-  //   .createToken({ mint: euroMeta.putOptionMint, owner: maker.publicKey });
-
-  // const takerMinterCollateralKey = await getAssociatedTokenAddress(
-  //   stableMint.address,
-  //   taker.publicKey,
-  //   undefined,
-  //   TOKEN_PROGRAM_ID,
-  //   ASSOCIATED_TOKEN_PROGRAM_ID
-  // );
-  // const takerOptionDestination = await getAssociatedTokenAddress(
-  //   euroMeta.putOptionMint,
-  //   taker.publicKey,
-  //   undefined,
-  //   TOKEN_PROGRAM_ID,
-  //   ASSOCIATED_TOKEN_PROGRAM_ID
-  // );
-  // const takerWriterDestination = await getAssociatedTokenAddress(
-  //   euroMeta.putWriterMint,
-  //   taker.publicKey,
-  //   undefined,
-  //   TOKEN_PROGRAM_ID,
-  //   ASSOCIATED_TOKEN_PROGRAM_ID
-  // );
-
-  // const makerMinterCollateralKey = await getAssociatedTokenAddress(
-  //   stableMint.address,
-  //   maker.publicKey,
-  //   undefined,
-  //   TOKEN_PROGRAM_ID,
-  //   ASSOCIATED_TOKEN_PROGRAM_ID
-  // );
-  // const makerOptionDestination = await getAssociatedTokenAddress(
-  //   euroMeta.putOptionMint,
-  //   maker.publicKey,
-  //   undefined,
-  //   TOKEN_PROGRAM_ID,
-  //   ASSOCIATED_TOKEN_PROGRAM_ID
-  // );
-  // const makerWriterDestination = await getAssociatedTokenAddress(
-  //   euroMeta.putWriterMint,
-  //   maker.publicKey,
-  //   undefined,
-  //   TOKEN_PROGRAM_ID,
-  //   ASSOCIATED_TOKEN_PROGRAM_ID
-  // );
 
   const { instruction: takerIx } = mintOptions(
     europeanProgram,

@@ -23,6 +23,7 @@ import {
   ConfirmResponseInput,
   createRfqOperation,
   CreateRfqInput,
+  //@ts-ignore
   createAndFinalizeRfqConstructionOperation,
   CreateAndFinalizeRfqConstructionInput,
   finalizeRfqConstructionOperation,
@@ -189,13 +190,22 @@ export class RfqClient {
   }
 
   /** {@inheritDoc createAndFinalizeRfqConstructionOperation} */
-  createAndFinalize(
+  async createAndFinalize(
     input: CreateAndFinalizeRfqConstructionInput,
     options?: OperationOptions
   ) {
+    const { taker } = input;
+
+    const { rfq } = await this.convergence.rfqs().create(
+      {
+        ...input,
+      },
+      options
+    );
+
     return this.convergence
       .operations()
-      .execute(createAndFinalizeRfqConstructionOperation(input), options);
+      .execute(finalizeRfqConstructionOperation({ taker, rfq: rfq.address }));
   }
 
   /** {@inheritDoc finalizeRfqConstructionOperation} */
