@@ -1419,8 +1419,24 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
     $topic: 'rfq model',
     model: 'rfq',
   });
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+    keypair: Keypair.generate(),
+  });
 
- 
+  await cvg.rfqs().confirmResponse({
+    taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: Side.Bid,
+    overrideLegMultiplierBps: null,
+  });
 });
 
 test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
