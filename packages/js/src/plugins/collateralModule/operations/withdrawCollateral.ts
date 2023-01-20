@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { createWithdrawCollateralInstruction } from '@convergence-rfq/rfq';
-import { bignum } from '@metaplex-foundation/beet';
+import { bignum } from '@convergence-rfq/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,

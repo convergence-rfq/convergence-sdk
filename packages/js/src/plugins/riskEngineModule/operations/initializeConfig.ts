@@ -1,7 +1,4 @@
-import {
-  createInitializeConfigInstruction,
-  Fraction,
-} from '@convergence-rfq/risk-engine';
+import { createInitializeConfigInstruction } from '@convergence-rfq/risk-engine';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -12,7 +9,6 @@ import {
   useOperation,
   Signer,
   toBigNumber,
-  toFractional,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
@@ -22,8 +18,8 @@ const DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ = toBigNumber(1_000_000_000);
 const DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ =
   toBigNumber(2_000_000_000);
 const DEFAULT_MINT_DECIMALS = 9;
-const DEFAULT_SAFETY_PRICE_SHIFT_FACTOR = toFractional(1, 2);
-const DEFAULT_OVERALL_SAFETY_FACTOR = toFractional(1, 1);
+const DEFAULT_SAFETY_PRICE_SHIFT_FACTOR = 0.5;
+const DEFAULT_OVERALL_SAFETY_FACTOR = 1.0;
 
 /**
  * Add an BaseAsset
@@ -70,9 +66,9 @@ export type InitializeConfigInput =
 
       collateralMintDecimals?: number;
 
-      safetyPriceShiftFactor?: Fraction;
+      safetyPriceShiftFactor?: number;
 
-      overallSafetyFactor?: Fraction;
+      overallSafetyFactor?: number;
     }
   | undefined;
 
@@ -161,8 +157,8 @@ export const initializeConfigBuilder = (
           collateralForVariableSizeRfqCreation,
           collateralForFixedQuoteAmountRfqCreation,
           collateralMintDecimals,
-          safetyPriceShiftFactor,
-          overallSafetyFactor,
+          safetyPriceShiftFactor: toBigNumber(safetyPriceShiftFactor),
+          overallSafetyFactor: toBigNumber(overallSafetyFactor),
         },
         riskEngineProgram.address
       ),

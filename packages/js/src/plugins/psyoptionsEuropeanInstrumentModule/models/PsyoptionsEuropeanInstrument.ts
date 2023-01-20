@@ -8,8 +8,8 @@ import {
   u64,
   i64,
   bignum,
-} from '@metaplex-foundation/beet';
-import { publicKey } from '@metaplex-foundation/beet-solana';
+} from '@convergence-rfq/beet';
+import { publicKey } from '@convergence-rfq/beet-solana';
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
