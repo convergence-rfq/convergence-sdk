@@ -1,7 +1,7 @@
 import { Leg, Side, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
-import * as beet from '@metaplex-foundation/beet';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
+import * as beet from '@convergence-rfq/beet';
+import * as beetSolana from '@convergence-rfq/beet-solana';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';

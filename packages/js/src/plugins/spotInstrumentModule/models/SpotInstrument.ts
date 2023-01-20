@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { Side, Leg, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
-import * as beet from '@metaplex-foundation/beet';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
+import * as beet from '@convergence-rfq/beet';
+import * as beetSolana from '@convergence-rfq/beet-solana';
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
