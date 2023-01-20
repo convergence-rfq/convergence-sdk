@@ -269,7 +269,7 @@ test('[protocolModule] it can register mints', async (t: Test) => {
 
 test('[protocolModule] it can get base assets', async (t: Test) => {
   const baseAssets = await cvg.protocol().getBaseAssets();
-  spok(t, baseAssets[1], {
+  spok(t, baseAssets[0], {
     $topic: 'Get Base Assets',
     model: 'baseAsset',
     index: {
@@ -278,7 +278,7 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
     ticker: 'BTC',
     riskCategory: 0,
   });
-  spok(t, baseAssets[0], {
+  spok(t, baseAssets[1], {
     $topic: 'Get Base Assets',
     model: 'baseAsset',
     index: {

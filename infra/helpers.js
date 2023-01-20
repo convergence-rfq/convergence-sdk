@@ -1,12 +1,11 @@
 const { spawn } = require('child_process');
 
-const RFQ = '6k3nypehfxd4tqCGRxNEZBMiT4xUPdQCkothLVz3JK6D';
-const RISK_ENGINE = '76TdqS9cEb8tYKUWKMzXBMwgCtXJiYMcrHxmzrYthjUm';
-const SPOT_INSTRUMENT = '6pyiZyPDi7a6vMymw5NFTvtFBZJbDrNsgrcYK5jGEH4K';
-const PSYOPTIONS_EUROPEAN_INSTRUMENT =
-  '7ZD9LcvMPfurRYz2AuZPWgtSXuSxPmvZNMBFK7fhyvQA';
-const PSYOPTIONS_AMERICAN_INSTRUMENT =
-  'ATtEpDQ6smvJnMSJvhLc21DBCTBKutih7KBf9Qd5b8xy';
+const rfq = require('@convergence-rfq/rfq');
+const riskEngine = require('@convergence-rfq/risk-engine');
+const spotInstrument = require('@convergence-rfq/spot-instrument');
+const psyoptionsEuropeanInstrument = require('@convergence-rfq/psyoptions-european-instrument');
+const psyoptionsAmericanInstrument = require('@convergence-rfq/psyoptions-american-instrument');
+
 const SWITCHBOARD_BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee';
 const SWITCHBOARD_SOL_ORACLE = 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR';
 const PSYOPTIONS_EURO_PRIMITIVE =
@@ -27,19 +26,19 @@ module.exports.solanaLogs = new Promise((resolve) => {
 module.exports.solanaTestValidator = new Promise((resolve) => {
   const args = [
     '--bpf-program',
-    RFQ,
+    rfq.PROGRAM_ADDRESS,
     'programs/rfq.so',
     '--bpf-program',
-    SPOT_INSTRUMENT,
+    spotInstrument.PROGRAM_ADDRESS,
     'programs/spot_instrument.so',
     '--bpf-program',
-    PSYOPTIONS_EUROPEAN_INSTRUMENT,
+    psyoptionsEuropeanInstrument.PROGRAM_ADDRESS,
     'programs/psyoptions_european_instrument.so',
     '--bpf-program',
-    PSYOPTIONS_AMERICAN_INSTRUMENT,
+    psyoptionsAmericanInstrument.PROGRAM_ADDRESS,
     'programs/psyoptions_american_instrument.so',
     '--bpf-program',
-    RISK_ENGINE,
+    riskEngine.PROGRAM_ADDRESS,
     'programs/risk_engine.so',
     '--account',
     SWITCHBOARD_BTC_ORACLE,
