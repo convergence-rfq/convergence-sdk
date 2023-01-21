@@ -1230,10 +1230,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/rfq@2.0.15":
-  version "2.0.15"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.0.15.tgz#b054771f9062f1e92db61380e132bb7e9c66b311"
-  integrity sha512-LomeeZsFpMuYS3gT0n2EIe+9PwklELiMN9Txfqtd2zltjCPG0/EGnER3gfPPpEVvxvp1cYFrPczSQelp542Ubw==
+"@convergence-rfq/rfq@2.0.16":
+  version "2.0.16"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.0.16.tgz#3c9f361e2b835473651baeac377c63defff863b8"
+  integrity sha512-UDVERByagGBa6gEZFajj+/pRtVmnrVJrS7gp2ojCwlkzmEQVFaMPOGZpvalRoCbIfVCqFw7hR6zDAKbaEuIHIg==
   dependencies:
     "@metaplex-foundation/beet" "^0.6.1"
     "@metaplex-foundation/beet-solana" "^0.3.1"

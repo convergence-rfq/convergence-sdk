@@ -14,6 +14,10 @@ export function killStuckProcess() {
   }
 }
 
+export function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export const SKIP_PREFLIGHT: ConfirmOptions = {
   skipPreflight: true,
   commitment: 'confirmed',

@@ -1,5 +1,5 @@
-import { PROGRAM_ID } from '@convergence-rfq/rfq';
-import { Program } from '@/types';
+import { PROGRAM_ID, cusper } from '@convergence-rfq/rfq';
+import { Program, ErrorWithLogs } from '@/types';
 import { Convergence } from '@/index';
 import { GpaBuilder } from '@/utils';
 
@@ -10,4 +10,6 @@ export const rfqProgram: Program = {
   gpaResolver: (convergence: Convergence) => {
     return new GpaBuilder(convergence, PROGRAM_ID);
   },
+  errorResolver: (error: ErrorWithLogs) =>
+    cusper.errorFromProgramLogs(error.logs, false),
 };

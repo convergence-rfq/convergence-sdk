@@ -1,8 +1,9 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair } from '@solana/web3.js';
-import { sleep } from '@bundlr-network/client/build/common/utils';
 import {
+  BTC_DECIMALS,
+  USDC_DECIMALS,
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
   SKIP_PREFLIGHT,
@@ -11,9 +12,8 @@ import {
   spokSamePubkey,
   initializeNewOptionMeta,
   setupAccounts,
-  BTC_DECIMALS,
-  USDC_DECIMALS,
   spokSameBignum,
+  delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
@@ -270,7 +270,7 @@ test('[protocolModule] it can register mints', async (t: Test) => {
 test('[protocolModule] it can get base assets', async (t: Test) => {
   const baseAssets = await cvg.protocol().getBaseAssets();
   spok(t, baseAssets[0], {
-    $topic: 'Get Base Assets',
+    $topic: 'baseAsset model',
     model: 'baseAsset',
     index: {
       value: 0,
@@ -279,7 +279,7 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
     riskCategory: 0,
   });
   spok(t, baseAssets[1], {
-    $topic: 'Get Base Assets',
+    $topic: 'baseAsset model',
     model: 'baseAsset',
     index: {
       value: 1,
@@ -342,7 +342,7 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
     'same address'
   );
   spok(t, makerCollateral, {
-    $topic: 'Initialize Collateral',
+    $topic: 'collateral model',
     model: 'collateral',
   });
 });
@@ -534,13 +534,13 @@ test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) 
   });
 
   spok(t, finalizedRfq, {
-    $topic: 'Finalized RFQ',
+    $topic: 'rfq model',
     model: 'rfq',
     state: StoredRfqState.Active,
   });
 });
 
-test('[rfqModule] it can create and finalize RFQ in single method', async (t: Test) => {
+test('[rfqModule] it can create and finalize RFQ and respond to RFQ', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -564,27 +564,13 @@ test('[rfqModule] it can create and finalize RFQ in single method', async (t: Te
 
   const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
 
+  t.same(rfq.address.toString(), foundRfq.address.toString(), 'same address');
   spok(t, rfq, {
-    $topic: 'Created RFQ',
+    $topic: 'rfq model',
     model: 'rfq',
-    address: spokSamePubkey(foundRfq.address),
     state: StoredRfqState.Active,
   });
-});
 
-test('[rfqModule] it can create and finalize, then respond to RFQ and confirm response', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-    ],
-    taker,
-    orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
-  });
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
     rfq: rfq.address,
@@ -592,25 +578,27 @@ test('[rfqModule] it can create and finalize, then respond to RFQ and confirm re
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   const respondedToRfq = await cvg.rfqs().refreshRfq(rfq.address);
 
+  t.same(
+    rfq.address.toString(),
+    respondedToRfq.address.toString(),
+    'same address'
+  );
   spok(t, rfq, {
-    $topic: 'Finalized Rfq',
+    $topic: 'rfq model',
     model: 'rfq',
-    address: spokSamePubkey(respondedToRfq.address),
   });
   spok(t, rfqResponse, {
-    $topic: 'Responded to Rfq',
+    $topic: 'response model',
     model: 'response',
     state: StoredResponseState.Active,
   });
 });
 
-test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collateral, and clean up RFQ', async (t: Test) => {
+test('[rfqModule] it can unlock RFQ collateral and clean up', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
     taker,
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
@@ -640,7 +628,7 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
   let refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
 
   spok(t, refreshedRfq, {
-    $topic: 'Cancelled RFQ',
+    $topic: 'rfq model',
     model: 'rfq',
     state: StoredRfqState.Canceled,
   });
@@ -691,7 +679,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -1474,6 +1461,8 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     activeWindow: 2,
     settlingWindow: 1,
   });
+
+  const keypair = Keypair.generate();
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
     rfq: rfq.address,
@@ -1482,8 +1471,13 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
     ask: null,
-    keypair: Keypair.generate(),
+    keypair,
   });
+  t.same(
+    keypair.publicKey.toString(),
+    rfqResponse.address.toString(),
+    'same address'
+  );
 
   await cvg.rfqs().confirmResponse({
     taker,
@@ -1503,7 +1497,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     baseAssetMints: [btcMint],
   });
 
-  await sleep(3_001);
+  await delay(3_001);
   await cvg.rfqs().revertSettlementPreparation({
     rfq: rfq.address,
     response: rfqResponse.address,
@@ -1512,15 +1506,14 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     side: AuthoritySide.Maker,
   });
 
-  // let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+  const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
-  // sleep(3001).then(() => {
-  //   spok(t, refreshedResponse, {
-  //     $topic: 'Revert settlement preparations',
-  //     model: 'response',
-  //     makerPreparedLegs: spokSameBignum(0),
-  //   });
-  // });
+  await delay(3_001);
+  spok(t, refreshedResponse, {
+    $topic: 'Revert settlement preparations',
+    model: 'response',
+    makerPreparedLegs: spokSameBignum(0),
+  });
 });
 
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, partly revert settlemt prep', async (t: Test) => {
@@ -1546,7 +1539,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, par
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
     ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1573,7 +1565,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, par
     refreshedResponse.makerPreparedLegs.toString()
   );
 
-  await sleep(3_001);
+  await delay(3_001);
   await cvg.rfqs().partlyRevertSettlementPreparation({
     rfq: rfq.address,
     response: rfqResponse.address,
@@ -1582,7 +1574,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, par
     legAmountToRevert: 1,
   });
 
-  await sleep(3_001);
+  await delay(3_001);
   spok(t, refreshedResponse, {
     $topic: 'Partly revert settlement preparations',
     model: 'response',
@@ -1613,7 +1605,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
     ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1634,7 +1625,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
     baseAssetMints: [btcMint],
   });
 
-  await sleep(3_001);
+  await delay(3_001);
   await cvg.rfqs().settleOnePartyDefault({
     rfq: rfq.address,
     response: rfqResponse.address,
@@ -1642,7 +1633,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
 
   const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
-  await sleep(3_001);
+  await delay(3_001);
   spok(t, refreshedResponse, {
     $topic: 'Settle 1 party default',
     model: 'response',
@@ -1677,7 +1668,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
     ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1688,7 +1678,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
     overrideLegMultiplierBps: null,
   });
 
-  await sleep(3_001);
+  await delay(3_001);
   await cvg.rfqs().settleTwoPartyDefault({
     rfq: rfq.address,
     response: rfqResponse.address,
@@ -1696,7 +1686,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
 
   const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
-  await sleep(3_001);
+  await delay(3_001);
   spok(t, refreshedResponse, {
     $topic: 'Settle 2 party default',
     model: 'response',
