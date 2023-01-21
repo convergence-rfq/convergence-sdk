@@ -12,7 +12,6 @@ import {
   createProgram,
   programId as psyoptionsEuropeanProgramId,
   instructions,
-  OptionType,
 } from '@mithraic-labs/tokenized-euros';
 import {
   IDL as PseudoPythIdl,
@@ -29,11 +28,8 @@ import {
   walletAdapterIdentity,
 } from '@/index';
 
-const {
-  initializeAllAccountsInstructions,
-  createEuroMetaInstruction,
-  mintOptions,
-} = instructions;
+const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
+  instructions;
 
 // CONSTANTS
 
@@ -278,17 +274,6 @@ export const initializeNewOptionMeta = async (
   takerUSDCWallet: Token,
   makerUSDCWallet: Token
 ) => {
-  const maker = Keypair.fromSecretKey(
-    new Uint8Array(
-      JSON.parse(readFileSync('./test/fixtures/maker.json', 'utf8'))
-    )
-  );
-  const taker = Keypair.fromSecretKey(
-    new Uint8Array(
-      JSON.parse(readFileSync('./test/fixtures/taker.json', 'utf8'))
-    )
-  );
-
   const payer = convergence.rpc().getDefaultFeePayer();
 
   const provider = new anchor.AnchorProvider(
@@ -348,59 +333,9 @@ export const initializeNewOptionMeta = async (
   const createTx = new web3.Transaction().add(createIx);
   await provider.sendAndConfirm(createTx);
 
-  const { token: takerOptionDest } = await convergence
-    .tokens()
-    .createToken({ mint: euroMeta.putOptionMint, owner: taker.publicKey });
-  const { token: takerWriterDest } = await convergence
-    .tokens()
-    .createToken({ mint: euroMeta.putWriterMint, owner: taker.publicKey });
-
-  const { token: makerOptionDest } = await convergence
-    .tokens()
-    .createToken({ mint: euroMeta.putOptionMint, owner: maker.publicKey });
-  const { token: makerWriterDest } = await convergence
-    .tokens()
-    .createToken({ mint: euroMeta.putWriterMint, owner: maker.publicKey });
-
-  const { instruction: takerIx } = mintOptions(
-    europeanProgram,
-    euroMetaKey,
-    euroMeta,
-    takerUSDCWallet.address,
-    takerOptionDest.address,
-    takerWriterDest.address,
-    new anchor.BN(1_000_000),
-    OptionType.PUT
-  );
-
-  takerIx.keys[0] = {
-    pubkey: taker.publicKey,
-    isSigner: true,
-    isWritable: false,
-  };
-  const takerTransaction = new web3.Transaction().add(takerIx);
-  await provider.sendAndConfirm(takerTransaction, [taker]);
-
-  const { instruction: makerIx } = mintOptions(
-    europeanProgram,
-    euroMetaKey,
-    euroMeta,
-    makerUSDCWallet.address,
-    makerOptionDest.address,
-    makerWriterDest.address,
-    new anchor.BN(1_000_000),
-    OptionType.PUT
-  );
-
-  makerIx.keys[0] = {
-    pubkey: maker.publicKey,
-    isSigner: true,
-    isWritable: false,
-  };
-  const transaction = new web3.Transaction().add(makerIx);
-  await provider.sendAndConfirm(transaction, [maker]);
-
   return {
+    provider,
+    europeanProgram,
     euroMeta,
     euroMetaKey,
     oracle,

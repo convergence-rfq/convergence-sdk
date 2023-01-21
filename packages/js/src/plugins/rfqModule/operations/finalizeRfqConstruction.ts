@@ -2,7 +2,7 @@ import {
   BaseAssetIndex,
   createFinalizeRfqConstructionInstruction,
 } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -269,20 +269,28 @@ export const finalizeRfqConstructionBuilder = async (
     .setContext({
       rfq,
     })
-    .add({
-      instruction: createFinalizeRfqConstructionInstruction(
-        {
-          taker: taker.publicKey,
-          protocol,
-          rfq,
-          collateralInfo,
-          collateralToken,
-          riskEngine,
-          anchorRemainingAccounts,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker],
-      key: 'finalizeRfqConstruction',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createFinalizeRfqConstructionInstruction(
+          {
+            taker: taker.publicKey,
+            protocol,
+            rfq,
+            collateralInfo,
+            collateralToken,
+            riskEngine,
+            anchorRemainingAccounts,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker],
+        key: 'finalizeRfqConstruction',
+      }
+    );
 };

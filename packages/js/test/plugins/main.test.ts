@@ -1,8 +1,9 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair } from '@solana/web3.js';
-//@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
+import * as anchor from '@project-serum/anchor';
+import { web3 } from '@project-serum/anchor';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -29,7 +30,6 @@ import {
   OptionType,
   InstrumentType,
   Token,
-  //@ts-ignore
   StoredResponseState,
   AuthoritySide,
   StoredRfqState,
@@ -39,7 +39,6 @@ import {
 import { instructions } from '@mithraic-labs/tokenized-euros';
 
 killStuckProcess();
-//@ts-ignore
 const { mintOptions } = instructions;
 
 let cvg: Convergence;
@@ -1152,12 +1151,66 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
       side: Side.Ask,
     })
   );
-  // instruments.push(
-  //   new SpotInstrument(cvg, btcMint, {
-  //     amount: 10,
-  //     side: Side.Ask,
-  //   })
-  // );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 10,
+      side: Side.Ask,
+    })
+  );
 
   let expLegSize = 4;
 
@@ -1192,10 +1245,53 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
         amount: 10,
         side: Side.Ask,
       }),
-      // new SpotInstrument(cvg, btcMint, {
-      //   amount: 10,
-      //   side: Side.Ask,
-      // }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+    ],
+  });
+
+  await cvg.rfqs().addLegsToRfq({
+    taker,
+    rfq: rfq.address,
+    legs: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 10,
+        side: Side.Ask,
+      }),
     ],
   });
 
@@ -1209,79 +1305,110 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     taker,
     rfq: rfq.address,
   });
+
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+    keypair: Keypair.generate(),
+  });
+
+  await cvg.rfqs().confirmResponse({
+    taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: Side.Bid,
+    overrideLegMultiplierBps: null,
+  });
+
+  // TODO: we have to pass the baseAssetMints manually
+  // we need a method with type (baseAssetIndex) -> Mint or MintPubkey
+  // then the baseAssetMints could be extracted from the rfq's legs
+  await cvg.rfqs().prepareSettlement({
+    caller: taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: AuthoritySide.Taker,
+    legAmountToPrepare: 13,
+    quoteMint: usdcMint,
+    baseAssetMints: [
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+    ],
+  });
+  //@ts-ignore
+  const firstToPrepare = taker.publicKey;
+
+  await cvg.rfqs().prepareSettlement({
+    caller: maker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: AuthoritySide.Maker,
+    legAmountToPrepare: 13,
+    quoteMint: usdcMint,
+    baseAssetMints: [
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+    ],
+  });
+
+  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+
+  spok(t, refreshedResponse, {
+    $topic: 'Prepared Settlement',
+    model: 'response',
+    state: StoredResponseState.ReadyForSettling,
+  });
+
+  await cvg.rfqs().settle({
+    maker: maker.publicKey,
+    taker: taker.publicKey,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    baseAssetMints: [
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+      btcMint,
+    ],
+    quoteMint: usdcMint,
+  });
 });
-
-// test('[rfqModule] it can make a big RFQ, by repeatedly calling addLegsToRfq', async (t: Test) => {
-//   const instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[] = [];
-
-//   instruments.push(
-//     new SpotInstrument(cvg, btcMint, {
-//       amount: 5,
-//       side: Side.Ask,
-//     })
-//   );
-//   instruments.push(
-//     new SpotInstrument(cvg, btcMint, {
-//       amount: 10,
-//       side: Side.Ask,
-//     })
-//   );
-//   instruments.push(
-//     new SpotInstrument(cvg, btcMint, {
-//       amount: 10,
-//       side: Side.Ask,
-//     })
-//   );
-
-//   let expLegSize = 4;
-//   // let expLegSize = 0;
-
-//   for (const instrument of instruments) {
-//     const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
-//     expLegSize += await instrumentClient.getLegDataSize();
-//   }
-
-//   const { rfq } = await cvg.rfqs().create({
-//     instruments: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Ask,
-//       }),
-//     ],
-//     taker,
-//     legSize: expLegSize,
-//     orderType: OrderType.TwoWay,
-//     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-//     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
-//   });
-
-//   await cvg.rfqs().addLegsToRfq({
-//     taker,
-//     rfq: rfq.address,
-//     legs: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 10,
-//         side: Side.Ask,
-//       }),
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 10,
-//         side: Side.Ask,
-//       }),
-//     ],
-//   });
-
-//   spok(t, rfq, {
-//     $topic: 'Made big RFQ',
-//     model: 'rfq',
-//     address: spokSamePubkey(rfq.address),
-//   });
-
-//   //@ts-ignore
-//   const { rfq: finalizedRfq } = await cvg.rfqs().finalizeRfqConstruction({
-//     taker,
-//     rfq: rfq.address,
-//   });
-// });
 
 // RFQ UTILS
 
@@ -1499,36 +1626,109 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
 // PSYOPTIONS EUROPEANS
 
 test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
-  const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+  const { provider, europeanProgram, euroMeta, euroMetaKey } =
+    await initializeNewOptionMeta(
+      cvg,
+      btcMint,
+      usdcMint,
+      17_500,
+      1_000_000,
+      3_600,
+      takerUSDCWallet,
+      makerUSDCWallet
+    );
+
+  const instrument = new PsyoptionsEuropeanInstrument(
     cvg,
     btcMint,
-    usdcMint,
-    17_500,
-    1_000_000,
-    3_600,
-    takerUSDCWallet,
-    makerUSDCWallet
+    OptionType.PUT,
+    euroMeta,
+    euroMetaKey,
+    {
+      amount: 1,
+      side: Side.Bid,
+    }
   );
 
   const { rfq } = await cvg.rfqs().create({
     taker,
-    instruments: [
-      new PsyoptionsEuropeanInstrument(
-        cvg,
-        btcMint,
-        OptionType.PUT,
-        euroMeta,
-        euroMetaKey,
-        {
-          amount: 1,
-          side: Side.Bid,
-        }
-      ),
-    ],
+    instruments: [instrument],
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
   });
+
+  const { token: takerOptionDest } = await cvg.tokens().createToken({
+    mint:
+      instrument.optionType == OptionType.CALL
+        ? euroMeta.callOptionMint
+        : euroMeta.putOptionMint,
+    owner: taker.publicKey,
+  });
+  const { token: takerWriterDest } = await cvg.tokens().createToken({
+    mint:
+      instrument.optionType == OptionType.CALL
+        ? euroMeta.callWriterMint
+        : euroMeta.putWriterMint,
+    owner: taker.publicKey,
+  });
+
+  const { token: makerOptionDest } = await cvg.tokens().createToken({
+    mint:
+      instrument.optionType == OptionType.CALL
+        ? euroMeta.callOptionMint
+        : euroMeta.putOptionMint,
+    owner: maker.publicKey,
+  });
+  const { token: makerWriterDest } = await cvg.tokens().createToken({
+    mint:
+      instrument.optionType == OptionType.CALL
+        ? euroMeta.callOptionMint
+        : euroMeta.putWriterMint,
+    owner: maker.publicKey,
+  });
+
+  const { instruction: takerIx } = mintOptions(
+    europeanProgram,
+    euroMetaKey,
+    euroMeta,
+    instrument.optionType == OptionType.CALL
+      ? takerBTCWallet.address
+      : takerUSDCWallet.address,
+    takerOptionDest.address,
+    takerWriterDest.address,
+    new anchor.BN(1_000_000),
+    OptionType.PUT
+  );
+
+  takerIx.keys[0] = {
+    pubkey: taker.publicKey,
+    isSigner: true,
+    isWritable: false,
+  };
+  const takerTransaction = new web3.Transaction().add(takerIx);
+  await provider.sendAndConfirm(takerTransaction, [taker]);
+
+  const { instruction: makerIx } = mintOptions(
+    europeanProgram,
+    euroMetaKey,
+    euroMeta,
+    instrument.optionType == OptionType.CALL
+      ? makerBTCWallet.address
+      : makerUSDCWallet.address,
+    makerOptionDest.address,
+    makerWriterDest.address,
+    new anchor.BN(1_000_000),
+    OptionType.PUT
+  );
+
+  makerIx.keys[0] = {
+    pubkey: maker.publicKey,
+    isSigner: true,
+    isWritable: false,
+  };
+  const transaction = new web3.Transaction().add(makerIx);
+  await provider.sendAndConfirm(transaction, [maker]);
 
   await cvg.rfqs().finalizeRfqConstruction({
     rfq: rfq.address,
@@ -1554,9 +1754,12 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     overrideLegMultiplierBps: null,
   });
 
-  const euroMetaPutOptionMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: euroMeta.putOptionMint });
+  const euroMetaOptionMint = await cvg.tokens().findMintByAddress({
+    address:
+      instrument.optionType == OptionType.CALL
+        ? euroMeta.callOptionMint
+        : euroMeta.putOptionMint,
+  });
 
   await cvg.rfqs().prepareSettlement({
     caller: taker,
@@ -1565,7 +1768,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     side: AuthoritySide.Taker,
     legAmountToPrepare: 1,
     quoteMint: usdcMint,
-    baseAssetMints: [euroMetaPutOptionMint],
+    baseAssetMints: [euroMetaOptionMint],
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -1575,7 +1778,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     side: AuthoritySide.Maker,
     legAmountToPrepare: 1,
     quoteMint: usdcMint,
-    baseAssetMints: [euroMetaPutOptionMint],
+    baseAssetMints: [euroMetaOptionMint],
   });
 
   await cvg.rfqs().settle({
@@ -1583,7 +1786,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     taker: taker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-    baseAssetMints: [euroMetaPutOptionMint],
+    baseAssetMints: [euroMetaOptionMint],
     quoteMint: usdcMint,
   });
 
@@ -1592,6 +1795,14 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
   spok(t, rfq, {
     $topic: 'rfq model',
     model: 'rfq',
+  });
+
+  const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+
+  spok(t, refreshedResponse, {
+    $topic: 'Settled',
+    model: 'response',
+    state: StoredResponseState.Settled,
   });
 });
 

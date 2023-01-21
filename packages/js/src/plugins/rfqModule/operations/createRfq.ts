@@ -204,10 +204,6 @@ export const createRfqBuilder = async (
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
 
-  // let expectedLegSize = legSize ? legSize : 4;
-
-  // let expectedLegSize = legSize;
-
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
       instrument,
@@ -218,6 +214,7 @@ export const createRfqBuilder = async (
   }
 
   let expectedLegSize: number;
+
   if (legSize) {
     expectedLegSize = legSize;
   } else {

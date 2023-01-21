@@ -1,5 +1,5 @@
 import { createSettleInstruction, Side } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -239,17 +239,25 @@ export const settleBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createSettleInstruction(
-        {
-          protocol: protocol.address,
-          rfq,
-          response,
-          anchorRemainingAccounts,
-        },
-        rfqProgram.address
-      ),
-      signers: [],
-      key: 'settle',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createSettleInstruction(
+          {
+            protocol: protocol.address,
+            rfq,
+            response,
+            anchorRemainingAccounts,
+          },
+          rfqProgram.address
+        ),
+        signers: [],
+        key: 'settle',
+      }
+    );
 };
