@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 2.0.17
+
+### Patch Changes
+
+- Added methods and refactoring
+
 ## 2.0.15
 
 ### Patch Changes
