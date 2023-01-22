@@ -130,6 +130,20 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
       },
     ];
   }
+  static deserializeInstrumentData(buffer: Buffer): InstrumentData {
+    const [instrumentData] = instrumentDataSerializer.deserialize(buffer);
+    return instrumentData;
+  }
+
+  static async fetchMeta(
+    convergence: Convergence,
+    metaKey: PublicKey
+  ): Promise<EuroMeta> {
+    const account = await convergence.rpc().getAccount(metaKey);
+    assert(account.exists, 'Account not found');
+    const [meta] = euroMetaSerializer.deserialize(Buffer.from(account.data), 8);
+    return meta;
+  }
 
   static async createFromLeg(
     convergence: Convergence,
@@ -140,14 +154,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
       Buffer.from(instrumentData)
     );
 
-    const account = await convergence.rpc().getAccount(metaKey);
-    if (!account.exists) {
-      throw new Error('Account not found');
-    }
-    const [euroMeta] = euroMetaSerializer.deserialize(
-      Buffer.from(account.data),
-      8
-    );
+    const euroMeta = await this.fetchMeta(convergence, metaKey);
 
     const mint = await convergence
       .tokens()

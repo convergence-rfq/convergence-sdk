@@ -10,7 +10,6 @@ import {
   toBigNumber,
   createSerializerFromFixableBeetArgsStruct,
 } from '@/types';
-//@ts-ignore
 
 /**
  * This is a client for the instrumentModule.
@@ -34,18 +33,14 @@ export class InstrumentClient {
   constructor(
     protected convergence: Convergence,
     protected instrument:
-      | PsyoptionsEuropeanInstrument
       | SpotInstrument
+      | PsyoptionsEuropeanInstrument
       | PsyoptionsAmericanInstrument,
     protected legInfo?: {
       amount: number;
       side: Side;
     }
   ) {}
-
-  // pdas() {
-  //   return new InstrumentPdasClient(this.convergence);
-  // }
 
   async getBaseAssetIndex(): Promise<number> {
     if (this.legInfo) {
@@ -77,7 +72,7 @@ export class InstrumentClient {
     throw Error('Instrument is used for leg');
   }
 
-  toQuoteData() {
+  toQuoteAsset() {
     if (this.legInfo) {
       throw Error('Instrument is used for quote');
     }
