@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 2.0.18
+
+### Patch Changes
+
+- Added helper function quoteAssetToInstrument and renamed toQuoteData to toQuoteAsset
+
 ## 2.0.17
 
 ### Patch Changes
