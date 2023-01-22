@@ -32,6 +32,7 @@ import {
   StoredRfqState,
   legsToInstruments,
   Signer,
+  quoteAssetToInstrument,
 } from '@/index';
 
 killStuckProcess();
@@ -513,7 +514,9 @@ test('[collateralModule] it can find collateral by user', async (t: Test) => {
 
 test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     instruments: [
       new SpotInstrument(cvg, solMint, {
         amount: 1,
@@ -559,7 +562,9 @@ test('[rfqModule] it can create and finalize RFQ and respond to RFQ', async (t: 
     taker,
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
 
   const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
@@ -601,7 +606,9 @@ test('[rfqModule] it can create and finalize RFQ and respond to RFQ', async (t: 
 test('[rfqModule] it can unlock RFQ collateral and clean up', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
     taker,
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     instruments: [
       new SpotInstrument(cvg, btcMint, {
         amount: 1,
@@ -670,7 +677,9 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
@@ -769,7 +778,9 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     activeWindow: 5_000,
     settlingWindow: 1_000,
   });
@@ -881,7 +892,9 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     activeWindow: 5_000,
     settlingWindow: 1_000,
   });
@@ -974,7 +987,9 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     activeWindow: 5_000,
     settlingWindow: 1_000,
   });
@@ -1083,7 +1098,9 @@ test('[rfqModule] it can create and finalize Rfq, respond, and cancel response',
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
@@ -1124,7 +1141,9 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     orderType: OrderType.Sell,
     taker,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
   const { rfq: rfq2 } = await cvg.rfqs().create({
     instruments: [
@@ -1136,7 +1155,9 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     taker,
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
   const { rfq: rfq3 } = await cvg.rfqs().create({
     instruments: [
@@ -1148,7 +1169,9 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     orderType: OrderType.Sell,
     taker,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
 
   const [foundRfq1, foundRfq2, foundRfq3] = await cvg
@@ -1192,7 +1215,9 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
     taker,
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
 
   const foundRfqs = await cvg.rfqs().findAllByOwner({ owner: taker.publicKey });
@@ -1220,7 +1245,9 @@ test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) =
     taker,
     orderType: OrderType.Sell,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
 
   await cvg.riskEngine().calculateCollateralForRfq({ rfq: rfq.address });
@@ -1243,7 +1270,9 @@ test('[riskEngineModule] it can calculate collateral for response', async (t: Te
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
@@ -1278,7 +1307,9 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     activeWindow: 5_000,
     settlingWindow: 1_000,
   });
@@ -1353,7 +1384,9 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
     orderType: OrderType.Sell,
     taker,
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
 
   const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
@@ -1404,7 +1437,9 @@ test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
     legSize: expLegSize,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
   });
 
   await cvg.rfqs().addLegsToRfq({
@@ -1432,7 +1467,7 @@ test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
 // RFQ HELPERS
 
 test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
-  // We we can to this after creating options so that we can test this method
+  // We do this after creating options so that we can test this method
   // on all instruments
   const rfqs = await cvg.rfqs().findAllByOwner({
     owner: taker.publicKey,
@@ -1441,6 +1476,19 @@ test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
     rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
   );
   spok(t, instruments[0][0], {
+    $topic: 'Convert RFQ Legs to Instruments',
+    model: 'spotInstrument',
+  });
+});
+
+test('[rfqModule] it can convert RFQ quote assets to instruments', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findAllByOwner({
+    owner: taker.publicKey,
+  });
+  const instruments = await Promise.all(
+    rfqs.map(async (rfq) => quoteAssetToInstrument(cvg, rfq.quoteAsset))
+  );
+  spok(t, instruments[0], {
     $topic: 'Convert RFQ Legs to Instruments',
     model: 'spotInstrument',
   });
@@ -1457,7 +1505,9 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     activeWindow: 2,
     settlingWindow: 1,
   });
@@ -1527,7 +1577,9 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, par
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     activeWindow: 2,
     settlingWindow: 1,
   });
@@ -1593,7 +1645,9 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     activeWindow: 2,
     settlingWindow: 1,
   });
@@ -1656,7 +1710,9 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
     taker,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteData(),
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
     activeWindow: 2,
     settlingWindow: 1,
   });
