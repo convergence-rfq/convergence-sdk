@@ -9,33 +9,26 @@ import {
 } from '@solana/web3.js';
 import { Convergence, keypairIdentity } from '@convergence-rfq/sdk';
 
-const RPC_ENDPOINT = 'http://127.0.0.1:8899';
-const KEYPAIR =
-  '/Users/pindaroso/code/convergence-sdk/packages/js/test/fixtures/dao.json'; // B7d6DombyjQSsPJdufiZg6eutmmYADkqDDGgQrd3LJPo
+type Options = any;
 
-const x = JSON.parse(readFileSync(KEYPAIR, 'utf8'));
-const user = Keypair.fromSecretKey(new Uint8Array(x));
+const DEFAULT_RPC_ENDPOINT = 'http://127.0.0.1:8899';
+const DEFAULT_KEYPAIR_FILE = '/Users/pindaroso/.config/solana/dao.json';
 
-const createCvg = async (): Promise<Convergence> => {
-  const connection = new Connection(RPC_ENDPOINT, {
-    commitment: 'confirmed',
-  });
-  const cvg = new Convergence(connection, { skipPreflight: true });
-  cvg.use(keypairIdentity(user));
+// ACTIONS
 
-  if (RPC_ENDPOINT.indexOf('8899') > -1) {
-    const tx = await cvg.connection.requestAirdrop(
-      user.publicKey,
-      1 * LAMPORTS_PER_SOL
-    );
-    await cvg.connection.confirmTransaction(tx);
-  }
-
-  return cvg;
+const airdrop = async (options: any) => {
+  const cvg = await createCvg(options);
+  const user = cvg.rpc().getDefaultFeePayer();
+  const tx = await cvg.connection.requestAirdrop(
+    user.publicKey,
+    options.amount * LAMPORTS_PER_SOL
+  );
+  await cvg.connection.confirmTransaction(tx);
 };
 
-const setupMints = async () => {
-  const cvg = await createCvg();
+const setupMints = async (options: any) => {
+  const cvg = await createCvg(options);
+  const user = cvg.rpc().getDefaultFeePayer();
   const { mint: usdcMint } = await cvg.tokens().createMint({
     mintAuthority: user.publicKey,
     decimals: 6,
@@ -49,26 +42,57 @@ const setupMints = async () => {
   console.log(`USDC: ${usdcMint.address.toString()}`);
 };
 
-const initializeProtocol = async (options: any) => {
-  console.log(options.makerFee.toString());
-  console.log(options.takerFee.toString());
-  console.log(options.collateralMint);
-  const cvg = await createCvg();
+const initializeProtocol = async (options: Options) => {
+  const cvg = await createCvg(options);
   const collateralMint = new PublicKey(options.collateralMint);
   await cvg.protocol().initialize({ collateralMint });
 };
 
+/// HELPERS
+
+const createCvg = async (options: Options): Promise<Convergence> => {
+  const secret = JSON.parse(readFileSync(options.keypairFile, 'utf8'));
+  const user = Keypair.fromSecretKey(new Uint8Array(secret));
+  const connection = new Connection(options.rpcEndpoint, {
+    commitment: 'confirmed',
+  });
+  const cvg = new Convergence(connection, { skipPreflight: true });
+  cvg.use(keypairIdentity(user));
+  return cvg;
+};
+
+const addDefaultArgs = (cmd: any) => {
+  cmd.option('--rpc-endpoint <value>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
+  cmd.option('--keypair-file <value>', 'Keypair file', DEFAULT_KEYPAIR_FILE);
+  return cmd;
+};
+
+/// CLI
+
 const program = new Command();
-program
-  .name('convergence')
-  .version('1.0.0')
-  .description('Convergence RFQ CLI?');
-program
+program.name('convergence').version('1.0.0').description('Convergence RFQ CLI');
+
+const airdropCommand = program
+  .command('airdrop')
+  .description('Airdrops SOL to the current user')
+  .option('--amount <value>', 'Amount to airdrop in SOL')
+  .action(airdrop);
+const initializeProtocolCommand = program
   .command('initialize-protocol')
   .description('Initializes protocol with taker and maker fees')
   .option('--maker-fee <value>', 'Maker fee')
   .option('--taker-fee <value>', 'Taker fee')
   .option('--collateral-mint <value>', 'Collaterl mint public key')
   .action(initializeProtocol);
-program.command('setup-mints').description('Setup mints').action(setupMints);
+const setupMintsCommand = program
+  .command('setup-mints')
+  .description('Setup mints')
+  .action(setupMints);
+
+addDefaultArgs(initializeProtocolCommand);
+addDefaultArgs(setupMintsCommand);
+addDefaultArgs(airdropCommand);
+
+/// EXECUTE
+
 program.parse();
