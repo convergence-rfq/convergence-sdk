@@ -11,8 +11,38 @@ import { Convergence, keypairIdentity, token } from '@convergence-rfq/sdk';
 
 type Options = any;
 
+/// Constants
+
 const DEFAULT_KEYPAIR_FILE = '/Users/pindaroso/.config/solana/dao.json';
 const DEFAULT_RPC_ENDPOINT = 'http://127.0.0.1:8899';
+
+/// HELPERS
+
+const createCvg = async (options: Options): Promise<Convergence> => {
+  const user = Keypair.fromSecretKey(
+    new Uint8Array(JSON.parse(readFileSync(options.keypairFile, 'utf8')))
+  );
+  const cvg = new Convergence(
+    new Connection(options.rpcEndpoint, {
+      commitment: 'confirmed',
+    }),
+    { skipPreflight: true }
+  );
+  cvg.use(keypairIdentity(user));
+
+  if (options.verbose) {
+    console.log('Using user:', user.publicKey.toString());
+  }
+
+  return cvg;
+};
+
+const addDefaultArgs = (cmd: any) => {
+  cmd.option('--rpc-endpoint <value>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
+  cmd.option('--keypair-file <value>', 'Keypair file', DEFAULT_KEYPAIR_FILE);
+  cmd.option('--verbose <value>', 'Verbose', false);
+  return cmd;
+};
 
 // ACTIONS
 
@@ -72,27 +102,30 @@ const initializeProtocol = async (options: Options) => {
   console.log('Success!');
 };
 
-/// HELPERS
-
-const createCvg = async (options: Options): Promise<Convergence> => {
-  const secret = JSON.parse(readFileSync(options.keypairFile, 'utf8'));
-  const user = Keypair.fromSecretKey(new Uint8Array(secret));
-  if (options.verbose) {
-    console.log('User:', user.publicKey.toString());
-  }
-  const connection = new Connection(options.rpcEndpoint, {
-    commitment: 'confirmed',
+const addInstrument = async (options: Options) => {
+  console.log('Adding instrument...');
+  const cvg = await createCvg(options);
+  const authority = cvg.rpc().getDefaultFeePayer();
+  const instrumentProgram = new PublicKey(options.instrumentProgram);
+  const {
+    canBeUsedAsQuote,
+    validateDataAccountAmount,
+    prepareToSettleAccountAmount,
+    settleAccountAmount,
+    revertPreparationAccountAmount,
+    cleanUpAccountAmount,
+  } = options;
+  await cvg.protocol().addInstrument({
+    authority,
+    instrumentProgram,
+    canBeUsedAsQuote,
+    validateDataAccountAmount,
+    prepareToSettleAccountAmount,
+    settleAccountAmount,
+    revertPreparationAccountAmount,
+    cleanUpAccountAmount,
   });
-  const cvg = new Convergence(connection, { skipPreflight: true });
-  cvg.use(keypairIdentity(user));
-  return cvg;
-};
-
-const addDefaultArgs = (cmd: any) => {
-  cmd.option('--rpc-endpoint <value>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
-  cmd.option('--keypair-file <value>', 'Keypair file', DEFAULT_KEYPAIR_FILE);
-  cmd.option('--verbose <value>', 'Verbose', false);
-  return cmd;
+  console.log('Success!');
 };
 
 /// CLI
@@ -107,12 +140,12 @@ const airdropCmd = program
   .action(airdrop);
 const createMintCmd = program
   .command('create-mint')
-  .description('Create mint')
+  .description('Creates mint')
   .option('--decimals <value>', 'Decimals')
   .action(createMint);
 const createWalletCmd = program
   .command('create-wallet')
-  .description('Create wallet')
+  .description('Creates wallet')
   .option('--owner <value>', 'Owner address')
   .option('--mint <value>', 'Mint address')
   .action(createWallet);
@@ -130,12 +163,33 @@ const initializeProtocolCmd = program
   .option('--taker-fee <value>', 'Taker fee')
   .option('--collateral-mint <value>', 'Collateral mint address')
   .action(initializeProtocol);
+const addInstrumentCmd = program
+  .command('add-instrument')
+  .description('Adds instrument')
+  .option('--instrument-program <value>', 'Instrument program address')
+  .option('--can-be-used-as-quote <value>', 'Can be used as quote')
+  .option(
+    '--validate-data-account-amount <value>',
+    'Validate data account amount'
+  )
+  .option(
+    '--prepare-to-settle-account-amount <value>',
+    'Prepare to settle account amount'
+  )
+  .option('--settle-account-amount <value>', 'Settle account amount')
+  .option(
+    '--revert-preparation-account-amount <value>',
+    'Revert preparation account amount'
+  )
+  .option('--clean-up-account-amount <value>', 'Clean up account amount')
+  .action(addInstrument);
 
 addDefaultArgs(airdropCmd);
 addDefaultArgs(createMintCmd);
 addDefaultArgs(createWalletCmd);
 addDefaultArgs(mintToCmd);
 addDefaultArgs(initializeProtocolCmd);
+addDefaultArgs(addInstrumentCmd);
 
 /// EXECUTE
 
