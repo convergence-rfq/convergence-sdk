@@ -137,10 +137,13 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     // console.log('tx size in createRfq: ' + txSize);
 
-    let instrs = instruments;
+    let slicedInstruments = instruments;
 
     while (txSize + 193 > MAX_TX_SIZE) {
-      const ins = instrs.slice(0, Math.trunc(instrs.length / 2));
+      const ins = slicedInstruments.slice(
+        0,
+        Math.trunc(slicedInstruments.length / 2)
+      );
 
       builder = await createRfqBuilder(
         convergence,
@@ -156,20 +159,71 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         .rpc()
         .getTransactionSize(builder, [taker, keypair]);
 
-      instrs = ins;
+      slicedInstruments = ins;
     }
 
-    //determining whether to call addLegsToRfq
-    if (instrs.length < instruments.length) {
-      const ins = instruments.slice(instrs.length);
+    let addLegsBuilder: TransactionBuilder;
+    let addLegsBuilder2: TransactionBuilder;
+    let addLegsTxSize: number = 0;
 
-      const builder = addLegsToRfqBuilder(
+    if (slicedInstruments.length < instruments.length) {
+      let addLegsSlicedInstruments = instruments.slice(
+        slicedInstruments.length
+      );
+
+      addLegsBuilder = await addLegsToRfqBuilder(
         convergence,
         {
           ...operation.input,
+          rfq: keypair.publicKey,
+          instruments: addLegsSlicedInstruments,
         },
         scope
       );
+
+      addLegsTxSize = await convergence
+        .rpc()
+        .getTransactionSize(addLegsBuilder, [taker]);
+
+      while (addLegsTxSize + 193 > MAX_TX_SIZE) {
+        const ins = addLegsSlicedInstruments.slice(
+          0,
+          Math.trunc(addLegsSlicedInstruments.length / 2)
+        );
+
+        addLegsBuilder = await addLegsToRfqBuilder(
+          convergence,
+          {
+            ...operation.input,
+            rfq: keypair.publicKey,
+            instruments: ins,
+          },
+          scope
+        );
+
+        addLegsTxSize = await convergence
+          .rpc()
+          .getTransactionSize(addLegsBuilder, [taker]);
+
+        addLegsSlicedInstruments = ins;
+      }
+
+      if (
+        addLegsSlicedInstruments.length <
+        instruments.slice(slicedInstruments.length).length
+      ) {
+        let ins = instruments.slice(addLegsSlicedInstruments.length);
+
+        addLegsBuilder2 = await addLegsToRfqBuilder(
+          convergence,
+          {
+            ...operation.input,
+            rfq: keypair.publicKey,
+            instruments: ins,
+          },
+          scope
+        );
+      }
     }
 
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
@@ -179,6 +233,17 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
+
+    //@ts-ignore
+    if (addLegsBuilder) {
+      await addLegsBuilder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+    }
+    //@ts-ignore
+    if (addLegsBuilder2) {
+      await addLegsBuilder2.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+    }
 
     const rfq = await convergence
       .rfqs()
