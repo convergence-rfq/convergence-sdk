@@ -2,7 +2,7 @@ import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 import { PublicKey } from '@solana/web3.js';
 import { SendTokensInput } from '../tokenModule';
 import { Rfq } from './models';
-import { RfqBuildersClient } from './RfqBuildersClient';
+// import { RfqBuildersClient } from './RfqBuildersClient';
 import { RfqPdasClient } from './RfqPdasClient';
 import {
   addInstrumentOperation,
@@ -108,9 +108,9 @@ export class RfqClient {
    * const buildersClient = convergence.rfqs().builders();
    * ```
    */
-  builders() {
-    return new RfqBuildersClient(this.convergence);
-  }
+  // builders() {
+  //   return new RfqBuildersClient(this.convergence);
+  // }
 
   /**
    * You may use the `pdas()` client to build PDAs related to this module.

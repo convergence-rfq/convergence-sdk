@@ -1,13 +1,9 @@
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import {
   createPartiallySettleLegsInstruction,
   Side,
 } from '@convergence-rfq/rfq';
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -20,6 +16,8 @@ import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 
@@ -64,8 +62,6 @@ export type PartiallySettleLegsInput = {
 
   taker: PublicKey;
 
-  baseAssetMints: Mint[];
-
   /*
    * Args
    */
@@ -80,6 +76,11 @@ export type PartiallySettleLegsInput = {
 export type PartiallySettleLegsOutput = {
   response: SendAndConfirmTransactionResponse;
 };
+
+enum OptionType {
+  CALL = 0,
+  PUT = 1,
+}
 
 /**
  * @group Operations
@@ -136,8 +137,7 @@ export const partiallySettleLegsBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const { rfq, response, maker, taker, baseAssetMints, legAmountToSettle } =
-    params;
+  const { rfq, response, maker, taker, legAmountToSettle } = params;
 
   const protocol = await convergence.protocol().get();
 
@@ -148,10 +148,16 @@ export const partiallySettleLegsBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const psyoptionsEuropeanProgram = convergence
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+
   const startIndex = parseInt(responseModel.settledLegs.toString());
 
   for (let i = startIndex; i < startIndex + legAmountToSettle; i++) {
     const leg = rfqModel.legs[i];
+
     const confirmationSide = responseModel.confirmed?.side;
 
     let legTakerAmount = -1;
@@ -177,6 +183,37 @@ export const partiallySettleLegsBuilder = async (
       rfqModel,
     });
 
+    let baseAssetMint: Mint;
+
+    if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsEuropeanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+
+      const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
+        address:
+          instrument.optionType == OptionType.CALL
+            ? instrument.meta.callOptionMint
+            : instrument.meta.putOptionMint,
+      });
+
+      baseAssetMint = euroMetaOptionMint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      spotInstrumentProgram.address.toString()
+    ) {
+      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMint = mint;
+    }
+
     const legAccounts: AccountMeta[] = [
       //`escrow`
       {
@@ -186,13 +223,14 @@ export const partiallySettleLegsBuilder = async (
       },
       // `receiver_tokens`
       {
-        pubkey: await getAssociatedTokenAddress(
-          baseAssetMints[i].address,
-          legTakerAmount > 0 ? maker : taker,
-          undefined,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        ),
+        pubkey: convergence
+          .tokens()
+          .pdas()
+          .associatedTokenAccount({
+            mint: baseAssetMint!.address,
+            owner: legTakerAmount > 0 ? maker : taker,
+            programs,
+          }),
         isSigner: false,
         isWritable: true,
       },
@@ -204,20 +242,28 @@ export const partiallySettleLegsBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createPartiallySettleLegsInstruction(
-        {
-          protocol: protocol.address,
-          rfq,
-          response,
-          anchorRemainingAccounts,
-        },
-        {
-          legAmountToSettle,
-        },
-        rfqProgram.address
-      ),
-      signers: [],
-      key: 'partiallySettleLegs',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createPartiallySettleLegsInstruction(
+          {
+            protocol: protocol.address,
+            rfq,
+            response,
+            anchorRemainingAccounts,
+          },
+          {
+            legAmountToSettle,
+          },
+          rfqProgram.address
+        ),
+        signers: [],
+        key: 'partiallySettleLegs',
+      }
+    );
 };

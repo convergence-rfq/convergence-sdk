@@ -2,8 +2,6 @@ import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
 } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -17,6 +15,8 @@ import {
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
@@ -62,8 +62,6 @@ export type CleanUpResponseLegsInput = {
   response: PublicKey;
 
   firstToPrepare: PublicKey;
-
-  baseAssetMints: Mint[];
 
   /*
    * Args
@@ -121,6 +119,11 @@ export const cleanUpResponseLegsOperationHandler: OperationHandler<CleanUpRespon
  */
 export type CleanUpResponseLegsBuilderParams = CleanUpResponseLegsInput;
 
+enum OptionType {
+  CALL = 0,
+  PUT = 1,
+}
+
 /**
  * Cleans up Legs for a Response.
  *
@@ -145,7 +148,6 @@ export const cleanUpResponseLegsBuilder = async (
     rfq,
     response,
     firstToPrepare,
-    baseAssetMints,
     legAmountToClear,
   } = params;
 
@@ -160,7 +162,11 @@ export const cleanUpResponseLegsBuilder = async (
     .findResponseByAddress({ address: response });
 
   const initializedLegs = responseModel.legPreparationsInitializedBy.length;
-  let mintIndex = 0;
+
+  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const psyoptionsEuropeanProgram = convergence
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
 
   for (let i = initializedLegs - legAmountToClear; i < initializedLegs; i++) {
     const instrumentProgramAccount: AccountMeta = {
@@ -176,6 +182,46 @@ export const cleanUpResponseLegsBuilder = async (
       index: i,
       rfqModel,
     });
+
+    let baseAssetMint: Mint;
+
+    const leg = rfqModel.legs[i];
+
+    if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsEuropeanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+
+      const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
+        address:
+          instrument.optionType == OptionType.CALL
+            ? instrument.meta.callOptionMint
+            : instrument.meta.putOptionMint,
+      });
+
+      console.log(
+        'baseasset mint inside euro: ' + euroMetaOptionMint.address.toString()
+      );
+
+      baseAssetMint = euroMetaOptionMint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      spotInstrumentProgram.address.toString()
+    ) {
+      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      console.log('baseasset mint inside spot: ' + mint.address.toString());
+
+      baseAssetMint = mint;
+    }
+
     const legAccounts: AccountMeta[] = [
       {
         pubkey: firstToPrepare,
@@ -188,13 +234,11 @@ export const cleanUpResponseLegsBuilder = async (
         isWritable: true,
       },
       {
-        pubkey: await getAssociatedTokenAddress(
-          baseAssetMints[mintIndex].address,
-          dao,
-          undefined,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        ),
+        pubkey: convergence.tokens().pdas().associatedTokenAccount({
+          mint: baseAssetMint!.address,
+          owner: dao,
+          programs,
+        }),
         isSigner: false,
         isWritable: true,
       },
@@ -202,8 +246,6 @@ export const cleanUpResponseLegsBuilder = async (
     ];
 
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
-
-    mintIndex++;
   }
 
   return TransactionBuilder.make()

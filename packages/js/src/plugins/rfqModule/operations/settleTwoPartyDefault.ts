@@ -171,9 +171,7 @@ export const settleTwoPartyDefaultBuilder = async (
     .collateral()
     .pdas()
     .collateralToken({
-      // user: convergence.rpc().getDefaultFeePayer().publicKey,
       user: protocol.authority,
-      // user: payer.publicKey,
       programs,
     });
 

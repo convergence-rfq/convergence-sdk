@@ -17,6 +17,8 @@ import {
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 
 const Key = 'SettleOperation' as const;
 
@@ -56,8 +58,6 @@ export type SettleInput = {
   response: PublicKey;
 
   quoteMint: Mint;
-
-  baseAssetMints: Mint[];
 };
 
 /**
@@ -106,6 +106,11 @@ export const settleOperationHandler: OperationHandler<SettleOperation> = {
  */
 export type SettleBuilderParams = SettleInput;
 
+enum OptionType {
+  CALL = 0,
+  PUT = 1,
+}
+
 /**
  * Settles
  *
@@ -125,7 +130,7 @@ export const settleBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { rfq, response, baseAssetMints, quoteMint, maker, taker } = params;
+  const { rfq, response, quoteMint, maker, taker } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await convergence.protocol().get();
@@ -137,9 +142,12 @@ export const settleBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const startIndex = parseInt(responseModel.settledLegs.toString());
+  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const psyoptionsEuropeanProgram = convergence
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
 
-  let j = 0;
+  const startIndex = parseInt(responseModel.settledLegs.toString());
 
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];
@@ -152,6 +160,39 @@ export const settleBuilder = async (
     }
     if (confirmationSide == Side.Bid) {
       legTakerAmount *= -1;
+    }
+
+    let baseAssetMint: Mint;
+
+    if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsEuropeanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+
+      const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
+        address:
+          instrument.optionType == OptionType.CALL
+            ? instrument.meta.callOptionMint
+            : instrument.meta.putOptionMint,
+      });
+
+      baseAssetMint = euroMetaOptionMint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      spotInstrumentProgram.address.toString()
+    ) {
+      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      console.log('baseasset mint inside spot: ' + mint.address.toString());
+
+      baseAssetMint = mint;
     }
 
     const instrumentProgramAccount: AccountMeta = {
@@ -177,13 +218,14 @@ export const settleBuilder = async (
       },
       // `receiver_tokens`
       {
-        pubkey: await getAssociatedTokenAddress(
-          baseAssetMints[j].address,
-          legTakerAmount > 0 ? maker : taker,
-          undefined,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        ),
+        pubkey: convergence
+          .tokens()
+          .pdas()
+          .associatedTokenAccount({
+            mint: baseAssetMint!.address,
+            owner: legTakerAmount > 0 ? maker : taker,
+            programs,
+          }),
         isSigner: false,
         isWritable: true,
       },
@@ -191,13 +233,9 @@ export const settleBuilder = async (
     ];
 
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
-
-    j++;
   }
 
   const confirmationSide = responseModel.confirmed?.side;
-
-  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
   const spotInstrumentProgramAccount: AccountMeta = {
     pubkey: spotInstrumentProgram.address,

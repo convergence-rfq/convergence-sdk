@@ -9,6 +9,7 @@ import {
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
 import {
+  //@ts-ignore
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
@@ -23,9 +24,23 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
+// import { OptionType } from '@/index';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
+//@ts-ignore
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import {
+  EuroMeta,
+  /*EuroPrimitive,*/
+  instructions,
+} from '@mithraic-labs/tokenized-euros';
+//@ts-ignore
+const { mintOptions } = instructions;
+// import * as anchor from '@project-serum/anchor';
+//@ts-ignore
+// import { web3 } from '@project-serum/anchor';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -65,6 +80,7 @@ export type PrepareSettlementInput = {
    * @defaultValue `convergence.identity()`
    */
   caller?: Signer;
+  // caller: Signer;
 
   /** The address of the protocol */
   protocol?: PublicKey;
@@ -85,7 +101,18 @@ export type PrepareSettlementInput = {
 
   quoteMint: Mint;
 
-  baseAssetMints: Mint[];
+  // baseAssetMints: Mint[];
+
+  // provider: anchor.AnchorProvider;
+
+  euroMeta?: EuroMeta;
+
+  // europeanProgram: anchor.Program<EuroPrimitive>;
+  europeanProgram?: any;
+
+  euroMetaKey?: PublicKey;
+
+  mintAmount?: any;
 };
 
 /**
@@ -135,6 +162,11 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
  */
 export type PrepareSettlementBuilderParams = PrepareSettlementInput;
 
+enum OptionType {
+  CALL = 0,
+  PUT = 1,
+}
+
 /**
  * Prepares for settlement
  *
@@ -161,15 +193,120 @@ export const prepareSettlementBuilder = async (
     side,
     legAmountToPrepare,
     quoteMint,
-    baseAssetMints,
+    euroMeta,
+    europeanProgram,
+    mintAmount,
   } = params;
 
   const protocol = await convergence.protocol().get();
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const anchorRemainingAccounts: AccountMeta[] = [];
+  const stableMintToken = await getAssociatedTokenAddress(
+    quoteMint.address,
+    caller.publicKey
+  );
+
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const psyoptionsEuropeanProgram = convergence
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+
+  let baseAssetMints: Mint[] = [];
+
+  let txBuilder = TransactionBuilder.make().setFeePayer(payer);
+
+  for (const leg of rfqModel.legs) {
+    if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsEuropeanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+      const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
+        address:
+          instrument.optionType == OptionType.CALL
+            ? instrument.meta.callOptionMint
+            : instrument.meta.putOptionMint,
+      });
+
+      baseAssetMints.push(euroMetaOptionMint);
+
+      const { token: optionDestination } = await convergence
+        .tokens()
+        .createToken({
+          mint:
+            instrument.optionType == OptionType.CALL
+              ? instrument.meta.callOptionMint
+              : instrument.meta.putOptionMint,
+          owner: caller.publicKey,
+        });
+      const { token: writerDestination } = await convergence
+        .tokens()
+        .createToken({
+          mint:
+            instrument.optionType == OptionType.CALL
+              ? instrument.meta.callWriterMint
+              : instrument.meta.putWriterMint,
+          owner: caller.publicKey,
+        });
+
+      const underlyingMintToken = convergence
+        .tokens()
+        .pdas()
+        .associatedTokenAccount({
+          mint: instrument.mint.address,
+          owner: caller.publicKey,
+          programs,
+        });
+
+      const minterCollateralKey =
+        instrument.optionType == OptionType.CALL
+          ? underlyingMintToken
+          : stableMintToken;
+
+      const { instruction } = mintOptions(
+        europeanProgram,
+        instrument.metaKey,
+        euroMeta!,
+        minterCollateralKey,
+        optionDestination.address,
+        writerDestination.address,
+        mintAmount,
+        OptionType.PUT
+      );
+
+      instruction.keys[0] = {
+        pubkey: caller.publicKey,
+        isSigner: true,
+        isWritable: false,
+      };
+
+      txBuilder.add({
+        instruction,
+        signers: [caller],
+      });
+
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+      await txBuilder.sendAndConfirm(convergence, confirmOptions);
+    } else if (
+      leg.instrumentProgram.toString() ===
+      spotInstrumentProgram.address.toString()
+    ) {
+      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMints.push(mint);
+    }
+  }
+
+  const anchorRemainingAccounts: AccountMeta[] = [];
 
   const spotInstrumentProgramAccount: AccountMeta = {
     pubkey: spotInstrumentProgram.address,
@@ -191,13 +328,11 @@ export const prepareSettlementBuilder = async (
       isWritable: true,
     },
     {
-      pubkey: await getAssociatedTokenAddress(
-        quoteMint.address,
-        caller.publicKey,
-        false,
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      ),
+      pubkey: convergence.tokens().pdas().associatedTokenAccount({
+        mint: quoteMint.address,
+        owner: caller.publicKey,
+        programs,
+      }),
       isSigner: false,
       isWritable: true,
     },
@@ -213,10 +348,6 @@ export const prepareSettlementBuilder = async (
   ];
 
   anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
-
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-
-  //TODO: extract base asset from base asset index
 
   for (let legIndex = 0; legIndex < legAmountToPrepare; legIndex++) {
     const instrumentProgramAccount: AccountMeta = {
@@ -240,15 +371,13 @@ export const prepareSettlementBuilder = async (
         isSigner: true,
         isWritable: true,
       },
-      // `caller_tokens`
+      // `caller_tokens` , optionDestination
       {
-        pubkey: await getAssociatedTokenAddress(
-          baseAssetMints[legIndex].address, //this mint acct must == mint below
-          caller.publicKey,
-          undefined,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        ),
+        pubkey: convergence.tokens().pdas().associatedTokenAccount({
+          mint: baseAssetMints[legIndex].address,
+          owner: caller.publicKey,
+          programs,
+        }),
         isSigner: false,
         isWritable: true,
       },

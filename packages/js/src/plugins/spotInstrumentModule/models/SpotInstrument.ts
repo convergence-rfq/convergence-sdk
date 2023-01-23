@@ -61,7 +61,7 @@ export class SpotInstrument implements Instrument {
     return Buffer.from(this.mint.address.toBytes());
   }
 
-  static async createFromLeg(
+    static async createFromLeg(
     convergence: Convergence,
     leg: Leg
   ): Promise<SpotInstrument> {

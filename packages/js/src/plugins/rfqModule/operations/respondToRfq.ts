@@ -193,6 +193,7 @@ export const respondToRfqBuilder = async (
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
+  //TODO: use PDA client
   const [config] = PublicKey.findProgramAddressSync(
     [Buffer.from('config')],
     riskEngineProgram.address

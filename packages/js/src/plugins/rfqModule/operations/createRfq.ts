@@ -15,6 +15,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { addLegsToRfqBuilder } from './addLegsToRfq';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -112,9 +113,15 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
-    const { keypair = Keypair.generate() } = operation.input;
+    const {
+      keypair = Keypair.generate(),
+      taker = convergence.identity(),
+      instruments,
+    } = operation.input;
 
-    const builder = await createRfqBuilder(
+    const MAX_TX_SIZE = 1232;
+
+    let builder = await createRfqBuilder(
       convergence,
       {
         ...operation.input,
@@ -123,6 +130,47 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       scope
     );
     scope.throwIfCanceled();
+
+    let txSize = await convergence
+      .rpc()
+      .getTransactionSize(builder, [taker, keypair]);
+
+    // console.log('tx size in createRfq: ' + txSize);
+
+    let instrs = instruments;
+
+    while (txSize + 193 > MAX_TX_SIZE) {
+      const ins = instrs.slice(0, Math.trunc(instrs.length / 2));
+
+      builder = await createRfqBuilder(
+        convergence,
+        {
+          ...operation.input,
+          keypair,
+          instruments: ins,
+        },
+        scope
+      );
+
+      txSize = await convergence
+        .rpc()
+        .getTransactionSize(builder, [taker, keypair]);
+
+      instrs = ins;
+    }
+
+    //determining whether to call addLegsToRfq
+    if (instrs.length < instruments.length) {
+      const ins = instruments.slice(instrs.length);
+
+      const builder = addLegsToRfqBuilder(
+        convergence,
+        {
+          ...operation.input,
+        },
+        scope
+      );
+    }
 
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
       convergence,
@@ -171,13 +219,11 @@ export const createRfqBuilder = async (
   const {
     taker = convergence.identity(),
     orderType,
-    //@ts-ignore
     instruments,
     quoteAsset,
     fixedSize,
-    activeWindow = 2,
-    settlingWindow = 1,
-    // legSize = 4,
+    activeWindow = 5_000,
+    settlingWindow = 1_000,
   } = params;
 
   let { legSize } = params;
