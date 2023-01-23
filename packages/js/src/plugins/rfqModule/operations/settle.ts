@@ -2,8 +2,6 @@ import { createSettleInstruction, Side } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
 } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -257,16 +255,18 @@ export const settleBuilder = async (
     },
     // `receiver_tokens`
     {
-      pubkey: await getAssociatedTokenAddress(
-        quoteMint.address,
-        rfqModel.fixedSize.__kind == 'QuoteAsset' &&
-          confirmationSide == Side.Ask
-          ? maker
-          : taker,
-        undefined,
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      ),
+      pubkey: convergence
+        .tokens()
+        .pdas()
+        .associatedTokenAccount({
+          mint: quoteMint.address,
+          owner:
+            rfqModel.fixedSize.__kind == 'QuoteAsset' &&
+            confirmationSide == Side.Ask
+              ? maker
+              : taker,
+          programs,
+        }),
       isSigner: false,
       isWritable: true,
     },

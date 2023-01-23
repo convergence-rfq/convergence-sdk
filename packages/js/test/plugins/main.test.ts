@@ -1114,29 +1114,29 @@ test('[collateralModule] it can find collateral by user', async (t: Test) => {
 
 test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   //@ts-ignore
-  // const { europeanProgram, euroMeta, euroMetaKey } =
-  //   await initializeNewOptionMeta(
-  //     cvg,
-  //     btcMint,
-  //     usdcMint,
-  //     17_500,
-  //     1_000_000,
-  //     3_600,
-  //     takerUSDCWallet,
-  //     makerUSDCWallet
-  //   );
-
-  // const instrument1 = new PsyoptionsEuropeanInstrument(
-  //   cvg,
-  //   btcMint,
-  //   OptionType.PUT,
-  //   euroMeta,
-  //   euroMetaKey,
-  //   {
-  //     amount: 1,
-  //     side: Side.Bid,
-  //   }
-  // );
+  const { europeanProgram, euroMeta, euroMetaKey } =
+    await initializeNewOptionMeta(
+      cvg,
+      btcMint,
+      usdcMint,
+      17_500,
+      1_000_000,
+      3_600,
+      takerUSDCWallet,
+      makerUSDCWallet
+    );
+  //@ts-ignore
+  const instrument1 = new PsyoptionsEuropeanInstrument(
+    cvg,
+    btcMint,
+    OptionType.PUT,
+    euroMeta,
+    euroMetaKey,
+    {
+      amount: 1,
+      side: Side.Bid,
+    }
+  );
 
   const instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[] = [];
   // 25
@@ -1146,13 +1146,7 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
       side: Side.Ask,
     })
   );
-  // instruments.push(instrument1);
-  instruments.push(
-    new SpotInstrument(cvg, btcMint, {
-      amount: 10,
-      side: Side.Ask,
-    })
-  );
+  instruments.push(instrument1);
   instruments.push(
     new SpotInstrument(cvg, btcMint, {
       amount: 10,
@@ -1285,20 +1279,23 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
       side: Side.Bid,
     })
   );
+  instruments.push(
+    new SpotInstrument(cvg, btcMint, {
+      amount: 1,
+      side: Side.Bid,
+    })
+  );
 
   let expLegSize = 4;
 
   let sizes: number[] = [];
-  // let counter: number = 0;
 
-  for (const instrument of instruments) {
+  // for (const instrument of instruments) {
+  for (const instrument of instruments.slice(0, 10)) {
     const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
     expLegSize += await instrumentClient.getLegDataSize();
 
-    // if (counter < 2) {
     sizes.push(await instrumentClient.getLegDataSize());
-    //   counter++;
-    // }
   }
 
   for (const x of sizes) {
@@ -1309,10 +1306,10 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   //@ts-ignore
   const { rfq } = await cvg.rfqs().create({
     //max slice: (0, 13). if > 13 we get:
-    //RangeError [ERR_OUT_OF_RANGE]: The value of "offset" is out of range. 
+    //RangeError [ERR_OUT_OF_RANGE]: The value of "offset" is out of range.
     //It must be >= 0 and <= 1231. Received 1232
     // from Buffer.writeUIntLE
-    instruments: instruments.slice(0, 13),
+    instruments: instruments.slice(0, 10),
     // instruments,
     taker,
     legSize: expLegSize,
@@ -1322,7 +1319,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   });
 
   // if (instruments.length > 7) {
-  //   // 8
   //   await cvg.rfqs().addLegsToRfq({
   //     taker,
   //     rfq: rfq.address,
@@ -1331,7 +1327,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   // }
 
   // if (instruments.length > 17) {
-  //   // 10
   //   await cvg.rfqs().addLegsToRfq({
   //     taker,
   //     rfq: rfq.address,
@@ -1344,60 +1339,64 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   //   model: 'rfq',
   //   address: spokSamePubkey(rfq.address),
   // });
-  // //@ts-ignore
-  // const { rfq: finalizedRfq } = await cvg.rfqs().finalizeRfqConstruction({
-  //   taker,
-  //   rfq: rfq.address,
-  // });
+  //@ts-ignore
+  const { rfq: finalizedRfq } = await cvg.rfqs().finalizeRfqConstruction({
+    taker,
+    rfq: rfq.address,
+  });
 
-  // const { rfqResponse } = await cvg.rfqs().respond({
-  //   maker,
-  //   rfq: rfq.address,
-  //   bid: {
-  //     __kind: 'FixedSize',
-  //     priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-  //   },
-  //   ask: null,
-  //   keypair: Keypair.generate(),
-  // });
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+    keypair: Keypair.generate(),
+  });
 
   // //if we stop with confirmResponse we don't get the rfq size error
 
-  // await cvg.rfqs().confirmResponse({
-  //   taker,
-  //   rfq: rfq.address,
-  //   response: rfqResponse.address,
-  //   side: Side.Bid,
-  //   overrideLegMultiplierBps: null,
-  // });
+  await cvg.rfqs().confirmResponse({
+    taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: Side.Bid,
+    overrideLegMultiplierBps: null,
+  });
 
-  // await cvg.rfqs().prepareSettlement({
-  //   caller: taker,
-  //   rfq: rfq.address,
-  //   response: rfqResponse.address,
-  //   side: AuthoritySide.Taker,
-  //   // legAmountToPrepare: 13,
-  //   legAmountToPrepare: instruments.length >= 13 ? 13 : instruments.length,
-  //   quoteMint: usdcMint,
-  //   euroMeta,
-  //   euroMetaKey,
-  //   europeanProgram,
-  // });
-  // //@ts-ignore
-  // const firstToPrepare = taker.publicKey;
+  await cvg.rfqs().prepareSettlement({
+    caller: taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: AuthoritySide.Taker,
+    // legAmountToPrepare: 13,
+    // legAmountToPrepare: instruments.length >= 13 ? 13 : instruments.length,
+    legAmountToPrepare: instruments.slice(0, 10).length,
+    quoteMint: usdcMint,
+    mintAmount: new anchor.BN(1_000_000),
+    euroMeta,
+    euroMetaKey,
+    europeanProgram,
+  });
+  //@ts-ignore
+  const firstToPrepare = taker.publicKey;
 
-  // await cvg.rfqs().prepareSettlement({
-  //   caller: maker,
-  //   rfq: rfq.address,
-  //   response: rfqResponse.address,
-  //   side: AuthoritySide.Maker,
-  //   // legAmountToPrepare: 13,
-  //   legAmountToPrepare: instruments.length >= 13 ? 13 : instruments.length,
-  //   quoteMint: usdcMint,
-  //   euroMeta,
-  //   euroMetaKey,
-  //   europeanProgram,
-  // });
+  await cvg.rfqs().prepareSettlement({
+    caller: maker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: AuthoritySide.Maker,
+    // legAmountToPrepare: 13,
+    // legAmountToPrepare: instruments.length >= 13 ? 13 : instruments.length,
+    legAmountToPrepare: instruments.slice(0, 10).length,
+    quoteMint: usdcMint,
+    mintAmount: new anchor.BN(1_000_000),
+    euroMeta,
+    euroMetaKey,
+    europeanProgram,
+  });
 
   // if (instruments.length >= 13) {
   //   await cvg.rfqs().prepareMoreLegsSettlement({

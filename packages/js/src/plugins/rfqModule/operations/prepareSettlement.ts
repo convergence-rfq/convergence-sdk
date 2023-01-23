@@ -8,12 +8,7 @@ import {
   ComputeBudgetProgram,
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
-import {
-  //@ts-ignore
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -39,7 +34,7 @@ import {
 //@ts-ignore
 const { mintOptions } = instructions;
 // import * as anchor from '@project-serum/anchor';
-//@ts-ignore
+// @ts-ignore
 // import { web3 } from '@project-serum/anchor';
 
 const Key = 'PrepareSettlementOperation' as const;
@@ -101,10 +96,6 @@ export type PrepareSettlementInput = {
 
   quoteMint: Mint;
 
-  // baseAssetMints: Mint[];
-
-  // provider: anchor.AnchorProvider;
-
   euroMeta?: EuroMeta;
 
   // europeanProgram: anchor.Program<EuroPrimitive>;
@@ -135,24 +126,78 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
-      const builder = await prepareSettlementBuilder(
+      //@ts-ignore
+      const { caller = convergence.identity(), legAmountToPrepare } =
+        operation.input;
+      //@ts-ignore
+      const MAX_TX_SIZE = 1232;
+
+      let builder = await prepareSettlementBuilder(
         convergence,
         {
           ...operation.input,
         },
         scope
       );
+      let builder2: TransactionBuilder;
       scope.throwIfCanceled();
+
+      let txSize = await convergence
+        .rpc()
+        .getTransactionSize(builder, [caller]);
+
+      console.log('tx size outside while-loop: ' + txSize.toString());
+      //@ts-ignore
+      let slicedLegAmount = legAmountToPrepare;
+
+      // while (txSize + 193 > MAX_TX_SIZE) {
+      if (txSize + 193 > MAX_TX_SIZE) {
+        console.log('inside while-loop');
+
+        // const legAmt = Math.trunc(slicedLegAmount / 2);
+
+        // console.log('inside while-loop new legAmt: ' + legAmt.toString());
+
+        builder2 = await prepareSettlementBuilder(
+          convergence,
+          {
+            ...operation.input,
+            // legAmountToPrepare: legAmt,
+            caller,
+          },
+          scope
+        );
+        console.log('inside while-loop updated builder');
+
+        txSize = await convergence.rpc().getTransactionSize(builder2, [caller]);
+
+        console.log('tx size inside while-loop: ' + txSize.toString());
+
+        // slicedLegAmount = legAmt;
+      }
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
         scope.confirmOptions
       );
+      //@ts-ignore
+      if (builder2) {
+        const output = await builder2.sendAndConfirm(
+          convergence,
+          confirmOptions
+        );
+        scope.throwIfCanceled();
 
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
-      scope.throwIfCanceled();
+        return { ...output };
+      } else {
+        const output = await builder.sendAndConfirm(
+          convergence,
+          confirmOptions
+        );
+        scope.throwIfCanceled();
 
-      return { ...output };
+        return { ...output };
+      }
     },
   };
 
@@ -201,10 +246,11 @@ export const prepareSettlementBuilder = async (
   const protocol = await convergence.protocol().get();
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const stableMintToken = await getAssociatedTokenAddress(
-    quoteMint.address,
-    caller.publicKey
-  );
+  const stableMintToken = convergence.tokens().pdas().associatedTokenAccount({
+    mint: quoteMint.address,
+    owner: caller.publicKey,
+    programs,
+  });
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
