@@ -17,6 +17,7 @@ const DEFAULT_KEYPAIR_FILE = '/Users/pindaroso/.config/solana/dao.json';
 // ACTIONS
 
 const airdrop = async (options: any) => {
+  console.log('Airdropping...');
   const cvg = await createCvg(options);
   const user = cvg.rpc().getDefaultFeePayer();
   const tx = await cvg.connection.requestAirdrop(
@@ -24,28 +25,27 @@ const airdrop = async (options: any) => {
     options.amount * LAMPORTS_PER_SOL
   );
   await cvg.connection.confirmTransaction(tx);
+  console.log('Success!');
 };
 
-const setupMints = async (options: any) => {
+const createMint = async (options: any) => {
+  console.log('Creating mint...');
   const cvg = await createCvg(options);
   const user = cvg.rpc().getDefaultFeePayer();
-  const { mint: usdcMint } = await cvg.tokens().createMint({
+  const { mint } = await cvg.tokens().createMint({
     mintAuthority: user.publicKey,
-    decimals: 6,
+    decimals: options.decimals,
   });
-  const { mint: btcMint } = await cvg.tokens().createMint({
-    mintAuthority: user.publicKey,
-    decimals: 9,
-  });
-
-  console.log(`BTC: ${btcMint.address.toString()}`);
-  console.log(`USDC: ${usdcMint.address.toString()}`);
+  console.log(`Address: ${mint.address.toString()}`);
+  console.log('Success!');
 };
 
 const initializeProtocol = async (options: Options) => {
+  console.log('Initializing protocol...');
   const cvg = await createCvg(options);
   const collateralMint = new PublicKey(options.collateralMint);
   await cvg.protocol().initialize({ collateralMint });
+  console.log('Success!');
 };
 
 /// HELPERS
@@ -72,26 +72,27 @@ const addDefaultArgs = (cmd: any) => {
 const program = new Command();
 program.name('convergence').version('1.0.0').description('Convergence RFQ CLI');
 
-const airdropCommand = program
+const airdropCmd = program
   .command('airdrop')
   .description('Airdrops SOL to the current user')
   .option('--amount <value>', 'Amount to airdrop in SOL')
   .action(airdrop);
-const initializeProtocolCommand = program
+const setupMintsCmd = program
+  .command('create-mint')
+  .description('Create mint')
+  .option('--decimals <value>', 'Decimals')
+  .action(createMint);
+const initializeProtocolCmd = program
   .command('initialize-protocol')
   .description('Initializes protocol with taker and maker fees')
   .option('--maker-fee <value>', 'Maker fee')
   .option('--taker-fee <value>', 'Taker fee')
   .option('--collateral-mint <value>', 'Collaterl mint public key')
   .action(initializeProtocol);
-const setupMintsCommand = program
-  .command('setup-mints')
-  .description('Setup mints')
-  .action(setupMints);
 
-addDefaultArgs(initializeProtocolCommand);
-addDefaultArgs(setupMintsCommand);
-addDefaultArgs(airdropCommand);
+addDefaultArgs(initializeProtocolCmd);
+addDefaultArgs(setupMintsCmd);
+addDefaultArgs(airdropCmd);
 
 /// EXECUTE
 
