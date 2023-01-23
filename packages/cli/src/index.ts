@@ -67,22 +67,24 @@ const createMint = async (options: any) => {
   console.log('Creating mint...');
   const cvg = await createCvg(options);
   const user = cvg.rpc().getDefaultFeePayer();
-  const { mint } = await cvg.tokens().createMint({
+  const { mint, response } = await cvg.tokens().createMint({
     mintAuthority: user.publicKey,
     decimals: options.decimals,
   });
-  console.log(`Address: ${mint.address.toString()}`);
+  console.log('Address:', mint.address.toString());
+  console.log('Tx:', response.signature);
   console.log('Success!');
 };
 
 const createWallet = async (options: any) => {
   console.log('Creating wallet...');
   const cvg = await createCvg(options);
-  const { token: wallet } = await cvg.tokens().createToken({
+  const { token: wallet, response } = await cvg.tokens().createToken({
     mint: new PublicKey(options.mint),
     owner: new PublicKey(options.owner),
   });
   console.log('Address:', wallet.address.toString());
+  console.log('Tx:', response.signature);
   console.log('Success!');
 };
 
@@ -90,12 +92,13 @@ const mintTo = async (options: any) => {
   console.log('Minting to...');
   const cvg = await createCvg(options);
   const user = cvg.rpc().getDefaultFeePayer();
-  await cvg.tokens().mint({
+  const { response } = await cvg.tokens().mint({
     mintAddress: new PublicKey(options.mint),
     amount: token(options.amount),
     toToken: new PublicKey(options.wallet),
     mintAuthority: user.publicKey,
   });
+  console.log('Tx:', response.signature);
   console.log('Success!');
 };
 
@@ -103,14 +106,23 @@ const initializeProtocol = async (options: Options) => {
   console.log('Initializing protocol...');
   const cvg = await createCvg(options);
   const collateralMint = new PublicKey(options.collateralMint);
-  await cvg.protocol().initialize({ collateralMint });
+  const { response } = await cvg.protocol().initialize({ collateralMint });
+  console.log('Tx:', response.signature);
+  console.log('Success!');
+};
+
+const initializeRiskEngine = async (options: Options) => {
+  console.log('Initializing risk engine...');
+  const cvg = await createCvg(options);
+  const { response } = await cvg.riskEngine().initializeConfig();
+  console.log('Tx:', response.signature);
   console.log('Success!');
 };
 
 const addInstrument = async (options: Options) => {
   console.log('Adding instrument...');
   const cvg = await createCvg(options);
-  await cvg.protocol().addInstrument({
+  const { response } = await cvg.protocol().addInstrument({
     authority: cvg.rpc().getDefaultFeePayer(),
     instrumentProgram: new PublicKey(options.instrumentProgram),
     canBeUsedAsQuote: options.canBeUsedAsQuote,
@@ -120,6 +132,7 @@ const addInstrument = async (options: Options) => {
     revertPreparationAccountAmount: options.revertPreparationAccountAmount,
     cleanUpAccountAmount: options.cleanUpAccountAmount,
   });
+  console.log('Tx:', response.signature);
   console.log('Success!');
 };
 
@@ -142,7 +155,7 @@ const addBaseAsset = async (options: Options) => {
     riskCategory = RiskCategory.VeryHigh;
   }
 
-  await cvg.protocol().addBaseAsset({
+  const { response } = await cvg.protocol().addBaseAsset({
     authority: cvg.rpc().getDefaultFeePayer(),
     index: { value: baseAssets.length },
     ticker: options.ticker,
@@ -152,7 +165,19 @@ const addBaseAsset = async (options: Options) => {
       address: new PublicKey(options.oracleAddress),
     },
   });
+  console.log('Tx:', response.signature);
 
+  console.log('Success!');
+};
+
+const registerMint = async (options: Options) => {
+  console.log('Registering mint...');
+  const cvg = await createCvg(options);
+  const { response } = await cvg.protocol().registerMint({
+    baseAssetIndex: options.baseAssetIndex,
+    mint: new PublicKey(options.mint),
+  });
+  console.log('Tx:', response.signature);
   console.log('Success!');
 };
 
@@ -191,6 +216,10 @@ const initializeProtocolCmd = program
   .option('--taker-fee <value>', 'Taker fee')
   .option('--collateral-mint <value>', 'Collateral mint address')
   .action(initializeProtocol);
+const initializeRiskEngineCmd = program
+  .command('initialize-risk-engine')
+  .description('Initializes risk engine')
+  .action(initializeRiskEngine);
 const addInstrumentCmd = program
   .command('add-instrument')
   .description('Adds instrument')
@@ -219,14 +248,22 @@ const addBaseAssetCmd = program
   .option('--oracle-kind <value>', 'Oracle kind', 'Switchboard')
   .option('--risk-category <value>', 'Risk category', 'very-low')
   .action(addBaseAsset);
+const registerMintCmd = program
+  .command('register-mint')
+  .description('Registers mint')
+  .option('--mint <value>', 'Mint address')
+  .option('--base-asset-index <value>', 'Base asset index')
+  .action(registerMint);
 
 addDefaultArgs(airdropCmd);
 addDefaultArgs(createMintCmd);
 addDefaultArgs(createWalletCmd);
 addDefaultArgs(mintToCmd);
 addDefaultArgs(initializeProtocolCmd);
+addDefaultArgs(initializeRiskEngineCmd);
 addDefaultArgs(addInstrumentCmd);
 addDefaultArgs(addBaseAssetCmd);
+addDefaultArgs(registerMintCmd);
 
 /// EXECUTE
 
