@@ -7,7 +7,12 @@ import {
   PublicKey,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
-import { Convergence, keypairIdentity, token } from '@convergence-rfq/sdk';
+import {
+  Convergence,
+  RiskCategory,
+  keypairIdentity,
+  token,
+} from '@convergence-rfq/sdk';
 
 type Options = any;
 
@@ -105,26 +110,49 @@ const initializeProtocol = async (options: Options) => {
 const addInstrument = async (options: Options) => {
   console.log('Adding instrument...');
   const cvg = await createCvg(options);
-  const authority = cvg.rpc().getDefaultFeePayer();
-  const instrumentProgram = new PublicKey(options.instrumentProgram);
-  const {
-    canBeUsedAsQuote,
-    validateDataAccountAmount,
-    prepareToSettleAccountAmount,
-    settleAccountAmount,
-    revertPreparationAccountAmount,
-    cleanUpAccountAmount,
-  } = options;
   await cvg.protocol().addInstrument({
-    authority,
-    instrumentProgram,
-    canBeUsedAsQuote,
-    validateDataAccountAmount,
-    prepareToSettleAccountAmount,
-    settleAccountAmount,
-    revertPreparationAccountAmount,
-    cleanUpAccountAmount,
+    authority: cvg.rpc().getDefaultFeePayer(),
+    instrumentProgram: new PublicKey(options.instrumentProgram),
+    canBeUsedAsQuote: options.canBeUsedAsQuote,
+    validateDataAccountAmount: options.validateDataAccountAmount,
+    prepareToSettleAccountAmount: options.prepareToSettleAccountAmount,
+    settleAccountAmount: options.settleAccountAmount,
+    revertPreparationAccountAmount: options.revertPreparationAccountAmount,
+    cleanUpAccountAmount: options.cleanUpAccountAmount,
   });
+  console.log('Success!');
+};
+
+const addBaseAsset = async (options: Options) => {
+  console.log('Adding base asset...');
+
+  const cvg = await createCvg(options);
+  const baseAssets = await cvg.protocol().getBaseAssets();
+
+  let riskCategory;
+  if (options.riskCategory === 'very-low') {
+    riskCategory = RiskCategory.Low;
+  } else if (options.riskCategory === 'low') {
+    riskCategory = RiskCategory.Low;
+  } else if (options.riskCategory === 'medium') {
+    riskCategory = RiskCategory.Medium;
+  } else if (options.riskCategory === 'high') {
+    riskCategory = RiskCategory.High;
+  } else {
+    riskCategory = RiskCategory.VeryHigh;
+  }
+
+  await cvg.protocol().addBaseAsset({
+    authority: cvg.rpc().getDefaultFeePayer(),
+    index: { value: baseAssets.length },
+    ticker: options.ticker,
+    riskCategory,
+    priceOracle: {
+      __kind: options.oracleKind,
+      address: new PublicKey(options.oracleAddress),
+    },
+  });
+
   console.log('Success!');
 };
 
@@ -183,6 +211,14 @@ const addInstrumentCmd = program
   )
   .option('--clean-up-account-amount <value>', 'Clean up account amount')
   .action(addInstrument);
+const addBaseAssetCmd = program
+  .command('add-base-asset')
+  .description('Adds base asset')
+  .option('--ticker <value>', 'Ticker')
+  .option('--oracle-address <value>', 'Oracle address')
+  .option('--oracle-kind <value>', 'Oracle kind', 'Switchboard')
+  .option('--risk-category <value>', 'Risk category', 'very-low')
+  .action(addBaseAsset);
 
 addDefaultArgs(airdropCmd);
 addDefaultArgs(createMintCmd);
@@ -190,6 +226,7 @@ addDefaultArgs(createWalletCmd);
 addDefaultArgs(mintToCmd);
 addDefaultArgs(initializeProtocolCmd);
 addDefaultArgs(addInstrumentCmd);
+addDefaultArgs(addBaseAssetCmd);
 
 /// EXECUTE
 
