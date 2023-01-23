@@ -1,0 +1,38 @@
+{
+  "name": "@convergence-rfq/cli",
+  "version": "1.0.0",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "module": "dist/esm/index.mjs",
+  "main": "dist/cjs/index.cjs",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
+  "files":[
+    "/dist/cjs",
+    "/dist/esm",
+    "/dist/types",
+    "/src"
+  ],
+  "scripts": {
+    "cli:run": "yarn build && node dist/cjs/index.cjs",
+    "lint": "eslint --ext js,ts,tsx src",
+    "lint:fix": "eslint --fix --ext js,ts,tsx src",
+    "clean": "rimraf dist",
+    "build": "pnpm clean && tsc && tsc-alias && rollup -c",
+    "test": "tape dist/test/**/*.test.js && pnpm test:exports",
+    "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs"
+  },
+  "dependencies": {
+    "@convergence-rfq/sdk": "workspace:*",
+    "@solana/web3.js": "^1.73.0",
+    "commander": "^10.0.0",
+    "figlet": "^1.5.2"
+  }
+}
