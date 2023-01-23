@@ -2,6 +2,9 @@
 packages/js/node_modules
 packages/js/dist
 packages/js/.turbo
+packages/cli/node_modules
+packages/cli/dist
+packages/cli/.turbo
 examples/node_modules
 node_modules
 test-ledger

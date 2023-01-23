@@ -1,0 +1,41 @@
+{
+  "name": "@convergence-rfq/cli",
+  "version": "1.0.0",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "module": "dist/esm/index.mjs",
+  "main": "dist/cjs/index.cjs",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
+  "files":[
+    "/dist/cjs",
+    "/dist/esm",
+    "/dist/types",
+    "/src"
+  ],
+  "scripts": {
+    "cli:run": "yarn build && node dist/cjs/index.cjs",
+    "cli:run:addSpotInstrument": "node dist/cjs/index.cjs add-instrument --instrument-program=FTzYU9cFnziCQvJ6ZUve7asaYqRexk7pBcn8zQ9MqoMQ --can-be-used-as-quote=true --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4",
+    "cli:run:addPsyoptionsEuropeanInstrument": "node dist/cjs/index.cjs add-instrument --instrument-program=BeJcAotUcFEWXVnh6qaBBLKaZaoaM8HSFY1L3sb1Aps3 --can-be-used-as-quote=true --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4",
+    "cli:run:addPsyoptionsAmericanInstrument": "node dist/cjs/index.cjs add-instrument --instrument-program=Cdaz7EGr2AVDkCpjMVEXDzap6oRrrrZUEaKAVLmJAX7R --can-be-used-as-quote=true --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4",
+    "lint": "eslint --ext js,ts,tsx src",
+    "lint:fix": "eslint --fix --ext js,ts,tsx src",
+    "clean": "rimraf dist",
+    "build": "pnpm clean && tsc && tsc-alias && rollup -c",
+    "test": "tape dist/test/**/*.test.js && pnpm test:exports",
+    "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs"
+  },
+  "dependencies": {
+    "@convergence-rfq/sdk": "workspace:*",
+    "@solana/web3.js": "^1.73.0",
+    "commander": "^10.0.0",
+    "figlet": "^1.5.2"
+  }
+}

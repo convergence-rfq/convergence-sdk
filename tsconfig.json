@@ -9,7 +9,7 @@
     "noEmitOnError": true,
     "emitDeclarationOnly": true,
     "paths": {
-      "@/*": ["packages/js/src/*"]
+      "@/*": ["packages/js/src/*", "packages/cli/src/*"],
     },
     "target": "es2019",
     "module": "esnext",

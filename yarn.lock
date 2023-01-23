@@ -1254,6 +1254,35 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
+"@convergence-rfq/sdk@workspace:*":
+  version "2.0.18"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/sdk/-/sdk-2.0.18.tgz#bc5774cfd553d888238800c2a659c1ba20c4812c"
+  integrity sha512-2OdUr86jY2x8Ev0rTw3OpPQg/E7C3bG9XFckuiWuZiQmFlE0klhhuUBcL5tsRrlQhNftKjQWzQ0RKry5jfRVOw==
+  dependencies:
+    "@bundlr-network/client" "^0.8.8"
+    "@convergence-rfq/beet" "0.7.5"
+    "@convergence-rfq/beet-solana" "0.4.4"
+    "@convergence-rfq/psyoptions-american-instrument" "2.0.6"
+    "@convergence-rfq/psyoptions-european-instrument" "2.0.9"
+    "@convergence-rfq/rfq" "2.0.16"
+    "@convergence-rfq/risk-engine" "2.0.12"
+    "@convergence-rfq/spot-instrument" "2.0.13"
+    "@mithraic-labs/psy-american" "^0.2.3"
+    "@mithraic-labs/tokenized-euros" "^0.2.2"
+    "@noble/ed25519" "^1.7.1"
+    "@noble/hashes" "^1.1.3"
+    "@solana/spl-token" "^0.3.5"
+    "@solana/web3.js" "^1.63.1"
+    bignumber.js "^9.0.2"
+    bn.js "^5.2.1"
+    bs58 "^5.0.0"
+    buffer "^6.0.3"
+    debug "^4.3.4"
+    eventemitter3 "^4.0.7"
+    merkletreejs "^0.2.32"
+    mime "^3.0.0"
+    node-fetch "^2.6.7"
+
 "@convergence-rfq/spot-instrument@2.0.13":
   version "2.0.13"
   resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.0.13.tgz#7ca74dd2bbdb046d12f1cac96d90603d65b36685"
@@ -2561,7 +2590,7 @@
   dependencies:
     eventemitter3 "^4.0.0"
 
-"@solana/web3.js@^1.17.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.28.0", "@solana/web3.js@^1.32.0", "@solana/web3.js@^1.36.0", "@solana/web3.js@^1.56.2", "@solana/web3.js@^1.63.0", "@solana/web3.js@^1.63.1", "@solana/web3.js@^1.66.2":
+"@solana/web3.js@^1.17.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.28.0", "@solana/web3.js@^1.32.0", "@solana/web3.js@^1.36.0", "@solana/web3.js@^1.56.2", "@solana/web3.js@^1.63.0", "@solana/web3.js@^1.63.1", "@solana/web3.js@^1.66.2", "@solana/web3.js@^1.73.0":
   version "1.73.0"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.73.0.tgz#c65f9f954ac80fca6952765c931dd72e57e1b572"
   integrity sha512-YrgX3Py7ylh8NYkbanoINUPCj//bWUjYZ5/WPy9nQ9SK3Cl7QWCR+NmbDjmC/fTspZGR+VO9LTQslM++jr5PRw==
@@ -3983,6 +4012,11 @@ combined-stream@^1.0.8:
   dependencies:
     delayed-stream "~1.0.0"
 
+commander@^10.0.0:
+  version "10.0.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-10.0.0.tgz#71797971162cd3cf65f0b9d24eb28f8d303acdf1"
+  integrity sha512-zS5PnTI22FIRM6ylNW8G4Ap0IEOyk62fhLSD0+uHRT9McRCLGpkVNvao4bjimpK/GShynyQkFFxHhwMcETmduA==
+
 commander@^2.18.0, commander@^2.20.0, commander@^2.20.3:
   version "2.20.3"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
@@ -5036,6 +5070,11 @@ fb-watchman@^2.0.0:
   integrity sha512-p5161BqbuCaSnB8jIbzQHOlpgsPmK5rJVDfDKO91Axs5NC1uu3HRQm6wt9cd9/+GtQQIO53JdGXXoyDpTAsgYA==
   dependencies:
     bser "2.1.1"
+
+figlet@^1.5.2:
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/figlet/-/figlet-1.5.2.tgz#dda34ff233c9a48e36fcff6741aeb5bafe49b634"
+  integrity sha512-WOn21V8AhyE1QqVfPIVxe3tupJacq1xGkPTB4iagT6o+P2cAgEOOwIxMftr4+ZCTI6d551ij9j61DFr0nsP2uQ==
 
 figures@3.2.0, figures@^3.0.0:
   version "3.2.0"
