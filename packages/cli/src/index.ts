@@ -9,15 +9,12 @@ import {
 } from '@solana/web3.js';
 import { Convergence, keypairIdentity } from '@convergence-rfq/sdk';
 
-console.log = console.log ?? undefined;
-
 const RPC_ENDPOINT = 'http://127.0.0.1:8899';
 const KEYPAIR =
   '/Users/pindaroso/code/convergence-sdk/packages/js/test/fixtures/dao.json'; // B7d6DombyjQSsPJdufiZg6eutmmYADkqDDGgQrd3LJPo
 
-const user = Keypair.fromSecretKey(
-  new Uint8Array(JSON.parse(readFileSync(KEYPAIR, 'utf8')))
-);
+const x = JSON.parse(readFileSync(KEYPAIR, 'utf8'));
+const user = Keypair.fromSecretKey(new Uint8Array(x));
 
 const createCvg = async (): Promise<Convergence> => {
   const connection = new Connection(RPC_ENDPOINT, {
@@ -60,16 +57,8 @@ const initializeProtocol = async (options: any) => {
   const collateralMint = new PublicKey(options.collateralMint);
   await cvg.protocol().initialize({ collateralMint });
 };
-const test = async () => {
-  console.log('TESTING');
-};
 
 const program = new Command();
-program.configureOutput({
-  writeOut: (str) => process.stdout.write(`[OUT] ${str}`),
-  writeErr: (str) => process.stdout.write(`[ERR] ${str}`),
-  outputError: (str, write) => write(str),
-});
 program
   .name('convergence')
   .version('1.0.0')
@@ -82,5 +71,4 @@ program
   .option('--collateral-mint <value>', 'Collaterl mint public key')
   .action(initializeProtocol);
 program.command('setup-mints').description('Setup mints').action(setupMints);
-program.command('test').description('Test').action(test);
 program.parse();
