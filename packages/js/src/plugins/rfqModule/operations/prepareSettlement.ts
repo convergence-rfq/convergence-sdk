@@ -23,20 +23,11 @@ import {
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
-//@ts-ignore
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import {
-  EuroMeta,
-  /*EuroPrimitive,*/
-  instructions,
-} from '@mithraic-labs/tokenized-euros';
-//@ts-ignore
+import { EuroMeta, instructions } from '@mithraic-labs/tokenized-euros';
 const { mintOptions } = instructions;
 import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
-// import * as anchor from '@project-serum/anchor';
-// @ts-ignore
-// import { web3 } from '@project-serum/anchor';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -76,7 +67,6 @@ export type PrepareSettlementInput = {
    * @defaultValue `convergence.identity()`
    */
   caller?: Signer;
-  // caller: Signer;
 
   /** The address of the protocol */
   protocol?: PublicKey;
@@ -143,15 +133,11 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         .rpc()
         .getTransactionSize(builder, [caller]);
 
-      console.log('outside while-loop');
-
       let slicedLegAmount = legAmountToPrepare;
 
       let prepareMoreLegsBuilder: TransactionBuilder;
 
       while (txSize + 193 > MAX_TX_SIZE) {
-        console.log('inside while-loop before builder creation');
-
         const legAmt = Math.trunc(slicedLegAmount / 2);
 
         builder = await prepareSettlementBuilder(
@@ -166,21 +152,12 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
 
         txSize = await convergence.rpc().getTransactionSize(builder, [caller]);
 
-        console.log('inside while-loop, after builder creation');
-
         slicedLegAmount = legAmt;
       }
-
-      console.log('sliced leg amt: ' + slicedLegAmount.toString());
 
       if (slicedLegAmount < legAmountToPrepare) {
         let prepareMoreLegsSlicedLegAmount =
           legAmountToPrepare - slicedLegAmount;
-
-        console.log(
-          'prepare more legs # of legs: ' +
-            prepareMoreLegsSlicedLegAmount.toString()
-        );
 
         prepareMoreLegsBuilder = await prepareMoreLegsSettlementBuilder(
           convergence,
@@ -203,8 +180,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
 
       //@ts-ignore
       if (prepareMoreLegsBuilder) {
-        console.log('gonna send and confirm prepareMoreLegs...');
-
         await prepareMoreLegsBuilder.sendAndConfirm(
           convergence,
           confirmOptions
@@ -447,11 +422,6 @@ export const prepareSettlementBuilder = async (
       index: legIndex,
       rfqModel,
     });
-
-    console.log(
-      'instrument escrow pda (prepareSettlement): ' +
-        instrumentEscrowPda.toString()
-    );
 
     const legAccounts: AccountMeta[] = [
       // `caller`

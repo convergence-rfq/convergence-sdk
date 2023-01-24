@@ -100,8 +100,6 @@ export const settleOperationHandler: OperationHandler<SettleOperation> = {
 
     let slicedIdx = rfqModel.legs.length;
 
-    console.log('tx size in settle: ' + txSize.toString());
-
     while (txSize + 193 > MAX_TX_SIZE) {
       const idx = Math.trunc(slicedIdx / 2);
 
@@ -118,11 +116,9 @@ export const settleOperationHandler: OperationHandler<SettleOperation> = {
 
       slicedIdx = idx;
     }
-    //@ts-ignore
     let partiallySettleBuilder: TransactionBuilder;
 
     if (slicedIdx < rfqModel.legs.length) {
-      console.log('calling partially settle legs builder...');
       partiallySettleBuilder = await partiallySettleLegsBuilder(
         convergence,
         {
@@ -242,8 +238,6 @@ export const settleBuilder = async (
       const mint = await convergence.tokens().findMintByAddress({
         address: instrument.mint.address,
       });
-
-      console.log('baseasset mint inside spot: ' + mint.address.toString());
 
       baseAssetMint = mint;
     }

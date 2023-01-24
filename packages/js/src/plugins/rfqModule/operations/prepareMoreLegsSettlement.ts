@@ -204,11 +204,6 @@ export const prepareMoreLegsSettlementBuilder = async (
       rfqModel,
     });
 
-    console.log(
-      'instrument escrow pda (prepare more legs): ' +
-        instrumentEscrowPda.toString()
-    );
-
     let baseAssetMint: Mint;
 
     const leg = rfqModel.legs[i];

@@ -86,6 +86,8 @@ export type CreateAndFinalizeRfqConstructionInput = {
 
   /** The base asset index. */
   baseAssetIndex?: BaseAssetIndex;
+
+  legSize?: number;
 };
 
 /**
@@ -181,6 +183,7 @@ export const createAndFinalizeRfqConstructionBuilder = async (
     collateralToken,
     riskEngine,
     baseAssetIndex,
+    legSize,
   } = params;
 
   const rfqBuilder = await createRfqBuilder(
@@ -194,6 +197,7 @@ export const createAndFinalizeRfqConstructionBuilder = async (
       fixedSize,
       activeWindow,
       settlingWindow,
+      legSize: legSize ? legSize : undefined,
     },
     options
   );
