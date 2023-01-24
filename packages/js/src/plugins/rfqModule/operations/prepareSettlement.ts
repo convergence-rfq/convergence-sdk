@@ -2,7 +2,12 @@ import {
   createPrepareSettlementInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
+import {
+  PublicKey,
+  AccountMeta,
+  SYSVAR_RENT_PUBKEY,
+  ComputeBudgetProgram,
+} from '@solana/web3.js';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -264,22 +269,30 @@ export const prepareSettlementBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createPrepareSettlementInstruction(
-        {
-          caller: caller.publicKey,
-          protocol: protocol.address,
-          rfq,
-          response,
-          anchorRemainingAccounts,
-        },
-        {
-          side,
-          legAmountToPrepare,
-        },
-        rfqProgram.address
-      ),
-      signers: [caller],
-      key: 'prepareSettlement',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createPrepareSettlementInstruction(
+          {
+            caller: caller.publicKey,
+            protocol: protocol.address,
+            rfq,
+            response,
+            anchorRemainingAccounts,
+          },
+          {
+            side,
+            legAmountToPrepare,
+          },
+          rfqProgram.address
+        ),
+        signers: [caller],
+        key: 'prepareSettlement',
+      }
+    );
 };

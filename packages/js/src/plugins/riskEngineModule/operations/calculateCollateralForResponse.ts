@@ -1,6 +1,7 @@
 import { createCalculateCollateralForResponseInstruction } from '@convergence-rfq/risk-engine';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { BaseAssetIndex } from '@convergence-rfq/rfq';
+import { bignum } from '@metaplex-foundation/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { RiskEnginePdasClient } from '../RiskEnginePdasClient';
 import { Convergence } from '@/Convergence';
@@ -28,6 +29,7 @@ export type CalculateCollateralForResponseOperation = Operation<
 export type CalculateCollateralForResponseOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+  collateralForResponseAmount: bignum;
 };
 
 export type CalculateCollateralForResponseIntput = {
@@ -51,11 +53,18 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
     ): Promise<CalculateCollateralForResponseOutput> => {
       scope.throwIfCanceled();
 
-      return calculateCollateralForResponsebuilder(
+      const output = await calculateCollateralForResponsebuilder(
         convergence,
         operation.input,
         scope
       ).sendAndConfirm(convergence, scope.confirmOptions);
+
+      const response = await convergence
+        .rfqs()
+        .findResponseByAddress({ address: operation.input.response });
+      const collateralForResponseAmount = response.makerCollateralLocked;
+
+      return { ...output, collateralForResponseAmount };
     },
   };
 

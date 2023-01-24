@@ -33,7 +33,6 @@ export class PsyoptionsAmericanInstrument implements Instrument {
   static createForLeg(
     convergence: Convergence,
     mint: Mint,
-    decimals: number,
     optionType: OptionType,
     optionMeta: OptionMarketWithKey,
     optionMetaPubkey: PublicKey,
@@ -58,10 +57,10 @@ export class PsyoptionsAmericanInstrument implements Instrument {
   }
 
   getValidationAccounts() {
-    const [mintInfoPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('mint_info'), this.mint.address.toBuffer()],
-      this.convergence.programs().getRfq().address
-    );
+    const mintInfoPda = this.convergence
+      .rfqs()
+      .pdas()
+      .mintInfo({ mint: this.mint.address });
     return [
       { pubkey: this.optionMetaPubKey, isSigner: false, isWritable: false },
       {

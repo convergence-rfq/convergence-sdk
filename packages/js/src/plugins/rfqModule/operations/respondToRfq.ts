@@ -3,7 +3,12 @@ import {
   Quote,
   BaseAssetIndex,
 } from '@convergence-rfq/rfq';
-import { PublicKey, Keypair, AccountMeta } from '@solana/web3.js';
+import {
+  PublicKey,
+  Keypair,
+  AccountMeta,
+  ComputeBudgetProgram,
+} from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
 import { Convergence } from '@/Convergence';
@@ -231,26 +236,34 @@ export const respondToRfqBuilder = async (
     .setContext({
       keypair,
     })
-    .add({
-      instruction: createRespondToRfqInstruction(
-        {
-          maker: maker.publicKey,
-          protocol: protocol.address,
-          rfq,
-          response: keypair.publicKey,
-          collateralInfo,
-          collateralToken,
-          riskEngine,
-          systemProgram: systemProgram.address,
-          anchorRemainingAccounts,
-        },
-        {
-          bid,
-          ask,
-        },
-        rfqProgram.address
-      ),
-      signers: [maker, keypair],
-      key: 'respondToRfq',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createRespondToRfqInstruction(
+          {
+            maker: maker.publicKey,
+            protocol: protocol.address,
+            rfq,
+            response: keypair.publicKey,
+            collateralInfo,
+            collateralToken,
+            riskEngine,
+            systemProgram: systemProgram.address,
+            anchorRemainingAccounts,
+          },
+          {
+            bid,
+            ask,
+          },
+          rfqProgram.address
+        ),
+        signers: [maker, keypair],
+        key: 'respondToRfq',
+      }
+    );
 };

@@ -3,7 +3,7 @@ import {
   Side,
   BaseAssetIndex,
 } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { bignum, COption } from '@metaplex-foundation/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -225,26 +225,34 @@ export const confirmResponseBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createConfirmResponseInstruction(
-        {
-          taker: taker.publicKey,
-          protocol: protocol.address,
-          rfq,
-          response,
-          collateralInfo: takerCollateralInfoPda,
-          makerCollateralInfo: makerCollateralInfoPda,
-          collateralToken: collateralTokenPda,
-          riskEngine: riskEngineProgram.address,
-          anchorRemainingAccounts,
-        },
-        {
-          side,
-          overrideLegMultiplierBps,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker],
-      key: 'confirmResponse',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createConfirmResponseInstruction(
+          {
+            taker: taker.publicKey,
+            protocol: protocol.address,
+            rfq,
+            response,
+            collateralInfo: takerCollateralInfoPda,
+            makerCollateralInfo: makerCollateralInfoPda,
+            collateralToken: collateralTokenPda,
+            riskEngine: riskEngineProgram.address,
+            anchorRemainingAccounts,
+          },
+          {
+            side,
+            overrideLegMultiplierBps,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker],
+        key: 'confirmResponse',
+      }
+    );
 };
