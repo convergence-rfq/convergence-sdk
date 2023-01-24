@@ -171,6 +171,8 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         slicedLegAmount = legAmt;
       }
 
+      console.log('sliced leg amt: ' + slicedLegAmount.toString());
+
       if (slicedLegAmount < legAmountToPrepare) {
         let prepareMoreLegsSlicedLegAmount =
           legAmountToPrepare - slicedLegAmount;
@@ -184,8 +186,8 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
           convergence,
           {
             ...operation.input,
-            caller,
             legAmountToPrepare: prepareMoreLegsSlicedLegAmount,
+            sidePreparedLegs: slicedLegAmount,
           },
           scope
         );
@@ -202,6 +204,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       //@ts-ignore
       if (prepareMoreLegsBuilder) {
         console.log('gonna send and confirm prepareMoreLegs...');
+
         await prepareMoreLegsBuilder.sendAndConfirm(
           convergence,
           confirmOptions
@@ -444,6 +447,11 @@ export const prepareSettlementBuilder = async (
       index: legIndex,
       rfqModel,
     });
+
+    console.log(
+      'instrument escrow pda (prepareSettlement): ' +
+        instrumentEscrowPda.toString()
+    );
 
     const legAccounts: AccountMeta[] = [
       // `caller`

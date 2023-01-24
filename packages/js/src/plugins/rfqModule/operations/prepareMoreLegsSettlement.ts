@@ -77,6 +77,8 @@ export type PrepareMoreLegsSettlementInput = {
   side: AuthoritySide;
 
   legAmountToPrepare: number;
+
+  sidePreparedLegs?: number;
 };
 
 /**
@@ -98,10 +100,13 @@ export const prepareMoreLegsSettlementOperationHandler: OperationHandler<Prepare
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareMoreLegsSettlementOutput> => {
+      const { sidePreparedLegs } = operation.input;
+
       const builder = await prepareMoreLegsSettlementBuilder(
         convergence,
         {
           ...operation.input,
+          sidePreparedLegs,
         },
         scope
       );
@@ -157,6 +162,8 @@ export const prepareMoreLegsSettlementBuilder = async (
     legAmountToPrepare,
   } = params;
 
+  let { sidePreparedLegs } = params;
+
   const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
@@ -166,10 +173,12 @@ export const prepareMoreLegsSettlementBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const sidePreparedLegs: number =
-    side == AuthoritySide.Taker
-      ? parseInt(responseModel.takerPreparedLegs.toString())
-      : parseInt(responseModel.makerPreparedLegs.toString());
+  if (!sidePreparedLegs) {
+    sidePreparedLegs =
+      side == AuthoritySide.Taker
+        ? parseInt(responseModel.takerPreparedLegs.toString())
+        : parseInt(responseModel.makerPreparedLegs.toString());
+  }
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
   const psyoptionsEuropeanProgram = convergence
@@ -195,7 +204,10 @@ export const prepareMoreLegsSettlementBuilder = async (
       rfqModel,
     });
 
-    console.log('instrument escrow pda: ' + instrumentEscrowPda.toString());
+    console.log(
+      'instrument escrow pda (prepare more legs): ' +
+        instrumentEscrowPda.toString()
+    );
 
     let baseAssetMint: Mint;
 
@@ -250,7 +262,7 @@ export const prepareMoreLegsSettlementBuilder = async (
         isSigner: false,
         isWritable: false,
       },
-      // getting seeds constraint violation with escrow here
+      // getting seeds constraint violation with `escrow` here
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,

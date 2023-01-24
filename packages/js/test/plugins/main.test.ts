@@ -1997,8 +1997,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     rfq: rfq.address,
     response: rfqResponse.address,
     side: AuthoritySide.Taker,
-    // legAmountToPrepare: 13,
-    // legAmountToPrepare: instruments.length >= 13 ? 13 : instruments.length,
     legAmountToPrepare: instruments.slice(0, 11).length,
     quoteMint: usdcMint,
     mintAmount: new anchor.BN(1_000_000),
@@ -2014,8 +2012,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     rfq: rfq.address,
     response: rfqResponse.address,
     side: AuthoritySide.Maker,
-    // legAmountToPrepare: 13,
-    // legAmountToPrepare: instruments.length >= 13 ? 13 : instruments.length,
     legAmountToPrepare: instruments.slice(0, 11).length,
     quoteMint: usdcMint,
     mintAmount: new anchor.BN(1_000_000),
@@ -2045,13 +2041,13 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   //   });
   // }
 
-  // let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
-  // spok(t, refreshedResponse, {
-  //   $topic: 'Prepared Settlement',
-  //   model: 'response',
-  //   state: StoredResponseState.ReadyForSettling,
-  // });
+  spok(t, refreshedResponse, {
+    $topic: 'Prepared Settlement',
+    model: 'response',
+    state: StoredResponseState.ReadyForSettling,
+  });
 
   // await cvg.rfqs().partiallySettleLegs({
   //   rfq: rfq.address,
