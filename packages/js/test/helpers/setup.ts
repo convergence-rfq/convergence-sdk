@@ -23,6 +23,7 @@ import {
   KeypairSigner,
   Mint,
   toBigNumber,
+  Token,
   token,
   walletAdapterIdentity,
 } from '@/index';
@@ -269,7 +270,9 @@ export const initializeNewOptionMeta = async (
   stableMint: Mint,
   strikePrice: number,
   underlyingAmountPerContract: number,
-  expiresIn: number
+  expiresIn: number,
+  takerUSDCWallet: Token,
+  makerUSDCWallet: Token
 ) => {
   const payer = convergence.rpc().getDefaultFeePayer();
 
@@ -331,6 +334,8 @@ export const initializeNewOptionMeta = async (
   await provider.sendAndConfirm(createTx);
 
   return {
+    provider,
+    europeanProgram,
     euroMeta,
     euroMetaKey,
     oracle,

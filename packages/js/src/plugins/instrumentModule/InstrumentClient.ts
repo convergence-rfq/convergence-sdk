@@ -12,7 +12,7 @@ import {
 } from '@/types';
 
 /**
- * This is a client for the instrumentModule.
+ * This is a client for the Instrument Module.
  *
  * It enables us to manage the instruments.
  *
@@ -44,7 +44,7 @@ export class InstrumentClient {
 
   async getBaseAssetIndex(): Promise<number> {
     if (this.legInfo) {
-      const mintInfo = await this.convergence
+      const registeredMint = await this.convergence
         .protocol()
         .findRegisteredMintByAddress({
           address: this.convergence
@@ -52,8 +52,8 @@ export class InstrumentClient {
             .pdas()
             .mintInfo({ mint: this.instrument.mint.address }),
         });
-      if (mintInfo.mintType.__kind === 'AssetWithRisk')
-        return mintInfo.mintType.baseAssetIndex.value;
+      if (registeredMint.mintType.__kind === 'AssetWithRisk')
+        return registeredMint.mintType.baseAssetIndex.value;
     }
     throw Error('Instrument is used for base asset index');
   }

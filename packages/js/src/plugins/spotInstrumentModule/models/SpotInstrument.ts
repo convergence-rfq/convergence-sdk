@@ -74,7 +74,7 @@ export class SpotInstrument implements Instrument {
     return Buffer.from(this.mint.address.toBytes());
   }
 
-  static deserializeInstrumentData(buffer: Buffer): InstrumentData {
+  static deserializeInstrumentData(buffer: Buffer): any {
     const [instrumentData] = instrumentDataSerializer.deserialize(buffer);
     return instrumentData;
   }

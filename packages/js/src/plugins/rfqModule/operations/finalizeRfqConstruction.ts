@@ -2,7 +2,7 @@ import {
   BaseAssetIndex,
   createFinalizeRfqConstructionInstruction,
 } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -159,7 +159,7 @@ export const finalizeRfqConstructionBuilder = async (
   const {
     taker = convergence.identity(),
     riskEngine = riskEngineProgram.address,
-    baseAssetIndex = { value: 0 },
+    // baseAssetIndex = { value: 0 },
     rfq,
   } = params;
   let { collateralInfo, collateralToken } = params;
@@ -179,6 +179,7 @@ export const finalizeRfqConstructionBuilder = async (
   const SWITCHBOARD_BTC_ORACLE = new PublicKey(
     '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
   );
+  //@ts-ignore
   const SWITCHBOARD_SOL_ORACLE = new PublicKey(
     'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
   );
@@ -198,8 +199,45 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
+  //@ts-ignore
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+
+  // let baseAssetAccounts: AccountMeta[] = [];
+  // let oracleAccounts: AccountMeta[] = [];
+
+  // for (const leg of rfqModel.legs) {
+  //   const baseAsset = convergence.rfqs().pdas().baseAsset({
+  //     baseAssetIndexValue: leg.baseAssetIndex.value,
+  //     programs,
+  //   });
+
+  //   const baseAssetAccount: AccountMeta = {
+  //     pubkey: baseAsset,
+  //     isSigner: false,
+  //     isWritable: false,
+  //   };
+
+  //   baseAssetAccounts.push(baseAssetAccount);
+  // }
+
+  // for (const leg of rfqModel.legs) {
+  //   const oracleAccount: AccountMeta = {
+  //     pubkey:
+  //       leg.baseAssetIndex.value == 0
+  //         ? SWITCHBOARD_BTC_ORACLE
+  //         : SWITCHBOARD_SOL_ORACLE,
+  //           // SWITCHBOARD_BTC_ORACLE,
+  //     isSigner: false,
+  //     isWritable: false,
+  //   };
+
+  //   oracleAccounts.push(oracleAccount);
+  // }
+
+  // -------
+
   const baseAsset = convergence.rfqs().pdas().baseAsset({
-    baseAssetIndexValue: baseAssetIndex.value,
+    baseAssetIndexValue: 0,
     programs,
   });
 
@@ -212,14 +250,13 @@ export const finalizeRfqConstructionBuilder = async (
   ];
   const oracleAccounts: AccountMeta[] = [
     {
-      pubkey:
-        baseAssetIndex.value == 0
-          ? SWITCHBOARD_BTC_ORACLE
-          : SWITCHBOARD_SOL_ORACLE,
+      pubkey: SWITCHBOARD_BTC_ORACLE,
       isSigner: false,
       isWritable: false,
     },
   ];
+
+  // -------
 
   anchorRemainingAccounts.push(
     configAccount,
@@ -232,20 +269,28 @@ export const finalizeRfqConstructionBuilder = async (
     .setContext({
       rfq,
     })
-    .add({
-      instruction: createFinalizeRfqConstructionInstruction(
-        {
-          taker: taker.publicKey,
-          protocol,
-          rfq,
-          collateralInfo,
-          collateralToken,
-          riskEngine,
-          anchorRemainingAccounts,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker],
-      key: 'finalizeRfqConstruction',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createFinalizeRfqConstructionInstruction(
+          {
+            taker: taker.publicKey,
+            protocol,
+            rfq,
+            collateralInfo,
+            collateralToken,
+            riskEngine,
+            anchorRemainingAccounts,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker],
+        key: 'finalizeRfqConstruction',
+      }
+    );
 };
