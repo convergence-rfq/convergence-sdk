@@ -10,6 +10,7 @@ import {
 import {
   Convergence,
   RiskCategory,
+  InstrumentType,
   keypairIdentity,
   token,
 } from '@convergence-rfq/sdk';
@@ -136,6 +137,28 @@ const addInstrument = async (options: Options) => {
   console.log('Success!');
 };
 
+const setRiskEngineInstrumentType = async (options: Options) => {
+  console.log('Setting risk engine instrument type...');
+  const cvg = await createCvg(options);
+
+  let instrumentType;
+  if (options.type == 'spot') {
+    instrumentType = InstrumentType.Spot;
+  } else if (options.type == 'option') {
+    instrumentType = InstrumentType.Option;
+  } else {
+    throw new Error('Invalid instrument type');
+  }
+
+  const { response } = await cvg.riskEngine().setInstrumentType({
+    instrumentProgram: new PublicKey(options.program),
+    instrumentType,
+  });
+
+  console.log('Tx:', response.signature);
+  console.log('Success!');
+};
+
 const addBaseAsset = async (options: Options) => {
   console.log('Adding base asset...');
 
@@ -220,6 +243,12 @@ const initializeRiskEngineCmd = program
   .command('initialize-risk-engine')
   .description('Initializes risk engine')
   .action(initializeRiskEngine);
+const setRiskEngineInstrumentTypeCmd = program
+  .command('set-risk-engine-instrument-type')
+  .description('Sets risk engine instrument type')
+  .option('--type <value>', 'Instrument type')
+  .option('--program <value>', 'Instrument program')
+  .action(setRiskEngineInstrumentType);
 const addInstrumentCmd = program
   .command('add-instrument')
   .description('Adds instrument')
@@ -262,6 +291,7 @@ addDefaultArgs(mintToCmd);
 addDefaultArgs(initializeProtocolCmd);
 addDefaultArgs(initializeRiskEngineCmd);
 addDefaultArgs(addInstrumentCmd);
+addDefaultArgs(setRiskEngineInstrumentTypeCmd);
 addDefaultArgs(addBaseAssetCmd);
 addDefaultArgs(registerMintCmd);
 
