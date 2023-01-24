@@ -1,8 +1,6 @@
 import { createSettleInstruction, Side } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
-import {
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -17,6 +15,7 @@ import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { partiallySettleLegsBuilder } from './partiallySettleLegs';
 
 const Key = 'SettleOperation' as const;
 
@@ -56,6 +55,8 @@ export type SettleInput = {
   response: PublicKey;
 
   quoteMint: Mint;
+
+  startIndex?: number;
 };
 
 /**
@@ -77,19 +78,69 @@ export const settleOperationHandler: OperationHandler<SettleOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ): Promise<SettleOutput> => {
-    const builder = await settleBuilder(
+    const MAX_TX_SIZE = 1232;
+    //@ts-ignore
+    const { startIndex, response, rfq } = operation.input;
+
+    let builder = await settleBuilder(
       convergence,
       {
         ...operation.input,
+        // startIndex,
       },
       scope
     );
     scope.throwIfCanceled();
 
+    let txSize = await convergence.rpc().getTransactionSize(builder, []);
+
+    const rfqModel = await convergence
+      .rfqs()
+      .findRfqByAddress({ address: rfq });
+
+    let slicedIdx = rfqModel.legs.length;
+
+    console.log('tx size in settle: ' + txSize.toString());
+
+    while (txSize + 193 > MAX_TX_SIZE) {
+      const idx = Math.trunc(slicedIdx / 2);
+
+      builder = await settleBuilder(
+        convergence,
+        {
+          ...operation.input,
+          startIndex: idx,
+        },
+        scope
+      );
+
+      txSize = await convergence.rpc().getTransactionSize(builder, []);
+
+      slicedIdx = idx;
+    }
+    //@ts-ignore
+    let partiallySettleBuilder: TransactionBuilder;
+
+    if (slicedIdx < rfqModel.legs.length) {
+      console.log('calling partially settle legs builder...');
+      partiallySettleBuilder = await partiallySettleLegsBuilder(
+        convergence,
+        {
+          ...operation.input,
+          legAmountToSettle: slicedIdx,
+        },
+        scope
+      );
+    }
+
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
       convergence,
       scope.confirmOptions
     );
+    //@ts-ignore
+    if (partiallySettleBuilder) {
+      await partiallySettleBuilder.sendAndConfirm(convergence, confirmOptions);
+    }
 
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
@@ -130,6 +181,8 @@ export const settleBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { rfq, response, quoteMint, maker, taker } = params;
 
+  let { startIndex } = params;
+
   const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await convergence.protocol().get();
 
@@ -145,7 +198,9 @@ export const settleBuilder = async (
     .programs()
     .getPsyoptionsEuropeanInstrument();
 
-  const startIndex = parseInt(responseModel.settledLegs.toString());
+  if (!startIndex) {
+    startIndex = parseInt(responseModel.settledLegs.toString());
+  }
 
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];

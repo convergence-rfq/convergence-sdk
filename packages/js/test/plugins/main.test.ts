@@ -2058,21 +2058,21 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   //   legAmountToSettle: instruments.length > 21 ? 21 : instruments.length,
   // });
 
-  // await cvg.rfqs().settle({
-  //   maker: maker.publicKey,
-  //   taker: taker.publicKey,
-  //   rfq: rfq.address,
-  //   response: rfqResponse.address,
-  //   quoteMint: usdcMint,
-  // });
+  await cvg.rfqs().settle({
+    maker: maker.publicKey,
+    taker: taker.publicKey,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    quoteMint: usdcMint,
+  });
 
-  // refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+  refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
-  // spok(t, refreshedResponse, {
-  //   $topic: 'Settled',
-  //   model: 'response',
-  //   state: StoredResponseState.Settled,
-  // });
+  spok(t, refreshedResponse, {
+    $topic: 'Settled',
+    model: 'response',
+    state: StoredResponseState.Settled,
+  });
 });
 
 // RFQ HELPERS
