@@ -33,6 +33,7 @@ import {
 } from '@mithraic-labs/tokenized-euros';
 //@ts-ignore
 const { mintOptions } = instructions;
+import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
 // import * as anchor from '@project-serum/anchor';
 // @ts-ignore
 // import { web3 } from '@project-serum/anchor';
@@ -126,78 +127,89 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
-      //@ts-ignore
       const { caller = convergence.identity(), legAmountToPrepare } =
         operation.input;
-      //@ts-ignore
       const MAX_TX_SIZE = 1232;
 
       let builder = await prepareSettlementBuilder(
         convergence,
         {
           ...operation.input,
+          createNewTokens: true,
         },
         scope
       );
-      let builder2: TransactionBuilder;
-      scope.throwIfCanceled();
-
       let txSize = await convergence
         .rpc()
         .getTransactionSize(builder, [caller]);
 
-      console.log('tx size outside while-loop: ' + txSize.toString());
-      //@ts-ignore
+      console.log('outside while-loop');
+
       let slicedLegAmount = legAmountToPrepare;
 
-      // while (txSize + 193 > MAX_TX_SIZE) {
-      if (txSize + 193 > MAX_TX_SIZE) {
-        console.log('inside while-loop');
+      let prepareMoreLegsBuilder: TransactionBuilder;
 
-        // const legAmt = Math.trunc(slicedLegAmount / 2);
+      while (txSize + 193 > MAX_TX_SIZE) {
+        console.log('inside while-loop before builder creation');
 
-        // console.log('inside while-loop new legAmt: ' + legAmt.toString());
+        const legAmt = Math.trunc(slicedLegAmount / 2);
 
-        builder2 = await prepareSettlementBuilder(
+        builder = await prepareSettlementBuilder(
           convergence,
           {
             ...operation.input,
-            // legAmountToPrepare: legAmt,
-            caller,
+            legAmountToPrepare: legAmt,
+            createNewTokens: false,
           },
           scope
         );
-        console.log('inside while-loop updated builder');
 
-        txSize = await convergence.rpc().getTransactionSize(builder2, [caller]);
+        txSize = await convergence.rpc().getTransactionSize(builder, [caller]);
 
-        console.log('tx size inside while-loop: ' + txSize.toString());
+        console.log('inside while-loop, after builder creation');
 
-        // slicedLegAmount = legAmt;
+        slicedLegAmount = legAmt;
+      }
+
+      if (slicedLegAmount < legAmountToPrepare) {
+        let prepareMoreLegsSlicedLegAmount =
+          legAmountToPrepare - slicedLegAmount;
+
+        console.log(
+          'prepare more legs # of legs: ' +
+            prepareMoreLegsSlicedLegAmount.toString()
+        );
+
+        prepareMoreLegsBuilder = await prepareMoreLegsSettlementBuilder(
+          convergence,
+          {
+            ...operation.input,
+            caller,
+            legAmountToPrepare: prepareMoreLegsSlicedLegAmount,
+          },
+          scope
+        );
       }
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
         scope.confirmOptions
       );
+
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+
       //@ts-ignore
-      if (builder2) {
-        const output = await builder2.sendAndConfirm(
+      if (prepareMoreLegsBuilder) {
+        console.log('gonna send and confirm prepareMoreLegs...');
+        await prepareMoreLegsBuilder.sendAndConfirm(
           convergence,
           confirmOptions
         );
         scope.throwIfCanceled();
-
-        return { ...output };
-      } else {
-        const output = await builder.sendAndConfirm(
-          convergence,
-          confirmOptions
-        );
-        scope.throwIfCanceled();
-
-        return { ...output };
       }
+
+      return { ...output };
     },
   };
 
@@ -205,7 +217,9 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
  * @group Transaction Builders
  * @category Inputs
  */
-export type PrepareSettlementBuilderParams = PrepareSettlementInput;
+export type PrepareSettlementBuilderParams = PrepareSettlementInput & {
+  createNewTokens: boolean;
+};
 
 enum OptionType {
   CALL = 0,
@@ -241,6 +255,7 @@ export const prepareSettlementBuilder = async (
     euroMeta,
     europeanProgram,
     mintAmount,
+    createNewTokens,
   } = params;
 
   const protocol = await convergence.protocol().get();
@@ -281,30 +296,50 @@ export const prepareSettlementBuilder = async (
 
       baseAssetMints.push(euroMetaOptionMint);
 
-      const { token: optionDestination } = await convergence
-        .tokens()
-        .createToken({
+      if (createNewTokens) {
+        await convergence.tokens().createToken({
           mint:
             instrument.optionType == OptionType.CALL
               ? instrument.meta.callOptionMint
               : instrument.meta.putOptionMint,
           owner: caller.publicKey,
         });
-      const { token: writerDestination } = await convergence
-        .tokens()
-        .createToken({
+        await convergence.tokens().createToken({
           mint:
             instrument.optionType == OptionType.CALL
               ? instrument.meta.callWriterMint
               : instrument.meta.putWriterMint,
           owner: caller.publicKey,
         });
+      }
 
       const underlyingMintToken = convergence
         .tokens()
         .pdas()
         .associatedTokenAccount({
           mint: instrument.mint.address,
+          owner: caller.publicKey,
+          programs,
+        });
+      const optionDestination = convergence
+        .tokens()
+        .pdas()
+        .associatedTokenAccount({
+          mint:
+            instrument.optionType == OptionType.CALL
+              ? instrument.meta.callOptionMint
+              : instrument.meta.putOptionMint,
+          owner: caller.publicKey,
+          programs,
+        });
+      const writerDestination = convergence
+        .tokens()
+        .pdas()
+        .associatedTokenAccount({
+          mint:
+            instrument.optionType == OptionType.CALL
+              ? instrument.meta.callWriterMint
+              : instrument.meta.putWriterMint,
           owner: caller.publicKey,
           programs,
         });
@@ -319,8 +354,8 @@ export const prepareSettlementBuilder = async (
         instrument.metaKey,
         euroMeta!,
         minterCollateralKey,
-        optionDestination.address,
-        writerDestination.address,
+        optionDestination,
+        writerDestination,
         mintAmount,
         OptionType.PUT
       );

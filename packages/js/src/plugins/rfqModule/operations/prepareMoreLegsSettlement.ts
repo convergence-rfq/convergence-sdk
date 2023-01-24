@@ -195,6 +195,8 @@ export const prepareMoreLegsSettlementBuilder = async (
       rfqModel,
     });
 
+    console.log('instrument escrow pda: ' + instrumentEscrowPda.toString());
+
     let baseAssetMint: Mint;
 
     const leg = rfqModel.legs[i];
@@ -248,6 +250,7 @@ export const prepareMoreLegsSettlementBuilder = async (
         isSigner: false,
         isWritable: false,
       },
+      // getting seeds constraint violation with escrow here
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,

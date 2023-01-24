@@ -135,8 +135,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       .rpc()
       .getTransactionSize(builder, [taker, keypair]);
 
-    // console.log('tx size in createRfq: ' + txSize);
-
     let slicedInstruments = instruments;
 
     while (txSize + 193 > MAX_TX_SIZE) {
