@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "outDir": "dist/esm",
+    "target": "es2019",
+    "declarationDir": "dist/types",
+  }
+}
