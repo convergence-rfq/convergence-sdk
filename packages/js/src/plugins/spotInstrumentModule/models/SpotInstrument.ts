@@ -1,7 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
 import { Side, Leg, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
-import * as beet from '@metaplex-foundation/beet';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
+import * as beet from '@convergence-rfq/beet';
+import * as beetSolana from '@convergence-rfq/beet-solana';
+import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
+import { publicKey } from '@convergence-rfq/beet-solana';
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
@@ -9,6 +11,17 @@ import { assert } from '@/utils';
 import { Convergence } from '@/Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '@/types';
 
+type InstrumentData = {
+  mint: PublicKey;
+};
+
+export const instrumentDataSerializer =
+  createSerializerFromFixableBeetArgsStruct(
+    new FixableBeetArgsStruct<InstrumentData>(
+      [['mint', publicKey]],
+      'InstrumentData'
+    )
+  );
 /**
  * This model captures all the relevant information about a spot
  * instrument on the Solana blockchain.
@@ -61,7 +74,12 @@ export class SpotInstrument implements Instrument {
     return Buffer.from(this.mint.address.toBytes());
   }
 
-    static async createFromLeg(
+  static deserializeInstrumentData(buffer: Buffer): any {
+    const [instrumentData] = instrumentDataSerializer.deserialize(buffer);
+    return instrumentData;
+  }
+
+  static async createFromLeg(
     convergence: Convergence,
     leg: Leg
   ): Promise<SpotInstrument> {

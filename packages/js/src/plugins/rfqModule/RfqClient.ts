@@ -1,4 +1,3 @@
-import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 import { PublicKey } from '@solana/web3.js';
 import { SendTokensInput } from '../tokenModule';
 import { Rfq } from './models';
@@ -331,13 +330,13 @@ export class RfqClient {
   refreshRfq<T extends Rfq | PublicKey>(
     model: T,
     options?: OperationOptions
-  ): Promise<T extends Metadata | PublicKey ? Rfq : T> {
+  ): Promise<T extends PublicKey ? Rfq : T> {
     return this.findRfqByAddress(
       {
         address: 'model' in model ? model.address : model,
       },
       options
-    ) as Promise<T extends Metadata | PublicKey ? Rfq : T>;
+    ) as Promise<T extends PublicKey ? Rfq : T>;
   }
 
   // /**

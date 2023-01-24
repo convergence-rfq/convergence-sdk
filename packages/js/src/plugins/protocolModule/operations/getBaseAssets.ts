@@ -80,6 +80,9 @@ export const getBaseAssetsOperationHandler: OperationHandler<GetBaseAssetsOperat
             return null;
           }
         })
-        .filter((baseAsset): baseAsset is BaseAsset => baseAsset !== null);
+        .filter((baseAsset): baseAsset is BaseAsset => baseAsset !== null)
+        .sort((a: BaseAsset, b: BaseAsset) => {
+          return a.index.value - b.index.value;
+        });
     },
   };

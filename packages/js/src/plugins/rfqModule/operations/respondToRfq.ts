@@ -57,22 +57,31 @@ export type RespondToRfqInput = {
    * The maker of the Response as a Signer.
    */
   maker?: Signer;
+
   /** The address of the protocol account. */
   protocol?: PublicKey;
+
   /** The address of the Rfq account. */
   rfq: PublicKey;
+
   /** Optional Response keypair */
   keypair?: Keypair;
+
   /** The address of the Maker's collateral_info account. */
   collateralInfo?: PublicKey;
+
   /** The address of the Maker's collateral_token account. */
   collateralToken?: PublicKey;
+
   /** The address of the risk_engine account. */
   riskEngine?: PublicKey;
+
   /** The optional Bid side */
-  bid: Option<Quote>;
+  bid?: Option<Quote>;
+
   /** The optional Ask side */
-  ask: Option<Quote>;
+  ask?: Option<Quote>;
+
   /** The base asset index. */
   baseAssetIndex?: BaseAssetIndex;
 };
@@ -106,6 +115,7 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         convergence,
         {
           ...operation.input,
+          keypair,
         },
         scope
       );
@@ -164,9 +174,13 @@ export const respondToRfqBuilder = async (
     maker = convergence.identity(),
     keypair = Keypair.generate(),
     baseAssetIndex = { value: 0 },
-    bid,
-    ask,
+    bid = null,
+    ask = null,
   } = params;
+
+  if (!bid && !ask) {
+    throw new Error('Must provide either a bid or an ask');
+  }
 
   const protocol = await convergence.protocol().get();
 

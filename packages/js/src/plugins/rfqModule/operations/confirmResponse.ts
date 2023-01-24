@@ -4,7 +4,7 @@ import {
   BaseAssetIndex,
 } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
-import { bignum, COption } from '@metaplex-foundation/beet';
+import { bignum, COption } from '@convergence-rfq/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {

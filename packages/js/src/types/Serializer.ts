@@ -1,5 +1,5 @@
-import type { Beet } from '@metaplex-foundation/beet';
-import * as beet from '@metaplex-foundation/beet';
+import type { Beet } from '@convergence-rfq/beet';
+import * as beet from '@convergence-rfq/beet';
 import {
   FailedToDeserializeDataError,
   FailedToSerializeDataError,
