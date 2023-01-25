@@ -5,3 +5,4 @@ export * from './registerMint';
 export * from './addBaseAsset';
 export * from './getBaseAssets';
 export * from './findRegisteredMintByAddress';
+export * from './findBaseAssetByAddress';

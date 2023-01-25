@@ -3,11 +3,7 @@ import {
   createPartlyRevertSettlementPreparationInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
-import {
-  TOKEN_PROGRAM_ID,
-  // ASSOCIATED_TOKEN_PROGRAM_ID,
-  // getAssociatedTokenAddress,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -22,6 +18,8 @@ import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 
@@ -115,11 +113,6 @@ export const partlyRevertSettlementPreparationOperationHandler: OperationHandler
 export type PartlyRevertSettlementPreparationBuilderParams =
   PartlyRevertSettlementPreparationInput;
 
-enum OptionType {
-  CALL = 0,
-  PUT = 1,
-}
-
 /**
  * Partially reverts settlement preparations
  *
@@ -161,6 +154,9 @@ export const partlyRevertSettlementPreparationBuilder = async (
   const psyoptionsEuropeanProgram = convergence
     .programs()
     .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanProgram = convergence
+    .programs()
+    .getPsyoptionsAmericanInstrument();
 
   const startIndex = sidePreparedLegs - legAmountToRevert;
 
@@ -202,6 +198,19 @@ export const partlyRevertSettlementPreparationBuilder = async (
       });
 
       baseAssetMint = euroMetaOptionMint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsAmericanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMint = mint;
     } else if (
       leg.instrumentProgram.toString() ===
       spotInstrumentProgram.address.toString()
