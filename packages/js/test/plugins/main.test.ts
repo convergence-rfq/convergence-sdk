@@ -1687,19 +1687,15 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
 // PSYOPTIONS EUROPEANS
 
 test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
-  //@ts-ignore
-  const { europeanProgram, euroMeta, euroMetaKey } =
-    await initializeNewOptionMeta(
-      cvg,
-      btcMint,
-      usdcMint,
-      17_500,
-      1_000_000,
-      3_600,
-      takerUSDCWallet,
-      makerUSDCWallet
-    );
-  //@ts-ignore
+  const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    cvg,
+    btcMint,
+    usdcMint,
+    17_500,
+    1_000_000,
+    3_600
+  );
+
   const instrument1 = new PsyoptionsEuropeanInstrument(
     cvg,
     btcMint,
@@ -1711,17 +1707,17 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
       side: Side.Bid,
     }
   );
-  //@ts-ignore
+
   const instrument2 = new SpotInstrument(cvg, btcMint, {
     amount: 5,
     side: Side.Ask,
   });
-  //@ts-ignore
+
   const instrument3 = new SpotInstrument(cvg, btcMint, {
     amount: 11,
     side: Side.Bid,
   });
-  //@ts-ignore
+
   const { rfq } = await cvg.rfqs().create({
     taker,
     instruments: [instrument1, instrument2, instrument3],
@@ -1758,8 +1754,6 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     overrideLegMultiplierBps: null,
   });
 
-  const mintAmount = new anchor.BN(1_000_000);
-
   await cvg.rfqs().prepareSettlement({
     caller: taker,
     rfq: rfq.address,
@@ -1767,10 +1761,6 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     side: AuthoritySide.Taker,
     legAmountToPrepare: 3,
     quoteMint: usdcMint,
-    euroMeta,
-    europeanProgram,
-    euroMetaKey,
-    mintAmount,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -1780,10 +1770,10 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     side: AuthoritySide.Maker,
     legAmountToPrepare: 3,
     quoteMint: usdcMint,
-    euroMeta,
-    europeanProgram,
-    euroMetaKey,
-    mintAmount,
+    // euroMeta,
+    // europeanProgram,
+    // euroMetaKey,
+    // mintAmount,
   });
 
   await cvg.rfqs().settle({
@@ -2123,10 +2113,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     side: AuthoritySide.Taker,
     legAmountToPrepare: instruments.slice(0, 12).length,
     quoteMint: usdcMint,
-    mintAmount: new anchor.BN(1_000_000),
-    // euroMeta,
-    // euroMetaKey,
-    // europeanProgram,
   });
   //@ts-ignore
   const firstToPrepare = taker.publicKey;
@@ -2138,10 +2124,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     side: AuthoritySide.Maker,
     legAmountToPrepare: instruments.slice(0, 12).length,
     quoteMint: usdcMint,
-    mintAmount: new anchor.BN(1_000_000),
-    // euroMeta,
-    // euroMetaKey,
-    // europeanProgram,
   });
 
   let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);

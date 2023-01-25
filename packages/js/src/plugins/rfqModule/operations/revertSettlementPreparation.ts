@@ -22,6 +22,7 @@ import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'RevertSettlementPreparationOperation' as const;
 
@@ -116,11 +117,6 @@ export const revertSettlementPreparationOperationHandler: OperationHandler<Rever
 
 export type RevertSettlementPreparationBuilderParams =
   RevertSettlementPreparationInput;
-
-enum OptionType {
-  CALL = 0,
-  PUT = 1,
-}
 
 /**
  * Partially reverts settlement preparations

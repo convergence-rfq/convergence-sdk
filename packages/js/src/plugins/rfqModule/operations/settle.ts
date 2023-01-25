@@ -16,6 +16,7 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { partiallySettleLegsBuilder } from './partiallySettleLegs';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'SettleOperation' as const;
 
@@ -150,11 +151,6 @@ export const settleOperationHandler: OperationHandler<SettleOperation> = {
  * @category Inputs
  */
 export type SettleBuilderParams = SettleInput;
-
-enum OptionType {
-  CALL = 0,
-  PUT = 1,
-}
 
 /**
  * Settles

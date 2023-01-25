@@ -24,6 +24,7 @@ import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 
@@ -126,11 +127,6 @@ export const prepareMoreLegsSettlementOperationHandler: OperationHandler<Prepare
 
 export type PrepareMoreLegsSettlementBuilderParams =
   PrepareMoreLegsSettlementInput;
-
-enum OptionType {
-  CALL = 0,
-  PUT = 1,
-}
 
 /**
  * Prepares more legs settlement

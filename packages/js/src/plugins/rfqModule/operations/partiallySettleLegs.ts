@@ -18,6 +18,7 @@ import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 
@@ -76,11 +77,6 @@ export type PartiallySettleLegsInput = {
 export type PartiallySettleLegsOutput = {
   response: SendAndConfirmTransactionResponse;
 };
-
-enum OptionType {
-  CALL = 0,
-  PUT = 1,
-}
 
 /**
  * @group Operations

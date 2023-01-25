@@ -161,7 +161,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     }
 
     let addLegsBuilder: TransactionBuilder;
-    let addLegsBuilder2: TransactionBuilder;
+    // let addLegsBuilder2: TransactionBuilder;
     let addLegsTxSize: number = 0;
 
     if (slicedInstruments.length < instruments.length) {
@@ -206,22 +206,22 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         addLegsSlicedInstruments = ins;
       }
 
-      if (
-        addLegsSlicedInstruments.length <
-        instruments.slice(slicedInstruments.length).length
-      ) {
-        let ins = instruments.slice(addLegsSlicedInstruments.length);
+      // if (
+      //   addLegsSlicedInstruments.length <
+      //   instruments.slice(slicedInstruments.length).length
+      // ) {
+      //   let ins = instruments.slice(addLegsSlicedInstruments.length);
 
-        addLegsBuilder2 = await addLegsToRfqBuilder(
-          convergence,
-          {
-            ...operation.input,
-            rfq: keypair.publicKey,
-            instruments: ins,
-          },
-          scope
-        );
-      }
+      //   addLegsBuilder2 = await addLegsToRfqBuilder(
+      //     convergence,
+      //     {
+      //       ...operation.input,
+      //       rfq: keypair.publicKey,
+      //       instruments: ins,
+      //     },
+      //     scope
+      //   );
+      // }
     }
 
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
@@ -237,11 +237,11 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       await addLegsBuilder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
     }
-    //@ts-ignore
-    if (addLegsBuilder2) {
-      await addLegsBuilder2.sendAndConfirm(convergence, confirmOptions);
-      scope.throwIfCanceled();
-    }
+    // @ts-ignore
+    // if (addLegsBuilder2) {
+    //   await addLegsBuilder2.sendAndConfirm(convergence, confirmOptions);
+    //   scope.throwIfCanceled();
+    // }
 
     const rfq = await convergence
       .rfqs()

@@ -19,15 +19,13 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-// import { OptionType } from '@/index';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { EuroMeta, instructions } from '@mithraic-labs/tokenized-euros';
-const { mintOptions } = instructions;
 import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -86,15 +84,6 @@ export type PrepareSettlementInput = {
   legAmountToPrepare: number;
 
   quoteMint: Mint;
-
-  euroMeta?: EuroMeta;
-
-  // europeanProgram: anchor.Program<EuroPrimitive>;
-  europeanProgram?: any;
-
-  euroMetaKey?: PublicKey;
-
-  mintAmount?: any;
 };
 
 /**
@@ -125,7 +114,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         convergence,
         {
           ...operation.input,
-          createNewTokens: true,
         },
         scope
       );
@@ -145,7 +133,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
           {
             ...operation.input,
             legAmountToPrepare: legAmt,
-            createNewTokens: false,
           },
           scope
         );
@@ -195,14 +182,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
  * @group Transaction Builders
  * @category Inputs
  */
-export type PrepareSettlementBuilderParams = PrepareSettlementInput & {
-  createNewTokens: boolean;
-};
-
-enum OptionType {
-  CALL = 0,
-  PUT = 1,
-}
+export type PrepareSettlementBuilderParams = PrepareSettlementInput;
 
 /**
  * Prepares for settlement
@@ -230,20 +210,10 @@ export const prepareSettlementBuilder = async (
     side,
     legAmountToPrepare,
     quoteMint,
-    euroMeta,
-    europeanProgram,
-    mintAmount,
-    createNewTokens,
   } = params;
 
   const protocol = await convergence.protocol().get();
   const rfqProgram = convergence.programs().getRfq(programs);
-
-  const stableMintToken = convergence.tokens().pdas().associatedTokenAccount({
-    mint: quoteMint.address,
-    owner: caller.publicKey,
-    programs,
-  });
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
@@ -253,8 +223,6 @@ export const prepareSettlementBuilder = async (
     .getPsyoptionsEuropeanInstrument();
 
   let baseAssetMints: Mint[] = [];
-
-  let txBuilder = TransactionBuilder.make().setFeePayer(payer);
 
   for (const leg of rfqModel.legs) {
     if (
@@ -273,85 +241,6 @@ export const prepareSettlementBuilder = async (
       });
 
       baseAssetMints.push(euroMetaOptionMint);
-
-      if (createNewTokens) {
-        await convergence.tokens().createToken({
-          mint:
-            instrument.optionType == OptionType.CALL
-              ? instrument.meta.callOptionMint
-              : instrument.meta.putOptionMint,
-          owner: caller.publicKey,
-        });
-        await convergence.tokens().createToken({
-          mint:
-            instrument.optionType == OptionType.CALL
-              ? instrument.meta.callWriterMint
-              : instrument.meta.putWriterMint,
-          owner: caller.publicKey,
-        });
-      }
-
-      const underlyingMintToken = convergence
-        .tokens()
-        .pdas()
-        .associatedTokenAccount({
-          mint: instrument.mint.address,
-          owner: caller.publicKey,
-          programs,
-        });
-      const optionDestination = convergence
-        .tokens()
-        .pdas()
-        .associatedTokenAccount({
-          mint:
-            instrument.optionType == OptionType.CALL
-              ? instrument.meta.callOptionMint
-              : instrument.meta.putOptionMint,
-          owner: caller.publicKey,
-          programs,
-        });
-      const writerDestination = convergence
-        .tokens()
-        .pdas()
-        .associatedTokenAccount({
-          mint:
-            instrument.optionType == OptionType.CALL
-              ? instrument.meta.callWriterMint
-              : instrument.meta.putWriterMint,
-          owner: caller.publicKey,
-          programs,
-        });
-
-      const minterCollateralKey =
-        instrument.optionType == OptionType.CALL
-          ? underlyingMintToken
-          : stableMintToken;
-
-      const { instruction } = mintOptions(
-        europeanProgram,
-        instrument.metaKey,
-        euroMeta!,
-        minterCollateralKey,
-        optionDestination,
-        writerDestination,
-        mintAmount,
-        OptionType.PUT
-      );
-
-      instruction.keys[0] = {
-        pubkey: caller.publicKey,
-        isSigner: true,
-        isWritable: false,
-      };
-
-      txBuilder.add({
-        instruction,
-        signers: [caller],
-      });
-
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
-
-      await txBuilder.sendAndConfirm(convergence, confirmOptions);
     } else if (
       leg.instrumentProgram.toString() ===
       spotInstrumentProgram.address.toString()

@@ -17,19 +17,25 @@ import {
   IDL as PseudoPythIdl,
   Pyth,
 } from '../../../../programs/pseudo_pyth_idl';
+import * as spl from '@solana/spl-token';
 import {
   Convergence,
   keypairIdentity,
   KeypairSigner,
   Mint,
   toBigNumber,
-  Token,
+  // Token,
   token,
   walletAdapterIdentity,
 } from '@/index';
-
-const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
-  instructions;
+const {
+  initializeAllAccountsInstructions,
+  createEuroMetaInstruction,
+  mintOptions,
+} = instructions;
+import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
+import { TransactionBuilder /*TransactionBuilderOptions*/ } from '@/utils';
 
 // CONSTANTS
 
@@ -270,10 +276,22 @@ export const initializeNewOptionMeta = async (
   stableMint: Mint,
   strikePrice: number,
   underlyingAmountPerContract: number,
-  expiresIn: number,
-  takerUSDCWallet: Token,
-  makerUSDCWallet: Token
+  expiresIn: number
+  // takerUSDCWallet: Token,
+  // makerUSDCWallet: Token
+  // quoteMint: Mint,
 ) => {
+  const maker = Keypair.fromSecretKey(
+    new Uint8Array(
+      JSON.parse(readFileSync('./test/fixtures/maker.json', 'utf8'))
+    )
+  );
+  const taker = Keypair.fromSecretKey(
+    new Uint8Array(
+      JSON.parse(readFileSync('./test/fixtures/taker.json', 'utf8'))
+    )
+  );
+
   const payer = convergence.rpc().getDefaultFeePayer();
 
   const provider = new anchor.AnchorProvider(
@@ -332,6 +350,117 @@ export const initializeNewOptionMeta = async (
 
   const createTx = new web3.Transaction().add(createIx);
   await provider.sendAndConfirm(createTx);
+
+  const makerStableMintToken = convergence
+    .tokens()
+    .pdas()
+    .associatedTokenAccount({
+      mint: stableMint.address,
+      owner: maker.publicKey,
+    });
+  const takerStableMintToken = convergence
+    .tokens()
+    .pdas()
+    .associatedTokenAccount({
+      mint: stableMint.address,
+      owner: taker.publicKey,
+    });
+  //@ts-ignore
+  const makerUnderlyingMintToken = convergence
+    .tokens()
+    .pdas()
+    .associatedTokenAccount({
+      mint: underlyingMint.address,
+      owner: maker.publicKey,
+    });
+  //@ts-ignore
+  const takerUnderlyingMintToken = convergence
+    .tokens()
+    .pdas()
+    .associatedTokenAccount({
+      mint: underlyingMint.address,
+      owner: taker.publicKey,
+    });
+
+  const makerPutMinterCollateralKey = makerStableMintToken;
+  const takerPutMinterCollateralKey = takerStableMintToken;
+
+  const makerPutOptionDestination = await spl.getOrCreateAssociatedTokenAccount(
+    convergence.connection,
+    payer as Keypair,
+    euroMeta.putOptionMint,
+    maker.publicKey
+  );
+  const makerPutWriterDestination = await spl.getOrCreateAssociatedTokenAccount(
+    convergence.connection,
+    payer as Keypair,
+    euroMeta.putWriterMint,
+    maker.publicKey
+  );
+
+  const takerPutOptionDestination = await spl.getOrCreateAssociatedTokenAccount(
+    convergence.connection,
+    payer as Keypair,
+    euroMeta.putOptionMint,
+    taker.publicKey
+  );
+  const takerPutWriterDestination = await spl.getOrCreateAssociatedTokenAccount(
+    convergence.connection,
+    payer as Keypair,
+    euroMeta.putWriterMint,
+    taker.publicKey
+  );
+
+  const { instruction: ix1 } = mintOptions(
+    europeanProgram,
+    euroMetaKey,
+    euroMeta,
+    makerPutMinterCollateralKey,
+    makerPutOptionDestination.address,
+    makerPutWriterDestination.address,
+    // mintAmount,
+    new anchor.BN(1_000_000),
+    OptionType.PUT
+  );
+  const { instruction: ix2 } = mintOptions(
+    europeanProgram,
+    euroMetaKey,
+    euroMeta,
+    takerPutMinterCollateralKey,
+    takerPutOptionDestination.address,
+    takerPutWriterDestination.address,
+    // mintAmount,
+    new anchor.BN(1_000_000),
+    OptionType.PUT
+  );
+
+  ix1.keys[0] = {
+    pubkey: maker.publicKey,
+    isSigner: true,
+    isWritable: false,
+  };
+  ix2.keys[0] = {
+    pubkey: taker.publicKey,
+    isSigner: true,
+    isWritable: false,
+  };
+
+  let txBuilder = TransactionBuilder.make().setFeePayer(payer);
+
+  txBuilder.add(
+    {
+      instruction: ix1,
+      signers: [maker],
+    },
+    {
+      instruction: ix2,
+      signers: [taker],
+    }
+  );
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  await txBuilder.sendAndConfirm(convergence, confirmOptions);
 
   return {
     provider,
