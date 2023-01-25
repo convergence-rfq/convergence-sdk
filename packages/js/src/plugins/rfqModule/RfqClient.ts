@@ -1,7 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { SendTokensInput } from '../tokenModule';
 import { Rfq } from './models';
-// import { RfqBuildersClient } from './RfqBuildersClient';
 import { RfqPdasClient } from './RfqPdasClient';
 import {
   addInstrumentOperation,
@@ -22,8 +21,6 @@ import {
   ConfirmResponseInput,
   createRfqOperation,
   CreateRfqInput,
-  //@ts-ignore
-  createAndFinalizeRfqConstructionOperation,
   CreateAndFinalizeRfqConstructionInput,
   finalizeRfqConstructionOperation,
   FinalizeRfqConstructionInput,
