@@ -3,11 +3,7 @@ import {
   createPartlyRevertSettlementPreparationInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -20,6 +16,10 @@ import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 
@@ -59,8 +59,6 @@ export type PartlyRevertSettlementPreparationInput = {
   rfq: PublicKey;
   /** The response address */
   response: PublicKey;
-
-  baseAssetMints: Mint[];
 
   /*
    * Args
@@ -136,13 +134,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const {
-    rfq,
-    response,
-    side,
-    baseAssetMints,
-    legAmountToRevert,
-  } = params;
+  const { rfq, response, side, legAmountToRevert } = params;
 
   const protocol = await convergence.protocol().get();
 
@@ -158,9 +150,17 @@ export const partlyRevertSettlementPreparationBuilder = async (
       ? parseInt(responseModel.takerPreparedLegs.toString())
       : parseInt(responseModel.makerPreparedLegs.toString());
 
+  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const psyoptionsEuropeanProgram = convergence
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanProgram = convergence
+    .programs()
+    .getPsyoptionsAmericanInstrument();
+
   const startIndex = sidePreparedLegs - legAmountToRevert;
 
-  let j = 0;
+  // let j = 0;
 
   for (let i = startIndex; i < sidePreparedLegs; i++) {
     const instrumentEscrowPda = new InstrumentPdasClient(
@@ -177,6 +177,52 @@ export const partlyRevertSettlementPreparationBuilder = async (
       isWritable: false,
     };
 
+    const leg = rfqModel.legs[i];
+
+    let baseAssetMint: Mint;
+
+    if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsEuropeanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+
+      const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
+        address:
+          instrument.optionType == OptionType.CALL
+            ? instrument.meta.callOptionMint
+            : instrument.meta.putOptionMint,
+      });
+
+      baseAssetMint = euroMetaOptionMint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsAmericanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMint = mint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      spotInstrumentProgram.address.toString()
+    ) {
+      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMint = mint;
+    }
+
     const legAccounts: AccountMeta[] = [
       //`escrow`
       {
@@ -186,13 +232,17 @@ export const partlyRevertSettlementPreparationBuilder = async (
       },
       // `receiver_tokens`
       {
-        pubkey: await getAssociatedTokenAddress(
-          baseAssetMints[j].address,
-          side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
-          undefined,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        ),
+        pubkey: convergence
+          .tokens()
+          .pdas()
+          .associatedTokenAccount({
+            mint: baseAssetMint!.address,
+            owner:
+              side == AuthoritySide.Maker
+                ? responseModel.maker
+                : rfqModel.taker,
+            programs,
+          }),
         isSigner: false,
         isWritable: true,
       },
@@ -201,7 +251,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
 
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
 
-    j++;
+    // j++;
   }
 
   return TransactionBuilder.make()
@@ -224,4 +274,3 @@ export const partlyRevertSettlementPreparationBuilder = async (
       key: 'partlyRevertSettlementPreparation',
     });
 };
-

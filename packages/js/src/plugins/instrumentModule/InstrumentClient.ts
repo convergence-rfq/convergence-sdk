@@ -1,7 +1,7 @@
 import { Leg, Side, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
-import * as beet from '@metaplex-foundation/beet';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
+import * as beet from '@convergence-rfq/beet';
+import * as beetSolana from '@convergence-rfq/beet-solana';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';
@@ -11,10 +11,9 @@ import {
   toBigNumber,
   createSerializerFromFixableBeetArgsStruct,
 } from '@/types';
-//@ts-ignore
 
 /**
- * This is a client for the instrumentModule.
+ * This is a client for the Instrument Module.
  *
  * It enables us to manage the instruments.
  *
@@ -35,8 +34,8 @@ export class InstrumentClient {
   constructor(
     protected convergence: Convergence,
     protected instrument:
-      | PsyoptionsEuropeanInstrument
       | SpotInstrument
+      | PsyoptionsEuropeanInstrument
       | PsyoptionsAmericanInstrument,
     protected legInfo?: {
       amount: number;
@@ -44,13 +43,9 @@ export class InstrumentClient {
     }
   ) {}
 
-  // pdas() {
-  //   return new InstrumentPdasClient(this.convergence);
-  // }
-
   async getBaseAssetIndex(): Promise<number> {
     if (this.legInfo) {
-      const mintInfo = await this.convergence
+      const registeredMint = await this.convergence
         .protocol()
         .findRegisteredMintByAddress({
           address: this.convergence
@@ -58,8 +53,8 @@ export class InstrumentClient {
             .pdas()
             .mintInfo({ mint: this.instrument.mint.address }),
         });
-      if (mintInfo.mintType.__kind === 'AssetWithRisk')
-        return mintInfo.mintType.baseAssetIndex.value;
+      if (registeredMint.mintType.__kind === 'AssetWithRisk')
+        return registeredMint.mintType.baseAssetIndex.value;
     }
     throw Error('Instrument is used for base asset index');
   }
@@ -78,7 +73,7 @@ export class InstrumentClient {
     throw Error('Instrument is used for leg');
   }
 
-  toQuoteData() {
+  toQuoteAsset() {
     if (this.legInfo) {
       throw Error('Instrument is used for quote');
     }

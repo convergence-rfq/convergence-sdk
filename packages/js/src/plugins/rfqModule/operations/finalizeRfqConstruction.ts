@@ -1,8 +1,5 @@
-import {
-  BaseAssetIndex,
-  createFinalizeRfqConstructionInstruction,
-} from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -66,9 +63,6 @@ export type FinalizeRfqConstructionInput = {
 
   /** The address of the risk_engine account */
   riskEngine?: PublicKey;
-
-  /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
 };
 
 /**
@@ -159,7 +153,6 @@ export const finalizeRfqConstructionBuilder = async (
   const {
     taker = convergence.identity(),
     riskEngine = riskEngineProgram.address,
-    baseAssetIndex = { value: 0 },
     rfq,
   } = params;
   let { collateralInfo, collateralToken } = params;
@@ -176,13 +169,6 @@ export const finalizeRfqConstructionBuilder = async (
   collateralInfo = collateralInfo ?? collateralInfoPda;
   collateralToken = collateralToken ?? collateralTokenPda;
 
-  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
-    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
-  );
-  const SWITCHBOARD_SOL_ORACLE = new PublicKey(
-    'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
-  );
-
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const protocol = convergence.protocol().pdas().protocol();
@@ -198,28 +184,46 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
-  const baseAsset = convergence.rfqs().pdas().baseAsset({
-    baseAssetIndexValue: baseAssetIndex.value,
-    programs,
-  });
+  //@ts-ignore
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  const baseAssetAccounts: AccountMeta[] = [
-    {
+  let baseAssetAccounts: AccountMeta[] = [];
+  let baseAssetIndexValuesSet: Set<number> = new Set();
+
+  let oracleAccounts: AccountMeta[] = [];
+
+  for (const leg of rfqModel.legs) {
+    baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);
+  }
+
+  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
+
+  for (const value of baseAssetIndexValues) {
+    const baseAsset = convergence.rfqs().pdas().baseAsset({
+      baseAssetIndexValue: value,
+      programs,
+    });
+
+    const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,
       isSigner: false,
       isWritable: false,
-    },
-  ];
-  const oracleAccounts: AccountMeta[] = [
-    {
-      pubkey:
-        baseAssetIndex.value == 0
-          ? SWITCHBOARD_BTC_ORACLE
-          : SWITCHBOARD_SOL_ORACLE,
+    };
+
+    baseAssetAccounts.push(baseAssetAccount);
+
+    const baseAssetModel = await convergence
+      .protocol()
+      .findBaseAssetByAddress({ address: baseAsset });
+
+    const oracleAccount: AccountMeta = {
+      pubkey: baseAssetModel.priceOracle.address,
       isSigner: false,
       isWritable: false,
-    },
-  ];
+    };
+
+    oracleAccounts.push(oracleAccount);
+  }
 
   anchorRemainingAccounts.push(
     configAccount,
@@ -232,20 +236,28 @@ export const finalizeRfqConstructionBuilder = async (
     .setContext({
       rfq,
     })
-    .add({
-      instruction: createFinalizeRfqConstructionInstruction(
-        {
-          taker: taker.publicKey,
-          protocol,
-          rfq,
-          collateralInfo,
-          collateralToken,
-          riskEngine,
-          anchorRemainingAccounts,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker],
-      key: 'finalizeRfqConstruction',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createFinalizeRfqConstructionInstruction(
+          {
+            taker: taker.publicKey,
+            protocol,
+            rfq,
+            collateralInfo,
+            collateralToken,
+            riskEngine,
+            anchorRemainingAccounts,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker],
+        key: 'finalizeRfqConstruction',
+      }
+    );
 };

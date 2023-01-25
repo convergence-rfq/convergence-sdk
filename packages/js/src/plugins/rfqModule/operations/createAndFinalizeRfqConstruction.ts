@@ -1,8 +1,9 @@
-import { BaseAssetIndex } from '@convergence-rfq/rfq';
+// import { BaseAssetIndex } from '@convergence-rfq/rfq';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { OrderType, QuoteAsset, FixedSize } from '../types';
 import { Rfq } from '../models';
 import { createRfqBuilder } from './createRfq';
@@ -89,8 +90,7 @@ export type CreateAndFinalizeRfqConstructionInput = {
   /** The address of the risk_engine account */
   riskEngine?: PublicKey;
 
-  /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
+  legSize?: number;
 };
 
 /**
@@ -185,7 +185,8 @@ export const createAndFinalizeRfqConstructionBuilder = async (
     collateralInfo,
     collateralToken,
     riskEngine,
-    baseAssetIndex,
+    // baseAssetIndex,
+    legSize,
   } = params;
 
   const rfqBuilder = await createRfqBuilder(
@@ -199,9 +200,11 @@ export const createAndFinalizeRfqConstructionBuilder = async (
       fixedSize,
       activeWindow,
       settlingWindow,
+      legSize: legSize ? legSize : undefined,
     },
     options
   );
+
   const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(
     convergence,
     {
@@ -210,7 +213,7 @@ export const createAndFinalizeRfqConstructionBuilder = async (
       collateralInfo,
       collateralToken,
       riskEngine,
-      baseAssetIndex,
+      // baseAssetIndex,
     },
     options
   );

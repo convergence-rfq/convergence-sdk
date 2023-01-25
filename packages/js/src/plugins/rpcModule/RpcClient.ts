@@ -81,6 +81,24 @@ export class RpcClient {
     return { transaction, signers, blockhashWithExpiryBlockHeight };
   }
 
+  async getTransactionSize(
+    transaction: Transaction | TransactionBuilder,
+    signers?: any
+  ) {
+    const prepared = await this.prepareTransaction(transaction, signers);
+
+    const tx = prepared.transaction;
+
+    const message = tx.compileMessage();
+
+    //@ts-ignore
+    const signData = message.serialize(); //this method errors if tx too large
+    // @ts-expect-error
+    const wireTransaction = tx.serializeMessage(signData);
+
+    return wireTransaction.length;
+  }
+
   async signTransaction(
     transaction: Transaction,
     signers: Signer[]

@@ -1,7 +1,7 @@
 import {
   createRespondToRfqInstruction,
   Quote,
-  BaseAssetIndex,
+  // BaseAssetIndex,
 } from '@convergence-rfq/rfq';
 import {
   PublicKey,
@@ -57,24 +57,30 @@ export type RespondToRfqInput = {
    * The maker of the Response as a Signer.
    */
   maker?: Signer;
+
   /** The address of the protocol account. */
   protocol?: PublicKey;
+
   /** The address of the Rfq account. */
   rfq: PublicKey;
+
   /** Optional Response keypair */
   keypair?: Keypair;
+
   /** The address of the Maker's collateral_info account. */
   collateralInfo?: PublicKey;
+
   /** The address of the Maker's collateral_token account. */
   collateralToken?: PublicKey;
+
   /** The address of the risk_engine account. */
   riskEngine?: PublicKey;
+
   /** The optional Bid side */
-  bid: Option<Quote>;
+  bid?: Option<Quote>;
+
   /** The optional Ask side */
-  ask: Option<Quote>;
-  /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
+  ask?: Option<Quote>;
 };
 
 /**
@@ -106,6 +112,7 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         convergence,
         {
           ...operation.input,
+          keypair,
         },
         scope
       );
@@ -134,12 +141,6 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
  */
 export type RespondToRfqBuilderParams = RespondToRfqInput;
 
-// function toLittleEndian(value: number, bytes: number) {
-//   const buf = Buffer.allocUnsafe(bytes);
-//   buf.writeUIntLE(value, 0, bytes);
-//   return buf;
-// }
-
 /**
  * Responds to an Rfq.
  *
@@ -163,10 +164,13 @@ export const respondToRfqBuilder = async (
     rfq,
     maker = convergence.identity(),
     keypair = Keypair.generate(),
-    baseAssetIndex = { value: 0 },
-    bid,
-    ask,
+    bid = null,
+    ask = null,
   } = params;
+
+  if (!bid && !ask) {
+    throw new Error('Must provide either a bid or an ask');
+  }
 
   const protocol = await convergence.protocol().get();
 
@@ -183,12 +187,9 @@ export const respondToRfqBuilder = async (
     programs,
   });
 
-  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
-    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
-  );
-
   const anchorRemainingAccounts: AccountMeta[] = [];
 
+  //TODO: use PDA client
   const [config] = PublicKey.findProgramAddressSync(
     [Buffer.from('config')],
     riskEngineProgram.address
@@ -199,31 +200,52 @@ export const respondToRfqBuilder = async (
     isWritable: false,
   };
 
-  const baseAsset = convergence.rfqs().pdas().baseAsset({
-    baseAssetIndexValue: baseAssetIndex.value,
-    programs,
-  });
-
-  const baseAssetAccounts: AccountMeta[] = [
-    {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
-  const oracleAccounts: AccountMeta[] = [
-    {
-      pubkey: SWITCHBOARD_BTC_ORACLE,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
-
   const {
     collateralInfo = collateralInfoPda,
     collateralToken = collateralTokenPda,
     riskEngine = riskEngineProgram.address,
   } = params;
+
+  //@ts-ignore
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+
+  let baseAssetAccounts: AccountMeta[] = [];
+  let baseAssetIndexValuesSet: Set<number> = new Set();
+
+  let oracleAccounts: AccountMeta[] = [];
+
+  for (const leg of rfqModel.legs) {
+    baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);
+  }
+
+  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
+
+  for (const value of baseAssetIndexValues) {
+    const baseAsset = convergence.rfqs().pdas().baseAsset({
+      baseAssetIndexValue: value,
+      programs,
+    });
+
+    const baseAssetAccount: AccountMeta = {
+      pubkey: baseAsset,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    baseAssetAccounts.push(baseAssetAccount);
+
+    const baseAssetModel = await convergence
+      .protocol()
+      .findBaseAssetByAddress({ address: baseAsset });
+
+    const oracleAccount: AccountMeta = {
+      pubkey: baseAssetModel.priceOracle.address,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    oracleAccounts.push(oracleAccount);
+  }
 
   anchorRemainingAccounts.push(
     configAccount,

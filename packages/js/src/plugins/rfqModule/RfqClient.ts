@@ -1,8 +1,7 @@
-import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
 import { PublicKey } from '@solana/web3.js';
 import { SendTokensInput } from '../tokenModule';
 import { Rfq } from './models';
-import { RfqBuildersClient } from './RfqBuildersClient';
+// import { RfqBuildersClient } from './RfqBuildersClient';
 import { RfqPdasClient } from './RfqPdasClient';
 import {
   addInstrumentOperation,
@@ -23,6 +22,7 @@ import {
   ConfirmResponseInput,
   createRfqOperation,
   CreateRfqInput,
+  //@ts-ignore
   createAndFinalizeRfqConstructionOperation,
   CreateAndFinalizeRfqConstructionInput,
   finalizeRfqConstructionOperation,
@@ -109,9 +109,9 @@ export class RfqClient {
    * const buildersClient = convergence.rfqs().builders();
    * ```
    */
-  builders() {
-    return new RfqBuildersClient(this.convergence);
-  }
+  // builders() {
+  //   return new RfqBuildersClient(this.convergence);
+  // }
 
   /**
    * You may use the `pdas()` client to build PDAs related to this module.
@@ -191,13 +191,22 @@ export class RfqClient {
   }
 
   /** {@inheritDoc createAndFinalizeRfqConstructionOperation} */
-  createAndFinalize(
+  async createAndFinalize(
     input: CreateAndFinalizeRfqConstructionInput,
     options?: OperationOptions
   ) {
+    const { taker } = input;
+
+    const { rfq } = await this.convergence.rfqs().create(
+      {
+        ...input,
+      },
+      options
+    );
+
     return this.convergence
       .operations()
-      .execute(createAndFinalizeRfqConstructionOperation(input), options);
+      .execute(finalizeRfqConstructionOperation({ taker, rfq: rfq.address }));
   }
 
   /** {@inheritDoc finalizeRfqConstructionOperation} */
@@ -329,13 +338,13 @@ export class RfqClient {
   refreshRfq<T extends Rfq | PublicKey>(
     model: T,
     options?: OperationOptions
-  ): Promise<T extends Metadata | PublicKey ? Rfq : T> {
+  ): Promise<T extends PublicKey ? Rfq : T> {
     return this.findRfqByAddress(
       {
         address: 'model' in model ? model.address : model,
       },
       options
-    ) as Promise<T extends Metadata | PublicKey ? Rfq : T>;
+    ) as Promise<T extends PublicKey ? Rfq : T>;
   }
 
   // /**

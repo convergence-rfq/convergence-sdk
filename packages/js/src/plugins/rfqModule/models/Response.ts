@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { bignum, COption } from '@metaplex-foundation/beet';
+import { bignum, COption } from '@convergence-rfq/beet';
 import {
   AuthoritySide,
   Confirmation,
@@ -12,7 +12,7 @@ import { assert } from '@/utils';
 
 /**
  * This model captures all the relevant information about an Response
- * on the Solana blockchain. 
+ * on the Solana blockchain.
  *
  * @group Models
  */

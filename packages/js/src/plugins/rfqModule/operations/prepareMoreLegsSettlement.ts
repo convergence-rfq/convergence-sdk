@@ -1,13 +1,14 @@
-import { PublicKey, AccountMeta, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
+import {
+  PublicKey,
+  AccountMeta,
+  SYSVAR_RENT_PUBKEY,
+  ComputeBudgetProgram,
+} from '@solana/web3.js';
 import {
   createPrepareMoreLegsSettlementInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -21,6 +22,10 @@ import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 
@@ -75,7 +80,7 @@ export type PrepareMoreLegsSettlementInput = {
 
   legAmountToPrepare: number;
 
-  baseAssetMints: Mint[];
+  sidePreparedLegs?: number;
 };
 
 /**
@@ -97,10 +102,13 @@ export const prepareMoreLegsSettlementOperationHandler: OperationHandler<Prepare
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareMoreLegsSettlementOutput> => {
+      const { sidePreparedLegs } = operation.input;
+
       const builder = await prepareMoreLegsSettlementBuilder(
         convergence,
         {
           ...operation.input,
+          sidePreparedLegs,
         },
         scope
       );
@@ -149,8 +157,9 @@ export const prepareMoreLegsSettlementBuilder = async (
     response,
     side,
     legAmountToPrepare,
-    baseAssetMints,
   } = params;
+
+  let { sidePreparedLegs } = params;
 
   const protocol = await convergence.protocol().get();
 
@@ -161,12 +170,21 @@ export const prepareMoreLegsSettlementBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const sidePreparedLegs: number =
-    side == AuthoritySide.Taker
-      ? parseInt(responseModel.takerPreparedLegs.toString())
-      : parseInt(responseModel.makerPreparedLegs.toString());
+  if (!sidePreparedLegs) {
+    sidePreparedLegs =
+      side == AuthoritySide.Taker
+        ? parseInt(responseModel.takerPreparedLegs.toString())
+        : parseInt(responseModel.makerPreparedLegs.toString());
+  }
 
-  let j = 0;
+  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const psyoptionsEuropeanProgram = convergence
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanProgram = convergence
+    .programs()
+    .getPsyoptionsAmericanInstrument();
+
   for (
     let i = sidePreparedLegs;
     i < sidePreparedLegs + legAmountToPrepare;
@@ -186,6 +204,52 @@ export const prepareMoreLegsSettlementBuilder = async (
       rfqModel,
     });
 
+    let baseAssetMint: Mint;
+
+    const leg = rfqModel.legs[i];
+
+    if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsEuropeanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+
+      const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
+        address:
+          instrument.optionType == OptionType.CALL
+            ? instrument.meta.callOptionMint
+            : instrument.meta.putOptionMint,
+      });
+
+      baseAssetMint = euroMetaOptionMint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsAmericanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMint = mint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      spotInstrumentProgram.address.toString()
+    ) {
+      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMint = mint;
+    }
+
     const legAccounts: AccountMeta[] = [
       {
         pubkey: caller.publicKey,
@@ -193,21 +257,20 @@ export const prepareMoreLegsSettlementBuilder = async (
         isWritable: true,
       },
       {
-        pubkey: await getAssociatedTokenAddress(
-          baseAssetMints[j].address,
-          caller.publicKey,
-          undefined,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        ),
+        pubkey: convergence.tokens().pdas().associatedTokenAccount({
+          mint: baseAssetMint!.address,
+          owner: caller.publicKey,
+          programs,
+        }),
         isSigner: false,
         isWritable: true,
       },
       {
-        pubkey: baseAssetMints[j].address,
+        pubkey: baseAssetMint!.address,
         isSigner: false,
         isWritable: false,
       },
+      // getting seeds constraint violation with `escrow` here
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,
@@ -218,28 +281,34 @@ export const prepareMoreLegsSettlementBuilder = async (
       { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
     ];
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
-
-    j++;
   }
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createPrepareMoreLegsSettlementInstruction(
-        {
-          caller: caller.publicKey,
-          protocol: protocol.address,
-          rfq,
-          response,
-          anchorRemainingAccounts,
-        },
-        {
-          side,
-          legAmountToPrepare,
-        },
-        rfqProgram.address
-      ),
-      signers: [caller],
-      key: 'prepareMoreLegsSettlement',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createPrepareMoreLegsSettlementInstruction(
+          {
+            caller: caller.publicKey,
+            protocol: protocol.address,
+            rfq,
+            response,
+            anchorRemainingAccounts,
+          },
+          {
+            side,
+            legAmountToPrepare,
+          },
+          rfqProgram.address
+        ),
+        signers: [caller],
+        key: 'prepareMoreLegsSettlement',
+      }
+    );
 };

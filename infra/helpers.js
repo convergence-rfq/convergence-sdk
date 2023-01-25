@@ -1,12 +1,10 @@
 const { spawn } = require('child_process');
 
-const RFQ = '6k3nypehfxd4tqCGRxNEZBMiT4xUPdQCkothLVz3JK6D';
-const RISK_ENGINE = '76TdqS9cEb8tYKUWKMzXBMwgCtXJiYMcrHxmzrYthjUm';
-const SPOT_INSTRUMENT = '6pyiZyPDi7a6vMymw5NFTvtFBZJbDrNsgrcYK5jGEH4K';
-const PSYOPTIONS_EUROPEAN_INSTRUMENT =
-  '7ZD9LcvMPfurRYz2AuZPWgtSXuSxPmvZNMBFK7fhyvQA';
-const PSYOPTIONS_AMERICAN_INSTRUMENT =
-  'ATtEpDQ6smvJnMSJvhLc21DBCTBKutih7KBf9Qd5b8xy';
+const rfq = require('@convergence-rfq/rfq');
+const riskEngine = require('@convergence-rfq/risk-engine');
+const spotInstrument = require('@convergence-rfq/spot-instrument');
+const psyoptionsEuropeanInstrument = require('@convergence-rfq/psyoptions-european-instrument');
+const psyoptionsAmericanInstrument = require('@convergence-rfq/psyoptions-american-instrument');
 const PSYOPTIONS_AMERICAN = 'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs';
 const SWITCHBOARD_BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee';
 const SWITCHBOARD_SOL_ORACLE = 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR';
@@ -27,30 +25,30 @@ module.exports.solanaLogs = new Promise((resolve) => {
 
 module.exports.solanaTestValidator = new Promise((resolve) => {
   const args = [
-    '--bpf-program',
-    RFQ,
-    'programs/rfq.so',
-    '--bpf-program',
-    SPOT_INSTRUMENT,
-    'programs/spot_instrument.so',
-    '--bpf-program',
-    PSYOPTIONS_EUROPEAN_INSTRUMENT,
-    'programs/psyoptions_european_instrument.so',
-    '--bpf-program',
-    PSYOPTIONS_AMERICAN,
-    'programs/psy_american.so',
-    '--bpf-program',
-    PSYOPTIONS_AMERICAN_INSTRUMENT,
-    'programs/psyoptions_american_instrument.so',
-    '--bpf-program',
-    RISK_ENGINE,
-    'programs/risk_engine.so',
     '--account',
     SWITCHBOARD_BTC_ORACLE,
     'programs/btc_20000_oracle_switchboard.json',
     '--account',
     SWITCHBOARD_SOL_ORACLE,
     'programs/sol_30_oracle_switchboard.json',
+    '--bpf-program',
+    rfq.PROGRAM_ADDRESS,
+    'programs/rfq.so',
+    '--bpf-program',
+    spotInstrument.PROGRAM_ADDRESS,
+    'programs/spot_instrument.so',
+    '--bpf-program',
+    psyoptionsEuropeanInstrument.PROGRAM_ADDRESS,
+    'programs/psyoptions_european_instrument.so',
+    '--bpf-program',
+    PSYOPTIONS_AMERICAN,
+    'programs/psy_american.so',
+    '--bpf-program',
+    psyoptionsAmericanInstrument.PROGRAM_ADDRESS,
+    'programs/psyoptions_american_instrument.so',
+    '--bpf-program',
+    riskEngine.PROGRAM_ADDRESS,
+    'programs/risk_engine.so',
     '--bpf-program',
     PSYOPTIONS_EURO_PRIMITIVE,
     'programs/euro_primitive.so',

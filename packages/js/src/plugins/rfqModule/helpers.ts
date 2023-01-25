@@ -1,11 +1,13 @@
 import type { PublicKey } from '@solana/web3.js';
+import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
+import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
   psyoptionsEuropeanInstrumentProgram,
 } from '../psyoptionsEuropeanInstrumentModule';
 import type { Rfq } from './models';
-import type { Leg } from './types';
+import type { Leg, QuoteAsset } from './types';
 import { PublicKeyValues, toPublicKey } from '@/types';
 import { Convergence } from '@/Convergence';
 
@@ -38,4 +40,43 @@ export const legsToInstruments = async (
       throw new Error('Unsupported instrument program');
     })
   );
+};
+
+export const quoteAssetToInstrument = async (
+  convergence: Convergence,
+  quoteAsset: QuoteAsset
+): Promise<SpotInstrument | PsyoptionsEuropeanInstrument> => {
+  if (quoteAsset.instrumentProgram.equals(SPOT_INSTRUMENT_PROGRAM_ID)) {
+    const { mint: mintPublicKey } = SpotInstrument.deserializeInstrumentData(
+      Buffer.from(quoteAsset.instrumentData)
+    );
+    const mint = await convergence
+      .tokens()
+      .findMintByAddress({ address: mintPublicKey });
+    return new SpotInstrument(convergence, mint);
+  } else if (
+    quoteAsset.instrumentProgram.equals(
+      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID
+    )
+  ) {
+    const { optionType, metaKey } =
+      PsyoptionsEuropeanInstrument.deserializeInstrumentData(
+        Buffer.from(quoteAsset.instrumentData)
+      );
+    const meta = await PsyoptionsEuropeanInstrument.fetchMeta(
+      convergence,
+      metaKey
+    );
+    const mint = await convergence
+      .tokens()
+      .findMintByAddress({ address: meta.underlyingMint });
+    return new PsyoptionsEuropeanInstrument(
+      convergence,
+      mint,
+      optionType,
+      meta,
+      metaKey
+    );
+  }
+  throw new Error("Instrument doesn't exist");
 };

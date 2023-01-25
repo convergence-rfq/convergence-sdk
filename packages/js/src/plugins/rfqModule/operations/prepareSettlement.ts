@@ -5,13 +5,13 @@ import {
 import {
   PublicKey,
   AccountMeta,
-  SYSVAR_RENT_PUBKEY,
   ComputeBudgetProgram,
+  SYSVAR_RENT_PUBKEY,
+  Keypair,
 } from '@solana/web3.js';
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
+  getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -26,6 +26,11 @@ import {
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -35,7 +40,7 @@ const Key = 'PrepareSettlementOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlement({ ... };
+ *   .prepareSettlement({ caller, rfq, response, side, legAmountToPrepare, quoteMint };
  * ```
  *
  * @group Operations
@@ -84,8 +89,6 @@ export type PrepareSettlementInput = {
   legAmountToPrepare: number;
 
   quoteMint: Mint;
-
-  baseAssetMints: Mint[];
 };
 
 /**
@@ -108,14 +111,56 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
-      const builder = await prepareSettlementBuilder(
+      const { caller = convergence.identity(), legAmountToPrepare } =
+        operation.input;
+      const MAX_TX_SIZE = 1232;
+
+      let builder = await prepareSettlementBuilder(
         convergence,
         {
           ...operation.input,
         },
         scope
       );
-      scope.throwIfCanceled();
+      let txSize = await convergence
+        .rpc()
+        .getTransactionSize(builder, [caller]);
+
+      let slicedLegAmount = legAmountToPrepare;
+
+      let prepareMoreLegsBuilder: TransactionBuilder;
+
+      while (txSize + 193 > MAX_TX_SIZE) {
+        const legAmt = Math.trunc(slicedLegAmount / 2);
+
+        builder = await prepareSettlementBuilder(
+          convergence,
+          {
+            ...operation.input,
+            legAmountToPrepare: legAmt,
+          },
+          scope
+        );
+
+        txSize = await convergence.rpc().getTransactionSize(builder, [caller]);
+
+        slicedLegAmount = legAmt;
+      }
+
+      if (slicedLegAmount < legAmountToPrepare) {
+        let prepareMoreLegsSlicedLegAmount =
+          legAmountToPrepare - slicedLegAmount;
+
+        prepareMoreLegsBuilder = await prepareMoreLegsSettlementBuilder(
+          convergence,
+          {
+            ...operation.input,
+            legAmountToPrepare: prepareMoreLegsSlicedLegAmount,
+            sidePreparedLegs: slicedLegAmount,
+          },
+          scope
+        );
+      }
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
@@ -124,6 +169,15 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
 
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
+
+      //@ts-ignore
+      if (prepareMoreLegsBuilder) {
+        await prepareMoreLegsBuilder.sendAndConfirm(
+          convergence,
+          confirmOptions
+        );
+        scope.throwIfCanceled();
+      }
 
       return { ...output };
     },
@@ -161,15 +215,67 @@ export const prepareSettlementBuilder = async (
     side,
     legAmountToPrepare,
     quoteMint,
-    baseAssetMints,
   } = params;
 
   const protocol = await convergence.protocol().get();
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const anchorRemainingAccounts: AccountMeta[] = [];
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const psyoptionsEuropeanProgram = convergence
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanProgram = convergence
+    .programs()
+    .getPsyoptionsAmericanInstrument();
+
+  let baseAssetMints: Mint[] = [];
+
+  for (const leg of rfqModel.legs) {
+    if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsEuropeanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+      const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
+        address:
+          instrument.optionType == OptionType.CALL
+            ? instrument.meta.callOptionMint
+            : instrument.meta.putOptionMint,
+      });
+
+      baseAssetMints.push(euroMetaOptionMint);
+    } else if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsAmericanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMints.push(mint);
+    } else if (
+      leg.instrumentProgram.toString() ===
+      spotInstrumentProgram.address.toString()
+    ) {
+      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMints.push(mint);
+    }
+  }
+
+  const anchorRemainingAccounts: AccountMeta[] = [];
 
   const spotInstrumentProgramAccount: AccountMeta = {
     pubkey: spotInstrumentProgram.address,
@@ -191,13 +297,11 @@ export const prepareSettlementBuilder = async (
       isWritable: true,
     },
     {
-      pubkey: await getAssociatedTokenAddress(
-        quoteMint.address,
-        caller.publicKey,
-        false,
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      ),
+      pubkey: convergence.tokens().pdas().associatedTokenAccount({
+        mint: quoteMint.address,
+        owner: caller.publicKey,
+        programs,
+      }),
       isSigner: false,
       isWritable: true,
     },
@@ -213,10 +317,6 @@ export const prepareSettlementBuilder = async (
   ];
 
   anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
-
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-
-  //TODO: extract base asset from base asset index
 
   for (let legIndex = 0; legIndex < legAmountToPrepare; legIndex++) {
     const instrumentProgramAccount: AccountMeta = {
@@ -234,22 +334,31 @@ export const prepareSettlementBuilder = async (
     });
 
     const legAccounts: AccountMeta[] = [
+      // `caller`
       {
         pubkey: caller.publicKey,
         isSigner: true,
         isWritable: true,
       },
+      // `caller_tokens` , optionDestination
       {
-        pubkey: await getAssociatedTokenAddress(
+        // pubkey: convergence.tokens().pdas().associatedTokenAccount({
+        //   mint: baseAssetMints[legIndex].address,
+        //   owner: caller.publicKey,
+        //   programs,
+        // }),
+        pubkey: await getOrCreateAssociatedTokenAccount(
+          convergence.connection,
+          caller as Keypair,
           baseAssetMints[legIndex].address,
-          caller.publicKey,
-          undefined,
-          TOKEN_PROGRAM_ID,
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        ),
+          caller.publicKey
+        ).then((account) => {
+          return account.address;
+        }),
         isSigner: false,
         isWritable: true,
       },
+      // `mint`
       {
         pubkey: baseAssetMints[legIndex].address,
         isSigner: false,

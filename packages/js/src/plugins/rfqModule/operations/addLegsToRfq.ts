@@ -14,6 +14,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 const Key = 'AddLegsToRfqOperation' as const;
 
 /**
@@ -58,7 +59,11 @@ export type AddLegsToRfqInput = {
    * Args
    */
 
-  legs: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[];
 };
 
 /**
@@ -129,16 +134,19 @@ export const addLegsToRfqBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const protocolPdaClient = convergence.protocol().pdas();
   const protocol = protocolPdaClient.protocol();
-  const { taker = convergence.identity(), rfq, legs } = params;
+  const { taker = convergence.identity(), rfq, instruments } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const legAccounts: AccountMeta[] = [];
-  const legsArray: Leg[] = [];
+  const legs: Leg[] = [];
 
-  for (const leg of legs) {
-    const instrumentClient = convergence.instrument(leg, leg.legInfo);
-    legsArray.push(await instrumentClient.toLegData());
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+    legs.push(await instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
   return TransactionBuilder.make()
@@ -152,7 +160,7 @@ export const addLegsToRfqBuilder = async (
           anchorRemainingAccounts: legAccounts,
         },
         {
-          legs: legsArray,
+          legs,
         },
         rfqProgram.address
       ),

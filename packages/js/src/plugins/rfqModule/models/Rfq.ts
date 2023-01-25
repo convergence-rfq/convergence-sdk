@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { bignum, COption } from '@metaplex-foundation/beet';
+import { bignum, COption } from '@convergence-rfq/beet';
 import {
   OrderType,
   StoredRfqState,

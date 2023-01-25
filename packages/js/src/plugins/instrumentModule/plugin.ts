@@ -4,7 +4,7 @@ import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentMod
 import { InstrumentClient } from './InstrumentClient';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
-import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
+import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 
 /** @group Plugins */
 export const instrumentModule = (): ConvergencePlugin => ({

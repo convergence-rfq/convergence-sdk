@@ -2,6 +2,14 @@ import { PublicKey } from '@solana/web3.js';
 import { Side, Leg } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+// import {
+//   FixableBeetArgsStruct,
+//   u8,
+//   u64,
+//   bool,
+//   i64,
+//   bignum,
+// } from '@metaplex-foundation/beet';
 import {
   FixableBeetArgsStruct,
   u8,
@@ -9,8 +17,9 @@ import {
   bool,
   i64,
   bignum,
-} from '@metaplex-foundation/beet';
-import { publicKey } from '@metaplex-foundation/beet-solana';
+} from '@convergence-rfq/beet';
+// import { publicKey } from '@metaplex-foundation/beet-solana';
+import { publicKey } from '@convergence-rfq/beet-solana';
 import { Mint } from '../../tokenModule';
 
 import { Instrument } from '../../instrumentModule/models/Instrument';
@@ -146,6 +155,7 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     );
   }
 
+ 
   getValidationAccounts() {
     const mintInfoPda = this.convergence
       .rfqs()
@@ -188,18 +198,18 @@ export class PsyoptionsAmericanInstrument implements Instrument {
   }
 }
 
-/** @group Model Helpers */
+/ @group Model Helpers */;
 export const isPsyoptionsAmericanInstrument = (
   value: any
 ): value is PsyoptionsAmericanInstrument =>
-  typeof value === 'object' && value.model === 'psyoptionsAmeicanInstrument';
+  typeof value === 'object' && value.model === 'psyoptionsAmericanInstrument';
 
-/** @group Model Helpers */
+/ @group Model Helpers */;
 export function assertPsyoptionsAmericanInstrument(
   value: any
 ): asserts value is PsyoptionsAmericanInstrument {
   assert(
     isPsyoptionsAmericanInstrument(value),
-    `Expected PsyoptionsAmericanInstrument model`
+    'Expected PsyoptionsAmericanInstrument model'
   );
 }

@@ -3,6 +3,7 @@ import { Keypair, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -15,6 +16,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { addLegsToRfqBuilder } from './addLegsToRfq';
 import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 
 const Key = 'CreateRfqOperation' as const;
@@ -117,9 +119,15 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
-    const { keypair = Keypair.generate() } = operation.input;
+    const {
+      keypair = Keypair.generate(),
+      taker = convergence.identity(),
+      instruments,
+    } = operation.input;
 
-    const builder = await createRfqBuilder(
+    const MAX_TX_SIZE = 1232;
+
+    let builder = await createRfqBuilder(
       convergence,
       {
         ...operation.input,
@@ -129,6 +137,99 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     );
     scope.throwIfCanceled();
 
+    let txSize = await convergence
+      .rpc()
+      .getTransactionSize(builder, [taker, keypair]);
+
+    let slicedInstruments = instruments;
+
+    while (txSize + 193 > MAX_TX_SIZE) {
+      const ins = slicedInstruments.slice(
+        0,
+        Math.trunc(slicedInstruments.length / 2)
+      );
+
+      builder = await createRfqBuilder(
+        convergence,
+        {
+          ...operation.input,
+          keypair,
+          instruments: ins,
+        },
+        scope
+      );
+
+      txSize = await convergence
+        .rpc()
+        .getTransactionSize(builder, [taker, keypair]);
+
+      slicedInstruments = ins;
+    }
+
+    let addLegsBuilder: TransactionBuilder;
+    // let addLegsBuilder2: TransactionBuilder;
+    let addLegsTxSize: number = 0;
+
+    if (slicedInstruments.length < instruments.length) {
+      let addLegsSlicedInstruments = instruments.slice(
+        slicedInstruments.length
+      );
+
+      addLegsBuilder = await addLegsToRfqBuilder(
+        convergence,
+        {
+          ...operation.input,
+          rfq: keypair.publicKey,
+          instruments: addLegsSlicedInstruments,
+        },
+        scope
+      );
+
+      addLegsTxSize = await convergence
+        .rpc()
+        .getTransactionSize(addLegsBuilder, [taker]);
+
+      while (addLegsTxSize + 193 > MAX_TX_SIZE) {
+        const ins = addLegsSlicedInstruments.slice(
+          0,
+          Math.trunc(addLegsSlicedInstruments.length / 2)
+        );
+
+        addLegsBuilder = await addLegsToRfqBuilder(
+          convergence,
+          {
+            ...operation.input,
+            rfq: keypair.publicKey,
+            instruments: ins,
+          },
+          scope
+        );
+
+        addLegsTxSize = await convergence
+          .rpc()
+          .getTransactionSize(addLegsBuilder, [taker]);
+
+        addLegsSlicedInstruments = ins;
+      }
+
+      // if (
+      //   addLegsSlicedInstruments.length <
+      //   instruments.slice(slicedInstruments.length).length
+      // ) {
+      //   let ins = instruments.slice(addLegsSlicedInstruments.length);
+
+      //   addLegsBuilder2 = await addLegsToRfqBuilder(
+      //     convergence,
+      //     {
+      //       ...operation.input,
+      //       rfq: keypair.publicKey,
+      //       instruments: ins,
+      //     },
+      //     scope
+      //   );
+      // }
+    }
+
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
       convergence,
       scope.confirmOptions
@@ -136,6 +237,17 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
+
+    //@ts-ignore
+    if (addLegsBuilder) {
+      await addLegsBuilder.sendAndConfirm(convergence, confirmOptions);
+      scope.throwIfCanceled();
+    }
+    // @ts-ignore
+    // if (addLegsBuilder2) {
+    //   await addLegsBuilder2.sendAndConfirm(convergence, confirmOptions);
+    //   scope.throwIfCanceled();
+    // }
 
     const rfq = await convergence
       .rfqs()
@@ -179,10 +291,11 @@ export const createRfqBuilder = async (
     instruments,
     quoteAsset,
     fixedSize,
-    activeWindow = 2,
-    settlingWindow = 1,
-    legSize = 4,
+    activeWindow = 5_000,
+    settlingWindow = 1_000,
   } = params;
+
+  let { legSize } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -205,7 +318,7 @@ export const createRfqBuilder = async (
 
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
-  let expectedLegSize = legSize;
+
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
       instrument,
@@ -213,7 +326,22 @@ export const createRfqBuilder = async (
     );
     legs.push(await instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());
-    expectedLegSize += await instrumentClient.getLegDataSize();
+  }
+
+  let expectedLegSize: number;
+
+  if (legSize) {
+    expectedLegSize = legSize;
+  } else {
+    expectedLegSize = 4;
+
+    for (const instrument of instruments) {
+      const instrumentClient = convergence.instrument(
+        instrument,
+        instrument.legInfo
+      );
+      expectedLegSize += await instrumentClient.getLegDataSize();
+    }
   }
 
   return TransactionBuilder.make()
