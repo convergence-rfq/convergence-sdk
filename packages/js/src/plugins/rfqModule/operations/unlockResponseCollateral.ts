@@ -45,12 +45,13 @@ export type UnlockResponseCollateralOperation = Operation<
 export type UnlockResponseCollateralInput = {
   /** The protocol address */
   protocol?: PublicKey;
-  /** The Rfq address */
-  rfq: PublicKey;
+
   /** The response address */
   response: PublicKey;
+
   /** The address of the Taker's collateralInfo account */
   takerCollateralInfo?: PublicKey;
+
   /** The address of the Maker's collateralInfo account */
   makerCollateralInfo?: PublicKey;
 };
@@ -118,40 +119,34 @@ export const unlockResponseCollateralBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
+  const protocol = convergence.protocol().pdas().protocol();
 
-  const { rfq, response } = params;
+  const { response } = params;
 
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  const responseModel = await convergence
+  const { maker, rfq } = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
+  const { taker } = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  const takerCollateralInfoPda = convergence
-    .collateral()
-    .pdas()
-    .collateralInfo({
-      user: rfqModel.taker,
-      programs,
-    });
-  const makerCollateralInfoPda = convergence
-    .collateral()
-    .pdas()
-    .collateralInfo({
-      user: responseModel.maker,
-      programs,
-    });
+  const takerCollateralInfo = convergence.collateral().pdas().collateralInfo({
+    user: taker,
+    programs,
+  });
+  const makerCollateralInfo = convergence.collateral().pdas().collateralInfo({
+    user: maker,
+    programs,
+  });
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createUnlockResponseCollateralInstruction(
         {
-          protocol: protocol.address,
+          protocol,
           rfq,
           response,
-          takerCollateralInfo: takerCollateralInfoPda,
-          makerCollateralInfo: makerCollateralInfoPda,
+          takerCollateralInfo,
+          makerCollateralInfo,
         },
         rfqProgram.address
       ),

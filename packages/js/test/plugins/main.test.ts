@@ -1,9 +1,7 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair } from '@solana/web3.js';
-//@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
-//@ts-ignore
 import * as anchor from '@project-serum/anchor';
 import {
   BTC_DECIMALS,
@@ -13,52 +11,31 @@ import {
   SKIP_PREFLIGHT,
   convergenceCli,
   killStuckProcess,
-  //@ts-ignore
   spokSamePubkey,
-  //@ts-ignore
   initializeNewOptionMeta,
   setupAccounts,
-  //@ts-ignore
-  spokSameBignum,
-  //@ts-ignore
-  delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
   Mint,
-  //@ts-ignore
   token,
-  //@ts-ignore
   Side,
   RiskCategory,
-  //@ts-ignore
   SpotInstrument,
-  //@ts-ignore
   OrderType,
-  //@ts-ignore
   PsyoptionsEuropeanInstrument,
-  //@ts-ignore
   OptionType,
-  //@ts-ignore
   InstrumentType,
   Token,
-  //@ts-ignore
   StoredResponseState,
-  //@ts-ignore
   AuthoritySide,
-  //@ts-ignore
   StoredRfqState,
-  //@ts-ignore
   legsToInstruments,
   Signer,
-  //@ts-ignore
   quoteAssetToInstrument,
 } from '@/index';
-// import { instructions } from '@mithraic-labs/tokenized-euros';
 
 killStuckProcess();
-//@ts-ignore
-// const { mintOptions } = instructions;
 
 let cvg: Convergence;
 
@@ -73,17 +50,16 @@ let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
 
 let daoBTCWallet: Token;
 let daoUSDCWallet: Token;
-//@ts-ignore
+
 let makerUSDCWallet: Token;
 let makerBTCWallet: Token;
-//@ts-ignore
+
 let takerUSDCWallet: Token;
 let takerBTCWallet: Token;
 let takerSOLWallet: Token;
 
 const WALLET_AMOUNT = 9_000 * 10 ** BTC_DECIMALS;
-//@ts-ignore
-const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
+const COLLATERAL_AMOUNT = 5_000_000 * 10 ** USDC_DECIMALS;
 
 // SETUP
 
@@ -854,7 +830,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     legAmountToPrepare: 2,
     quoteMint: usdcMint,
   });
-  // const firstToPrepare = taker.publicKey;
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
@@ -1292,7 +1267,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
 
   // getting error  6028: no collateral locked
   await cvg.rfqs().unlockResponseCollateral({
-    rfq: rfq.address,
     response: rfqResponse.address,
   });
 
@@ -1391,10 +1365,12 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     state: StoredResponseState.Settled,
   });
 
-  await cvg.rfqs().unlockResponseCollateral({
-    rfq: rfq.address,
+  // TODO: 6028 error
+  const { response } = await cvg.rfqs().unlockResponseCollateral({
     response: rfqResponse.address,
   });
+  console.log('response', response);
+  //t.assert(response.signature.length > 0, 'signature should be present');
 
   //TODO: fix BN types (test currently passes, value is 0 on both sides)
   spok(t, refreshedResponse, {
