@@ -126,13 +126,10 @@ export const unlockRfqCollateralBuilder = async (
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  const collateralInfoPda = convergence
-    .collateral()
-    .pdas()
-    .collateralInfo({
-      user: rfqModel.taker,
-      programs,
-    });
+  const collateralInfoPda = convergence.collateral().pdas().collateralInfo({
+    user: rfqModel.taker,
+    programs,
+  });
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
