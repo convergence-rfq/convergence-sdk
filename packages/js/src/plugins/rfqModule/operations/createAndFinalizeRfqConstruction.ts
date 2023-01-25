@@ -1,4 +1,4 @@
-import { BaseAssetIndex } from '@convergence-rfq/rfq';
+// import { BaseAssetIndex } from '@convergence-rfq/rfq';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
@@ -85,7 +85,7 @@ export type CreateAndFinalizeRfqConstructionInput = {
   riskEngine?: PublicKey;
 
   /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
+  // baseAssetIndex?: BaseAssetIndex;
 
   legSize?: number;
 };
@@ -182,7 +182,7 @@ export const createAndFinalizeRfqConstructionBuilder = async (
     collateralInfo,
     collateralToken,
     riskEngine,
-    baseAssetIndex,
+    // baseAssetIndex,
     legSize,
   } = params;
 
@@ -210,7 +210,7 @@ export const createAndFinalizeRfqConstructionBuilder = async (
       collateralInfo,
       collateralToken,
       riskEngine,
-      baseAssetIndex,
+      // baseAssetIndex,
     },
     options
   );

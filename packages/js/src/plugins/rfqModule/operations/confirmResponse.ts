@@ -1,7 +1,7 @@
 import {
   createConfirmResponseInstruction,
   Side,
-  BaseAssetIndex,
+  // BaseAssetIndex,
 } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { bignum, COption } from '@convergence-rfq/beet';
@@ -74,8 +74,6 @@ export type ConfirmResponseInput = {
   side: Side;
   /** ??? */
   overrideLegMultiplierBps: COption<bignum>;
-  /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
 };
 
 /**
@@ -150,7 +148,6 @@ export const confirmResponseBuilder = async (
     response,
     side,
     overrideLegMultiplierBps,
-    baseAssetIndex = { value: 0 },
   } = params;
 
   const responseModel = await convergence
@@ -164,6 +161,9 @@ export const confirmResponseBuilder = async (
 
   const SWITCHBOARD_BTC_ORACLE = new PublicKey(
     '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
+  );
+  const SWITCHBOARD_SOL_ORACLE = new PublicKey(
+    'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
   );
 
   const takerCollateralInfoPda = convergence
@@ -197,25 +197,41 @@ export const confirmResponseBuilder = async (
     isWritable: false,
   };
 
-  const baseAsset = convergence.rfqs().pdas().baseAsset({
-    baseAssetIndexValue: baseAssetIndex.value,
-    programs,
-  });
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  const baseAssetAccounts: AccountMeta[] = [
-    {
+  let baseAssetAccounts: AccountMeta[] = [];
+  let baseAssetIndexValuesSet: Set<number> = new Set();
+
+  let oracleAccounts: AccountMeta[] = [];
+
+  for (const leg of rfqModel.legs) {
+    baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);
+  }
+
+  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
+
+  for (const value of baseAssetIndexValues) {
+    const baseAsset = convergence.rfqs().pdas().baseAsset({
+      baseAssetIndexValue: value,
+      programs,
+    });
+
+    const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,
       isSigner: false,
       isWritable: false,
-    },
-  ];
-  const oracleAccounts: AccountMeta[] = [
-    {
-      pubkey: SWITCHBOARD_BTC_ORACLE,
+    };
+
+    baseAssetAccounts.push(baseAssetAccount);
+
+    const oracleAccount: AccountMeta = {
+      pubkey: value == 0 ? SWITCHBOARD_BTC_ORACLE : SWITCHBOARD_SOL_ORACLE,
       isSigner: false,
       isWritable: false,
-    },
-  ];
+    };
+
+    oracleAccounts.push(oracleAccount);
+  }
 
   anchorRemainingAccounts.push(
     configAccount,

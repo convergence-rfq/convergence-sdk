@@ -7,8 +7,12 @@ import {
   AccountMeta,
   ComputeBudgetProgram,
   SYSVAR_RENT_PUBKEY,
+  Keypair,
 } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  TOKEN_PROGRAM_ID,
+  getOrCreateAssociatedTokenAccount,
+} from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -35,7 +39,7 @@ const Key = 'PrepareSettlementOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlement({ ... };
+ *   .prepareSettlement({ caller, rfq, response, side, legAmountToPrepare, quoteMint };
  * ```
  *
  * @group Operations
@@ -321,10 +325,18 @@ export const prepareSettlementBuilder = async (
       },
       // `caller_tokens` , optionDestination
       {
-        pubkey: convergence.tokens().pdas().associatedTokenAccount({
-          mint: baseAssetMints[legIndex].address,
-          owner: caller.publicKey,
-          programs,
+        // pubkey: convergence.tokens().pdas().associatedTokenAccount({
+        //   mint: baseAssetMints[legIndex].address,
+        //   owner: caller.publicKey,
+        //   programs,
+        // }),
+        pubkey: await getOrCreateAssociatedTokenAccount(
+          convergence.connection,
+          caller as Keypair,
+          baseAssetMints[legIndex].address,
+          caller.publicKey
+        ).then((account) => {
+          return account.address;
         }),
         isSigner: false,
         isWritable: true,

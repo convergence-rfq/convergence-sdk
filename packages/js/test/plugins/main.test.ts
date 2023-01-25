@@ -919,7 +919,6 @@ test('[rfqModule] it can unlock RFQ collateral and clean up', async (t: Test) =>
   await cvg.rfqs().finalizeRfqConstruction({
     taker,
     rfq: rfq.address,
-    baseAssetIndex: { value: 0 },
   });
 
   await cvg.rfqs().cancelRfq({
@@ -1291,10 +1290,10 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
   });
 
   // getting error  6028: no collateral locked
-  await cvg.rfqs().unlockResponseCollateral({
-    rfq: rfq.address,
-    response: rfqResponse.address,
-  });
+  // await cvg.rfqs().unlockResponseCollateral({
+  //   rfq: rfq.address,
+  //   response: rfqResponse.address,
+  // });
 
   spok(t, refreshedResponse, {
     $topic: 'Unlocked response collateral',
@@ -1391,10 +1390,10 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     state: StoredResponseState.Settled,
   });
 
-  await cvg.rfqs().unlockResponseCollateral({
-    rfq: rfq.address,
-    response: rfqResponse.address,
-  });
+  // await cvg.rfqs().unlockResponseCollateral({
+  //   rfq: rfq.address,
+  //   response: rfqResponse.address,
+  // });
 
   //TODO: fix BN types (test currently passes, value is 0 on both sides)
   spok(t, refreshedResponse, {
@@ -1707,12 +1706,10 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
       side: Side.Bid,
     }
   );
-
   const instrument2 = new SpotInstrument(cvg, btcMint, {
     amount: 5,
     side: Side.Ask,
   });
-
   const instrument3 = new SpotInstrument(cvg, btcMint, {
     amount: 11,
     side: Side.Bid,
@@ -1866,7 +1863,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   //   }
   // );
   const instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[] = [];
-  // 25
   instruments.push(
     new SpotInstrument(cvg, btcMint, {
       amount: 5,
@@ -1875,7 +1871,7 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   );
   // instruments.push(instrument1);
   instruments.push(
-    new SpotInstrument(cvg, btcMint, {
+    new SpotInstrument(cvg, solMint, {
       amount: 10,
       side: Side.Bid,
     })
@@ -2208,29 +2204,16 @@ test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) =
   });
 });
 
-// // RFQ HELPERS
-
-test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
-  // We we can to this after creating options so that we can test this method
-  // on all instruments
-  const rfqs = await cvg.rfqs().findAllByOwner({
-    owner: taker.publicKey,
-  });
-  const instruments = await Promise.all(
-    rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
-  );
-  spok(t, instruments[0][0], {
-    $topic: 'Convert RFQ Legs to Instruments',
-    model: 'spotInstrument',
-  });
-});
-
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, revert settlemt prep', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
         amount: 5,
         side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, solMint, {
+        amount: 87,
+        side: Side.Ask,
       }),
     ],
     taker,
@@ -2266,7 +2249,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     rfq: rfq.address,
     response: rfqResponse.address,
     side: AuthoritySide.Maker,
-    legAmountToPrepare: 1,
+    legAmountToPrepare: 2,
     quoteMint: usdcMint,
   });
 

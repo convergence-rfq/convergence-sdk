@@ -418,7 +418,6 @@ export const initializeNewOptionMeta = async (
     makerPutMinterCollateralKey,
     makerPutOptionDestination.address,
     makerPutWriterDestination.address,
-    // mintAmount,
     new anchor.BN(1_000_000),
     OptionType.PUT
   );
@@ -429,7 +428,6 @@ export const initializeNewOptionMeta = async (
     takerPutMinterCollateralKey,
     takerPutOptionDestination.address,
     takerPutWriterDestination.address,
-    // mintAmount,
     new anchor.BN(1_000_000),
     OptionType.PUT
   );
