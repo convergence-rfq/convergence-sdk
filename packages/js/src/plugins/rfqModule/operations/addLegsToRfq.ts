@@ -14,6 +14,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 const Key = 'AddLegsToRfqOperation' as const;
 
 /**
@@ -58,7 +59,11 @@ export type AddLegsToRfqInput = {
    * Args
    */
 
-  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[];
 };
 
 /**

@@ -1,8 +1,6 @@
 import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
-import {
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -17,6 +15,8 @@ import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
@@ -119,11 +119,6 @@ export const cleanUpResponseLegsOperationHandler: OperationHandler<CleanUpRespon
  */
 export type CleanUpResponseLegsBuilderParams = CleanUpResponseLegsInput;
 
-enum OptionType {
-  CALL = 0,
-  PUT = 1,
-}
-
 /**
  * Cleans up Legs for a Response.
  *
@@ -143,13 +138,7 @@ export const cleanUpResponseLegsBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const {
-    dao,
-    rfq,
-    response,
-    firstToPrepare,
-    legAmountToClear,
-  } = params;
+  const { dao, rfq, response, firstToPrepare, legAmountToClear } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await convergence.protocol().get();
@@ -167,6 +156,9 @@ export const cleanUpResponseLegsBuilder = async (
   const psyoptionsEuropeanProgram = convergence
     .programs()
     .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanProgram = convergence
+    .programs()
+    .getPsyoptionsAmericanInstrument();
 
   for (let i = initializedLegs - legAmountToClear; i < initializedLegs; i++) {
     const instrumentProgramAccount: AccountMeta = {
@@ -208,6 +200,19 @@ export const cleanUpResponseLegsBuilder = async (
       );
 
       baseAssetMint = euroMetaOptionMint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsAmericanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMint = mint;
     } else if (
       leg.instrumentProgram.toString() ===
       spotInstrumentProgram.address.toString()

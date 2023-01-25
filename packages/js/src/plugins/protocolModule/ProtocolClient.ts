@@ -13,6 +13,8 @@ import {
   GetBaseAssetsInput,
   findRegisteredMintByAddressOperation,
   FindRegisteredMintByAddressInput,
+  findBaseAssetByAddressOperation,
+  FindBaseAssetByAddressInput,
 } from './operations';
 import { ProtocolPdasClient } from './ProtocolPdasClient';
 import { OperationOptions } from '@/types';
@@ -93,5 +95,15 @@ export class ProtocolClient {
     return this.convergence
       .operations()
       .execute(findRegisteredMintByAddressOperation(input), options);
+  }
+
+  /** {@inheritDoc findBaseAssetByAddressOperation} */
+  findBaseAssetByAddress(
+    input: FindBaseAssetByAddressInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(findBaseAssetByAddressOperation(input), options);
   }
 }

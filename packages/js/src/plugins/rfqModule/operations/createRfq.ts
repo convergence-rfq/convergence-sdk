@@ -3,6 +3,7 @@ import { Keypair, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -73,7 +74,11 @@ export type CreateRfqInput = {
   quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
-  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[];
 
   /**
    * The type of order.
@@ -161,7 +166,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     }
 
     let addLegsBuilder: TransactionBuilder;
-    let addLegsBuilder2: TransactionBuilder;
+    // let addLegsBuilder2: TransactionBuilder;
     let addLegsTxSize: number = 0;
 
     if (slicedInstruments.length < instruments.length) {
@@ -206,22 +211,22 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         addLegsSlicedInstruments = ins;
       }
 
-      if (
-        addLegsSlicedInstruments.length <
-        instruments.slice(slicedInstruments.length).length
-      ) {
-        let ins = instruments.slice(addLegsSlicedInstruments.length);
+      // if (
+      //   addLegsSlicedInstruments.length <
+      //   instruments.slice(slicedInstruments.length).length
+      // ) {
+      //   let ins = instruments.slice(addLegsSlicedInstruments.length);
 
-        addLegsBuilder2 = await addLegsToRfqBuilder(
-          convergence,
-          {
-            ...operation.input,
-            rfq: keypair.publicKey,
-            instruments: ins,
-          },
-          scope
-        );
-      }
+      //   addLegsBuilder2 = await addLegsToRfqBuilder(
+      //     convergence,
+      //     {
+      //       ...operation.input,
+      //       rfq: keypair.publicKey,
+      //       instruments: ins,
+      //     },
+      //     scope
+      //   );
+      // }
     }
 
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
@@ -237,11 +242,11 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       await addLegsBuilder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
     }
-    //@ts-ignore
-    if (addLegsBuilder2) {
-      await addLegsBuilder2.sendAndConfirm(convergence, confirmOptions);
-      scope.throwIfCanceled();
-    }
+    // @ts-ignore
+    // if (addLegsBuilder2) {
+    //   await addLegsBuilder2.sendAndConfirm(convergence, confirmOptions);
+    //   scope.throwIfCanceled();
+    // }
 
     const rfq = await convergence
       .rfqs()
