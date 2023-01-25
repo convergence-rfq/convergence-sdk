@@ -38,7 +38,6 @@ import {
   StoredRfqState,
   legsToInstruments,
   Signer,
-
 } from '@/index';
 
 killStuckProcess();
@@ -1180,7 +1179,6 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     .findRfqsByAddresses({
       addresses: [rfq1.address, rfq2.address, rfq3.address],
     });
-
   spok(t, rfq1, {
     $topic: 'Created RFQ',
     model: 'rfq',
@@ -1847,5 +1845,24 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
     model: 'response',
     takerCollateralLocked: spokSameBignum(0),
     makerCollateralLocked: spokSameBignum(0),
+  });
+});
+
+test('[rfq module] it can find all rfqs by instrument as leg', async () => {
+  const spotInstrument = cvg.programs().getSpotInstrument();
+
+  const Rfqs = await cvg
+    .rfqs()
+    .findByInstrument({ instrumentProgram: spotInstrument });
+  Rfqs.forEach((rfq) => {
+    console.log('Rfq Pubkey', rfq.address.toBase58());
+  });
+});
+
+test('[rfq module] it can find all rfqs which are active', async () => {
+  const Rfqs = await cvg.rfqs().findRfqsByActive({});
+  Rfqs.forEach((rfq) => {
+    console.log('Rfq state', rfq.state);
+    console.log('Rfq address', rfq.address.toBase58());
   });
 });

@@ -1,19 +1,70 @@
 import { PublicKey } from '@solana/web3.js';
-import { Side } from '@convergence-rfq/rfq';
+import { Side, Leg } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+import {
+  FixableBeetArgsStruct,
+  u8,
+  u64,
+  bool,
+  i64,
+  bignum,
+} from '@metaplex-foundation/beet';
+import { publicKey } from '@metaplex-foundation/beet-solana';
 import { Mint } from '../../tokenModule';
+
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
 import { Convergence } from '@/Convergence';
 
-/**
- * This model captures all the relevant information about a Psyoptions European
- * instrument on the Solana blockchain.
- *
- * @group Models
- */
+import { createSerializerFromFixableBeetArgsStruct } from '@/types';
+
+type InstrumentData = {
+  optionType: OptionType;
+  underlyingAmountPerContract: bignum;
+  strikePrice: bignum;
+  expiration: bignum;
+  optionMint: PublicKey;
+  metaKey: PublicKey;
+};
+
+const instrumentDataSerializer = createSerializerFromFixableBeetArgsStruct(
+  new FixableBeetArgsStruct<InstrumentData>(
+    [
+      ['optionType', u8],
+      ['underlyingAmountPerContract', u64],
+      ['strikePrice', u64],
+      ['expiration', u64],
+      ['optionMint', publicKey],
+      ['metaKey', publicKey],
+    ],
+    'InstrumentData'
+  )
+);
+
+const optionMarketWithKeySerializer = createSerializerFromFixableBeetArgsStruct(
+  new FixableBeetArgsStruct<OptionMarketWithKey>(
+    [
+      ['optionMint', publicKey],
+      ['writerTokenMint', publicKey],
+      ['underlyingAssetMint', publicKey],
+      ['quoteAssetMint', publicKey],
+      ['underlyingAssetPool', publicKey],
+      ['quoteAssetPool', publicKey],
+      ['mintFeeAccount', publicKey],
+      ['exerciseFeeAccount', publicKey],
+      ['underlyingAmountPerContract', u64],
+      ['quoteAmountPerContract', u64],
+      ['expirationUnixTimestamp', i64],
+      ['expired', bool],
+      ['bumpSeed', u8],
+      ['key', publicKey],
+    ],
+    'OptionMarketWithKey'
+  )
+);
+
 export class PsyoptionsAmericanInstrument implements Instrument {
   readonly model = 'psyoptionsAmericanInstrument';
   readonly decimals = 0;
@@ -54,6 +105,45 @@ export class PsyoptionsAmericanInstrument implements Instrument {
       amount,
       side,
     });
+  }
+
+  static async createFromLeg(
+    convergence: Convergence,
+    leg: Leg
+  ): Promise<PsyoptionsAmericanInstrument> {
+    const { side, instrumentAmount, instrumentData } = leg;
+    const [{ metaKey, optionType }] = instrumentDataSerializer.deserialize(
+      Buffer.from(instrumentData)
+    );
+
+    const account = await convergence.rpc().getAccount(metaKey);
+    if (!account.exists) {
+      throw new Error('Account not found');
+    }
+    const [optionMarketWithKey] = optionMarketWithKeySerializer.deserialize(
+      Buffer.from(account.data),
+      8
+    );
+
+    const mint = await convergence
+      .tokens()
+      .findMintByAddress({ address: optionMarketWithKey.underlyingAssetMint });
+    const amount =
+      typeof instrumentAmount === 'number'
+        ? instrumentAmount
+        : instrumentAmount.toNumber();
+
+    return new PsyoptionsAmericanInstrument(
+      convergence,
+      mint,
+      optionType,
+      optionMarketWithKey,
+      metaKey,
+      {
+        amount,
+        side,
+      }
+    );
   }
 
   getValidationAccounts() {
