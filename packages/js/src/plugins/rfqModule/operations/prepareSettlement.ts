@@ -28,6 +28,7 @@ import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 
@@ -225,6 +226,9 @@ export const prepareSettlementBuilder = async (
   const psyoptionsEuropeanProgram = convergence
     .programs()
     .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanProgram = convergence
+    .programs()
+    .getPsyoptionsAmericanInstrument();
 
   let baseAssetMints: Mint[] = [];
 
@@ -245,6 +249,19 @@ export const prepareSettlementBuilder = async (
       });
 
       baseAssetMints.push(euroMetaOptionMint);
+    } else if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsAmericanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMints.push(mint);
     } else if (
       leg.instrumentProgram.toString() ===
       spotInstrumentProgram.address.toString()

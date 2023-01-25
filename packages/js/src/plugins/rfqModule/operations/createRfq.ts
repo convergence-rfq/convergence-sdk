@@ -3,6 +3,7 @@ import { Keypair, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
@@ -73,7 +74,11 @@ export type CreateRfqInput = {
   quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
-  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[];
 
   /**
    * The type of order.

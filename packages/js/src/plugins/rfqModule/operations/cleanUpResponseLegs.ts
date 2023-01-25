@@ -15,6 +15,7 @@ import { Mint } from '@/plugins/tokenModule';
 import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
@@ -155,6 +156,9 @@ export const cleanUpResponseLegsBuilder = async (
   const psyoptionsEuropeanProgram = convergence
     .programs()
     .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanProgram = convergence
+    .programs()
+    .getPsyoptionsAmericanInstrument();
 
   for (let i = initializedLegs - legAmountToClear; i < initializedLegs; i++) {
     const instrumentProgramAccount: AccountMeta = {
@@ -196,6 +200,19 @@ export const cleanUpResponseLegsBuilder = async (
       );
 
       baseAssetMint = euroMetaOptionMint;
+    } else if (
+      leg.instrumentProgram.toString() ===
+      psyoptionsAmericanProgram.address.toString()
+    ) {
+      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+      const mint = await convergence.tokens().findMintByAddress({
+        address: instrument.mint.address,
+      });
+
+      baseAssetMint = mint;
     } else if (
       leg.instrumentProgram.toString() ===
       spotInstrumentProgram.address.toString()

@@ -2,7 +2,8 @@
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { OrderType, QuoteAsset, FixedSize } from '../types';
 import { Rfq } from '../models';
 import { createRfqBuilder } from './createRfq';
@@ -64,7 +65,11 @@ export type CreateAndFinalizeRfqConstructionInput = {
   quoteAsset: QuoteAsset;
 
   /** The legs of the order. */
-  instruments: (SpotInstrument | PsyoptionsEuropeanInstrument)[];
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[];
 
   /** The type of order. */
   orderType: OrderType;
@@ -83,9 +88,6 @@ export type CreateAndFinalizeRfqConstructionInput = {
 
   /** The address of the risk_engine account */
   riskEngine?: PublicKey;
-
-  /** The base asset index. */
-  // baseAssetIndex?: BaseAssetIndex;
 
   legSize?: number;
 };
