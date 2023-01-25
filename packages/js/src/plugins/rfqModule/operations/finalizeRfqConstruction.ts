@@ -1,6 +1,4 @@
-import {
-  createFinalizeRfqConstructionInstruction,
-} from '@convergence-rfq/rfq';
+import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
@@ -171,14 +169,6 @@ export const finalizeRfqConstructionBuilder = async (
   collateralInfo = collateralInfo ?? collateralInfoPda;
   collateralToken = collateralToken ?? collateralTokenPda;
 
-  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
-    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
-  );
-  //@ts-ignore
-  const SWITCHBOARD_SOL_ORACLE = new PublicKey(
-    'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
-  );
-
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const protocol = convergence.protocol().pdas().protocol();
@@ -222,8 +212,12 @@ export const finalizeRfqConstructionBuilder = async (
 
     baseAssetAccounts.push(baseAssetAccount);
 
+    const baseAssetModel = await convergence
+      .protocol()
+      .findBaseAssetByAddress({ address: baseAsset });
+
     const oracleAccount: AccountMeta = {
-      pubkey: value == 0 ? SWITCHBOARD_BTC_ORACLE : SWITCHBOARD_SOL_ORACLE,
+      pubkey: baseAssetModel.priceOracle.address,
       isSigner: false,
       isWritable: false,
     };

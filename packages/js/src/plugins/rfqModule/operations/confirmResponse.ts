@@ -1,8 +1,4 @@
-import {
-  createConfirmResponseInstruction,
-  Side,
-  // BaseAssetIndex,
-} from '@convergence-rfq/rfq';
+import { createConfirmResponseInstruction, Side } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { bignum, COption } from '@convergence-rfq/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -159,13 +155,6 @@ export const confirmResponseBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
-  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
-    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
-  );
-  const SWITCHBOARD_SOL_ORACLE = new PublicKey(
-    'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
-  );
-
   const takerCollateralInfoPda = convergence
     .collateral()
     .pdas()
@@ -224,8 +213,12 @@ export const confirmResponseBuilder = async (
 
     baseAssetAccounts.push(baseAssetAccount);
 
+    const baseAssetModel = await convergence
+      .protocol()
+      .findBaseAssetByAddress({ address: baseAsset });
+
     const oracleAccount: AccountMeta = {
-      pubkey: value == 0 ? SWITCHBOARD_BTC_ORACLE : SWITCHBOARD_SOL_ORACLE,
+      pubkey: baseAssetModel.priceOracle.address,
       isSigner: false,
       isWritable: false,
     };

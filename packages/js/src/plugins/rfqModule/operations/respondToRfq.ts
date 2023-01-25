@@ -187,14 +187,6 @@ export const respondToRfqBuilder = async (
     programs,
   });
 
-  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
-    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
-  );
-  //@ts-ignore
-  const SWITCHBOARD_SOL_ORACLE = new PublicKey(
-    'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
-  );
-
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   //TODO: use PDA client
@@ -242,8 +234,12 @@ export const respondToRfqBuilder = async (
 
     baseAssetAccounts.push(baseAssetAccount);
 
+    const baseAssetModel = await convergence
+      .protocol()
+      .findBaseAssetByAddress({ address: baseAsset });
+
     const oracleAccount: AccountMeta = {
-      pubkey: value == 0 ? SWITCHBOARD_BTC_ORACLE : SWITCHBOARD_SOL_ORACLE,
+      pubkey: baseAssetModel.priceOracle.address,
       isSigner: false,
       isWritable: false,
     };
