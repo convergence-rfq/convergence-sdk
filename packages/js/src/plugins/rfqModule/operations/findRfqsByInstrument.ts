@@ -67,10 +67,9 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const rfqs = await rfqGpaBuilder.get();
-      scope.throwIfCanceled();
+      const unparsedRfqs = await rfqGpaBuilder.get();
 
-      const rfqAccounts = rfqs
+      const rfqs = unparsedRfqs
         .map<Rfq | null>((account) => {
           if (account === null) {
             return null;
@@ -84,7 +83,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         })
         .filter((rfq): rfq is Rfq => rfq !== null);
       const rfq: Rfq[] = [];
-      for (const r of rfqAccounts) {
+      for (const r of rfqs) {
         for (const l of r.legs) {
           if (
             l.instrumentProgram.toBase58() ===

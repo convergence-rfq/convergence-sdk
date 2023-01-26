@@ -62,7 +62,7 @@ let makerBTCWallet: Token;
 let takerUSDCWallet: Token;
 let takerBTCWallet: Token;
 let takerSOLWallet: Token;
-
+let americanOptionMint: Mint;
 const WALLET_AMOUNT = 9_000 * 10 ** BTC_DECIMALS;
 const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
 
@@ -71,6 +71,7 @@ const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
 let optionMarket: OptionMarketWithKey | null;
 let optionMarketPubkey: PublicKey;
 
+let europeanOptionPutMint: PublicKey;
 test('[setup] it can create Convergence instance', async (t: Test) => {
   cvg = await convergenceCli(SKIP_PREFLIGHT);
 
@@ -1397,6 +1398,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
     1_000_000,
     3_600
   );
+  europeanOptionPutMint = euroMeta.putOptionMint;
 
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
@@ -1440,19 +1442,21 @@ test('[psyoptionsEuropeanInstrumentModule] it can create an RFQ with PsyOptions 
 });
 
 test('[psyoptionsAmericanInstrumentModule] it can mint options to taker', async () => {
-  const { op, optionMarketKey } = await initializePsyoptionsAmerican(
-    cvg,
-    btcMint,
-    usdcMint,
-    taker,
-    maker,
-    new anchor.BN(100),
-    new anchor.BN(1),
-    3_600
-  );
+  const { op, optionMarketKey, optionMint } =
+    await initializePsyoptionsAmerican(
+      cvg,
+      btcMint,
+      usdcMint,
+      taker,
+      maker,
+      new anchor.BN(100),
+      new anchor.BN(1),
+      3_600
+    );
 
   optionMarket = op;
   optionMarketPubkey = optionMarketKey;
+  americanOptionMint = optionMint;
 });
 
 test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions American, respond,confirm response , preparesettlement, settle', async (t: Test) => {
@@ -1529,6 +1533,8 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
     response: rfqResponse.address,
     quoteMint: usdcMint,
   });
+
+  console.log(americanOptionMint.address.toBase58());
 });
 
 test('[rfqModule] it can add legs to  rfq', async (t: Test) => {
@@ -1880,6 +1886,15 @@ test('[rfq module] it can find all rfqs which are active', async () => {
   const Rfqs = await cvg.rfqs().findRfqsByActive({});
   Rfqs.forEach((rfq) => {
     console.log('Rfq state', rfq.state);
+    console.log('Rfq address', rfq.address.toBase58());
+  });
+});
+
+test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async () => {
+  const Rfqs = await cvg
+    .rfqs()
+    .findByToken({ mintAddress: europeanOptionPutMint });
+  Rfqs.forEach((rfq) => {
     console.log('Rfq address', rfq.address.toBase58());
   });
 });

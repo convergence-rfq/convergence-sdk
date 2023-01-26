@@ -29,7 +29,7 @@ import { Convergence } from '@/Convergence';
 
 import { createSerializerFromFixableBeetArgsStruct } from '@/types';
 
-type InstrumentData = {
+type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;
   underlyingAmountPerContract: bignum;
   strikePrice: bignum;
@@ -38,19 +38,20 @@ type InstrumentData = {
   metaKey: PublicKey;
 };
 
-const instrumentDataSerializer = createSerializerFromFixableBeetArgsStruct(
-  new FixableBeetArgsStruct<InstrumentData>(
-    [
-      ['optionType', u8],
-      ['underlyingAmountPerContract', u64],
-      ['strikePrice', u64],
-      ['expiration', u64],
-      ['optionMint', publicKey],
-      ['metaKey', publicKey],
-    ],
-    'InstrumentData'
-  )
-);
+export const psyoptionsAmericanInstrumentDataSerializer =
+  createSerializerFromFixableBeetArgsStruct(
+    new FixableBeetArgsStruct<PsyoptionsAmericanInstrumentData>(
+      [
+        ['optionType', u8],
+        ['underlyingAmountPerContract', u64],
+        ['strikePrice', u64],
+        ['expiration', u64],
+        ['optionMint', publicKey],
+        ['metaKey', publicKey],
+      ],
+      'InstrumentData'
+    )
+  );
 
 const optionMarketWithKeySerializer = createSerializerFromFixableBeetArgsStruct(
   new FixableBeetArgsStruct<OptionMarketWithKey>(
@@ -121,9 +122,10 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     leg: Leg
   ): Promise<PsyoptionsAmericanInstrument> {
     const { side, instrumentAmount, instrumentData } = leg;
-    const [{ metaKey, optionType }] = instrumentDataSerializer.deserialize(
-      Buffer.from(instrumentData)
-    );
+    const [{ metaKey, optionType }] =
+      psyoptionsAmericanInstrumentDataSerializer.deserialize(
+        Buffer.from(instrumentData)
+      );
 
     const account = await convergence.rpc().getAccount(metaKey);
     if (!account.exists) {
@@ -155,7 +157,6 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     );
   }
 
- 
   getValidationAccounts() {
     const mintInfoPda = this.convergence
       .rfqs()
