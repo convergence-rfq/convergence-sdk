@@ -319,13 +319,55 @@ test('[riskEngineModule] it can set instrument types', async () => {
 });
 
 test('[riskEngineModule] it can set risk categories info', async (t: Test) => {
-  const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
-    change: {
-      newValue: DEFAULT_RISK_CATEGORIES_INFO.veryLow,
-      riskCategoryIndex: RiskCategory.VeryLow,
-    },
-  });
-  t.assert(response.signature.length > 0, 'signature present');
+  const { response: responseVeryLow } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      change: {
+        newValue: DEFAULT_RISK_CATEGORIES_INFO.veryLow,
+        riskCategoryIndex: RiskCategory.VeryLow,
+      },
+    });
+  t.assert(responseVeryLow.signature.length > 0, 'signature present');
+
+  const { response: responseLow } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      change: {
+        newValue: DEFAULT_RISK_CATEGORIES_INFO.low,
+        riskCategoryIndex: RiskCategory.Low,
+      },
+    });
+  t.assert(responseLow.signature.length > 0, 'signature present');
+
+  const { response: responseMedium } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      change: {
+        newValue: DEFAULT_RISK_CATEGORIES_INFO.medium,
+        riskCategoryIndex: RiskCategory.Medium,
+      },
+    });
+  t.assert(responseMedium.signature.length > 0, 'signature present');
+
+  const { response: responseHigh } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      change: {
+        newValue: DEFAULT_RISK_CATEGORIES_INFO.high,
+        riskCategoryIndex: RiskCategory.High,
+      },
+    });
+  t.assert(responseHigh.signature.length > 0, 'signature present');
+
+  const { response: responseVeryHigh } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      change: {
+        newValue: DEFAULT_RISK_CATEGORIES_INFO.veryHigh,
+        riskCategoryIndex: RiskCategory.VeryHigh,
+      },
+    });
+  t.assert(responseVeryHigh.signature.length > 0, 'signature present');
 });
 
 const RUN = false;
