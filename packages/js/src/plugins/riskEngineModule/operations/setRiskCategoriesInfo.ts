@@ -50,6 +50,8 @@ export type SetRiskCategoriesInfoInput = {
    * The owner of the protocol.
    */
   authority?: Signer;
+
+  change: RiskCategoryChange;
 };
 
 /**

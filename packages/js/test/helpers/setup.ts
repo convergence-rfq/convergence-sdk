@@ -8,7 +8,6 @@ import {
 } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
-
 import {
   createProgram,
   programId as psyoptionsEuropeanProgramId,
@@ -16,20 +15,18 @@ import {
   OptionType,
 } from '@mithraic-labs/tokenized-euros';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+import * as spl from '@solana/spl-token';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
-
 import {
   IDL as PseudoPythIdl,
   Pyth,
 } from '../../../../programs/pseudo_pyth_idl';
-import * as spl from '@solana/spl-token';
 import {
   Convergence,
   keypairIdentity,
   KeypairSigner,
   Mint,
   toBigNumber,
-  // Token,
   token,
   walletAdapterIdentity,
   Signer,
@@ -40,8 +37,7 @@ const {
   mintOptions,
 } = instructions;
 import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-
-import { TransactionBuilder /*TransactionBuilderOptions*/ } from '@/utils';
+import { TransactionBuilder } from '@/utils';
 
 // CONSTANTS
 
@@ -368,22 +364,6 @@ export const initializeNewOptionMeta = async (
       mint: stableMint.address,
       owner: taker.publicKey,
     });
-  //@ts-ignore
-  const makerUnderlyingMintToken = convergence
-    .tokens()
-    .pdas()
-    .associatedTokenAccount({
-      mint: underlyingMint.address,
-      owner: maker.publicKey,
-    });
-  //@ts-ignore
-  const takerUnderlyingMintToken = convergence
-    .tokens()
-    .pdas()
-    .associatedTokenAccount({
-      mint: underlyingMint.address,
-      owner: taker.publicKey,
-    });
 
   const makerPutMinterCollateralKey = makerStableMintToken;
   const takerPutMinterCollateralKey = takerStableMintToken;
@@ -446,7 +426,7 @@ export const initializeNewOptionMeta = async (
     isWritable: false,
   };
 
-  let txBuilder = TransactionBuilder.make().setFeePayer(payer);
+  const txBuilder = TransactionBuilder.make().setFeePayer(payer);
 
   txBuilder.add(
     {
