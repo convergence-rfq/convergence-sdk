@@ -1,9 +1,7 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair } from '@solana/web3.js';
-//@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
-//@ts-ignore
 import * as anchor from '@project-serum/anchor';
 import {
   BTC_DECIMALS,
@@ -13,52 +11,31 @@ import {
   SKIP_PREFLIGHT,
   convergenceCli,
   killStuckProcess,
-  //@ts-ignore
   spokSamePubkey,
-  //@ts-ignore
   initializeNewOptionMeta,
   setupAccounts,
-  //@ts-ignore
-  spokSameBignum,
-  //@ts-ignore
-  delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
   Mint,
-  //@ts-ignore
   token,
-  //@ts-ignore
   Side,
   RiskCategory,
-  //@ts-ignore
   SpotInstrument,
-  //@ts-ignore
   OrderType,
-  //@ts-ignore
   PsyoptionsEuropeanInstrument,
-  //@ts-ignore
   OptionType,
-  //@ts-ignore
   InstrumentType,
   Token,
-  //@ts-ignore
   StoredResponseState,
-  //@ts-ignore
   AuthoritySide,
-  //@ts-ignore
   StoredRfqState,
-  //@ts-ignore
   legsToInstruments,
   Signer,
-  //@ts-ignore
   quoteAssetToInstrument,
 } from '@/index';
-// import { instructions } from '@mithraic-labs/tokenized-euros';
 
 killStuckProcess();
-//@ts-ignore
-// const { mintOptions } = instructions;
 
 let cvg: Convergence;
 
@@ -73,16 +50,15 @@ let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
 
 let daoBTCWallet: Token;
 let daoUSDCWallet: Token;
-//@ts-ignore
+
 let makerUSDCWallet: Token;
 let makerBTCWallet: Token;
-//@ts-ignore
+
 let takerUSDCWallet: Token;
 let takerBTCWallet: Token;
 let takerSOLWallet: Token;
 
 const WALLET_AMOUNT = 9_000 * 10 ** BTC_DECIMALS;
-//@ts-ignore
 const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
 
 // SETUP
@@ -318,21 +294,33 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
 // RISK ENGINE
 
 test('[riskEngineModule] it can initialize the default risk engine config', async () => {
-  await cvg.riskEngine().initializeConfig();
-});
+  test('[initializeConfig] it can initialize the risk engine', async () => {
+    await cvg.riskEngine().initializeConfig();
+  });
 
-test('[riskEngineModule] it can set spot, American and European option instrument types', async () => {
-  await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: cvg.programs().getSpotInstrument().address,
-    instrumentType: InstrumentType.Spot,
+  test('[setInstrumentType] it can set spot, American and European option instrument types', async () => {
+    await cvg.riskEngine().setInstrumentType({
+      instrumentProgram: cvg.programs().getSpotInstrument().address,
+      instrumentType: InstrumentType.Spot,
+    });
+    await cvg.riskEngine().setInstrumentType({
+      instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument()
+        .address,
+      instrumentType: InstrumentType.Option,
+    });
+    await cvg.riskEngine().setInstrumentType({
+      instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
+        .address,
+      instrumentType: InstrumentType.Option,
+    });
   });
-  await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument().address,
-    instrumentType: InstrumentType.Option,
-  });
-  await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument().address,
-    instrumentType: InstrumentType.Option,
+
+  test('[setRiskProfile] it can set risk profile', async () => {
+    await cvg.riskEngine().setInstrumentType({
+      instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
+        .address,
+      instrumentType: InstrumentType.Option,
+    });
   });
 });
 
@@ -1687,7 +1675,6 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
 // PSYOPTIONS EUROPEANS
 
 test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
-  //@ts-ignore
   const { europeanProgram, euroMeta, euroMetaKey } =
     await initializeNewOptionMeta(
       cvg,
@@ -1695,11 +1682,8 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
       usdcMint,
       17_500,
       1_000_000,
-      3_600,
-      takerUSDCWallet,
-      makerUSDCWallet
+      3_600
     );
-  //@ts-ignore
   const instrument1 = new PsyoptionsEuropeanInstrument(
     cvg,
     btcMint,
@@ -1711,17 +1695,14 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
       side: Side.Bid,
     }
   );
-  //@ts-ignore
   const instrument2 = new SpotInstrument(cvg, btcMint, {
     amount: 5,
     side: Side.Ask,
   });
-  //@ts-ignore
   const instrument3 = new SpotInstrument(cvg, btcMint, {
     amount: 11,
     side: Side.Bid,
   });
-  //@ts-ignore
   const { rfq } = await cvg.rfqs().create({
     taker,
     instruments: [instrument1, instrument2, instrument3],
@@ -2022,10 +2003,9 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
       side: Side.Bid,
     })
   );
-  //@ts-ignore
   let expLegSize = 4;
 
-  let sizes: number[] = [];
+  const sizes: number[] = [];
 
   // for (const instrument of instruments) {
   for (const instrument of instruments.slice(0, 12)) {
@@ -2047,14 +2027,11 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
   */
 
   // 7
-  //@ts-ignore
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: instruments.slice(0, 12),
-    // instruments,
     taker,
     legSize: expLegSize,
     orderType: OrderType.TwoWay,
-    // fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
@@ -2124,12 +2101,7 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     legAmountToPrepare: instruments.slice(0, 12).length,
     quoteMint: usdcMint,
     mintAmount: new anchor.BN(1_000_000),
-    // euroMeta,
-    // euroMetaKey,
-    // europeanProgram,
   });
-  //@ts-ignore
-  const firstToPrepare = taker.publicKey;
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
@@ -2139,9 +2111,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     legAmountToPrepare: instruments.slice(0, 12).length,
     quoteMint: usdcMint,
     mintAmount: new anchor.BN(1_000_000),
-    // euroMeta,
-    // euroMetaKey,
-    // europeanProgram,
   });
 
   let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -2226,7 +2195,7 @@ test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) =
   });
 });
 
-// // RFQ HELPERS
+// RFQ HELPERS
 
 test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
   // We we can to this after creating options so that we can test this method
