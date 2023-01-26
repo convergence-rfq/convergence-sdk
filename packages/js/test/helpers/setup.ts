@@ -8,11 +8,16 @@ import {
 } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
+
 import {
   createProgram,
   programId as psyoptionsEuropeanProgramId,
   instructions,
+  OptionType,
 } from '@mithraic-labs/tokenized-euros';
+import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
+
 import {
   IDL as PseudoPythIdl,
   Pyth,
@@ -27,6 +32,7 @@ import {
   // Token,
   token,
   walletAdapterIdentity,
+  Signer,
 } from '@/index';
 const {
   initializeAllAccountsInstructions,
@@ -34,7 +40,7 @@ const {
   mintOptions,
 } = instructions;
 import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import { OptionType } from '@mithraic-labs/tokenized-euros';
+
 import { TransactionBuilder /*TransactionBuilderOptions*/ } from '@/utils';
 
 // CONSTANTS
@@ -466,5 +472,121 @@ export const initializeNewOptionMeta = async (
     euroMeta,
     euroMetaKey,
     oracle,
+  };
+};
+
+const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
+  'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
+);
+
+export const initializePsyoptionsAmerican = async (
+  convergence: Convergence,
+  underlyingMint: Mint,
+  quoteMint: Mint,
+  taker: Signer,
+  maker: Signer,
+  quoteAmountPerContract: anchor.BN,
+  underlyingAmountPerContract: anchor.BN,
+  expiresIn: number
+) => {
+  const payer = taker;
+
+  const provider = new anchor.AnchorProvider(
+    convergence.connection,
+    new anchor.Wallet(payer as Keypair),
+    {}
+  );
+  anchor.setProvider(provider);
+
+  const AmericanProgram = psyoptionsAmerican.createProgram(
+    psyOptionsAmericanLocalNetProgramId,
+    provider
+  );
+
+  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
+
+  const { optionMarketKey, optionMintKey, writerMintKey } =
+    await psyoptionsAmerican.instructions.initializeMarket(AmericanProgram, {
+      expirationUnixTimestamp: expiration,
+      quoteAmountPerContract,
+      quoteMint: quoteMint.address,
+      underlyingAmountPerContract,
+      underlyingMint: underlyingMint.address,
+    });
+
+  const op = (await psyoptionsAmerican.getOptionByKey(
+    AmericanProgram,
+    optionMarketKey
+  )) as OptionMarketWithKey;
+
+  const takerOptionToken = await spl.createAssociatedTokenAccount(
+    convergence.connection,
+    taker as Keypair,
+    optionMintKey,
+    taker.publicKey
+  );
+
+  await spl.createAssociatedTokenAccount(
+    convergence.connection,
+    maker as Keypair,
+    optionMintKey,
+    maker.publicKey
+  );
+
+  await spl.createAssociatedTokenAccount(
+    convergence.connection,
+    maker as Keypair,
+    writerMintKey,
+    maker.publicKey
+  );
+
+  const takerWriterToken = await spl.createAssociatedTokenAccount(
+    convergence.connection,
+    taker as Keypair,
+    writerMintKey,
+    taker.publicKey
+  );
+  const takerUnderlyingToken = await spl.getAssociatedTokenAddress(
+    underlyingMint.address,
+    taker.publicKey
+  );
+
+  // const makerUnderlyingToken = await spl.getAssociatedTokenAddress(
+  //   underlyingMint.address,
+  //   maker.publicKey
+  // );
+
+  const optionMint = await convergence
+    .tokens()
+    .findMintByAddress({ address: optionMintKey });
+
+  const ix1 = await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+    AmericanProgram,
+    takerOptionToken,
+    takerWriterToken,
+    takerUnderlyingToken,
+    new anchor.BN(10),
+    op as psyoptionsAmerican.OptionMarketWithKey
+  );
+  ix1.signers.push(taker as Keypair);
+  const tnx1 = new anchor.web3.Transaction();
+  tnx1.add(ix1.ix);
+  await provider.sendAndConfirm(tnx1, ix1.signers);
+  // const ix2 = await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+  //   AmericanProgram,
+  //   makerOptionToken,
+  //   makerWriterToken,
+  //   makerUnderlyingToken,
+  //   new anchor.BN(10),
+  //   op as psyoptionsAmerican.OptionMarketWithKey
+  // );
+  // ix2.signers.push(maker as Keypair);
+  // const tnx2 = new anchor.web3.Transaction();
+  // tnx2.add(ix2.ix);
+  // await provider.sendAndConfirm(tnx2, ix2.signers);
+  return {
+    op,
+    optionMarketKey,
+    optionMint,
   };
 };

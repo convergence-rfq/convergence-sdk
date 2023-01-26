@@ -5,6 +5,7 @@ import * as beetSolana from '@convergence-rfq/beet-solana';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';
+// import { InstrumentPdasClient } from './InstrumentPdasClient';
 import type { Convergence } from '@/Convergence';
 import {
   toBigNumber,

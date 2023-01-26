@@ -5,7 +5,7 @@ const riskEngine = require('@convergence-rfq/risk-engine');
 const spotInstrument = require('@convergence-rfq/spot-instrument');
 const psyoptionsEuropeanInstrument = require('@convergence-rfq/psyoptions-european-instrument');
 const psyoptionsAmericanInstrument = require('@convergence-rfq/psyoptions-american-instrument');
-
+const PSYOPTIONS_AMERICAN = 'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs';
 const SWITCHBOARD_BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee';
 const SWITCHBOARD_SOL_ORACLE = 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR';
 const PSYOPTIONS_EURO_PRIMITIVE =
@@ -40,6 +40,9 @@ module.exports.solanaTestValidator = new Promise((resolve) => {
     '--bpf-program',
     psyoptionsEuropeanInstrument.PROGRAM_ADDRESS,
     'programs/psyoptions_european_instrument.so',
+    '--bpf-program',
+    PSYOPTIONS_AMERICAN,
+    'programs/psy_american.so',
     '--bpf-program',
     psyoptionsAmericanInstrument.PROGRAM_ADDRESS,
     'programs/psyoptions_american_instrument.so',

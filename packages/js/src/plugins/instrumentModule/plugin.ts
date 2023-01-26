@@ -10,7 +10,10 @@ import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentMod
 export const instrumentModule = (): ConvergencePlugin => ({
   install(convergence: Convergence) {
     convergence.instrument = function (
-      instrument: SpotInstrument | PsyoptionsEuropeanInstrument,
+      instrument:
+        | SpotInstrument
+        | PsyoptionsEuropeanInstrument
+        | PsyoptionsAmericanInstrument,
       legInfo?: {
         amount: number;
         side: Side;

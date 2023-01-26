@@ -39,6 +39,8 @@ import {
   FindRfqsByOwnerInput,
   findRfqsByTokenOperation,
   FindRfqsByTokenInput,
+  findRfqsByActiveOperation,
+  FindRfqsByActiveInput,
   partiallySettleLegsOperation,
   PartiallySettleLegsInput,
   partlyRevertSettlementPreparationOperation,
@@ -242,6 +244,12 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(findRfqsByAddressesOperation(input), options);
+  }
+
+  findRfqsByActive(input: FindRfqsByActiveInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(findRfqsByActiveOperation(input), options);
   }
 
   /** {@inheritDoc findRfqsByInstrumentOperation} */
