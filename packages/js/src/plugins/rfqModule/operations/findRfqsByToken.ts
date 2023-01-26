@@ -189,7 +189,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
           }
         }
       }
-
-      return rfqByToken;
+      const rfqTokenSorted = [...new Set(rfqByToken)];
+      return rfqTokenSorted;
     },
   };
