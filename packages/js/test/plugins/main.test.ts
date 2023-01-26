@@ -1899,3 +1899,9 @@ test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', as
   });
 });
 
+test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async () => {
+  const Rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
+  Rfqs.forEach((rfq) => {
+    console.log('Rfq address', rfq.address.toBase58());
+  });
+});
