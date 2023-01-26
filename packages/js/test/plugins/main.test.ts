@@ -298,26 +298,34 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
 
 // RISK ENGINE
 
-test('[riskEngineModule] it can initialize the default risk engine config', async () => {
-  await cvg.riskEngine().initializeConfig();
+test('[riskEngineModule]', async () => {
+  test('[initializeConfig] it can initialize the default risk engine config', async () => {
+    await cvg.riskEngine().initializeConfig();
+  });
+
+  test('[setInstrumentType] it can set instrument types', async () => {
+    await cvg.riskEngine().setInstrumentType({
+      instrumentProgram: cvg.programs().getSpotInstrument().address,
+      instrumentType: InstrumentType.Spot,
+    });
+    await cvg.riskEngine().setInstrumentType({
+      instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument()
+        .address,
+      instrumentType: InstrumentType.Option,
+    });
+    await cvg.riskEngine().setInstrumentType({
+      instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
+        .address,
+      instrumentType: InstrumentType.Option,
+    });
+  });
+
+  test('[setInstrumentType] it can set risk categories info', async () => {
+    //await cvg.riskEngine().setRiskCategoriesInfo({});
+  });
 });
 
-test('[riskEngineModule] it can set spot, American and European option instrument types', async () => {
-  await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: cvg.programs().getSpotInstrument().address,
-    instrumentType: InstrumentType.Spot,
-  });
-  await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument().address,
-    instrumentType: InstrumentType.Option,
-  });
-  await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument().address,
-    instrumentType: InstrumentType.Option,
-  });
-});
-
-// // COLLATERAL
+// COLLATERAL
 
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const { collateral: takerCollateral } = await cvg.collateral().initialize({

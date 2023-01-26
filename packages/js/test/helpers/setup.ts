@@ -283,9 +283,6 @@ export const initializeNewOptionMeta = async (
   strikePrice: number,
   underlyingAmountPerContract: number,
   expiresIn: number
-  // takerUSDCWallet: Token,
-  // makerUSDCWallet: Token
-  // quoteMint: Mint,
 ) => {
   const maker = Keypair.fromSecretKey(
     new Uint8Array(

@@ -9,6 +9,8 @@ import {
   CalculateCollateralForConfirmationIntput,
   CalculateCollateralForRfqIntput,
   CalculateCollateralForResponseIntput,
+  setRiskCategoriesInfoOperation,
+  SetRiskCategoriesInfoInput,
 } from './operations';
 import type { Convergence } from '@/Convergence';
 import { OperationOptions } from '@/types';
@@ -41,6 +43,17 @@ export class RiskEngineClient {
       .operations()
       .execute(setInstrumentTypeOperation(input), options);
   }
+
+  /** {@inheritDoc setRiskCategoriesInfoOperation} */
+  setRiskCategoriesInfo(
+    input: SetRiskCategoriesInfoInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(setRiskCategoriesInfoOperation(input), options);
+  }
+
   /** {@inheritDoc  calculateCollateralForRfq} */
   calculateCollateralForRfq(
     input: CalculateCollateralForRfqIntput,
@@ -50,6 +63,7 @@ export class RiskEngineClient {
       .operations()
       .execute(calculateCollateralForRfqOperation(input), options);
   }
+
   /** {@inheritDoc calculateCollateralForResponse} */
   calculateCollateralForResponse(
     input: CalculateCollateralForResponseIntput,
