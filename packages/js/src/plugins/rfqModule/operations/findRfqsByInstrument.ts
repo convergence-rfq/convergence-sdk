@@ -94,6 +94,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
           }
         }
       }
-      return rfq;
+      const rfqSet = [...new Set(rfq)];
+      return rfqSet;
     },
   };
