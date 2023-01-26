@@ -15,7 +15,7 @@ import {
   setupAccounts,
   BTC_DECIMALS,
   USDC_DECIMALS,
-  spokSameBignum,
+  // spokSameBignum,
 } from '../helpers';
 
 import { initializePsyoptionsAmerican } from '../helpers/setup';
@@ -1724,11 +1724,11 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, par
     quoteMint: usdcMint,
   });
 
-  const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+  // const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
-  const makerPreparedLegs = parseInt(
-    refreshedResponse.makerPreparedLegs.toString()
-  );
+  // const makerPreparedLegs = parseInt(
+  //   refreshedResponse.makerPreparedLegs.toString()
+  // );
 
   await sleep(3_001).then(async () => {
     await cvg.rfqs().partlyRevertSettlementPreparation({
