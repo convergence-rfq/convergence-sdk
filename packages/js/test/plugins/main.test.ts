@@ -1686,6 +1686,10 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, par
         amount: 5,
         side: Side.Bid,
       }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 7,
+        side: Side.Ask,
+      }),
     ],
     taker,
     orderType: OrderType.TwoWay,
@@ -1720,15 +1724,9 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, par
     rfq: rfq.address,
     response: rfqResponse.address,
     side: AuthoritySide.Maker,
-    legAmountToPrepare: 1,
+    legAmountToPrepare: 2,
     quoteMint: usdcMint,
   });
-
-  // const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  // const makerPreparedLegs = parseInt(
-  //   refreshedResponse.makerPreparedLegs.toString()
-  // );
 
   await sleep(3_001).then(async () => {
     await cvg.rfqs().partlyRevertSettlementPreparation({
