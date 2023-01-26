@@ -1,5 +1,7 @@
 import { createInitializeConfigInstruction } from '@convergence-rfq/risk-engine';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { toConfigAccount } from '../accounts';
+import { toConfig, assertConfig, Config } from '../models';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -78,6 +80,8 @@ export type InitializeConfigInput =
 export type InitializeConfigOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
+  config: Config;
 };
 
 /**
@@ -91,13 +95,27 @@ export const initializeConfigOperationHandler: OperationHandler<InitalizeConfigO
       convergence: Convergence,
       scope: OperationScope
     ): Promise<InitializeConfigOutput> => {
+      const { commitment } = scope;
       scope.throwIfCanceled();
 
-      return initializeConfigBuilder(
+      const builder = initializeConfigBuilder(
         convergence,
         operation.input,
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      const { response } = await builder.sendAndConfirm(
+        convergence,
+        scope.confirmOptions
+      );
+
+      const account = await convergence
+        .rpc()
+        .getAccount(convergence.riskEngine().pdas().config(), commitment);
+      const config = toConfig(toConfigAccount(account));
+      scope.throwIfCanceled();
+      assertConfig(config);
+
+      return { response, config };
     },
   };
 

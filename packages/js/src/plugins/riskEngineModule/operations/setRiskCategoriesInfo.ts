@@ -3,6 +3,8 @@ import {
   RiskCategoryChange,
 } from '@convergence-rfq/risk-engine';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { assertConfig, Config, toConfig } from '../models';
+import { toConfigAccount } from '../accounts';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -60,6 +62,9 @@ export type SetRiskCategoriesInfoInput = {
 export type SetRiskCategoriesInfoOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
+  /** Risk engine config. */
+  config: Config;
 };
 
 /**
@@ -73,12 +78,27 @@ export const setRiskCategoriesInfoOperationHandler: OperationHandler<SetRiskCate
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetRiskCategoriesInfoOutput> => {
+      const { commitment } = scope;
       scope.throwIfCanceled();
-      return SetRiskCategoriesInfoBuilder(
+
+      const builder = setRiskCategoriesInfoBuilder(
         convergence,
         operation.input,
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      const { response } = await builder.sendAndConfirm(
+        convergence,
+        scope.confirmOptions
+      );
+
+      const account = await convergence
+        .rpc()
+        .getAccount(convergence.riskEngine().pdas().config(), commitment);
+      const config = toConfig(toConfigAccount(account));
+      scope.throwIfCanceled();
+      assertConfig(config);
+
+      return { response, config };
     },
   };
 
@@ -101,7 +121,7 @@ export type SetRiskCategoriesInfoBuilderParams = SetRiskCategoriesInfoInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const SetRiskCategoriesInfoBuilder = (
+export const setRiskCategoriesInfoBuilder = (
   convergence: Convergence,
   params: SetRiskCategoriesInfoBuilderParams,
   options: TransactionBuilderOptions = {}
