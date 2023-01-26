@@ -66,8 +66,6 @@ export type RevertSettlementPreparationInput = {
 
   quoteMint: Mint;
 
-  // baseAssetMints: Mint[];
-
   /*
    * Args
    */

@@ -195,10 +195,6 @@ export const cleanUpResponseLegsBuilder = async (
             : instrument.meta.putOptionMint,
       });
 
-      console.log(
-        'baseasset mint inside euro: ' + euroMetaOptionMint.address.toString()
-      );
-
       baseAssetMint = euroMetaOptionMint;
     } else if (
       leg.instrumentProgram.toString() ===
@@ -221,8 +217,6 @@ export const cleanUpResponseLegsBuilder = async (
       const mint = await convergence.tokens().findMintByAddress({
         address: instrument.mint.address,
       });
-
-      console.log('baseasset mint inside spot: ' + mint.address.toString());
 
       baseAssetMint = mint;
     }

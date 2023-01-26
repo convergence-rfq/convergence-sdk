@@ -270,7 +270,6 @@ export const prepareMoreLegsSettlementBuilder = async (
         isSigner: false,
         isWritable: false,
       },
-      // getting seeds constraint violation with `escrow` here
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,

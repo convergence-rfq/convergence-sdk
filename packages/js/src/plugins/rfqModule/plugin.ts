@@ -55,6 +55,8 @@ import {
   unlockRfqCollateralOperationHandler,
   createAndFinalizeRfqConstructionOperation,
   createAndFinalizeRfqConstructionOperationHandler,
+  createAndAddLegsToRfqOperation,
+  createAndAddLegsToRfqOperationHandler,
 } from './operations';
 import { rfqProgram } from './program';
 import { ConvergencePlugin, Program } from '@/types';
@@ -142,6 +144,10 @@ export const rfqModule = (): ConvergencePlugin => ({
     op.register(
       unlockRfqCollateralOperation,
       unlockRfqCollateralOperationHandler
+    );
+    op.register(
+      createAndAddLegsToRfqOperation,
+      createAndAddLegsToRfqOperationHandler
     );
 
     convergence.rfqs = function () {

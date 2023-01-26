@@ -25,6 +25,8 @@ import {
   //@ts-ignore
   createAndFinalizeRfqConstructionOperation,
   CreateAndFinalizeRfqConstructionInput,
+  createAndAddLegsToRfqOperation,
+  CreateAndAddLegsToRfqInput,
   finalizeRfqConstructionOperation,
   FinalizeRfqConstructionInput,
   findRfqsByAddressesOperation,
@@ -186,6 +188,16 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(createRfqOperation(input), options);
+  }
+
+  /** {@inheritDoc createAndAddLegsToRfqOperation} */
+  createAndAddLegs(
+    input: CreateAndAddLegsToRfqInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(createAndAddLegsToRfqOperation(input), options);
   }
 
   /** {@inheritDoc createAndFinalizeRfqConstructionOperation} */

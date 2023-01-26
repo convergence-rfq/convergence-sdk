@@ -148,7 +148,6 @@ export const cleanUpResponseBuilder = async (
     response,
     firstToPrepare,
     dao,
-    // baseAssetMints,
     quoteMint,
   } = params;
 
@@ -229,8 +228,6 @@ export const cleanUpResponseBuilder = async (
       const mint = await convergence.tokens().findMintByAddress({
         address: instrument.mint.address,
       });
-
-      console.log('baseasset mint inside spot: ' + mint.address.toString());
 
       baseAssetMint = mint;
     }

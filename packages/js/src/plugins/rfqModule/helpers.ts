@@ -6,6 +6,10 @@ import {
   PsyoptionsEuropeanInstrument,
   psyoptionsEuropeanInstrumentProgram,
 } from '../psyoptionsEuropeanInstrumentModule';
+import {
+  PsyoptionsAmericanInstrument,
+  psyoptionsAmericanInstrumentProgram,
+} from '../psyoptionsAmericanInstrumentModule';
 import type { Rfq } from './models';
 import type { Leg, QuoteAsset } from './types';
 import { PublicKeyValues, toPublicKey } from '@/types';
@@ -22,7 +26,13 @@ export const toMintAddress = (
 export const legsToInstruments = async (
   convergence: Convergence,
   legs: Leg[]
-): Promise<(SpotInstrument | PsyoptionsEuropeanInstrument)[]> => {
+): Promise<
+  (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+> => {
   return await Promise.all(
     legs.map(async (leg: Leg) => {
       if (leg.instrumentProgram.equals(spotInstrumentProgram.address)) {
@@ -36,7 +46,17 @@ export const legsToInstruments = async (
           convergence,
           leg
         );
+      } else if (
+        leg.instrumentProgram.equals(
+          psyoptionsAmericanInstrumentProgram.address
+        )
+      ) {
+        return await PsyoptionsAmericanInstrument.createFromLeg(
+          convergence,
+          leg
+        );
       }
+
       throw new Error('Unsupported instrument program');
     })
   );

@@ -342,11 +342,6 @@ export const prepareSettlementBuilder = async (
       },
       // `caller_tokens` , optionDestination
       {
-        // pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        //   mint: baseAssetMints[legIndex].address,
-        //   owner: caller.publicKey,
-        //   programs,
-        // }),
         pubkey: await getOrCreateAssociatedTokenAccount(
           convergence.connection,
           caller as Keypair,

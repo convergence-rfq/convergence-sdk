@@ -153,13 +153,13 @@ export type CreateAndFinalizeRfqConstructionBuilderContext =
   SendAndConfirmTransactionResponse;
 
 /**
- * createAndFinalizes an Rfq.
+ * Creates and finalizes an Rfq.
  *
  * ```ts
  * const transactionBuilder = await convergence
  *   .rfqs()
  *   .builders()
- *   .create();
+ *   .createAndFinalize();
  * ```
  *
  * @group Transaction Builders
@@ -184,7 +184,6 @@ export const createAndFinalizeRfqConstructionBuilder = async (
     collateralInfo,
     collateralToken,
     riskEngine,
-    // baseAssetIndex,
     legSize,
   } = params;
 
@@ -212,7 +211,6 @@ export const createAndFinalizeRfqConstructionBuilder = async (
       collateralInfo,
       collateralToken,
       riskEngine,
-      // baseAssetIndex,
     },
     options
   );
