@@ -1078,7 +1078,7 @@ test('[rfqModule] it can perform an full RFQ', async (t: Test) => {
     overrideLegMultiplierBps: 1_000_000_000,
   });
 
-  //let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
   await cvg.rfqs().prepareSettlement({
     caller: taker,
@@ -1141,7 +1141,7 @@ test('[rfqModule] it can perform an full RFQ', async (t: Test) => {
 
   console.log(
     'rfqResponse.makerCollateralLocked',
-    rfqResponse.makerCollateralLocked.toString()
+    refreshedResponse.makerCollateralLocked.toString()
   );
   console.log(
     'rfq.totalTakerCollateralLocked',
