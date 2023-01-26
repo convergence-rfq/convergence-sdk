@@ -164,8 +164,8 @@ export const createProtocolBuilder = async (
   const protocol = convergence.protocol().pdas().protocol();
 
   // TODO: Make this configurable
-  const settleFees: FeeParameters = { takerBps: 0, makerBps: 0 };
-  const defaultFees: FeeParameters = { takerBps: 0, makerBps: 0 };
+  const settleFees: FeeParameters = { takerBps: 1, makerBps: 1 };
+  const defaultFees: FeeParameters = { takerBps: 1, makerBps: 1 };
 
   return TransactionBuilder.make<InitializeProtocolBuilderContext>()
     .setFeePayer(payer)

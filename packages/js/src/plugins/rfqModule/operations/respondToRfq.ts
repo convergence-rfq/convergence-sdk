@@ -1,8 +1,4 @@
-import {
-  createRespondToRfqInstruction,
-  Quote,
-  // BaseAssetIndex,
-} from '@convergence-rfq/rfq';
+import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
 import {
   PublicKey,
   Keypair,

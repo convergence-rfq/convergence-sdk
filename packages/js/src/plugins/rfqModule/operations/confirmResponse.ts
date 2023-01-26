@@ -68,8 +68,9 @@ export type ConfirmResponseInput = {
 
   /** The side */
   side: Side;
+
   /** ??? */
-  overrideLegMultiplierBps: COption<bignum>;
+  overrideLegMultiplierBps?: COption<bignum>;
 };
 
 /**
@@ -143,7 +144,7 @@ export const confirmResponseBuilder = async (
     rfq,
     response,
     side,
-    overrideLegMultiplierBps,
+    overrideLegMultiplierBps = null,
   } = params;
 
   const responseModel = await convergence
@@ -190,7 +191,6 @@ export const confirmResponseBuilder = async (
 
   let baseAssetAccounts: AccountMeta[] = [];
   let baseAssetIndexValuesSet: Set<number> = new Set();
-
   let oracleAccounts: AccountMeta[] = [];
 
   for (const leg of rfqModel.legs) {
