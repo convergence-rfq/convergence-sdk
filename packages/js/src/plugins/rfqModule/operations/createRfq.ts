@@ -17,7 +17,6 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
-import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 
 const Key = 'CreateRfqOperation' as const;
 

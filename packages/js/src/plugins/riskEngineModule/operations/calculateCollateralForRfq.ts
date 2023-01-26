@@ -1,7 +1,7 @@
 import { createCalculateCollateralForRfqInstruction } from '@convergence-rfq/risk-engine';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { BaseAssetIndex } from '@convergence-rfq/rfq';
-import { bignum } from '@metaplex-foundation/beet';
+import { bignum } from '@convergence-rfq/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { RiskEnginePdasClient } from '../RiskEnginePdasClient';
 import { Convergence } from '@/Convergence';

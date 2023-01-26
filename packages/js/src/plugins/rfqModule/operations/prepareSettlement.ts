@@ -257,11 +257,11 @@ export const prepareSettlementBuilder = async (
         convergence,
         leg
       );
-      const mint = await convergence.tokens().findMintByAddress({
-        address: instrument.mint.address,
+      const americanOptionMint = await convergence.tokens().findMintByAddress({
+        address: instrument.optionMeta.optionMint,
       });
 
-      baseAssetMints.push(mint);
+      baseAssetMints.push(americanOptionMint);
     } else if (
       leg.instrumentProgram.toString() ===
       spotInstrumentProgram.address.toString()

@@ -18,7 +18,6 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
