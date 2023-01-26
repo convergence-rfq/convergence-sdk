@@ -322,418 +322,425 @@ test('[riskEngineModule] it can set risk categories info', async (t: Test) => {
   const { response: responseVeryLow } = await cvg
     .riskEngine()
     .setRiskCategoriesInfo({
-      change: {
-        newValue: DEFAULT_RISK_CATEGORIES_INFO.veryLow,
-        riskCategoryIndex: RiskCategory.VeryLow,
-      },
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.veryLow,
+          riskCategoryIndex: RiskCategory.VeryLow,
+        },
+      ],
     });
   t.assert(responseVeryLow.signature.length > 0, 'signature present');
 
   const { response: responseLow } = await cvg
     .riskEngine()
     .setRiskCategoriesInfo({
-      change: {
-        newValue: DEFAULT_RISK_CATEGORIES_INFO.low,
-        riskCategoryIndex: RiskCategory.Low,
-      },
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.low,
+          riskCategoryIndex: RiskCategory.Low,
+        },
+      ],
     });
   t.assert(responseLow.signature.length > 0, 'signature present');
 
   const { response: responseMedium } = await cvg
     .riskEngine()
     .setRiskCategoriesInfo({
-      change: {
-        newValue: DEFAULT_RISK_CATEGORIES_INFO.medium,
-        riskCategoryIndex: RiskCategory.Medium,
-      },
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.medium,
+          riskCategoryIndex: RiskCategory.Medium,
+        },
+      ],
     });
   t.assert(responseMedium.signature.length > 0, 'signature present');
 
   const { response: responseHigh } = await cvg
     .riskEngine()
     .setRiskCategoriesInfo({
-      change: {
-        newValue: DEFAULT_RISK_CATEGORIES_INFO.high,
-        riskCategoryIndex: RiskCategory.High,
-      },
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.high,
+          riskCategoryIndex: RiskCategory.High,
+        },
+      ],
     });
   t.assert(responseHigh.signature.length > 0, 'signature present');
 
   const { response: responseVeryHigh } = await cvg
     .riskEngine()
     .setRiskCategoriesInfo({
-      change: {
-        newValue: DEFAULT_RISK_CATEGORIES_INFO.veryHigh,
-        riskCategoryIndex: RiskCategory.VeryHigh,
-      },
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.veryHigh,
+          riskCategoryIndex: RiskCategory.VeryHigh,
+        },
+      ],
     });
   t.assert(responseVeryHigh.signature.length > 0, 'signature present');
 });
 
-const RUN = false;
-
 // COLLATERAL
 
+test('[collateralModule] it can initialize collateral', async (t: Test) => {
+  const { collateral: takerCollateral } = await cvg.collateral().initialize({
+    user: taker,
+  });
+  const { collateral: makerCollateral } = await cvg.collateral().initialize({
+    user: maker,
+  });
+
+  const foundTakercollateral = await cvg
+    .collateral()
+    .findByAddress({ address: takerCollateral.address });
+  t.same(
+    foundTakercollateral.address.toString(),
+    takerCollateral.address.toString(),
+    'same address'
+  );
+  spok(t, takerCollateral, {
+    $topic: 'collateral model',
+    model: 'collateral',
+  });
+
+  const foundMakercollateral = await cvg
+    .collateral()
+    .findByAddress({ address: makerCollateral.address });
+  t.same(
+    foundMakercollateral.address.toString(),
+    makerCollateral.address.toString(),
+    'same address'
+  );
+  spok(t, makerCollateral, {
+    $topic: 'Initialize Collateral',
+    model: 'collateral',
+  });
+});
+
+test('[collateralModule] it can fund collateral', async (t: Test) => {
+  await cvg.collateral().fund({
+    userTokens: takerUSDCWallet.address,
+    user: taker,
+    amount: COLLATERAL_AMOUNT,
+  });
+  await cvg.collateral().fund({
+    userTokens: makerUSDCWallet.address,
+    user: maker,
+    amount: COLLATERAL_AMOUNT,
+  });
+
+  const takerCollateralTokenPda = cvg
+    .collateral()
+    .pdas()
+    .collateralToken({ user: taker.publicKey });
+  const makerCollateralTokenPda = cvg
+    .collateral()
+    .pdas()
+    .collateralToken({ user: maker.publicKey });
+
+  const protocol = await cvg.protocol().get();
+  const collateralMint = await cvg
+    .tokens()
+    .findMintByAddress({ address: protocol.collateralMint });
+
+  const takerCollateralTokenAccount = await cvg
+    .tokens()
+    .findTokenByAddress({ address: takerCollateralTokenPda });
+  const makerCollateralTokenAccount = await cvg
+    .tokens()
+    .findTokenByAddress({ address: makerCollateralTokenPda });
+
+  t.same(
+    takerCollateralTokenAccount.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
+  spok(t, takerCollateralTokenAccount, {
+    $topic: 'collateral model',
+    model: 'token',
+    amount: token(COLLATERAL_AMOUNT),
+  });
+
+  t.same(
+    makerCollateralTokenAccount.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
+  spok(t, makerCollateralTokenAccount, {
+    $topic: 'collateral model',
+    model: 'token',
+    amount: token(COLLATERAL_AMOUNT),
+  });
+});
+
+test('[collateralModule] it can withdraw collateral', async (t: Test) => {
+  const amount = 10;
+
+  const protocol = await cvg.protocol().get();
+  const collateralMint = await cvg
+    .tokens()
+    .findMintByAddress({ address: protocol.collateralMint });
+
+  await cvg.collateral().withdraw({
+    userTokens: takerUSDCWallet.address,
+    user: taker,
+    amount,
+  });
+  await cvg.collateral().withdraw({
+    userTokens: makerUSDCWallet.address,
+    user: maker,
+    amount,
+  });
+
+  const refreshedTakerUSDCWallet = await cvg
+    .tokens()
+    .refreshToken(takerUSDCWallet);
+  const refreshedMakerUSDCWallet = await cvg
+    .tokens()
+    .refreshToken(makerUSDCWallet);
+
+  t.same(
+    takerUSDCWallet.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
+  spok(t, refreshedTakerUSDCWallet, {
+    $topic: 'same model',
+    model: 'token',
+  });
+
+  t.same(
+    makerUSDCWallet.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
+  spok(t, refreshedMakerUSDCWallet, {
+    $topic: 'same model',
+    model: 'token',
+  });
+
+  const makerCollateral = cvg
+    .collateral()
+    .pdas()
+    .collateralToken({ user: maker.publicKey });
+  const makerCollateralInfo = await cvg
+    .tokens()
+    .findTokenByAddress({ address: makerCollateral });
+  const takerCollateralInfo = await cvg
+    .tokens()
+    .findTokenByAddress({ address: makerCollateral });
+
+  t.same(
+    makerCollateralInfo.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
+  spok(t, makerCollateralInfo, {
+    $topic: 'same model',
+    model: 'token',
+  });
+
+  t.same(
+    takerCollateralInfo.mintAddress.toString(),
+    collateralMint.address.toString(),
+    'same address'
+  );
+  spok(t, takerCollateralInfo, {
+    $topic: 'same model',
+    model: 'token',
+  });
+});
+
+test('[collateralModule] it can find collateral by user', async (t: Test) => {
+  const makerCollateral = await cvg.collateral().findByUser({
+    user: maker.publicKey,
+  });
+  t.same(
+    makerCollateral.user.toString(),
+    maker.publicKey.toString(),
+    'same address'
+  );
+  spok(t, makerCollateral, {
+    $topic: 'same model',
+    model: 'collateral',
+  });
+
+  const takerCollateral = await cvg.collateral().findByUser({
+    user: taker.publicKey,
+  });
+  t.same(
+    takerCollateral.user.toString(),
+    taker.publicKey.toString(),
+    'same address'
+  );
+  spok(t, takerCollateral, {
+    $topic: 'same model',
+    model: 'collateral',
+  });
+});
+
+// RFQ
+
+test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().create({
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    instruments: [
+      new SpotInstrument(cvg, solMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    activeWindow: 5_000,
+    settlingWindow: 1_000,
+    taker,
+  });
+
+  const { rfq: finalizedRfq } = await cvg.rfqs().finalizeRfqConstruction({
+    taker,
+    rfq: rfq.address,
+  });
+
+  spok(t, finalizedRfq, {
+    $topic: 'Finalized RFQ',
+    model: 'rfq',
+    state: StoredRfqState.Active,
+  });
+});
+
+test('[rfqModule] it can create and finalize RFQ in single method', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 2,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+  });
+
+  const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
+
+  spok(t, rfq, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq.address),
+    state: StoredRfqState.Active,
+  });
+});
+
+test('[rfqModule] it can create and finalize, then respond to RFQ and confirm response', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+  });
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+    keypair: Keypair.generate(),
+  });
+
+  const respondedToRfq = await cvg.rfqs().refreshRfq(rfq.address);
+
+  spok(t, rfq, {
+    $topic: 'Finalized Rfq',
+    model: 'rfq',
+    address: spokSamePubkey(respondedToRfq.address),
+  });
+  spok(t, rfqResponse, {
+    $topic: 'Responded to Rfq',
+    model: 'response',
+    state: StoredResponseState.Active,
+  });
+});
+
+test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collateral, and clean up RFQ', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().create({
+    taker,
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1,
+        side: Side.Bid,
+      }),
+    ],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    activeWindow: 5_000,
+    settlingWindow: 1_000,
+  });
+
+  await cvg.rfqs().finalizeRfqConstruction({
+    taker,
+    rfq: rfq.address,
+  });
+
+  await cvg.rfqs().cancelRfq({
+    taker,
+    rfq: rfq.address,
+  });
+
+  const refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
+
+  spok(t, refreshedRfq, {
+    $topic: 'Cancelled RFQ',
+    model: 'rfq',
+    state: StoredRfqState.Canceled,
+  });
+
+  await cvg.rfqs().unlockRfqCollateral({
+    rfq: rfq.address,
+  });
+
+  // refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
+
+  // spok(t, refreshedRfq, {
+  //   $topic: 'Unlocked rfq collateral',
+  //   model: 'rfq',
+  //   // nonResponseTakerCollateralLocked: new BN(0),
+  // });
+
+  // await cvg.rfqs().cleanUpRfq({
+  //   rfq: rfq.address,
+  //   taker: taker.publicKey,
+  // });
+});
+
+const RUN = false;
 if (RUN) {
-  test('[collateralModule] it can initialize collateral', async (t: Test) => {
-    const { collateral: takerCollateral } = await cvg.collateral().initialize({
-      user: taker,
-    });
-    const { collateral: makerCollateral } = await cvg.collateral().initialize({
-      user: maker,
-    });
-
-    const foundTakercollateral = await cvg
-      .collateral()
-      .findByAddress({ address: takerCollateral.address });
-    t.same(
-      foundTakercollateral.address.toString(),
-      takerCollateral.address.toString(),
-      'same address'
-    );
-    spok(t, takerCollateral, {
-      $topic: 'collateral model',
-      model: 'collateral',
-    });
-
-    const foundMakercollateral = await cvg
-      .collateral()
-      .findByAddress({ address: makerCollateral.address });
-    t.same(
-      foundMakercollateral.address.toString(),
-      makerCollateral.address.toString(),
-      'same address'
-    );
-    spok(t, makerCollateral, {
-      $topic: 'Initialize Collateral',
-      model: 'collateral',
-    });
-  });
-
-  test('[collateralModule] it can fund collateral', async (t: Test) => {
-    await cvg.collateral().fund({
-      userTokens: takerUSDCWallet.address,
-      user: taker,
-      amount: COLLATERAL_AMOUNT,
-    });
-    await cvg.collateral().fund({
-      userTokens: makerUSDCWallet.address,
-      user: maker,
-      amount: COLLATERAL_AMOUNT,
-    });
-
-    const takerCollateralTokenPda = cvg
-      .collateral()
-      .pdas()
-      .collateralToken({ user: taker.publicKey });
-    const makerCollateralTokenPda = cvg
-      .collateral()
-      .pdas()
-      .collateralToken({ user: maker.publicKey });
-
-    const protocol = await cvg.protocol().get();
-    const collateralMint = await cvg
-      .tokens()
-      .findMintByAddress({ address: protocol.collateralMint });
-
-    const takerCollateralTokenAccount = await cvg
-      .tokens()
-      .findTokenByAddress({ address: takerCollateralTokenPda });
-    const makerCollateralTokenAccount = await cvg
-      .tokens()
-      .findTokenByAddress({ address: makerCollateralTokenPda });
-
-    t.same(
-      takerCollateralTokenAccount.mintAddress.toString(),
-      collateralMint.address.toString(),
-      'same address'
-    );
-    spok(t, takerCollateralTokenAccount, {
-      $topic: 'collateral model',
-      model: 'token',
-      amount: token(COLLATERAL_AMOUNT),
-    });
-
-    t.same(
-      makerCollateralTokenAccount.mintAddress.toString(),
-      collateralMint.address.toString(),
-      'same address'
-    );
-    spok(t, makerCollateralTokenAccount, {
-      $topic: 'collateral model',
-      model: 'token',
-      amount: token(COLLATERAL_AMOUNT),
-    });
-  });
-
-  test('[collateralModule] it can withdraw collateral', async (t: Test) => {
-    const amount = 10;
-
-    const protocol = await cvg.protocol().get();
-    const collateralMint = await cvg
-      .tokens()
-      .findMintByAddress({ address: protocol.collateralMint });
-
-    await cvg.collateral().withdraw({
-      userTokens: takerUSDCWallet.address,
-      user: taker,
-      amount,
-    });
-    await cvg.collateral().withdraw({
-      userTokens: makerUSDCWallet.address,
-      user: maker,
-      amount,
-    });
-
-    const refreshedTakerUSDCWallet = await cvg
-      .tokens()
-      .refreshToken(takerUSDCWallet);
-    const refreshedMakerUSDCWallet = await cvg
-      .tokens()
-      .refreshToken(makerUSDCWallet);
-
-    t.same(
-      takerUSDCWallet.mintAddress.toString(),
-      collateralMint.address.toString(),
-      'same address'
-    );
-    spok(t, refreshedTakerUSDCWallet, {
-      $topic: 'same model',
-      model: 'token',
-    });
-
-    t.same(
-      makerUSDCWallet.mintAddress.toString(),
-      collateralMint.address.toString(),
-      'same address'
-    );
-    spok(t, refreshedMakerUSDCWallet, {
-      $topic: 'same model',
-      model: 'token',
-    });
-
-    const makerCollateral = cvg
-      .collateral()
-      .pdas()
-      .collateralToken({ user: maker.publicKey });
-    const makerCollateralInfo = await cvg
-      .tokens()
-      .findTokenByAddress({ address: makerCollateral });
-    const takerCollateralInfo = await cvg
-      .tokens()
-      .findTokenByAddress({ address: makerCollateral });
-
-    t.same(
-      makerCollateralInfo.mintAddress.toString(),
-      collateralMint.address.toString(),
-      'same address'
-    );
-    spok(t, makerCollateralInfo, {
-      $topic: 'same model',
-      model: 'token',
-    });
-
-    t.same(
-      takerCollateralInfo.mintAddress.toString(),
-      collateralMint.address.toString(),
-      'same address'
-    );
-    spok(t, takerCollateralInfo, {
-      $topic: 'same model',
-      model: 'token',
-    });
-  });
-
-  test('[collateralModule] it can find collateral by user', async (t: Test) => {
-    const makerCollateral = await cvg.collateral().findByUser({
-      user: maker.publicKey,
-    });
-    t.same(
-      makerCollateral.user.toString(),
-      maker.publicKey.toString(),
-      'same address'
-    );
-    spok(t, makerCollateral, {
-      $topic: 'same model',
-      model: 'collateral',
-    });
-
-    const takerCollateral = await cvg.collateral().findByUser({
-      user: taker.publicKey,
-    });
-    t.same(
-      takerCollateral.user.toString(),
-      taker.publicKey.toString(),
-      'same address'
-    );
-    spok(t, takerCollateral, {
-      $topic: 'same model',
-      model: 'collateral',
-    });
-  });
-
-  // RFQ
-
-  test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) => {
-    const { rfq } = await cvg.rfqs().create({
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
-      instruments: [
-        new SpotInstrument(cvg, solMint, {
-          amount: 1,
-          side: Side.Bid,
-        }),
-      ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-      activeWindow: 5_000,
-      settlingWindow: 1_000,
-      taker,
-    });
-
-    const { rfq: finalizedRfq } = await cvg.rfqs().finalizeRfqConstruction({
-      taker,
-      rfq: rfq.address,
-    });
-
-    spok(t, finalizedRfq, {
-      $topic: 'Finalized RFQ',
-      model: 'rfq',
-      state: StoredRfqState.Active,
-    });
-  });
-
-  test('[rfqModule] it can create and finalize RFQ in single method', async (t: Test) => {
-    const { rfq } = await cvg.rfqs().createAndFinalize({
-      instruments: [
-        new SpotInstrument(cvg, btcMint, {
-          amount: 1,
-          side: Side.Bid,
-        }),
-        new SpotInstrument(cvg, btcMint, {
-          amount: 2,
-          side: Side.Bid,
-        }),
-        new SpotInstrument(cvg, btcMint, {
-          amount: 5,
-          side: Side.Bid,
-        }),
-      ],
-      taker,
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
-    });
-
-    const foundRfq = await cvg
-      .rfqs()
-      .findRfqByAddress({ address: rfq.address });
-
-    spok(t, rfq, {
-      $topic: 'Created RFQ',
-      model: 'rfq',
-      address: spokSamePubkey(foundRfq.address),
-      state: StoredRfqState.Active,
-    });
-  });
-
-  test('[rfqModule] it can create and finalize, then respond to RFQ and confirm response', async (t: Test) => {
-    const { rfq } = await cvg.rfqs().createAndFinalize({
-      instruments: [
-        new SpotInstrument(cvg, btcMint, {
-          amount: 5,
-          side: Side.Ask,
-        }),
-      ],
-      taker,
-      orderType: OrderType.TwoWay,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
-    });
-    const { rfqResponse } = await cvg.rfqs().respond({
-      maker,
-      rfq: rfq.address,
-      bid: {
-        __kind: 'FixedSize',
-        priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-      },
-      ask: null,
-      keypair: Keypair.generate(),
-    });
-
-    const respondedToRfq = await cvg.rfqs().refreshRfq(rfq.address);
-
-    spok(t, rfq, {
-      $topic: 'Finalized Rfq',
-      model: 'rfq',
-      address: spokSamePubkey(respondedToRfq.address),
-    });
-    spok(t, rfqResponse, {
-      $topic: 'Responded to Rfq',
-      model: 'response',
-      state: StoredResponseState.Active,
-    });
-  });
-
-  test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collateral, and clean up RFQ', async (t: Test) => {
-    const { rfq } = await cvg.rfqs().create({
-      taker,
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
-      instruments: [
-        new SpotInstrument(cvg, btcMint, {
-          amount: 1,
-          side: Side.Bid,
-        }),
-      ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-      activeWindow: 5_000,
-      settlingWindow: 1_000,
-    });
-
-    await cvg.rfqs().finalizeRfqConstruction({
-      taker,
-      rfq: rfq.address,
-    });
-
-    await cvg.rfqs().cancelRfq({
-      taker,
-      rfq: rfq.address,
-    });
-
-    const refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
-
-    spok(t, refreshedRfq, {
-      $topic: 'Cancelled RFQ',
-      model: 'rfq',
-      state: StoredRfqState.Canceled,
-    });
-
-    // await cvg.rfqs().unlockRfqCollateral({
-    //   rfq: rfq.address,
-    // });
-
-    // refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
-
-    // spok(t, refreshedRfq, {
-    //   $topic: 'Unlocked rfq collateral',
-    //   model: 'rfq',
-    //   // nonResponseTakerCollateralLocked: new BN(0),
-    // });
-
-    // await cvg.rfqs().cleanUpRfq({
-    //   rfq: rfq.address,
-    //   taker: taker.publicKey,
-    // });
-  });
-
   test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlement, prepare more legs settlement, settle', async (t: Test) => {
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [

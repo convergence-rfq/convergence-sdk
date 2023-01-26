@@ -121,10 +121,7 @@ export const setInstrumentTypeBuilder = (
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
-  const [config] = PublicKey.findProgramAddressSync(
-    [Buffer.from('config')],
-    riskEngineProgram.address
-  );
+  const config = convergence.riskEngine().pdas().config();
   const protocol = convergence.protocol().pdas().protocol();
 
   return TransactionBuilder.make()

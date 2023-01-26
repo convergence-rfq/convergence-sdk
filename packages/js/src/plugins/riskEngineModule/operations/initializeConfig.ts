@@ -1,5 +1,4 @@
 import { createInitializeConfigInstruction } from '@convergence-rfq/risk-engine';
-import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -139,10 +138,7 @@ export const initializeConfigBuilder = (
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const systemProgram = convergence.programs().getSystem(programs);
 
-  const [config] = PublicKey.findProgramAddressSync(
-    [Buffer.from('config')],
-    riskEngineProgram.address
-  );
+  const config = convergence.riskEngine().pdas().config();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

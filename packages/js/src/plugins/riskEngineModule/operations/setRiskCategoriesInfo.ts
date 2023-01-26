@@ -2,7 +2,6 @@ import {
   createSetRiskCategoriesInfoInstruction,
   RiskCategoryChange,
 } from '@convergence-rfq/risk-engine';
-import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -51,7 +50,7 @@ export type SetRiskCategoriesInfoInput = {
    */
   authority?: Signer;
 
-  change: RiskCategoryChange;
+  changes: RiskCategoryChange[];
 };
 
 /**
@@ -108,16 +107,12 @@ export const SetRiskCategoriesInfoBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { authority = payer } = params;
+  const { authority = payer, changes } = params;
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
-  const [config] = PublicKey.findProgramAddressSync(
-    [Buffer.from('config')],
-    riskEngineProgram.address
-  );
+  const config = convergence.riskEngine().pdas().config();
   const protocol = convergence.protocol().pdas().protocol();
-  const changes: RiskCategoryChange[] = [];
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
