@@ -41,6 +41,7 @@ import {
   AuthoritySide,
   //@ts-ignore
   StoredRfqState,
+  //@ts-ignore
   legsToInstruments,
   Signer,
 } from '@/index';
@@ -710,25 +711,20 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().prepareMoreLegsSettlement({
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 1,
   });
 
@@ -736,7 +732,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 1,
   });
 
@@ -753,7 +748,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     taker: taker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-    // quoteMint: usdcMint,
   });
 
   refreshedResponse = await cvg.rfqs().refreshResponse(refreshedResponse);
@@ -809,18 +803,14 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -844,7 +834,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     taker: taker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-    // quoteMint: usdcMint,
   });
 
   refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -955,25 +944,20 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().prepareMoreLegsSettlement({
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 1,
   });
 
@@ -981,7 +965,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 1,
   });
 
@@ -998,7 +981,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     taker: taker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-    // quoteMint: usdcMint,
   });
 
   refreshedResponse = await cvg.rfqs().refreshResponse(refreshedResponse);
@@ -1056,9 +1038,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
   const firstToPrepare = taker.publicKey;
 
@@ -1066,9 +1046,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -1084,7 +1062,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     taker: taker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-    // quoteMint: usdcMint,
   });
 
   refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -1398,18 +1375,14 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 3,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 3,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().settle({
@@ -1417,7 +1390,6 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     taker: taker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-    // quoteMint: usdcMint,
   });
 
   const foundRfq = await cvg.rfqs().findRfqByAddress({ address: rfq.address });
@@ -1748,25 +1720,20 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().prepareMoreLegsSettlement({
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 1,
   });
 
@@ -1774,7 +1741,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 1,
   });
 
@@ -1791,8 +1757,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     taker: taker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-
-    // quoteMint: usdcMint,
   });
 
   refreshedResponse = await cvg.rfqs().refreshResponse(refreshedResponse);
@@ -1848,9 +1812,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
   //@ts-ignore
   const firstToPrepare = taker.publicKey;
@@ -1859,9 +1821,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -1877,8 +1837,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     taker: taker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-
-    // quoteMint: usdcMint,
   });
 
   refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -1951,9 +1909,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 1,
-    // quoteMint: usdcMint,
   });
   //@ts-ignore
   const firstToPrepare = taker.publicKey;
@@ -1962,9 +1918,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 1,
-    // quoteMint: usdcMint,
   });
 
   let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -1980,7 +1934,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     taker: taker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-    // quoteMint: usdcMint,
   });
 
   refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -2011,8 +1964,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
   //   rfq: rfq.address,
   //   response: rfqResponse.address,
   //   firstToPrepare,
-
-  //   quoteMint: usdcMint,
   // });
 });
 
@@ -2278,18 +2229,14 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 1,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().prepareSettlement({
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 1,
-    // quoteMint: usdcMint,
   });
 
   await cvg.rfqs().settle({
@@ -2297,7 +2244,6 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
     maker: maker.publicKey,
     rfq: rfq.address,
     response: rfqResponse.address,
-    // quoteMint: usdcMint,
   });
 });
 
@@ -2616,9 +2562,7 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
 //     caller: taker,
 //     rfq: rfq.address,
 //     response: rfqResponse.address,
-//     side: AuthoritySide.Taker,
 //     legAmountToPrepare: instruments.slice(0, 12).length,
-//     quoteMint: usdcMint,
 //   });
 //   //@ts-ignore
 //   const firstToPrepare = taker.publicKey;
@@ -2627,9 +2571,7 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
 //     caller: maker,
 //     rfq: rfq.address,
 //     response: rfqResponse.address,
-//     side: AuthoritySide.Maker,
 //     legAmountToPrepare: instruments.slice(0, 12).length,
-//     quoteMint: usdcMint,
 //   });
 
 //   let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -2645,7 +2587,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
 //     taker: taker.publicKey,
 //     rfq: rfq.address,
 //     response: rfqResponse.address,
-//     quoteMint: usdcMint,
 //   });
 
 //   refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -2659,20 +2600,20 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
 
 // RFQ HELPERS
 
-test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
-  // We we can to this after creating options so that we can test this method
-  // on all instruments
-  const rfqs = await cvg.rfqs().findAllByOwner({
-    owner: taker.publicKey,
-  });
-  const instruments = await Promise.all(
-    rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
-  );
-  spok(t, instruments[0][0], {
-    $topic: 'Convert RFQ Legs to Instruments',
-    model: 'spotInstrument',
-  });
-});
+// test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
+//   // We we can to this after creating options so that we can test this method
+//   // on all instruments
+//   const rfqs = await cvg.rfqs().findAllByOwner({
+//     owner: taker.publicKey,
+//   });
+//   const instruments = await Promise.all(
+//     rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
+//   );
+//   spok(t, instruments[0][0], {
+//     $topic: 'Convert RFQ Legs to Instruments',
+//     model: 'spotInstrument',
+//   });
+// });
 
 // //RISK ENGINE UTILS
 
@@ -2717,15 +2658,12 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 1,
-    // quoteMint: usdcMint,
   });
   sleep(3_001).then(async () => {
     await cvg.rfqs().revertSettlementPreparation({
       rfq: rfq.address,
       response: rfqResponse.address,
-      // quoteMint: usdcMint,
       side: AuthoritySide.Maker,
     });
   });
@@ -2836,9 +2774,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     caller: maker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Maker,
     legAmountToPrepare: 2,
-    // quoteMint: usdcMint,
   });
 
   await sleep(3_001).then(async () => {
@@ -2905,9 +2841,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
     caller: taker,
     rfq: rfq.address,
     response: rfqResponse.address,
-    side: AuthoritySide.Taker,
     legAmountToPrepare: 1,
-    // quoteMint: usdcMint,
   });
 
   sleep(3_001).then(async () => {

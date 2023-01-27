@@ -248,8 +248,6 @@ export const partlyRevertSettlementPreparationBuilder = async (
     ];
 
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
-
-    // j++;
   }
 
   return TransactionBuilder.make()

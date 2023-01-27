@@ -76,7 +76,7 @@ export type PrepareMoreLegsSettlementInput = {
    * Args
    */
 
-  side: AuthoritySide;
+  // side: AuthoritySide;
 
   legAmountToPrepare: number;
 
@@ -155,7 +155,7 @@ export const prepareMoreLegsSettlementBuilder = async (
     caller = convergence.identity(),
     rfq,
     response,
-    side,
+    // side,
     legAmountToPrepare,
   } = params;
 
@@ -169,6 +169,11 @@ export const prepareMoreLegsSettlementBuilder = async (
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
+
+  const side =
+    caller.publicKey.toBase58() == responseModel.maker.toBase58()
+      ? AuthoritySide.Maker
+      : AuthoritySide.Taker;
 
   if (!sidePreparedLegs) {
     sidePreparedLegs =

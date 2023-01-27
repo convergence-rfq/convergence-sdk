@@ -29,7 +29,6 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PrepareSettlementOperation' as const;
@@ -40,7 +39,7 @@ const Key = 'PrepareSettlementOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlement({ caller, rfq, response, side, legAmountToPrepare };
+ *   .prepareSettlement({ caller, rfq, response, legAmountToPrepare };
  * ```
  *
  * @group Operations
@@ -84,7 +83,7 @@ export type PrepareSettlementInput = {
    * Args
    */
 
-  side: AuthoritySide;
+  // side: AuthoritySide;
 
   legAmountToPrepare: number;
 };
@@ -145,20 +144,20 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         slicedLegAmount = legAmt;
       }
 
-      if (slicedLegAmount < legAmountToPrepare) {
-        let prepareMoreLegsSlicedLegAmount =
-          legAmountToPrepare - slicedLegAmount;
+      // if (slicedLegAmount < legAmountToPrepare) {
+      //   let prepareMoreLegsSlicedLegAmount =
+      //     legAmountToPrepare - slicedLegAmount;
 
-        prepareMoreLegsBuilder = await prepareMoreLegsSettlementBuilder(
-          convergence,
-          {
-            ...operation.input,
-            legAmountToPrepare: prepareMoreLegsSlicedLegAmount,
-            sidePreparedLegs: slicedLegAmount,
-          },
-          scope
-        );
-      }
+      //   prepareMoreLegsBuilder = await prepareMoreLegsSettlementBuilder(
+      //     convergence,
+      //     {
+      //       ...operation.input,
+      //       legAmountToPrepare: prepareMoreLegsSlicedLegAmount,
+      //       sidePreparedLegs: slicedLegAmount,
+      //     },
+      //     scope
+      //   );
+      // }
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
@@ -210,7 +209,7 @@ export const prepareSettlementBuilder = async (
     caller = convergence.identity(),
     rfq,
     response,
-    side,
+    // side,
     legAmountToPrepare,
   } = params;
 
@@ -218,6 +217,14 @@ export const prepareSettlementBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
+
+  const side =
+    caller.publicKey.toBase58() == responseModel.maker.toBase58()
+      ? AuthoritySide.Maker
+      : AuthoritySide.Taker;
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
   const psyoptionsEuropeanProgram = convergence
