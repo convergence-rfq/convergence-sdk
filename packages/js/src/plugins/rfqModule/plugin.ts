@@ -45,6 +45,8 @@ import {
   partlyRevertSettlementPreparationOperationHandler,
   prepareSettlementOperation,
   prepareSettlementOperationHandler,
+  prepareSettlementAndPrepareMoreLegsOperation,
+  prepareSettlementAndPrepareMoreLegsOperationHandler,
   settleOperation,
   settleOperationHandler,
   settleOnePartyDefaultOperation,
@@ -151,6 +153,10 @@ export const rfqModule = (): ConvergencePlugin => ({
     op.register(
       createAndAddLegsToRfqOperation,
       createAndAddLegsToRfqOperationHandler
+    );
+    op.register(
+      prepareSettlementAndPrepareMoreLegsOperation,
+      prepareSettlementAndPrepareMoreLegsOperationHandler
     );
 
     convergence.rfqs = function () {

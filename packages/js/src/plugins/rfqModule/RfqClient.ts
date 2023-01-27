@@ -50,6 +50,8 @@ import {
   PrepareMoreLegsSettlementInput,
   prepareSettlementOperation,
   PrepareSettlementInput,
+  prepareSettlementAndPrepareMoreLegsOperation,
+  PrepareSettlementAndPrepareMoreLegsInput,
   respondToRfqOperation,
   RespondToRfqInput,
   settleOperation,
@@ -331,6 +333,16 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(prepareSettlementOperation(input), options);
+  }
+
+  /** {@inheritDoc prepareSettlementAndPrepareMoreLegsOperation} */
+  prepareSettlementAndPrepareMoreLegs(
+    input: PrepareSettlementAndPrepareMoreLegsInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(prepareSettlementAndPrepareMoreLegsOperation(input), options);
   }
 
   /**

@@ -18,6 +18,7 @@ export * from './partiallySettleLegs';
 export * from './partlyRevertSettlementPreparation';
 export * from './prepareMoreLegsSettlement';
 export * from './prepareSettlement';
+export * from './prepareSettlementAndPrepareMoreLegs';
 export * from './respondToRfq';
 export * from './revertSettlementPreparation';
 export * from './settle';

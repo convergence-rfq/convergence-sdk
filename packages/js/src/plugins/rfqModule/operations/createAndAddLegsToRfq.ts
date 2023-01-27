@@ -144,8 +144,6 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
       let slicedInstruments = instruments;
 
       while (txSize == -1 || txSize + 193 > MAX_TX_SIZE) {
-        console.log('inside while loop');
-
         const halvedInstruments = slicedInstruments.slice(
           0,
           Math.trunc(slicedInstruments.length / 2)

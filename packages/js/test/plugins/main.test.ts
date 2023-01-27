@@ -1515,7 +1515,7 @@ test('[rfqModule] it can create and add legs to RFQ in a single method', async (
       }),
     ],
     taker,
-    orderType: OrderType.Sell,
+    orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
@@ -1526,7 +1526,73 @@ test('[rfqModule] it can create and add legs to RFQ in a single method', async (
     taker,
     rfq: rfq.address,
   });
+
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+    keypair: Keypair.generate(),
+  });
+
+  await cvg.rfqs().confirmResponse({
+    taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: Side.Bid,
+  });
+
+  await cvg.rfqs().prepareSettlementAndPrepareMoreLegs({
+    caller: taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    legAmountToPrepare: 25,
+  });
+  await cvg.rfqs().prepareSettlementAndPrepareMoreLegs({
+    caller: maker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    legAmountToPrepare: 25,
+  });
+
+  // await cvg.rfqs().settle({
+  //   maker: maker.publicKey,
+  //   taker: taker.publicKey,
+  //   rfq: rfq.address,
+  //   response: rfqResponse.address,
+  // });
 });
+
+// test('[rfqModule] it can prepare settlemt and prepare more legs settlemt in a single method', async (t: Test) => {
+//   const makerCollateral = await cvg.collateral().findByUser({
+//     user: maker.publicKey,
+//   });
+//   t.same(
+//     makerCollateral.user.toString(),
+//     maker.publicKey.toString(),
+//     'same address'
+//   );
+//   spok(t, makerCollateral, {
+//     $topic: 'same model',
+//     model: 'collateral',
+//   });
+
+//   const takerCollateral = await cvg.collateral().findByUser({
+//     user: taker.publicKey,
+//   });
+//   t.same(
+//     takerCollateral.user.toString(),
+//     taker.publicKey.toString(),
+//     'same address'
+//   );
+//   spok(t, takerCollateral, {
+//     $topic: 'same model',
+//     model: 'collateral',
+//   });
+// });
 
 test('[collateralModule] it can find collateral by user', async (t: Test) => {
   const makerCollateral = await cvg.collateral().findByUser({

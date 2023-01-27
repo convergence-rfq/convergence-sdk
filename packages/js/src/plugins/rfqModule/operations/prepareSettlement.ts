@@ -83,8 +83,6 @@ export type PrepareSettlementInput = {
    * Args
    */
 
-  // side: AuthoritySide;
-
   legAmountToPrepare: number;
 };
 
@@ -108,10 +106,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
-      const { caller = convergence.identity(), legAmountToPrepare } =
-        operation.input;
-      const MAX_TX_SIZE = 1232;
-
       let builder = await prepareSettlementBuilder(
         convergence,
         {
@@ -119,45 +113,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         },
         scope
       );
-      let txSize = await convergence
-        .rpc()
-        .getTransactionSize(builder, [caller]);
-
-      let slicedLegAmount = legAmountToPrepare;
-
-      let prepareMoreLegsBuilder: TransactionBuilder;
-
-      while (txSize + 193 > MAX_TX_SIZE) {
-        const legAmt = Math.trunc(slicedLegAmount / 2);
-
-        builder = await prepareSettlementBuilder(
-          convergence,
-          {
-            ...operation.input,
-            legAmountToPrepare: legAmt,
-          },
-          scope
-        );
-
-        txSize = await convergence.rpc().getTransactionSize(builder, [caller]);
-
-        slicedLegAmount = legAmt;
-      }
-
-      // if (slicedLegAmount < legAmountToPrepare) {
-      //   let prepareMoreLegsSlicedLegAmount =
-      //     legAmountToPrepare - slicedLegAmount;
-
-      //   prepareMoreLegsBuilder = await prepareMoreLegsSettlementBuilder(
-      //     convergence,
-      //     {
-      //       ...operation.input,
-      //       legAmountToPrepare: prepareMoreLegsSlicedLegAmount,
-      //       sidePreparedLegs: slicedLegAmount,
-      //     },
-      //     scope
-      //   );
-      // }
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
@@ -166,15 +121,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
 
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
-
-      //@ts-ignore
-      if (prepareMoreLegsBuilder) {
-        await prepareMoreLegsBuilder.sendAndConfirm(
-          convergence,
-          confirmOptions
-        );
-        scope.throwIfCanceled();
-      }
 
       return { ...output };
     },
@@ -209,7 +155,6 @@ export const prepareSettlementBuilder = async (
     caller = convergence.identity(),
     rfq,
     response,
-    // side,
     legAmountToPrepare,
   } = params;
 
