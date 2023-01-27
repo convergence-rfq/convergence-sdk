@@ -56,8 +56,6 @@ export type SettleInput = {
   /** The address of the Response account. */
   response: PublicKey;
 
-  quoteMint: Mint;
-
   startIndex?: number;
 };
 
@@ -172,7 +170,7 @@ export const settleBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { rfq, response, quoteMint, maker, taker } = params;
+  const { rfq, response, maker, taker } = params;
 
   let { startIndex } = params;
 
@@ -193,6 +191,10 @@ export const settleBuilder = async (
   const psyoptionsAmericanProgram = convergence
     .programs()
     .getPsyoptionsAmericanInstrument();
+
+  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
+    Buffer.from(rfqModel.quoteAsset.instrumentData)
+  ).mint;
 
   if (!startIndex) {
     startIndex = parseInt(responseModel.settledLegs.toString());
@@ -321,7 +323,7 @@ export const settleBuilder = async (
         .tokens()
         .pdas()
         .associatedTokenAccount({
-          mint: quoteMint.address,
+          mint: quoteMint,
           owner:
             rfqModel.fixedSize.__kind == 'QuoteAsset' &&
             confirmationSide == Side.Ask

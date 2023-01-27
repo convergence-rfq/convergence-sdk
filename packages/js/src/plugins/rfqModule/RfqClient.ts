@@ -62,6 +62,7 @@ import {
   UnlockResponseCollateralInput,
   unlockRfqCollateralOperation,
   UnlockRfqCollateralInput,
+  createAndFinalizeRfqConstructionOperation,
 } from './operations';
 import { Response } from './models/Response';
 import { PartialKeys } from '@/utils';
@@ -204,18 +205,18 @@ export class RfqClient {
     input: CreateAndFinalizeRfqConstructionInput,
     options?: OperationOptions
   ) {
-    const { taker } = input;
+    // const { taker } = input;
 
-    const { rfq } = await this.convergence.rfqs().create(
-      {
-        ...input,
-      },
-      options
-    );
+    // const { rfq } = await this.convergence.rfqs().createAndFinalize(
+    //   {
+    //     ...input,
+    //   },
+    //   options
+    // );
 
     return this.convergence
       .operations()
-      .execute(finalizeRfqConstructionOperation({ taker, rfq: rfq.address }));
+      .execute(createAndFinalizeRfqConstructionOperation(input), options);
   }
 
   /** {@inheritDoc finalizeRfqConstructionOperation} */

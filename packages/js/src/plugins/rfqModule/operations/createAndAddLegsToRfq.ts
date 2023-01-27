@@ -1,5 +1,4 @@
-//@ts-ignore
-import { ComputeBudgetProgram, Keypair } from '@solana/web3.js';
+import { Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -11,7 +10,6 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { OrderType, FixedSize, QuoteAsset } from '../types';
-// import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
@@ -28,7 +26,7 @@ const Key = 'CreateAndAddLegsToRfqOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .createAndAddLegsToRfq({ caller, rfq, response, side, legAmountToPrepare, quoteMint };
+ *   .createAndAddLegsToRfq({ caller, rfq, response, side, legAmountToPrepare, quoteAsset };
  * ```
  *
  * @group Operations

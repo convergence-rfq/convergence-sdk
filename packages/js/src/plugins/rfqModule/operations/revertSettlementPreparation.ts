@@ -64,8 +64,6 @@ export type RevertSettlementPreparationInput = {
   /** The response address */
   response: PublicKey;
 
-  quoteMint: Mint;
-
   /*
    * Args
    */
@@ -138,7 +136,7 @@ export const revertSettlementPreparationBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const { rfq, response, side, quoteMint } = params;
+  const { rfq, response, side } = params;
 
   const protocol = await convergence.protocol().get();
 
@@ -157,12 +155,14 @@ export const revertSettlementPreparationBuilder = async (
     .programs()
     .getPsyoptionsAmericanInstrument();
 
+  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
+    Buffer.from(rfqModel.quoteAsset.instrumentData)
+  ).mint;
+
   const sidePreparedLegs: number =
     side == AuthoritySide.Taker
       ? parseInt(responseModel.takerPreparedLegs.toString())
       : parseInt(responseModel.makerPreparedLegs.toString());
-
-  // let j = 0;
 
   for (let i = 0; i < sidePreparedLegs; i++) {
     const instrumentEscrowPda = new InstrumentPdasClient(
@@ -252,8 +252,6 @@ export const revertSettlementPreparationBuilder = async (
     ];
 
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
-
-    // j++;
   }
 
   const spotInstrumentProgramAccount: AccountMeta = {
@@ -277,7 +275,7 @@ export const revertSettlementPreparationBuilder = async (
     // `receiver_tokens`
     {
       pubkey: await getAssociatedTokenAddress(
-        quoteMint.address,
+        quoteMint,
         side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
         undefined,
         TOKEN_PROGRAM_ID,

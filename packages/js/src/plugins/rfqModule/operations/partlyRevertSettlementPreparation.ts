@@ -160,8 +160,6 @@ export const partlyRevertSettlementPreparationBuilder = async (
 
   const startIndex = sidePreparedLegs - legAmountToRevert;
 
-  // let j = 0;
-
   for (let i = startIndex; i < sidePreparedLegs; i++) {
     const instrumentEscrowPda = new InstrumentPdasClient(
       convergence

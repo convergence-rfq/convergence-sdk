@@ -40,7 +40,7 @@ const Key = 'PrepareSettlementOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlement({ caller, rfq, response, side, legAmountToPrepare, quoteMint };
+ *   .prepareSettlement({ caller, rfq, response, side, legAmountToPrepare };
  * ```
  *
  * @group Operations
@@ -87,8 +87,6 @@ export type PrepareSettlementInput = {
   side: AuthoritySide;
 
   legAmountToPrepare: number;
-
-  quoteMint: Mint;
 };
 
 /**
@@ -214,7 +212,6 @@ export const prepareSettlementBuilder = async (
     response,
     side,
     legAmountToPrepare,
-    quoteMint,
   } = params;
 
   const protocol = await convergence.protocol().get();
@@ -231,6 +228,10 @@ export const prepareSettlementBuilder = async (
     .getPsyoptionsAmericanInstrument();
 
   let baseAssetMints: Mint[] = [];
+
+  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
+    Buffer.from(rfqModel.quoteAsset.instrumentData)
+  ).mint;
 
   for (const leg of rfqModel.legs) {
     if (
@@ -298,14 +299,14 @@ export const prepareSettlementBuilder = async (
     },
     {
       pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        mint: quoteMint.address,
+        mint: quoteMint,
         owner: caller.publicKey,
         programs,
       }),
       isSigner: false,
       isWritable: true,
     },
-    { pubkey: quoteMint.address, isSigner: false, isWritable: false },
+    { pubkey: quoteMint, isSigner: false, isWritable: false },
     {
       pubkey: quoteEscrowPda,
       isSigner: false,
