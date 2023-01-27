@@ -45,7 +45,7 @@
     "@bundlr-network/client": "^0.8.8",
     "@convergence-rfq/psyoptions-american-instrument": "2.0.6",
     "@convergence-rfq/psyoptions-european-instrument": "2.0.9",
-    "@convergence-rfq/rfq": "2.0.13",
+    "@convergence-rfq/rfq": "2.0.16",
     "@convergence-rfq/risk-engine": "2.0.12",
     "@convergence-rfq/spot-instrument": "2.0.13",
     "@convergence-rfq/beet": "0.7.5",

@@ -6,10 +6,6 @@ import {
   PsyoptionsEuropeanInstrument,
   psyoptionsEuropeanInstrumentProgram,
 } from '../psyoptionsEuropeanInstrumentModule';
-import {
-  PsyoptionsAmericanInstrument,
-  psyoptionsAmericanInstrumentProgram,
-} from '../psyoptionsAmericanInstrumentModule';
 import type { Rfq } from './models';
 import type { Leg, QuoteAsset } from './types';
 import { PublicKeyValues, toPublicKey } from '@/types';
