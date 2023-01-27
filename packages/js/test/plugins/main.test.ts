@@ -1876,3 +1876,15 @@ test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async
   const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
   t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
 });
+
+test('[rfq module] it can find all responses by maker  address', async (t: Test) => {
+  const responses = await cvg
+    .rfqs()
+    .findResponsesByOwner({ address: maker.publicKey });
+
+  for (const response of responses) {
+    console.log('response', response.address.toBase58());
+  }
+
+  t.assert(responses.length > 0, 'responses should be greater than 0');
+});
