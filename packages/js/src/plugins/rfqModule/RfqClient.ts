@@ -194,8 +194,8 @@ export class RfqClient {
       .execute(createRfqOperation(input), options);
   }
 
-  /** {@inheritDoc createAndAddLegsToRfqOperation} */
-  createAndAddLegs(
+  /** {@inheritDoc createRfqAndAddLegsToRfqOperation} */
+  createRfqAndAddLegs(
     input: CreateAndAddLegsToRfqInput,
     options?: OperationOptions
   ) {

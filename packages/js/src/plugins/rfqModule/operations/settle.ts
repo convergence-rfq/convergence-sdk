@@ -125,17 +125,17 @@ export const settleBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { rfq, response, maker, taker } = params;
 
-  let { startIndex } = params;
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
+
+  let { startIndex = parseInt(responseModel.settledLegs.toString()) } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
-
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  const responseModel = await convergence
-    .rfqs()
-    .findResponseByAddress({ address: response });
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
   const psyoptionsEuropeanProgram = convergence
@@ -149,9 +149,9 @@ export const settleBuilder = async (
     Buffer.from(rfqModel.quoteAsset.instrumentData)
   ).mint;
 
-  if (!startIndex) {
-    startIndex = parseInt(responseModel.settledLegs.toString());
-  }
+  // if (!startIndex) {
+  //   startIndex = parseInt(responseModel.settledLegs.toString());
+  // }
 
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];

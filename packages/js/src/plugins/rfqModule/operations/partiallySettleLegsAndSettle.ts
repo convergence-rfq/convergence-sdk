@@ -81,12 +81,14 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PartiallySettleLegsAndSettleOutput> => {
-      const {
-        // taker = convergence.identity(),
-        rfq,
-      } = operation.input;
+      const { rfq } = operation.input;
 
       const MAX_TX_SIZE = 1232;
+
+      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+        convergence,
+        scope.confirmOptions
+      );
 
       let settleRfqBuilder = await settleBuilder(
         convergence,
@@ -97,12 +99,7 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       );
       scope.throwIfCanceled();
 
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-        convergence,
-        scope.confirmOptions
-      );
-
-      let txSize = await convergence.rpc().getTransactionSize(settleRfqBuilder);
+      let txSize = await convergence.rpc().getTransactionSize(settleRfqBuilder, []);
 
       const rfqModel = await convergence
         .rfqs()
@@ -112,11 +109,13 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
 
       while (txSize == -1 || txSize + 193 > MAX_TX_SIZE) {
         const idx = Math.trunc(slicedIdx / 2);
+        const startIdx = rfqModel.legs.length - idx;
 
         settleRfqBuilder = await settleBuilder(
           convergence,
           {
             ...operation.input,
+            startIndex: startIdx,
           },
           scope
         );
@@ -129,41 +128,42 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       }
 
       if (slicedIdx < rfqModel.legs.length) {
-        let partiallySettleSlicedIdx = rfqModel.legs.length - slicedIdx;
+        //   if (slicedIdx > 0) {
+        let partiallySettleSlicedLegAmount = rfqModel.legs.length - slicedIdx;
 
         let partiallySettleBuilder = await partiallySettleLegsBuilder(
           convergence,
           {
             ...operation.input,
-            legAmountToSettle: partiallySettleSlicedIdx,
+            legAmountToSettle: partiallySettleSlicedLegAmount,
           },
           scope
         );
 
         let partiallySettleTxSize = await convergence
           .rpc()
-          .getTransactionSize(partiallySettleBuilder);
+          .getTransactionSize(partiallySettleBuilder, []);
 
         while (
           partiallySettleTxSize == -1 ||
           partiallySettleTxSize + 193 > MAX_TX_SIZE
         ) {
-          const halvedIdx = Math.trunc(partiallySettleSlicedIdx / 2);
+          const halvedLegAmount = Math.trunc(partiallySettleSlicedLegAmount / 2);
 
           partiallySettleBuilder = await partiallySettleLegsBuilder(
             convergence,
             {
               ...operation.input,
-              legAmountToSettle: halvedIdx,
+              legAmountToSettle: halvedLegAmount,
             },
             scope
           );
 
           partiallySettleTxSize = await convergence
             .rpc()
-            .getTransactionSize(partiallySettleBuilder);
+            .getTransactionSize(partiallySettleBuilder, []);
 
-          partiallySettleSlicedIdx = halvedIdx;
+          partiallySettleSlicedLegAmount = halvedLegAmount;
         }
 
         await partiallySettleBuilder.sendAndConfirm(
@@ -172,9 +172,9 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
         );
         scope.throwIfCanceled();
 
-        let x = partiallySettleSlicedIdx;
+        let x = partiallySettleSlicedLegAmount;
 
-        if (partiallySettleSlicedIdx < rfqModel.legs.length) {
+        if (partiallySettleSlicedLegAmount < rfqModel.legs.length) {
           while (x + slicedIdx < rfqModel.legs.length) {
             const ins = rfqModel.legs.length - slicedIdx - x;
 
