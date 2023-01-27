@@ -110,8 +110,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       let slicedLegAmount = legAmountToPrepare;
 
       while (txSize == -1 || txSize + 193 > MAX_TX_SIZE) {
-        console.log('prepareTxSize too big x1');
-
         const halvedLegAmount = Math.trunc(slicedLegAmount / 2);
 
         prepareBuilder = await prepareSettlementBuilder(
@@ -128,7 +126,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
           .getTransactionSize(prepareBuilder, [caller]);
 
         slicedLegAmount = halvedLegAmount;
-        console.log('sliced leg amt: ' + slicedLegAmount.toString());
       }
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
@@ -146,16 +143,8 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       let prepareMoreTxSize: number = 0;
 
       if (slicedLegAmount < legAmountToPrepare) {
-        console.log(
-          'hit first if-statement: if slicedLegAmount < legAmountToPrepare'
-        );
         let prepareMoreLegsSlicedLegAmount =
           legAmountToPrepare - slicedLegAmount;
-
-        console.log(
-          'prepareMoreLegsSlicedLegAmount: ' +
-            prepareMoreLegsSlicedLegAmount.toString()
-        );
 
         let prepareMoreBuilder = await prepareMoreLegsSettlementBuilder(
           convergence,
@@ -175,8 +164,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
           prepareMoreTxSize == -1 ||
           prepareMoreTxSize + 193 > MAX_TX_SIZE
         ) {
-          console.log('prepareMoreTxSize too big x1');
-
           const halvedLegAmount = Math.trunc(
             prepareMoreLegsSlicedLegAmount / 2
           );
@@ -196,17 +183,11 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
             .getTransactionSize(prepareMoreBuilder, [caller]);
 
           prepareMoreLegsSlicedLegAmount = halvedLegAmount;
-
-          console.log(
-            ' prepareMoreLegsSlicedLegAmount: ' +
-              prepareMoreLegsSlicedLegAmount.toString()
-          );
         }
 
         await prepareMoreBuilder.sendAndConfirm(convergence, confirmOptions);
         scope.throwIfCanceled();
 
-        let x = prepareMoreLegsSlicedLegAmount;
         let sidePrepared = 0;
 
         if (
@@ -227,22 +208,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
               prepareMoreLegsSlicedLegAmount -
               sidePrepared;
 
-            console.log(
-              'side prepared legs: ' +
-                (
-                  slicedLegAmount +
-                  prepareMoreLegsSlicedLegAmount +
-                  sidePrepared
-                ).toString()
-            );
-            console.log('leg amt to prepare (ins): ' + ins.toString());
-            console.log('slicedLegAmount: ' + slicedLegAmount.toString());
-            console.log('x: ' + x.toString());
-            console.log(
-              'preapreMoreLegsSlicedAmt: ' +
-                prepareMoreLegsSlicedLegAmount.toString()
-            );
-
             //@ts-ignore
             const prepareMoreBuilder = await prepareMoreLegsSettlementBuilder(
               convergence,
@@ -262,7 +227,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
               confirmOptions
             );
 
-            // x += ins;
             sidePrepared += ins;
           }
         }

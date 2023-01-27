@@ -1,10 +1,6 @@
 import { createCleanUpResponseInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -148,7 +144,7 @@ export const cleanUpResponseBuilder = async (
     response,
     firstToPrepare,
     dao,
-    quoteMint,
+    // quoteMint,
   } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -170,6 +166,10 @@ export const cleanUpResponseBuilder = async (
     .getPsyoptionsAmericanInstrument();
 
   const initializedLegs = responseModel.legPreparationsInitializedBy.length;
+
+  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
+    Buffer.from(rfqModel.quoteAsset.instrumentData)
+  ).mint;
 
   for (let i = 0; i < initializedLegs; i++) {
     const leg = rfqModel.legs[i];
@@ -244,13 +244,6 @@ export const cleanUpResponseBuilder = async (
         isWritable: true,
       },
       {
-        // pubkey: await getAssociatedTokenAddress(
-        //   baseAssetMints[i].address,
-        //   dao,
-        //   undefined,
-        //   TOKEN_PROGRAM_ID,
-        //   ASSOCIATED_TOKEN_PROGRAM_ID
-        // ),
         pubkey: convergence.tokens().pdas().associatedTokenAccount({
           mint: baseAssetMint!.address,
           owner: dao,
@@ -290,13 +283,11 @@ export const cleanUpResponseBuilder = async (
     },
     // `receiver_tokens`
     {
-      pubkey: await getAssociatedTokenAddress(
-        quoteMint.address,
-        dao,
-        undefined,
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      ),
+      pubkey: convergence.tokens().pdas().associatedTokenAccount({
+        mint: quoteMint,
+        owner: dao,
+        programs,
+      }),
       isSigner: false,
       isWritable: true,
     },
