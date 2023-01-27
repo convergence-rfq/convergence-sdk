@@ -27,3 +27,4 @@ export * from './unlockResponseCollateral';
 export * from './unlockRfqCollateral';
 export * from './findResponseByAddress';
 export * from './createAndAddLegsToRfq';
+export * from './findRfqsByActive';

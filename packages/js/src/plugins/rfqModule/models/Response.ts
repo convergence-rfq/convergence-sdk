@@ -35,11 +35,11 @@ export type Response = {
 
   readonly state: StoredResponseState;
 
-  readonly takerPreparedLegs: bignum;
+  readonly takerPreparedLegs: number;
 
-  readonly makerPreparedLegs: bignum;
+  readonly makerPreparedLegs: number;
 
-  readonly settledLegs: bignum;
+  readonly settledLegs: number;
 
   readonly confirmed: COption<Confirmation>;
 

@@ -14,6 +14,8 @@ import type { Rfq } from './models';
 import type { Leg, QuoteAsset } from './types';
 import { PublicKeyValues, toPublicKey } from '@/types';
 import { Convergence } from '@/Convergence';
+import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
+import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 
 export type HasMintAddress = Rfq | PublicKey;
 

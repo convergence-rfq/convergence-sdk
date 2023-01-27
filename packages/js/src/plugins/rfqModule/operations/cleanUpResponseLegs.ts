@@ -1,6 +1,7 @@
 import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -16,7 +17,6 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
@@ -246,6 +246,8 @@ export const cleanUpResponseLegsBuilder = async (
 
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
+
+  console.log('legAmountToClear', legAmountToClear);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

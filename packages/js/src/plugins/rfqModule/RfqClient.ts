@@ -1,7 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { SendTokensInput } from '../tokenModule';
 import { Rfq } from './models';
-// import { RfqBuildersClient } from './RfqBuildersClient';
 import { RfqPdasClient } from './RfqPdasClient';
 import {
   addInstrumentOperation,
@@ -22,8 +21,6 @@ import {
   ConfirmResponseInput,
   createRfqOperation,
   CreateRfqInput,
-  //@ts-ignore
-  createAndFinalizeRfqConstructionOperation,
   CreateAndFinalizeRfqConstructionInput,
   createAndAddLegsToRfqOperation,
   CreateAndAddLegsToRfqInput,
@@ -41,6 +38,8 @@ import {
   FindRfqsByOwnerInput,
   findRfqsByTokenOperation,
   FindRfqsByTokenInput,
+  findRfqsByActiveOperation,
+  FindRfqsByActiveInput,
   partiallySettleLegsOperation,
   PartiallySettleLegsInput,
   partlyRevertSettlementPreparationOperation,
@@ -254,6 +253,12 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(findRfqsByAddressesOperation(input), options);
+  }
+
+  findRfqsByActive(input: FindRfqsByActiveInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(findRfqsByActiveOperation(input), options);
   }
 
   /** {@inheritDoc findRfqsByInstrumentOperation} */

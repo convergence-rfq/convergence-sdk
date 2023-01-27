@@ -20,7 +20,7 @@ import {
   toBigNumber,
 } from '@/types';
 
-type InstrumentData = {
+type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;
   underlyingAmountPerContract: bignum;
   strikePrice: bignum;
@@ -29,19 +29,20 @@ type InstrumentData = {
   metaKey: PublicKey;
 };
 
-const instrumentDataSerializer = createSerializerFromFixableBeetArgsStruct(
-  new FixableBeetArgsStruct<InstrumentData>(
-    [
-      ['optionType', u8],
-      ['underlyingAmountPerContract', u64],
-      ['strikePrice', u64],
-      ['expiration', u64],
-      ['optionMint', publicKey],
-      ['metaKey', publicKey],
-    ],
-    'InstrumentData'
-  )
-);
+export const psyoptionsEuropeanInstrumentDataSerializer =
+  createSerializerFromFixableBeetArgsStruct(
+    new FixableBeetArgsStruct<PsyoptionsEuropeanInstrumentData>(
+      [
+        ['optionType', u8],
+        ['underlyingAmountPerContract', u64],
+        ['strikePrice', u64],
+        ['expiration', u64],
+        ['optionMint', publicKey],
+        ['metaKey', publicKey],
+      ],
+      'InstrumentData'
+    )
+  );
 
 const euroMetaSerializer = createSerializerFromFixableBeetArgsStruct(
   new FixableBeetArgsStruct<EuroMeta>(
@@ -130,8 +131,11 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
       },
     ];
   }
-  static deserializeInstrumentData(buffer: Buffer): InstrumentData {
-    const [instrumentData] = instrumentDataSerializer.deserialize(buffer);
+  static deserializeInstrumentData(
+    buffer: Buffer
+  ): PsyoptionsEuropeanInstrumentData {
+    const [instrumentData] =
+      psyoptionsEuropeanInstrumentDataSerializer.deserialize(buffer);
     return instrumentData;
   }
 
@@ -150,9 +154,10 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     leg: Leg
   ): Promise<PsyoptionsEuropeanInstrument> {
     const { side, instrumentAmount, instrumentData } = leg;
-    const [{ metaKey, optionType }] = instrumentDataSerializer.deserialize(
-      Buffer.from(instrumentData)
-    );
+    const [{ metaKey, optionType }] =
+      psyoptionsEuropeanInstrumentDataSerializer.deserialize(
+        Buffer.from(instrumentData)
+      );
 
     const euroMeta = await this.fetchMeta(convergence, metaKey);
 

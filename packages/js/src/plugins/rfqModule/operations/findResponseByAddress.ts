@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { toResponseAccount } from '../accounts';
-import { Response, toResponse } from '../models/Response';
+import { assertResponse, Response, toResponse } from '../models/Response';
 import {
   Operation,
   OperationHandler,
@@ -68,6 +68,7 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
 
       const account = await convergence.rpc().getAccount(address, commitment);
       const response = toResponse(toResponseAccount(account));
+      assertResponse(response);
       scope.throwIfCanceled();
 
       return response;

@@ -15,7 +15,7 @@ type InstrumentData = {
   mint: PublicKey;
 };
 
-export const instrumentDataSerializer =
+export const SpotInstrumentDataSerializer =
   createSerializerFromFixableBeetArgsStruct(
     new FixableBeetArgsStruct<InstrumentData>(
       [['mint', publicKey]],
@@ -75,7 +75,7 @@ export class SpotInstrument implements Instrument {
   }
 
   static deserializeInstrumentData(buffer: Buffer): any {
-    const [instrumentData] = instrumentDataSerializer.deserialize(buffer);
+    const [instrumentData] = SpotInstrumentDataSerializer.deserialize(buffer);
     return instrumentData;
   }
 
