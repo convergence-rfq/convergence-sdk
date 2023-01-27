@@ -1558,6 +1558,8 @@ test('[rfqModule] it can create and add legs to RFQ in a single method', async (
     legAmountToPrepare: 25,
   });
 
+  // await cvg.rfqs().partiallyS
+
   // await cvg.rfqs().settle({
   //   maker: maker.publicKey,
   //   taker: taker.publicKey,

@@ -166,8 +166,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
             prepareMoreLegsSlicedLegAmount / 2
           );
 
-          console.log('halved leg amount: ' + halvedLegAmount.toString());
-
           prepareMoreBuilder = await prepareMoreLegsSettlementBuilder(
             convergence,
             {
@@ -208,8 +206,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
               slicedLegAmount -
               x -
               prepareMoreLegsSlicedLegAmount;
-
-            console.log('halved leg amount (inner): ' + ins.toString());
 
             //@ts-ignore
             const prepareMoreBuilder = await prepareMoreLegsSettlementBuilder(

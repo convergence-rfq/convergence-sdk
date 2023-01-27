@@ -16,7 +16,6 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { partiallySettleLegsBuilder } from './partiallySettleLegs';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'SettleOperation' as const;
@@ -78,65 +77,19 @@ export const settleOperationHandler: OperationHandler<SettleOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ): Promise<SettleOutput> => {
-    const MAX_TX_SIZE = 1232;
-    //@ts-ignore
-    const { startIndex, response, rfq } = operation.input;
-
     let builder = await settleBuilder(
       convergence,
       {
         ...operation.input,
-        // startIndex,
       },
       scope
     );
     scope.throwIfCanceled();
 
-    let txSize = await convergence.rpc().getTransactionSize(builder, []);
-
-    const rfqModel = await convergence
-      .rfqs()
-      .findRfqByAddress({ address: rfq });
-
-    let slicedIdx = rfqModel.legs.length;
-
-    while (txSize + 193 > MAX_TX_SIZE) {
-      const idx = Math.trunc(slicedIdx / 2);
-
-      builder = await settleBuilder(
-        convergence,
-        {
-          ...operation.input,
-          startIndex: idx,
-        },
-        scope
-      );
-
-      txSize = await convergence.rpc().getTransactionSize(builder, []);
-
-      slicedIdx = idx;
-    }
-    let partiallySettleBuilder: TransactionBuilder;
-
-    if (slicedIdx < rfqModel.legs.length) {
-      partiallySettleBuilder = await partiallySettleLegsBuilder(
-        convergence,
-        {
-          ...operation.input,
-          legAmountToSettle: slicedIdx,
-        },
-        scope
-      );
-    }
-
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
       convergence,
       scope.confirmOptions
     );
-    //@ts-ignore
-    if (partiallySettleBuilder) {
-      await partiallySettleBuilder.sendAndConfirm(convergence, confirmOptions);
-    }
 
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();

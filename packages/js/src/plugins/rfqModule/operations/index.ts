@@ -15,6 +15,7 @@ export * from './findRfqsByInstrument';
 export * from './findRfqsByOwner';
 export * from './findRfqsByToken';
 export * from './partiallySettleLegs';
+export * from './partiallySettleLegsAndSettle';
 export * from './partlyRevertSettlementPreparation';
 export * from './prepareMoreLegsSettlement';
 export * from './prepareSettlement';
