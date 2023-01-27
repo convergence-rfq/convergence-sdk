@@ -15,7 +15,6 @@ import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrument
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { createRfqBuilder } from './createRfq';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
-//@ts-ignore
 import { assertRfq, Rfq } from '../models';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
@@ -94,7 +93,7 @@ export type CreateAndAddLegsToRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
-  // rfq: Rfq;
+  rfq: Rfq;
 };
 
 /**
@@ -181,15 +180,10 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
       );
       scope.throwIfCanceled();
 
-      // let addLegsBuilder: TransactionBuilder;
-      // let addLegsBuilder2: TransactionBuilder;
       //@ts-ignore
       let addLegsTxSize: number = 0;
 
       if (slicedInstruments.length < instruments.length) {
-        //in this loop try to have all the addLegs builders creation for each...each what?
-        // and try to execute createRfq before doing anything with addLegs
-
         let addLegsSlicedInstruments = instruments.slice(
           slicedInstruments.length
         );
@@ -209,8 +203,6 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
           .getTransactionSize(addLegsBuilder, [taker]);
 
         while (addLegsTxSize == -1 || addLegsTxSize + 193 > MAX_TX_SIZE) {
-          console.log('inside legs while-loop');
-
           const halvedInstruments = addLegsSlicedInstruments.slice(
             0,
             Math.trunc(addLegsSlicedInstruments.length / 2)
@@ -235,14 +227,46 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
         await addLegsBuilder.sendAndConfirm(convergence, confirmOptions);
         scope.throwIfCanceled();
+
+        let x = addLegsSlicedInstruments;
+
+        if (
+          addLegsSlicedInstruments.length <
+          instruments.slice(slicedInstruments.length).length
+        ) {
+          while (x.length + slicedInstruments.length < instruments.length) {
+            let ins = instruments.slice(
+              slicedInstruments.length + x.length, //offset of createRfq legs + addLegs legs
+              slicedInstruments.length +
+                x.length +
+                addLegsSlicedInstruments.length //num of legs successfully passed to addLegs
+            );
+
+            //@ts-ignore
+            const nextAddLegsBuilder = await addLegsToRfqBuilder(
+              convergence,
+              {
+                ...operation.input,
+                rfq: keypair.publicKey,
+                instruments: ins,
+              },
+              scope
+            );
+
+            await nextAddLegsBuilder.sendAndConfirm(
+              convergence,
+              confirmOptions
+            );
+
+            x.push(...ins);
+          }
+        }
       }
+      const rfq = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: keypair.publicKey });
+      assertRfq(rfq);
 
-      //@ts-ignore
-      // if (addLegsBuilder) {
-      // await addLegsBuilder.sendAndConfirm(convergence, confirmOptions);
-      // scope.throwIfCanceled();
-      // }
-
-      return { ...output };
+      return { ...output, rfq };
     },
   };

@@ -328,7 +328,7 @@ test('[riskEngineModule] it can set spot, American and European option instrumen
   });
 });
 
-// // COLLATERAL
+// COLLATERAL
 
 test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const { collateral: takerCollateral } = await cvg.collateral().initialize({
@@ -1205,10 +1205,11 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
 });
 
 test('[rfqModule] it can find RFQs by instrument', async () => {
+  //@ts-ignore
   const instruments = await cvg.rfqs().findByInstrument({
     instrumentProgram: cvg.programs().getSpotInstrument(),
   });
-  console.error(instruments);
+  // console.error(instruments);
 });
 
 test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
@@ -1476,6 +1477,42 @@ test('[rfqModule] it can create and add legs to RFQ in a single method', async (
         amount: 5,
         side: Side.Ask,
       }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
     ],
     taker,
     orderType: OrderType.Sell,
@@ -1483,6 +1520,11 @@ test('[rfqModule] it can create and add legs to RFQ in a single method', async (
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
+  });
+
+  await cvg.rfqs().finalizeRfqConstruction({
+    taker,
+    rfq: rfq.address,
   });
 });
 
