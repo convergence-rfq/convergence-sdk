@@ -21,7 +21,7 @@ const Key = 'PrepareSettlementAndPrepareMoreLegsOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlementAndPrepareMoreLegs({ caller, rfq, response, legAmountToPrepare };
+ *   .prepareSettlementAndPrepareMoreLegs({ caller, protocol, rfq, response, legAmountToPrepare });
  * ```
  *
  * @group Operations
@@ -88,10 +88,9 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementAndPrepareMoreLegsOutput> => {
-      //   let prepareCounter: number = 0;
-
       const { caller = convergence.identity(), legAmountToPrepare } =
         operation.input;
+
       const MAX_TX_SIZE = 1232;
 
       let prepareBuilder = await prepareSettlementBuilder(
@@ -103,13 +102,13 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       );
       scope.throwIfCanceled();
 
-      let txSize = await convergence
+      let prepareSettlementTxSize = await convergence
         .rpc()
         .getTransactionSize(prepareBuilder, [caller]);
 
       let slicedLegAmount = legAmountToPrepare;
 
-      while (txSize == -1 || txSize + 193 > MAX_TX_SIZE) {
+      while (prepareSettlementTxSize == -1 || prepareSettlementTxSize + 193 > MAX_TX_SIZE) {
         const halvedLegAmount = Math.trunc(slicedLegAmount / 2);
 
         prepareBuilder = await prepareSettlementBuilder(
@@ -121,7 +120,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
           scope
         );
 
-        txSize = await convergence
+        prepareSettlementTxSize = await convergence
           .rpc()
           .getTransactionSize(prepareBuilder, [caller]);
 
@@ -139,8 +138,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       );
       scope.throwIfCanceled();
 
-      //@ts-ignore
-      let prepareMoreTxSize: number = 0;
+      let prepareMoreTxSize = 0;
 
       if (slicedLegAmount < legAmountToPrepare) {
         let prepareMoreLegsSlicedLegAmount =
@@ -188,27 +186,28 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
         await prepareMoreBuilder.sendAndConfirm(convergence, confirmOptions);
         scope.throwIfCanceled();
 
-        let sidePrepared = 0;
+        let prepareMoreSidePrepared = 0;
 
         if (
           prepareMoreLegsSlicedLegAmount <
           legAmountToPrepare - slicedLegAmount
         ) {
           while (
-            slicedLegAmount + prepareMoreLegsSlicedLegAmount + sidePrepared <
+            slicedLegAmount +
+              prepareMoreLegsSlicedLegAmount +
+              prepareMoreSidePrepared <
               legAmountToPrepare &&
             legAmountToPrepare -
               slicedLegAmount -
               prepareMoreLegsSlicedLegAmount >
               0
           ) {
-            let ins =
+            let amountToPrepare =
               legAmountToPrepare -
               slicedLegAmount -
               prepareMoreLegsSlicedLegAmount -
-              sidePrepared;
+              prepareMoreSidePrepared;
 
-            //@ts-ignore
             const prepareMoreBuilder = await prepareMoreLegsSettlementBuilder(
               convergence,
               {
@@ -216,8 +215,8 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
                 sidePreparedLegs:
                   slicedLegAmount +
                   prepareMoreLegsSlicedLegAmount +
-                  sidePrepared,
-                legAmountToPrepare: ins,
+                  prepareMoreSidePrepared,
+                legAmountToPrepare: amountToPrepare,
               },
               scope
             );
@@ -227,7 +226,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
               confirmOptions
             );
 
-            sidePrepared += ins;
+            prepareMoreSidePrepared += amountToPrepare;
           }
         }
       }

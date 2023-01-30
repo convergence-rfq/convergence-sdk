@@ -99,7 +99,7 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       );
       scope.throwIfCanceled();
 
-      let txSize = await convergence
+      let settleTxSize = await convergence
         .rpc()
         .getTransactionSize(settleRfqBuilder, []);
 
@@ -109,7 +109,7 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
 
       let slicedIndex = rfqModel.legs.length;
 
-      while (txSize == -1 || txSize + 193 > MAX_TX_SIZE) {
+      while (settleTxSize == -1 || settleTxSize + 193 > MAX_TX_SIZE) {
         const index = Math.trunc(slicedIndex / 2);
         const startIndex = rfqModel.legs.length - index;
 
@@ -122,7 +122,7 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
           scope
         );
 
-        txSize = await convergence
+        settleTxSize = await convergence
           .rpc()
           .getTransactionSize(settleRfqBuilder, []);
 
@@ -179,13 +179,14 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
 
         if (partiallySettleSlicedLegAmount < rfqModel.legs.length) {
           while (x + slicedIndex < rfqModel.legs.length) {
-            const ins = rfqModel.legs.length - slicedIndex - x;
+            const nextPartiallySettleLegs =
+              rfqModel.legs.length - slicedIndex - x;
 
             const nextPartiallySettleBuilder = await partiallySettleLegsBuilder(
               convergence,
               {
                 ...operation.input,
-                legAmountToSettle: ins,
+                legAmountToSettle: nextPartiallySettleLegs,
               },
               scope
             );
@@ -196,7 +197,7 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
             );
             scope.throwIfCanceled();
 
-            x += ins;
+            x += nextPartiallySettleLegs;
           }
         }
       }

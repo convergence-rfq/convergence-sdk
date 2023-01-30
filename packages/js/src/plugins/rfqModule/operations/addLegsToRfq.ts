@@ -23,7 +23,7 @@ const Key = 'AddLegsToRfqOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .addLegsTo({ address };
+ *   .addLegsToRfq({ taker, rfq, instruments };
  * ```
  *
  * @group Operations
@@ -120,7 +120,7 @@ export type AddLegsToRfqBuilderParams = AddLegsToRfqInput;
  * const transactionBuilder = convergences
  *   .rfqs()
  *   .builders()
- *   .addLegsTo({ address });
+ *   .addLegsToRfq({ address });
  * ```
  *
  * @group Transaction Builders

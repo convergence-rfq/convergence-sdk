@@ -25,7 +25,7 @@ const Key = 'CreateAndAddLegsToRfqOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .createAndAddLegsToRfq({ caller, rfq, response, side, legAmountToPrepare, quoteAsset };
+ *   .createRfqAndAddLegs({ taker, keypair, quoteAsset, instruments, orderType, fixedSize, activeWindow, settlingWindow, legSize };
  * ```
  *
  * @group Operations
@@ -137,13 +137,13 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
       );
       scope.throwIfCanceled();
 
-      let txSize = await convergence
+      let createRfqTxSize = await convergence
         .rpc()
         .getTransactionSize(rfqBuilder, [taker, keypair]);
 
       let slicedInstruments = instruments;
 
-      while (txSize == -1 || txSize + 193 > MAX_TX_SIZE) {
+      while (createRfqTxSize == -1 || createRfqTxSize + 193 > MAX_TX_SIZE) {
         const halvedInstruments = slicedInstruments.slice(
           0,
           Math.trunc(slicedInstruments.length / 2)
@@ -160,7 +160,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
           scope
         );
 
-        txSize = await convergence
+        createRfqTxSize = await convergence
           .rpc()
           .getTransactionSize(rfqBuilder, [taker, keypair]);
 
@@ -178,8 +178,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
       );
       scope.throwIfCanceled();
 
-      //@ts-ignore
-      let addLegsTxSize: number = 0;
+      let addLegsTxSize = 0;
 
       if (slicedInstruments.length < instruments.length) {
         let addLegsSlicedInstruments = instruments.slice(
@@ -226,27 +225,29 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         await addLegsBuilder.sendAndConfirm(convergence, confirmOptions);
         scope.throwIfCanceled();
 
-        let x = addLegsSlicedInstruments;
+        let nextAddLegsSlicedInstruments = addLegsSlicedInstruments;
 
         if (
           addLegsSlicedInstruments.length <
           instruments.slice(slicedInstruments.length).length
         ) {
-          while (x.length + slicedInstruments.length < instruments.length) {
-            let ins = instruments.slice(
-              slicedInstruments.length + x.length, //offset of createRfq legs + addLegs legs
+          while (
+            nextAddLegsSlicedInstruments.length + slicedInstruments.length <
+            instruments.length
+          ) {
+            let nextAddLegsInstruments = instruments.slice(
+              slicedInstruments.length + nextAddLegsSlicedInstruments.length, //offset of createRfq legs + addLegs legs
               slicedInstruments.length +
-                x.length +
+                nextAddLegsSlicedInstruments.length +
                 addLegsSlicedInstruments.length //num of legs successfully passed to addLegs
             );
 
-            //@ts-ignore
             const nextAddLegsBuilder = await addLegsToRfqBuilder(
               convergence,
               {
                 ...operation.input,
                 rfq: keypair.publicKey,
-                instruments: ins,
+                instruments: nextAddLegsInstruments,
               },
               scope
             );
@@ -256,7 +257,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
               confirmOptions
             );
 
-            x.push(...ins);
+            nextAddLegsSlicedInstruments.push(...nextAddLegsInstruments);
           }
         }
       }
