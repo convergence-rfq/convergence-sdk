@@ -32,6 +32,10 @@ import {
   findRfqByAddressOperation,
   FindResponseByAddressInput,
   findResponseByAddressOperation,
+  findResponsesByRfqOperation,
+  FindResponsesByRfqInput,
+  findResponsesByRfqsOperation,
+  FindResponsesByRfqsInput,
   findRfqsByInstrumentOperation,
   FindRfqsByInstrumentInput,
   findRfqsByOwnerOperation,
@@ -241,6 +245,26 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(findResponseByAddressOperation(input), options);
+  }
+
+  /** {@inheritDoc findResponsesByRfqOperation} */
+  findResponsesByRfq(
+    input: FindResponsesByRfqInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(findResponsesByRfqOperation(input), options);
+  }
+
+  /** {@inheritDoc findResponsesByRfqsOperation} */
+  findResponsesByRfqs(
+    input: FindResponsesByRfqsInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(findResponsesByRfqsOperation(input), options);
   }
 
   /** {@inheritDoc findRfqByAddressOperation} */

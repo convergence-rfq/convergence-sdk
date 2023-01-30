@@ -10,61 +10,61 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 
-const Key = 'FindResponsesByRfqOperation' as const;
+const Key = 'FindResponsesByRfqsOperation' as const;
 
 /**
- * Finds Responses by a given RFQ address.
+ * Finds Responses by a list of given RFQ addresses.
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findResponsesByRfq({ address };
+ *   .findResponsesByRfqs({ addresses };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const findResponsesByRfqOperation =
-  useOperation<FindResponsesByRfqOperation>(Key);
+export const findResponsesByRfqsOperation =
+  useOperation<FindResponsesByRfqsOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type FindResponsesByRfqOperation = Operation<
+export type FindResponsesByRfqsOperation = Operation<
   typeof Key,
-  FindResponsesByRfqInput,
-  FindResponsesByRfqOutput
+  FindResponsesByRfqsInput,
+  FindResponsesByRfqsOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type FindResponsesByRfqInput = {
-  /** The address of the Rfq. */
-  address: PublicKey;
+export type FindResponsesByRfqsInput = {
+  /** The addresses of the Rfqs. */
+  addresses: PublicKey[];
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByRfqOutput = Response[];
+export type FindResponsesByRfqsOutput = Response[];
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesByRfqOperation> =
+export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponsesByRfqsOperation> =
   {
     handle: async (
-      operation: FindResponsesByRfqOperation,
+      operation: FindResponsesByRfqsOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<FindResponsesByRfqOutput> => {
+    ): Promise<FindResponsesByRfqsOutput> => {
       const { programs } = scope;
-      const { address } = operation.input;
+      const { addresses } = operation.input;
       scope.throwIfCanceled();
 
       const rfqProgram = convergence.programs().getRfq(programs);
@@ -90,9 +90,12 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
         .filter((response): response is Response => response !== null);
 
       const foundResponses: Response[] = [];
-      for (const r of responseAccounts) {
-        if (r.rfq.toBase58() === address.toBase58()) {
-          foundResponses.push(r);
+
+      for (const address of addresses) {
+        for (const r of responseAccounts) {
+          if (r.rfq.toBase58() === address.toBase58()) {
+            foundResponses.push(r);
+          }
         }
       }
       return foundResponses;
