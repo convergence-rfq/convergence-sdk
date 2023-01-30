@@ -97,7 +97,6 @@ export class RpcClient {
       //@ts-ignore
       signData = message.serialize(); //this method errors if tx too large
     } catch (err) {
-      console.log('too many legs');
       return -1;
     }
     // @ts-expect-error

@@ -148,11 +148,7 @@ export const settleBuilder = async (
   const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
     Buffer.from(rfqModel.quoteAsset.instrumentData)
   ).mint;
-
-  // if (!startIndex) {
-  //   startIndex = parseInt(responseModel.settledLegs.toString());
-  // }
-
+  
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];
     const confirmationSide = responseModel.confirmed?.side;

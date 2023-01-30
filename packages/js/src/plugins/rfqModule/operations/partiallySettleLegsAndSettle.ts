@@ -99,23 +99,25 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       );
       scope.throwIfCanceled();
 
-      let txSize = await convergence.rpc().getTransactionSize(settleRfqBuilder, []);
+      let txSize = await convergence
+        .rpc()
+        .getTransactionSize(settleRfqBuilder, []);
 
       const rfqModel = await convergence
         .rfqs()
         .findRfqByAddress({ address: rfq });
 
-      let slicedIdx = rfqModel.legs.length;
+      let slicedIndex = rfqModel.legs.length;
 
       while (txSize == -1 || txSize + 193 > MAX_TX_SIZE) {
-        const idx = Math.trunc(slicedIdx / 2);
-        const startIdx = rfqModel.legs.length - idx;
+        const index = Math.trunc(slicedIndex / 2);
+        const startIndex = rfqModel.legs.length - index;
 
         settleRfqBuilder = await settleBuilder(
           convergence,
           {
             ...operation.input,
-            startIndex: startIdx,
+            startIndex,
           },
           scope
         );
@@ -124,12 +126,11 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
           .rpc()
           .getTransactionSize(settleRfqBuilder, []);
 
-        slicedIdx = idx;
+        slicedIndex = index;
       }
 
-      if (slicedIdx < rfqModel.legs.length) {
-        //   if (slicedIdx > 0) {
-        let partiallySettleSlicedLegAmount = rfqModel.legs.length - slicedIdx;
+      if (slicedIndex < rfqModel.legs.length) {
+        let partiallySettleSlicedLegAmount = rfqModel.legs.length - slicedIndex;
 
         let partiallySettleBuilder = await partiallySettleLegsBuilder(
           convergence,
@@ -148,7 +149,9 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
           partiallySettleTxSize == -1 ||
           partiallySettleTxSize + 193 > MAX_TX_SIZE
         ) {
-          const halvedLegAmount = Math.trunc(partiallySettleSlicedLegAmount / 2);
+          const halvedLegAmount = Math.trunc(
+            partiallySettleSlicedLegAmount / 2
+          );
 
           partiallySettleBuilder = await partiallySettleLegsBuilder(
             convergence,
@@ -175,8 +178,8 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
         let x = partiallySettleSlicedLegAmount;
 
         if (partiallySettleSlicedLegAmount < rfqModel.legs.length) {
-          while (x + slicedIdx < rfqModel.legs.length) {
-            const ins = rfqModel.legs.length - slicedIdx - x;
+          while (x + slicedIndex < rfqModel.legs.length) {
+            const ins = rfqModel.legs.length - slicedIndex - x;
 
             const nextPartiallySettleBuilder = await partiallySettleLegsBuilder(
               convergence,

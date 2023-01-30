@@ -180,8 +180,8 @@ export const partlyRevertSettlementPreparationBuilder = async (
     let baseAssetMint: Mint;
 
     if (
-      leg.instrumentProgram.toString() ===
-      psyoptionsEuropeanProgram.address.toString()
+      leg.instrumentProgram.toBase58() ===
+      psyoptionsEuropeanProgram.address.toBase58()
     ) {
       const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
         convergence,
@@ -197,21 +197,21 @@ export const partlyRevertSettlementPreparationBuilder = async (
 
       baseAssetMint = euroMetaOptionMint;
     } else if (
-      leg.instrumentProgram.toString() ===
-      psyoptionsAmericanProgram.address.toString()
+      leg.instrumentProgram.toBase58() ===
+      psyoptionsAmericanProgram.address.toBase58()
     ) {
       const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
         convergence,
         leg
       );
-      const mint = await convergence.tokens().findMintByAddress({
+      const americanOptionMint = await convergence.tokens().findMintByAddress({
         address: instrument.mint.address,
       });
 
-      baseAssetMint = mint;
+      baseAssetMint = americanOptionMint;
     } else if (
-      leg.instrumentProgram.toString() ===
-      spotInstrumentProgram.address.toString()
+      leg.instrumentProgram.toBase58() ===
+      spotInstrumentProgram.address.toBase58()
     ) {
       const instrument = await SpotInstrument.createFromLeg(convergence, leg);
       const mint = await convergence.tokens().findMintByAddress({
