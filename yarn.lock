@@ -1188,6 +1188,16 @@
     bs58 "^5.0.0"
     debug "^4.3.4"
 
+"@convergence-rfq/beet-solana@=0.4.7":
+  version "0.4.7"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/beet-solana/-/beet-solana-0.4.7.tgz#f632ac0ef670201afe80884070aaa02e79d556c2"
+  integrity sha512-a1Z1hekvyU1T25w9NXZit/HEPujcmaSv8Qa/DBYQie4oRoUxr1nND5MMAUOGExV7dDLwLqER34GOv+kjFGBRiA==
+  dependencies:
+    "@convergence-rfq/beet" "=0.7.8"
+    "@solana/web3.js" "^1.56.2"
+    bs58 "^5.0.0"
+    debug "^4.3.4"
+
 "@convergence-rfq/beet@0.7.5", "@convergence-rfq/beet@^0.7.5":
   version "0.7.5"
   resolved "https://registry.yarnpkg.com/@convergence-rfq/beet/-/beet-0.7.5.tgz#0bf43a34e0e1d5be0c9a8d64f5281b380652ee4e"
@@ -1201,6 +1211,15 @@
   version "0.7.2"
   resolved "https://registry.yarnpkg.com/@convergence-rfq/beet/-/beet-0.7.2.tgz#20fe858df54209404c83da628e7d5421eb3d2cbe"
   integrity sha512-Xff5HBXeMdoTIPstRi01/FnaQ8RMDyftC5lwzS7Mp66rv7i8oJcOodKb6v+2Eo+C2QMtwN+EGdH+2rEGwaLP+A==
+  dependencies:
+    ansicolors "^0.3.2"
+    bn.js "^5.2.0"
+    debug "^4.3.3"
+
+"@convergence-rfq/beet@=0.7.8":
+  version "0.7.8"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/beet/-/beet-0.7.8.tgz#80c21a7a9a931770c02c2034844388de2f433122"
+  integrity sha512-+nyeTlqzpr9PsLhzJ5aC594KFIYmQ6ucHcy/fsWp//KNhgRlA98ADl+E+zNoMnwS8owHTGYdW3P3adWpv8iOJA==
   dependencies:
     ansicolors "^0.3.2"
     bn.js "^5.2.0"
@@ -1230,7 +1249,7 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/rfq@2.0.13", "@convergence-rfq/rfq@2.0.16":
+"@convergence-rfq/rfq@2.0.16":
   version "2.0.16"
   resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.0.16.tgz#3c9f361e2b835473651baeac377c63defff863b8"
   integrity sha512-UDVERByagGBa6gEZFajj+/pRtVmnrVJrS7gp2ojCwlkzmEQVFaMPOGZpvalRoCbIfVCqFw7hR6zDAKbaEuIHIg==
@@ -1249,6 +1268,18 @@
   dependencies:
     "@convergence-rfq/beet" "^0.7.5"
     "@convergence-rfq/beet-solana" "^0.4.4"
+    "@metaplex-foundation/cusper" "^0.0.2"
+    "@solana/spl-token" "^0.3.5"
+    "@solana/web3.js" "^1.56.2"
+    bn.js "^5.2.0"
+
+"@convergence-rfq/risk-engine@=2.0.17":
+  version "2.0.17"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.0.17.tgz#67f4eec685f398f22744bd8f5fc70e07376617fc"
+  integrity sha512-lGIxYQvq89oT11GNvGTmKnh+IzyrvZ2cQw6xeyCyx6KWxuD70q/fZhzl+7O6qgNYxLfK6q11yvTiT/zMZdUBZA==
+  dependencies:
+    "@convergence-rfq/beet" "=0.7.8"
+    "@convergence-rfq/beet-solana" "=0.4.7"
     "@metaplex-foundation/cusper" "^0.0.2"
     "@solana/spl-token" "^0.3.5"
     "@solana/web3.js" "^1.56.2"

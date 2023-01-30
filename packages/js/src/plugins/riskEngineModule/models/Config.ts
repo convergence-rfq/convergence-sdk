@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { bignum } from '@convergence-rfq/beet';
 import { ConfigAccount } from '../accounts';
-import { RiskCategoryInfo, InstrumentInfo } from '../types';
+//import { RiskCategoryInfo, InstrumentInfo } from '../types';
 import { assert } from '@/utils';
 
 /**
@@ -21,15 +21,15 @@ export type Config = {
 
   readonly collateralForFixedQuoteAmountRfqCreation: bignum;
 
-  readonly collateralMintDecimals: number;
+  readonly collateralMintDecimals: bignum;
 
   readonly safetyPriceShiftFactor: bignum;
 
   readonly overallSafetyFactor: bignum;
 
-  readonly riskCategoriesInfo: RiskCategoryInfo[];
+  //readonly riskCategoriesInfo: RiskCategoryInfo[];
 
-  readonly instrumentTypes: InstrumentInfo[];
+  //readonly instrumentTypes: InstrumentType[];
 };
 
 /** @group Model helpers */
@@ -52,6 +52,6 @@ export const toConfig = (account: ConfigAccount): Config => ({
   collateralMintDecimals: account.data.collateralMintDecimals,
   safetyPriceShiftFactor: account.data.safetyPriceShiftFactor,
   overallSafetyFactor: account.data.overallSafetyFactor,
-  riskCategoriesInfo: account.data.riskCategoriesInfo,
-  instrumentTypes: account.data.instrumentTypes,
+  //riskCategoriesInfo: account.data.riskCategoriesInfo,
+  //instrumentTypes: account.data.instrumentTypes,
 });

@@ -152,11 +152,12 @@ export const initializeConfigBuilder = (
   const systemProgram = convergence.programs().getSystem(programs);
 
   console.log(
+    'input',
     collateralForVariableSizeRfqCreation.toString(),
     collateralForFixedQuoteAmountRfqCreation.toString(),
     collateralMintDecimals,
-    safetyPriceShiftFactor,
-    overallSafetyFactor
+    safetyPriceShiftFactor.toString(),
+    overallSafetyFactor.toString()
   );
 
   return TransactionBuilder.make()

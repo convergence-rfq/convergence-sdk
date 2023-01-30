@@ -301,7 +301,16 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
 
 test('[riskEngineModule] it can initialize the default risk engine config', async (t: Test) => {
   const { response, config } = await cvg.riskEngine().initializeConfig();
-  console.log(config);
+
+  console.log(
+    'output',
+    config.collateralForVariableSizeRfqCreation.toString(),
+    config.collateralForFixedQuoteAmountRfqCreation.toString(),
+    config.collateralMintDecimals.toString(),
+    config.safetyPriceShiftFactor.toString(),
+    config.overallSafetyFactor.toString()
+  );
+
   t.assert(response.signature.length > 0, 'signature present');
   spok(t, config, {
     $topic: 'config model',
@@ -310,11 +319,12 @@ test('[riskEngineModule] it can initialize the default risk engine config', asyn
 });
 
 test('[riskEngineModule] it can set instrument types', async (t: Test) => {
-  const { response, config } = await cvg.riskEngine().setInstrumentType({
+  //const { response, config } = await cvg.riskEngine().setInstrumentType({
+  const { response } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getSpotInstrument().address,
     instrumentType: InstrumentType.Spot,
   });
-  console.log(config);
+  //console.log(config);
   t.assert(response.signature.length > 0, 'signature present');
 
   await cvg.riskEngine().setInstrumentType({
