@@ -309,11 +309,14 @@ test('[riskEngineModule] it can initialize the default risk engine config', asyn
   });
 });
 
-test('[riskEngineModule] it can set instrument types', async () => {
-  await cvg.riskEngine().setInstrumentType({
+test('[riskEngineModule] it can set instrument types', async (t: Test) => {
+  const { response, config } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getSpotInstrument().address,
     instrumentType: InstrumentType.Spot,
   });
+  console.log(config);
+  t.assert(response.signature.length > 0, 'signature present');
+
   await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument().address,
     instrumentType: InstrumentType.Option,
@@ -373,7 +376,7 @@ test('[riskEngineModule] it can set risk categories info', async (t: Test) => {
     });
   t.assert(responseHigh.signature.length > 0, 'signature present');
 
-  const { response: responseVeryHigh, config } = await cvg
+  const { response: responseVeryHigh } = await cvg
     .riskEngine()
     .setRiskCategoriesInfo({
       changes: [
@@ -384,7 +387,6 @@ test('[riskEngineModule] it can set risk categories info', async (t: Test) => {
       ],
     });
   t.assert(responseVeryHigh.signature.length > 0, 'signature present');
-  console.log(config);
 });
 
 // COLLATERAL

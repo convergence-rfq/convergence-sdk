@@ -1,9 +1,10 @@
-import {
-  createSetInstrumentTypeInstruction,
-  InstrumentType,
-} from '@convergence-rfq/risk-engine';
+import { createSetInstrumentTypeInstruction } from '@convergence-rfq/risk-engine';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { Config, assertConfig, toConfig } from '../models';
+import { toConfigAccount } from '../accounts';
+//import { instrumentTypeToObject } from '../helpers';
+import { InstrumentType } from '../types';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -69,6 +70,9 @@ export type SetInstrumentTypeInput = {
 export type SetInstrumentTypeOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
+  /** Risk engine config. */
+  config: Config;
 };
 
 /**
@@ -82,13 +86,29 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetInstrumentTypeOutput> => {
+      const { commitment } = scope;
+
       scope.throwIfCanceled();
 
-      return setInstrumentTypeBuilder(
+      const builder = setInstrumentTypeBuilder(
         convergence,
         operation.input,
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+
+      const { response } = await builder.sendAndConfirm(
+        convergence,
+        scope.confirmOptions
+      );
+
+      const account = await convergence
+        .rpc()
+        .getAccount(convergence.riskEngine().pdas().config(), commitment);
+      const config = toConfig(toConfigAccount(account));
+      scope.throwIfCanceled();
+      assertConfig(config);
+
+      return { response, config };
     },
   };
 
@@ -134,6 +154,7 @@ export const setInstrumentTypeBuilder = (
           config,
         },
         {
+          //instrumentType: instrumentTypeToObject(instrumentType),
           instrumentType,
           instrumentProgram,
         },

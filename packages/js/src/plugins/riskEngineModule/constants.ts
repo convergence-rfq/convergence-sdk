@@ -1,4 +1,17 @@
 import { toRiskCategoryInfo, toScenario } from './helpers';
+import { toBigNumber } from '@/types';
+
+export const DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ =
+  toBigNumber(1_000_000_000);
+
+export const DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ =
+  toBigNumber(2_000_000_000);
+
+export const DEFAULT_MINT_DECIMALS = 9;
+
+export const DEFAULT_SAFETY_PRICE_SHIFT_FACTOR = 0.5;
+
+export const DEFAULT_OVERALL_SAFETY_FACTOR = 1.0;
 
 export const DEFAULT_RISK_CATEGORIES_INFO = {
   veryLow: toRiskCategoryInfo(0.05, 0.5, [

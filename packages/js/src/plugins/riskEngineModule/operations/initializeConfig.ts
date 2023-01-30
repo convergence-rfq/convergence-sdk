@@ -2,6 +2,13 @@ import { createInitializeConfigInstruction } from '@convergence-rfq/risk-engine'
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { toConfigAccount } from '../accounts';
 import { toConfig, assertConfig, Config } from '../models';
+import {
+  DEFAULT_MINT_DECIMALS,
+  DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
+  DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
+  DEFAULT_OVERALL_SAFETY_FACTOR,
+  DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
+} from '../constants';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -9,18 +16,10 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  toBigNumber,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
 const Key = 'InitalizeConfigOperation' as const;
-
-const DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ = toBigNumber(1_000_000_000);
-const DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ =
-  toBigNumber(2_000_000_000);
-const DEFAULT_MINT_DECIMALS = 9;
-const DEFAULT_SAFETY_PRICE_SHIFT_FACTOR = 0.5;
-const DEFAULT_OVERALL_SAFETY_FACTOR = 1.0;
 
 /**
  * Add an BaseAsset
@@ -53,14 +52,9 @@ export type InitalizeConfigOperation = Operation<
  */
 export type InitializeConfigInput =
   | {
-      /**
-       * The owner of the protocol.
-       */
+      /** The owner of the protocol. */
       authority?: Signer;
 
-      /*
-       * ARGS
-       */
       collateralForVariableSizeRfqCreation?: number;
 
       collateralForFixedQuoteAmountRfqCreation?: number;
@@ -81,6 +75,7 @@ export type InitializeConfigOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
+  /** Risk engine config model. */
   config: Config;
 };
 
@@ -156,7 +151,13 @@ export const initializeConfigBuilder = (
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const systemProgram = convergence.programs().getSystem(programs);
 
-  const config = convergence.riskEngine().pdas().config();
+  console.log(
+    collateralForVariableSizeRfqCreation.toString(),
+    collateralForFixedQuoteAmountRfqCreation.toString(),
+    collateralMintDecimals,
+    safetyPriceShiftFactor,
+    overallSafetyFactor
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -164,15 +165,15 @@ export const initializeConfigBuilder = (
       instruction: createInitializeConfigInstruction(
         {
           signer: authority.publicKey,
-          config,
+          config: convergence.riskEngine().pdas().config(),
           systemProgram: systemProgram.address,
         },
         {
           collateralForVariableSizeRfqCreation,
           collateralForFixedQuoteAmountRfqCreation,
           collateralMintDecimals,
-          safetyPriceShiftFactor: toBigNumber(safetyPriceShiftFactor),
-          overallSafetyFactor: toBigNumber(overallSafetyFactor),
+          safetyPriceShiftFactor,
+          overallSafetyFactor,
         },
         riskEngineProgram.address
       ),
