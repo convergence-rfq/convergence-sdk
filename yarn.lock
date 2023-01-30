@@ -1230,7 +1230,7 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/rfq@2.0.16":
+"@convergence-rfq/rfq@2.0.16", "@convergence-rfq/rfq@^2.0.16":
   version "2.0.16"
   resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.0.16.tgz#3c9f361e2b835473651baeac377c63defff863b8"
   integrity sha512-UDVERByagGBa6gEZFajj+/pRtVmnrVJrS7gp2ojCwlkzmEQVFaMPOGZpvalRoCbIfVCqFw7hR6zDAKbaEuIHIg==

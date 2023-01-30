@@ -53,10 +53,10 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
 
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const rfqs = await rfqGpaBuilder.get();
+      const unparsedAccounts = await rfqGpaBuilder.get();
       scope.throwIfCanceled();
 
-      const rfqAccounts = rfqs
+      const rfqs = unparsedAccounts
         .map<Rfq | null>((account) => {
           if (account === null) {
             return null;
@@ -71,9 +71,9 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
         .filter((rfq): rfq is Rfq => rfq !== null);
 
       const rfqActive: Rfq[] = [];
-      for (const r of rfqAccounts) {
-        if (r.state == StoredRfqState.Active) {
-          rfqActive.push(r);
+      for (const rfq of rfqs) {
+        if (rfq.state == StoredRfqState.Active) {
+          rfqActive.push(rfq);
         }
       }
       return rfqActive;

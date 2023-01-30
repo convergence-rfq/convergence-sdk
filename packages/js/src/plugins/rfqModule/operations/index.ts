@@ -32,3 +32,4 @@ export * from './findResponsesByRfq';
 export * from './findResponsesByRfqs';
 export * from './createAndAddLegsToRfq';
 export * from './findRfqsByActive';
+export * from './findResponsesByOwner';
