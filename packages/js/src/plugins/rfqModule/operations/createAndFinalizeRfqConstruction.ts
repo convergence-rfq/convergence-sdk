@@ -1,4 +1,3 @@
-// import { BaseAssetIndex } from '@convergence-rfq/rfq';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
@@ -8,7 +7,6 @@ import { OrderType, QuoteAsset, FixedSize } from '../types';
 import { Rfq } from '../models';
 import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   Operation,
   OperationHandler,
@@ -116,7 +114,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
     ): Promise<CreateAndFinalizeRfqConstructionOutput> => {
       const { keypair = Keypair.generate() } = operation.input;
 
-      const builder = await createAndFinalizeRfqConstructionBuilder(
+      const rfqBuilder = await createRfqBuilder(
         convergence,
         { ...operation.input, keypair },
         scope
@@ -127,8 +125,19 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         convergence,
         scope.confirmOptions
       );
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      const output = await rfqBuilder.sendAndConfirm(
+        convergence,
+        confirmOptions
+      );
       scope.throwIfCanceled();
+
+      const finalizeBuilder = await finalizeRfqConstructionBuilder(
+        convergence,
+        { ...operation.input, rfq: keypair.publicKey },
+        scope
+      );
+
+      await finalizeBuilder.sendAndConfirm(convergence, confirmOptions);
 
       const rfq = await convergence
         .rfqs()
@@ -137,93 +146,3 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       return { ...output, rfq };
     },
   };
-
-/**
- * @group Transaction Builders
- * @category Inputs
- */
-export type CreateAndFinalizeRfqConstructionBuilderParams =
-  CreateAndFinalizeRfqConstructionInput;
-
-/**
- * @group Transaction Builders
- * @category Contexts
- */
-export type CreateAndFinalizeRfqConstructionBuilderContext =
-  SendAndConfirmTransactionResponse;
-
-/**
- * createAndFinalizes an Rfq.
- *
- * ```ts
- * const transactionBuilder = await convergence
- *   .rfqs()
- *   .builders()
- *   .create();
- * ```
- *
- * @group Transaction Builders
- * @category Constructors
- */
-export const createAndFinalizeRfqConstructionBuilder = async (
-  convergence: Convergence,
-  params: CreateAndFinalizeRfqConstructionBuilderParams,
-  options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
-  const { payer = convergence.rpc().getDefaultFeePayer() } = options;
-
-  const {
-    taker = convergence.identity(),
-    keypair = Keypair.generate(),
-    orderType,
-    instruments,
-    quoteAsset,
-    fixedSize,
-    activeWindow = 5_000,
-    settlingWindow = 1_000,
-    collateralInfo,
-    collateralToken,
-    riskEngine,
-    // baseAssetIndex,
-    legSize,
-  } = params;
-
-  const rfqBuilder = await createRfqBuilder(
-    convergence,
-    {
-      keypair,
-      taker,
-      orderType,
-      instruments,
-      quoteAsset,
-      fixedSize,
-      activeWindow,
-      settlingWindow,
-      legSize: legSize ? legSize : undefined,
-    },
-    options
-  );
-
-  const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(
-    convergence,
-    {
-      taker,
-      rfq: keypair.publicKey,
-      collateralInfo,
-      collateralToken,
-      riskEngine,
-      // baseAssetIndex,
-    },
-    options
-  );
-
-  return TransactionBuilder.make()
-    .setContext({
-      keypair,
-    })
-    .setFeePayer(payer)
-    .add(
-      ...rfqBuilder.getInstructionsWithSigners(),
-      ...finalizeConstructionBuilder.getInstructionsWithSigners()
-    );
-};

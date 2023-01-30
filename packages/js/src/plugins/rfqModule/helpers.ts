@@ -54,6 +54,7 @@ export const legsToInstruments = async (
           leg
         );
       }
+
       throw new Error('Unsupported instrument program');
     })
   );

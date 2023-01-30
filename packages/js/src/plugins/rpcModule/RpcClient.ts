@@ -91,8 +91,14 @@ export class RpcClient {
 
     const message = tx.compileMessage();
 
-    //@ts-ignore
-    const signData = message.serialize(); //this method errors if tx too large
+    let signData: Buffer;
+
+    try {
+      //@ts-ignore
+      signData = message.serialize(); //this method errors if tx too large
+    } catch (err) {
+      return -1;
+    }
     // @ts-expect-error
     const wireTransaction = tx.serializeMessage(signData);
 
