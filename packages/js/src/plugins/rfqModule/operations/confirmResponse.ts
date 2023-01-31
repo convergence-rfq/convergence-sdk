@@ -21,7 +21,11 @@ const Key = 'ConfirmResponseOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .confirmResponse({ ... };
+ *   .confirmResponse({ 
+ *     rfq, 
+ *     response, 
+ *     side
+ *   });
  * ```
  *
  * @group Operations
@@ -55,7 +59,7 @@ export type ConfirmResponseInput = {
   protocol?: PublicKey;
   /** The address of the Rfq account. */
   rfq: PublicKey;
-  /** The address of the response */
+  /** The address of the Response */
   response: PublicKey;
   /** The address of the Taker's collateral info account */
   collateralInfo?: PublicKey;

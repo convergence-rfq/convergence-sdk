@@ -24,9 +24,15 @@ const Key = 'RespondToRfqOperation' as const;
  * Responds to an Rfq.
  *
  * ```ts
- * await convergence
+ * const { rfqResponse } = await convergence
  *   .rfqs()
- *   .respond({ ... };
+ *   .respond({
+ *     rfq: rfq.address,
+ *     bid: { 
+ *       __kind: 'FixedSize',
+ *       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+ *     },
+ *   });
  * ```
  *
  * @group Operations
@@ -218,9 +224,9 @@ export const respondToRfqBuilder = async (
 
   for (const value of baseAssetIndexValues) {
     const baseAsset = convergence
-    .protocol()
-    .pdas()
-    .baseAsset({ index: { value } });
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value } });
 
     const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,

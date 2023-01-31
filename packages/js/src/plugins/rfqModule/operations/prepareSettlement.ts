@@ -39,7 +39,11 @@ const Key = 'PrepareSettlementOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlement({ caller, rfq, response, legAmountToPrepare };
+ *   .prepareSettlement({
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     legAmountToPrepare: 1
+ *   });
  * ```
  *
  * @group Operations

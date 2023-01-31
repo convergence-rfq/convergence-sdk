@@ -26,7 +26,13 @@ const Key = 'CleanUpResponseLegsOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .cleanUpResponseLegs({ address };
+ *   .cleanUpResponseLegs({
+ *     dao,
+ *     rfq,
+ *     response,
+ *     firstToPrepare: maker,
+ *     legAmountToClear: 5
+ *   });
  * ```
  *
  * @group Operations

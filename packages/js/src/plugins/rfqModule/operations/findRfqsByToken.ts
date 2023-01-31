@@ -28,7 +28,7 @@ const Key = 'FindRfqsByTokenOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByToken({ tokenAddress };
+ *   .findByToken({ mintAddress };
  * ```
  *
  * @group Operations

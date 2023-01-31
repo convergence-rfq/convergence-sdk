@@ -585,7 +585,6 @@ test('[rfqModule] it can create and finalize, then respond to RFQ and confirm re
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -607,7 +606,6 @@ test('[rfqModule] it can create and finalize, then respond to RFQ and confirm re
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 });
 
@@ -695,7 +693,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -704,7 +701,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -787,7 +783,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -796,7 +791,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -937,7 +931,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -1014,7 +1007,6 @@ test('[rfqModule] it can create and finalize Rfq, respond, and cancel response',
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -1187,7 +1179,6 @@ test('[riskEngineModule] it can calculate collateral for response', async (t: Te
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -1213,6 +1204,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     1_000_000,
     3_600
   );
+  europeanOptionPutMint = euroMeta.putOptionMint;
 
   const instrument1 = new PsyoptionsEuropeanInstrument(
     cvg,
@@ -1258,7 +1250,6 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -1267,7 +1258,6 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -1431,7 +1421,6 @@ test('[rfqModule] it can createRfqAndAddLegs, finalize, respond, confirmResponse
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -1622,7 +1611,6 @@ test('[rfqModule] it can create and finalize, then respond to RFQ and confirm re
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -1724,7 +1712,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -1733,7 +1720,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -1816,7 +1802,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -1825,7 +1810,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -1911,7 +1895,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -1920,7 +1903,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -1985,7 +1967,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
   });
 });
 
-test('[rfqModule] it can create and finalize Rfq, respond, and cancel response', async (t: Test) => {
+test('[rfqModule] it can create and finalize Rfq (BaseAsset), respond, and cancel response', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -2007,7 +1989,6 @@ test('[rfqModule] it can create and finalize Rfq, respond, and cancel response',
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -2026,7 +2007,61 @@ test('[rfqModule] it can create and finalize Rfq, respond, and cancel response',
   });
 });
 
-test('[rfqModule] it can create and finalize open RFQ, then respond w/ base quantity', async (t: Test) => {
+test('[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and cancel response', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    // fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+  });
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    keypair: Keypair.generate(),
+  });
+
+  await cvg.rfqs().confirmResponse({
+    taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: Side.Bid,
+  });
+
+  await cvg.rfqs().prepareSettlement({
+    caller: maker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    legAmountToPrepare: 1,
+  });
+  await cvg.rfqs().prepareSettlement({
+    caller: taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    legAmountToPrepare: 1,
+  });
+
+  await cvg.rfqs().settle({
+    maker: maker.publicKey,
+    taker: taker.publicKey,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+  });
+});
+
+test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base quantity', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -2056,7 +2091,11 @@ test('[rfqModule] it can create and finalize open RFQ, then respond w/ base quan
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
       legsMultiplierBps: 1_000_000,
     },
-    ask: null,
+    ask: {
+      __kind: 'Standard',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+      legsMultiplierBps: 1_000_000,
+    },
     keypair: Keypair.generate(),
   });
 });
@@ -2182,7 +2221,6 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -2207,7 +2245,6 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   // TODO: Finish
@@ -2266,7 +2303,6 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -2275,7 +2311,6 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -2413,7 +2448,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -2422,7 +2456,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -2478,7 +2511,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -2487,7 +2519,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -2545,7 +2576,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -2554,7 +2584,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -2581,58 +2610,58 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
   // });
 });
 
-// test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
-//   const { rfq } = await cvg.rfqs().createAndFinalize({
-//     instruments: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Bid,
-//       }),
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Ask,
-//       }),
-//     ],
-//     taker,
-//     orderType: OrderType.TwoWay,
-//     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-//     quoteAsset: cvg
-//       .instrument(new SpotInstrument(cvg, usdcMint))
-//       .toQuoteAsset(),
-//     activeWindow: 2,
-//     settlingWindow: 1,
-//   });
-//   //@ts-ignore
-//   const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
-//     maker,
-//     rfq: rfq.address,
-//     bid: {
-//       __kind: 'FixedSize',
-//       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-//     },
-//     ask: null,
-//     keypair: Keypair.generate(),
-//   });
-//   //@ts-ignore
-//   const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
-//     maker,
-//     rfq: rfq.address,
-//     bid: null,
-//     ask: {
-//       __kind: 'FixedSize',
-//       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-//     },
-//     keypair: Keypair.generate(),
-//   });
+test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    activeWindow: 2,
+    settlingWindow: 1,
+  });
+  //@ts-ignore
+  const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+    keypair: Keypair.generate(),
+  });
+  //@ts-ignore
+  const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: null,
+    ask: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    keypair: Keypair.generate(),
+  });
 
-//   const responses = await cvg.rfqs().findResponsesByRfq({
-//     address: rfq.address,
-//   });
+  const responses = await cvg.rfqs().findResponsesByRfq({
+    address: rfq.address,
+  });
 
-//   for (const response of responses) {
-//     console.log('Rfq response: ' + response.address.toString());
-//   }
-// });
+  for (const response of responses) {
+    console.log('Rfq response: ' + response.address.toString());
+  }
+});
 
 // test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Test) => {
 //   const { rfq: rfq1 } = await cvg.rfqs().createAndFinalize({
@@ -2735,7 +2764,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
     keypair: Keypair.generate(),
   });
 
@@ -2744,7 +2772,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   sleep(3_001).then(async () => {
@@ -2778,12 +2805,12 @@ test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
   t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
 });
 
-// test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
-//   const rfqs = await cvg
-//     .rfqs()
-//     .findByToken({ mintAddress: europeanOptionPutMint });
-//   t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-// });
+test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
+  const rfqs = await cvg
+    .rfqs()
+    .findByToken({ mintAddress: europeanOptionPutMint });
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
 
 test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
   const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });

@@ -14,12 +14,20 @@ import { partiallySettleLegsBuilder } from './partiallySettleLegs';
 const Key = 'PartiallySettleLegsAndSettleOperation' as const;
 
 /**
- * Prepares for settlement.
+ * Partially settles legs and settles the remaining legs
  *
  * ```ts
+ * const quoteAsset = instrumentClient.createQuote(new SpotInstrument(...));
+ * 
  * await convergence
  *   .rfqs()
- *   .partiallySettleLegsAndSettle({ caller, rfq, response, side, legAmountToPrepare, quoteAsset };
+ *   .partiallySettleLegsAndSettle({ 
+ *     rfq: rfq.address, 
+ *     response: rfqResponse.address, 
+ *     side: Side.Bid, 
+ *     legAmountToPrepare: 3, 
+ *     quoteAsset 
+ *   });
  * ```
  *
  * @group Operations

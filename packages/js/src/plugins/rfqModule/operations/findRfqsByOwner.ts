@@ -13,7 +13,7 @@ import { Convergence } from '@/Convergence';
 const Key = 'FindRfqsByOwnerOperation' as const;
 
 /**
- * Finds multiple NFTs and SFTs by a given owner.
+ * Finds multiple RFQs by a given owner.
  *
  * ```ts
  * const rfqs = await convergence

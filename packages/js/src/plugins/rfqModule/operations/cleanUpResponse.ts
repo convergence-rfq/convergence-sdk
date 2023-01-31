@@ -26,7 +26,12 @@ const Key = 'CleanUpResponseOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .cleanUpResponse({ address };
+ *   .cleanUpResponse({
+ *     dao,
+ *     rfq,
+ *     response,
+ *     firstToPrepare: taker
+ *   });
  * ```
  *
  * @group Operations

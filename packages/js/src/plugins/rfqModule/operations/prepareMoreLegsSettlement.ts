@@ -35,7 +35,12 @@ const Key = 'PrepareMoreLegsSettlementOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .prepareMoreLegsSettlement({ address };
+ *   .prepareMoreLegsSettlement({
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     legAmountToPrepare: 2,
+ *     sidePreparedLegs: 1
+ *   });
  * ```
  *
  * @group Operations

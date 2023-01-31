@@ -12,12 +12,14 @@ import { Convergence } from '@/Convergence';
 const Key = 'FindRfqsByAddressesOperation' as const;
 
 /**
- * Finds Rfq by a given address.
+ * Finds Rfqs corresponding to a list of addresses.
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByAddress({ address };
+ *   .findByAddress({ 
+ *     addresses: [rfq1.address, rfq2.address] 
+ *   });
  * ```
  *
  * @group Operations
@@ -41,7 +43,7 @@ export type FindRfqsByAddressesOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByAddressesInput = {
-  /** The address of the Rfq. */
+  /** The addresses of the Rfqs. */
   addresses: PublicKey[];
 };
 

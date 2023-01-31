@@ -29,7 +29,12 @@ const Key = 'PartlyRevertSettlementPreparationOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .partlyRevertSettlementPreparation({ address };
+ *   .partlyRevertSettlementPreparation({
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     side: AuthoritySide.Maker,
+ *     legAmountToRevert: 3
+ *   });
  * ```
  *
  * @group Operations

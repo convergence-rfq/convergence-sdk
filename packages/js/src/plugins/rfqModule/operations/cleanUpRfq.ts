@@ -18,8 +18,10 @@ const Key = 'CleanUpRfqOperation' as const;
  *
  * ```ts
  * await convergence
- * .rfqs()
- * .cleanUpRfq({ address };
+ *   .rfqs()
+ *   .cleanUpRfq({
+ *     rfq
+ *   });
  * ```
  *
  * @group Operations

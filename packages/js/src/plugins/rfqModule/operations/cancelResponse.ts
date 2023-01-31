@@ -20,7 +20,7 @@ const Key = 'CancelResponseOperation' as const;
  * ```ts
  * await convergence
  * .rfqs()
- * .cancel({ address };
+ * .cancelResponse({ rfq, response });
  * ```
  *
  * @group Operations

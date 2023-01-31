@@ -14,12 +14,14 @@ import { Convergence } from '@/Convergence';
 const Key = 'FindResponsesByOwnerOperation' as const;
 
 /**
- * Finds Response by a given address.
+ * Finds all Responses for a given maker (owner).
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findResponseByAddress({ address };
+ *   .findResponsesByOwner({ 
+ *     address 
+ *   });
  * ```
  *
  * @group Operations
@@ -43,7 +45,7 @@ export type FindResponsesByOwnerOperation = Operation<
  * @category Inputs
  */
 export type FindResponsesByOwnerInput = {
-  /** The address of the Response. */
+  /** The address of the maker (owner) of the Response(s). */
   address: PublicKey;
 };
 

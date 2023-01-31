@@ -17,7 +17,9 @@ const Key = 'FindResponseByAddressOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findResponseByAddress({ address };
+ *   .findResponseByAddress({ 
+ *     address 
+ *   });
  * ```
  *
  * @group Operations

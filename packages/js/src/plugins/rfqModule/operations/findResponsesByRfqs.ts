@@ -13,12 +13,14 @@ import { Convergence } from '@/Convergence';
 const Key = 'FindResponsesByRfqsOperation' as const;
 
 /**
- * Finds Responses by a list of given RFQ addresses.
+ * Finds all Responses for each RFQ in a list of given RFQ addresses.
  *
  * ```ts
- * const rfq = await convergence
+ * const responses = await convergence
  *   .rfqs()
- *   .findResponsesByRfqs({ addresses };
+ *   .findResponsesByRfqs({ 
+ *     addresses: [rfq1.address, rfq2.address] 
+ *   });
  * ```
  *
  * @group Operations

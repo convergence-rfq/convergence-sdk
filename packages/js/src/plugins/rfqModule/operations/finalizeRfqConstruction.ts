@@ -21,7 +21,9 @@ const Key = 'FinalizeRfqConstructionOperation' as const;
  * ```ts
  * const { rfq } = await convergence
  *   .rfqs()
- *   .create();
+ *   .finalize({ 
+ *     rfq 
+ *   });
  * ```
  *
  * @group Operations

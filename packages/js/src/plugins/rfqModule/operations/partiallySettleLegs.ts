@@ -24,12 +24,18 @@ import { OptionType } from '@mithraic-labs/tokenized-euros';
 const Key = 'PartiallySettleLegsOperation' as const;
 
 /**
- * Partially settles legs
+ * Partially settles legs of an RFQ
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .partiallySettleLegs({ address };
+ *   .partiallySettleLegs({ 
+ *     rfq: rfq.address, 
+ *     response: rfqResponse.address, 
+ *     maker, 
+ *     taker, 
+ *     legAmountToSettle: 4 
+ *   });
  * ```
  *
  * @group Operations

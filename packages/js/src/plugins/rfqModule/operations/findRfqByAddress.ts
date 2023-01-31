@@ -17,7 +17,7 @@ const Key = 'FindRfqByAddressOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByAddress({ address };
+ *   .findByAddress({ address });
  * ```
  *
  * @group Operations

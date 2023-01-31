@@ -20,12 +20,22 @@ import { Convergence } from '@/Convergence';
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
 /**
- * Creates and createAndFinalizes construction of an Rfq.
+ * Creates and finalizes construction of an Rfq.
  *
  * ```ts
+ * const spotInstrument = new SpotInstrument(...);
+ * const quoteAsset = instrumentClient.createQuote(new SpotInstrument(...));
+ * 
  * const { rfq } = await convergence
  *   .rfqs()
- *   .createAndFinalize({ ... });
+ *   .createAndFinalize({ 
+ *     quoteAsset, 
+ *     instruments: [spotInstrument], 
+ *     orderType: OrderType.Sell, 
+ *     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+ *     activeWindow: 5_000, 
+ *     settlingWindow: 1_000 
+ *   });
  * ```
  *
  * @group Operations

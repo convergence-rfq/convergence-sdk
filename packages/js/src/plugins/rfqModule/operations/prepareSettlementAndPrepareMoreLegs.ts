@@ -21,7 +21,11 @@ const Key = 'PrepareSettlementAndPrepareMoreLegsOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlementAndPrepareMoreLegs({ caller, protocol, rfq, response, legAmountToPrepare });
+ *   .prepareSettlementAndPrepareMoreLegs({
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     legAmountToPrepare: 3
+ *   });
  * ```
  *
  * @group Operations
@@ -108,7 +112,10 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
 
       let slicedLegAmount = legAmountToPrepare;
 
-      while (prepareSettlementTxSize == -1 || prepareSettlementTxSize + 193 > MAX_TX_SIZE) {
+      while (
+        prepareSettlementTxSize == -1 ||
+        prepareSettlementTxSize + 193 > MAX_TX_SIZE
+      ) {
         const halvedLegAmount = Math.trunc(slicedLegAmount / 2);
 
         prepareBuilder = await prepareSettlementBuilder(

@@ -20,12 +20,25 @@ import { assertRfq, Rfq } from '../models';
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
 /**
- * Prepares for settlement.
+ * Creates an Rfq with the maximum number of instruments, then calls 
+ *   `addLegsToRfq` with the remaining legs
  *
  * ```ts
+ * const spotInstrument1 = new SpotInstrument(...);
+ * const spotInstrument2 = new SpotInstrument(...);
+ * const psyoptionsEuropeanInstrument = new PsyOptionsEuropeanInstrument(...);
+ * const quoteAsset = instrumentClient.createQuote(new SpotInstrument(...));
+ * 
  * await convergence
  *   .rfqs()
- *   .createRfqAndAddLegs({ taker, keypair, quoteAsset, instruments, orderType, fixedSize, activeWindow, settlingWindow, legSize };
+ *   .createRfqAndAddLegs({ 
+ *     quoteAsset, 
+ *     instruments: [spotInstrument1, spotInstrument2, psyoptionsEuropeanInstrument], 
+ *     orderType: OrderType.TwoWay, 
+ *     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 }, 
+ *     activeWindow: 5_000, 
+ *     settlingWindow: 1_000,  
+ *   };
  * ```
  *
  * @group Operations
