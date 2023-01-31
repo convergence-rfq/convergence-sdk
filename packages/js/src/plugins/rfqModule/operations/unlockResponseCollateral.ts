@@ -136,8 +136,6 @@ export const unlockResponseCollateralBuilder = async (
     user: maker,
     programs,
   });
-  console.log('takerCollateralInfo', takerCollateralInfo.toString());
-  console.log('makerCollateralInfo', makerCollateralInfo.toString());
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

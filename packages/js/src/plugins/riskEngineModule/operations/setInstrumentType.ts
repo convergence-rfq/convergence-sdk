@@ -1,9 +1,8 @@
 import { createSetInstrumentTypeInstruction } from '@convergence-rfq/risk-engine';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-//import { Config, assertConfig, toConfig } from '../models';
-//import { toConfigAccount } from '../accounts';
-//import { instrumentTypeToObject } from '../helpers';
+import { Config, assertConfig, toConfig } from '../models';
+import { toConfigAccount } from '../accounts';
 import { InstrumentType } from '../types';
 import { Convergence } from '@/Convergence';
 import {
@@ -72,7 +71,7 @@ export type SetInstrumentTypeOutput = {
   response: SendAndConfirmTransactionResponse;
 
   /** Risk engine config. */
-  //config: Config;
+  config: Config;
 };
 
 /**
@@ -86,7 +85,7 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetInstrumentTypeOutput> => {
-      //const { commitment } = scope;
+      const { commitment } = scope;
 
       scope.throwIfCanceled();
 
@@ -101,15 +100,14 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
         scope.confirmOptions
       );
 
-      //const account = await convergence
-      //  .rpc()
-      //  .getAccount(convergence.riskEngine().pdas().config(), commitment);
-      //const config = toConfig(toConfigAccount(account));
-      //scope.throwIfCanceled();
-      //assertConfig(config);
+      const account = await convergence
+        .rpc()
+        .getAccount(convergence.riskEngine().pdas().config(), commitment);
+      const config = toConfig(toConfigAccount(account));
+      scope.throwIfCanceled();
+      assertConfig(config);
 
-      //return { response, config };
-      return { response };
+      return { response, config };
     },
   };
 

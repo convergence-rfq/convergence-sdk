@@ -151,15 +151,6 @@ export const initializeConfigBuilder = (
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const systemProgram = convergence.programs().getSystem(programs);
 
-  console.log(
-    'input',
-    collateralForVariableSizeRfqCreation.toString(),
-    collateralForFixedQuoteAmountRfqCreation.toString(),
-    collateralMintDecimals,
-    safetyPriceShiftFactor.toString(),
-    overallSafetyFactor.toString()
-  );
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
