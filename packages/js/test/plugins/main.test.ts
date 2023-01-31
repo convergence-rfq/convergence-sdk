@@ -2026,6 +2026,41 @@ test('[rfqModule] it can create and finalize Rfq, respond, and cancel response',
   });
 });
 
+test('[rfqModule] it can create and finalize open RFQ, then respond w/ base quantity', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    // fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    // fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    fixedSize: { __kind: 'None', padding: 0 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+  });
+  //@ts-ignore
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    // bid: {
+    //   __kind: 'FixedSize',
+    //   priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    // },
+    bid: {
+      __kind: 'Standard',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+      legsMultiplierBps: 1_000_000,
+    },
+    ask: null,
+    keypair: Keypair.generate(),
+  });
+});
+
 // RFQ UTILS
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
