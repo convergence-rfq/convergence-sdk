@@ -1,5 +1,17 @@
 # @convergence-rfq/sdk
 
+## 2.0.20
+
+### Patch Changes
+
+- update version to 2.0.20
+
+## 2.0.19
+
+### Patch Changes
+
+- register ops, export Response model
+
 ## 2.0.18
 
 ### Patch Changes

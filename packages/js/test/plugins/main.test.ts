@@ -2071,8 +2071,6 @@ test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base qu
     ],
     taker,
     orderType: OrderType.TwoWay,
-    // fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    // fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     fixedSize: { __kind: 'None', padding: 0 },
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
@@ -2082,10 +2080,6 @@ test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base qu
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
     rfq: rfq.address,
-    // bid: {
-    //   __kind: 'FixedSize',
-    //   priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    // },
     bid: {
       __kind: 'Standard',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
