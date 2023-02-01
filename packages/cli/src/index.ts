@@ -212,25 +212,25 @@ program.name('convergence').version('1.0.0').description('Convergence RFQ CLI');
 const airdropCmd = program
   .command('airdrop')
   .description('Airdrops SOL to the current user')
-  .option('--amount <value>', 'Amount to airdrop in SOL')
+  .option('--amount <value>', 'Amount to airdrop in SOL', '1')
   .action(airdrop);
 const createMintCmd = program
   .command('create-mint')
   .description('Creates mint')
-  .option('--decimals <value>', 'Decimals')
+  .requiredOption('--decimals <value>', 'Decimals')
   .action(createMint);
 const createWalletCmd = program
   .command('create-wallet')
   .description('Creates wallet')
-  .option('--owner <value>', 'Owner address')
-  .option('--mint <value>', 'Mint address')
+  .requiredOption('--owner <value>', 'Owner address')
+  .requiredOption('--mint <value>', 'Mint address')
   .action(createWallet);
 const mintToCmd = program
   .command('mint-to')
   .description('Mints tokens to wallet')
-  .option('--mint <value>', 'Mint address')
-  .option('--wallet <value>', 'Wallet address')
-  .option('--amount <value>', 'Mint amount')
+  .requiredOption('--mint <value>', 'Mint address')
+  .requiredOption('--wallet <value>', 'Wallet address')
+  .requiredOption('--amount <value>', 'Mint amount')
   .action(mintTo);
 const initializeProtocolCmd = program
   .command('initialize-protocol')
