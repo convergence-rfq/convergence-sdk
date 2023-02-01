@@ -70,9 +70,6 @@ const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
 let optionMarket: OptionMarketWithKey | null;
 let optionMarketPubkey: PublicKey;
 
-//@ts-ignore
-let europeanOptionPutMint: PublicKey;
-
 test('[setup] it can create Convergence instance', async (t: Test) => {
   cvg = await convergenceCli(SKIP_PREFLIGHT);
 
@@ -1163,12 +1160,11 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can find RFQs by instrument', async () => {
-  //@ts-ignore
+test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
   const instruments = await cvg.rfqs().findByInstrument({
     instrumentProgram: cvg.programs().getSpotInstrument(),
   });
-  // console.error(instruments);
+  t.assert(instruments.length > 0, 'instruments present');
 });
 
 test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
@@ -2296,7 +2292,7 @@ test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
 });
 
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, revert settlemt prep', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
+  const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
         amount: 5,
@@ -2312,6 +2308,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     activeWindow: 2,
     settlingWindow: 1,
   });
+  t.assert(response.signature.length > 0, 'signature present');
 
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
@@ -2701,10 +2698,5 @@ test('[rfq module] it can find all responses by maker  address', async (t: Test)
   const responses = await cvg
     .rfqs()
     .findResponsesByOwner({ address: maker.publicKey });
-
-  for (const response of responses) {
-    console.log('response', response.address.toBase58());
-  }
-
   t.assert(responses.length > 0, 'responses should be greater than 0');
 });
