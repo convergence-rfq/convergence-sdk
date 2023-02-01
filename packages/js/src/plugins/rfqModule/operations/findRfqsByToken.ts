@@ -109,8 +109,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       const rfqGpaBuilder = convergence
         .programs()
         .getGpaBuilder(rfqProgram.address);
-      const unparsedRfqs = await rfqGpaBuilder.get();
-      const rfqs = unparsedRfqs
+      const unparsedAccounts = await rfqGpaBuilder.get();
+      const rfqs = unparsedAccounts
         .map<Rfq | null>((account) => {
           if (account === null) {
             return null;

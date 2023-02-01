@@ -16,7 +16,6 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { partiallySettleLegsBuilder } from './partiallySettleLegs';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'SettleOperation' as const;
@@ -56,8 +55,6 @@ export type SettleInput = {
   /** The address of the Response account. */
   response: PublicKey;
 
-  quoteMint: Mint;
-
   startIndex?: number;
 };
 
@@ -80,65 +77,19 @@ export const settleOperationHandler: OperationHandler<SettleOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ): Promise<SettleOutput> => {
-    const MAX_TX_SIZE = 1232;
-    //@ts-ignore
-    const { startIndex, response, rfq } = operation.input;
-
     let builder = await settleBuilder(
       convergence,
       {
         ...operation.input,
-        // startIndex,
       },
       scope
     );
     scope.throwIfCanceled();
 
-    let txSize = await convergence.rpc().getTransactionSize(builder, []);
-
-    const rfqModel = await convergence
-      .rfqs()
-      .findRfqByAddress({ address: rfq });
-
-    let slicedIdx = rfqModel.legs.length;
-
-    while (txSize + 193 > MAX_TX_SIZE) {
-      const idx = Math.trunc(slicedIdx / 2);
-
-      builder = await settleBuilder(
-        convergence,
-        {
-          ...operation.input,
-          startIndex: idx,
-        },
-        scope
-      );
-
-      txSize = await convergence.rpc().getTransactionSize(builder, []);
-
-      slicedIdx = idx;
-    }
-    let partiallySettleBuilder: TransactionBuilder;
-
-    if (slicedIdx < rfqModel.legs.length) {
-      partiallySettleBuilder = await partiallySettleLegsBuilder(
-        convergence,
-        {
-          ...operation.input,
-          legAmountToSettle: slicedIdx,
-        },
-        scope
-      );
-    }
-
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
       convergence,
       scope.confirmOptions
     );
-    //@ts-ignore
-    if (partiallySettleBuilder) {
-      await partiallySettleBuilder.sendAndConfirm(convergence, confirmOptions);
-    }
 
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
@@ -172,19 +123,19 @@ export const settleBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { rfq, response, quoteMint, maker, taker } = params;
-
-  let { startIndex } = params;
-
-  const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
-
-  const anchorRemainingAccounts: AccountMeta[] = [];
+  const { rfq, response, maker, taker } = params;
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
+
+  let { startIndex = parseInt(responseModel.settledLegs.toString()) } = params;
+
+  const rfqProgram = convergence.programs().getRfq(programs);
+  const protocol = await convergence.protocol().get();
+
+  const anchorRemainingAccounts: AccountMeta[] = [];
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
   const psyoptionsEuropeanProgram = convergence
@@ -194,10 +145,10 @@ export const settleBuilder = async (
     .programs()
     .getPsyoptionsAmericanInstrument();
 
-  if (!startIndex) {
-    startIndex = parseInt(responseModel.settledLegs.toString());
-  }
-
+  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
+    Buffer.from(rfqModel.quoteAsset.instrumentData)
+  ).mint;
+  
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];
     const confirmationSide = responseModel.confirmed?.side;
@@ -321,7 +272,7 @@ export const settleBuilder = async (
         .tokens()
         .pdas()
         .associatedTokenAccount({
-          mint: quoteMint.address,
+          mint: quoteMint,
           owner:
             rfqModel.fixedSize.__kind == 'QuoteAsset' &&
             confirmationSide == Side.Ask

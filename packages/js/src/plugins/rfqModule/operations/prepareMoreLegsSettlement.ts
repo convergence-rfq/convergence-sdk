@@ -76,7 +76,7 @@ export type PrepareMoreLegsSettlementInput = {
    * Args
    */
 
-  side: AuthoritySide;
+  // side: AuthoritySide;
 
   legAmountToPrepare: number;
 
@@ -155,7 +155,7 @@ export const prepareMoreLegsSettlementBuilder = async (
     caller = convergence.identity(),
     rfq,
     response,
-    side,
+    // side,
     legAmountToPrepare,
   } = params;
 
@@ -169,6 +169,11 @@ export const prepareMoreLegsSettlementBuilder = async (
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
+
+  const side =
+    caller.publicKey.toBase58() == responseModel.maker.toBase58()
+      ? AuthoritySide.Maker
+      : AuthoritySide.Taker;
 
   if (!sidePreparedLegs) {
     sidePreparedLegs =
@@ -209,8 +214,8 @@ export const prepareMoreLegsSettlementBuilder = async (
     const leg = rfqModel.legs[i];
 
     if (
-      leg.instrumentProgram.toString() ===
-      psyoptionsEuropeanProgram.address.toString()
+      leg.instrumentProgram.toBase58() ===
+      psyoptionsEuropeanProgram.address.toBase58()
     ) {
       const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
         convergence,
@@ -226,21 +231,21 @@ export const prepareMoreLegsSettlementBuilder = async (
 
       baseAssetMint = euroMetaOptionMint;
     } else if (
-      leg.instrumentProgram.toString() ===
-      psyoptionsAmericanProgram.address.toString()
+      leg.instrumentProgram.toBase58() ===
+      psyoptionsAmericanProgram.address.toBase58()
     ) {
       const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
         convergence,
         leg
       );
-      const mint = await convergence.tokens().findMintByAddress({
+      const americanOptionMint = await convergence.tokens().findMintByAddress({
         address: instrument.mint.address,
       });
 
-      baseAssetMint = mint;
+      baseAssetMint = americanOptionMint;
     } else if (
-      leg.instrumentProgram.toString() ===
-      spotInstrumentProgram.address.toString()
+      leg.instrumentProgram.toBase58() ===
+      spotInstrumentProgram.address.toBase58()
     ) {
       const instrument = await SpotInstrument.createFromLeg(convergence, leg);
       const mint = await convergence.tokens().findMintByAddress({
@@ -270,7 +275,6 @@ export const prepareMoreLegsSettlementBuilder = async (
         isSigner: false,
         isWritable: false,
       },
-      // getting seeds constraint violation with `escrow` here
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,

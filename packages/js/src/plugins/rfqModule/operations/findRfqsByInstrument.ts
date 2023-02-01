@@ -67,9 +67,9 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const unparsedRfqs = await rfqGpaBuilder.get();
+      const unparsedAccounts = await rfqGpaBuilder.get();
 
-      const rfqs = unparsedRfqs
+      const rfqs = unparsedAccounts
         .map<Rfq | null>((account) => {
           if (account === null) {
             return null;

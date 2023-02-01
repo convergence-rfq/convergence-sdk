@@ -31,6 +31,12 @@ import {
   confirmResponseOperationHandler,
   findResponseByAddressOperation,
   findResponseByAddressOperationHandler,
+  findResponsesByRfqOperation,
+  findResponsesByRfqOperationHandler,
+  findResponsesByRfqsOperation,
+  findResponsesByRfqsOperationHandler,
+  findResponsesByOwnerOperation,
+  findResponsesByOwnerOperationHandler,
   findRfqByAddressOperation,
   findRfqByAddressOperationHandler,
   findRfqsByAddressesOperation,
@@ -43,8 +49,12 @@ import {
   prepareMoreLegsSettlementOperationHandler,
   partlyRevertSettlementPreparationOperation,
   partlyRevertSettlementPreparationOperationHandler,
+  partiallySettleLegsAndSettleOperation,
+  partiallySettleLegsAndSettleOperationHandler,
   prepareSettlementOperation,
   prepareSettlementOperationHandler,
+  prepareSettlementAndPrepareMoreLegsOperation,
+  prepareSettlementAndPrepareMoreLegsOperationHandler,
   settleOperation,
   settleOperationHandler,
   settleOnePartyDefaultOperation,
@@ -57,6 +67,8 @@ import {
   unlockRfqCollateralOperationHandler,
   createAndFinalizeRfqConstructionOperation,
   createAndFinalizeRfqConstructionOperationHandler,
+  createAndAddLegsToRfqOperation,
+  createAndAddLegsToRfqOperationHandler,
 } from './operations';
 import { rfqProgram } from './program';
 import { ConvergencePlugin, Program } from '@/types';
@@ -102,6 +114,10 @@ export const rfqModule = (): ConvergencePlugin => ({
       findResponseByAddressOperation,
       findResponseByAddressOperationHandler
     );
+    op.register(
+      findResponsesByRfqOperation,
+      findResponsesByRfqOperationHandler
+    );
     op.register(findRfqByAddressOperation, findRfqByAddressOperationHandler);
     op.register(
       findRfqsByAddressesOperation,
@@ -145,6 +161,18 @@ export const rfqModule = (): ConvergencePlugin => ({
     op.register(
       unlockRfqCollateralOperation,
       unlockRfqCollateralOperationHandler
+    );
+    op.register(
+      createAndAddLegsToRfqOperation,
+      createAndAddLegsToRfqOperationHandler
+    );
+    op.register(
+      prepareSettlementAndPrepareMoreLegsOperation,
+      prepareSettlementAndPrepareMoreLegsOperationHandler
+    );
+    op.register(
+      partiallySettleLegsAndSettleOperation,
+      partiallySettleLegsAndSettleOperationHandler
     );
 
     convergence.rfqs = function () {

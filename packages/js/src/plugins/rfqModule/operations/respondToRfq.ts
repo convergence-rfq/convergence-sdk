@@ -217,10 +217,10 @@ export const respondToRfqBuilder = async (
   const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
 
   for (const value of baseAssetIndexValues) {
-    const baseAsset = convergence.rfqs().pdas().baseAsset({
-      baseAssetIndexValue: value,
-      programs,
-    });
+    const baseAsset = convergence
+    .protocol()
+    .pdas()
+    .baseAsset({ index: { value } });
 
     const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,

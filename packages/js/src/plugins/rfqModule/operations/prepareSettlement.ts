@@ -29,7 +29,6 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PrepareSettlementOperation' as const;
@@ -40,7 +39,7 @@ const Key = 'PrepareSettlementOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlement({ caller, rfq, response, side, legAmountToPrepare, quoteMint };
+ *   .prepareSettlement({ caller, rfq, response, legAmountToPrepare };
  * ```
  *
  * @group Operations
@@ -84,11 +83,7 @@ export type PrepareSettlementInput = {
    * Args
    */
 
-  side: AuthoritySide;
-
   legAmountToPrepare: number;
-
-  quoteMint: Mint;
 };
 
 /**
@@ -111,10 +106,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
-      const { caller = convergence.identity(), legAmountToPrepare } =
-        operation.input;
-      const MAX_TX_SIZE = 1232;
-
       let builder = await prepareSettlementBuilder(
         convergence,
         {
@@ -122,45 +113,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         },
         scope
       );
-      let txSize = await convergence
-        .rpc()
-        .getTransactionSize(builder, [caller]);
-
-      let slicedLegAmount = legAmountToPrepare;
-
-      let prepareMoreLegsBuilder: TransactionBuilder;
-
-      while (txSize + 193 > MAX_TX_SIZE) {
-        const legAmt = Math.trunc(slicedLegAmount / 2);
-
-        builder = await prepareSettlementBuilder(
-          convergence,
-          {
-            ...operation.input,
-            legAmountToPrepare: legAmt,
-          },
-          scope
-        );
-
-        txSize = await convergence.rpc().getTransactionSize(builder, [caller]);
-
-        slicedLegAmount = legAmt;
-      }
-
-      if (slicedLegAmount < legAmountToPrepare) {
-        let prepareMoreLegsSlicedLegAmount =
-          legAmountToPrepare - slicedLegAmount;
-
-        prepareMoreLegsBuilder = await prepareMoreLegsSettlementBuilder(
-          convergence,
-          {
-            ...operation.input,
-            legAmountToPrepare: prepareMoreLegsSlicedLegAmount,
-            sidePreparedLegs: slicedLegAmount,
-          },
-          scope
-        );
-      }
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
@@ -169,15 +121,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
 
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
-
-      //@ts-ignore
-      if (prepareMoreLegsBuilder) {
-        await prepareMoreLegsBuilder.sendAndConfirm(
-          convergence,
-          confirmOptions
-        );
-        scope.throwIfCanceled();
-      }
 
       return { ...output };
     },
@@ -212,15 +155,21 @@ export const prepareSettlementBuilder = async (
     caller = convergence.identity(),
     rfq,
     response,
-    side,
     legAmountToPrepare,
-    quoteMint,
   } = params;
 
   const protocol = await convergence.protocol().get();
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
+
+  const side =
+    caller.publicKey.toBase58() == responseModel.maker.toBase58()
+      ? AuthoritySide.Maker
+      : AuthoritySide.Taker;
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
   const psyoptionsEuropeanProgram = convergence
@@ -232,10 +181,14 @@ export const prepareSettlementBuilder = async (
 
   let baseAssetMints: Mint[] = [];
 
+  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
+    Buffer.from(rfqModel.quoteAsset.instrumentData)
+  ).mint;
+
   for (const leg of rfqModel.legs) {
     if (
-      leg.instrumentProgram.toString() ===
-      psyoptionsEuropeanProgram.address.toString()
+      leg.instrumentProgram.toBase58() ===
+      psyoptionsEuropeanProgram.address.toBase58()
     ) {
       const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
         convergence,
@@ -250,8 +203,8 @@ export const prepareSettlementBuilder = async (
 
       baseAssetMints.push(euroMetaOptionMint);
     } else if (
-      leg.instrumentProgram.toString() ===
-      psyoptionsAmericanProgram.address.toString()
+      leg.instrumentProgram.toBase58() ===
+      psyoptionsAmericanProgram.address.toBase58()
     ) {
       const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
         convergence,
@@ -263,8 +216,8 @@ export const prepareSettlementBuilder = async (
 
       baseAssetMints.push(americanOptionMint);
     } else if (
-      leg.instrumentProgram.toString() ===
-      spotInstrumentProgram.address.toString()
+      leg.instrumentProgram.toBase58() ===
+      spotInstrumentProgram.address.toBase58()
     ) {
       const instrument = await SpotInstrument.createFromLeg(convergence, leg);
       const mint = await convergence.tokens().findMintByAddress({
@@ -298,14 +251,14 @@ export const prepareSettlementBuilder = async (
     },
     {
       pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        mint: quoteMint.address,
+        mint: quoteMint,
         owner: caller.publicKey,
         programs,
       }),
       isSigner: false,
       isWritable: true,
     },
-    { pubkey: quoteMint.address, isSigner: false, isWritable: false },
+    { pubkey: quoteMint, isSigner: false, isWritable: false },
     {
       pubkey: quoteEscrowPda,
       isSigner: false,
@@ -340,13 +293,8 @@ export const prepareSettlementBuilder = async (
         isSigner: true,
         isWritable: true,
       },
-      // `caller_tokens` , optionDestination
+      // `caller_tokens`
       {
-        // pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        //   mint: baseAssetMints[legIndex].address,
-        //   owner: caller.publicKey,
-        //   programs,
-        // }),
         pubkey: await getOrCreateAssociatedTokenAccount(
           convergence.connection,
           caller as Keypair,

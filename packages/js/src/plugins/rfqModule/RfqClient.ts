@@ -22,6 +22,8 @@ import {
   createRfqOperation,
   CreateRfqInput,
   CreateAndFinalizeRfqConstructionInput,
+  createAndAddLegsToRfqOperation,
+  CreateAndAddLegsToRfqInput,
   finalizeRfqConstructionOperation,
   FinalizeRfqConstructionInput,
   findRfqsByAddressesOperation,
@@ -30,6 +32,12 @@ import {
   findRfqByAddressOperation,
   FindResponseByAddressInput,
   findResponseByAddressOperation,
+  findResponsesByRfqOperation,
+  FindResponsesByRfqInput,
+  findResponsesByRfqsOperation,
+  FindResponsesByRfqsInput,
+  findResponsesByOwnerOperation,
+  FindResponsesByOwnerInput,
   findRfqsByInstrumentOperation,
   FindRfqsByInstrumentInput,
   findRfqsByOwnerOperation,
@@ -42,12 +50,16 @@ import {
   PartiallySettleLegsInput,
   partlyRevertSettlementPreparationOperation,
   PartlyRevertSettlementPreparationInput,
+  partiallySettleLegsAndSettleOperation,
+  PartiallySettleLegsAndSettleInput,
   revertSettlementPreparationOperation,
   RevertSettlementPreparationInput,
   prepareMoreLegsSettlementOperation,
   PrepareMoreLegsSettlementInput,
   prepareSettlementOperation,
   PrepareSettlementInput,
+  prepareSettlementAndPrepareMoreLegsOperation,
+  PrepareSettlementAndPrepareMoreLegsInput,
   respondToRfqOperation,
   RespondToRfqInput,
   settleOperation,
@@ -60,6 +72,7 @@ import {
   UnlockResponseCollateralInput,
   unlockRfqCollateralOperation,
   UnlockRfqCollateralInput,
+  createAndFinalizeRfqConstructionOperation,
 } from './operations';
 import { Response } from './models/Response';
 import { PartialKeys } from '@/utils';
@@ -187,23 +200,33 @@ export class RfqClient {
       .execute(createRfqOperation(input), options);
   }
 
+  /** {@inheritDoc createRfqAndAddLegsToRfqOperation} */
+  createRfqAndAddLegs(
+    input: CreateAndAddLegsToRfqInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(createAndAddLegsToRfqOperation(input), options);
+  }
+
   /** {@inheritDoc createAndFinalizeRfqConstructionOperation} */
   async createAndFinalize(
     input: CreateAndFinalizeRfqConstructionInput,
     options?: OperationOptions
   ) {
-    const { taker } = input;
+    // const { taker } = input;
 
-    const { rfq } = await this.convergence.rfqs().create(
-      {
-        ...input,
-      },
-      options
-    );
+    // const { rfq } = await this.convergence.rfqs().createAndFinalize(
+    //   {
+    //     ...input,
+    //   },
+    //   options
+    // );
 
     return this.convergence
       .operations()
-      .execute(finalizeRfqConstructionOperation({ taker, rfq: rfq.address }));
+      .execute(createAndFinalizeRfqConstructionOperation(input), options);
   }
 
   /** {@inheritDoc finalizeRfqConstructionOperation} */
@@ -224,6 +247,35 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(findResponseByAddressOperation(input), options);
+  }
+  /** {@inheritDoc findResponsesByOwnerOperation} */
+  findResponsesByOwner(
+    input: FindResponsesByOwnerInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(findResponsesByOwnerOperation(input), options);
+  }
+
+  /** {@inheritDoc findResponsesByRfqOperation} */
+  findResponsesByRfq(
+    input: FindResponsesByRfqInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(findResponsesByRfqOperation(input), options);
+  }
+
+  /** {@inheritDoc findResponsesByRfqsOperation} */
+  findResponsesByRfqs(
+    input: FindResponsesByRfqsInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(findResponsesByRfqsOperation(input), options);
   }
 
   /** {@inheritDoc findRfqByAddressOperation} */
@@ -293,6 +345,16 @@ export class RfqClient {
       .execute(partlyRevertSettlementPreparationOperation(input), options);
   }
 
+  /** {@inheritDoc partiallySettleLegsAndSettleOperation} */
+  partiallySettleLegsAndSettle(
+    input: PartiallySettleLegsAndSettleInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(partiallySettleLegsAndSettleOperation(input), options);
+  }
+
   /** {@inheritDoc revertSettlementPreparationOperation} */
   revertSettlementPreparation(
     input: RevertSettlementPreparationInput,
@@ -318,6 +380,16 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(prepareSettlementOperation(input), options);
+  }
+
+  /** {@inheritDoc prepareSettlementAndPrepareMoreLegsOperation} */
+  prepareSettlementAndPrepareMoreLegs(
+    input: PrepareSettlementAndPrepareMoreLegsInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(prepareSettlementAndPrepareMoreLegsOperation(input), options);
   }
 
   /**
