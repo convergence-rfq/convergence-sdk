@@ -9,8 +9,8 @@ SPOT_INSTRUMENT_PROGRAM_ID=FTzYU9cFnziCQvJ6ZUve7asaYqRexk7pBcn8zQ9MqoMQ
 PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID=BeJcAotUcFEWXVnh6qaBBLKaZaoaM8HSFY1L3sb1Aps3
 PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID=Cdaz7EGr2AVDkCpjMVEXDzap6oRrrrZUEaKAVLmJAX7R
 
-#CVG=convergence
-CVG="node /Users/pindaroso/code/convergence-sdk/packages/cli/dist/cjs/index.cjs"
+CVG=convergence
+#CVG="node /Users/pindaroso/code/convergence-sdk/packages/cli/dist/cjs/index.cjs"
 OPT="--rpc-endpoint=$RPC_ENDPOINT --keypair-file=$KEYPAIR_FILE"
 
 $CVG airdrop
@@ -26,3 +26,9 @@ $CVG add-instrument $OPT --instrument-program=$PSYOPTIONS_AMERICAN_INSTRUMENT_PR
 $CVG set-risk-engine-instrument-type $OPT --type=spot --program=$SPOT_INSTRUMENT_PROGRAM_ID
 $CVG set-risk-engine-instrument-type $OPT --type=option --program=$PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID
 $CVG set-risk-engine-instrument-type $OPT --type=option --program=$PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID
+
+$CVG set-risk-engine-risk-categories-info $OPT --category=very-low --new-value=0.05,0.5,0.02,0.2,0.04,0.3,0.08,0.4,0.12,0.5,0.2,0.6,0.3,0.7
+$CVG set-risk-engine-risk-categories-info $OPT --category=low --new-value=0.05,0.8,0.04,0.4,0.08,0.6,0.16,0.8,0.24,1,0.4,1.2,0.6,1.4
+$CVG set-risk-engine-risk-categories-info $OPT --category=medium --new-value=0.05,1.2,0.06,0.6,0.12,0.9,0.24,1.2,0.36,1.5,0.6,1.8,0.9,2.1
+$CVG set-risk-engine-risk-categories-info $OPT --category=high --new-value=0.05,2.4,0.08,0.8,0.16,1.2,0.32,1.6,0.48,2,0.8,2.4,1.2,2.8,
+$CVG set-risk-engine-risk-categories-info $OPT --category=very-high --new-value=0.05,5,0.1,1,0.2,1.5,0.4,2,0.6,2.5,1,3,1.5,3.5
