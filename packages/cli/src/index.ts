@@ -13,6 +13,8 @@ import {
   InstrumentType,
   keypairIdentity,
   token,
+  toRiskCategoriesInfo,
+  toScenario,
 } from '@convergence-rfq/sdk';
 
 type Options = any;
@@ -159,6 +161,44 @@ const setRiskEngineInstrumentType = async (options: Options) => {
   console.log('Success!');
 };
 
+const setRiskEngineCategoriesInfo = async (options: Options) => {
+  console.log('Setting risk engine categories info...');
+  const cvg = await createCvg(options);
+
+  let riskCategoryIndex;
+  if (options.category == 'very-low') {
+    riskCategoryIndex = RiskCategory.VeryLow;
+  } else if (options.category == 'low') {
+    riskCategoryIndex = RiskCategory.Low;
+  } else if (options.categories == 'medium') {
+    riskCategoryIndex = RiskCategory.Medium;
+  } else if (options.categories == 'high') {
+    riskCategoryIndex = RiskCategory.High;
+  } else if (options.categories == 'very-high') {
+    riskCategoryIndex = RiskCategory.VeryHigh;
+  } else {
+    throw new Error('Invalid risk category');
+  }
+
+  const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
+    changes: [
+      {
+        newValue: toRiskCategoryInfo(0.05, 0.5, [
+          toScenario(0.02, 0.2),
+          toScenario(0.04, 0.3),
+          toScenario(0.08, 0.4),
+          toScenario(0.12, 0.5),
+          toScenario(0.2, 0.6),
+          toScenario(0.3, 0.7),
+        ]),
+        riskCategoryIndex,
+      },
+    ],
+  });
+  console.log('Tx:', response.signature);
+  console.log('Success!');
+};
+
 const addBaseAsset = async (options: Options) => {
   console.log('Adding base asset...');
 
@@ -174,8 +214,10 @@ const addBaseAsset = async (options: Options) => {
     riskCategory = RiskCategory.Medium;
   } else if (options.riskCategory === 'high') {
     riskCategory = RiskCategory.High;
-  } else {
+  } else if (options.riskCategory === 'very-high') {
     riskCategory = RiskCategory.VeryHigh;
+  } else {
+    throw new Error('Invalid risk category');
   }
 
   const { response } = await cvg.protocol().addBaseAsset({
@@ -212,25 +254,25 @@ program.name('convergence').version('1.0.0').description('Convergence RFQ CLI');
 const airdropCmd = program
   .command('airdrop')
   .description('Airdrops SOL to the current user')
-  .option('--amount <value>', 'Amount to airdrop in SOL')
+  .option('--amount <value>', 'Amount to airdrop in SOL', '1')
   .action(airdrop);
 const createMintCmd = program
   .command('create-mint')
   .description('Creates mint')
-  .option('--decimals <value>', 'Decimals')
+  .requiredOption('--decimals <value>', 'Decimals')
   .action(createMint);
 const createWalletCmd = program
   .command('create-wallet')
   .description('Creates wallet')
-  .option('--owner <value>', 'Owner address')
-  .option('--mint <value>', 'Mint address')
+  .requiredOption('--owner <value>', 'Owner address')
+  .requiredOption('--mint <value>', 'Mint address')
   .action(createWallet);
 const mintToCmd = program
   .command('mint-to')
   .description('Mints tokens to wallet')
-  .option('--mint <value>', 'Mint address')
-  .option('--wallet <value>', 'Wallet address')
-  .option('--amount <value>', 'Mint amount')
+  .requiredOption('--mint <value>', 'Mint address')
+  .requiredOption('--wallet <value>', 'Wallet address')
+  .requiredOption('--amount <value>', 'Mint amount')
   .action(mintTo);
 const initializeProtocolCmd = program
   .command('initialize-protocol')
@@ -249,6 +291,11 @@ const setRiskEngineInstrumentTypeCmd = program
   .option('--type <value>', 'Instrument type')
   .option('--program <value>', 'Instrument program')
   .action(setRiskEngineInstrumentType);
+const setRiskEngineRiskCategoriesInfoCmd = program
+  .command('set-risk-engine-risk-categories-info')
+  .description('Sets risk engine instrument type')
+  .option('--program <value>', 'Instrument program')
+  .action(setRiskEngineCategoriesInfo);
 const addInstrumentCmd = program
   .command('add-instrument')
   .description('Adds instrument')
@@ -290,6 +337,7 @@ addDefaultArgs(createWalletCmd);
 addDefaultArgs(mintToCmd);
 addDefaultArgs(initializeProtocolCmd);
 addDefaultArgs(initializeRiskEngineCmd);
+addDefaultArgs(setRiskEngineRiskCategoriesInfoCmd);
 addDefaultArgs(addInstrumentCmd);
 addDefaultArgs(setRiskEngineInstrumentTypeCmd);
 addDefaultArgs(addBaseAssetCmd);

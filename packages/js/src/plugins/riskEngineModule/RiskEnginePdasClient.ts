@@ -2,7 +2,6 @@ import { Buffer } from 'buffer';
 import type { Convergence } from '@/Convergence';
 import { Pda, Program } from '@/types';
 
-
 /**
  * This client allows you to build PDAs related to the protocol module.
  *

@@ -1,4 +1,6 @@
 import { readFileSync } from 'fs';
+import { Test } from 'tape';
+import spok from 'spok';
 import {
   Commitment,
   PublicKey,
@@ -8,7 +10,6 @@ import {
 } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
-
 import {
   createProgram,
   programId as psyoptionsEuropeanProgramId,
@@ -16,20 +17,23 @@ import {
   OptionType,
 } from '@mithraic-labs/tokenized-euros';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+import * as spl from '@solana/spl-token';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
-
 import {
   IDL as PseudoPythIdl,
   Pyth,
 } from '../../../../programs/pseudo_pyth_idl';
-import * as spl from '@solana/spl-token';
 import {
+  DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
+  DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
+  DEFAULT_MINT_DECIMALS,
+  DEFAULT_OVERALL_SAFETY_FACTOR,
+  DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
   Convergence,
   keypairIdentity,
   KeypairSigner,
   Mint,
   toBigNumber,
-  // Token,
   token,
   walletAdapterIdentity,
   Signer,
@@ -40,8 +44,7 @@ const {
   mintOptions,
 } = instructions;
 import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-
-import { TransactionBuilder /*TransactionBuilderOptions*/ } from '@/utils';
+import { TransactionBuilder } from '@/utils';
 
 // CONSTANTS
 
@@ -283,9 +286,6 @@ export const initializeNewOptionMeta = async (
   strikePrice: number,
   underlyingAmountPerContract: number,
   expiresIn: number
-  // takerUSDCWallet: Token,
-  // makerUSDCWallet: Token
-  // quoteMint: Mint,
 ) => {
   const maker = Keypair.fromSecretKey(
     new Uint8Array(
@@ -371,22 +371,6 @@ export const initializeNewOptionMeta = async (
       mint: stableMint.address,
       owner: taker.publicKey,
     });
-  //@ts-ignore
-  const makerUnderlyingMintToken = convergence
-    .tokens()
-    .pdas()
-    .associatedTokenAccount({
-      mint: underlyingMint.address,
-      owner: maker.publicKey,
-    });
-  //@ts-ignore
-  const takerUnderlyingMintToken = convergence
-    .tokens()
-    .pdas()
-    .associatedTokenAccount({
-      mint: underlyingMint.address,
-      owner: taker.publicKey,
-    });
 
   const makerPutMinterCollateralKey = makerStableMintToken;
   const takerPutMinterCollateralKey = takerStableMintToken;
@@ -449,7 +433,7 @@ export const initializeNewOptionMeta = async (
     isWritable: false,
   };
 
-  let txBuilder = TransactionBuilder.make().setFeePayer(payer);
+  const txBuilder = TransactionBuilder.make().setFeePayer(payer);
 
   txBuilder.add(
     {
@@ -589,4 +573,46 @@ export const initializePsyoptionsAmerican = async (
     optionMarketKey,
     optionMint,
   };
+};
+
+export const assertInitRiskEngineConfig = (
+  cvg: Convergence,
+  t: Test,
+  output: any
+) => {
+  t.same(
+    output.config.address.toString(),
+    cvg.riskEngine().pdas().config().toString(),
+    'config address'
+  );
+  t.same(
+    output.config.collateralForFixedQuoteAmountRfqCreation.toString(),
+    DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ.toString(),
+    'default collateral for fixed quote amount rfq'
+  );
+  t.same(
+    output.config.collateralForVariableSizeRfqCreation.toString(),
+    DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ.toString(),
+    'default collateral for variable size rfq'
+  );
+  t.same(
+    output.config.safetyPriceShiftFactor.toString(),
+    DEFAULT_SAFETY_PRICE_SHIFT_FACTOR.toString(),
+    'default safety price shift factor'
+  );
+  t.same(
+    output.config.overallSafetyFactor.toString(),
+    DEFAULT_OVERALL_SAFETY_FACTOR.toString(),
+    'overall safety factor'
+  );
+  t.same(
+    output.config.collateralMintDecimals.toString(),
+    DEFAULT_MINT_DECIMALS.toString(),
+    'collateral mint decimals'
+  );
+  t.assert(output.response.signature.length > 0, 'signature present');
+  spok(t, output.config, {
+    $topic: 'config model',
+    model: 'config',
+  });
 };

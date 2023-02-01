@@ -6,6 +6,8 @@ import {
   initializeConfigOperationHandler,
   setInstrumentTypeOperation,
   setInstrumentTypeOperationHandler,
+  setRiskCategoriesInfoOperation,
+  setRiskCategoriesInfoOperationHandler,
   calculateCollateralForConfirmationOperation,
   calculateCollateralForConfirmationOperationHandler,
   calculateCollateralForResponseOperation,
@@ -35,6 +37,10 @@ export const riskEngineModule = (): ConvergencePlugin => ({
     const op = convergence.operations();
     op.register(initializeConfigOperation, initializeConfigOperationHandler);
     op.register(setInstrumentTypeOperation, setInstrumentTypeOperationHandler);
+    op.register(
+      setRiskCategoriesInfoOperation,
+      setRiskCategoriesInfoOperationHandler
+    );
     op.register(
       calculateCollateralForRfqOperation,
       calculateCollateralForRfqOperationHandler
