@@ -20,7 +20,7 @@ const Key = 'FindResponsesByOwnerOperation' as const;
  * const rfq = await convergence
  *   .rfqs()
  *   .findResponsesByOwner({ 
- *     address 
+ *     address
  *   });
  * ```
  *

@@ -20,41 +20,64 @@ export type Rfq = {
   /** A model identifier to distinguish models in the SDK. */
   readonly model: 'rfq';
 
-  /** The mint address of the Rfq. */
+  /** The address of the Rfq. */
   readonly address: PublicKey;
 
+  /** The Taker's pubkey address. */
   readonly taker: PublicKey;
 
+  /** The order type of the Rfq. */
   readonly orderType: OrderType;
 
+  /** Flag signifying whether `last look` is enabled for this Rfq. */
   readonly lastLookEnabled: boolean;
 
+  /** Whether this Rfq is open (no size specified), or a fixed amount of the base asset,
+   * or a fixed amount of the quote asset. */
   readonly fixedSize: FixedSize;
 
+  /** The quote asset of the Rfq. */
   readonly quoteAsset: QuoteAsset;
 
+  /** The mint access manager of the Rfq. */
   readonly accessManager: COption<PublicKey>;
 
+  /** The time at which this Rfq was created. */
   readonly creationTimestamp: bignum;
 
+  /** The number of seconds during which this Rfq can be responded to. */
   readonly activeWindow: number;
 
+  /** The number of seconds within which this Rfq must be settled
+   *  after starting the settlement process. */
   readonly settlingWindow: number;
 
+  /** The combined size of all legs of Rfq. This must include the sizes
+   *  of any legs to be added in the future. */
   readonly expectedLegSize: number;
 
+  /** The state of the Rfq. */
   readonly state: StoredRfqState;
 
+  /** The amount of Taker collateral locked at the time
+   *  of finalized construction of the Rfq. */
   readonly nonResponseTakerCollateralLocked: bignum;
 
+  /** The total amount of Taker collateral locked.
+   * This includes collateral added when confirming a Response. */
   readonly totalTakerCollateralLocked: bignum;
 
+  /** The total number of Responses to this Rfq. */
   readonly totalResponses: number;
 
+  /** The number of Responses to this Rfq which have been
+   *  cleared during the Rfq cleanup process. */
   readonly clearedResponses: number;
 
+  /** The number of confirmed Responses to the Rfq. */
   readonly confirmedResponses: number;
 
+  /** The legs of the Rfq. */
   readonly legs: Leg[];
 };
 

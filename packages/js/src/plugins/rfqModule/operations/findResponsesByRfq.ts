@@ -18,8 +18,8 @@ const Key = 'FindResponsesByRfqOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findResponsesByRfq({ 
- *     address 
+ *   .findResponsesByRfq({
+ *     address
  *   });
  * ```
  *
@@ -74,10 +74,8 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
         convergence,
         rfqProgram.address
       );
-      const responses = await responseGpaBuilder.get();
-      scope.throwIfCanceled();
-
-      const responseAccounts = responses
+      const unparsedAccounts = await responseGpaBuilder.get();
+      const responseAccounts = unparsedAccounts
         .map<Response | null>((account) => {
           if (account === null) {
             return null;
@@ -91,12 +89,14 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
         })
         .filter((response): response is Response => response !== null);
 
-      const foundResponses: Response[] = [];
-      for (const r of responseAccounts) {
-        if (r.rfq.toBase58() === address.toBase58()) {
-          foundResponses.push(r);
+      const responsesByRfq: Response[] = [];
+      for (const response of responseAccounts) {
+        if (response.rfq.toBase58() === address.toBase58()) {
+          responsesByRfq.push(response);
         }
       }
-      return foundResponses;
+      scope.throwIfCanceled();
+
+      return responsesByRfq;
     },
   };

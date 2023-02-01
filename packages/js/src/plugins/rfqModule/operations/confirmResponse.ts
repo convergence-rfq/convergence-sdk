@@ -19,11 +19,17 @@ const Key = 'ConfirmResponseOperation' as const;
  * Confirms a response.
  *
  * ```ts
+ *
+ * const { rfq } = await convergence.rfqs.create(...);
+ * const { rfqResponse } = await convergence
+ *                                 .rfqs()
+ *                                 .respond({ rfq: rfq.address, ... });
+ *
  * await convergence
  *   .rfqs()
- *   .confirmResponse({ 
- *     rfq, 
- *     response, 
+ *   .confirmResponse({
+ *     rfq,
+ *     response,
  *     side
  *   });
  * ```

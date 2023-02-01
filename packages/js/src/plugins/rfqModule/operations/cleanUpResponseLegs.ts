@@ -24,13 +24,19 @@ const Key = 'CleanUpResponseLegsOperation' as const;
  * Cleans up Legs for a Response
  *
  * ```ts
+ * 
+ * const { rfq } = await convergence.rfqs.create(...);
+ * const { rfqResponse } = await convergence
+ *                                 .rfqs()
+ *                                 .respond({ rfq: rfq.address, ... });
+ * 
  * await convergence
  *   .rfqs()
  *   .cleanUpResponseLegs({
  *     dao,
- *     rfq,
- *     response,
- *     firstToPrepare: maker,
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     firstToPrepare: maker.publicKey,
  *     legAmountToClear: 5
  *   });
  * ```

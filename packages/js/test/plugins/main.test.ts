@@ -1656,7 +1656,7 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
     rfq: rfq.address,
   });
 
-  const refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
+  let refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
 
   spok(t, refreshedRfq, {
     $topic: 'Cancelled RFQ',
@@ -1664,22 +1664,22 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
     state: StoredRfqState.Canceled,
   });
 
-  // await cvg.rfqs().unlockRfqCollateral({
-  //   rfq: rfq.address,
-  // });
+  await cvg.rfqs().unlockRfqCollateral({
+    rfq: rfq.address,
+  });
 
-  // refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
+  refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
 
-  // spok(t, refreshedRfq, {
-  //   $topic: 'Unlocked rfq collateral',
-  //   model: 'rfq',
-  //   // nonResponseTakerCollateralLocked: new BN(0),
-  // });
+  spok(t, refreshedRfq, {
+    $topic: 'Unlocked rfq collateral',
+    model: 'rfq',
+    // nonResponseTakerCollateralLocked: new BN(0),
+  });
 
-  // await cvg.rfqs().cleanUpRfq({
-  //   rfq: rfq.address,
-  //   taker: taker.publicKey,
-  // });
+  await cvg.rfqs().cleanUpRfq({
+    rfq: rfq.address,
+    taker: taker.publicKey,
+  });
 });
 
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlement, prepare more legs settlement, settle', async (t: Test) => {
@@ -2546,6 +2546,186 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
   // });
 });
 
+test('[rfq module] it can find all rfqs by instrument as leg', async (t: Test) => {
+  const spotInstrument = cvg.programs().getSpotInstrument();
+  const rfqs = await cvg
+    .rfqs()
+    .findByInstrument({ instrumentProgram: spotInstrument });
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findRfqsByActive({});
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
+  const rfqs = await cvg
+    .rfqs()
+    .findByToken({ mintAddress: europeanOptionPutMint });
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all responses by maker  address', async (t: Test) => {
+  const responses = await cvg
+    .rfqs()
+    .findResponsesByOwner({ address: maker.publicKey });
+
+  for (const response of responses) {
+    console.log('response', response.address.toBase58());
+  }
+
+  t.assert(responses.length > 0, 'responses should be greater than 0');
+});
+
+test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    activeWindow: 2,
+    settlingWindow: 1,
+  });
+
+  console.log(
+    'rfq collateral locked after creation: ' +
+      rfq.nonResponseTakerCollateralLocked.toString()
+  );
+
+  //@ts-ignore
+  const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+    keypair: Keypair.generate(),
+  });
+
+  console.log(
+    'response1 collateral locked: ' +
+      rfqResponse1.makerCollateralLocked.toString()
+  );
+
+  //@ts-ignore
+  const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: null,
+    ask: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    keypair: Keypair.generate(),
+  });
+
+  console.log(
+    'response2 collateral locked: ' +
+      rfqResponse2.makerCollateralLocked.toString()
+  );
+
+  const responses = await cvg.rfqs().findResponsesByRfq({
+    address: rfq.address,
+  });
+
+  for (const response of responses) {
+    console.log('Rfq response: ' + response.address.toString());
+  }
+});
+
+test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Test) => {
+  const { rfq: rfq1 } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    activeWindow: 2,
+    settlingWindow: 1,
+  });
+  const { rfq: rfq2 } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    activeWindow: 2,
+    settlingWindow: 1,
+  });
+  //@ts-ignore
+  const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq1.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: null,
+    keypair: Keypair.generate(),
+  });
+  //@ts-ignore
+  const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq2.address,
+    bid: null,
+    ask: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    keypair: Keypair.generate(),
+  });
+
+  const responses = await cvg.rfqs().findResponsesByRfqs({
+    addresses: [rfq1.address, rfq2.address],
+  });
+
+  for (const response of responses) {
+    console.log('Rfq response: ' + response.address.toString());
+  }
+});
+
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, taker prepare settlement, settle 1 party default', async () => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
@@ -2604,132 +2784,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
   // });
 });
 
-test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Bid,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-    ],
-    taker,
-    orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-    activeWindow: 2,
-    settlingWindow: 1,
-  });
-  //@ts-ignore
-  const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
-    maker,
-    rfq: rfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    ask: null,
-    keypair: Keypair.generate(),
-  });
-  //@ts-ignore
-  const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
-    maker,
-    rfq: rfq.address,
-    bid: null,
-    ask: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    keypair: Keypair.generate(),
-  });
-
-  const responses = await cvg.rfqs().findResponsesByRfq({
-    address: rfq.address,
-  });
-
-  for (const response of responses) {
-    console.log('Rfq response: ' + response.address.toString());
-  }
-});
-
-// test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Test) => {
-//   const { rfq: rfq1 } = await cvg.rfqs().createAndFinalize({
-//     instruments: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Bid,
-//       }),
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Ask,
-//       }),
-//     ],
-//     taker,
-//     orderType: OrderType.TwoWay,
-//     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-//     quoteAsset: cvg
-//       .instrument(new SpotInstrument(cvg, usdcMint))
-//       .toQuoteAsset(),
-//     activeWindow: 2,
-//     settlingWindow: 1,
-//   });
-//   const { rfq: rfq2 } = await cvg.rfqs().createAndFinalize({
-//     instruments: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Bid,
-//       }),
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Ask,
-//       }),
-//     ],
-//     taker,
-//     orderType: OrderType.TwoWay,
-//     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-//     quoteAsset: cvg
-//       .instrument(new SpotInstrument(cvg, usdcMint))
-//       .toQuoteAsset(),
-//     activeWindow: 2,
-//     settlingWindow: 1,
-//   });
-//   //@ts-ignore
-//   const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
-//     maker,
-//     rfq: rfq1.address,
-//     bid: {
-//       __kind: 'FixedSize',
-//       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-//     },
-//     ask: null,
-//     keypair: Keypair.generate(),
-//   });
-//   //@ts-ignore
-//   const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
-//     maker,
-//     rfq: rfq2.address,
-//     bid: null,
-//     ask: {
-//       __kind: 'FixedSize',
-//       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-//     },
-//     keypair: Keypair.generate(),
-//   });
-
-//   const responses = await cvg.rfqs().findResponsesByRfqs({
-//     addresses: [rfq1.address, rfq2.address],
-//   });
-
-//   for (const response of responses) {
-//     console.log('Rfq response: ' + response.address.toString());
-//   }
-// });
-
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, settle 2 party default', async () => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
@@ -2784,41 +2838,4 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
   //   takerCollateralLocked: spokSameBignum(0),
   //   makerCollateralLocked: spokSameBignum(0),
   // });
-});
-
-test('[rfq module] it can find all rfqs by instrument as leg', async (t: Test) => {
-  const spotInstrument = cvg.programs().getSpotInstrument();
-  const rfqs = await cvg
-    .rfqs()
-    .findByInstrument({ instrumentProgram: spotInstrument });
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-});
-
-test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
-  const rfqs = await cvg.rfqs().findRfqsByActive({});
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-});
-
-test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
-  const rfqs = await cvg
-    .rfqs()
-    .findByToken({ mintAddress: europeanOptionPutMint });
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-});
-
-test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
-  const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-});
-
-test('[rfq module] it can find all responses by maker  address', async (t: Test) => {
-  const responses = await cvg
-    .rfqs()
-    .findResponsesByOwner({ address: maker.publicKey });
-
-  for (const response of responses) {
-    console.log('response', response.address.toBase58());
-  }
-
-  t.assert(responses.length > 0, 'responses should be greater than 0');
 });

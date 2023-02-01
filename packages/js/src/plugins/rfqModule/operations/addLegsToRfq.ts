@@ -21,13 +21,15 @@ const Key = 'AddLegsToRfqOperation' as const;
  * Adds Legs to an existing Rfq.
  *
  * ```ts
+ * const { rfq } = await convergence.rfqs.create(...);
+ *
  * const spotInstrument = new SpotInstrument(...);
  * const psyoptionsEuropeanInstrument = new PsyOptionsEuropeanInstrument(...);
  *
  * await convergence
  *   .rfqs()
  *   .addLegsToRfq({
- *     rfq,
+ *     rfq: rfq.address,
  *     instruments: [
  *       spotInstrument,
  *       psyoptionsEuropeanInstrument,

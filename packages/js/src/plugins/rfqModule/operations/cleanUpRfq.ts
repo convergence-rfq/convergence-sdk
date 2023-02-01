@@ -17,10 +17,13 @@ const Key = 'CleanUpRfqOperation' as const;
  * Cleans up an Rfq.
  *
  * ```ts
+ * 
+ * const { rfq } = await convergence.rfqs.create(...);
+ * 
  * await convergence
  *   .rfqs()
  *   .cleanUpRfq({
- *     rfq
+ *     rfq: rfq.address
  *   });
  * ```
  *

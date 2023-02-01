@@ -18,9 +18,12 @@ const Key = 'CancelRfqOperation' as const;
  * Cancels an existing Rfq.
  *
  * ```ts
+ * 
+ * const { rfq } = await convergence.rfqs.create(...);
+ * 
  * await convergence
  *   .rfqs()
- *   .cancelRfq({ rfq });
+ *   .cancelRfq({ rfq: rfq.address });
  * ```
  *
  * @group Operations

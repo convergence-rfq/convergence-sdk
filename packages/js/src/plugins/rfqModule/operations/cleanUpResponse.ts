@@ -24,13 +24,19 @@ const Key = 'CleanUpResponseOperation' as const;
  * Cleans up a Response.
  *
  * ```ts
+ * 
+ * const { rfq } = await convergence.rfqs.create(...);
+ * const { rfqResponse } = await convergence
+ *                                 .rfqs()
+ *                                 .respond({ rfq: rfq.address, ... });
+ * 
  * await convergence
  *   .rfqs()
  *   .cleanUpResponse({
  *     dao,
- *     rfq,
- *     response,
- *     firstToPrepare: taker
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     firstToPrepare: taker.publicKey
  *   });
  * ```
  *
