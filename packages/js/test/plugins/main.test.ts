@@ -16,9 +16,9 @@ import {
   setupAccounts,
   BTC_DECIMALS,
   USDC_DECIMALS,
+  assertInitRiskEngineConfig,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
-import { DEFAULT_RISK_CATEGORIES_INFO } from '@/plugins/riskEngineModule';
 import {
   Mint,
   token,
@@ -36,6 +36,7 @@ import {
   StoredRfqState,
   legsToInstruments,
   Signer,
+  DEFAULT_RISK_CATEGORIES_INFO,
 } from '@/index';
 
 killStuckProcess();
@@ -144,7 +145,7 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   });
 });
 
-// // PROTOCOL
+// PROTOCOL
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
   const { protocol } = await cvg.protocol().initialize({
@@ -300,36 +301,28 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
 // RISK ENGINE
 
 test('[riskEngineModule] it can initialize the default risk engine config', async (t: Test) => {
-  const { response, config } = await cvg.riskEngine().initializeConfig();
-
-  console.log(config.address.toString());
-  console.log(config.collateralForFixedQuoteAmountRfqCreation.toString());
-  console.log(config.collateralForVariableSizeRfqCreation.toString());
-  console.log(config.safetyPriceShiftFactor.toString());
-  console.log(config.overallSafetyFactor.toString());
-
-  t.assert(response.signature.length > 0, 'signature present');
-  spok(t, config, {
-    $topic: 'config model',
-    model: 'config',
-  });
+  const output = await cvg.riskEngine().initializeConfig();
+  assertInitRiskEngineConfig(cvg, t, output);
 });
 
 test('[riskEngineModule] it can set instrument types', async (t: Test) => {
-  const { response } = await cvg.riskEngine().setInstrumentType({
+  const { response: response1 } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getSpotInstrument().address,
     instrumentType: InstrumentType.Spot,
   });
-  t.assert(response.signature.length > 0, 'signature present');
+  t.assert(response1.signature.length > 0, 'signature present');
 
-  await cvg.riskEngine().setInstrumentType({
+  const { response: response2 } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument().address,
     instrumentType: InstrumentType.Option,
   });
-  await cvg.riskEngine().setInstrumentType({
+  t.assert(response2.signature.length > 0, 'signature present');
+
+  const { response: response3 } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument().address,
     instrumentType: InstrumentType.Option,
   });
+  t.assert(response3.signature.length > 0, 'signature present');
 });
 
 test('[riskEngineModule] it can set risk categories info', async (t: Test) => {

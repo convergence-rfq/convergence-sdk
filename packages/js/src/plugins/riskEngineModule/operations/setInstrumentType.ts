@@ -1,7 +1,7 @@
 import { createSetInstrumentTypeInstruction } from '@convergence-rfq/risk-engine';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Config, assertConfig, toConfig } from '../models';
+import { Config, toConfig, assertConfig } from '../models';
 import { toConfigAccount } from '../accounts';
 import { InstrumentType } from '../types';
 import { Convergence } from '@/Convergence';
@@ -104,7 +104,6 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
         .rpc()
         .getAccount(convergence.riskEngine().pdas().config(), commitment);
       const config = toConfig(toConfigAccount(account));
-      scope.throwIfCanceled();
       assertConfig(config);
 
       return { response, config };
@@ -153,8 +152,8 @@ export const setInstrumentTypeBuilder = (
           config,
         },
         {
-          instrumentType,
           instrumentProgram,
+          instrumentType,
         },
         riskEngineProgram.address
       ),

@@ -4,7 +4,10 @@ export function toScenario(
   baseAssetPriceChange: number,
   volatilityChange: number
 ): Scenario {
-  return { baseAssetPriceChange, volatilityChange };
+  return {
+    baseAssetPriceChange,
+    volatilityChange,
+  };
 }
 
 export function toRiskCategoryInfo(

@@ -21,7 +21,7 @@ export type Config = {
 
   readonly collateralForFixedQuoteAmountRfqCreation: bignum;
 
-  readonly collateralMintDecimals: number;
+  readonly collateralMintDecimals: bignum;
 
   readonly safetyPriceShiftFactor: number;
 
@@ -45,10 +45,10 @@ export function assertConfig(value: any): asserts value is Response {
 export const toConfig = (account: ConfigAccount): Config => ({
   model: 'config',
   address: account.publicKey,
-  collateralForFixedQuoteAmountRfqCreation:
-    account.data.collateralForFixedQuoteAmountRfqCreation,
   collateralForVariableSizeRfqCreation:
     account.data.collateralForVariableSizeRfqCreation,
+  collateralForFixedQuoteAmountRfqCreation:
+    account.data.collateralForFixedQuoteAmountRfqCreation,
   collateralMintDecimals: account.data.collateralMintDecimals,
   safetyPriceShiftFactor: account.data.safetyPriceShiftFactor,
   overallSafetyFactor: account.data.overallSafetyFactor,

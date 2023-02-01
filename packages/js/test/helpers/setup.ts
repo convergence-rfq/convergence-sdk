@@ -1,4 +1,6 @@
 import { readFileSync } from 'fs';
+import { Test } from 'tape';
+import spok from 'spok';
 import {
   Commitment,
   PublicKey,
@@ -22,6 +24,11 @@ import {
   Pyth,
 } from '../../../../programs/pseudo_pyth_idl';
 import {
+  DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
+  DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
+  DEFAULT_MINT_DECIMALS,
+  DEFAULT_OVERALL_SAFETY_FACTOR,
+  DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
   Convergence,
   keypairIdentity,
   KeypairSigner,
@@ -566,4 +573,46 @@ export const initializePsyoptionsAmerican = async (
     optionMarketKey,
     optionMint,
   };
+};
+
+export const assertInitRiskEngineConfig = (
+  cvg: Convergence,
+  t: Test,
+  output: any
+) => {
+  t.same(
+    output.config.address.toString(),
+    cvg.riskEngine().pdas().config().toString(),
+    'config address'
+  );
+  t.same(
+    output.config.collateralForFixedQuoteAmountRfqCreation.toString(),
+    DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ.toString(),
+    'default collateral for fixed quote amount rfq'
+  );
+  t.same(
+    output.config.collateralForVariableSizeRfqCreation.toString(),
+    DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ.toString(),
+    'default collateral for variable size rfq'
+  );
+  t.same(
+    output.config.safetyPriceShiftFactor.toString(),
+    DEFAULT_SAFETY_PRICE_SHIFT_FACTOR.toString(),
+    'default safety price shift factor'
+  );
+  t.same(
+    output.config.overallSafetyFactor.toString(),
+    DEFAULT_OVERALL_SAFETY_FACTOR.toString(),
+    'overall safety factor'
+  );
+  t.same(
+    output.config.collateralMintDecimals.toString(),
+    DEFAULT_MINT_DECIMALS.toString(),
+    'collateral mint decimals'
+  );
+  t.assert(output.response.signature.length > 0, 'signature present');
+  spok(t, output.config, {
+    $topic: 'config model',
+    model: 'config',
+  });
 };
