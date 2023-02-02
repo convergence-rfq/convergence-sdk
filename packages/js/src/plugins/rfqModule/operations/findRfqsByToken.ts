@@ -126,14 +126,11 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
       scope.throwIfCanceled();
 
-      const rfqByToken: Rfq[] = [];
+      const rfqsByToken: Rfq[] = [];
 
       for (const rfq of rfqs) {
-        const quoteMint = await convergence.tokens().findMintByAddress({
-          address: new PublicKey(rfq.quoteAsset.instrumentData),
-        });
-        if (quoteMint.address.toBase58() === mintAddress.toBase58()) {
-          rfqByToken.push(rfq);
+        if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
+          rfqsByToken.push(rfq);
         }
         for (const leg of rfq.legs) {
           if (
@@ -145,7 +142,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
             )[0];
 
             if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-              rfqByToken.push(rfq);
+              rfqsByToken.push(rfq);
             }
           } else if (
             leg.instrumentProgram.toBase58() ===
@@ -173,7 +170,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
             if (
               euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
             ) {
-              rfqByToken.push(rfq);
+              rfqsByToken.push(rfq);
             }
           } else if (
             leg.instrumentProgram.toBase58() ===
@@ -184,12 +181,12 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
             )[0];
 
             if (data.mint.toBase58() === mintAddress.toBase58()) {
-              rfqByToken.push(rfq);
+              rfqsByToken.push(rfq);
             }
           }
         }
       }
-      const rfqTokenSorted = [...new Set(rfqByToken)];
-      return rfqTokenSorted;
+      const rfqsTokenSorted = [...new Set(rfqsByToken)];
+      return rfqsTokenSorted;
     },
   };

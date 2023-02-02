@@ -24,12 +24,13 @@ const Key = 'CleanUpResponseOperation' as const;
  * Cleans up a Response.
  *
  * ```ts
- * 
+ *
  * const { rfq } = await convergence.rfqs.create(...);
- * const { rfqResponse } = await convergence
- *                                 .rfqs()
- *                                 .respond({ rfq: rfq.address, ... });
- * 
+ * const { rfqResponse } =
+ *   await convergence
+ *     .rfqs()
+ *     .respond({ rfq: rfq.address, ... });
+ *
  * await convergence
  *   .rfqs()
  *   .cleanUpResponse({
@@ -173,10 +174,6 @@ export const cleanUpResponseBuilder = async (
 
   const initializedLegs = responseModel.legPreparationsInitializedBy.length;
 
-  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
-    Buffer.from(rfqModel.quoteAsset.instrumentData)
-  ).mint;
-
   for (let i = 0; i < initializedLegs; i++) {
     const leg = rfqModel.legs[i];
 
@@ -290,7 +287,7 @@ export const cleanUpResponseBuilder = async (
     // `receiver_tokens`
     {
       pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        mint: quoteMint,
+        mint: rfqModel.quoteMint,
         owner: dao,
         programs,
       }),

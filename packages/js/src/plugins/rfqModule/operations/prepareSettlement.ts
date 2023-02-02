@@ -185,10 +185,6 @@ export const prepareSettlementBuilder = async (
 
   let baseAssetMints: Mint[] = [];
 
-  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
-    Buffer.from(rfqModel.quoteAsset.instrumentData)
-  ).mint;
-
   for (const leg of rfqModel.legs) {
     if (
       leg.instrumentProgram.toBase58() ===
@@ -255,14 +251,14 @@ export const prepareSettlementBuilder = async (
     },
     {
       pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        mint: quoteMint,
+        mint: rfqModel.quoteMint,
         owner: caller.publicKey,
         programs,
       }),
       isSigner: false,
       isWritable: true,
     },
-    { pubkey: quoteMint, isSigner: false, isWritable: false },
+    { pubkey: rfqModel.quoteMint, isSigner: false, isWritable: false },
     {
       pubkey: quoteEscrowPda,
       isSigner: false,

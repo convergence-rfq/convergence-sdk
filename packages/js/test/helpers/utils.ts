@@ -1,5 +1,6 @@
 import { ConfirmOptions } from '@solana/web3.js';
 import test from 'tape';
+import { Rfq, Response } from '@/plugins';
 
 /**
  * This is a workaround the fact that web3.js doesn't close it's socket connection and provides no way to do so.
@@ -22,3 +23,21 @@ export const SKIP_PREFLIGHT: ConfirmOptions = {
   skipPreflight: true,
   commitment: 'confirmed',
 };
+
+// TODO: complete this
+export function getResponseBaseAssetAmount(
+  rfq: Rfq,
+  rfqResponse: Response
+): number {
+  const rfqQuoteAssetAmount =
+    rfq.fixedSize.__kind != 'None'
+      ? // ? parseInt(rfq.fixedSize.quoteAmount.toString())
+        1
+      : -1;
+
+  const responseAmountBps = rfqResponse.bid
+    ? parseInt(rfqResponse.bid.priceQuote.amountBps.toString())
+    : -1;
+
+  return rfqQuoteAssetAmount / responseAmountBps / 100;
+}

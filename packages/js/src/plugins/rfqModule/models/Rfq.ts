@@ -9,6 +9,7 @@ import {
 } from '../types';
 import { RfqAccount } from '../accounts';
 import { assert } from '@/utils';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -38,6 +39,9 @@ export type Rfq = {
 
   /** The quote asset of the Rfq. */
   readonly quoteAsset: QuoteAsset;
+
+  /** The quote asset mint. */
+  readonly quoteMint: PublicKey;
 
   /** The mint access manager of the Rfq. */
   readonly accessManager: COption<PublicKey>;
@@ -99,6 +103,9 @@ export const toRfq = (account: RfqAccount): Rfq => ({
   lastLookEnabled: account.data.lastLookEnabled,
   fixedSize: account.data.fixedSize,
   quoteAsset: account.data.quoteAsset,
+  quoteMint: SpotInstrument.deserializeInstrumentData(
+    Buffer.from(account.data.quoteAsset.instrumentData)
+  ).mint,
   accessManager: account.data.accessManager,
   creationTimestamp: account.data.creationTimestamp,
   activeWindow: account.data.activeWindow,

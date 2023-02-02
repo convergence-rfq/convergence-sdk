@@ -3,11 +3,7 @@ import {
   createRevertSettlementPreparationInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -155,10 +151,6 @@ export const revertSettlementPreparationBuilder = async (
     .programs()
     .getPsyoptionsAmericanInstrument();
 
-  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
-    Buffer.from(rfqModel.quoteAsset.instrumentData)
-  ).mint;
-
   const sidePreparedLegs: number =
     side == AuthoritySide.Taker
       ? parseInt(responseModel.takerPreparedLegs.toString())
@@ -274,13 +266,15 @@ export const revertSettlementPreparationBuilder = async (
     },
     // `receiver_tokens`
     {
-      pubkey: await getAssociatedTokenAddress(
-        quoteMint,
-        side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
-        undefined,
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      ),
+      pubkey: convergence
+        .tokens()
+        .pdas()
+        .associatedTokenAccount({
+          mint: rfqModel.quoteMint,
+          owner:
+            side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
+          programs,
+        }),
       isSigner: false,
       isWritable: true,
     },

@@ -145,10 +145,6 @@ export const settleBuilder = async (
     .programs()
     .getPsyoptionsAmericanInstrument();
 
-  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
-    Buffer.from(rfqModel.quoteAsset.instrumentData)
-  ).mint;
-  
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];
     const confirmationSide = responseModel.confirmed?.side;
@@ -272,7 +268,7 @@ export const settleBuilder = async (
         .tokens()
         .pdas()
         .associatedTokenAccount({
-          mint: quoteMint,
+          mint: rfqModel.quoteMint,
           owner:
             rfqModel.fixedSize.__kind == 'QuoteAsset' &&
             confirmationSide == Side.Ask
