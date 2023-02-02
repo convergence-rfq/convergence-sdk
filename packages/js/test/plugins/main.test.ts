@@ -11,14 +11,12 @@ import {
   convergenceCli,
   killStuckProcess,
   spokSamePubkey,
-  //@ts-ignore
   initializeNewOptionMeta,
   initializePsyoptionsAmerican,
   setupAccounts,
   BTC_DECIMALS,
   USDC_DECIMALS,
-  //@ts-ignore
-  spokSameBignum,
+  assertInitRiskEngineConfig,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
@@ -28,22 +26,17 @@ import {
   RiskCategory,
   SpotInstrument,
   OrderType,
-  //@ts-ignore
   PsyoptionsEuropeanInstrument,
-  //@ts-ignore
   PsyoptionsAmericanInstrument,
   OptionType,
   InstrumentType,
   Token,
-  //@ts-ignore
   StoredResponseState,
-  //@ts-ignore
   AuthoritySide,
-  //@ts-ignore
   StoredRfqState,
-  //@ts-ignore
   legsToInstruments,
   Signer,
+  DEFAULT_RISK_CATEGORIES_INFO,
 } from '@/index';
 
 killStuckProcess();
@@ -77,7 +70,6 @@ const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
 let optionMarket: OptionMarketWithKey | null;
 let optionMarketPubkey: PublicKey;
 
-//@ts-ignore
 let europeanOptionPutMint: PublicKey;
 
 test('[setup] it can create Convergence instance', async (t: Test) => {
@@ -309,23 +301,91 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
 
 // RISK ENGINE
 
-test('[riskEngineModule] it can initialize the default risk engine config', async () => {
-  await cvg.riskEngine().initializeConfig();
+test('[riskEngineModule] it can initialize the default risk engine config', async (t: Test) => {
+  const output = await cvg.riskEngine().initializeConfig();
+  assertInitRiskEngineConfig(cvg, t, output);
 });
 
-test('[riskEngineModule] it can set spot, American and European option instrument types', async () => {
-  await cvg.riskEngine().setInstrumentType({
+test('[riskEngineModule] it can set instrument types', async (t: Test) => {
+  const { response: response1 } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getSpotInstrument().address,
     instrumentType: InstrumentType.Spot,
   });
-  await cvg.riskEngine().setInstrumentType({
+  t.assert(response1.signature.length > 0, 'signature present');
+
+  const { response: response2 } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument().address,
     instrumentType: InstrumentType.Option,
   });
-  await cvg.riskEngine().setInstrumentType({
+  t.assert(response2.signature.length > 0, 'signature present');
+
+  const { response: response3 } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument().address,
     instrumentType: InstrumentType.Option,
   });
+  t.assert(response3.signature.length > 0, 'signature present');
+});
+
+test('[riskEngineModule] it can set risk categories info', async (t: Test) => {
+  const { response: responseVeryLow } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.veryLow,
+          riskCategoryIndex: RiskCategory.VeryLow,
+        },
+      ],
+    });
+  t.assert(responseVeryLow.signature.length > 0, 'signature present');
+
+  const { response: responseLow } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.low,
+          riskCategoryIndex: RiskCategory.Low,
+        },
+      ],
+    });
+  t.assert(responseLow.signature.length > 0, 'signature present');
+
+  const { response: responseMedium } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.medium,
+          riskCategoryIndex: RiskCategory.Medium,
+        },
+      ],
+    });
+  t.assert(responseMedium.signature.length > 0, 'signature present');
+
+  const { response: responseHigh } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.high,
+          riskCategoryIndex: RiskCategory.High,
+        },
+      ],
+    });
+  t.assert(responseHigh.signature.length > 0, 'signature present');
+
+  const { response: responseVeryHigh } = await cvg
+    .riskEngine()
+    .setRiskCategoriesInfo({
+      changes: [
+        {
+          newValue: DEFAULT_RISK_CATEGORIES_INFO.veryHigh,
+          riskCategoryIndex: RiskCategory.VeryHigh,
+        },
+      ],
+    });
+  t.assert(responseVeryHigh.signature.length > 0, 'signature present');
 });
 
 // COLLATERAL
@@ -1002,12 +1062,11 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can find RFQs by instrument', async () => {
-  //@ts-ignore
+test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
   const instruments = await cvg.rfqs().findByInstrument({
     instrumentProgram: cvg.programs().getSpotInstrument(),
   });
-  // console.error(instruments);
+  t.assert(instruments.length > 0, 'instruments present');
 });
 
 test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
@@ -1559,7 +1618,24 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
   await cvg.rfqs().cleanUpRfq({
     rfq: rfq.address,
     taker: taker.publicKey,
+    // response: rfqResponse.address,
   });
+
+  // refreshedResponse = await cvg.rfqs().refreshResponse(refreshedResponse);
+
+  //await cvg.rfqs().unlockRfqCollateral({
+  //  rfq: rfq.address,
+  //});
+
+  // await cvg.rfqs().unlockResponseCollateral({
+  //   response: refreshedResponse.address,
+  // });
+
+  // spok(t, refreshedResponse, {
+  //   $topic: 'Settled',
+  //   model: 'response',
+  //   state: StoredResponseState.Settled,
+  // });
 });
 
 test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, and clean up resp legs', async (t: Test) => {
@@ -2055,7 +2131,7 @@ test('[psyoptionsAmericanInstrumentModule] it can mint options to taker', async 
 });
 
 test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions American, respond, confirm response, prepare settlement, settle', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
+  const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new PsyoptionsAmericanInstrument(
         cvg,
@@ -2076,6 +2152,7 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
   });
+  t.assert(response.signature.length > 0, 'signature present');
 
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
@@ -2205,7 +2282,7 @@ test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
 });
 
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, revert settlemt prep', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
+  const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
         amount: 5,
@@ -2221,6 +2298,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     activeWindow: 2,
     settlingWindow: 1,
   });
+  t.assert(response.signature.length > 0, 'signature present');
 
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
@@ -2625,4 +2703,36 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
   //   takerCollateralLocked: spokSameBignum(0),
   //   makerCollateralLocked: spokSameBignum(0),
   // });
+});
+
+test('[rfq module] it can find all rfqs by instrument as leg', async (t: Test) => {
+  const spotInstrument = cvg.programs().getSpotInstrument();
+  const rfqs = await cvg
+    .rfqs()
+    .findByInstrument({ instrumentProgram: spotInstrument });
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findRfqsByActive({});
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+// test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
+//   const rfqs = await cvg
+//     .rfqs()
+//     .findByToken({ mintAddress: europeanOptionPutMint });
+//   t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+// });
+
+test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all responses by maker  address', async (t: Test) => {
+  const responses = await cvg
+    .rfqs()
+    .findResponsesByOwner({ address: maker.publicKey });
+  t.assert(responses.length > 0, 'responses should be greater than 0');
 });

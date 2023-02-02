@@ -9,12 +9,15 @@ import {
   CalculateCollateralForConfirmationIntput,
   CalculateCollateralForRfqIntput,
   CalculateCollateralForResponseIntput,
+  setRiskCategoriesInfoOperation,
+  SetRiskCategoriesInfoInput,
 } from './operations';
+import { RiskEnginePdasClient } from './RiskEnginePdasClient';
 import type { Convergence } from '@/Convergence';
 import { OperationOptions } from '@/types';
 
 /**
- * This is a client for the risk engine module.
+ * This is a client for the Risk Engine module.
  *
  * It enables us to interact with the risk engine program in order to
  * manage risk.
@@ -27,6 +30,17 @@ import { OperationOptions } from '@/types';
  */
 export class RiskEngineClient {
   constructor(protected readonly convergence: Convergence) {}
+
+  /**
+   * You may use the `pdas()` client to build PDAs related to this module.
+   *
+   * ```ts
+   * const pdasClient = convergence.riskEngine().pdas();
+   * ```
+   */
+  pdas() {
+    return new RiskEnginePdasClient(this.convergence);
+  }
 
   /** {@inheritDoc initializeConfig} */
   initializeConfig(input?: InitializeConfigInput, options?: OperationOptions) {
@@ -41,6 +55,17 @@ export class RiskEngineClient {
       .operations()
       .execute(setInstrumentTypeOperation(input), options);
   }
+
+  /** {@inheritDoc setRiskCategoriesInfoOperation} */
+  setRiskCategoriesInfo(
+    input: SetRiskCategoriesInfoInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(setRiskCategoriesInfoOperation(input), options);
+  }
+
   /** {@inheritDoc  calculateCollateralForRfq} */
   calculateCollateralForRfq(
     input: CalculateCollateralForRfqIntput,
@@ -50,6 +75,7 @@ export class RiskEngineClient {
       .operations()
       .execute(calculateCollateralForRfqOperation(input), options);
   }
+
   /** {@inheritDoc calculateCollateralForResponse} */
   calculateCollateralForResponse(
     input: CalculateCollateralForResponseIntput,

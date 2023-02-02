@@ -1,9 +1,10 @@
-import { createSetInstrumentTypeInstruction } from '@convergence-rfq/risk-engine';
-import { PublicKey } from '@solana/web3.js';
+import {
+  createSetRiskCategoriesInfoInstruction,
+  RiskCategoryChange,
+} from '@convergence-rfq/risk-engine';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Config, toConfig, assertConfig } from '../models';
-import { toConfigAccount } from '../accounts';
-import { InstrumentType } from '../types';
+//import { assertConfig, Config, toConfig } from '../models';
+//import { toConfigAccount } from '../accounts';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -14,7 +15,7 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
-const Key = 'SetInstrumentTypeOperation' as const;
+const Key = 'SetRiskCategoriesInfoOperation' as const;
 
 /**
  * Set instrument type
@@ -22,91 +23,83 @@ const Key = 'SetInstrumentTypeOperation' as const;
  * ```ts
  * await convergence
  *   .riskEngine()
- *   .setInstrumentType({ ... };
+ *   .SetRiskCategoriesInfo({ ... };
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const setInstrumentTypeOperation =
-  useOperation<SetInstrumentTypeOperation>(Key);
+export const setRiskCategoriesInfoOperation =
+  useOperation<SetRiskCategoriesInfoOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type SetInstrumentTypeOperation = Operation<
+export type SetRiskCategoriesInfoOperation = Operation<
   typeof Key,
-  SetInstrumentTypeInput,
-  SetInstrumentTypeOutput
+  SetRiskCategoriesInfoInput,
+  SetRiskCategoriesInfoOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type SetInstrumentTypeInput = {
+export type SetRiskCategoriesInfoInput = {
   /**
    * The owner of the protocol.
    */
   authority?: Signer;
 
-  /**
-   * Instrument type
-   */
-  instrumentType: InstrumentType;
-
-  /**
-   * Instrument program
-   */
-  instrumentProgram: PublicKey;
+  changes: RiskCategoryChange[];
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type SetInstrumentTypeOutput = {
+export type SetRiskCategoriesInfoOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
   /** Risk engine config. */
-  config: Config;
+  //config: Config;
 };
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTypeOperation> =
+export const setRiskCategoriesInfoOperationHandler: OperationHandler<SetRiskCategoriesInfoOperation> =
   {
     handle: async (
-      operation: SetInstrumentTypeOperation,
+      operation: SetRiskCategoriesInfoOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<SetInstrumentTypeOutput> => {
-      const { commitment } = scope;
-
+    ): Promise<SetRiskCategoriesInfoOutput> => {
+      //const { commitment } = scope;
       scope.throwIfCanceled();
 
-      const builder = setInstrumentTypeBuilder(
+      const builder = setRiskCategoriesInfoBuilder(
         convergence,
         operation.input,
         scope
       );
-
       const { response } = await builder.sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
 
-      const account = await convergence
-        .rpc()
-        .getAccount(convergence.riskEngine().pdas().config(), commitment);
-      const config = toConfig(toConfigAccount(account));
-      assertConfig(config);
+      //const account = await convergence
+      //  .rpc()
+      //  .getAccount(convergence.riskEngine().pdas().config(), commitment);
+      //const config = toConfig(toConfigAccount(account));
+      //scope.throwIfCanceled();
+      //assertConfig(config);
 
-      return { response, config };
+      //return { response, config };
+      return { response };
     },
   };
 
@@ -114,7 +107,7 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
  * @group Transaction Builders
  * @category Inputs
  */
-export type SetInstrumentTypeBuilderParams = SetInstrumentTypeInput;
+export type SetRiskCategoriesInfoBuilderParams = SetRiskCategoriesInfoInput;
 
 /**
  * Adds an BaseAsset
@@ -123,19 +116,19 @@ export type SetInstrumentTypeBuilderParams = SetInstrumentTypeInput;
  * const transactionBuilder = convergence
  *   .riskEngine()
  *   .builders()
- *   .setInstrumentType({ instrumentType, instrumentProgram });
+ *   .setRiskCategoriesInfo({ changes });
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const setInstrumentTypeBuilder = (
+export const setRiskCategoriesInfoBuilder = (
   convergence: Convergence,
-  params: SetInstrumentTypeBuilderParams,
+  params: SetRiskCategoriesInfoBuilderParams,
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { authority = payer, instrumentProgram, instrumentType } = params;
+  const { authority = payer, changes } = params;
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
@@ -145,19 +138,16 @@ export const setInstrumentTypeBuilder = (
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
-      instruction: createSetInstrumentTypeInstruction(
+      instruction: createSetRiskCategoriesInfoInstruction(
         {
           authority: authority.publicKey,
           protocol,
           config,
         },
-        {
-          instrumentProgram,
-          instrumentType,
-        },
+        { changes },
         riskEngineProgram.address
       ),
       signers: [authority],
-      key: 'setInstrumentType',
+      key: 'setRiskCategoriesInfo',
     });
 };

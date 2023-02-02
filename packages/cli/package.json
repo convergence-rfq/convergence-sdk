@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/cli",
-  "version": "2.0.20",
+  "version": "2.0.1",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -22,9 +22,6 @@
   ],
   "scripts": {
     "cli:run": "yarn build && node dist/cjs/index.cjs",
-    "cli:run:addSpotInstrument": "node dist/cjs/index.cjs add-instrument --instrument-program=FTzYU9cFnziCQvJ6ZUve7asaYqRexk7pBcn8zQ9MqoMQ --can-be-used-as-quote=true --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4",
-    "cli:run:addPsyoptionsEuropeanInstrument": "node dist/cjs/index.cjs add-instrument --instrument-program=BeJcAotUcFEWXVnh6qaBBLKaZaoaM8HSFY1L3sb1Aps3 --can-be-used-as-quote=true --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4",
-    "cli:run:addPsyoptionsAmericanInstrument": "node dist/cjs/index.cjs add-instrument --instrument-program=Cdaz7EGr2AVDkCpjMVEXDzap6oRrrrZUEaKAVLmJAX7R --can-be-used-as-quote=true --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4",
     "lint": "eslint --ext js,ts,tsx src",
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
@@ -33,7 +30,7 @@
     "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "workspace:*",
+    "@convergence-rfq/sdk": "^2.0.21",
     "@solana/web3.js": "^1.73.0",
     "commander": "^10.0.0",
     "figlet": "^1.5.2"
