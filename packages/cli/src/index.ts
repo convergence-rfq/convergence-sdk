@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /* eslint-disable no-console */
 import { readFileSync } from 'fs';
 import { Command } from 'commander';

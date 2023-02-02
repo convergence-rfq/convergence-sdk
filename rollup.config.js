@@ -4,6 +4,7 @@ import json from '@rollup/plugin-json';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
+import shebang from 'rollup-plugin-preserve-shebang';
 import { terser } from 'rollup-plugin-terser';
 
 export const createConfigs = (options) => {
@@ -61,6 +62,7 @@ const createConfig = (build, options) => {
     },
     plugins: [
       commonjs(),
+      shebang(),
       nodeResolve({
         browser,
         dedupe: dependenciesToDedupes,
