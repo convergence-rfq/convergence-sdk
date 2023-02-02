@@ -254,7 +254,7 @@ const registerMint = async (options: Options) => {
 /// CLI
 
 const program = new Command();
-program.name('convergence').version('1.0.0').description('Convergence RFQ CLI');
+program.name('convergence').version('2.0.8').description('Convergence RFQ CLI');
 
 const airdropCmd = program
   .command('airdrop')
