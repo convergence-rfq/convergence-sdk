@@ -3,6 +3,6 @@
 set -e
 source .env
 
-DECIMALS=9
+DECIMALS=
 
 $CVG create-mint $OPT --decimals=$DECIMALS

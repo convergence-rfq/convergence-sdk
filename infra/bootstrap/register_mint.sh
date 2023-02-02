@@ -3,7 +3,8 @@
 set -e
 source .env
 
-TICKER=BTC
-ORACLE_ADDRESS=8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee
+BASE_ASSET_INDEX=
+MINT=
 
-$CVG register-mint $OPT --ticker=$TICKER --oracle-address=$ORACLE_ADDRESS
+#$CVG register-mint $OPT --base-asset-index=$BASE_ASSET_INDEX --mint=$MINT
+$CVG register-mint $OPT --mint=$MINT

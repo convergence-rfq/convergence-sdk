@@ -243,10 +243,21 @@ const addBaseAsset = async (options: Options) => {
 const registerMint = async (options: Options) => {
   console.log('Registering mint...');
   const cvg = await createCvg(options);
-  const { response } = await cvg.protocol().registerMint({
-    baseAssetIndex: options.baseAssetIndex,
-    mint: new PublicKey(options.mint),
-  });
+  const mint = new PublicKey(options.mint);
+
+  let args;
+  if (options.baseAssetIndex >= 0) {
+    args = {
+      baseAssetIndex: options.baseAssetIndex,
+      mint,
+    };
+  } else {
+    args = {
+      mint,
+    };
+  }
+
+  const { response } = await cvg.protocol().registerMint(args);
   console.log('Tx:', response.signature);
   console.log('Success!');
 };
@@ -325,15 +336,15 @@ const addInstrumentCmd = program
 const addBaseAssetCmd = program
   .command('add-base-asset')
   .description('Adds base asset')
-  .option('--ticker <value>', 'Ticker')
-  .option('--oracle-address <value>', 'Oracle address')
+  .requiredOption('--ticker <value>', 'Ticker')
+  .requiredOption('--oracle-address <value>', 'Oracle address')
   .option('--oracle-kind <value>', 'Oracle kind', 'Switchboard')
   .option('--risk-category <value>', 'Risk category', 'very-low')
   .action(addBaseAsset);
 const registerMintCmd = program
   .command('register-mint')
   .description('Registers mint')
-  .option('--mint <value>', 'Mint address')
+  .requiredOption('--mint <value>', 'Mint address')
   .option('--base-asset-index <value>', 'Base asset index')
   .action(registerMint);
 
