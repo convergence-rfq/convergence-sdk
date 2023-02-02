@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /* eslint-disable no-console */
 import { readFileSync } from 'fs';
 import { Command } from 'commander';
@@ -13,7 +14,7 @@ import {
   InstrumentType,
   keypairIdentity,
   token,
-  toRiskCategoriesInfo,
+  toRiskCategoryInfo,
   toScenario,
 } from '@convergence-rfq/sdk';
 
@@ -170,26 +171,30 @@ const setRiskEngineCategoriesInfo = async (options: Options) => {
     riskCategoryIndex = RiskCategory.VeryLow;
   } else if (options.category == 'low') {
     riskCategoryIndex = RiskCategory.Low;
-  } else if (options.categories == 'medium') {
+  } else if (options.category == 'medium') {
     riskCategoryIndex = RiskCategory.Medium;
-  } else if (options.categories == 'high') {
+  } else if (options.category == 'high') {
     riskCategoryIndex = RiskCategory.High;
-  } else if (options.categories == 'very-high') {
+  } else if (options.category == 'very-high') {
     riskCategoryIndex = RiskCategory.VeryHigh;
   } else {
     throw new Error('Invalid risk category');
   }
 
+  const newValue = options.newValue
+    .split(',')
+    .map((x: string) => parseFloat(x));
+
   const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
     changes: [
       {
-        newValue: toRiskCategoryInfo(0.05, 0.5, [
-          toScenario(0.02, 0.2),
-          toScenario(0.04, 0.3),
-          toScenario(0.08, 0.4),
-          toScenario(0.12, 0.5),
-          toScenario(0.2, 0.6),
-          toScenario(0.3, 0.7),
+        newValue: toRiskCategoryInfo(newValue[0], newValue[1], [
+          toScenario(newValue[2], newValue[3]),
+          toScenario(newValue[4], newValue[5]),
+          toScenario(newValue[6], newValue[7]),
+          toScenario(newValue[8], newValue[9]),
+          toScenario(newValue[10], newValue[11]),
+          toScenario(newValue[12], newValue[13]),
         ]),
         riskCategoryIndex,
       },
@@ -293,8 +298,9 @@ const setRiskEngineInstrumentTypeCmd = program
   .action(setRiskEngineInstrumentType);
 const setRiskEngineRiskCategoriesInfoCmd = program
   .command('set-risk-engine-risk-categories-info')
-  .description('Sets risk engine instrument type')
-  .option('--program <value>', 'Instrument program')
+  .description('Sets risk engine risk categories info')
+  .requiredOption('--category <value>', 'Category')
+  .requiredOption('--new-value <value>', 'New value')
   .action(setRiskEngineCategoriesInfo);
 const addInstrumentCmd = program
   .command('add-instrument')
