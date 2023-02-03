@@ -1,10 +1,10 @@
 import { Side } from '../rfqModule';
 import { SpotInstrument } from '../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { InstrumentClient } from './InstrumentClient';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
-import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 
 /** @group Plugins */
 export const instrumentModule = (): ConvergencePlugin => ({

@@ -4,6 +4,7 @@ import {
   Side,
 } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -19,7 +20,6 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 

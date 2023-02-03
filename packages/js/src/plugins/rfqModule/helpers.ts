@@ -32,20 +32,22 @@ export const toMintAddress = (
  */
 export const devnetAirdrops = async (
   cvg: Convergence,
-  user: PublicKey
-): Promise<any> => {
-  const mintAuthority = Keypair.fromSeed(
-    new Uint8Array([
-      195, 171, 187, 206, 150, 223, 15, 222, 66, 189, 14, 34, 241, 1, 26, 95,
-      251, 154, 99, 221, 244, 134, 82, 234, 114, 163, 221, 151, 53, 171, 209,
-      189, 41, 58, 183, 52, 123, 23, 211, 220, 156, 60, 205, 23, 9, 11, 51, 252,
-      184, 116, 167, 109, 174, 140, 100, 91, 157, 252, 202, 152, 61, 246, 84,
-      87,
-    ])
-  );
+  user: PublicKey,
+  mintAuthority?: Keypair
+): Promise<{ collateralWallet: any; registeredMintWallets: any[] }> => {
+  mintAuthority =
+    mintAuthority ??
+    Keypair.fromSecretKey(
+      new Uint8Array([
+        195, 171, 187, 206, 150, 223, 15, 222, 66, 189, 14, 34, 241, 1, 26, 95,
+        251, 154, 99, 221, 244, 134, 82, 234, 114, 163, 221, 151, 53, 171, 209,
+        189, 41, 58, 183, 52, 123, 23, 211, 220, 156, 60, 205, 23, 9, 11, 51,
+        252, 184, 116, 167, 109, 174, 140, 100, 91, 157, 252, 202, 152, 61, 246,
+        84, 87,
+      ])
+    );
 
   const protocol = await cvg.protocol().get();
-
   const collateralMint = await cvg
     .tokens()
     .findMintByAddress({ address: protocol.collateralMint });
@@ -66,48 +68,49 @@ export const devnetAirdrops = async (
 
   await cvg.tokens().mint({
     mintAddress: collateralMint.address,
-    amount: token(1_000_000_000_000),
+    amount: token(1_000_000),
     toToken: collateralWallet.address,
     mintAuthority,
   });
 
-  const baseWallets = [];
-  const baseAssets = await cvg.protocol().getBaseAssets();
-  for (const index in baseAssets) {
-    const baseAsset = baseAssets[index];
+  const registeredMintWallets = [];
+  const registeredMints = await cvg.protocol().getRegisteredMints();
 
-    // TODO: Not correct
+  for (const index in registeredMints) {
+    const registeredMint = registeredMints[index];
+
     const baseMint = await cvg
       .tokens()
-      .findMintByAddress({ address: baseAsset.address });
+      .findMintByAddress({ address: registeredMint.address });
 
-    let baseWallet;
+    let registeredMintWallet;
     try {
+      const mint = registeredMint.address;
       const { token: wallet } = await cvg
         .tokens()
-        .createToken({ mint: baseMint.address, owner: user });
-      baseWallet = wallet;
+        .createToken({ mint, owner: user });
+      registeredMintWallet = wallet;
     } catch {
       const address = cvg
         .tokens()
         .pdas()
         .associatedTokenAccount({ mint: baseMint.address, owner: user });
-      baseWallet = await cvg.tokens().findTokenByAddress({ address });
+      registeredMintWallet = await cvg.tokens().findTokenByAddress({ address });
     }
 
-    baseWallets.push(baseWallet);
+    registeredMintWallets.push(registeredMintWallet);
 
     await cvg.tokens().mint({
       mintAddress: baseMint.address,
-      amount: token(1_000_000_000_000),
-      toToken: baseWallet.address,
+      amount: token(1_000_000),
+      toToken: registeredMintWallet.address,
       mintAuthority,
     });
   }
 
   return {
     collateralWallet,
-    baseWallets,
+    registeredMintWallets,
   };
 };
 

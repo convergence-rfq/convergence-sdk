@@ -1,12 +1,12 @@
 import { PublicKey, Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { OrderType, QuoteAsset, FixedSize } from '../types';
 import { Rfq } from '../models';
 import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import {
   Operation,
   OperationHandler,

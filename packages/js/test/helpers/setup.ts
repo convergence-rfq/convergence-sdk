@@ -55,7 +55,7 @@ export const SWITCHBOARD_SOL_ORACLE = new PublicKey(
   'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
 );
 
-export const RPC_ENDPOINT = 'https://api.devnet.solana.com'; // 'http://127.0.0.1:8899'
+export const RPC_ENDPOINT = 'http://127.0.0.1:8899';
 
 export const BTC_DECIMALS = 9;
 export const SOL_DECIMALS = 9;
@@ -236,6 +236,7 @@ export const setupAccounts = async (
     takerSOLWallet,
     daoBTCWallet,
     daoUSDCWallet,
+    mintAuthority,
   };
 };
 

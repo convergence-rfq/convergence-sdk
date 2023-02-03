@@ -207,9 +207,9 @@ export const confirmResponseBuilder = async (
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  let baseAssetAccounts: AccountMeta[] = [];
-  let baseAssetIndexValuesSet: Set<number> = new Set();
-  let oracleAccounts: AccountMeta[] = [];
+  const baseAssetAccounts: AccountMeta[] = [];
+  const baseAssetIndexValuesSet: Set<number> = new Set();
+  const oracleAccounts: AccountMeta[] = [];
 
   for (const leg of rfqModel.legs) {
     baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);

@@ -13,6 +13,7 @@ import {
   TOKEN_PROGRAM_ID,
   getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -29,7 +30,6 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -111,7 +111,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
-      let builder = await prepareSettlementBuilder(
+      const builder = await prepareSettlementBuilder(
         convergence,
         {
           ...operation.input,
@@ -184,7 +184,7 @@ export const prepareSettlementBuilder = async (
     .programs()
     .getPsyoptionsAmericanInstrument();
 
-  let baseAssetMints: Mint[] = [];
+  const baseAssetMints: Mint[] = [];
 
   for (const leg of rfqModel.legs) {
     if (
