@@ -1,5 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { prepareSettlementBuilder } from './prepareSettlement';
+import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -10,8 +12,6 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 // import { TransactionBuilder } from '@/utils';
-import { prepareSettlementBuilder } from './prepareSettlement';
-import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
 
 const Key = 'PrepareSettlementAndPrepareMoreLegsOperation' as const;
 
@@ -210,7 +210,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
               prepareMoreLegsSlicedLegAmount >
               0
           ) {
-            let amountToPrepare =
+            const amountToPrepare =
               legAmountToPrepare -
               slicedLegAmount -
               prepareMoreLegsSlicedLegAmount -

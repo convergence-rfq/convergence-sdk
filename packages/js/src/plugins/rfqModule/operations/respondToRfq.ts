@@ -218,10 +218,10 @@ export const respondToRfqBuilder = async (
   //@ts-ignore
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  let baseAssetAccounts: AccountMeta[] = [];
-  let baseAssetIndexValuesSet: Set<number> = new Set();
+  const baseAssetAccounts: AccountMeta[] = [];
+  const baseAssetIndexValuesSet: Set<number> = new Set();
 
-  let oracleAccounts: AccountMeta[] = [];
+  const oracleAccounts: AccountMeta[] = [];
 
   for (const leg of rfqModel.legs) {
     baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);

@@ -1197,10 +1197,10 @@
     bn.js "^5.2.0"
     debug "^4.3.3"
 
-"@convergence-rfq/psyoptions-american-instrument@2.0.6":
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-american-instrument/-/psyoptions-american-instrument-2.0.6.tgz#fef6e9416290ed2a13d07dff166947d2ceff197c"
-  integrity sha512-UctgECVxkJdMJ6a6ts22Js+cUmKf8PuOFe+DKv8MhI2nYJuY4hTBEMIzzJDMUctNGqYP8U+8j2c3kkUuvHRscA==
+"@convergence-rfq/psyoptions-american-instrument@^2.0.8":
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-american-instrument/-/psyoptions-american-instrument-2.0.8.tgz#18f1815591a7259631ca3a275e6d3aa5b7df5180"
+  integrity sha512-C6zga1tU0A18Akxhqzx4RN4R95GLsMHxP0eFlPcgBh2ZKQ8UBa4hzyDjsGWrqrPkuxDKe0w5kEM7a1amPfZQTQ==
   dependencies:
     "@metaplex-foundation/beet" "^0.6.1"
     "@metaplex-foundation/beet-solana" "^0.3.1"
@@ -1209,10 +1209,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/psyoptions-european-instrument@2.0.9":
-  version "2.0.9"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-european-instrument/-/psyoptions-european-instrument-2.0.9.tgz#59463e84d2f2fa6868d635c055c79704db453b34"
-  integrity sha512-Bc0vphBVoGXQg6OFSg86HE03dR1FH3RDYWU3dYC7cMu3bp7xCcJdfB8AiZaackQazkSGA55boUdxnEs1SwVwgw==
+"@convergence-rfq/psyoptions-european-instrument@^2.0.11":
+  version "2.0.11"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-european-instrument/-/psyoptions-european-instrument-2.0.11.tgz#e243c7489f829742879c398563dfe500c1037527"
+  integrity sha512-kbfdO/UmmTyQzXI1Zg+AQ4ugdYxI6ulkTjYVSKFKHfT3j6A4cG0MLK9Xv+KuP7s3baZEoP+uDXxcVemVSv627A==
   dependencies:
     "@metaplex-foundation/beet" "^0.6.1"
     "@metaplex-foundation/beet-solana" "^0.3.1"
@@ -1221,10 +1221,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/rfq@^2.0.16":
-  version "2.0.16"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.0.16.tgz#3c9f361e2b835473651baeac377c63defff863b8"
-  integrity sha512-UDVERByagGBa6gEZFajj+/pRtVmnrVJrS7gp2ojCwlkzmEQVFaMPOGZpvalRoCbIfVCqFw7hR6zDAKbaEuIHIg==
+"@convergence-rfq/rfq@^2.0.19":
+  version "2.0.19"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.0.19.tgz#f38d1271d247760fe8f06e88200aad2499798189"
+  integrity sha512-vf8Va4m7YuPE1Ggi/69oa44rxxow6rKXZjPKyyot+LviPB4FDJxR4coGOyBT0c0P691bnnmQbPliGzS3RFyaiQ==
   dependencies:
     "@metaplex-foundation/beet" "^0.6.1"
     "@metaplex-foundation/beet-solana" "^0.3.1"
@@ -1233,22 +1233,28 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/risk-engine@^2.0.21":
-  version "2.0.21"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.0.21.tgz#937eb6aeaad6ab6aa3822029ebfd6e59be0f8c2c"
-  integrity sha512-g1AlCz7bC2DCYV6mcSRQHCvn6tRb5YPKERSPg3RmsQZCn1QIFqaxz6+5/x/i1J/7+62qv3BYSs90X3Wz2tZ6NA==
+"@convergence-rfq/risk-engine@^2.0.24":
+  version "2.0.24"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.0.24.tgz#7a3c607d4ee145016ac8c46e975ef1305d5aebe0"
+  integrity sha512-NzK22zVdRKKm+br9baszz0AW+h3kOkHbzs3t/OZ0aWPUV7ttdfmbjyJVJUZD3pcQ8SKrxWjQ9lMXmloUoaO7BA==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
-    "@metaplex-foundation/cusper" "^0.0.2"
     "@solana/spl-token" "^0.3.5"
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
+<<<<<<< HEAD
+"@convergence-rfq/spot-instrument@^2.0.15":
+  version "2.0.15"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.0.15.tgz#c9814386b8e1e7c906458bf8b5b4f370322f4ca9"
+  integrity sha512-LFwHC+0adGkT1N30EgX52E+hJCP0FWchaC8wbUkRDWuVjK3H2gK76oiSKaZrj1vLassav4LdtG+Sr6rg7/rSMA==
+=======
 "@convergence-rfq/spot-instrument@2.0.13":
   version "2.0.13"
   resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.0.13.tgz#7ca74dd2bbdb046d12f1cac96d90603d65b36685"
   integrity sha512-PN29DeNCE/+vllqzPyvBUhub43B6eSsU9352sqXa1JnWSkqdk9fLlmfRP+eW3UIvPLkF4H3rzMv/avPGPHBL1w==
+>>>>>>> 74839c436ca3d33491e8f7a3af141562f03f1866
   dependencies:
     "@metaplex-foundation/beet" "^0.6.1"
     "@metaplex-foundation/beet-solana" "^0.3.1"

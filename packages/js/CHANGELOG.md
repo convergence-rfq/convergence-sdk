@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 3.0.0
+
+### Major Changes
+
+- Added method for retrieving registered mints and devnet airdrops helper"
+
 ## 2.0.24
 
 ### Patch Changes

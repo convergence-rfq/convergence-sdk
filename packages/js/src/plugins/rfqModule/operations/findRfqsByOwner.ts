@@ -70,7 +70,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       const { programs } = scope;
 
       if (rfqs) {
-        let rfqsByOwner = [];
+        const rfqsByOwner = [];
 
         for (const rfq of rfqs) {
           if (rfq.taker.toBase58() === owner.toBase58()) {

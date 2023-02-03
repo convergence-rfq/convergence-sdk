@@ -1,6 +1,7 @@
 import { createSettleInstruction, Side } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
 import {
@@ -16,7 +17,6 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 const Key = 'SettleOperation' as const;
 
@@ -84,7 +84,7 @@ export const settleOperationHandler: OperationHandler<SettleOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ): Promise<SettleOutput> => {
-    let builder = await settleBuilder(
+    const builder = await settleBuilder(
       convergence,
       {
         ...operation.input,
@@ -137,7 +137,7 @@ export const settleBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  let { startIndex = parseInt(responseModel.settledLegs.toString()) } = params;
+  const { startIndex = parseInt(responseModel.settledLegs.toString()) } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await convergence.protocol().get();

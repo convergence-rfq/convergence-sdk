@@ -1,6 +1,10 @@
 import { Buffer } from 'buffer';
 import { PublicKey } from '@solana/web3.js';
-import { PROGRAM_ID, baseAssetInfoDiscriminator } from '@convergence-rfq/rfq';
+import {
+  PROGRAM_ID,
+  baseAssetInfoDiscriminator,
+  registerMintInstructionDiscriminator,
+} from '@convergence-rfq/rfq';
 import { Convergence } from '@/Convergence';
 import { GpaBuilder } from '@/utils';
 
@@ -13,14 +17,17 @@ const TICKER = PRICE_ORACLE + 32;
 export class ProtocolGpaBuilder extends GpaBuilder {
   constructor(convergence: Convergence, programId?: PublicKey) {
     super(convergence, programId ?? PROGRAM_ID);
-    this.where(0, Buffer.from(baseAssetInfoDiscriminator));
   }
 
   whereBaseAssets() {
-    return this;
+    return this.where(0, Buffer.from(baseAssetInfoDiscriminator));
   }
 
   whereTicker(ticker: string) {
     return this.where(TICKER, Buffer.from(ticker));
+  }
+
+  whereRegisteredMints() {
+    return this.where(0, Buffer.from(registerMintInstructionDiscriminator));
   }
 }

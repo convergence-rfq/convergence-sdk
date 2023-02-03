@@ -12,6 +12,8 @@ import {
   registerMintOperationHandler,
   getBaseAssetsOperation,
   getBaseAssetsOperationHandler,
+  getRegisteredMintsOperation,
+  getRegisteredMintsOperationHandler,
   findRegisteredMintByAddressOperation,
   findRegisteredMintByAddressOperationHandler,
   findBaseAssetByAddressOperation,
@@ -34,6 +36,10 @@ export const protocolModule = (): ConvergencePlugin => ({
     op.register(addBaseAssetOperation, addBaseAssetOperationHandler);
     op.register(registerMintOperation, registerMintOperationHandler);
     op.register(getBaseAssetsOperation, getBaseAssetsOperationHandler);
+    op.register(
+      getRegisteredMintsOperation,
+      getRegisteredMintsOperationHandler
+    );
     op.register(
       findRegisteredMintByAddressOperation,
       findRegisteredMintByAddressOperationHandler

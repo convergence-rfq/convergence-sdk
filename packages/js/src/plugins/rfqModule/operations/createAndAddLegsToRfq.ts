@@ -1,6 +1,12 @@
 import { Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { OrderType, FixedSize, QuoteAsset } from '../types';
+import { SpotInstrument } from '../../spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { assertRfq, Rfq } from '../models';
+import { createRfqBuilder } from './createRfq';
+import { addLegsToRfqBuilder } from './addLegsToRfq';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import {
   Operation,
   OperationHandler,
@@ -9,13 +15,7 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-import { OrderType, FixedSize, QuoteAsset } from '../types';
-import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { createRfqBuilder } from './createRfq';
-import { addLegsToRfqBuilder } from './addLegsToRfq';
-import { assertRfq, Rfq } from '../models';
+import { Convergence } from '@/Convergence';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -238,7 +238,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         await addLegsBuilder.sendAndConfirm(convergence, confirmOptions);
         scope.throwIfCanceled();
 
-        let nextAddLegsSlicedInstruments = addLegsSlicedInstruments;
+        const nextAddLegsSlicedInstruments = addLegsSlicedInstruments;
 
         if (
           addLegsSlicedInstruments.length <
@@ -248,7 +248,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
             nextAddLegsSlicedInstruments.length + slicedInstruments.length <
             instruments.length
           ) {
-            let nextAddLegsInstruments = instruments.slice(
+            const nextAddLegsInstruments = instruments.slice(
               slicedInstruments.length + nextAddLegsSlicedInstruments.length, //offset of createRfq legs + addLegs legs
               slicedInstruments.length +
                 nextAddLegsSlicedInstruments.length +

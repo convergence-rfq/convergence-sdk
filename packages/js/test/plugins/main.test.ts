@@ -37,6 +37,7 @@ import {
   legsToInstruments,
   Signer,
   DEFAULT_RISK_CATEGORIES_INFO,
+  devnetAirdrops,
 } from '@/index';
 
 killStuckProcess();
@@ -51,6 +52,8 @@ let dao: Signer;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
+
+let mintAuthority: Keypair;
 
 let daoBTCWallet: Token;
 let daoUSDCWallet: Token;
@@ -94,6 +97,8 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   takerUSDCWallet = context.takerUSDCWallet;
   takerBTCWallet = context.takerBTCWallet;
   takerSOLWallet = context.takerSOLWallet;
+
+  mintAuthority = context.mintAuthority;
 
   t.same(
     daoBTCWallet.ownerAddress.toString(),
@@ -1859,4 +1864,13 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
       response: rfqResponse.address,
     });
   });
+});
+
+test('[helpers] devnet', async (t: Test) => {
+  const { collateralWallet } = await devnetAirdrops(
+    cvg,
+    Keypair.generate().publicKey,
+    mintAuthority
+  );
+  t.assert(collateralWallet);
 });
