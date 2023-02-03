@@ -18,15 +18,15 @@ const Key = 'PartiallySettleLegsAndSettleOperation' as const;
  *
  * ```ts
  * const quoteAsset = instrumentClient.createQuote(new SpotInstrument(...));
- * 
+ *
  * await convergence
  *   .rfqs()
- *   .partiallySettleLegsAndSettle({ 
- *     rfq: rfq.address, 
- *     response: rfqResponse.address, 
- *     side: Side.Bid, 
- *     legAmountToPrepare: 3, 
- *     quoteAsset 
+ *   .partiallySettleLegsAndSettle({
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     side: Side.Bid,
+ *     legAmountToPrepare: 3,
+ *     quoteAsset
  *   });
  * ```
  *
@@ -51,20 +51,26 @@ export type PartiallySettleLegsAndSettleOperation = Operation<
  * @category Inputs
  */
 export type PartiallySettleLegsAndSettleInput = {
+  /** The protocol address. */
+  protocol?: PublicKey;
+
+  /** The Rfq address. */
+  rfq: PublicKey;
+
+  /** The Response address. */
+  response: PublicKey;
+
+  /** The Maker's public key address. */
   maker: PublicKey;
 
+  /** The Taker's public key address. */
   taker: PublicKey;
-  /** The protocol address */
-  protocol?: PublicKey;
-  /** The Rfq address */
-  rfq: PublicKey;
-  /** The response address */
-  response: PublicKey;
 
   /*
    * Args
    */
 
+  /** The number of legs to settle. */
   legAmountToSettle: number;
 };
 

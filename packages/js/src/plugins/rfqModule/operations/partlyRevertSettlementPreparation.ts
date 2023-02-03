@@ -58,19 +58,25 @@ export type PartlyRevertSettlementPreparationOperation = Operation<
  * @category Inputs
  */
 export type PartlyRevertSettlementPreparationInput = {
-  /** The protocol address */
+  /** The protocol address. */
   protocol?: PublicKey;
-  /** The Rfq address */
+
+  /** The Rfq address. */
   rfq: PublicKey;
-  /** The response address */
+
+  /** The response address. */
   response: PublicKey;
 
   /*
    * Args
    */
 
+  /** The side (Maker or Taker) that is partly reverting
+   * settlement preparation.
+   */
   side: AuthoritySide;
 
+  /** The number of legs to revert settlement preparation for. */
   legAmountToRevert: number;
 };
 

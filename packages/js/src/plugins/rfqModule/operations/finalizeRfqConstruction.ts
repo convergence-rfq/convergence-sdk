@@ -19,10 +19,12 @@ const Key = 'FinalizeRfqConstructionOperation' as const;
  * Finalizes construction of an Rfq.
  *
  * ```ts
+ * const { rfq } = await convergence.rfqs.create(...);
+ *
  * const { rfq } = await convergence
  *   .rfqs()
- *   .finalize({ 
- *     rfq 
+ *   .finalize({
+ *     rfq: rfq.address
  *   });
  * ```
  *
@@ -54,16 +56,16 @@ export type FinalizeRfqConstructionInput = {
    */
   taker?: Signer;
 
-  /** The address of the Rfq account */
+  /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** The address of the Taker's collateral_info account */
+  /** Optional address of the Taker's collateral info account. */
   collateralInfo?: PublicKey;
 
-  /** The address of the Taker's collateral_token account */
+  /** Optional address of the Taker's collateral token account. */
   collateralToken?: PublicKey;
 
-  /** The address of the risk_engine account */
+  /** Optional address of the risk engine program. */
   riskEngine?: PublicKey;
 };
 

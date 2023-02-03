@@ -52,8 +52,10 @@ export type CancelRfqInput = {
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
-  /** The address of the protocol account */
+
+  /** The address of the protocol account. */
   protocol?: PublicKey;
+
   /** The address of the Rfq account. */
   rfq: PublicKey;
 };

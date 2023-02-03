@@ -19,7 +19,7 @@ const Key = 'UnlockRfqCollateralOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .unlockRfqCollateral({ address };
+ *   .unlockRfqCollateral({ rfq: rfq.address });
  * ```
  *
  * @group Operations
@@ -43,11 +43,13 @@ export type UnlockRfqCollateralOperation = Operation<
  * @category Inputs
  */
 export type UnlockRfqCollateralInput = {
-  /** The protocol address */
+  /** The protocol address. */
   protocol?: PublicKey;
-  /** The Rfq address */
+
+  /** The Rfq address. */
   rfq: PublicKey;
-  /** The address of the taker's collateralInfo account */
+
+  /** Optional address of the Taker's collateral info account. */
   collateralInfo?: PublicKey;
 };
 

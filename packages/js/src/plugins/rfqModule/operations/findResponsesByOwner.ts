@@ -20,7 +20,7 @@ const Key = 'FindResponsesByOwnerOperation' as const;
  * const rfq = await convergence
  *   .rfqs()
  *   .findResponsesByOwner({ 
- *     address
+ *     address: maker.publicKey
  *   });
  * ```
  *
@@ -45,7 +45,7 @@ export type FindResponsesByOwnerOperation = Operation<
  * @category Inputs
  */
 export type FindResponsesByOwnerInput = {
-  /** The address of the maker (owner) of the Response(s). */
+  /** The address of the Maker (owner) of the Response(s). */
   address: PublicKey;
 };
 

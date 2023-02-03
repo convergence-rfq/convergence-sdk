@@ -17,7 +17,7 @@ import {
   BTC_DECIMALS,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
-  getResponseBaseAssetAmount,
+  getResponseBaseAssetAmounts,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
@@ -39,7 +39,6 @@ import {
   Signer,
   DEFAULT_RISK_CATEGORIES_INFO,
 } from '@/index';
-// import { BN } from 'bn.js';
 
 killStuckProcess();
 
@@ -675,7 +674,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -898,7 +896,6 @@ test('[riskEngineModule] it can calculate collateral for response', async (t: Te
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.riskEngine().calculateCollateralForResponse({
@@ -969,7 +966,6 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1049,7 +1045,6 @@ test('[rfqModule] it can createRfqAndAddLegs, finalize, respond, confirmResponse
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1123,7 +1118,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1208,7 +1202,6 @@ test('[rfqModule] it can create and finalize Rfq (BaseAsset), respond, and cance
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().cancelResponse({
@@ -1229,15 +1222,15 @@ test('[rfqModule] it can create and finalize Rfq (BaseAsset), respond, and cance
 //TODO: add helper method to get number of base asset from response
 test('**[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and cancel response', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
+    taker,
     instruments: [
       new SpotInstrument(cvg, btcMint, {
         amount: 5,
         side: Side.Bid,
       }),
     ],
-    taker,
     orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 100 },
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
@@ -1247,19 +1240,20 @@ test('**[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and ca
     rfq: rfq.address,
     bid: {
       __kind: 'FixedSize',
-
       // 10_000 / (23_500 USDC / 1 BTC) = 0.42
       // 0.42 * 1 BTC = 0.42 BTC
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
+    ask: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
   });
 
-  //TODO: think I need to multiply this rate by the different legs
+  const [bidAmount, askAmount] = getResponseBaseAssetAmounts(rfq, rfqResponse);
 
-  const baseAssetAmount = getResponseBaseAssetAmount(rfq, rfqResponse);
-
-  console.log('QuoteAsset RFQ baseAssetRate: ' + baseAssetAmount.toString());
+  console.log('QuoteAsset RFQ bidAmount: ' + bidAmount.toString());
+  console.log('QuoteAsset RFQ askAmount: ' + askAmount.toString());
 
   await cvg.rfqs().confirmResponse({
     taker,
@@ -1318,12 +1312,17 @@ test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base qu
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
       legsMultiplierBps: 1_000_000,
     },
-    keypair: Keypair.generate(),
   });
 
-  const baseAssetAmount = getResponseBaseAssetAmount(rfq, rfqResponse);
+  //TODO: this will be wrong at first, need to pass in the confirmation I think
+  const [bidAmount, askAmount] = getResponseBaseAssetAmounts(rfq, rfqResponse);
 
-  console.log('base asset amount from response: ' + baseAssetAmount.toString());
+  console.log(
+    'base asset amounts from response: ' +
+      bidAmount.toString() +
+      ' ' +
+      askAmount.toString()
+  );
 });
 
 test('[riskEngineModule] it can calculate collateral for confirm response', async (t: Test) => {
@@ -1351,7 +1350,6 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   const respondedToRfq = await cvg.rfqs().refreshRfq(rfq.address);
@@ -1384,8 +1382,6 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
     response: rfqResponse.address,
   });
 });
-
-// PSYOPTIONS EUROPEANS
 
 test('[psyoptionsAmericanInstrumentModule] it can mint options to taker', async () => {
   const { op, optionMarketKey } = await initializePsyoptionsAmerican(
@@ -1434,7 +1430,6 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1535,12 +1530,17 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     model: 'rfq',
     address: spokSamePubkey(rfq.address),
   });
+
+  await cvg.rfqs().finalizeRfqConstruction({
+    taker,
+    rfq: rfq.address,
+  });
 });
 
 // RFQ HELPERS
 
 test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
-  // We we can to this after creating options so that we can test this method
+  // We can to this after creating options so that we can test this method
   // on all instruments
   const rfqs = await cvg.rfqs().findAllByOwner({
     owner: taker.publicKey,
@@ -1584,7 +1584,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1684,20 +1683,16 @@ test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   //@ts-ignore
   const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
     maker,
     rfq: rfq.address,
-    bid: null,
     ask: {
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   const responses = await cvg.rfqs().findResponsesByRfq({
@@ -1754,19 +1749,15 @@ test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Te
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
   //@ts-ignore
   const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
     maker,
     rfq: rfq2.address,
-    bid: null,
     ask: {
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   const responses = await cvg.rfqs().findResponsesByRfqs({
@@ -1802,7 +1793,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1855,7 +1845,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({

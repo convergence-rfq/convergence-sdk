@@ -28,7 +28,7 @@ const Key = 'RespondToRfqOperation' as const;
  *   .rfqs()
  *   .respond({
  *     rfq: rfq.address,
- *     bid: { 
+ *     bid: {
  *       __kind: 'FixedSize',
  *       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
  *     },
@@ -57,6 +57,9 @@ export type RespondToRfqOperation = Operation<
 export type RespondToRfqInput = {
   /**
    * The maker of the Response as a Signer.
+   *
+   * @defaultValue `convergence.identity()`
+   *
    */
   maker?: Signer;
 
@@ -66,16 +69,20 @@ export type RespondToRfqInput = {
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional Response keypair */
+  /** Optional Response keypair. */
   keypair?: Keypair;
 
-  /** The address of the Maker's collateral_info account. */
+  /** Optional address of the Maker's collateral info account. */
   collateralInfo?: PublicKey;
 
-  /** The address of the Maker's collateral_token account. */
+  /** Optional address of the Maker's collateral token account. */
   collateralToken?: PublicKey;
 
-  /** The address of the risk_engine account. */
+  /** Optional address of the risk engine account.
+   *
+   * @defaultValue `convergence.programs().getRiskEngine(programs)`
+   *
+   */
   riskEngine?: PublicKey;
 
   /** The optional Bid side */

@@ -50,25 +50,26 @@ export type PrepareSettlementAndPrepareMoreLegsOperation = Operation<
  */
 export type PrepareSettlementAndPrepareMoreLegsInput = {
   /**
-   * The caller to prepare settlement of the Rfq
+   * The caller to prepare settlement of the Rfq.
    *
    * @defaultValue `convergence.identity()`
    */
   caller?: Signer;
 
-  /** The address of the protocol */
+  /** The address of the protocol. */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account */
+  /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** The address of the response account */
+  /** The address of the Response account. */
   response: PublicKey;
 
   /*
    * Args
    */
 
+  /** The number of legs to prepare settlement for. */
   legAmountToPrepare: number;
 };
 

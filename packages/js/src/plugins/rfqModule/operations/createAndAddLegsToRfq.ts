@@ -69,13 +69,13 @@ export type CreateAndAddLegsToRfqInput = {
    */
   taker?: Signer;
 
-  /** Optional Rfq keypair */
+  /** Optional Rfq keypair. */
   keypair?: Keypair;
 
-  /** Optional quote asset account. */
+  /** The quote asset account. */
   quoteAsset: QuoteAsset;
 
-  /** The legs of the order. */
+  /** The instruments of the order, used to construct legs. */
   instruments: (
     | SpotInstrument
     | PsyoptionsEuropeanInstrument

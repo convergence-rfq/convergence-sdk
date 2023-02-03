@@ -45,16 +45,23 @@ export type SettleOperation = Operation<typeof Key, SettleInput, SettleOutput>;
  * @category Inputs
  */
 export type SettleInput = {
-  maker: PublicKey;
-
-  taker: PublicKey;
-  /** The address of the protocol account. */
+  /** The address of the protocol. */
   protocol?: PublicKey;
+
   /** The address of the Rfq account. */
   rfq: PublicKey;
+
   /** The address of the Response account. */
   response: PublicKey;
 
+  /** The Maker public key address. */
+  maker: PublicKey;
+
+  /** The Taker public key address. */
+  taker: PublicKey;
+
+  /** Optional start index to corresponding to 
+   * the first leg to settle. */
   startIndex?: number;
 };
 

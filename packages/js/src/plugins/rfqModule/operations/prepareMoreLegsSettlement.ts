@@ -65,26 +65,29 @@ export type PrepareMoreLegsSettlementOperation = Operation<
  */
 export type PrepareMoreLegsSettlementInput = {
   /**
-   * The owner of the Rfq as a Signer.
+   * The caller of the instruction as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
   caller?: Signer;
-  /** The protocol address */
+
+  /** The protocol address. */
   protocol?: PublicKey;
-  /** The Rfq address */
+
+  /** The Rfq address. */
   rfq: PublicKey;
-  /** The response address */
+
+  /** The response address. */
   response: PublicKey;
 
   /*
    * Args
    */
 
-  // side: AuthoritySide;
-
+  /** The number of additional legs to prepare settlement for. */
   legAmountToPrepare: number;
 
+  /** Optional number of legs already prepared by the caller of this instruction. */
   sidePreparedLegs?: number;
 };
 
@@ -107,13 +110,10 @@ export const prepareMoreLegsSettlementOperationHandler: OperationHandler<Prepare
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareMoreLegsSettlementOutput> => {
-      const { sidePreparedLegs } = operation.input;
-
       const builder = await prepareMoreLegsSettlementBuilder(
         convergence,
         {
           ...operation.input,
-          sidePreparedLegs,
         },
         scope
       );
@@ -160,7 +160,6 @@ export const prepareMoreLegsSettlementBuilder = async (
     caller = convergence.identity(),
     rfq,
     response,
-    // side,
     legAmountToPrepare,
   } = params;
 

@@ -43,21 +43,28 @@ export type SettleTwoPartyDefaultOperation = Operation<
  * @category Inputs
  */
 export type SettleTwoPartyDefaultInput = {
-  /** The address of the protocol account. */
+  /** The address of the protocol. */
   protocol?: PublicKey;
+
   /** The address of the Rfq account. */
   rfq: PublicKey;
+
   /** The address of the Response account. */
   response: PublicKey;
-  /** The address of the Taker's collateralInfo account. */
+
+  /** Optional address of the Taker's collateral info account. */
   takerCollateralInfo?: PublicKey;
-  /** The address of the Maker's collateralInfo account. */
+
+  /** Optional address of the Maker's collateral info account. */
   makerCollateralInfo?: PublicKey;
-  /** The address of the Taker's collateralTokens account. */
+
+  /** Optional address of the Taker's collateral tokens account. */
   takerCollateralTokens?: PublicKey;
-  /** The address of the Maker's collateralTokens account. */
+
+  /** Optional address of the Maker's collateral tokens account. */
   makerCollateralTokens?: PublicKey;
-  /** The address of the protocol's collateralTokens account. */
+
+  /** Optional address of the protocol's collateral tokens account. */
   protocolCollateralTokens?: PublicKey;
 };
 
@@ -139,6 +146,14 @@ export const settleTwoPartyDefaultBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  let {
+    takerCollateralInfo,
+    makerCollateralInfo,
+    takerCollateralTokens,
+    makerCollateralTokens,
+    protocolCollateralTokens,
+  } = params;
+
   const takerCollateralInfoPda = convergence
     .collateral()
     .pdas()
@@ -153,27 +168,34 @@ export const settleTwoPartyDefaultBuilder = async (
       user: responseModel.maker,
       programs,
     });
-  const takerCollateralTokenPda = convergence
+  const takerCollateralTokensPda = convergence
     .collateral()
     .pdas()
     .collateralToken({
       user: rfqModel.taker,
       programs,
     });
-  const makerCollateralTokenPda = convergence
+  const makerCollateralTokensPda = convergence
     .collateral()
     .pdas()
     .collateralToken({
       user: responseModel.maker,
       programs,
     });
-  const protocolCollateralTokenPda = convergence
+  const protocolCollateralTokensPda = convergence
     .collateral()
     .pdas()
     .collateralToken({
       user: protocol.authority,
       programs,
     });
+
+  takerCollateralInfo = takerCollateralInfo ?? takerCollateralInfoPda;
+  makerCollateralInfo = makerCollateralInfo ?? makerCollateralInfoPda;
+  takerCollateralTokens = takerCollateralTokens ?? takerCollateralTokensPda;
+  makerCollateralTokens = makerCollateralTokens ?? makerCollateralTokensPda;
+  protocolCollateralTokens =
+    protocolCollateralTokens ?? protocolCollateralTokensPda;
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -183,11 +205,11 @@ export const settleTwoPartyDefaultBuilder = async (
           protocol: protocol.address,
           rfq,
           response,
-          takerCollateralInfo: takerCollateralInfoPda,
-          makerCollateralInfo: makerCollateralInfoPda,
-          takerCollateralTokens: takerCollateralTokenPda,
-          makerCollateralTokens: makerCollateralTokenPda,
-          protocolCollateralTokens: protocolCollateralTokenPda,
+          takerCollateralInfo,
+          makerCollateralInfo,
+          takerCollateralTokens,
+          makerCollateralTokens,
+          protocolCollateralTokens,
           tokenProgram: tokenProgram.address,
         },
         rfqProgram.address

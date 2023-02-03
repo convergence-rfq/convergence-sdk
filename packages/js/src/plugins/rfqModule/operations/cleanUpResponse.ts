@@ -64,17 +64,22 @@ export type CleanUpResponseOperation = Operation<
 export type CleanUpResponseInput = {
   /** The Maker of the Response */
   maker: PublicKey;
+  
   /**
    * The address of the protocol
    */
   protocol?: PublicKey;
 
+  /** The address of the DAO. */
   dao: PublicKey;
-  /** The address of the Rfq account */
+
+  /** The address of the Rfq account. */
   rfq: PublicKey;
-  /** The address of the Reponse account */
+
+  /** The address of the Reponse account. */
   response: PublicKey;
 
+  /** The first entity (Maker or Taker) to begin settlement preparation. */
   firstToPrepare: PublicKey;
 };
 

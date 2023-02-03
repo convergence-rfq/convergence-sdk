@@ -66,32 +66,39 @@ export type CreateRfqInput = {
    */
   taker?: Signer;
 
-  /** Optional Rfq keypair */
+  /** Optional Rfq keypair. */
   keypair?: Keypair;
 
-  /** Optional quote asset account. */
+  /** The quote asset account. */
   quoteAsset: QuoteAsset;
 
-  /** The legs of the order. */
+  /** The instruments of the order, used to construct legs. */
   instruments: (
     | SpotInstrument
     | PsyoptionsEuropeanInstrument
     | PsyoptionsAmericanInstrument
   )[];
 
-  /**
-   * The type of order.
-   *
-   * @defaultValue Defaults to creating a two-way order
-   */
+  /** The type of order. */
   orderType: OrderType;
 
+  /** The type of the Rfq, specifying whether we fix the number of
+   * base assets to be exchanged, the number of quote assets,
+   * or neither.
+   */
   fixedSize: FixedSize;
 
+  /** The active window (in seconds). */
   activeWindow?: number;
 
+  /** The settling window (in seconds). */
   settlingWindow?: number;
 
+  /** The sum of the sizes of all legs of the Rfq,
+   * including legs added in the future (if any).
+   * This can be calculated automatically if
+   * additional legs will not be added in 
+   * the future. */
   legSize?: number;
 };
 

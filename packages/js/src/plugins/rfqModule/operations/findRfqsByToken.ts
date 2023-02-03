@@ -54,32 +54,6 @@ export type FindRfqsByTokenOperation = Operation<
 export type FindRfqsByTokenInput = {
   /** The address of the mint account. */
   mintAddress: PublicKey;
-
-  /**
-   * The explicit token account to fetch with the Rfq.
-   *
-   * If provided, and if that address is valid, the Rfq returned
-   * will be of the type `RfqWithToken`.
-   *
-   * Alternatively, you may use the `tokenOwner` parameter to fetch the
-   * associated token account.
-   *
-   * @defaultValue Defaults to not fetching the token account.
-   */
-  tokenAddress?: PublicKey;
-
-  /**
-   * The associated token account to fetch with the Rfq.
-   *
-   * If provided, and if that account exists, the Rfq returned
-   * will be of the type `RfqWithToken`.
-   *
-   * Alternatively, you may use the `tokenAddress` parameter to fetch the
-   * token account at an explicit address.
-   *
-   * @defaultValue Defaults to not fetching the associated token account.
-   */
-  tokenOwner?: PublicKey;
 };
 
 /**

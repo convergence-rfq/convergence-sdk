@@ -53,17 +53,22 @@ export type RevertSettlementPreparationOperation = Operation<
  * @category Inputs
  */
 export type RevertSettlementPreparationInput = {
-  /** The protocol address */
+  /** The protocol address. */
   protocol?: PublicKey;
-  /** The Rfq address */
+
+  /** The Rfq address. */
   rfq: PublicKey;
-  /** The response address */
+
+  /** The Response address. */
   response: PublicKey;
 
   /*
    * Args
    */
 
+  /** The side (Maker or Taker) that is reverting
+   * settlement preparation.
+   */
   side: AuthoritySide;
 };
 

@@ -15,10 +15,16 @@ const Key = 'FindResponseByAddressOperation' as const;
  * Finds Response by a given address.
  *
  * ```ts
+ * 
+ * const { rfqResponse } = 
+ *   await convergence
+ *     .rfqs()
+ *     .respond(...)
+ * 
  * const rfq = await convergence
  *   .rfqs()
  *   .findResponseByAddress({ 
- *     address 
+ *     address: rfqResponse.address 
  *   });
  * ```
  *

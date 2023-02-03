@@ -21,16 +21,17 @@ const Key = 'ConfirmResponseOperation' as const;
  * ```ts
  *
  * const { rfq } = await convergence.rfqs.create(...);
- * const { rfqResponse } = await convergence
- *                                 .rfqs()
- *                                 .respond({ rfq: rfq.address, ... });
+ * const { rfqResponse } =
+ *   await convergence
+ *     .rfqs()
+ *     .respond({ rfq: rfq.address, ... });
  *
  * await convergence
  *   .rfqs()
  *   .confirmResponse({
- *     rfq,
- *     response,
- *     side
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     side: Side.Bid
  *   });
  * ```
  *
@@ -56,27 +57,34 @@ export type ConfirmResponseOperation = Operation<
  */
 export type ConfirmResponseInput = {
   /**
-   * The taker of the Rfq as a Signer
+   * The taker of the Rfq as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
-  /** The address of the protocol */
+
+  /** The address of the protocol. */
   protocol?: PublicKey;
+
   /** The address of the Rfq account. */
   rfq: PublicKey;
-  /** The address of the Response */
+
+  /** The address of the Response. */
   response: PublicKey;
-  /** The address of the Taker's collateral info account */
+
+  /** The address of the Taker's collateral info account. */
   collateralInfo?: PublicKey;
-  /** The address of the Maker's collateral info account */
+
+  /** The address of the Maker's collateral info account. */
   makerCollateralInfo?: PublicKey;
-  /** The address of the collateral token */
+
+  /** The address of the collateral token. */
   collateralToken?: PublicKey;
-  /** The address of the risk engine */
+
+  /** The address of the risk engine program. */
   riskEngine?: PublicKey;
 
-  /** The side */
+  /** The Side to confirm from the Response. */
   side: Side;
 
   /** ??? */

@@ -42,7 +42,7 @@ export type FindRfqsByInstrumentOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByInstrumentInput = {
-  /** The program to search for. */
+  /** The instrument program to search for. */
   instrumentProgram: Program;
 };
 

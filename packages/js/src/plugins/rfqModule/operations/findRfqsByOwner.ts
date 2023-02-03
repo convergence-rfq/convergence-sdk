@@ -18,7 +18,7 @@ const Key = 'FindRfqsByOwnerOperation' as const;
  * ```ts
  * const rfqs = await convergence
  *   .rfqs()
- *   .findAllByOwner({ owner };
+ *   .findAllByOwner({ owner: taker.publicKey };
  * ```
  *
  * @group Operations
