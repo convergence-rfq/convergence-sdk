@@ -16,6 +16,7 @@ import {
   token,
   toRiskCategoryInfo,
   toScenario,
+  devnetAirdrops,
 } from '@convergence-rfq/sdk';
 
 type Options = any;
@@ -262,103 +263,143 @@ const registerMint = async (options: Options) => {
   console.log('Success!');
 };
 
+const getRegisteredMints = async (options: Options) => {
+  console.log('Getting registered mints...');
+  const cvg = await createCvg(options);
+  const mints = await cvg.protocol().getRegisteredMints();
+  mints.map((x) => console.log('Mint:', x.address.toString()));
+  console.log('Success!');
+};
+
+const airdropDevnetTokens = async (options: Options) => {
+  console.log('Airdropping devnet tokens...');
+  const cvg = await createCvg(options);
+  const owner = new PublicKey(options.owner);
+  const { collateralWallet } = await devnetAirdrops(cvg, owner);
+  console.log('Collateral wallet:', collateralWallet.address.toString());
+  console.log('Success!');
+};
+
 /// CLI
 
 const program = new Command();
 program.name('convergence').version('2.0.8').description('Convergence RFQ CLI');
 
-const airdropCmd = program
-  .command('airdrop')
-  .description('Airdrops SOL to the current user')
-  .option('--amount <value>', 'Amount to airdrop in SOL', '1')
-  .action(airdrop);
-const createMintCmd = program
-  .command('create-mint')
-  .description('Creates mint')
-  .requiredOption('--decimals <value>', 'Decimals')
-  .action(createMint);
-const createWalletCmd = program
-  .command('create-wallet')
-  .description('Creates wallet')
-  .requiredOption('--owner <value>', 'Owner address')
-  .requiredOption('--mint <value>', 'Mint address')
-  .action(createWallet);
-const mintToCmd = program
-  .command('mint-to')
-  .description('Mints tokens to wallet')
-  .requiredOption('--mint <value>', 'Mint address')
-  .requiredOption('--wallet <value>', 'Wallet address')
-  .requiredOption('--amount <value>', 'Mint amount')
-  .action(mintTo);
-const initializeProtocolCmd = program
-  .command('initialize-protocol')
-  .description('Initializes protocol')
-  .option('--maker-fee <value>', 'Maker fee')
-  .option('--taker-fee <value>', 'Taker fee')
-  .option('--collateral-mint <value>', 'Collateral mint address')
-  .action(initializeProtocol);
-const initializeRiskEngineCmd = program
-  .command('initialize-risk-engine')
-  .description('Initializes risk engine')
-  .action(initializeRiskEngine);
-const setRiskEngineInstrumentTypeCmd = program
-  .command('set-risk-engine-instrument-type')
-  .description('Sets risk engine instrument type')
-  .option('--type <value>', 'Instrument type')
-  .option('--program <value>', 'Instrument program')
-  .action(setRiskEngineInstrumentType);
-const setRiskEngineRiskCategoriesInfoCmd = program
-  .command('set-risk-engine-risk-categories-info')
-  .description('Sets risk engine risk categories info')
-  .requiredOption('--category <value>', 'Category')
-  .requiredOption('--new-value <value>', 'New value')
-  .action(setRiskEngineCategoriesInfo);
-const addInstrumentCmd = program
-  .command('add-instrument')
-  .description('Adds instrument')
-  .option('--instrument-program <value>', 'Instrument program address')
-  .option('--can-be-used-as-quote <value>', 'Can be used as quote')
-  .option(
-    '--validate-data-account-amount <value>',
-    'Validate data account amount'
-  )
-  .option(
-    '--prepare-to-settle-account-amount <value>',
-    'Prepare to settle account amount'
-  )
-  .option('--settle-account-amount <value>', 'Settle account amount')
-  .option(
-    '--revert-preparation-account-amount <value>',
-    'Revert preparation account amount'
-  )
-  .option('--clean-up-account-amount <value>', 'Clean up account amount')
-  .action(addInstrument);
-const addBaseAssetCmd = program
-  .command('add-base-asset')
-  .description('Adds base asset')
-  .requiredOption('--ticker <value>', 'Ticker')
-  .requiredOption('--oracle-address <value>', 'Oracle address')
-  .option('--oracle-kind <value>', 'Oracle kind', 'Switchboard')
-  .option('--risk-category <value>', 'Risk category', 'very-low')
-  .action(addBaseAsset);
-const registerMintCmd = program
-  .command('register-mint')
-  .description('Registers mint')
-  .requiredOption('--mint <value>', 'Mint address')
-  .option('--base-asset-index <value>', 'Base asset index')
-  .action(registerMint);
-
-addDefaultArgs(airdropCmd);
-addDefaultArgs(createMintCmd);
-addDefaultArgs(createWalletCmd);
-addDefaultArgs(mintToCmd);
-addDefaultArgs(initializeProtocolCmd);
-addDefaultArgs(initializeRiskEngineCmd);
-addDefaultArgs(setRiskEngineRiskCategoriesInfoCmd);
-addDefaultArgs(addInstrumentCmd);
-addDefaultArgs(setRiskEngineInstrumentTypeCmd);
-addDefaultArgs(addBaseAssetCmd);
-addDefaultArgs(registerMintCmd);
+addDefaultArgs(
+  program
+    .command('airdrop')
+    .description('Airdrops SOL to the current user')
+    .option('--amount <value>', 'Amount to airdrop in SOL', '1')
+    .action(airdrop)
+);
+addDefaultArgs(
+  program
+    .command('create-mint')
+    .description('Creates mint')
+    .requiredOption('--decimals <value>', 'Decimals')
+    .action(createMint)
+);
+addDefaultArgs(
+  program
+    .command('create-wallet')
+    .description('Creates wallet')
+    .requiredOption('--owner <value>', 'Owner address')
+    .requiredOption('--mint <value>', 'Mint address')
+    .action(createWallet)
+);
+addDefaultArgs(
+  program
+    .command('mint-to')
+    .description('Mints tokens to wallet')
+    .requiredOption('--mint <value>', 'Mint address')
+    .requiredOption('--wallet <value>', 'Wallet address')
+    .requiredOption('--amount <value>', 'Mint amount')
+    .action(mintTo)
+);
+addDefaultArgs(
+  program
+    .command('initialize-protocol')
+    .description('Initializes protocol')
+    .option('--maker-fee <value>', 'Maker fee')
+    .option('--taker-fee <value>', 'Taker fee')
+    .option('--collateral-mint <value>', 'Collateral mint address')
+    .action(initializeProtocol)
+);
+addDefaultArgs(
+  program
+    .command('initialize-risk-engine')
+    .description('Initializes risk engine')
+    .action(initializeRiskEngine)
+);
+addDefaultArgs(
+  program
+    .command('set-risk-engine-instrument-type')
+    .description('Sets risk engine instrument type')
+    .option('--type <value>', 'Instrument type')
+    .option('--program <value>', 'Instrument program')
+    .action(setRiskEngineInstrumentType)
+);
+addDefaultArgs(
+  program
+    .command('set-risk-engine-risk-categories-info')
+    .description('Sets risk engine risk categories info')
+    .requiredOption('--category <value>', 'Category')
+    .requiredOption('--new-value <value>', 'New value')
+    .action(setRiskEngineCategoriesInfo)
+);
+addDefaultArgs(
+  program
+    .command('add-instrument')
+    .description('Adds instrument')
+    .option('--instrument-program <value>', 'Instrument program address')
+    .option('--can-be-used-as-quote <value>', 'Can be used as quote')
+    .option(
+      '--validate-data-account-amount <value>',
+      'Validate data account amount'
+    )
+    .option(
+      '--prepare-to-settle-account-amount <value>',
+      'Prepare to settle account amount'
+    )
+    .option('--settle-account-amount <value>', 'Settle account amount')
+    .option(
+      '--revert-preparation-account-amount <value>',
+      'Revert preparation account amount'
+    )
+    .option('--clean-up-account-amount <value>', 'Clean up account amount')
+    .action(addInstrument)
+);
+addDefaultArgs(
+  program
+    .command('add-base-asset')
+    .description('Adds base asset')
+    .requiredOption('--ticker <value>', 'Ticker')
+    .requiredOption('--oracle-address <value>', 'Oracle address')
+    .option('--oracle-kind <value>', 'Oracle kind', 'Switchboard')
+    .option('--risk-category <value>', 'Risk category', 'very-low')
+    .action(addBaseAsset)
+);
+addDefaultArgs(
+  program
+    .command('register-mint')
+    .description('Registers mint')
+    .requiredOption('--mint <value>', 'Mint address')
+    .option('--base-asset-index <value>', 'Base asset index')
+    .action(registerMint)
+);
+addDefaultArgs(
+  program
+    .command('get-registered-mints')
+    .description('Get registered mints')
+    .action(getRegisteredMints)
+);
+addDefaultArgs(
+  program
+    .command('airdrop-devnet-tokens')
+    .description('Airdrops devnet tokens')
+    .requiredOption('--owner <value>', 'Owner address')
+    .action(airdropDevnetTokens)
+);
 
 /// EXECUTE
 

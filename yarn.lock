@@ -1244,17 +1244,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-<<<<<<< HEAD
 "@convergence-rfq/spot-instrument@^2.0.15":
   version "2.0.15"
   resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.0.15.tgz#c9814386b8e1e7c906458bf8b5b4f370322f4ca9"
   integrity sha512-LFwHC+0adGkT1N30EgX52E+hJCP0FWchaC8wbUkRDWuVjK3H2gK76oiSKaZrj1vLassav4LdtG+Sr6rg7/rSMA==
-=======
-"@convergence-rfq/spot-instrument@2.0.13":
-  version "2.0.13"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.0.13.tgz#7ca74dd2bbdb046d12f1cac96d90603d65b36685"
-  integrity sha512-PN29DeNCE/+vllqzPyvBUhub43B6eSsU9352sqXa1JnWSkqdk9fLlmfRP+eW3UIvPLkF4H3rzMv/avPGPHBL1w==
->>>>>>> 74839c436ca3d33491e8f7a3af141562f03f1866
   dependencies:
     "@metaplex-foundation/beet" "^0.6.1"
     "@metaplex-foundation/beet-solana" "^0.3.1"
