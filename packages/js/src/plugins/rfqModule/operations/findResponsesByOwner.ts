@@ -83,32 +83,31 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
         scope.throwIfCanceled();
 
         return responsesByowner;
-      } else {
-        const gpaBuilder = new GpaBuilder(
-          convergence,
-          convergence.programs().getRfq().address
-        );
-        const unparsedAccounts = await gpaBuilder.get();
-        const responseAccounts = unparsedAccounts
-          .map<Response | null>((account) => {
-            if (account == null) {
-              return null;
-            }
-            try {
-              return toResponse(toResponseAccount(account));
-            } catch (e) {
-              return null;
-            }
-          })
-          .filter((response): response is Response => response != null);
-        for (const response of responseAccounts) {
-          if (response.maker.toBase58() === owner.toBase58()) {
-            responsesByowner.push(response);
-          }
-        }
-        scope.throwIfCanceled();
-
-        return responsesByowner;
       }
+      const gpaBuilder = new GpaBuilder(
+        convergence,
+        convergence.programs().getRfq().address
+      );
+      const unparsedAccounts = await gpaBuilder.get();
+      const responseAccounts = unparsedAccounts
+        .map<Response | null>((account) => {
+          if (account == null) {
+            return null;
+          }
+          try {
+            return toResponse(toResponseAccount(account));
+          } catch (e) {
+            return null;
+          }
+        })
+        .filter((response): response is Response => response != null);
+      for (const response of responseAccounts) {
+        if (response.maker.toBase58() === owner.toBase58()) {
+          responsesByowner.push(response);
+        }
+      }
+      scope.throwIfCanceled();
+
+      return responsesByowner;
     },
   };

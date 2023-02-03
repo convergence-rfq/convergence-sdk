@@ -80,28 +80,24 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         scope.throwIfCanceled();
 
         return rfqsByOwner;
-      } else {
-        const rfqProgram = convergence.programs().getRfq(programs);
-        const rfqGpaBuilder = new RfqGpaBuilder(
-          convergence,
-          rfqProgram.address
-        );
-        const gotRfqs = await rfqGpaBuilder.whereTaker(owner).get();
-        scope.throwIfCanceled();
-
-        return gotRfqs
-          .map<Rfq | null>((account) => {
-            if (account === null) {
-              return null;
-            }
-
-            try {
-              return toRfq(toRfqAccount(account));
-            } catch (e) {
-              return null;
-            }
-          })
-          .filter((rfq): rfq is Rfq => rfq !== null);
       }
+      const rfqProgram = convergence.programs().getRfq(programs);
+      const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
+      const gotRfqs = await rfqGpaBuilder.whereTaker(owner).get();
+      scope.throwIfCanceled();
+
+      return gotRfqs
+        .map<Rfq | null>((account) => {
+          if (account === null) {
+            return null;
+          }
+
+          try {
+            return toRfq(toRfqAccount(account));
+          } catch (e) {
+            return null;
+          }
+        })
+        .filter((rfq): rfq is Rfq => rfq !== null);
     },
   };

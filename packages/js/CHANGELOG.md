@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 2.0.24
+
+### Patch Changes
+
+- update findResponsesByOwner & findRfqsByOwner
+
 ## 2.0.20
 
 ### Patch Changes
