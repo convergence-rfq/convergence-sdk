@@ -1,12 +1,15 @@
 {
   "name": "@convergence-rfq/cli",
-  "version": "2.0.1",
+  "version": "2.0.8",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
   "module": "dist/esm/index.mjs",
   "main": "dist/cjs/index.cjs",
+  "bin": {
+    "convergence": "dist/cjs/index.cjs"
+  },
   "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
@@ -30,7 +33,7 @@
     "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "^2.0.21",
+    "@convergence-rfq/sdk": "^2.0.23",
     "@solana/web3.js": "^1.73.0",
     "commander": "^10.0.0",
     "figlet": "^1.5.2"
