@@ -55,6 +55,8 @@ export const SWITCHBOARD_SOL_ORACLE = new PublicKey(
   'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
 );
 
+export const RPC_ENDPOINT = 'https://api.devnet.solana.com'; // 'http://127.0.0.1:8899'
+
 export const BTC_DECIMALS = 9;
 export const SOL_DECIMALS = 9;
 export const USDC_DECIMALS = 6;
@@ -69,12 +71,9 @@ export type ConvergenceTestOptions = {
 };
 
 export const createCvg = (options: ConvergenceTestOptions = {}) => {
-  const connection = new Connection(
-    options.rpcEndpoint ?? 'http://127.0.0.1:8899',
-    {
-      commitment: options.commitment ?? 'confirmed',
-    }
-  );
+  const connection = new Connection(options.rpcEndpoint ?? RPC_ENDPOINT, {
+    commitment: options.commitment ?? 'confirmed',
+  });
   return Convergence.make(connection, { skipPreflight: options.skipPreflight });
 };
 
