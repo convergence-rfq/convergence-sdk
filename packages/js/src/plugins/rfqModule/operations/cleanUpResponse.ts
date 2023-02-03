@@ -24,9 +24,21 @@ const Key = 'CleanUpResponseOperation' as const;
  * Cleans up a Response.
  *
  * ```ts
+ *
+ * const { rfq } = await convergence.rfqs.create(...);
+ * const { rfqResponse } =
+ *   await convergence
+ *     .rfqs()
+ *     .respond({ rfq: rfq.address, ... });
+ *
  * await convergence
  *   .rfqs()
- *   .cleanUpResponse({ address };
+ *   .cleanUpResponse({
+ *     dao,
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     firstToPrepare: taker.publicKey
+ *   });
  * ```
  *
  * @group Operations
@@ -52,17 +64,22 @@ export type CleanUpResponseOperation = Operation<
 export type CleanUpResponseInput = {
   /** The Maker of the Response */
   maker: PublicKey;
+  
   /**
    * The address of the protocol
    */
   protocol?: PublicKey;
 
+  /** The address of the DAO. */
   dao: PublicKey;
-  /** The address of the Rfq account */
+
+  /** The address of the Rfq account. */
   rfq: PublicKey;
-  /** The address of the Reponse account */
+
+  /** The address of the Reponse account. */
   response: PublicKey;
 
+  /** The first entity (Maker or Taker) to begin settlement preparation. */
   firstToPrepare: PublicKey;
 };
 
@@ -161,10 +178,6 @@ export const cleanUpResponseBuilder = async (
     .getPsyoptionsAmericanInstrument();
 
   const initializedLegs = responseModel.legPreparationsInitializedBy.length;
-
-  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
-    Buffer.from(rfqModel.quoteAsset.instrumentData)
-  ).mint;
 
   for (let i = 0; i < initializedLegs; i++) {
     const leg = rfqModel.legs[i];
@@ -279,7 +292,7 @@ export const cleanUpResponseBuilder = async (
     // `receiver_tokens`
     {
       pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        mint: quoteMint,
+        mint: rfqModel.quoteMint,
         owner: dao,
         programs,
       }),

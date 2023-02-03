@@ -1245,35 +1245,6 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/sdk@workspaces:*":
-  version "2.0.23"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/sdk/-/sdk-2.0.23.tgz#81503a6cdb84ba34f730f61382e9253ec17e9159"
-  integrity sha512-iFXJFxapGyYaAV5OKUtMAJRVbloYXoPf4RrRRUPsv7m3ct0l0PHXNegl9+X0/a3aCOJNCRmlBFhwiMndrSFDmw==
-  dependencies:
-    "@bundlr-network/client" "^0.8.8"
-    "@convergence-rfq/beet" "^0.7.10"
-    "@convergence-rfq/beet-solana" "^0.4.11"
-    "@convergence-rfq/psyoptions-american-instrument" "2.0.6"
-    "@convergence-rfq/psyoptions-european-instrument" "2.0.9"
-    "@convergence-rfq/rfq" "^2.0.16"
-    "@convergence-rfq/risk-engine" "^2.0.21"
-    "@convergence-rfq/spot-instrument" "2.0.13"
-    "@mithraic-labs/psy-american" "^0.2.3"
-    "@mithraic-labs/tokenized-euros" "^0.2.2"
-    "@noble/ed25519" "^1.7.1"
-    "@noble/hashes" "^1.1.3"
-    "@solana/spl-token" "^0.3.5"
-    "@solana/web3.js" "^1.63.1"
-    bignumber.js "^9.0.2"
-    bn.js "^5.2.1"
-    bs58 "^5.0.0"
-    buffer "^6.0.3"
-    debug "^4.3.4"
-    eventemitter3 "^4.0.7"
-    merkletreejs "^0.2.32"
-    mime "^3.0.0"
-    node-fetch "^2.6.7"
-
 "@convergence-rfq/spot-instrument@2.0.13":
   version "2.0.13"
   resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.0.13.tgz#7ca74dd2bbdb046d12f1cac96d90603d65b36685"

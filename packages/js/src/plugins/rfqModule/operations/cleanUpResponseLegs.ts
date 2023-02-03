@@ -24,9 +24,21 @@ const Key = 'CleanUpResponseLegsOperation' as const;
  * Cleans up Legs for a Response
  *
  * ```ts
+ *
+ * const { rfq } = await convergence.rfqs.create(...);
+ * const { rfqResponse } = await convergence
+ *                                 .rfqs()
+ *                                 .respond({ rfq: rfq.address, ... });
+ *
  * await convergence
  *   .rfqs()
- *   .cleanUpResponseLegs({ address };
+ *   .cleanUpResponseLegs({
+ *     dao,
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     firstToPrepare: maker.publicKey,
+ *     legAmountToClear: 5
+ *   });
  * ```
  *
  * @group Operations
@@ -51,16 +63,20 @@ export type CleanUpResponseLegsOperation = Operation<
  */
 export type CleanUpResponseLegsInput = {
   /**
-   * The address of the protocol
+   * The address of the protocol.
    */
   protocol?: PublicKey;
 
+  /** The address of the DAO. */
   dao: PublicKey;
-  /** The address of the Rfq account */
+
+  /** The address of the Rfq account. */
   rfq: PublicKey;
-  /** The address of the Reponse account */
+
+  /** The address of the Reponse account. */
   response: PublicKey;
 
+  /** The first entity (Maker or Taker) to begin settlement preparation. */
   firstToPrepare: PublicKey;
 
   /*

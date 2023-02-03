@@ -70,6 +70,8 @@ const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
 let optionMarket: OptionMarketWithKey | null;
 let optionMarketPubkey: PublicKey;
 
+let europeanOptionPutMint: PublicKey;
+
 test('[setup] it can create Convergence instance', async (t: Test) => {
   cvg = await convergenceCli(SKIP_PREFLIGHT);
 
@@ -587,88 +589,6 @@ test('[collateralModule] it can find collateral by user', async (t: Test) => {
 
 // RFQ
 
-test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().create({
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 1,
-        side: Side.Bid,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 1,
-        side: Side.Bid,
-      }),
-    ],
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    activeWindow: 5_000,
-    settlingWindow: 1_000,
-    taker,
-  });
-
-  const { rfq: finalizedRfq } = await cvg.rfqs().finalizeRfqConstruction({
-    taker,
-    rfq: rfq.address,
-  });
-
-  spok(t, finalizedRfq, {
-    $topic: 'Finalized RFQ',
-    model: 'rfq',
-    state: StoredRfqState.Active,
-  });
-});
-
-test('[rfqModule] it can create and finalize, then respond to RFQ and confirm response', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-    ],
-    taker,
-    orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-  });
-  const { rfqResponse } = await cvg.rfqs().respond({
-    maker,
-    rfq: rfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    ask: null,
-    keypair: Keypair.generate(),
-  });
-
-  const respondedToRfq = await cvg.rfqs().refreshRfq(rfq.address);
-
-  spok(t, rfq, {
-    $topic: 'Finalized Rfq',
-    model: 'rfq',
-    address: spokSamePubkey(respondedToRfq.address),
-  });
-  spok(t, rfqResponse, {
-    $topic: 'Responded to Rfq',
-    model: 'response',
-    state: StoredResponseState.Active,
-  });
-
-  await cvg.rfqs().confirmResponse({
-    taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    side: Side.Bid,
-    overrideLegMultiplierBps: null,
-  });
-});
-
 test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collateral, and clean up RFQ', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
     taker,
@@ -711,11 +631,11 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
 
   refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
 
-  spok(t, refreshedRfq, {
-    $topic: 'Unlocked rfq collateral',
-    model: 'rfq',
-    // nonResponseTakerCollateralLocked: new BN(0),
-  });
+  t.same(
+    refreshedRfq.nonResponseTakerCollateralLocked.toString(),
+    '0',
+    'Expected 0 locked taker collateral'
+  );
 
   await cvg.rfqs().cleanUpRfq({
     rfq: rfq.address,
@@ -723,7 +643,7 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
   });
 });
 
-test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlement, prepare more legs settlement, settle', async (t: Test) => {
+test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlement, prepare more legs settlement, partially settle legs, settle', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -753,8 +673,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -762,7 +680,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -791,84 +708,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     rfq: rfq.address,
     response: rfqResponse.address,
     legAmountToPrepare: 1,
-  });
-
-  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  spok(t, refreshedResponse, {
-    $topic: 'Prepared Settlement',
-    model: 'response',
-    state: StoredResponseState.ReadyForSettling,
-  });
-
-  await cvg.rfqs().settle({
-    maker: maker.publicKey,
-    taker: taker.publicKey,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-  });
-
-  refreshedResponse = await cvg.rfqs().refreshResponse(refreshedResponse);
-
-  spok(t, refreshedResponse, {
-    $topic: 'Settled',
-    model: 'response',
-    state: StoredResponseState.Settled,
-  });
-});
-
-test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, partially settle legs, settle', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Bid,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 3,
-        side: Side.Ask,
-      }),
-    ],
-    taker,
-    orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-    activeWindow: 5_000,
-    settlingWindow: 1_000,
-  });
-  const { rfqResponse } = await cvg.rfqs().respond({
-    maker,
-    rfq: rfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    ask: null,
-    keypair: Keypair.generate(),
-  });
-
-  await cvg.rfqs().confirmResponse({
-    taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    side: Side.Bid,
-    overrideLegMultiplierBps: null,
-  });
-
-  await cvg.rfqs().prepareSettlement({
-    caller: taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 2,
-  });
-
-  await cvg.rfqs().prepareSettlement({
-    caller: maker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 2,
   });
 
   let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -894,200 +733,12 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     response: rfqResponse.address,
   });
 
-  refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  spok(t, refreshedResponse, {
-    $topic: 'Settled',
-    model: 'response',
-    state: StoredResponseState.Settled,
-  });
-});
-
-test('[rfqModule] it can unlock RFQ collateral and clean up', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().create({
-    taker,
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 1,
-        side: Side.Bid,
-      }),
-    ],
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    activeWindow: 5_000,
-    settlingWindow: 1_000,
-  });
-
-  await cvg.rfqs().finalizeRfqConstruction({
-    taker,
-    rfq: rfq.address,
-  });
-
-  await cvg.rfqs().cancelRfq({
-    taker,
-    rfq: rfq.address,
-  });
-
-  let refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
-
-  spok(t, refreshedRfq, {
-    $topic: 'rfq model',
-    model: 'rfq',
-    state: StoredRfqState.Canceled,
-  });
-
-  await cvg.rfqs().unlockRfqCollateral({
-    rfq: rfq.address,
-  });
-
-  refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
-
-  spok(t, refreshedRfq, {
-    $topic: 'Unlocked rfq collateral',
-    model: 'rfq',
-    // nonResponseTakerCollateralLocked: new BN(0),
-  });
-
-  await cvg.rfqs().cleanUpRfq({
-    rfq: rfq.address,
-    taker: taker.publicKey,
-  });
-});
-
-test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlement, prepare more legs settlement, settle', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Bid,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 2,
-        side: Side.Ask,
-      }),
-    ],
-    taker,
-    orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-  });
-  const { rfqResponse } = await cvg.rfqs().respond({
-    maker,
-    rfq: rfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    keypair: Keypair.generate(),
-  });
-
-  await cvg.rfqs().confirmResponse({
-    taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    side: Side.Bid,
-    overrideLegMultiplierBps: null,
-  });
-
-  await cvg.rfqs().prepareSettlement({
-    caller: taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 2,
-  });
-
-  await cvg.rfqs().prepareSettlement({
-    caller: maker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 2,
-  });
-
-  await cvg.rfqs().prepareMoreLegsSettlement({
-    caller: taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 1,
-  });
-
-  await cvg.rfqs().prepareMoreLegsSettlement({
-    caller: maker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 1,
-  });
-
-  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  spok(t, refreshedResponse, {
-    $topic: 'Prepared Settlement',
-    model: 'response',
-    state: StoredResponseState.ReadyForSettling,
-  });
-
-  await cvg.rfqs().settle({
-    maker: maker.publicKey,
-    taker: taker.publicKey,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-  });
-
   refreshedResponse = await cvg.rfqs().refreshResponse(refreshedResponse);
 
   spok(t, refreshedResponse, {
     $topic: 'Settled',
     model: 'response',
     state: StoredResponseState.Settled,
-  });
-});
-
-test('[rfqModule] it can create and finalize Rfq, respond, and cancel response', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Bid,
-      }),
-    ],
-    taker,
-    orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-  });
-  const { rfqResponse } = await cvg.rfqs().respond({
-    maker,
-    rfq: rfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    ask: null,
-    keypair: Keypair.generate(),
-  });
-
-  await cvg.rfqs().cancelResponse({
-    maker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-  });
-
-  const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  spok(t, refreshedResponse, {
-    $topic: 'Cancelled response',
-    model: 'response',
-    state: StoredResponseState.Canceled,
   });
 });
 
@@ -1185,6 +836,14 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
 
   const foundRfqs = await cvg.rfqs().findAllByOwner({ owner: taker.publicKey });
 
+  const newFoundRfqs = await cvg
+    .rfqs()
+    .findAllByOwner({ owner: taker.publicKey, rfqs: foundRfqs });
+
+  for (const newFoundRfq of newFoundRfqs) {
+    console.log('new found rfq: ' + newFoundRfq.address.toBase58());
+  }
+
   spok(t, rfq, {
     $topic: 'Created RFQ',
     taker: spokSamePubkey(foundRfqs[0].taker),
@@ -1244,8 +903,6 @@ test('[riskEngineModule] it can calculate collateral for response', async (t: Te
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.riskEngine().calculateCollateralForResponse({
@@ -1270,6 +927,7 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     1_000_000,
     3_600
   );
+  europeanOptionPutMint = euroMeta.putOptionMint;
 
   const instrument1 = new PsyoptionsEuropeanInstrument(
     cvg,
@@ -1315,8 +973,6 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1324,7 +980,6 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -1365,110 +1020,19 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
 });
 
 test('[rfqModule] it can createRfqAndAddLegs, finalize, respond, confirmResponse, prepareSettlementAndPrepareMoreLegs, partiallySettleLegsAndSettle', async (t: Test) => {
+  const instruments = [];
+  for (let i = 0; i < 25; i++) {
+    instruments.push(
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      })
+    );
+  }
+
   const { rfq } = await cvg.rfqs().createRfqAndAddLegs({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-    ],
     taker,
+    instruments,
     orderType: OrderType.TwoWay,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
     quoteAsset: cvg
@@ -1488,8 +1052,6 @@ test('[rfqModule] it can createRfqAndAddLegs, finalize, respond, confirmResponse
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1535,197 +1097,7 @@ test('[rfqModule] it can createRfqAndAddLegs, finalize, respond, confirmResponse
   });
 });
 
-// test('[rfqModule] it can prepare settlemt and prepare more legs settlemt in a single method', async (t: Test) => {
-//   const makerCollateral = await cvg.collateral().findByUser({
-//     user: maker.publicKey,
-//   });
-//   t.same(
-//     makerCollateral.user.toString(),
-//     maker.publicKey.toString(),
-//     'same address'
-//   );
-//   spok(t, makerCollateral, {
-//     $topic: 'same model',
-//     model: 'collateral',
-//   });
-
-//   const takerCollateral = await cvg.collateral().findByUser({
-//     user: taker.publicKey,
-//   });
-//   t.same(
-//     takerCollateral.user.toString(),
-//     taker.publicKey.toString(),
-//     'same address'
-//   );
-//   spok(t, takerCollateral, {
-//     $topic: 'same model',
-//     model: 'collateral',
-//   });
-// });
-
-test('[collateralModule] it can find collateral by user', async (t: Test) => {
-  const makerCollateral = await cvg.collateral().findByUser({
-    user: maker.publicKey,
-  });
-  t.same(
-    makerCollateral.user.toString(),
-    maker.publicKey.toString(),
-    'same address'
-  );
-  spok(t, makerCollateral, {
-    $topic: 'same model',
-    model: 'collateral',
-  });
-
-  const takerCollateral = await cvg.collateral().findByUser({
-    user: taker.publicKey,
-  });
-  t.same(
-    takerCollateral.user.toString(),
-    taker.publicKey.toString(),
-    'same address'
-  );
-  spok(t, takerCollateral, {
-    $topic: 'same model',
-    model: 'collateral',
-  });
-});
-
-// RFQ
-
-test('[rfqModule] it can create and finalize RFQ construction', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().create({
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-    instruments: [
-      new SpotInstrument(cvg, solMint, {
-        amount: 1,
-        side: Side.Bid,
-      }),
-    ],
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    activeWindow: 5_000,
-    settlingWindow: 1_000,
-    taker,
-  });
-
-  const { rfq: finalizedRfq } = await cvg.rfqs().finalizeRfqConstruction({
-    taker,
-    rfq: rfq.address,
-  });
-
-  spok(t, finalizedRfq, {
-    $topic: 'Finalized RFQ',
-    model: 'rfq',
-    state: StoredRfqState.Active,
-  });
-});
-
-test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlement, prepare more legs settlement, settle', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Bid,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Ask,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 2,
-        side: Side.Ask,
-      }),
-    ],
-    taker,
-    orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-  });
-  const { rfqResponse } = await cvg.rfqs().respond({
-    maker,
-    rfq: rfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    ask: null,
-    keypair: Keypair.generate(),
-  });
-
-  await cvg.rfqs().confirmResponse({
-    taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    side: Side.Bid,
-    overrideLegMultiplierBps: null,
-  });
-
-  await cvg.rfqs().prepareSettlement({
-    caller: taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 2,
-  });
-
-  await cvg.rfqs().prepareSettlement({
-    caller: maker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 2,
-  });
-
-  await cvg.rfqs().prepareMoreLegsSettlement({
-    caller: taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 1,
-  });
-
-  await cvg.rfqs().prepareMoreLegsSettlement({
-    caller: maker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 1,
-  });
-
-  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  spok(t, refreshedResponse, {
-    $topic: 'Prepared Settlement',
-    model: 'response',
-    state: StoredResponseState.ReadyForSettling,
-  });
-
-  await cvg.rfqs().settle({
-    maker: maker.publicKey,
-    taker: taker.publicKey,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-  });
-
-  refreshedResponse = await cvg.rfqs().refreshResponse(refreshedResponse);
-
-  //await cvg.rfqs().unlockRfqCollateral({
-  //  rfq: rfq.address,
-  //});
-
-  await cvg.rfqs().unlockResponseCollateral({
-    response: refreshedResponse.address,
-  });
-
-  spok(t, refreshedResponse, {
-    $topic: 'Settled',
-    model: 'response',
-    state: StoredResponseState.Settled,
-  });
-});
-
-test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, and clean up resp legs', async (t: Test) => {
+test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, clean up response legs, clean up response', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -1753,8 +1125,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -1762,7 +1132,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -1771,7 +1140,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     response: rfqResponse.address,
     legAmountToPrepare: 2,
   });
-  //@ts-ignore
   const firstToPrepare = taker.publicKey;
 
   await cvg.rfqs().prepareSettlement({
@@ -1782,12 +1150,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
   });
 
   let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  spok(t, refreshedResponse, {
-    $topic: 'Prepared Settlement',
-    model: 'response',
-    state: StoredResponseState.ReadyForSettling,
-  });
 
   await cvg.rfqs().settle({
     maker: maker.publicKey,
@@ -1806,13 +1168,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
 
   await cvg.rfqs().unlockResponseCollateral({
     response: rfqResponse.address,
-  });
-
-  spok(t, refreshedResponse, {
-    $topic: 'Unlocked response collateral',
-    model: 'response',
-    // makerCollateralLocked: new BN(0),
-    // takerCollateralLocked: new BN(0),
   });
 
   await cvg.rfqs().cleanUpResponseLegs({
@@ -1822,96 +1177,6 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     firstToPrepare,
     legAmountToClear: 1,
   });
-});
-
-test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, and clean up response', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Bid,
-      }),
-    ],
-    taker,
-    orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-    activeWindow: 5_000,
-    settlingWindow: 1_000,
-  });
-  const { rfqResponse } = await cvg.rfqs().respond({
-    maker,
-    rfq: rfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    ask: null,
-    keypair: Keypair.generate(),
-  });
-
-  await cvg.rfqs().confirmResponse({
-    taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    side: Side.Bid,
-    overrideLegMultiplierBps: null,
-  });
-
-  await cvg.rfqs().prepareSettlement({
-    caller: taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 1,
-  });
-  //@ts-ignore
-  const firstToPrepare = taker.publicKey;
-
-  await cvg.rfqs().prepareSettlement({
-    caller: maker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 1,
-  });
-
-  let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  spok(t, refreshedResponse, {
-    $topic: 'Prepared Settlement',
-    model: 'response',
-    state: StoredResponseState.ReadyForSettling,
-  });
-
-  await cvg.rfqs().settle({
-    maker: maker.publicKey,
-    taker: taker.publicKey,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-  });
-
-  refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  spok(t, refreshedResponse, {
-    $topic: 'Settled',
-    model: 'response',
-    state: StoredResponseState.Settled,
-  });
-
-  await cvg.rfqs().unlockResponseCollateral({
-    response: rfqResponse.address,
-  });
-
-  //TODO: fix BN types (test currently passes, value is 0 on both sides)
-  spok(t, refreshedResponse, {
-    $topic: 'Unlocked response collateral',
-    model: 'response',
-    // makerCollateralLocked: new BN(0),
-    // takerCollateralLocked: new BN(0),
-  });
-
-  refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
   await cvg.rfqs().cleanUpResponse({
     maker: maker.publicKey,
@@ -1922,7 +1187,7 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
   });
 });
 
-test('[rfqModule] it can create and finalize Rfq, respond, and cancel response', async (t: Test) => {
+test('[rfqModule] it can create and finalize Rfq (BaseAsset), respond, and cancel response', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -1944,8 +1209,6 @@ test('[rfqModule] it can create and finalize Rfq, respond, and cancel response',
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().cancelResponse({
@@ -1963,99 +1226,93 @@ test('[rfqModule] it can create and finalize Rfq, respond, and cancel response',
   });
 });
 
-// RFQ UTILS
-
-test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
-  const { rfq: rfq1 } = await cvg.rfqs().create({
+//TODO: add helper method to get number of base asset from response
+test('**[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and cancel response', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    taker,
     instruments: [
       new SpotInstrument(cvg, btcMint, {
-        amount: 1,
+        amount: 5,
         side: Side.Bid,
       }),
     ],
-    orderType: OrderType.Sell,
-    taker,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 100 },
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
   });
-  const { rfq: rfq2 } = await cvg.rfqs().create({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 1,
-        side: Side.Bid,
-      }),
-    ],
-    taker,
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-  });
-  const { rfq: rfq3 } = await cvg.rfqs().create({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 1,
-        side: Side.Bid,
-      }),
-    ],
-    orderType: OrderType.Sell,
-    taker,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+    ask: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
   });
 
-  const [foundRfq1, foundRfq2, foundRfq3] = await cvg
-    .rfqs()
-    .findRfqsByAddresses({
-      addresses: [rfq1.address, rfq2.address, rfq3.address],
-    });
-  spok(t, rfq1, {
-    $topic: 'Created RFQ',
-    model: 'rfq',
-    address: spokSamePubkey(foundRfq1.address),
+  await cvg.rfqs().confirmResponse({
+    taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: Side.Bid,
   });
-  spok(t, rfq2, {
-    $topic: 'Created RFQ',
-    model: 'rfq',
-    address: spokSamePubkey(foundRfq2.address),
+
+  await cvg.rfqs().prepareSettlement({
+    caller: maker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    legAmountToPrepare: 1,
   });
-  spok(t, rfq3, {
-    $topic: 'Created RFQ',
-    model: 'rfq',
-    address: spokSamePubkey(foundRfq3.address),
+  await cvg.rfqs().prepareSettlement({
+    caller: taker,
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    legAmountToPrepare: 1,
+  });
+
+  await cvg.rfqs().settle({
+    maker: maker.publicKey,
+    taker: taker.publicKey,
+    rfq: rfq.address,
+    response: rfqResponse.address,
   });
 });
 
-test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
-  const { rfq } = await cvg.rfqs().create({
+//TODO: add helper method to get number of base asset from response
+test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base quantity', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
-        amount: 1,
+        amount: 5,
         side: Side.Bid,
       }),
     ],
     taker,
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'None', padding: 0 },
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
   });
-
-  const foundRfqs = await cvg.rfqs().findAllByOwner({ owner: taker.publicKey });
-
-  spok(t, rfq, {
-    $topic: 'Created RFQ',
-    taker: spokSamePubkey(foundRfqs[0].taker),
-  });
-  spok(t, rfq, {
-    $topic: 'Created RFQ',
-    taker: spokSamePubkey(foundRfqs[1].taker),
+  //@ts-ignore
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'Standard',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+      legsMultiplierBps: 1_000_000,
+    },
+    ask: {
+      __kind: 'Standard',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+      legsMultiplierBps: 1_000_000,
+    },
   });
 });
 
@@ -2084,8 +1341,6 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   const respondedToRfq = await cvg.rfqs().refreshRfq(rfq.address);
@@ -2109,7 +1364,6 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   // TODO: Finish
@@ -2119,8 +1373,6 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
     response: rfqResponse.address,
   });
 });
-
-// PSYOPTIONS EUROPEANS
 
 test('[psyoptionsAmericanInstrumentModule] it can mint options to taker', async () => {
   const { op, optionMarketKey } = await initializePsyoptionsAmerican(
@@ -2169,8 +1421,6 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -2178,7 +1428,6 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -2272,12 +1521,17 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     model: 'rfq',
     address: spokSamePubkey(rfq.address),
   });
+
+  await cvg.rfqs().finalizeRfqConstruction({
+    taker,
+    rfq: rfq.address,
+  });
 });
 
 // RFQ HELPERS
 
 test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
-  // We we can to this after creating options so that we can test this method
+  // We can to this after creating options so that we can test this method
   // on all instruments
   const rfqs = await cvg.rfqs().findAllByOwner({
     owner: taker.publicKey,
@@ -2291,12 +1545,16 @@ test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can create and finalize RFQ, respond, confirm response, revert settlemt prep', async (t: Test) => {
+test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlemt, partly revert settlemt prep, revert settlemt prep', async (t: Test) => {
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
         amount: 5,
         side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 7,
+        side: Side.Ask,
       }),
     ],
     taker,
@@ -2317,8 +1575,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -2326,72 +1582,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, rev
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
-  });
-
-  await cvg.rfqs().prepareSettlement({
-    caller: maker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    legAmountToPrepare: 1,
-  });
-  sleep(3_001).then(async () => {
-    await cvg.rfqs().revertSettlementPreparation({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      side: AuthoritySide.Maker,
-    });
-  });
-
-  // const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  // sleep(3001).then(() => {
-  //   spok(t, refreshedResponse, {
-  //     $topic: 'Revert settlement preparations',
-  //     model: 'response',
-  //     makerPreparedLegs: spokSameBignum(0),
-  //   });
-  // });
-});
-
-test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlemt, partly revert settlemt prep', async () => {
-  const { rfq } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, btcMint, {
-        amount: 5,
-        side: Side.Bid,
-      }),
-      new SpotInstrument(cvg, btcMint, {
-        amount: 7,
-        side: Side.Ask,
-      }),
-    ],
-    taker,
-    orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
-    activeWindow: 2,
-    settlingWindow: 1,
-  });
-  const { rfqResponse } = await cvg.rfqs().respond({
-    maker,
-    rfq: rfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-    },
-    ask: null,
-    keypair: Keypair.generate(),
-  });
-
-  await cvg.rfqs().confirmResponse({
-    taker,
-    rfq: rfq.address,
-    response: rfqResponse.address,
-    side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -2410,22 +1600,175 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
     });
   });
 
-  // const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  // const makerPreparedLegs = parseInt(
-  //   refreshedResponse.makerPreparedLegs.toString()
-  // );
-
-  // await sleep(3_001);
-  // spok(t, refreshedResponse, {
-  //   $topic: 'Partly revert settlement preparations',
-  //   model: 'response',
-  //   makerPreparedLegs: spokSameBignum(makerPreparedLegs - 1),
-  // });
-  // });
+  await cvg.rfqs().revertSettlementPreparation({
+    rfq: rfq.address,
+    response: rfqResponse.address,
+    side: AuthoritySide.Maker,
+  });
 });
 
-test('[rfqModule] it can create and finalize RFQ, respond, confirm response, taker prepare settlement, settle 1 party default', async () => {
+test('[rfq module] it can find all rfqs by instrument as leg', async (t: Test) => {
+  const spotInstrument = cvg.programs().getSpotInstrument();
+  const rfqs = await cvg
+    .rfqs()
+    .findByInstrument({ instrumentProgram: spotInstrument });
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findRfqsByActive({});
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
+  const rfqs = await cvg
+    .rfqs()
+    .findByToken({ mintAddress: europeanOptionPutMint });
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
+  const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
+  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
+
+test('[rfq module] it can find all responses by maker address', async (t: Test) => {
+  const responses = await cvg
+    .rfqs()
+    .findResponsesByOwner({ owner: maker.publicKey });
+
+  for (const response of responses) {
+    console.log('response', response.address.toBase58());
+  }
+
+  const newResponses = await cvg
+    .rfqs()
+    .findResponsesByOwner({ owner: maker.publicKey, responses });
+
+  for (const newResponse of newResponses) {
+    console.log('new response: ' + newResponse.address.toBase58());
+  }
+
+  t.assert(responses.length > 0, 'responses should be greater than 0');
+});
+
+test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    activeWindow: 2,
+    settlingWindow: 1,
+  });
+
+  //@ts-ignore
+  const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+  });
+
+  //@ts-ignore
+  const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    ask: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+  });
+
+  const responses = await cvg.rfqs().findResponsesByRfq({
+    address: rfq.address,
+  });
+
+  for (const response of responses) {
+    console.log('Rfq response: ' + response.address.toString());
+  }
+});
+
+test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Test) => {
+  const { rfq: rfq1 } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+  });
+  const { rfq: rfq2 } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Bid,
+      }),
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+  });
+  //@ts-ignore
+  const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq1.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+  });
+  //@ts-ignore
+  const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq2.address,
+    ask: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+  });
+
+  const responses = await cvg.rfqs().findResponsesByRfqs({
+    addresses: [rfq1.address, rfq2.address],
+  });
+
+  for (const response of responses) {
+    console.log('Rfq response: ' + response.address.toString());
+  }
+});
+
+test('[rfqModule] it can create and finalize RFQ, respond, confirm response, taker prepare settlement, settle 1 party default', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -2449,8 +1792,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -2458,7 +1799,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   await cvg.rfqs().prepareSettlement({
@@ -2474,144 +1814,9 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
       response: rfqResponse.address,
     });
   });
-
-  // const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  // await sleep(3_001);
-  // spok(t, refreshedResponse, {
-  //   $topic: 'Settle 1 party default',
-  //   model: 'response',
-  //   makerCollateralLocked: spokSameBignum(0),
-  // });
 });
 
-// test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
-//   const { rfq } = await cvg.rfqs().createAndFinalize({
-//     instruments: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Bid,
-//       }),
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Ask,
-//       }),
-//     ],
-//     taker,
-//     orderType: OrderType.TwoWay,
-//     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-//     quoteAsset: cvg
-//       .instrument(new SpotInstrument(cvg, usdcMint))
-//       .toQuoteAsset(),
-//     activeWindow: 2,
-//     settlingWindow: 1,
-//   });
-//   //@ts-ignore
-//   const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
-//     maker,
-//     rfq: rfq.address,
-//     bid: {
-//       __kind: 'FixedSize',
-//       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-//     },
-//     ask: null,
-//     keypair: Keypair.generate(),
-//   });
-//   //@ts-ignore
-//   const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
-//     maker,
-//     rfq: rfq.address,
-//     bid: null,
-//     ask: {
-//       __kind: 'FixedSize',
-//       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-//     },
-//     keypair: Keypair.generate(),
-//   });
-
-//   const responses = await cvg.rfqs().findResponsesByRfq({
-//     address: rfq.address,
-//   });
-
-//   for (const response of responses) {
-//     console.log('Rfq response: ' + response.address.toString());
-//   }
-// });
-
-// test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Test) => {
-//   const { rfq: rfq1 } = await cvg.rfqs().createAndFinalize({
-//     instruments: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Bid,
-//       }),
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Ask,
-//       }),
-//     ],
-//     taker,
-//     orderType: OrderType.TwoWay,
-//     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-//     quoteAsset: cvg
-//       .instrument(new SpotInstrument(cvg, usdcMint))
-//       .toQuoteAsset(),
-//     activeWindow: 2,
-//     settlingWindow: 1,
-//   });
-//   const { rfq: rfq2 } = await cvg.rfqs().createAndFinalize({
-//     instruments: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Bid,
-//       }),
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Ask,
-//       }),
-//     ],
-//     taker,
-//     orderType: OrderType.TwoWay,
-//     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
-//     quoteAsset: cvg
-//       .instrument(new SpotInstrument(cvg, usdcMint))
-//       .toQuoteAsset(),
-//     activeWindow: 2,
-//     settlingWindow: 1,
-//   });
-//   //@ts-ignore
-//   const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
-//     maker,
-//     rfq: rfq1.address,
-//     bid: {
-//       __kind: 'FixedSize',
-//       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-//     },
-//     ask: null,
-//     keypair: Keypair.generate(),
-//   });
-//   //@ts-ignore
-//   const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
-//     maker,
-//     rfq: rfq2.address,
-//     bid: null,
-//     ask: {
-//       __kind: 'FixedSize',
-//       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-//     },
-//     keypair: Keypair.generate(),
-//   });
-
-//   const responses = await cvg.rfqs().findResponsesByRfqs({
-//     addresses: [rfq1.address, rfq2.address],
-//   });
-
-//   for (const response of responses) {
-//     console.log('Rfq response: ' + response.address.toString());
-//   }
-// });
-
-test('[rfqModule] it can create and finalize RFQ, respond, confirm response, settle 2 party default', async () => {
+test('[rfqModule] it can create and finalize RFQ, respond, confirm response, settle 2 party default', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -2639,8 +1844,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
       __kind: 'FixedSize',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
-    ask: null,
-    keypair: Keypair.generate(),
   });
 
   await cvg.rfqs().confirmResponse({
@@ -2648,7 +1851,6 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
     rfq: rfq.address,
     response: rfqResponse.address,
     side: Side.Bid,
-    overrideLegMultiplierBps: null,
   });
 
   sleep(3_001).then(async () => {
@@ -2657,46 +1859,4 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
       response: rfqResponse.address,
     });
   });
-
-  // const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
-
-  // await sleep(3_001);
-  // spok(t, refreshedResponse, {
-  //   $topic: 'Settle 2 party default',
-  //   model: 'response',
-  //   takerCollateralLocked: spokSameBignum(0),
-  //   makerCollateralLocked: spokSameBignum(0),
-  // });
-});
-
-test('[rfq module] it can find all rfqs by instrument as leg', async (t: Test) => {
-  const spotInstrument = cvg.programs().getSpotInstrument();
-  const rfqs = await cvg
-    .rfqs()
-    .findByInstrument({ instrumentProgram: spotInstrument });
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-});
-
-test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
-  const rfqs = await cvg.rfqs().findRfqsByActive({});
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-});
-
-// test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
-//   const rfqs = await cvg
-//     .rfqs()
-//     .findByToken({ mintAddress: europeanOptionPutMint });
-//   t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-// });
-
-test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
-  const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-});
-
-test('[rfq module] it can find all responses by maker  address', async (t: Test) => {
-  const responses = await cvg
-    .rfqs()
-    .findResponsesByOwner({ address: maker.publicKey });
-  t.assert(responses.length > 0, 'responses should be greater than 0');
 });

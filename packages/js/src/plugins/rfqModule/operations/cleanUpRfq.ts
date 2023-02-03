@@ -17,9 +17,14 @@ const Key = 'CleanUpRfqOperation' as const;
  * Cleans up an Rfq.
  *
  * ```ts
+ *
+ * const { rfq } = await convergence.rfqs.create(...);
+ *
  * await convergence
- * .rfqs()
- * .cleanUpRfq({ address };
+ *   .rfqs()
+ *   .cleanUpRfq({
+ *     rfq: rfq.address
+ *   });
  * ```
  *
  * @group Operations
@@ -43,7 +48,9 @@ export type CleanUpRfqOperation = Operation<
  */
 export type CleanUpRfqInput = {
   /**
-   * The Taker
+   * The Taker of the Rfq
+   *
+   *  @defaultValue `convergence.identity().publicKey`
    *
    */
   taker?: PublicKey;
@@ -53,7 +60,7 @@ export type CleanUpRfqInput = {
    */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account */
+  /** The address of the Rfq account. */
   rfq: PublicKey;
 };
 

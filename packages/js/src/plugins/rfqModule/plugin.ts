@@ -33,6 +33,8 @@ import {
   findResponseByAddressOperationHandler,
   findResponsesByRfqOperation,
   findResponsesByRfqOperationHandler,
+  findResponsesByRfqsOperation,
+  findResponsesByRfqsOperationHandler,
   findResponsesByOwnerOperation,
   findResponsesByOwnerOperationHandler,
   findRfqByAddressOperation,
@@ -117,12 +119,12 @@ export const rfqModule = (): ConvergencePlugin => ({
       findResponsesByRfqOperationHandler
     );
     op.register(
-      findResponsesByOwnerOperation,
-      findResponsesByOwnerOperationHandler
+      findResponsesByRfqsOperation,
+      findResponsesByRfqsOperationHandler
     );
     op.register(
-      findResponsesByRfqOperation,
-      findResponsesByRfqOperationHandler
+      findResponsesByOwnerOperation,
+      findResponsesByOwnerOperationHandler
     );
     op.register(findRfqByAddressOperation, findRfqByAddressOperationHandler);
     op.register(

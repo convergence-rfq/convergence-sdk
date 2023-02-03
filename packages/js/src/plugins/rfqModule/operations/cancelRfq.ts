@@ -18,9 +18,12 @@ const Key = 'CancelRfqOperation' as const;
  * Cancels an existing Rfq.
  *
  * ```ts
+ * 
+ * const { rfq } = await convergence.rfqs.create(...);
+ * 
  * await convergence
  *   .rfqs()
- *   .cancel({ address };
+ *   .cancelRfq({ rfq: rfq.address });
  * ```
  *
  * @group Operations
@@ -49,8 +52,10 @@ export type CancelRfqInput = {
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
-  /** The address of the protocol account */
+
+  /** The address of the protocol account. */
   protocol?: PublicKey;
+
   /** The address of the Rfq account. */
   rfq: PublicKey;
 };

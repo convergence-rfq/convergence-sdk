@@ -28,7 +28,7 @@ const Key = 'FindRfqsByTokenOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByToken({ tokenAddress };
+ *   .findByToken({ mintAddress };
  * ```
  *
  * @group Operations
@@ -54,32 +54,6 @@ export type FindRfqsByTokenOperation = Operation<
 export type FindRfqsByTokenInput = {
   /** The address of the mint account. */
   mintAddress: PublicKey;
-
-  /**
-   * The explicit token account to fetch with the Rfq.
-   *
-   * If provided, and if that address is valid, the Rfq returned
-   * will be of the type `RfqWithToken`.
-   *
-   * Alternatively, you may use the `tokenOwner` parameter to fetch the
-   * associated token account.
-   *
-   * @defaultValue Defaults to not fetching the token account.
-   */
-  tokenAddress?: PublicKey;
-
-  /**
-   * The associated token account to fetch with the Rfq.
-   *
-   * If provided, and if that account exists, the Rfq returned
-   * will be of the type `RfqWithToken`.
-   *
-   * Alternatively, you may use the `tokenAddress` parameter to fetch the
-   * token account at an explicit address.
-   *
-   * @defaultValue Defaults to not fetching the associated token account.
-   */
-  tokenOwner?: PublicKey;
 };
 
 /**
@@ -126,14 +100,11 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
       scope.throwIfCanceled();
 
-      const rfqByToken: Rfq[] = [];
+      const rfqsByToken: Rfq[] = [];
 
       for (const rfq of rfqs) {
-        const quoteMint = await convergence.tokens().findMintByAddress({
-          address: new PublicKey(rfq.quoteAsset.instrumentData),
-        });
-        if (quoteMint.address.toBase58() === mintAddress.toBase58()) {
-          rfqByToken.push(rfq);
+        if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
+          rfqsByToken.push(rfq);
         }
         for (const leg of rfq.legs) {
           if (
@@ -145,7 +116,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
             )[0];
 
             if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-              rfqByToken.push(rfq);
+              rfqsByToken.push(rfq);
             }
           } else if (
             leg.instrumentProgram.toBase58() ===
@@ -173,7 +144,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
             if (
               euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
             ) {
-              rfqByToken.push(rfq);
+              rfqsByToken.push(rfq);
             }
           } else if (
             leg.instrumentProgram.toBase58() ===
@@ -184,12 +155,12 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
             )[0];
 
             if (data.mint.toBase58() === mintAddress.toBase58()) {
-              rfqByToken.push(rfq);
+              rfqsByToken.push(rfq);
             }
           }
         }
       }
-      const rfqTokenSorted = [...new Set(rfqByToken)];
-      return rfqTokenSorted;
+      const rfqsTokenSorted = [...new Set(rfqsByToken)];
+      return rfqsTokenSorted;
     },
   };

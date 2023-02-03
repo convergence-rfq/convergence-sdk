@@ -13,12 +13,12 @@ import { Convergence } from '@/Convergence';
 const Key = 'FindRfqsByOwnerOperation' as const;
 
 /**
- * Finds multiple NFTs and SFTs by a given owner.
+ * Finds multiple RFQs by a given owner.
  *
  * ```ts
  * const rfqs = await convergence
  *   .rfqs()
- *   .findAllByOwner({ owner };
+ *   .findAllByOwner({ owner: taker.publicKey };
  * ```
  *
  * @group Operations
@@ -44,6 +44,9 @@ export type FindRfqsByOwnerOperation = Operation<
 export type FindRfqsByOwnerInput = {
   /** The address of the owner. */
   owner: PublicKey;
+
+  /** Optional array of Rfqs to search from. */
+  rfqs?: Rfq[];
 };
 
 /**
@@ -63,15 +66,27 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
-      const { owner } = operation.input;
+      const { owner, rfqs } = operation.input;
       const { programs } = scope;
 
+      if (rfqs) {
+        let rfqsByOwner = [];
+
+        for (const rfq of rfqs) {
+          if (rfq.taker.toBase58() === owner.toBase58()) {
+            rfqsByOwner.push(rfq);
+          }
+        }
+        scope.throwIfCanceled();
+
+        return rfqsByOwner;
+      }
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const rfqs = await rfqGpaBuilder.whereTaker(owner).get();
+      const gotRfqs = await rfqGpaBuilder.whereTaker(owner).get();
       scope.throwIfCanceled();
 
-      return rfqs
+      return gotRfqs
         .map<Rfq | null>((account) => {
           if (account === null) {
             return null;

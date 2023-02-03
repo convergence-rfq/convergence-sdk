@@ -39,7 +39,11 @@ const Key = 'PrepareSettlementOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlement({ caller, rfq, response, legAmountToPrepare };
+ *   .prepareSettlement({
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     legAmountToPrepare: 1
+ *   });
  * ```
  *
  * @group Operations
@@ -64,25 +68,26 @@ export type PrepareSettlementOperation = Operation<
  */
 export type PrepareSettlementInput = {
   /**
-   * The caller to prepare settlement of the Rfq
+   * The caller to prepare settlement of the Rfq.
    *
    * @defaultValue `convergence.identity()`
    */
   caller?: Signer;
 
-  /** The address of the protocol */
+  /** The address of the protocol. */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account */
+  /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** The address of the response account */
+  /** The address of the Response account. */
   response: PublicKey;
 
   /*
    * Args
    */
 
+  /** The number of legs to prepare settlement for. */
   legAmountToPrepare: number;
 };
 
@@ -181,10 +186,6 @@ export const prepareSettlementBuilder = async (
 
   let baseAssetMints: Mint[] = [];
 
-  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
-    Buffer.from(rfqModel.quoteAsset.instrumentData)
-  ).mint;
-
   for (const leg of rfqModel.legs) {
     if (
       leg.instrumentProgram.toBase58() ===
@@ -251,14 +252,14 @@ export const prepareSettlementBuilder = async (
     },
     {
       pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        mint: quoteMint,
+        mint: rfqModel.quoteMint,
         owner: caller.publicKey,
         programs,
       }),
       isSigner: false,
       isWritable: true,
     },
-    { pubkey: quoteMint, isSigner: false, isWritable: false },
+    { pubkey: rfqModel.quoteMint, isSigner: false, isWritable: false },
     {
       pubkey: quoteEscrowPda,
       isSigner: false,

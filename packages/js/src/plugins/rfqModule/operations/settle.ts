@@ -45,16 +45,23 @@ export type SettleOperation = Operation<typeof Key, SettleInput, SettleOutput>;
  * @category Inputs
  */
 export type SettleInput = {
-  maker: PublicKey;
-
-  taker: PublicKey;
-  /** The address of the protocol account. */
+  /** The address of the protocol. */
   protocol?: PublicKey;
+
   /** The address of the Rfq account. */
   rfq: PublicKey;
+
   /** The address of the Response account. */
   response: PublicKey;
 
+  /** The Maker public key address. */
+  maker: PublicKey;
+
+  /** The Taker public key address. */
+  taker: PublicKey;
+
+  /** Optional start index to corresponding to 
+   * the first leg to settle. */
   startIndex?: number;
 };
 
@@ -145,10 +152,6 @@ export const settleBuilder = async (
     .programs()
     .getPsyoptionsAmericanInstrument();
 
-  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
-    Buffer.from(rfqModel.quoteAsset.instrumentData)
-  ).mint;
-  
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];
     const confirmationSide = responseModel.confirmed?.side;
@@ -272,7 +275,7 @@ export const settleBuilder = async (
         .tokens()
         .pdas()
         .associatedTokenAccount({
-          mint: quoteMint,
+          mint: rfqModel.quoteMint,
           owner:
             rfqModel.fixedSize.__kind == 'QuoteAsset' &&
             confirmationSide == Side.Ask
