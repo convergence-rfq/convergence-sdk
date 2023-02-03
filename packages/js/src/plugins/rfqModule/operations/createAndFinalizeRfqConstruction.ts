@@ -32,7 +32,10 @@ const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
  *     quoteAsset,
  *     instruments: [spotInstrument],
  *     orderType: OrderType.Sell,
- *     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1_000_000_000 },
+ *     fixedSize: {
+ *       __kind: 'BaseAsset',
+ *       legsMultiplierBps: 1_000_000_000
+ *     },
  *     activeWindow: 5_000,
  *     settlingWindow: 1_000
  *   });

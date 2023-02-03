@@ -17,7 +17,6 @@ import {
   BTC_DECIMALS,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
-  getResponseBaseAssetAmounts,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
@@ -1240,8 +1239,6 @@ test('**[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and ca
     rfq: rfq.address,
     bid: {
       __kind: 'FixedSize',
-      // 10_000 / (23_500 USDC / 1 BTC) = 0.42
-      // 0.42 * 1 BTC = 0.42 BTC
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
     ask: {
@@ -1249,11 +1246,6 @@ test('**[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and ca
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
   });
-
-  const [bidAmount, askAmount] = getResponseBaseAssetAmounts(rfq, rfqResponse);
-
-  console.log('QuoteAsset RFQ bidAmount: ' + bidAmount.toString());
-  console.log('QuoteAsset RFQ askAmount: ' + askAmount.toString());
 
   await cvg.rfqs().confirmResponse({
     taker,
@@ -1299,6 +1291,7 @@ test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base qu
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
   });
+  //@ts-ignore
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
     rfq: rfq.address,
@@ -1313,16 +1306,6 @@ test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base qu
       legsMultiplierBps: 1_000_000,
     },
   });
-
-  //TODO: this will be wrong at first, need to pass in the confirmation I think
-  const [bidAmount, askAmount] = getResponseBaseAssetAmounts(rfq, rfqResponse);
-
-  console.log(
-    'base asset amounts from response: ' +
-      bidAmount.toString() +
-      ' ' +
-      askAmount.toString()
-  );
 });
 
 test('[riskEngineModule] it can calculate collateral for confirm response', async (t: Test) => {

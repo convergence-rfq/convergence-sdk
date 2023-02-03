@@ -123,6 +123,8 @@ export const unlockRfqCollateralBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { rfq } = params;
 
+  let { collateralInfo } = params;
+
   const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await convergence.protocol().get();
 
@@ -133,6 +135,8 @@ export const unlockRfqCollateralBuilder = async (
     programs,
   });
 
+  collateralInfo = collateralInfo ?? collateralInfoPda;
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -140,7 +144,7 @@ export const unlockRfqCollateralBuilder = async (
         {
           protocol: protocol.address,
           rfq,
-          collateralInfo: collateralInfoPda,
+          collateralInfo,
         },
         rfqProgram.address
       ),
