@@ -17,10 +17,16 @@ const Key = 'CancelResponseOperation' as const;
 /**
  * Cancels an existing Response.
  *
+ * const { rfq } = await convergence.rfqs.createAndFinalize(...);
+ * const { rfqResponse } = await convergence.rfqs.().respond({ rfq: rfq.address, ... });
+ *
  * ```ts
  * await convergence
- * .rfqs()
- * .cancel({ address };
+ *   .rfqs()
+ *   .cancelResponse({
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address
+ *   });
  * ```
  *
  * @group Operations

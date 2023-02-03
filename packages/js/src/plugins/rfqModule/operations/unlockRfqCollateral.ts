@@ -19,7 +19,7 @@ const Key = 'UnlockRfqCollateralOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .unlockRfqCollateral({ address };
+ *   .unlockRfqCollateral({ rfq: rfq.address });
  * ```
  *
  * @group Operations
@@ -43,11 +43,13 @@ export type UnlockRfqCollateralOperation = Operation<
  * @category Inputs
  */
 export type UnlockRfqCollateralInput = {
-  /** The protocol address */
+  /** The protocol address. */
   protocol?: PublicKey;
-  /** The Rfq address */
+
+  /** The Rfq address. */
   rfq: PublicKey;
-  /** The address of the taker's collateralInfo account */
+
+  /** Optional address of the Taker's collateral info account. */
   collateralInfo?: PublicKey;
 };
 
@@ -121,6 +123,8 @@ export const unlockRfqCollateralBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { rfq } = params;
 
+  let { collateralInfo } = params;
+
   const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await convergence.protocol().get();
 
@@ -131,6 +135,8 @@ export const unlockRfqCollateralBuilder = async (
     programs,
   });
 
+  collateralInfo = collateralInfo ?? collateralInfoPda;
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -138,7 +144,7 @@ export const unlockRfqCollateralBuilder = async (
         {
           protocol: protocol.address,
           rfq,
-          collateralInfo: collateralInfoPda,
+          collateralInfo,
         },
         rfqProgram.address
       ),

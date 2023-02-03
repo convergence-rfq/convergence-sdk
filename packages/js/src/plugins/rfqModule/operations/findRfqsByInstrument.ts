@@ -13,7 +13,7 @@ import { Convergence } from '@/Convergence';
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
 /**
- * Finds an RFQ by its token address.
+ * Finds all RFQs corresponding to a given instrument program address.
  *
  * ```ts
  * const rfq = await convergence
@@ -42,7 +42,7 @@ export type FindRfqsByInstrumentOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByInstrumentInput = {
-  /** The program to search for. */
+  /** The instrument program to search for. */
   instrumentProgram: Program;
 };
 

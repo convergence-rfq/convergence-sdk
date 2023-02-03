@@ -3,11 +3,7 @@ import {
   createRevertSettlementPreparationInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
-import {
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -57,17 +53,22 @@ export type RevertSettlementPreparationOperation = Operation<
  * @category Inputs
  */
 export type RevertSettlementPreparationInput = {
-  /** The protocol address */
+  /** The protocol address. */
   protocol?: PublicKey;
-  /** The Rfq address */
+
+  /** The Rfq address. */
   rfq: PublicKey;
-  /** The response address */
+
+  /** The Response address. */
   response: PublicKey;
 
   /*
    * Args
    */
 
+  /** The side (Maker or Taker) that is reverting
+   * settlement preparation.
+   */
   side: AuthoritySide;
 };
 
@@ -154,10 +155,6 @@ export const revertSettlementPreparationBuilder = async (
   const psyoptionsAmericanProgram = convergence
     .programs()
     .getPsyoptionsAmericanInstrument();
-
-  const quoteMint: PublicKey = SpotInstrument.deserializeInstrumentData(
-    Buffer.from(rfqModel.quoteAsset.instrumentData)
-  ).mint;
 
   const sidePreparedLegs: number =
     side == AuthoritySide.Taker
@@ -274,13 +271,15 @@ export const revertSettlementPreparationBuilder = async (
     },
     // `receiver_tokens`
     {
-      pubkey: await getAssociatedTokenAddress(
-        quoteMint,
-        side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
-        undefined,
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      ),
+      pubkey: convergence
+        .tokens()
+        .pdas()
+        .associatedTokenAccount({
+          mint: rfqModel.quoteMint,
+          owner:
+            side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
+          programs,
+        }),
       isSigner: false,
       isWritable: true,
     },

@@ -20,35 +20,52 @@ export type Response = {
   /** A model identifier to distinguish models in the SDK. */
   readonly model: 'response';
 
-  /** The mint address of the Response. */
+  /** The address of the Response. */
   readonly address: PublicKey;
 
+  /** The Maker's pubkey address. */
   readonly maker: PublicKey;
 
+  /** The address of the Rfq this Response corresponds to. */
   readonly rfq: PublicKey;
 
+  /** The time at which this Response was created. */
   readonly creationTimestamp: bignum;
 
+  /** The amount of the Maker's collateral locked. */
   readonly makerCollateralLocked: bignum;
 
+  /** The amount of the Taker's collateral locked. */
   readonly takerCollateralLocked: bignum;
 
+  /** The current state of the Response. */
   readonly state: StoredResponseState;
 
+  /** The number of legs prepared by the Taker. */
   readonly takerPreparedLegs: number;
 
+  /** The number of legs prepared by the Maker. */
   readonly makerPreparedLegs: number;
 
+  /** The number of legs that have already been settled. */
   readonly settledLegs: number;
 
+  /** The Confirmation of this Response, if any. */
   readonly confirmed: COption<Confirmation>;
 
+  /** The defaulting party of this Response, if any. */
   readonly defaultingParty: COption<DefaultingParty>;
 
+  /** An array of `AuthoritySide`s showing whether the Maker or Taker
+   *  initialized leg preparation for each prepared leg */
   readonly legPreparationsInitializedBy: AuthoritySide[];
 
+  /** The bid, if any. If the `orderType` of the RFQ is 
+   * OrderType.Sell then this field is required. */
   readonly bid: COption<Quote>;
 
+  /** The ask, if any. If the `orderType` of the RFQ is 
+   * OrderType.Buy then this field is required. */
   readonly ask: COption<Quote>;
 };
 

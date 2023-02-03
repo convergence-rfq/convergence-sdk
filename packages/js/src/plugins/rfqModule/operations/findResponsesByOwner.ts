@@ -14,12 +14,14 @@ import { Convergence } from '@/Convergence';
 const Key = 'FindResponsesByOwnerOperation' as const;
 
 /**
- * Finds Response by a given address.
+ * Finds all Responses for a given maker (owner).
  *
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findResponseByAddress({ address };
+ *   .findResponsesByOwner({
+ *     address: maker.publicKey
+ *   });
  * ```
  *
  * @group Operations
@@ -43,8 +45,11 @@ export type FindResponsesByOwnerOperation = Operation<
  * @category Inputs
  */
 export type FindResponsesByOwnerInput = {
-  /** The address of the Response. */
-  address: PublicKey;
+  /** The address of the Maker (owner) of the Response(s). */
+  owner: PublicKey;
+
+  /** Optional array of Responses to search from. */
+  responses?: Response[];
 };
 
 /**
@@ -64,9 +69,21 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByOwnerOutput> => {
-      const { address } = operation.input;
+      const { owner, responses } = operation.input;
       scope.throwIfCanceled();
+
       const responsesByowner: Response[] = [];
+
+      if (responses) {
+        for (const response of responses) {
+          if (response.maker.toBase58() === owner.toBase58()) {
+            responsesByowner.push(response);
+          }
+        }
+        scope.throwIfCanceled();
+
+        return responsesByowner;
+      }
       const gpaBuilder = new GpaBuilder(
         convergence,
         convergence.programs().getRfq().address
@@ -85,7 +102,7 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
         })
         .filter((response): response is Response => response != null);
       for (const response of responseAccounts) {
-        if (response.maker.toBase58() === address.toBase58()) {
+        if (response.maker.toBase58() === owner.toBase58()) {
           responsesByowner.push(response);
         }
       }

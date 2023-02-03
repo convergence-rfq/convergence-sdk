@@ -13,6 +13,18 @@ import { Convergence } from '@/Convergence';
 
 const Key = 'FindRfqsByActiveOperation' as const;
 
+/**
+ * Finds all active RFQs.
+ *
+ * ```ts
+ * const rfq = await convergence
+ *   .rfqs()
+ *   .findByActive();
+ * ```
+ *
+ * @group Operations
+ * @category Constructors
+ */
 export const findRfqsByActiveOperation =
   useOperation<FindRfqsByActiveOperation>(Key);
 

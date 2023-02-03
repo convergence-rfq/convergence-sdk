@@ -21,7 +21,11 @@ const Key = 'PrepareSettlementAndPrepareMoreLegsOperation' as const;
  * ```ts
  * await convergence
  *   .rfqs()
- *   .prepareSettlementAndPrepareMoreLegs({ caller, protocol, rfq, response, legAmountToPrepare });
+ *   .prepareSettlementAndPrepareMoreLegs({
+ *     rfq: rfq.address,
+ *     response: rfqResponse.address,
+ *     legAmountToPrepare: 3
+ *   });
  * ```
  *
  * @group Operations
@@ -46,25 +50,26 @@ export type PrepareSettlementAndPrepareMoreLegsOperation = Operation<
  */
 export type PrepareSettlementAndPrepareMoreLegsInput = {
   /**
-   * The caller to prepare settlement of the Rfq
+   * The caller to prepare settlement of the Rfq.
    *
    * @defaultValue `convergence.identity()`
    */
   caller?: Signer;
 
-  /** The address of the protocol */
+  /** The address of the protocol. */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account */
+  /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** The address of the response account */
+  /** The address of the Response account. */
   response: PublicKey;
 
   /*
    * Args
    */
 
+  /** The number of legs to prepare settlement for. */
   legAmountToPrepare: number;
 };
 
@@ -108,7 +113,10 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
 
       let slicedLegAmount = legAmountToPrepare;
 
-      while (prepareSettlementTxSize == -1 || prepareSettlementTxSize + 193 > MAX_TX_SIZE) {
+      while (
+        prepareSettlementTxSize == -1 ||
+        prepareSettlementTxSize + 193 > MAX_TX_SIZE
+      ) {
         const halvedLegAmount = Math.trunc(slicedLegAmount / 2);
 
         prepareBuilder = await prepareSettlementBuilder(
