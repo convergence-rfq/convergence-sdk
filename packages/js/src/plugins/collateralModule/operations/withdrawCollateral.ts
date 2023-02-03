@@ -46,13 +46,14 @@ export type WithdrawCollateralOperation = Operation<
  */
 export type WithdrawCollateralInput = {
   /**
-   * The user for whom collateral is withdrawd.
+   * The user for whom collateral is withdrawn.
    *
    * @defaultValue `convergence.identity().publicKey`
    */
   user?: Signer;
 
-  /** The address of the protocol*/
+  /** The address of the user's token account where withdrawn
+   * tokens will be transferred to. */
   userTokens: PublicKey;
 
   protocol?: PublicKey;
@@ -64,6 +65,8 @@ export type WithdrawCollateralInput = {
   /*
    * Args
    */
+
+  /** The amount to withdraw */
   amount: bignum;
 };
 

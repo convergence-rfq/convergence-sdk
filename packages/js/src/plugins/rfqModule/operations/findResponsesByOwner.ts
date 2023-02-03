@@ -19,7 +19,7 @@ const Key = 'FindResponsesByOwnerOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findResponsesByOwner({ 
+ *   .findResponsesByOwner({
  *     address: maker.publicKey
  *   });
  * ```
@@ -46,7 +46,10 @@ export type FindResponsesByOwnerOperation = Operation<
  */
 export type FindResponsesByOwnerInput = {
   /** The address of the Maker (owner) of the Response(s). */
-  address: PublicKey;
+  owner: PublicKey;
+
+  /** Optional array of Responses to search from. */
+  responses?: Response[];
 };
 
 /**
@@ -66,33 +69,46 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByOwnerOutput> => {
-      const { address } = operation.input;
-      scope.throwIfCanceled();
-      const responsesByowner: Response[] = [];
-      const gpaBuilder = new GpaBuilder(
-        convergence,
-        convergence.programs().getRfq().address
-      );
-      const unparsedAccounts = await gpaBuilder.get();
-      const responseAccounts = unparsedAccounts
-        .map<Response | null>((account) => {
-          if (account == null) {
-            return null;
-          }
-          try {
-            return toResponse(toResponseAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((response): response is Response => response != null);
-      for (const response of responseAccounts) {
-        if (response.maker.toBase58() === address.toBase58()) {
-          responsesByowner.push(response);
-        }
-      }
+      const { owner, responses } = operation.input;
       scope.throwIfCanceled();
 
-      return responsesByowner;
+      const responsesByowner: Response[] = [];
+
+      if (responses) {
+        for (const response of responses) {
+          if (response.maker.toBase58() === owner.toBase58()) {
+            responsesByowner.push(response);
+          }
+        }
+        scope.throwIfCanceled();
+
+        return responsesByowner;
+      } else {
+        const gpaBuilder = new GpaBuilder(
+          convergence,
+          convergence.programs().getRfq().address
+        );
+        const unparsedAccounts = await gpaBuilder.get();
+        const responseAccounts = unparsedAccounts
+          .map<Response | null>((account) => {
+            if (account == null) {
+              return null;
+            }
+            try {
+              return toResponse(toResponseAccount(account));
+            } catch (e) {
+              return null;
+            }
+          })
+          .filter((response): response is Response => response != null);
+        for (const response of responseAccounts) {
+          if (response.maker.toBase58() === owner.toBase58()) {
+            responsesByowner.push(response);
+          }
+        }
+        scope.throwIfCanceled();
+
+        return responsesByowner;
+      }
     },
   };

@@ -44,6 +44,9 @@ export type FindRfqsByOwnerOperation = Operation<
 export type FindRfqsByOwnerInput = {
   /** The address of the owner. */
   owner: PublicKey;
+
+  /** Optional array of Rfqs to search from. */
+  rfqs?: Rfq[];
 };
 
 /**
@@ -63,26 +66,42 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
-      const { owner } = operation.input;
+      const { owner, rfqs } = operation.input;
       const { programs } = scope;
 
-      const rfqProgram = convergence.programs().getRfq(programs);
-      const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const rfqs = await rfqGpaBuilder.whereTaker(owner).get();
-      scope.throwIfCanceled();
+      if (rfqs) {
+        let rfqsByOwner = [];
 
-      return rfqs
-        .map<Rfq | null>((account) => {
-          if (account === null) {
-            return null;
+        for (const rfq of rfqs) {
+          if (rfq.taker.toBase58() === owner.toBase58()) {
+            rfqsByOwner.push(rfq);
           }
+        }
+        scope.throwIfCanceled();
 
-          try {
-            return toRfq(toRfqAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((rfq): rfq is Rfq => rfq !== null);
+        return rfqsByOwner;
+      } else {
+        const rfqProgram = convergence.programs().getRfq(programs);
+        const rfqGpaBuilder = new RfqGpaBuilder(
+          convergence,
+          rfqProgram.address
+        );
+        const gotRfqs = await rfqGpaBuilder.whereTaker(owner).get();
+        scope.throwIfCanceled();
+
+        return gotRfqs
+          .map<Rfq | null>((account) => {
+            if (account === null) {
+              return null;
+            }
+
+            try {
+              return toRfq(toRfqAccount(account));
+            } catch (e) {
+              return null;
+            }
+          })
+          .filter((rfq): rfq is Rfq => rfq !== null);
+      }
     },
   };

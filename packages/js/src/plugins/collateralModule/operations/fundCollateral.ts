@@ -56,7 +56,7 @@ export type FundCollateralInput = {
   /** Token account of user's token */
   userTokens: PublicKey;
 
-  /** The address of the user's collateral_info account. */
+  /** The address of the user's collateral info account. */
   collateralInfo?: PublicKey;
 
   /** The Token account of the user's collateral */

@@ -836,6 +836,14 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
 
   const foundRfqs = await cvg.rfqs().findAllByOwner({ owner: taker.publicKey });
 
+  const newFoundRfqs = await cvg
+    .rfqs()
+    .findAllByOwner({ owner: taker.publicKey, rfqs: foundRfqs });
+
+  for (const newFoundRfq of newFoundRfqs) {
+    console.log('new found rfq: ' + newFoundRfq.address.toBase58());
+  }
+
   spok(t, rfq, {
     $topic: 'Created RFQ',
     taker: spokSamePubkey(foundRfqs[0].taker),
@@ -1624,13 +1632,21 @@ test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async
   t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
 });
 
-test('[rfq module] it can find all responses by maker  address', async (t: Test) => {
+test('[rfq module] it can find all responses by maker address', async (t: Test) => {
   const responses = await cvg
     .rfqs()
-    .findResponsesByOwner({ address: maker.publicKey });
+    .findResponsesByOwner({ owner: maker.publicKey });
 
   for (const response of responses) {
     console.log('response', response.address.toBase58());
+  }
+
+  const newResponses = await cvg
+    .rfqs()
+    .findResponsesByOwner({ owner: maker.publicKey, responses });
+
+  for (const newResponse of newResponses) {
+    console.log('new response: ' + newResponse.address.toBase58());
   }
 
   t.assert(responses.length > 0, 'responses should be greater than 0');
