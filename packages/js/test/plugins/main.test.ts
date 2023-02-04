@@ -304,6 +304,11 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
   });
 });
 
+test('[protocolModule] get registered mints', async (t: Test) => {
+  const registeredMints = await cvg.protocol().getRegisteredMints();
+  t.assert(registeredMints.length > 0);
+});
+
 // RISK ENGINE
 
 test('[riskEngineModule] it can initialize the default risk engine config', async (t: Test) => {
@@ -1866,7 +1871,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
   });
 });
 
-test('[helpers] devnet', async (t: Test) => {
+test('[helpers] devnet airdrop tokens', async (t: Test) => {
   const { collateralWallet } = await devnetAirdrops(
     cvg,
     Keypair.generate().publicKey,

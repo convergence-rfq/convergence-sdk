@@ -3,7 +3,7 @@ import { PublicKey } from '@solana/web3.js';
 import {
   PROGRAM_ID,
   baseAssetInfoDiscriminator,
-  registerMintInstructionDiscriminator,
+  mintInfoDiscriminator,
 } from '@convergence-rfq/rfq';
 import { Convergence } from '@/Convergence';
 import { GpaBuilder } from '@/utils';
@@ -28,6 +28,6 @@ export class ProtocolGpaBuilder extends GpaBuilder {
   }
 
   whereRegisteredMints() {
-    return this.where(0, Buffer.from(registerMintInstructionDiscriminator));
+    return this.where(0, Buffer.from(mintInfoDiscriminator));
   }
 }

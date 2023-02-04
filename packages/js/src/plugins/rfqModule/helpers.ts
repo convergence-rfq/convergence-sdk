@@ -78,30 +78,25 @@ export const devnetAirdrops = async (
 
   for (const index in registeredMints) {
     const registeredMint = registeredMints[index];
-
-    const baseMint = await cvg
-      .tokens()
-      .findMintByAddress({ address: registeredMint.address });
-
     let registeredMintWallet;
+
     try {
-      const mint = registeredMint.address;
       const { token: wallet } = await cvg
         .tokens()
-        .createToken({ mint, owner: user });
+        .createToken({ mint: registeredMint.mintAddress, owner: user });
       registeredMintWallet = wallet;
     } catch {
-      const address = cvg
-        .tokens()
-        .pdas()
-        .associatedTokenAccount({ mint: baseMint.address, owner: user });
+      const address = cvg.tokens().pdas().associatedTokenAccount({
+        mint: registeredMint.mintAddress,
+        owner: user,
+      });
       registeredMintWallet = await cvg.tokens().findTokenByAddress({ address });
     }
 
     registeredMintWallets.push(registeredMintWallet);
 
     await cvg.tokens().mint({
-      mintAddress: baseMint.address,
+      mintAddress: registeredMint.mintAddress,
       amount: token(1_000_000),
       toToken: registeredMintWallet.address,
       mintAuthority,
