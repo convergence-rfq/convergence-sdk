@@ -275,15 +275,21 @@ const airdropDevnetTokens = async (options: Options) => {
   console.log('Airdropping devnet tokens...');
   const cvg = await createCvg(options);
   const owner = new PublicKey(options.owner);
-  const { collateralWallet } = await devnetAirdrops(cvg, owner);
+  const { collateralWallet, registeredMintWallets } = await devnetAirdrops(
+    cvg,
+    owner
+  );
   console.log('Collateral wallet:', collateralWallet.address.toString());
+  registeredMintWallets.map((wallet) => {
+    console.log('Registered mint wallet:', wallet.address.toString());
+  });
   console.log('Success!');
 };
 
 /// CLI
 
 const program = new Command();
-program.name('convergence').version('2.0.8').description('Convergence RFQ CLI');
+program.name('convergence').version('3.0.4').description('Convergence RFQ CLI');
 
 addDefaultArgs(
   program
