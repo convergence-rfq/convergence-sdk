@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 3.0.1
+
+### Patch Changes
+
+- Minor improvements in decimal conversions and devnet airdrop
+
 ## 3.0.0
 
 ### Major Changes

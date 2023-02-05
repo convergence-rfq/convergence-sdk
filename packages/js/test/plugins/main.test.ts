@@ -17,6 +17,7 @@ import {
   BTC_DECIMALS,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
+  delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
@@ -1863,11 +1864,11 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
     side: Side.Bid,
   });
 
-  sleep(3_001).then(async () => {
-    await cvg.rfqs().settleTwoPartyDefault({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-    });
+  await delay(3_001);
+
+  await cvg.rfqs().settleTwoPartyDefault({
+    rfq: rfq.address,
+    response: rfqResponse.address,
   });
 });
 

@@ -68,7 +68,7 @@ export const devnetAirdrops = async (
 
   await cvg.tokens().mint({
     mintAddress: collateralMint.address,
-    amount: token(1_000_000),
+    amount: token(1_000_000, collateralMint.decimals),
     toToken: collateralWallet.address,
     mintAuthority,
   });
@@ -97,7 +97,7 @@ export const devnetAirdrops = async (
 
     await cvg.tokens().mint({
       mintAddress: registeredMint.mintAddress,
-      amount: token(1_000_000),
+      amount: token(1_000_000, registeredMint.decimals),
       toToken: registeredMintWallet.address,
       mintAuthority,
     });
