@@ -77,6 +77,6 @@
   "typedoc": {
     "entryPoint": "./src/index.ts",
     "readmeFile": "./README.md",
-    "displayName": "js"
+    "displayName": "sdk"
   }
 }
