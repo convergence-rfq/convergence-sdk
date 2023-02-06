@@ -30,7 +30,7 @@
     "format": "prettier --write packages/",
     "validator:run": "pkill solana-test-validator | echo 'Skipping...' && node ./infra/validator.js",
     "validator:logs": "node ./infra/logs.js",
-    "docs": "typedoc",
+    "docs": "typedoc --out  ../../gh-pages",
     "docs:deploy": "yarn docs && gh-pages --dist docs --dotfiles",
     "packages:change": "changeset",
     "packages:version": "changeset version",
