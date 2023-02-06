@@ -25,21 +25,20 @@ cvg.use(walletAdapterIdentity(wallet));
 
 **Example**
 
-To create a basic RFQ for BTC spot.
+To create a basic RFQ for BTC spot quoted in USDC spot.
 
 ```ts
+import { SpotInstrument, Side, OrderType } from '@convergence-rfq/sdk';
+
 const { rfq } = await cvg.rfqs().createAndFinalize({
   instruments: [
     new SpotInstrument(cvg, btcMint, {
-      amount: 1,
+      amount: 1.3,
       side: Side.Bid,
     }),
   ],
   orderType: OrderType.Buy,
-  fixedSize: { __kind: 'None', padding: 0 },
-  quoteAsset: cvg
-    .instrument(new SpotInstrument(cvg, usdcMint))
-    .toQuoteData(),
+  quoteAsset: new SpotInstrument(cvg, usdcMint).toQuoteAsset(),
 });
 ```
 

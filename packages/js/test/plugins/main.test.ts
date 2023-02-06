@@ -1305,10 +1305,7 @@ test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base qu
     ],
     taker,
     orderType: OrderType.TwoWay,
-    fixedSize: { __kind: 'None', padding: 0 },
-    quoteAsset: cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset(),
+    quoteAsset: new SpotInstrument(cvg, usdcMint).toQuoteAsset(),
   });
   //@ts-ignore
   const { rfqResponse } = await cvg.rfqs().respond({
