@@ -53,6 +53,28 @@ export const createSerializerFromBeet = <T>(
   },
 });
 
+export const createSerializerFromFixableBeet = <T>(
+  beetArg: beet.FixableBeet<T, Partial<T>>
+): Serializer<T> => ({
+  description: beetArg.description,
+  serialize: (value: T) => {
+    const fixedBeet = beet.isFixableBeet(beetArg)
+      ? beetArg.toFixedFromValue(value)
+      : beetArg;
+    const writer = new beet.BeetWriter(fixedBeet.byteSize);
+    writer.write(fixedBeet, value);
+    return writer.buffer;
+  },
+  deserialize: (buffer: Buffer, offset?: number) => {
+    const fixedBeet = beet.isFixableBeet(beetArg)
+      ? beetArg.toFixedFromData(buffer, offset ?? 0)
+      : beetArg;
+    const reader = new beet.BeetReader(buffer, offset ?? 0);
+    const value = reader.read(fixedBeet);
+    return [value, reader.offset];
+  },
+});
+
 export const createSerializerFromFixableBeetArgsStruct = <T>(
   beetArg: beet.FixableBeetArgsStruct<T>
 ): Serializer<T> => ({

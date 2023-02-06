@@ -262,6 +262,8 @@ export const respondToRfqBuilder = async (
     ...oracleAccounts
   );
 
+  const pdaDistinguisher = 0;
+
   return TransactionBuilder.make()
     .setFeePayer(maker)
     .setContext({
@@ -290,6 +292,7 @@ export const respondToRfqBuilder = async (
           {
             bid,
             ask,
+            pdaDistinguisher,
           },
           rfqProgram.address
         ),

@@ -17,6 +17,7 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import * as anchor from '@project-serum/anchor';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -178,13 +179,8 @@ export const createRfqBuilder = async (
   params: CreateRfqBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  const { keypair = Keypair.generate() } = params;
+  // const { keypair = Keypair.generate() } = params;
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-
-  /*
-  TODO: serialize the legs field using beet/borsh, then pass it to solanaProgram.hash to 
-  get expectedLegsHash
-*/
 
   const {
     taker = convergence.identity(),
@@ -222,7 +218,7 @@ export const createRfqBuilder = async (
 
   const serializedLegsData: Buffer[] = [];
 
-  let calculatedLegsHash: Uint8Array;
+  let expectedLegsHash: Uint8Array;
 
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
@@ -242,65 +238,74 @@ export const createRfqBuilder = async (
       ...serializedLegsData,
     ]);
 
-    calculatedLegsHash = sha256(fullLegDataBuffer);
+    expectedLegsHash = sha256(fullLegDataBuffer);
 
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
+  //@ts-ignore
+  console.log('expected legs hash array: ' + Array.from(expectedLegsHash));
+    //@ts-ignore
+  console.log('expected legs hash buf: ' + expectedLegsHash);
 
-  let expectedLegSize: number;
+  let expectedLegsSize: number;
 
   if (legSize) {
-    expectedLegSize = legSize;
+    expectedLegsSize = legSize;
   } else {
-    expectedLegSize = 4;
+    expectedLegsSize = 4;
 
     for (const instrument of instruments) {
       const instrumentClient = convergence.instrument(
         instrument,
         instrument.legInfo
       );
-      expectedLegSize += await instrumentClient.getLegDataSize();
+      expectedLegsSize += await instrumentClient.getLegDataSize();
     }
   }
 
-  //@ts-ignore
+  const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
+
   const rfqPda = convergence.rfqs().pdas().rfq({
     taker: taker.publicKey,
     //@ts-ignore
-    legsHash: calculatedLegsHash,
+    legsHash: expectedLegsHash,
     orderType,
     quoteAsset,
     fixedSize,
     activeWindow,
     settlingWindow,
+    recentTimestamp,
   });
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({
-      keypair,
+      rfqPda,
     })
     .add({
       instruction: createCreateRfqInstruction(
         {
           taker: taker.publicKey,
           protocol: convergence.protocol().pdas().protocol(),
-          rfq: keypair.publicKey,
+          rfq: rfqPda,
           systemProgram: systemProgram.address,
           anchorRemainingAccounts: [...quoteAccounts, ...legAccounts],
         },
         {
-          expectedLegSize,
+          expectedLegsSize,
+          //@ts-ignore
+          expectedLegsHash: Array.from(expectedLegsHash),
           legs,
-          fixedSize,
           orderType,
           quoteAsset,
+          fixedSize,
           activeWindow,
           settlingWindow,
+          recentTimestamp,
         },
         rfqProgram.address
       ),
-      signers: [taker, keypair],
+      signers: [taker],
       key: 'createRfq',
     });
 };
