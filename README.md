@@ -30,7 +30,7 @@ To create a basic RFQ for BTC spot quoted in USDC spot.
 ```ts
 import { SpotInstrument, Side, OrderType } from '@convergence-rfq/sdk';
 
-const { rfq } = await cvg.rfqs().createAndFinalize({
+const { rfq, response } = await cvg.rfqs().createAndFinalize({
   instruments: [
     new SpotInstrument(cvg, btcMint, {
       amount: 1.3,
@@ -40,6 +40,8 @@ const { rfq } = await cvg.rfqs().createAndFinalize({
   orderType: OrderType.Buy,
   quoteAsset: new SpotInstrument(cvg, usdcMint).toQuoteAsset(),
 });
+
+console.log('Tx:', response.signature);
 ```
 
 ## Development
