@@ -83,3 +83,7 @@ yarn changeset:change
 yarn changeset:version
 yarn changeset:publish
 ```
+
+### Docs
+
+Automatically built and released to [GitHub Pages](https://convergence-rfq.github.io/sdk/).
