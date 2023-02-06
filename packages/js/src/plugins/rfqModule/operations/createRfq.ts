@@ -7,6 +7,7 @@ import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { sha256 } from '@noble/hashes/sha256';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
@@ -97,7 +98,7 @@ export type CreateRfqInput = {
   /** The sum of the sizes of all legs of the Rfq,
    * including legs added in the future (if any).
    * This can be calculated automatically if
-   * additional legs will not be added in 
+   * additional legs will not be added in
    * the future. */
   legSize?: number;
 };
@@ -180,6 +181,11 @@ export const createRfqBuilder = async (
   const { keypair = Keypair.generate() } = params;
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
+  /*
+  TODO: serialize the legs field using beet/borsh, then pass it to solanaProgram.hash to 
+  get expectedLegsHash
+*/
+
   const {
     taker = convergence.identity(),
     orderType,
@@ -214,12 +220,30 @@ export const createRfqBuilder = async (
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
 
+  const serializedLegsData: Buffer[] = [];
+
+  let calculatedLegsHash: Uint8Array;
+
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
       instrument,
       instrument.legInfo
     );
-    legs.push(await instrumentClient.toLegData());
+
+    const leg = await instrumentClient.toLegData();
+    legs.push(leg);
+
+    serializedLegsData.push(instrumentClient.serializeLegData(leg));
+
+    const lengthBuffer = Buffer.alloc(4);
+    lengthBuffer.writeInt32LE(legs.length);
+    const fullLegDataBuffer = Buffer.concat([
+      lengthBuffer,
+      ...serializedLegsData,
+    ]);
+
+    calculatedLegsHash = sha256(fullLegDataBuffer);
+
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
 
@@ -238,6 +262,18 @@ export const createRfqBuilder = async (
       expectedLegSize += await instrumentClient.getLegDataSize();
     }
   }
+
+  //@ts-ignore
+  const rfqPda = convergence.rfqs().pdas().rfq({
+    taker: taker.publicKey,
+    //@ts-ignore
+    legsHash: calculatedLegsHash,
+    orderType,
+    quoteAsset,
+    fixedSize,
+    activeWindow,
+    settlingWindow,
+  });
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
