@@ -86,4 +86,4 @@ yarn changeset:publish
 
 **TypeDocs**
 
-Documentation is automatically built and released [here](https://convergence-rfq.github.io/convergence-sdk/).
+Documentation is built via CI/CD and released [here](https://convergence-rfq.github.io/convergence-sdk/).
