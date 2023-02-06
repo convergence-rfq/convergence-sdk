@@ -3,24 +3,29 @@ import {
   FixedSize,
   OrderType,
   QuoteAsset,
+  QuoteRecord,
   FixedSizeRecord,
+  Quote,
+  priceQuoteBeet,
 } from '@convergence-rfq/rfq';
 import type { Convergence } from '@/Convergence';
 import {
-  createSerializerFromBeet,
+  // createSerializerFromBeet,
   createSerializerFromFixableBeetArgsStruct,
   createSerializerFromFixableBeet,
+  createSerializerFromFixedSizeBeet,
   Pda,
   Program,
   PublicKey,
 } from '@/types';
+//@ts-ignore
 import { sha256 } from '@noble/hashes/sha256';
 import * as anchor from '@project-serum/anchor';
 import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
-// import { Response, Rfq } from './models';
 //@ts-ignore
 import { hash } from '@project-serum/anchor/dist/cjs/utils/sha256'; //todo: is this correct?
+import { COption } from '@convergence-rfq/beet';
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -78,31 +83,67 @@ export class RfqPdasClient {
     ]);
   }
 
-  // response({ rfq, rfqResponse }: ResponseInput): Pda {
-  //   const programId = this.programId();
-  //   return Pda.find(programId, [
-  //     Buffer.from('response', 'utf8'),
-  //     rfq.address.toBuffer(),
-  //     rfqResponse.maker.toBuffer(),
-  //     // rfqResponse.bid.serialize(),
-  //     // rfqResponse.ask.serialize(),
-  //     // _pdaDistinguisher?
-  //   ]);
-  // }
+  response({ rfq, maker, bid, ask, pdaDistinguisher }: ResponseInput): Pda {
+    const programId = this.programId();
+    return Pda.find(programId, [
+      Buffer.from('response', 'utf8'),
+      rfq.toBuffer(),
+      maker.toBuffer(),
+      serializeOptionQuote(bid),
+      serializeOptionQuote(ask),
+      toLittleEndian(pdaDistinguisher, 2),
+    ]);
+  }
 
   private programId(programs?: Program[]) {
     return this.convergence.programs().getRfq(programs).address;
   }
 }
 
+const serializeOptionQuote = (quote: COption<Quote>) => {
+  if (quote === null) {
+    return Buffer.from([0]);
+  }
+
+  const serializedQuote = serializeQuoteData(quote);
+  return Buffer.concat([Buffer.from([1]), serializedQuote]);
+};
+
 const serializeOrderTypeData = (orderType: OrderType): Buffer => {
   const orderTypeBeet = beet.fixedScalarEnum(OrderType) as beet.FixedSizeBeet<
     OrderType,
     OrderType
   >;
+  const orderTypeSerializer = createSerializerFromFixedSizeBeet(orderTypeBeet);
 
-  const orderTypeSerializer = createSerializerFromBeet(orderTypeBeet);
   return orderTypeSerializer.serialize(orderType);
+};
+
+const serializeQuoteData = (quote: Quote): Buffer => {
+  const quoteBeet = beet.dataEnum<QuoteRecord>([
+    [
+      'Standard',
+      new beet.FixableBeetArgsStruct<QuoteRecord['Standard']>(
+        [
+          ['priceQuote', priceQuoteBeet],
+          ['legsMultiplierBps', beet.u64],
+        ],
+        'QuoteRecord["Standard"]'
+      ),
+    ],
+
+    [
+      'FixedSize',
+      new beet.FixableBeetArgsStruct<QuoteRecord['FixedSize']>(
+        [['priceQuote', priceQuoteBeet]],
+        'QuoteRecord["FixedSize"]'
+      ),
+    ],
+  ]) as beet.FixableBeet<Quote>;
+
+  const quoteSerializer = createSerializerFromFixableBeet(quoteBeet);
+
+  return quoteSerializer.serialize(quote);
 };
 
 const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
@@ -117,6 +158,11 @@ const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
 
   const quoteAssetSerializer =
     createSerializerFromFixableBeetArgsStruct(quoteAssetBeet);
+
+  console.log(
+    'quote asset buffer: ' +
+      quoteAssetSerializer.serialize(quoteAsset).toString()
+  );
 
   return quoteAssetSerializer.serialize(quoteAsset);
 };
@@ -149,6 +195,11 @@ const serializeFixedSizeData = (fixedSize: FixedSize): Buffer => {
   ]) as beet.FixableBeet<FixedSize>;
 
   const fixedSizeSerializer = createSerializerFromFixableBeet(fixedSizeBeet);
+
+  console.log(
+    'fixed size: ' + fixedSizeSerializer.serialize(fixedSize).toString()
+  );
+
   return fixedSizeSerializer.serialize(fixedSize);
 };
 
@@ -186,9 +237,17 @@ type RfqInput = {
   recentTimestamp: anchor.BN;
 };
 
-// type ResponseInput = {
-//   rfq: Rfq;
-// };
+type ResponseInput = {
+  rfq: PublicKey;
+
+  maker: PublicKey;
+
+  bid: COption<Quote>;
+
+  ask: COption<Quote>;
+
+  pdaDistinguisher: number;
+};
 
 // new response pda:
 

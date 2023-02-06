@@ -18,6 +18,7 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import * as anchor from '@project-serum/anchor';
+import { InstrumentClient } from '@/plugins/instrumentModule';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -216,9 +217,11 @@ export const createRfqBuilder = async (
   const legAccounts: AccountMeta[] = [];
   const legs: Leg[] = [];
 
-  const serializedLegsData: Buffer[] = [];
+  let serializedLegsData: Buffer[] = [];
 
   let expectedLegsHash: Uint8Array;
+
+  let ic: InstrumentClient;
 
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
@@ -226,26 +229,26 @@ export const createRfqBuilder = async (
       instrument.legInfo
     );
 
+    ic = instrumentClient;
+
     const leg = await instrumentClient.toLegData();
     legs.push(leg);
 
-    serializedLegsData.push(instrumentClient.serializeLegData(leg));
-
-    const lengthBuffer = Buffer.alloc(4);
-    lengthBuffer.writeInt32LE(legs.length);
-    const fullLegDataBuffer = Buffer.concat([
-      lengthBuffer,
-      ...serializedLegsData,
-    ]);
-
-    expectedLegsHash = sha256(fullLegDataBuffer);
+    // serializedLegsData.push(instrumentClient.serializeLegData(leg));
 
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
-  //@ts-ignore
-  console.log('expected legs hash array: ' + Array.from(expectedLegsHash));
-    //@ts-ignore
-  console.log('expected legs hash buf: ' + expectedLegsHash);
+
+  serializedLegsData = legs.map(leg => ic.serializeLegData(leg));
+
+  const lengthBuffer = Buffer.alloc(4);
+  lengthBuffer.writeInt32LE(legs.length);
+  const fullLegDataBuffer = Buffer.concat([
+    lengthBuffer,
+    ...serializedLegsData,
+  ]);
+
+  expectedLegsHash = sha256(fullLegDataBuffer);
 
   let expectedLegsSize: number;
 
@@ -295,6 +298,7 @@ export const createRfqBuilder = async (
           expectedLegsSize,
           //@ts-ignore
           expectedLegsHash: Array.from(expectedLegsHash),
+          // expectedLegsHash,
           legs,
           orderType,
           quoteAsset,

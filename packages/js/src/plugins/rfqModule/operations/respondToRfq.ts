@@ -264,6 +264,14 @@ export const respondToRfqBuilder = async (
 
   const pdaDistinguisher = 0;
 
+  const responsePda = convergence.rfqs().pdas().response({
+    rfq,
+    maker: maker.publicKey,
+    bid,
+    ask,
+    pdaDistinguisher,
+  });
+
   return TransactionBuilder.make()
     .setFeePayer(maker)
     .setContext({
@@ -282,7 +290,7 @@ export const respondToRfqBuilder = async (
             maker: maker.publicKey,
             protocol: protocol.address,
             rfq,
-            response: keypair.publicKey,
+            response: responsePda,
             collateralInfo,
             collateralToken,
             riskEngine,
@@ -296,7 +304,7 @@ export const respondToRfqBuilder = async (
           },
           rfqProgram.address
         ),
-        signers: [maker, keypair],
+        signers: [maker],
         key: 'respondToRfq',
       }
     );
