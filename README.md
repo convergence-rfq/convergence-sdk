@@ -86,4 +86,4 @@ yarn changeset:publish
 
 ### Docs
 
-Automatically built and released to [GitHub Pages](https://convergence-rfq.github.io/convergence-sdk/)
+Automatically built and [released](https://convergence-rfq.github.io/convergence-sdk/).
