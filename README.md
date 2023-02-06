@@ -1,12 +1,14 @@
 # @convergence-rfq/sdk
 
-## Installation
+## Overview
+
+**Installation**
 
 ```bash
 npm install @convergence-rfq/sdk @solana/web3.js
 ```
 
-## Setup
+**Setup**
 
 The entry point to the JavaScript SDK is a Convergence instance that will give you access to its API. It accepts a Connection instance from @solana/web3.js that will be used to communicate with the cluster.
 
@@ -21,7 +23,7 @@ const cvg = new Convergence(new Connection(clusterApiUrl('devnet')));
 cvg.use(walletAdapterIdentity(wallet));
 ```
 
-## Basic Usage
+**Example**
 
 To create a basic RFQ for BTC spot.
 
@@ -46,6 +48,7 @@ const { rfq } = await cvg.rfqs().createAndFinalize({
 **Requirements**
 
 - [Node (18.12.1)](https://nodejs.org/en/download/)
+- [Solana (1.14.11)](https://docs.solana.com/cli/install-solana-cli-tools#use-solanas-install-tool)
 - [Yarn (1.22.15)](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
 - [NX (14.8.6)](https://nx.dev/recipes/adopting-nx/adding-to-monorepo)
 
@@ -64,16 +67,11 @@ Run the Solana test validator, Solana logs, and the tests.
 yarn test:all
 ```
 
-Run the validator separately.
+Run the validator and tests separately.
 
 ```bash
 yarn validator:logs
-```
-
-Run the tests only.
-
-```bash
-yarn test
+yarn test # In a separate terminal
 ```
 
 **NPM**
