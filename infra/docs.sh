@@ -4,5 +4,5 @@ set -e
 set -x
 
 npm install --global yarn
-yarn install --pure-lockfile
+yarn install --frozen-lockfile
 yarn docs
