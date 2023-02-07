@@ -1,10 +1,5 @@
 import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
-import {
-  PublicKey,
-  Keypair,
-  AccountMeta,
-  ComputeBudgetProgram,
-} from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
 import { Convergence } from '@/Convergence';
@@ -17,6 +12,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions, Option } from '@/utils';
+// import * as anchor from '@project-serum/anchor';
 
 const Key = 'RespondToRfqOperation' as const;
 
@@ -69,9 +65,6 @@ export type RespondToRfqInput = {
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional Response keypair. */
-  keypair?: Keypair;
-
   /** Optional address of the Maker's collateral info account. */
   collateralInfo?: PublicKey;
 
@@ -115,13 +108,27 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<RespondToRfqOutput> => {
-      const { keypair = Keypair.generate() } = operation.input;
+      const { rfq, maker = convergence.identity(), bid, ask } = operation.input;
+
+      const pdaDistinguisher = 0;
+
+      const responsePda = convergence
+        .rfqs()
+        .pdas()
+        .response({
+          rfq,
+          maker: maker.publicKey,
+          bid: bid ?? null,
+          ask: ask ?? null,
+          pdaDistinguisher,
+        });
 
       const builder = await respondToRfqBuilder(
         convergence,
         {
           ...operation.input,
-          keypair,
+          response: responsePda,
+          pdaDistinguisher,
         },
         scope
       );
@@ -137,7 +144,7 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
 
       const rfqResponse = await convergence
         .rfqs()
-        .findResponseByAddress({ address: keypair.publicKey });
+        .findResponseByAddress({ address: responsePda });
       assertResponse(rfqResponse);
 
       return { ...output, rfqResponse };
@@ -148,7 +155,11 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
  * @group Transaction Builders
  * @category Inputs
  */
-export type RespondToRfqBuilderParams = RespondToRfqInput;
+export type RespondToRfqBuilderParams = RespondToRfqInput & {
+  response: PublicKey;
+
+  pdaDistinguisher: number;
+};
 
 /**
  * Responds to an Rfq.
@@ -172,9 +183,9 @@ export const respondToRfqBuilder = async (
   const {
     rfq,
     maker = convergence.identity(),
-    keypair = Keypair.generate(),
     bid = null,
     ask = null,
+    response,
   } = params;
 
   if (!bid && !ask) {
@@ -275,7 +286,7 @@ export const respondToRfqBuilder = async (
   return TransactionBuilder.make()
     .setFeePayer(maker)
     .setContext({
-      keypair,
+      response,
     })
     .add(
       {

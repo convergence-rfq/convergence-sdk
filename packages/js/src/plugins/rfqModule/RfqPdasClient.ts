@@ -25,7 +25,8 @@ import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
 //@ts-ignore
 import { hash } from '@project-serum/anchor/dist/cjs/utils/sha256'; //todo: is this correct?
-import { COption } from '@convergence-rfq/beet';
+// import { COption } from '@convergence-rfq/beet';
+import { Option } from '@/utils';
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -100,7 +101,7 @@ export class RfqPdasClient {
   }
 }
 
-const serializeOptionQuote = (quote: COption<Quote>) => {
+const serializeOptionQuote = (quote: Option<Quote>) => {
   if (quote === null) {
     return Buffer.from([0]);
   }
@@ -159,11 +160,6 @@ const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
   const quoteAssetSerializer =
     createSerializerFromFixableBeetArgsStruct(quoteAssetBeet);
 
-  console.log(
-    'quote asset buffer: ' +
-      quoteAssetSerializer.serialize(quoteAsset).toString()
-  );
-
   return quoteAssetSerializer.serialize(quoteAsset);
 };
 
@@ -195,10 +191,6 @@ const serializeFixedSizeData = (fixedSize: FixedSize): Buffer => {
   ]) as beet.FixableBeet<FixedSize>;
 
   const fixedSizeSerializer = createSerializerFromFixableBeet(fixedSizeBeet);
-
-  console.log(
-    'fixed size: ' + fixedSizeSerializer.serialize(fixedSize).toString()
-  );
 
   return fixedSizeSerializer.serialize(fixedSize);
 };
@@ -242,9 +234,9 @@ type ResponseInput = {
 
   maker: PublicKey;
 
-  bid: COption<Quote>;
+  bid: Option<Quote>;
 
-  ask: COption<Quote>;
+  ask: Option<Quote>;
 
   pdaDistinguisher: number;
 };

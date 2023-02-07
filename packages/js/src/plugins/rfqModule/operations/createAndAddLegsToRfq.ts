@@ -1,4 +1,3 @@
-import { Keypair } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { OrderType, FixedSize, QuoteAsset } from '../types';
 import { SpotInstrument } from '../../spotInstrumentModule';
@@ -7,6 +6,8 @@ import { assertRfq, Rfq } from '../models';
 import { createRfqBuilder } from './createRfq';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { sha256 } from '@noble/hashes/sha256';
+import * as anchor from '@project-serum/anchor';
 import {
   Operation,
   OperationHandler,
@@ -20,7 +21,7 @@ import { Convergence } from '@/Convergence';
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
 /**
- * Creates an Rfq with the maximum number of instruments, then calls 
+ * Creates an Rfq with the maximum number of instruments, then calls
  *   `addLegsToRfq` with the remaining legs
  *
  * ```ts
@@ -28,16 +29,16 @@ const Key = 'CreateAndAddLegsToRfqOperation' as const;
  * const spotInstrument2 = new SpotInstrument(...);
  * const psyoptionsEuropeanInstrument = new PsyOptionsEuropeanInstrument(...);
  * const quoteAsset = instrumentClient.createQuote(new SpotInstrument(...));
- * 
+ *
  * await convergence
  *   .rfqs()
- *   .createRfqAndAddLegs({ 
- *     quoteAsset, 
- *     instruments: [spotInstrument1, spotInstrument2, psyoptionsEuropeanInstrument], 
- *     orderType: OrderType.TwoWay, 
- *     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 }, 
- *     activeWindow: 5_000, 
- *     settlingWindow: 1_000,  
+ *   .createRfqAndAddLegs({
+ *     quoteAsset,
+ *     instruments: [spotInstrument1, spotInstrument2, psyoptionsEuropeanInstrument],
+ *     orderType: OrderType.TwoWay,
+ *     fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+ *     activeWindow: 5_000,
+ *     settlingWindow: 1_000,
  *   };
  * ```
  *
@@ -68,9 +69,6 @@ export type CreateAndAddLegsToRfqInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   taker?: Signer;
-
-  /** Optional Rfq keypair. */
-  keypair?: Keypair;
 
   /** The quote asset account. */
   quoteAsset: QuoteAsset;
@@ -122,10 +120,52 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
       scope: OperationScope
     ): Promise<CreateAndAddLegsToRfqOutput> => {
       const {
-        keypair = Keypair.generate(),
         taker = convergence.identity(),
         instruments,
+        orderType,
+        fixedSize,
+        quoteAsset,
+        activeWindow = 5_000,
+        settlingWindow = 1_000,
       } = operation.input;
+
+      const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
+
+      let serializedLegsData: Buffer[] = [];
+
+      let expectedLegsHash: Uint8Array;
+
+      for (const instrument of instruments) {
+        const instrumentClient = convergence.instrument(
+          instrument,
+          instrument.legInfo
+        );
+
+        const leg = await instrumentClient.toLegData();
+
+        serializedLegsData.push(instrumentClient.serializeLegData(leg));
+      }
+
+      let lengthBuffer = Buffer.alloc(4);
+      lengthBuffer.writeInt32LE(instruments.length);
+      let fullLegDataBuffer = Buffer.concat([
+        lengthBuffer,
+        ...serializedLegsData,
+      ]);
+
+      expectedLegsHash = sha256(fullLegDataBuffer);
+
+      let rfqPda = convergence.rfqs().pdas().rfq({
+        taker: taker.publicKey,
+        //@ts-ignore
+        legsHash: expectedLegsHash,
+        orderType,
+        quoteAsset,
+        fixedSize,
+        activeWindow,
+        settlingWindow,
+        recentTimestamp,
+      });
 
       const MAX_TX_SIZE = 1232;
 
@@ -143,8 +183,10 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         convergence,
         {
           ...operation.input,
-          keypair,
+          rfq: rfqPda,
           legSize: expectedLegSize,
+          recentTimestamp,
+          expectedLegsHash,
         },
         scope
       );
@@ -152,7 +194,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
       let createRfqTxSize = await convergence
         .rpc()
-        .getTransactionSize(rfqBuilder, [taker, keypair]);
+        .getTransactionSize(rfqBuilder, [taker]);
 
       let slicedInstruments = instruments;
 
@@ -162,20 +204,58 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
           Math.trunc(slicedInstruments.length / 2)
         );
 
+        let serializedLegsData: Buffer[] = [];
+
+        let expectedLegsHash: Uint8Array;
+
+        for (const instrument of instruments) {
+          const instrumentClient = convergence.instrument(
+            instrument,
+            instrument.legInfo
+          );
+
+          const leg = await instrumentClient.toLegData();
+
+          serializedLegsData.push(instrumentClient.serializeLegData(leg));
+        }
+
+        lengthBuffer = Buffer.alloc(4);
+        lengthBuffer.writeInt32LE(instruments.length);
+        fullLegDataBuffer = Buffer.concat([
+          lengthBuffer,
+          ...serializedLegsData,
+        ]);
+
+        expectedLegsHash = sha256(fullLegDataBuffer);
+
+        rfqPda = convergence.rfqs().pdas().rfq({
+          taker: taker.publicKey,
+          //@ts-ignore
+          legsHash: expectedLegsHash,
+          orderType,
+          quoteAsset,
+          fixedSize,
+          activeWindow,
+          settlingWindow,
+          recentTimestamp,
+        });
+
         rfqBuilder = await createRfqBuilder(
           convergence,
           {
             ...operation.input,
-            keypair,
             instruments: halvedInstruments,
             legSize: expectedLegSize,
+            recentTimestamp,
+            expectedLegsHash,
+            rfq: rfqPda,
           },
           scope
         );
 
         createRfqTxSize = await convergence
           .rpc()
-          .getTransactionSize(rfqBuilder, [taker, keypair]);
+          .getTransactionSize(rfqBuilder, [taker]);
 
         slicedInstruments = halvedInstruments;
       }
@@ -202,7 +282,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
           convergence,
           {
             ...operation.input,
-            rfq: keypair.publicKey,
+            rfq: rfqPda,
             instruments: addLegsSlicedInstruments,
           },
           scope
@@ -222,7 +302,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
             convergence,
             {
               ...operation.input,
-              rfq: keypair.publicKey,
+              rfq: rfqPda,
               instruments: halvedInstruments,
             },
             scope
@@ -259,7 +339,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
               convergence,
               {
                 ...operation.input,
-                rfq: keypair.publicKey,
+                rfq: rfqPda,
                 instruments: nextAddLegsInstruments,
               },
               scope
@@ -276,7 +356,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
       }
       const rfq = await convergence
         .rfqs()
-        .findRfqByAddress({ address: keypair.publicKey });
+        .findRfqByAddress({ address: rfqPda });
       assertRfq(rfq);
 
       return { ...output, rfq };
