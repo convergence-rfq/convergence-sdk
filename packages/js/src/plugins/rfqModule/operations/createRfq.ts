@@ -100,6 +100,10 @@ export type CreateRfqInput = {
    * additional legs will not be added in
    * the future. */
   legSize?: number;
+
+  expectedLegsHash?: Uint8Array;
+
+  // totalNumLegs?: number;
 };
 
 /**
@@ -132,47 +136,65 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       fixedSize,
       activeWindow = 5_000,
       settlingWindow = 1_000,
+      // totalNumLegs,
     } = operation.input;
+    let { expectedLegsHash } = operation.input;
+
+    let rfqPda: PublicKey;
+
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
-    const serializedLegsData: Buffer[] = [];
+    if (expectedLegsHash) {
+      rfqPda = convergence.rfqs().pdas().rfq({
+        taker: taker.publicKey,
+        //@ts-ignore
+        legsHash: expectedLegsHash,
+        orderType,
+        quoteAsset,
+        fixedSize,
+        activeWindow,
+        settlingWindow,
+        recentTimestamp,
+      });
+    } else {
+      const serializedLegsData: Buffer[] = [];
 
-    let expectedLegsHash: Uint8Array;
+      // let expectedLegsHash: Uint8Array;
 
-    const legs: Leg[] = [];
+      for (const instrument of instruments) {
+        const instrumentClient = convergence.instrument(
+          instrument,
+          instrument.legInfo
+        );
 
-    for (const instrument of instruments) {
-      const instrumentClient = convergence.instrument(
-        instrument,
-        instrument.legInfo
-      );
+        const leg = await instrumentClient.toLegData();
 
-      const leg = await instrumentClient.toLegData();
-      legs.push(leg);
+        serializedLegsData.push(instrumentClient.serializeLegData(leg));
+      }
 
-      serializedLegsData.push(instrumentClient.serializeLegData(leg));
+      const lengthBuffer = Buffer.alloc(4);
+      lengthBuffer.writeInt32LE(instruments.length);
+      const fullLegDataBuffer = Buffer.concat([
+        lengthBuffer,
+        ...serializedLegsData,
+      ]);
+
+      expectedLegsHash = sha256(fullLegDataBuffer);
+
+      rfqPda = convergence
+        .rfqs()
+        .pdas()
+        .rfq({
+          taker: taker.publicKey,
+          legsHash: Buffer.from(expectedLegsHash),
+          orderType,
+          quoteAsset,
+          fixedSize,
+          activeWindow,
+          settlingWindow,
+          recentTimestamp,
+        });
     }
-
-    const lengthBuffer = Buffer.alloc(4);
-    lengthBuffer.writeInt32LE(legs.length);
-    const fullLegDataBuffer = Buffer.concat([
-      lengthBuffer,
-      ...serializedLegsData,
-    ]);
-
-    expectedLegsHash = sha256(fullLegDataBuffer);
-
-    const rfqPda = convergence.rfqs().pdas().rfq({
-      taker: taker.publicKey,
-      //@ts-ignore
-      legsHash: expectedLegsHash,
-      orderType,
-      quoteAsset,
-      fixedSize,
-      activeWindow,
-      settlingWindow,
-      recentTimestamp,
-    });
 
     const builder = await createRfqBuilder(
       convergence,
@@ -194,6 +216,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
+    //@ts-ignore
     const rfq = await convergence.rfqs().findRfqByAddress({ address: rfqPda });
     assertRfq(rfq);
 
@@ -231,7 +254,6 @@ export const createRfqBuilder = async (
   params: CreateRfqBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  // const { keypair = Keypair.generate() } = params;
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
   const {

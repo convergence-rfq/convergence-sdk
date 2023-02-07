@@ -1,11 +1,12 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair, PublicKey } from '@solana/web3.js';
-//@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 //@ts-ignore
 import * as anchor from '@project-serum/anchor';
+//@ts-ignore
+import { sha256 } from '@noble/hashes/sha256';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -22,10 +23,10 @@ import {
   BTC_DECIMALS,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
+  //@ts-ignore
   delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
-//@ts-ignore
 import {
   Mint,
   token,
@@ -105,6 +106,7 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   solMint = context.solMint;
 
   daoUSDCWallet = context.daoUSDCWallet;
+
   daoBTCWallet = context.daoBTCWallet;
 
   makerUSDCWallet = context.makerUSDCWallet;
@@ -422,6 +424,10 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
   });
   const { collateral: makerCollateral } = await cvg.collateral().initialize({
     user: maker,
+  });
+  //@ts-ignore
+  const { collateral: daoCollateral } = await cvg.collateral().initialize({
+    user: dao,
   });
 
   const foundTakercollateral = await cvg
@@ -1517,10 +1523,27 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
 
   let expLegSize = 4;
 
+  const serializedLegsData: Buffer[] = [];
+
   for (const instrument of instruments) {
     const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
     expLegSize += await instrumentClient.getLegDataSize();
+
+    const leg = await instrumentClient.toLegData();
+
+    serializedLegsData.push(instrumentClient.serializeLegData(leg));
   }
+
+  const lengthBuffer = Buffer.alloc(4);
+  lengthBuffer.writeInt32LE(instruments.length);
+  const fullLegDataBuffer = Buffer.concat([
+    lengthBuffer,
+    ...serializedLegsData,
+  ]);
+
+  const expectedLegsHash = sha256(fullLegDataBuffer);
+
+  // const totalNumLegs = 3;
 
   // TODO: pass the legs hash for all the legs here
   const { rfq } = await cvg.rfqs().create({
@@ -1537,6 +1560,8 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
+    expectedLegsHash,
+    // totalNumLegs,
   });
 
   await cvg.rfqs().addLegsToRfq({
@@ -1806,6 +1831,15 @@ test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Te
   }
 });
 
+test('[helpers] devnet airdrop tokens', async (t: Test) => {
+  const { collateralWallet } = await devnetAirdrops(
+    cvg,
+    Keypair.generate().publicKey,
+    mintAuthority
+  );
+  t.assert(collateralWallet);
+});
+
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, taker prepare settlement, settle 1 party default', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
@@ -1846,7 +1880,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
     legAmountToPrepare: 1,
   });
 
-  sleep(3_001).then(async () => {
+  await sleep(3_001).then(async () => {
     await cvg.rfqs().settleOnePartyDefault({
       rfq: rfq.address,
       response: rfqResponse.address,
@@ -1891,19 +1925,10 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
     side: Side.Bid,
   });
 
-  await delay(3_001);
-
-  await cvg.rfqs().settleTwoPartyDefault({
-    rfq: rfq.address,
-    response: rfqResponse.address,
+  await delay(3_001).then(async () => {
+    await cvg.rfqs().settleTwoPartyDefault({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+    });
   });
-});
-
-test('[helpers] devnet airdrop tokens', async (t: Test) => {
-  const { collateralWallet } = await devnetAirdrops(
-    cvg,
-    Keypair.generate().publicKey,
-    mintAuthority
-  );
-  t.assert(collateralWallet);
 });
