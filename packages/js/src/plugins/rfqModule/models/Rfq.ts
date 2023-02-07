@@ -30,9 +30,6 @@ export type Rfq = {
   /** The order type of the Rfq. */
   readonly orderType: OrderType;
 
-  // /** Flag signifying whether `last look` is enabled for this Rfq. */
-  // readonly lastLookEnabled: boolean;
-
   /** Whether this Rfq is open (no size specified), or a fixed amount of the base asset,
    * or a fixed amount of the quote asset. */
   readonly fixedSize: FixedSize;
@@ -42,9 +39,6 @@ export type Rfq = {
 
   /** The quote asset mint. */
   readonly quoteMint: PublicKey;
-
-  // /** The mint access manager of the Rfq. */
-  // readonly accessManager: COption<PublicKey>;
 
   /** The time at which this Rfq was created. */
   readonly creationTimestamp: bignum;

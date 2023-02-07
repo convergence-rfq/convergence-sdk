@@ -3,9 +3,7 @@ import spok from 'spok';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
-//@ts-ignore
 import * as anchor from '@project-serum/anchor';
-//@ts-ignore
 import { sha256 } from '@noble/hashes/sha256';
 import {
   SWITCHBOARD_BTC_ORACLE,
@@ -13,17 +11,13 @@ import {
   SKIP_PREFLIGHT,
   convergenceCli,
   killStuckProcess,
-  //@ts-ignore
   spokSamePubkey,
-  //@ts-ignore
   initializeNewOptionMeta,
-  //@ts-ignore
   initializePsyoptionsAmerican,
   setupAccounts,
   BTC_DECIMALS,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
-  //@ts-ignore
   delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
@@ -34,25 +28,17 @@ import {
   RiskCategory,
   SpotInstrument,
   OrderType,
-  //@ts-ignore
   PsyoptionsEuropeanInstrument,
-  //@ts-ignore
   PsyoptionsAmericanInstrument,
-  //@ts-ignore
   OptionType,
   InstrumentType,
   Token,
-  //@ts-ignore
   StoredResponseState,
-  //@ts-ignore
   AuthoritySide,
-  //@ts-ignore
   StoredRfqState,
-  //@ts-ignore
   legsToInstruments,
   Signer,
   DEFAULT_RISK_CATEGORIES_INFO,
-  //@ts-ignore
   devnetAirdrops,
 } from '@/index';
 
@@ -68,7 +54,7 @@ let dao: Signer;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
-//@ts-ignore
+
 let mintAuthority: Keypair;
 
 let daoBTCWallet: Token;
@@ -85,11 +71,9 @@ const WALLET_AMOUNT = 9_000 * 10 ** BTC_DECIMALS;
 const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
 
 // SETUP
-//@ts-ignore
+
 let optionMarket: OptionMarketWithKey | null;
-//@ts-ignore
 let optionMarketPubkey: PublicKey;
-//@ts-ignore
 let europeanOptionPutMint: PublicKey;
 
 test('[setup] it can create Convergence instance', async (t: Test) => {
@@ -1831,15 +1815,6 @@ test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Te
   }
 });
 
-test('[helpers] devnet airdrop tokens', async (t: Test) => {
-  const { collateralWallet } = await devnetAirdrops(
-    cvg,
-    Keypair.generate().publicKey,
-    mintAuthority
-  );
-  t.assert(collateralWallet);
-});
-
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, taker prepare settlement, settle 1 party default', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
@@ -1888,7 +1863,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
   });
 });
 
-test('[rfqModule] it can create and finalize RFQ, respond, confirm response, settle 2 party default', async (t: Test) => {
+test('[rfqModule] it can create and finalize RFQ, respond twice (identical responses), confirm response, settle 2 party default', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -1917,6 +1892,14 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
     },
   });
+  await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+  });
 
   await cvg.rfqs().confirmResponse({
     taker,
@@ -1931,4 +1914,13 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
       response: rfqResponse.address,
     });
   });
+});
+
+test('[helpers] devnet airdrop tokens', async (t: Test) => {
+  const { collateralWallet } = await devnetAirdrops(
+    cvg,
+    Keypair.generate().publicKey,
+    mintAuthority
+  );
+  t.assert(collateralWallet);
 });

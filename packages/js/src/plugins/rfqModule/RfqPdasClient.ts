@@ -10,7 +10,6 @@ import {
 } from '@convergence-rfq/rfq';
 import type { Convergence } from '@/Convergence';
 import {
-  // createSerializerFromBeet,
   createSerializerFromFixableBeetArgsStruct,
   createSerializerFromFixableBeet,
   createSerializerFromFixedSizeBeet,
@@ -18,14 +17,10 @@ import {
   Program,
   PublicKey,
 } from '@/types';
-//@ts-ignore
 import { sha256 } from '@noble/hashes/sha256';
 import * as anchor from '@project-serum/anchor';
 import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
-//@ts-ignore
-import { hash } from '@project-serum/anchor/dist/cjs/utils/sha256'; //todo: is this correct?
-// import { COption } from '@convergence-rfq/beet';
 import { Option } from '@/utils';
 
 function toLittleEndian(value: number, bytes: number) {
@@ -212,43 +207,48 @@ type QuoteInput = {
 };
 
 type RfqInput = {
+  /** The taker's public key address. */
   taker: PublicKey;
 
+  /** The SHA256 hash of the serialized legs of the RFQ. */
   legsHash: Buffer;
 
+  /** The order type of the Rfq. */
   orderType: OrderType;
 
+  /** The quote asset of the Rfq. */
   quoteAsset: QuoteAsset;
 
+  /** Whether this Rfq is open (no size specified), or a fixed amount of the base asset,
+   * or a fixed amount of the quote asset. */
   fixedSize: FixedSize;
 
+  /** The number of seconds during which this Rfq can be responded to. */
   activeWindow: number;
 
+  /** The number of seconds within which this Rfq must be settled
+   *  after starting the settlement process. */
   settlingWindow: number;
 
+  /** A recent timestamp. */
   recentTimestamp: anchor.BN;
 };
 
 type ResponseInput = {
+  /** The Rfq public key. */
   rfq: PublicKey;
 
+  /** The maker's public key address. */
   maker: PublicKey;
 
+  /** Optional `bid` quote. */
   bid: Option<Quote>;
 
+  /** Optional `ask` quote. */
   ask: Option<Quote>;
 
+  /** A number to distinguish this response from other responses,
+   * in the case that the maker responds to the same RFQ multiple
+   * times with the same response. Otherwise it will always be 0. */
   pdaDistinguisher: number;
 };
-
-// new response pda:
-
-// #[account(init, payer = maker, space = 8 + mem::size_of::<Response>() + rfq.legs.len() * 1, seeds = [
-//   RESPONSE_SEED.as_bytes(),
-//   rfq.key().as_ref(),
-//   maker.key().as_ref(),
-//   &bid.try_to_vec().unwrap(),
-//   &ask.try_to_vec().unwrap(),
-//   &pda_distinguisher.to_le_bytes(),
-// ], bump)]
-// pub response: Account<'info, Response>,

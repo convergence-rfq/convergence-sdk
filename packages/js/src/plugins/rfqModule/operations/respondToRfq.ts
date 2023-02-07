@@ -1,5 +1,10 @@
 import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import {
+  PublicKey,
+  AccountMeta,
+  ComputeBudgetProgram,
+  // Account,
+} from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
 import { Convergence } from '@/Convergence';
@@ -110,9 +115,9 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
     ): Promise<RespondToRfqOutput> => {
       const { rfq, maker = convergence.identity(), bid, ask } = operation.input;
 
-      const pdaDistinguisher = 0;
+      let pdaDistinguisher = 0;
 
-      const responsePda = convergence
+      let responsePda = convergence
         .rfqs()
         .pdas()
         .response({
@@ -122,6 +127,25 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
           ask: ask ?? null,
           pdaDistinguisher,
         });
+
+      let account = await convergence.rpc().getAccount(responsePda);
+
+      while (account.exists) {
+        pdaDistinguisher++;
+
+        responsePda = convergence
+          .rfqs()
+          .pdas()
+          .response({
+            rfq,
+            maker: maker.publicKey,
+            bid: bid ?? null,
+            ask: ask ?? null,
+            pdaDistinguisher,
+          });
+
+        account = await convergence.rpc().getAccount(responsePda);
+      }
 
       const builder = await respondToRfqBuilder(
         convergence,
@@ -186,6 +210,7 @@ export const respondToRfqBuilder = async (
     bid = null,
     ask = null,
     response,
+    pdaDistinguisher,
   } = params;
 
   if (!bid && !ask) {
@@ -226,7 +251,6 @@ export const respondToRfqBuilder = async (
     riskEngine = riskEngineProgram.address,
   } = params;
 
-  //@ts-ignore
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
   const baseAssetAccounts: AccountMeta[] = [];
@@ -273,16 +297,6 @@ export const respondToRfqBuilder = async (
     ...oracleAccounts
   );
 
-  const pdaDistinguisher = 0;
-
-  const responsePda = convergence.rfqs().pdas().response({
-    rfq,
-    maker: maker.publicKey,
-    bid,
-    ask,
-    pdaDistinguisher,
-  });
-
   return TransactionBuilder.make()
     .setFeePayer(maker)
     .setContext({
@@ -301,7 +315,7 @@ export const respondToRfqBuilder = async (
             maker: maker.publicKey,
             protocol: protocol.address,
             rfq,
-            response: responsePda,
+            response,
             collateralInfo,
             collateralToken,
             riskEngine,
