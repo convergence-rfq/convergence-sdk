@@ -22,6 +22,7 @@ import {
   BTC_DECIMALS,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
+  delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
 //@ts-ignore
@@ -317,6 +318,11 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
     ticker: 'SOL',
     riskCategory: 0,
   });
+});
+
+test('[protocolModule] get registered mints', async (t: Test) => {
+  const registeredMints = await cvg.protocol().getRegisteredMints();
+  t.assert(registeredMints.length > 0);
 });
 
 // RISK ENGINE
@@ -1885,15 +1891,15 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, set
     side: Side.Bid,
   });
 
-  sleep(3_001).then(async () => {
-    await cvg.rfqs().settleTwoPartyDefault({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-    });
+  await delay(3_001);
+
+  await cvg.rfqs().settleTwoPartyDefault({
+    rfq: rfq.address,
+    response: rfqResponse.address,
   });
 });
 
-test('[helpers] devnet', async (t: Test) => {
+test('[helpers] devnet airdrop tokens', async (t: Test) => {
   const { collateralWallet } = await devnetAirdrops(
     cvg,
     Keypair.generate().publicKey,
