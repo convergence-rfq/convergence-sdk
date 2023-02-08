@@ -2,7 +2,6 @@ import { PublicKey } from '@solana/web3.js';
 import { toResponseAccount } from '../accounts';
 import { Response, toResponse } from '../models/Response';
 import { GpaBuilder } from '@/utils';
-
 import {
   Operation,
   OperationHandler,

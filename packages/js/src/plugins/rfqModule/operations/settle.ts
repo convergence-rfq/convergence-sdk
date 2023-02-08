@@ -60,7 +60,7 @@ export type SettleInput = {
   /** The Taker public key address. */
   taker: PublicKey;
 
-  /** Optional start index to corresponding to 
+  /** Optional start index to corresponding to
    * the first leg to settle. */
   startIndex?: number;
 };
@@ -137,7 +137,7 @@ export const settleBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const { startIndex = parseInt(responseModel.settledLegs.toString()) } = params;
+  const { startIndex = responseModel.settledLegs } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await convergence.protocol().get();

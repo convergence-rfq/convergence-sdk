@@ -1,5 +1,5 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
-import { Keypair, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
@@ -7,6 +7,7 @@ import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { sha256 } from '@noble/hashes/sha256';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
@@ -16,6 +17,8 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import * as anchor from '@project-serum/anchor';
+// import { InstrumentClient } from '@/plugins/instrumentModule';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -66,9 +69,6 @@ export type CreateRfqInput = {
    */
   taker?: Signer;
 
-  /** Optional Rfq keypair. */
-  keypair?: Keypair;
-
   /** The quote asset account. */
   quoteAsset: QuoteAsset;
 
@@ -97,9 +97,13 @@ export type CreateRfqInput = {
   /** The sum of the sizes of all legs of the Rfq,
    * including legs added in the future (if any).
    * This can be calculated automatically if
-   * additional legs will not be added in 
+   * additional legs will not be added in
    * the future. */
   legSize?: number;
+
+  expectedLegsHash?: Uint8Array;
+
+  // totalNumLegs?: number;
 };
 
 /**
@@ -124,13 +128,80 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     convergence: Convergence,
     scope: OperationScope
   ) => {
-    const { keypair = Keypair.generate() } = operation.input;
+    const {
+      taker = convergence.identity(),
+      orderType,
+      quoteAsset,
+      instruments,
+      fixedSize,
+      activeWindow = 5_000,
+      settlingWindow = 1_000,
+    } = operation.input;
+    let { expectedLegsHash } = operation.input;
+
+    let rfqPda: PublicKey;
+
+    const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
+
+    if (expectedLegsHash) {
+      rfqPda = convergence
+        .rfqs()
+        .pdas()
+        .rfq({
+          taker: taker.publicKey,
+          legsHash: Buffer.from(expectedLegsHash),
+          orderType,
+          quoteAsset,
+          fixedSize,
+          activeWindow,
+          settlingWindow,
+          recentTimestamp,
+        });
+    } else {
+      const serializedLegsData: Buffer[] = [];
+
+      for (const instrument of instruments) {
+        const instrumentClient = convergence.instrument(
+          instrument,
+          instrument.legInfo
+        );
+
+        const leg = await instrumentClient.toLegData();
+
+        serializedLegsData.push(instrumentClient.serializeLegData(leg));
+      }
+
+      const lengthBuffer = Buffer.alloc(4);
+      lengthBuffer.writeInt32LE(instruments.length);
+      const fullLegDataBuffer = Buffer.concat([
+        lengthBuffer,
+        ...serializedLegsData,
+      ]);
+
+      expectedLegsHash = sha256(fullLegDataBuffer);
+
+      rfqPda = convergence
+        .rfqs()
+        .pdas()
+        .rfq({
+          taker: taker.publicKey,
+          legsHash: Buffer.from(expectedLegsHash),
+          orderType,
+          quoteAsset,
+          fixedSize,
+          activeWindow,
+          settlingWindow,
+          recentTimestamp,
+        });
+    }
 
     const builder = await createRfqBuilder(
       convergence,
       {
         ...operation.input,
-        keypair,
+        expectedLegsHash,
+        rfq: rfqPda,
+        recentTimestamp,
       },
       scope
     );
@@ -144,9 +215,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
-    const rfq = await convergence
-      .rfqs()
-      .findRfqByAddress({ address: keypair.publicKey });
+    const rfq = await convergence.rfqs().findRfqByAddress({ address: rfqPda });
     assertRfq(rfq);
 
     return { ...output, rfq };
@@ -157,7 +226,13 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
  * @group Transaction Builders
  * @category Inputs
  */
-export type CreateRfqBuilderParams = CreateRfqInput;
+export type CreateRfqBuilderParams = CreateRfqInput & {
+  rfq: PublicKey;
+
+  expectedLegsHash: Uint8Array;
+
+  recentTimestamp: anchor.BN;
+};
 
 /**
  * Creates a new Rfq.
@@ -177,7 +252,6 @@ export const createRfqBuilder = async (
   params: CreateRfqBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  const { keypair = Keypair.generate() } = params;
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
   const {
@@ -188,6 +262,9 @@ export const createRfqBuilder = async (
     fixedSize,
     activeWindow = 5_000,
     settlingWindow = 1_000,
+    rfq,
+    recentTimestamp,
+    expectedLegsHash,
   } = params;
 
   const { legSize } = params;
@@ -219,52 +296,57 @@ export const createRfqBuilder = async (
       instrument,
       instrument.legInfo
     );
-    legs.push(await instrumentClient.toLegData());
+
+    const leg = await instrumentClient.toLegData();
+    legs.push(leg);
+
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
 
-  let expectedLegSize: number;
+  let expectedLegsSize: number;
 
   if (legSize) {
-    expectedLegSize = legSize;
+    expectedLegsSize = legSize;
   } else {
-    expectedLegSize = 4;
+    expectedLegsSize = 4;
 
     for (const instrument of instruments) {
       const instrumentClient = convergence.instrument(
         instrument,
         instrument.legInfo
       );
-      expectedLegSize += await instrumentClient.getLegDataSize();
+      expectedLegsSize += await instrumentClient.getLegDataSize();
     }
   }
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({
-      keypair,
+      rfq,
     })
     .add({
       instruction: createCreateRfqInstruction(
         {
           taker: taker.publicKey,
           protocol: convergence.protocol().pdas().protocol(),
-          rfq: keypair.publicKey,
+          rfq,
           systemProgram: systemProgram.address,
           anchorRemainingAccounts: [...quoteAccounts, ...legAccounts],
         },
         {
-          expectedLegSize,
+          expectedLegsSize,
+          expectedLegsHash: Array.from(expectedLegsHash),
           legs,
-          fixedSize,
           orderType,
           quoteAsset,
+          fixedSize,
           activeWindow,
           settlingWindow,
+          recentTimestamp,
         },
         rfqProgram.address
       ),
-      signers: [taker, keypair],
+      signers: [taker],
       key: 'createRfq',
     });
 };

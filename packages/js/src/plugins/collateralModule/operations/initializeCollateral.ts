@@ -187,11 +187,11 @@ export const initializeCollateralBuilder = async (
     collateralToken = convergence
       .collateral()
       .pdas()
-      .collateralToken({ user: user.publicKey }),
+      .collateralToken({ user: user.publicKey, programs }),
     collateralInfo = convergence
       .collateral()
       .pdas()
-      .collateralInfo({ user: user.publicKey }),
+      .collateralInfo({ user: user.publicKey, programs }),
   } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);

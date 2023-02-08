@@ -7,7 +7,7 @@ import {
   calculateCollateralForResponseOperation,
   calculateCollateralForRfqOperation,
   CalculateCollateralForConfirmationIntput,
-  CalculateCollateralForRfqIntput,
+  CalculateCollateralForRfqInput,
   CalculateCollateralForResponseIntput,
   setRiskCategoriesInfoOperation,
   SetRiskCategoriesInfoInput,
@@ -68,7 +68,7 @@ export class RiskEngineClient {
 
   /** {@inheritDoc  calculateCollateralForRfq} */
   calculateCollateralForRfq(
-    input: CalculateCollateralForRfqIntput,
+    input: CalculateCollateralForRfqInput,
     options?: OperationOptions
   ) {
     return this.convergence

@@ -157,9 +157,9 @@ export const partlyRevertSettlementPreparationBuilder = async (
     .findResponseByAddress({ address: response });
 
   const sidePreparedLegs: number =
-    side == AuthoritySide.Taker
-      ? parseInt(responseModel.takerPreparedLegs.toString())
-      : parseInt(responseModel.makerPreparedLegs.toString());
+  side == AuthoritySide.Taker
+    ? responseModel.takerPreparedLegs
+    : responseModel.makerPreparedLegs;
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
   const psyoptionsEuropeanProgram = convergence

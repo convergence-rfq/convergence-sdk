@@ -78,9 +78,9 @@ yarn test # In a separate terminal
 **NPM**
 
 ```bash
-yarn changeset:change
-yarn changeset:version
-yarn changeset:publish
+yarn packages:change
+yarn packages:version
+yarn packages:publish
 ```
 
 **TypeDocs**
