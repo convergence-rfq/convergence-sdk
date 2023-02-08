@@ -136,7 +136,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       fixedSize,
       activeWindow = 5_000,
       settlingWindow = 1_000,
-      // totalNumLegs,
     } = operation.input;
     let { expectedLegsHash } = operation.input;
 
@@ -145,21 +144,21 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
     if (expectedLegsHash) {
-      rfqPda = convergence.rfqs().pdas().rfq({
-        taker: taker.publicKey,
-        //@ts-ignore
-        legsHash: expectedLegsHash,
-        orderType,
-        quoteAsset,
-        fixedSize,
-        activeWindow,
-        settlingWindow,
-        recentTimestamp,
-      });
+      rfqPda = convergence
+        .rfqs()
+        .pdas()
+        .rfq({
+          taker: taker.publicKey,
+          legsHash: Buffer.from(expectedLegsHash),
+          orderType,
+          quoteAsset,
+          fixedSize,
+          activeWindow,
+          settlingWindow,
+          recentTimestamp,
+        });
     } else {
       const serializedLegsData: Buffer[] = [];
-
-      // let expectedLegsHash: Uint8Array;
 
       for (const instrument of instruments) {
         const instrumentClient = convergence.instrument(
@@ -216,7 +215,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
-    //@ts-ignore
     const rfq = await convergence.rfqs().findRfqByAddress({ address: rfqPda });
     assertRfq(rfq);
 
@@ -337,7 +335,6 @@ export const createRfqBuilder = async (
         },
         {
           expectedLegsSize,
-          //@ts-ignore
           expectedLegsHash: Array.from(expectedLegsHash),
           legs,
           orderType,

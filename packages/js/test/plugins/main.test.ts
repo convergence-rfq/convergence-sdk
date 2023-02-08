@@ -1303,6 +1303,7 @@ test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base qu
     ],
     taker,
     orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'None', padding: 0 },
     quoteAsset: new SpotInstrument(cvg, usdcMint).toQuoteAsset(),
   });
   //@ts-ignore
@@ -1504,9 +1505,8 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     ...serializedLegsData,
   ]);
 
+  //@ts-ignore
   const expectedLegsHash = sha256(fullLegDataBuffer);
-
-  // const totalNumLegs = 3;
 
   // TODO: pass the legs hash for all the legs here
   const { rfq } = await cvg.rfqs().create({
@@ -1523,8 +1523,6 @@ test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
-    expectedLegsHash,
-    // totalNumLegs,
   });
 
   await cvg.rfqs().addLegsToRfq({
@@ -1842,7 +1840,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, tak
   });
 });
 
-test('[rfqModule] it can create and finalize RFQ, respond twice (identical responses), confirm response, settle 2 party default', async (t: Test) => {
+test('[rfqModule] it can create and finalize RFQ, respond twice w/ identical responses, confirm response, settle 2 party default', async (t: Test) => {
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {

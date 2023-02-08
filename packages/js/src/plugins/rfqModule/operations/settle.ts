@@ -230,7 +230,6 @@ export const settleBuilder = async (
         isSigner: false,
         isWritable: true,
       },
-      // TODO: create this ATA if it doesn't exist
       // `receiver_tokens`
       {
         pubkey: convergence
