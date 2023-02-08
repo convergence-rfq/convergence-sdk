@@ -158,8 +158,8 @@ export const revertSettlementPreparationBuilder = async (
 
   const sidePreparedLegs: number =
     side == AuthoritySide.Taker
-      ? parseInt(responseModel.takerPreparedLegs.toString())
-      : parseInt(responseModel.makerPreparedLegs.toString());
+      ? responseModel.takerPreparedLegs
+      : responseModel.makerPreparedLegs;
 
   for (let i = 0; i < sidePreparedLegs; i++) {
     const instrumentEscrowPda = new InstrumentPdasClient(

@@ -164,7 +164,7 @@ export const partiallySettleLegsBuilder = async (
     .programs()
     .getPsyoptionsAmericanInstrument();
 
-  const startIndex = parseInt(responseModel.settledLegs.toString());
+  const startIndex = responseModel.settledLegs;
 
   for (let i = startIndex; i < startIndex + legAmountToSettle; i++) {
     const leg = rfqModel.legs[i];

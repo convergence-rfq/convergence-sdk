@@ -182,8 +182,8 @@ export const prepareMoreLegsSettlementBuilder = async (
   if (!sidePreparedLegs) {
     sidePreparedLegs =
       side == AuthoritySide.Taker
-        ? parseInt(responseModel.takerPreparedLegs.toString())
-        : parseInt(responseModel.makerPreparedLegs.toString());
+        ? responseModel.takerPreparedLegs
+        : responseModel.makerPreparedLegs;
   }
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();

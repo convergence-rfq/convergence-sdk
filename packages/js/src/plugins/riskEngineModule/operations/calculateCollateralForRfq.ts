@@ -22,26 +22,28 @@ export const calculateCollateralForRfqOperation =
 
 export type CalculateCollateralForRfqOperation = Operation<
   typeof Key,
-  CalculateCollateralForRfqIntput,
+  CalculateCollateralForRfqInput,
   CalculateCollateralForRfqOutput
 >;
+
+export type CalculateCollateralForRfqInput = {
+  /** The address of the Rfq account. */
+  rfq: PublicKey;
+
+  /** The base asset index. */
+  baseAssetIndex?: BaseAssetIndex;
+};
 
 export type CalculateCollateralForRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
+  /** The collateral amount required for the Rfq. */
   collateralForRfqAmount: bignum;
 };
 
-export type CalculateCollateralForRfqIntput = {
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
-  /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
-};
-
 export type CalculateCollateralForRfqBuilderParams =
-  CalculateCollateralForRfqIntput;
+  CalculateCollateralForRfqInput;
 
 export const calculateCollateralForRfqOperationHandler: OperationHandler<CalculateCollateralForRfqOperation> =
   {
@@ -61,7 +63,9 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
       const rfq = await convergence
         .rfqs()
         .findRfqByAddress({ address: operation.input.rfq });
+
       const collateralForRfqAmount = rfq.totalTakerCollateralLocked;
+
       return { ...output, collateralForRfqAmount };
     },
   };

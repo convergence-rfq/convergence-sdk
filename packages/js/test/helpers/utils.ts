@@ -1,6 +1,6 @@
 import { ConfirmOptions } from '@solana/web3.js';
 import test from 'tape';
-// import { Rfq, Response } from '@/plugins';
+import { Rfq, Response } from '@/plugins';
 
 /**
  * This is a workaround the fact that web3.js doesn't close it's socket connection and provides no way to do so.
@@ -23,6 +23,29 @@ export const SKIP_PREFLIGHT: ConfirmOptions = {
   skipPreflight: true,
   commitment: 'confirmed',
 };
+
+export function getResponseBaseAssetAmounts(
+  rfq: Rfq,
+  rfqResponse: Response
+): number {
+  const baseDecimals = rfq.legs[0].instrumentDecimals;
+  const quoteDecimals = rfq.quoteAsset.instrumentDecimals;
+
+  let quoteQuantity = //rfq.quoteAsset.amount?
+    Math.round(Number(rfq.quoteAsset) * Math.pow(10, quoteDecimals)) /
+    Math.pow(10, quoteDecimals);
+  let baseQuantity =
+    Math.round(
+      Number(rfq.legs[0].instrumentAmount) * Math.pow(10, baseDecimals)
+    ) / Math.pow(10, baseDecimals);
+  const pricePerLeg =
+    Math.round((quoteQuantity / baseQuantity) * Math.pow(10, quoteDecimals)) /
+    Math.pow(10, quoteDecimals);
+
+  return pricePerLeg;
+}
+
+// ------------------------------------
 
 // TODO: this should only return one value as we can only confirm one side of the response
 // export function getResponseBaseAssetAmounts(

@@ -18,6 +18,7 @@ import {
   BTC_DECIMALS,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
+  //@ts-ignore
   delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
@@ -606,7 +607,6 @@ test('[collateralModule] it can find collateral by user', async (t: Test) => {
 // RFQ
 
 test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collateral, and clean up RFQ', async (t: Test) => {
-  //@ts-ignore
   const { rfq } = await cvg.rfqs().create({
     taker,
     quoteAsset: cvg
@@ -661,7 +661,6 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
 });
 
 test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlement, prepare more legs settlement, partially settle legs, settle', async (t: Test) => {
-  //@ts-ignore
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
@@ -684,7 +683,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
   });
-  //@ts-ignore
+
   const { rfqResponse } = await cvg.rfqs().respond({
     maker,
     rfq: rfq.address,
@@ -761,7 +760,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
   });
 });
 
-// // RFQ UTILS
+// RFQ UTILS
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   const { rfq: rfq1 } = await cvg.rfqs().create({
@@ -779,8 +778,6 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
       .toQuoteAsset(),
   });
 
-  console.log('rfq1 addr: ' + rfq1.address.toString());
-
   const { rfq: rfq2 } = await cvg.rfqs().create({
     taker,
     instruments: [
@@ -796,8 +793,6 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
       .toQuoteAsset(),
   });
 
-  console.log('rfq2 addr: ' + rfq2.address.toString());
-
   const { rfq: rfq3 } = await cvg.rfqs().create({
     taker,
     instruments: [
@@ -812,8 +807,6 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
   });
-
-  console.log('rfq3 addr: ' + rfq3.address.toString());
 
   const [foundRfq1, foundRfq2, foundRfq3] = await cvg
     .rfqs()
@@ -846,21 +839,6 @@ test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
 });
 
 test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
-  // const { rfq } = await cvg.rfqs().create({
-  //   instruments: [
-  //     new SpotInstrument(cvg, btcMint, {
-  //       amount: 1,
-  //       side: Side.Bid,
-  //     }),
-  //   ],
-  //   taker,
-  //   orderType: OrderType.Sell,
-  //   fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-  //   quoteAsset: cvg
-  //     .instrument(new SpotInstrument(cvg, usdcMint))
-  //     .toQuoteAsset(),
-  // });
-
   const foundRfqs = await cvg.rfqs().findAllByOwner({ owner: taker.publicKey });
 
   const newFoundRfqs = await cvg
@@ -870,18 +848,9 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
   for (const newFoundRfq of newFoundRfqs) {
     console.log('new found rfq: ' + newFoundRfq.address.toBase58());
   }
-
-  // spok(t, rfq, {
-  //   $topic: 'Created RFQ',
-  //   taker: spokSamePubkey(foundRfqs[0].taker),
-  // });
-  // spok(t, rfq, {
-  //   $topic: 'Created RFQ',
-  //   taker: spokSamePubkey(foundRfqs[1].taker),
-  // });
 });
 
-// // RISK ENGINE UTILS
+// RISK ENGINE UTILS
 
 test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) => {
   const { rfq } = await cvg.rfqs().create({
@@ -899,13 +868,19 @@ test('[riskEngineModule] it can calculate collateral for RFQ', async (t: Test) =
       .toQuoteAsset(),
   });
 
-  await cvg.riskEngine().calculateCollateralForRfq({ rfq: rfq.address });
-
-  spok(t, rfq, {
-    $topic: 'Calculated Collateral for Rfq',
-    model: 'rfq',
-    address: spokSamePubkey(rfq.address),
+  await cvg.rfqs().finalizeRfqConstruction({
+    taker,
+    rfq: rfq.address,
   });
+
+  const { collateralForRfqAmount } = await cvg
+    .riskEngine()
+    .calculateCollateralForRfq({ rfq: rfq.address });
+
+  t.assert(
+    collateralForRfqAmount > 0,
+    'expected collateral for Rfq to be greater than 0.'
+  );
 });
 
 test('[riskEngineModule] it can calculate collateral for response', async (t: Test) => {
@@ -1212,6 +1187,13 @@ test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare set
     response: rfqResponse.address,
     firstToPrepare,
   });
+
+  const refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
+
+  t.assert(
+    refreshedRfq.clearedResponses == 1,
+    'expected there to be 1 cleared response'
+  );
 });
 
 test('[rfqModule] it can create and finalize Rfq (BaseAsset), respond, and cancel response', async (t: Test) => {
@@ -1908,7 +1890,7 @@ test('[rfqModule] it can create and finalize RFQ, respond twice (identical respo
     side: Side.Bid,
   });
 
-  await delay(3_001).then(async () => {
+  await sleep(3_001).then(async () => {
     await cvg.rfqs().settleTwoPartyDefault({
       rfq: rfq.address,
       response: rfqResponse.address,
