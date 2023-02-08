@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 3.1.1
+
+### Patch Changes
+
+- add new rfq / response pdas
+
 ## 3.1.0
 
 ### Minor Changes
