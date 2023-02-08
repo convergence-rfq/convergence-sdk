@@ -1,0 +1,23 @@
+name: Deploy typedocs to gh-pages on main
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-typedocs:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: 12.x
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build typedocs
+        run: ./infra/docs.sh
+      - name: Deploy to gh-pages
+        uses: crazy-max/ghaction-github-pages@v1
+        with:
+          target_branch: gh-pages
+          build_dir: docs
+          jekyll: false
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
