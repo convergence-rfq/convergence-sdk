@@ -1,4 +1,4 @@
-import { toRiskCategoryInfo, toScenario } from './helpers';
+import { RiskCategoryInfo, Scenario } from '@convergence-rfq/risk-engine';
 import { toBigNumber } from '@/types';
 
 export const DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ =
@@ -55,3 +55,32 @@ export const DEFAULT_RISK_CATEGORIES_INFO = {
     toScenario(1.5, 3.5),
   ]),
 };
+
+function toScenario(
+  baseAssetPriceChange: number,
+  volatilityChange: number
+): Scenario {
+  return {
+    baseAssetPriceChange,
+    volatilityChange,
+  };
+}
+
+function toRiskCategoryInfo(
+  interestRate: number,
+  annualized30DayVolatility: number,
+  scenarioPerSettlementPeriod: [
+    Scenario,
+    Scenario,
+    Scenario,
+    Scenario,
+    Scenario,
+    Scenario
+  ]
+): RiskCategoryInfo {
+  return {
+    interestRate,
+    annualized30DayVolatility,
+    scenarioPerSettlementPeriod,
+  };
+}

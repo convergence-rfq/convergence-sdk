@@ -14,6 +14,8 @@ import {
   calculateCollateralForResponseOperationHandler,
   calculateCollateralForRfqOperation,
   calculateCollateralForRfqOperationHandler,
+  fetchConfigOperation,
+  fetchConfigOperationHandler,
 } from './operations';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
@@ -53,6 +55,7 @@ export const riskEngineModule = (): ConvergencePlugin => ({
       calculateCollateralForConfirmationOperation,
       calculateCollateralForConfirmationOperationHandler
     );
+    op.register(fetchConfigOperation, fetchConfigOperationHandler);
 
     convergence.riskEngine = function () {
       return new RiskEngineClient(this);
