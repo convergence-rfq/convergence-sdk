@@ -6,11 +6,12 @@ import {
   calculateCollateralForConfirmationOperation,
   calculateCollateralForResponseOperation,
   calculateCollateralForRfqOperation,
-  CalculateCollateralForConfirmationIntput,
-  CalculateCollateralForRfqIntput,
-  CalculateCollateralForResponseIntput,
+  CalculateCollateralForConfirmationInput,
+  CalculateCollateralForRfqInput,
+  CalculateCollateralForResponseInput,
   setRiskCategoriesInfoOperation,
   SetRiskCategoriesInfoInput,
+  fetchConfigOperation,
 } from './operations';
 import { RiskEnginePdasClient } from './RiskEnginePdasClient';
 import type { Convergence } from '@/Convergence';
@@ -68,7 +69,7 @@ export class RiskEngineClient {
 
   /** {@inheritDoc  calculateCollateralForRfq} */
   calculateCollateralForRfq(
-    input: CalculateCollateralForRfqIntput,
+    input: CalculateCollateralForRfqInput,
     options?: OperationOptions
   ) {
     return this.convergence
@@ -78,7 +79,7 @@ export class RiskEngineClient {
 
   /** {@inheritDoc calculateCollateralForResponse} */
   calculateCollateralForResponse(
-    input: CalculateCollateralForResponseIntput,
+    input: CalculateCollateralForResponseInput,
     options?: OperationOptions
   ) {
     return this.convergence
@@ -88,11 +89,18 @@ export class RiskEngineClient {
 
   /** {@inheritDoc calculateCollateralForConfirmation} */
   calculateCollateralForConfirmation(
-    input: CalculateCollateralForConfirmationIntput,
+    input: CalculateCollateralForConfirmationInput,
     options?: OperationOptions
   ) {
     return this.convergence
       .operations()
       .execute(calculateCollateralForConfirmationOperation(input), options);
+  }
+
+  /** {@inheritDoc fetchConfig} */
+  fetchConfig(options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(fetchConfigOperation({}), options);
   }
 }

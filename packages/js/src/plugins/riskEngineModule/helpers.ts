@@ -1,30 +1,47 @@
-import { Scenario, RiskCategoryInfo } from './types';
+import {
+  isFixedSizeBaseAsset,
+  isFixedSizeNone,
+  isFixedSizeQuoteAsset,
+  isQuoteFixedSize,
+  isQuoteStandard,
+  Quote,
+} from '@convergence-rfq/rfq';
+import BN from 'bn.js';
+import {
+  ABSOLUTE_PRICE_DECIMALS,
+  LEG_MULTIPLIER_DECIMALS,
+} from '../rfqModule/constants';
+import { Rfq } from '../rfqModule/models';
 
-export function toScenario(
-  baseAssetPriceChange: number,
-  volatilityChange: number
-): Scenario {
-  return {
-    baseAssetPriceChange,
-    volatilityChange,
-  };
-}
+export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
+  const { fixedSize } = rfq;
+  if (isFixedSizeNone(fixedSize)) {
+    if (isQuoteFixedSize(quote)) {
+      throw Error('Fixed size quote cannot be provided to non-fixed size rfq');
+    }
 
-export function toRiskCategoryInfo(
-  interestRate: number,
-  annualized30DayVolatility: number,
-  scenarioPerSettlementPeriod: [
-    Scenario,
-    Scenario,
-    Scenario,
-    Scenario,
-    Scenario,
-    Scenario
-  ]
-): RiskCategoryInfo {
-  return {
-    interestRate,
-    annualized30DayVolatility,
-    scenarioPerSettlementPeriod,
-  };
+    return quote.legsMultiplierBps;
+  } else if (isFixedSizeBaseAsset(fixedSize)) {
+    if (isQuoteStandard(quote)) {
+      throw Error('Non fixed size quote cannot be provided to fixed size rfq');
+    }
+
+    return fixedSize.legsMultiplierBps;
+  } else if (isFixedSizeQuoteAsset(fixedSize)) {
+    if (isQuoteStandard(quote)) {
+      throw Error('Non fixed size quote cannot be provided to fixed size rfq');
+    }
+
+    const priceBps = new BN(quote.priceQuote.amountBps);
+    if (priceBps.ltn(0)) {
+      throw Error('Negative prices are not allowed for fixed quote amount rfq');
+    }
+
+    return new BN(fixedSize.quoteAmount)
+      .muln(10 ** LEG_MULTIPLIER_DECIMALS)
+      .muln(10 ** ABSOLUTE_PRICE_DECIMALS)
+      .div(priceBps);
+  }
+
+  throw new Error('Invalid fixed size');
 }

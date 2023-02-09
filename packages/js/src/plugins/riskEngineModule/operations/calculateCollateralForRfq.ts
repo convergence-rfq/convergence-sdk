@@ -1,47 +1,84 @@
-import { createCalculateCollateralForRfqInstruction } from '@convergence-rfq/risk-engine';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
-import { BaseAssetIndex } from '@convergence-rfq/rfq';
+import {
+  AuthoritySide,
+  FixedSize,
+  isFixedSizeBaseAsset,
+  isFixedSizeNone,
+  isFixedSizeQuoteAsset,
+  Leg,
+  OrderType,
+  Side,
+} from '@convergence-rfq/rfq';
 import { bignum } from '@convergence-rfq/beet';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { RiskEnginePdasClient } from '../RiskEnginePdasClient';
-import { Convergence } from '@/Convergence';
-import { ProtocolPdasClient } from '@/plugins/protocolModule';
-
+import { calculateRisk } from '../clientCollateralCalculator';
+import { Config } from '../models';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
 } from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { Convergence } from '@/Convergence';
+import { LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
+/**
+ * Calculates the required collateral for a taker to create a particular RFQ
+ *
+ * ```ts
+ * TODO
+ * ```
+ *
+ * @group Operations
+ * @category Constructors
+ */
 export const calculateCollateralForRfqOperation =
   useOperation<CalculateCollateralForRfqOperation>(Key);
 
+/**
+ * @group Operations
+ * @category Types
+ */
 export type CalculateCollateralForRfqOperation = Operation<
   typeof Key,
-  CalculateCollateralForRfqIntput,
+  CalculateCollateralForRfqInput,
   CalculateCollateralForRfqOutput
 >;
 
+/**
+ * @group Operations
+ * @category Outputs
+ */
 export type CalculateCollateralForRfqOutput = {
-  /** The blockchain response from sending and confirming the transaction. */
-  response: SendAndConfirmTransactionResponse;
-
-  collateralForRfqAmount: bignum;
+  /** Collateral required as a floating point number */
+  requiredCollateral: number;
 };
 
-export type CalculateCollateralForRfqIntput = {
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
-  /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
+/**
+ * @group Operations
+ * @category Inputs
+ */
+export type CalculateCollateralForRfqInput = {
+  /**
+   * What's the size restriction of the RFQ being created
+   */
+  fixedSize: FixedSize;
+  /**
+   * What's the order type of the RFQ being created
+   */
+  orderType: OrderType;
+  /**
+   * What's the legs of the RFQ being created
+   */
+  legs: Leg[];
+  /**
+   * What's the settlement period of the RFQ being created in seconds
+   */
+  settlementPeriod: number;
 };
 
 export type CalculateCollateralForRfqBuilderParams =
-  CalculateCollateralForRfqIntput;
+  CalculateCollateralForRfqInput;
 
 export const calculateCollateralForRfqOperationHandler: OperationHandler<CalculateCollateralForRfqOperation> =
   {
@@ -52,70 +89,67 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
     ): Promise<CalculateCollateralForRfqOutput> => {
       scope.throwIfCanceled();
 
-      const output = await calculateCollateralForRfqbuilder(
-        convergence,
-        operation.input,
-        scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      const config = await convergence.riskEngine().fetchConfig(scope);
 
-      const rfq = await convergence
-        .rfqs()
-        .findRfqByAddress({ address: operation.input.rfq });
-      const collateralForRfqAmount = rfq.totalTakerCollateralLocked;
-      return { ...output, collateralForRfqAmount };
+      const { fixedSize, orderType, legs, settlementPeriod } = operation.input;
+      if (isFixedSizeNone(fixedSize)) {
+        return convertCollateralBpsToOutput(
+          config.collateralForVariableSizeRfqCreation,
+          config
+        );
+      } else if (isFixedSizeQuoteAsset(fixedSize)) {
+        return convertCollateralBpsToOutput(
+          config.collateralForFixedQuoteAmountRfqCreation,
+          config
+        );
+      } else if (isFixedSizeBaseAsset(fixedSize)) {
+        const { legsMultiplierBps } = fixedSize;
+        const legMultiplier =
+          Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
+
+        const sideToCase = (side: Side) => {
+          return {
+            legMultiplier,
+            authoritySide: AuthoritySide.Taker,
+            quoteSide: side,
+          };
+        };
+
+        const cases = [];
+        if (orderType == OrderType.Buy) {
+          cases.push(sideToCase(Side.Ask));
+        } else if (orderType == OrderType.Sell) {
+          cases.push(sideToCase(Side.Bid));
+        } else if (orderType == OrderType.TwoWay) {
+          cases.push(sideToCase(Side.Ask));
+          cases.push(sideToCase(Side.Bid));
+        } else {
+          throw new Error('Invalid order type');
+        }
+
+        const risks = await calculateRisk(
+          convergence,
+          config,
+          legs,
+          cases,
+          settlementPeriod,
+          scope.commitment
+        );
+
+        const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
+        return { requiredCollateral };
+      }
+
+      throw new Error('Invalid fixed size');
     },
   };
 
-export const calculateCollateralForRfqbuilder = (
-  convergence: Convergence,
-  params: CalculateCollateralForRfqBuilderParams,
-  options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
-  const anchorRemainingAccounts: AccountMeta[] = [];
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
+function convertCollateralBpsToOutput(
+  value: bignum,
+  config: Config
+): CalculateCollateralForRfqOutput {
+  const requiredCollateral =
+    Number(value) / 10 ** Number(config.collateralMintDecimals);
 
-  const { rfq, baseAssetIndex = { value: 0 } } = params;
-
-  const riskEngineProgram = convergence.programs().getRiskEngine(programs);
-  const config = new RiskEnginePdasClient(convergence).config();
-
-  const baseAsset = new ProtocolPdasClient(convergence).baseAsset({
-    index: baseAssetIndex,
-  });
-  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
-    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
-  );
-
-  const baseAssetAccounts: AccountMeta[] = [
-    {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
-  const oracleAccounts: AccountMeta[] = [
-    {
-      pubkey: SWITCHBOARD_BTC_ORACLE,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
-
-  anchorRemainingAccounts.push(...baseAssetAccounts, ...oracleAccounts);
-
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
-    .add({
-      instruction: createCalculateCollateralForRfqInstruction(
-        {
-          rfq,
-          config,
-          anchorRemainingAccounts,
-        },
-
-        riskEngineProgram.address
-      ),
-      signers: [],
-      key: 'CalculateCollateralForRfqOperation',
-    });
-};
+  return { requiredCollateral };
+}
