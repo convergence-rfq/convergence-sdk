@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 3.1.0
+
+### Minor Changes
+
+- Cleaned up SpotInstrument interface to include toQuoteAsset method
+
 ## 3.0.1
 
 ### Patch Changes

@@ -86,7 +86,7 @@ export type CreateAndFinalizeRfqConstructionInput = {
   orderType: OrderType;
 
   /** The type of Rfq. */
-  fixedSize: FixedSize;
+  fixedSize?: FixedSize;
 
   /** the active window. */
   activeWindow?: number;
@@ -126,11 +126,14 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       convergence: Convergence,
       scope: OperationScope
     ): Promise<CreateAndFinalizeRfqConstructionOutput> => {
-      const { keypair = Keypair.generate() } = operation.input;
+      const {
+        keypair = Keypair.generate(),
+        fixedSize = { __kind: 'None', padding: 0 },
+      } = operation.input;
 
       const rfqBuilder = await createRfqBuilder(
         convergence,
-        { ...operation.input, keypair },
+        { ...operation.input, keypair, fixedSize },
         scope
       );
       scope.throwIfCanceled();

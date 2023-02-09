@@ -1,5 +1,11 @@
 import { PublicKey } from '@solana/web3.js';
-import { Side, Leg, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
+import {
+  Side,
+  Leg,
+  QuoteAsset,
+  sideBeet,
+  baseAssetIndexBeet,
+} from '@convergence-rfq/rfq';
 import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
 import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
@@ -68,6 +74,14 @@ export class SpotInstrument implements Instrument {
       .pdas()
       .mintInfo({ mint: this.mint.address });
     return [{ pubkey: mintInfo, isSigner: false, isWritable: false }];
+  }
+
+  toQuoteAsset(): QuoteAsset {
+    return {
+      instrumentProgram: this.getProgramId(),
+      instrumentData: this.serializeInstrumentData(),
+      instrumentDecimals: this.mint.decimals,
+    };
   }
 
   serializeInstrumentData(): Buffer {

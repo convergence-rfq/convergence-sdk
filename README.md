@@ -1,44 +1,47 @@
 # @convergence-rfq/sdk
 
-## Installation
+## Overview
+
+**Installation**
 
 ```bash
 npm install @convergence-rfq/sdk @solana/web3.js
 ```
 
-## Setup
+**Setup**
 
 The entry point to the JavaScript SDK is a Convergence instance that will give you access to its API. It accepts a Connection instance from @solana/web3.js that will be used to communicate with the cluster.
 
 ```ts
-import { Convergence, walletAdapterIdentity } from '@convergence-rfq/sdk';
 import { Connection, clusterApiUrl } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 
+import { Convergence, walletAdapterIdentity } from '@convergence-rfq/sdk';
+
 const wallet = useWallet();
-const connection = new Connection(clusterApiUrl('devnet'));
-const cvg = new Convergence(connection);
+const cvg = new Convergence(new Connection(clusterApiUrl('devnet')));
 cvg.use(walletAdapterIdentity(wallet));
 ```
 
-## Basic Usage
+**Example**
 
-To create a basic RFQ for BTC spot.
+To create a basic RFQ for BTC spot quoted in USDC spot.
 
 ```ts
-const { rfq } = await cvg.rfqs().createAndFinalize({
+import { SpotInstrument, Side, OrderType } from '@convergence-rfq/sdk';
+
+const { rfq, response } = await cvg.rfqs().createAndFinalize({
   instruments: [
     new SpotInstrument(cvg, btcMint, {
-      amount: 1,
+      amount: 1.3,
       side: Side.Bid,
     }),
   ],
   orderType: OrderType.Buy,
-  fixedSize: { __kind: 'None', padding: 0 },
-  quoteAsset: cvg
-    .instrument(new SpotInstrument(cvg, usdcMint))
-    .toQuoteData(),
+  quoteAsset: new SpotInstrument(cvg, usdcMint).toQuoteAsset(),
 });
+
+console.log('Tx:', response.signature);
 ```
 
 ## Development
@@ -46,6 +49,7 @@ const { rfq } = await cvg.rfqs().createAndFinalize({
 **Requirements**
 
 - [Node (18.12.1)](https://nodejs.org/en/download/)
+- [Solana (1.14.11)](https://docs.solana.com/cli/install-solana-cli-tools#use-solanas-install-tool)
 - [Yarn (1.22.15)](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
 - [NX (14.8.6)](https://nx.dev/recipes/adopting-nx/adding-to-monorepo)
 
@@ -64,19 +68,14 @@ Run the Solana test validator, Solana logs, and the tests.
 yarn test:all
 ```
 
-Run the validator separately.
+Run the validator and tests separately.
 
 ```bash
 yarn validator:logs
+yarn test # In a separate terminal
 ```
 
-Run the tests only.
-
-```bash
-yarn test
-```
-
-### NPM
+**NPM**
 
 ```bash
 yarn changeset:change
@@ -84,6 +83,6 @@ yarn changeset:version
 yarn changeset:publish
 ```
 
-### Docs
+**TypeDocs**
 
-Automatically built and [released](https://convergence-rfq.github.io/convergence-sdk/).
+Documentation is built via CI/CD and released [here](https://convergence-rfq.github.io/convergence-sdk/).
