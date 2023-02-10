@@ -408,6 +408,10 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const { collateral: makerCollateral } = await cvg.collateral().initialize({
     user: maker,
   });
+  //@ts-ignore
+  const { collateral: daoCollateral } = await cvg.collateral().initialize({
+    user: dao,
+  });
 
   const foundTakercollateral = await cvg
     .collateral()
