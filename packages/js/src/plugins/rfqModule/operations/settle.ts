@@ -292,10 +292,7 @@ export const settleBuilder = async (
         .associatedTokenAccount({
           mint: rfqModel.quoteMint,
           owner:
-            // rfqModel.fixedSize.__kind == 'QuoteAsset' &&
-            // confirmationSide == Side.Ask
-            //   ? maker
-            //   : taker,
+
             quoteReceiverTokens > 0 ? maker : taker,
           programs,
         }),
