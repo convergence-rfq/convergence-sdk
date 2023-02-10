@@ -174,7 +174,6 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
       const hash = new Sha256();
       hash.update(fullLegDataBuffer);
-
       expectedLegsHash = hash.digestSync();
 
       let rfqPda = convergence

@@ -142,17 +142,33 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     let rfqPda: PublicKey;
 
-    const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
+    const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
     if (fixedSize.__kind == 'BaseAsset') {
       const parsedLegsMultiplierBps =
-        (fixedSize.legsMultiplierBps as number) * (10 ^ 9);
-
+        (fixedSize.legsMultiplierBps as number) * 1_000_000_000;
       fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-    } else if (fixedSize.__kind == 'QuoteAsset') {
-      const parsedQuoteAmount = (fixedSize.quoteAmount as number) * (10 ^ 9);
 
+      console.log(
+        'baseasset fixedSize.legsMultiplierBps: ' +
+          fixedSize.legsMultiplierBps.toString()
+      );
+      console.log(
+        'baseasset createRfq parsedLegsMultBps: ' +
+          parsedLegsMultiplierBps.toString()
+      );
+    } else if (fixedSize.__kind == 'QuoteAsset') {
+      const parsedQuoteAmount =
+        (fixedSize.quoteAmount as number) * 1_000_000_000;
       fixedSize.quoteAmount = parsedQuoteAmount;
+
+      console.log(
+        'quoteasset fixedSize.quoteAmount: ' + fixedSize.quoteAmount.toString()
+      );
+      console.log(
+        'quoteasset createRfq parsedQuoteAmount: ' +
+          parsedQuoteAmount.toString()
+      );
     }
 
     if (expectedLegsHash) {
@@ -174,7 +190,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= 10 ^ 9;
+          instrument.legInfo.amount *= 1_000_000_000;
         }
 
         const instrumentClient = convergence.instrument(
@@ -196,7 +212,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
       const hash = new Sha256();
       hash.update(fullLegDataBuffer);
-
       expectedLegsHash = hash.digestSync();
 
       rfqPda = convergence

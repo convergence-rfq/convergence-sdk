@@ -9,6 +9,9 @@ import {
   Program,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
@@ -65,11 +68,19 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
     ): Promise<FindRfqsByInstrumentOutput> => {
       const { instrumentProgram } = operation.input;
 
+      const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+      const psyoptionsEuropeanProgram = convergence
+        .programs()
+        .getPsyoptionsEuropeanInstrument();
+      const psyoptionsAmericanProgram = convergence
+        .programs()
+        .getPsyoptionsAmericanInstrument();
+
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder.get();
 
-      const rfqs = unparsedAccounts
+      const rfqAccounts = unparsedAccounts
         .map<Rfq | null>((account) => {
           if (account === null) {
             return null;
@@ -82,18 +93,78 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
           }
         })
         .filter((rfq): rfq is Rfq => rfq !== null);
-      const rfq: Rfq[] = [];
-      for (const r of rfqs) {
-        for (const l of r.legs) {
+      const rfqs: Rfq[] = [];
+      for (const rfq of rfqAccounts) {
+        for (const leg of rfq.legs) {
           if (
-            l.instrumentProgram.toBase58() ===
+            leg.instrumentProgram.toBase58() ===
             instrumentProgram.address.toBase58()
           ) {
-            rfq.push(r);
+            if (rfq.fixedSize.__kind == 'BaseAsset') {
+              const parsedLegsMultiplierBps =
+                (rfq.fixedSize.legsMultiplierBps as number) / 1_000_000_000;
+
+              rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+            } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
+              const parsedQuoteAmount =
+                (rfq.fixedSize.quoteAmount as number) / 1_000_000_000;
+
+              rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+            }
+
+            for (const leg of rfq.legs) {
+              if (
+                leg.instrumentProgram.toBase58() ===
+                psyoptionsEuropeanProgram.address.toBase58()
+              ) {
+                const instrument =
+                  await PsyoptionsEuropeanInstrument.createFromLeg(
+                    convergence,
+                    leg
+                  );
+
+                if (instrument.legInfo?.amount) {
+                  // instrument.legInfo.amount /= 1_000_000_000;
+                  leg.instrumentAmount =
+                    (leg.instrumentAmount as number) /= 1_000_000_000;
+                }
+              } else if (
+                leg.instrumentProgram.toBase58() ===
+                psyoptionsAmericanProgram.address.toBase58()
+              ) {
+                const instrument =
+                  await PsyoptionsAmericanInstrument.createFromLeg(
+                    convergence,
+                    leg
+                  );
+
+                if (instrument.legInfo?.amount) {
+                  // instrument.legInfo.amount /= 1_000_000_000;
+                  leg.instrumentAmount =
+                    (leg.instrumentAmount as number) /= 1_000_000_000;
+                }
+              } else if (
+                leg.instrumentProgram.toBase58() ===
+                spotInstrumentProgram.address.toBase58()
+              ) {
+                const instrument = await SpotInstrument.createFromLeg(
+                  convergence,
+                  leg
+                );
+
+                if (instrument.legInfo?.amount) {
+                  // instrument.legInfo.amount /= 1_000_000_000;
+                  leg.instrumentAmount =
+                    (leg.instrumentAmount as number) /= 1_000_000_000;
+                }
+              }
+            }
+
+            rfqs.push(rfq);
           }
         }
       }
-      const rfqSet = [...new Set(rfq)];
+      const rfqSet = [...new Set(rfqs)];
       return rfqSet;
     },
   };

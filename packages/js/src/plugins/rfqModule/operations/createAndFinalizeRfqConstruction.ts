@@ -135,27 +135,15 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         settlingWindow = 1_000,
       } = operation.input;
 
-      const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
+      const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
       if (fixedSize.__kind == 'BaseAsset') {
         const parsedLegsMultiplierBps =
-          (fixedSize.legsMultiplierBps as number) * (10 ^ 9);
-
-        console.log(
-          'fixed size base asset before reassign: ' +
-            fixedSize.legsMultiplierBps.toString()
-        );
+          (fixedSize.legsMultiplierBps as number) * 1_000_000_000;
 
         fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-
-        console.log(
-          'fixed size base asset: ' + parsedLegsMultiplierBps.toString()
-        );
-        console.log(
-          'fixed size base asset: ' + fixedSize.legsMultiplierBps.toString()
-        );
       } else if (fixedSize.__kind == 'QuoteAsset') {
-        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * (10 ^ 9);
+        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * (1_000_000_000);
 
         console.log(
           'fixed size quote asset before reassign: ' +
@@ -176,7 +164,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= 10 ^ 9;
+          instrument.legInfo.amount *= 1_000_000_000;
         }
 
         const instrumentClient = convergence.instrument(
@@ -198,7 +186,6 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       const hash = new Sha256();
       hash.update(fullLegDataBuffer);
-
       expectedLegsHash = hash.digestSync();
 
       const rfqPda = convergence

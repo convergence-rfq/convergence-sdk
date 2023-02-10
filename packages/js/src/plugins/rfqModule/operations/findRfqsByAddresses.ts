@@ -8,6 +8,9 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 
 const Key = 'FindRfqsByAddressesOperation' as const;
 
@@ -17,8 +20,8 @@ const Key = 'FindRfqsByAddressesOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByAddress({ 
- *     addresses: [rfq1.address, rfq2.address] 
+ *   .findByAddress({
+ *     addresses: [rfq1.address, rfq2.address]
  *   });
  * ```
  *
@@ -68,6 +71,14 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
       const { commitment } = scope;
       scope.throwIfCanceled();
 
+      const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+      const psyoptionsEuropeanProgram = convergence
+        .programs()
+        .getPsyoptionsEuropeanInstrument();
+      const psyoptionsAmericanProgram = convergence
+        .programs()
+        .getPsyoptionsAmericanInstrument();
+
       const rfqs: Rfq[] = [];
 
       const accounts = await convergence
@@ -75,8 +86,65 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
         .getMultipleAccounts(addresses, commitment);
 
       for (const account of accounts) {
-        const rfqAccount = toRfqAccount(account);
-        const rfq = toRfq(rfqAccount);
+        const rfq = toRfq(toRfqAccount(account));
+
+        if (rfq.fixedSize.__kind == 'BaseAsset') {
+          const parsedLegsMultiplierBps =
+            (rfq.fixedSize.legsMultiplierBps as number) / 1_000_000_000;
+
+          rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+        } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
+          const parsedQuoteAmount =
+            (rfq.fixedSize.quoteAmount as number) / 1_000_000_000;
+
+          rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+        }
+
+        for (const leg of rfq.legs) {
+          if (
+            leg.instrumentProgram.toBase58() ===
+            psyoptionsEuropeanProgram.address.toBase58()
+          ) {
+            const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+              convergence,
+              leg
+            );
+
+            if (instrument.legInfo?.amount) {
+              // instrument.legInfo.amount /= 1_000_000_000;
+              leg.instrumentAmount =
+                (leg.instrumentAmount as number) /= 1_000_000_000;
+            }
+          } else if (
+            leg.instrumentProgram.toBase58() ===
+            psyoptionsAmericanProgram.address.toBase58()
+          ) {
+            const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+              convergence,
+              leg
+            );
+
+            if (instrument.legInfo?.amount) {
+              // instrument.legInfo.amount /= 1_000_000_000;
+              leg.instrumentAmount =
+                (leg.instrumentAmount as number) /= 1_000_000_000;
+            }
+          } else if (
+            leg.instrumentProgram.toBase58() ===
+            spotInstrumentProgram.address.toBase58()
+          ) {
+            const instrument = await SpotInstrument.createFromLeg(
+              convergence,
+              leg
+            );
+
+            if (instrument.legInfo?.amount) {
+              // instrument.legInfo.amount /= 1_000_000_000;
+              leg.instrumentAmount =
+                (leg.instrumentAmount as number) /= 1_000_000_000;
+            }
+          }
+        }
 
         rfqs.push(rfq);
       }

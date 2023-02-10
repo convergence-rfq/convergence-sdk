@@ -2,7 +2,6 @@ import { PublicKey } from '@solana/web3.js';
 import { toResponseAccount } from '../accounts';
 import { Response, toResponse } from '../models/Response';
 import { GpaBuilder } from '@/utils';
-
 import {
   Operation,
   OperationHandler,
@@ -103,6 +102,33 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
         .filter((response): response is Response => response != null);
       for (const response of responseAccounts) {
         if (response.maker.toBase58() === owner.toBase58()) {
+          if (response.bid) {
+            const parsedPriceQuoteAmountBps =
+              (response.bid.priceQuote.amountBps as number) / 1_000_000_000;
+
+            response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+            if (response.bid.__kind == 'Standard') {
+              const parsedLegsMultiplierBps =
+                (response.bid.legsMultiplierBps as number) / 1_000_000_000;
+
+              response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
+            }
+          }
+          if (response.ask) {
+            const parsedPriceQuoteAmountBps =
+              (response.ask.priceQuote.amountBps as number) / 1_000_000_000;
+
+            response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+            if (response.ask.__kind == 'Standard') {
+              const parsedLegsMultiplierBps =
+                (response.ask.legsMultiplierBps as number) / 1_000_000_000;
+
+              response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
+            }
+          }
+
           responsesByowner.push(response);
         }
       }

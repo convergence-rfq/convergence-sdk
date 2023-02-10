@@ -119,26 +119,26 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
 
       if (bid) {
         const parsedPriceQuoteAmountBps =
-          (bid.priceQuote.amountBps as number) * (10 ^ 9);
+          (bid.priceQuote.amountBps as number) * 1_000_000_000;
 
         bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
         if (bid.__kind == 'Standard') {
           const parsedLegsMultiplierBps =
-            (bid.legsMultiplierBps as number) * (10 ^ 9);
+            (bid.legsMultiplierBps as number) * 1_000_000_000;
 
           bid.legsMultiplierBps = parsedLegsMultiplierBps;
         }
       }
       if (ask) {
         const parsedPriceQuoteAmountBps =
-          (ask.priceQuote.amountBps as number) * (10 ^ 9);
+          (ask.priceQuote.amountBps as number) * 1_000_000_000;
 
         ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
         if (ask.__kind == 'Standard') {
           const parsedLegsMultiplierBps =
-            (ask.legsMultiplierBps as number) * (10 ^ 9);
+            (ask.legsMultiplierBps as number) * 1_000_000_000;
 
           ask.legsMultiplierBps = parsedLegsMultiplierBps;
         }

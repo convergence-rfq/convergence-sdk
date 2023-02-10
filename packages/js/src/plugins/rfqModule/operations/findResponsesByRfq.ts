@@ -92,6 +92,33 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       const responsesByRfq: Response[] = [];
       for (const response of responseAccounts) {
         if (response.rfq.toBase58() === address.toBase58()) {
+          if (response.bid) {
+            const parsedPriceQuoteAmountBps =
+              (response.bid.priceQuote.amountBps as number) / 1_000_000_000;
+
+            response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+            if (response.bid.__kind == 'Standard') {
+              const parsedLegsMultiplierBps =
+                (response.bid.legsMultiplierBps as number) / 1_000_000_000;
+
+              response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
+            }
+          }
+          if (response.ask) {
+            const parsedPriceQuoteAmountBps =
+              (response.ask.priceQuote.amountBps as number) / 1_000_000_000;
+
+            response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+            if (response.ask.__kind == 'Standard') {
+              const parsedLegsMultiplierBps =
+                (response.ask.legsMultiplierBps as number) / 1_000_000_000;
+
+              response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
+            }
+          }
+
           responsesByRfq.push(response);
         }
       }

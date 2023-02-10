@@ -18,8 +18,8 @@ const Key = 'FindResponsesByRfqsOperation' as const;
  * ```ts
  * const responses = await convergence
  *   .rfqs()
- *   .findResponsesByRfqs({ 
- *     addresses: [rfq1.address, rfq2.address] 
+ *   .findResponsesByRfqs({
+ *     addresses: [rfq1.address, rfq2.address]
  *   });
  * ```
  *
@@ -74,10 +74,10 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
         convergence,
         rfqProgram.address
       );
-      const responses = await responseGpaBuilder.get();
+      const responseAccounts = await responseGpaBuilder.get();
       scope.throwIfCanceled();
 
-      const responseAccounts = responses
+      const responses = responseAccounts
         .map<Response | null>((account) => {
           if (account === null) {
             return null;
@@ -94,9 +94,36 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
       const foundResponses: Response[] = [];
 
       for (const address of addresses) {
-        for (const r of responseAccounts) {
-          if (r.rfq.toBase58() === address.toBase58()) {
-            foundResponses.push(r);
+        for (const response of responses) {
+          if (response.rfq.toBase58() === address.toBase58()) {
+            if (response.bid) {
+              const parsedPriceQuoteAmountBps =
+                (response.bid.priceQuote.amountBps as number) / 1_000_000_000;
+
+              response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+              if (response.bid.__kind == 'Standard') {
+                const parsedLegsMultiplierBps =
+                  (response.bid.legsMultiplierBps as number) / 1_000_000_000;
+
+                response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
+              }
+            }
+            if (response.ask) {
+              const parsedPriceQuoteAmountBps =
+                (response.ask.priceQuote.amountBps as number) / 1_000_000_000;
+
+              response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+              if (response.ask.__kind == 'Standard') {
+                const parsedLegsMultiplierBps =
+                  (response.ask.legsMultiplierBps as number) / 1_000_000_000;
+
+                response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
+              }
+            }
+
+            foundResponses.push(response);
           }
         }
       }
