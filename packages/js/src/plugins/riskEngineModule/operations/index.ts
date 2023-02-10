@@ -4,3 +4,4 @@ export * from './calculateCollateralForConfirmation';
 export * from './calculateCollateralForResponse';
 export * from './calculateCollateralForRfq';
 export * from './setRiskCategoriesInfo';
+export * from './fetchConfig';
