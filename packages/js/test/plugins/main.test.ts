@@ -789,7 +789,7 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     taker,
     instruments: [
       new SpotInstrument(cvg, solMint, {
-        amount: 6,
+        amount: 0.000000006,
         side: Side.Bid,
       }),
     ],
@@ -804,7 +804,7 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     taker,
     instruments: [
       new SpotInstrument(cvg, btcMint, {
-        amount: 9,
+        amount: 0.000000009,
         side: Side.Ask,
       }),
     ],
