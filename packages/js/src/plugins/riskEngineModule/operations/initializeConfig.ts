@@ -1,7 +1,6 @@
 import { createInitializeConfigInstruction } from '@convergence-rfq/risk-engine';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { toConfigAccount } from '../accounts';
-import { toConfig, assertConfig, Config } from '../models';
+import { Config } from '../models';
 import {
   DEFAULT_MINT_DECIMALS,
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
@@ -90,7 +89,6 @@ export const initializeConfigOperationHandler: OperationHandler<InitalizeConfigO
       convergence: Convergence,
       scope: OperationScope
     ): Promise<InitializeConfigOutput> => {
-      const { commitment } = scope;
       scope.throwIfCanceled();
 
       const builder = initializeConfigBuilder(
@@ -103,12 +101,7 @@ export const initializeConfigOperationHandler: OperationHandler<InitalizeConfigO
         scope.confirmOptions
       );
 
-      const account = await convergence
-        .rpc()
-        .getAccount(convergence.riskEngine().pdas().config(), commitment);
-      const config = toConfig(toConfigAccount(account));
-      scope.throwIfCanceled();
-      assertConfig(config);
+      const config = await convergence.riskEngine().fetchConfig(scope);
 
       return { response, config };
     },
