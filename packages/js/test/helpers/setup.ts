@@ -107,6 +107,7 @@ export const createWallet = async (
 export const setupAccounts = async (
   cvg: Convergence,
   walletAmount: number,
+  usdcWalletAmount: number,
   dao: PublicKey
 ) => {
   const mintAuthority = Keypair.generate();
@@ -162,19 +163,19 @@ export const setupAccounts = async (
   // Mint USDC
   await cvg.tokens().mint({
     mintAddress: usdcMint.address,
-    amount: token(walletAmount),
+    amount: token(usdcWalletAmount),
     toToken: makerUSDCWallet.address,
     mintAuthority,
   });
   await cvg.tokens().mint({
     mintAddress: usdcMint.address,
-    amount: token(walletAmount),
+    amount: token(usdcWalletAmount),
     toToken: takerUSDCWallet.address,
     mintAuthority,
   });
   await cvg.tokens().mint({
     mintAddress: usdcMint.address,
-    amount: token(walletAmount),
+    amount: token(usdcWalletAmount),
     toToken: daoUSDCWallet.address,
     mintAuthority,
   });

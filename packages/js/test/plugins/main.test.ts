@@ -72,7 +72,7 @@ let takerBTCWallet: Token;
 let takerSOLWallet: Token;
 
 const WALLET_AMOUNT = 9_000 * 10 ** BTC_DECIMALS;
-const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
+const COLLATERAL_AMOUNT = 1_000_000_000 * 10 ** USDC_DECIMALS;
 
 // SETUP
 
@@ -86,7 +86,12 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
 
   dao = cvg.rpc().getDefaultFeePayer();
 
-  const context = await setupAccounts(cvg, WALLET_AMOUNT, dao.publicKey);
+  const context = await setupAccounts(
+    cvg,
+    WALLET_AMOUNT,
+    COLLATERAL_AMOUNT,
+    dao.publicKey
+  );
   maker = context.maker;
   taker = context.taker;
 
@@ -942,6 +947,104 @@ test('[riskEngineModule] it can calculate collateral for fixed base size RFQ cre
   spok(t, riskOutput, {
     $topic: 'Calculated Collateral for fixed quote size Rfq',
     requiredCollateral: 19800,
+  });
+});
+
+test('[riskEngineModule] it can calculate collateral for a response to an Rfq', async (t: Test) => {
+  // variable size rfq for btc
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1 * 10 ** BTC_DECIMALS,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'None', padding: 0 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    settlingWindow: 30 * 60 * 60, // 30 hours
+  });
+
+  const riskOutput = await cvg.riskEngine().calculateCollateralForResponse({
+    rfqAddress: rfq.address,
+    bid: {
+      __kind: 'Standard',
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps: 22_000 * 10 ** USDC_DECIMALS,
+      },
+      legsMultiplierBps: 20 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+    ask: {
+      __kind: 'Standard',
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps: 23_000 * 10 ** USDC_DECIMALS,
+      },
+      legsMultiplierBps: 5 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+  });
+
+  spok(t, riskOutput, {
+    $topic: 'Calculated Collateral for response to an Rfq',
+    requiredCollateral: 92400,
+  });
+});
+
+test('[riskEngineModule] it can calculate collateral for a confirmation of the Rfq', async (t: Test) => {
+  // variable size rfq for btc
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1 * 10 ** BTC_DECIMALS,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'None', padding: 0 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    settlingWindow: 60 * 60 * 60, // 60 hours
+  });
+
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'Standard',
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps: 22_000 * 10 ** USDC_DECIMALS,
+      },
+      legsMultiplierBps: 20 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+    ask: {
+      __kind: 'Standard',
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps: 23_000 * 10 ** USDC_DECIMALS,
+      },
+      legsMultiplierBps: 5 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+  });
+
+  const riskOutput = await cvg.riskEngine().calculateCollateralForConfirmation({
+    rfqAddress: rfq.address,
+    responseAddress: rfqResponse.address,
+    confirmation: {
+      side: Side.Bid,
+      overrideLegMultiplierBps: 3 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+  });
+
+  spok(t, riskOutput, {
+    $topic: 'Calculated Collateral for a confirmation of the Rfq',
+    requiredCollateral: spok.range(20459.9999, 20460.0001),
   });
 });
 
