@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.0.6
+
+### Patch Changes
+
+- use a different sha256 client so sdk builds correctly
+
 ## 3.1.0
 
 ### Minor Changes
