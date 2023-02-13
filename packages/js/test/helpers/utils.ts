@@ -1,4 +1,5 @@
-import { ConfirmOptions } from '@solana/web3.js';
+import { Convergence } from '@/index';
+import { ConfirmOptions, PublicKey } from '@solana/web3.js';
 import test from 'tape';
 // import { Rfq, Response } from '@/plugins';
 
@@ -23,6 +24,24 @@ export const SKIP_PREFLIGHT: ConfirmOptions = {
   skipPreflight: true,
   commitment: 'confirmed',
 };
+
+export async function collateralInitializationNecessary(
+  convergence: Convergence,
+  user: PublicKey
+): Promise<boolean> {
+  const collateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({ user });
+
+  const collateralInfo = await convergence.rpc().getAccount(collateralInfoPda);
+
+  if (collateralInfo.exists) {
+    return false;
+  }
+
+  return true;
+}
 
 // TODO: this should only return one value as we can only confirm one side of the response
 // export function getResponseBaseAssetAmounts(

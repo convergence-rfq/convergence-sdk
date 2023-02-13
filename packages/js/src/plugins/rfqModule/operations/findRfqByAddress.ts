@@ -78,7 +78,7 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
         .getPsyoptionsAmericanInstrument();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      let rfq = toRfq(toRfqAccount(account));
+      const rfq = toRfq(toRfqAccount(account));
       scope.throwIfCanceled();
 
       if (rfq.fixedSize.__kind == 'BaseAsset') {

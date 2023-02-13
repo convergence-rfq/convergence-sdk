@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.0.7
+
+### Patch Changes
+
+- add logic for converting number-> bignum
+
 ## 4.0.6
 
 ### Patch Changes

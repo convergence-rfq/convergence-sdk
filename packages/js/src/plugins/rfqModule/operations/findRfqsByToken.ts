@@ -6,14 +6,13 @@ import { psyoptionsAmericanInstrumentProgram } from '../../psyoptionsAmericanIns
 import { psyoptionsEuropeanInstrumentProgram } from '../../psyoptionsEuropeanInstrumentModule/programs';
 import { psyoptionsAmericanInstrumentDataSerializer } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { Convergence } from '@/Convergence';
-import { SpotInstrumentDataSerializer } from '@/plugins/spotInstrumentModule';
+import { SpotInstrument, SpotInstrumentDataSerializer } from '@/plugins/spotInstrumentModule';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
 } from '@/types';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 

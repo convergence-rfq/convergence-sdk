@@ -54,7 +54,7 @@ export type WithdrawCollateralInput = {
 
   /** The address of the user's token account where withdrawn
    * tokens will be transferred to. */
-  userTokens: PublicKey;
+  userTokens?: PublicKey;
 
   protocol?: PublicKey;
 
@@ -144,6 +144,8 @@ export const withdrawCollateralBuilder = async (
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
+  const protocolModel = await convergence.protocol().get();
+
   const {
     user = convergence.identity(),
     protocol = convergence.protocol().pdas().protocol(),
@@ -155,7 +157,11 @@ export const withdrawCollateralBuilder = async (
       .collateral()
       .pdas()
       .collateralToken({ user: user.publicKey }),
-    userTokens,
+    userTokens = convergence.tokens().pdas().associatedTokenAccount({
+      mint: protocolModel.collateralMint,
+      owner: user.publicKey,
+      programs,
+    }),
     amount,
   } = params;
 

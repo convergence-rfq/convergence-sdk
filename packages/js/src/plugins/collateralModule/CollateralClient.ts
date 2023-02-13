@@ -13,6 +13,7 @@ import {
 import { CollateralPdasClient } from './CollateralPdasClient';
 import { OperationOptions } from '@/types';
 import type { Convergence } from '@/Convergence';
+import { PublicKey } from '@solana/web3.js';
 
 export class CollateralClient {
   constructor(protected readonly convergence: Convergence) {}
@@ -57,5 +58,19 @@ export class CollateralClient {
     return this.convergence
       .operations()
       .execute(findCollateralByAddressOperation(input), options);
+  }
+
+  async initializationNecessary(user: PublicKey): Promise<boolean> {
+    const collateralInfoPda = this.pdas().collateralInfo({ user });
+
+    const collateralInfo = await this.convergence
+      .rpc()
+      .getAccount(collateralInfoPda);
+
+    if (collateralInfo.exists) {
+      return false;
+    }
+
+    return true;
   }
 }

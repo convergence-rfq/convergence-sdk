@@ -54,7 +54,7 @@ export type FundCollateralInput = {
   protocol?: PublicKey;
 
   /** Token account of user's token */
-  userTokens: PublicKey;
+  userTokens?: PublicKey;
 
   /** The address of the user's collateral info account. */
   collateralInfo?: PublicKey;
@@ -133,6 +133,9 @@ export const fundCollateralBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { user = convergence.identity() } = params;
+
+  const protocolModel = await convergence.protocol().get();
+
   const {
     protocol = convergence.protocol().pdas().protocol(),
     collateralToken = convergence
@@ -143,7 +146,11 @@ export const fundCollateralBuilder = async (
       .collateral()
       .pdas()
       .collateralInfo({ user: user.publicKey }),
-    userTokens,
+    userTokens = convergence.tokens().pdas().associatedTokenAccount({
+      mint: protocolModel.collateralMint,
+      owner: user.publicKey,
+      programs,
+    }),
     amount,
   } = params;
 

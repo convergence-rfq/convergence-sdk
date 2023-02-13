@@ -57,6 +57,7 @@ let cvg: Convergence;
 let usdcMint: Mint;
 let btcMint: Mint;
 let solMint: Mint;
+// let ethMint: Mint;
 
 let dao: Signer;
 
@@ -451,12 +452,12 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 
 test('[collateralModule] it can fund collateral', async (t: Test) => {
   await cvg.collateral().fund({
-    userTokens: takerUSDCWallet.address,
+    // userTokens: takerUSDCWallet.address,
     user: taker,
     amount: COLLATERAL_AMOUNT,
   });
   await cvg.collateral().fund({
-    userTokens: makerUSDCWallet.address,
+    // userTokens: makerUSDCWallet.address,
     user: maker,
     amount: COLLATERAL_AMOUNT,
   });
@@ -514,12 +515,12 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     .findMintByAddress({ address: protocol.collateralMint });
 
   await cvg.collateral().withdraw({
-    userTokens: takerUSDCWallet.address,
+    // userTokens: takerUSDCWallet.address,
     user: taker,
     amount,
   });
   await cvg.collateral().withdraw({
-    userTokens: makerUSDCWallet.address,
+    // userTokens: makerUSDCWallet.address,
     user: maker,
     amount,
   });
@@ -621,7 +622,7 @@ test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collate
       .toQuoteAsset(),
     instruments: [
       new SpotInstrument(cvg, btcMint, {
-        amount: 1,
+        amount: 0.000000001,
         side: Side.Bid,
       }),
     ],
@@ -774,7 +775,7 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     taker,
     instruments: [
       new SpotInstrument(cvg, solMint, {
-        amount: 2,
+        amount: 0.000000002,
         side: Side.Bid,
       }),
     ],
@@ -1351,8 +1352,10 @@ test('[riskEngineModule] it can calculate collateral for confirm response', asyn
   // TODO: Finish
 
   // await cvg.riskEngine().calculateCollateralForConfirmation({
-  //   rfq: rfq.address,
-  //   response: rfqResponse.address,
+  //   rfqAddress: rfq.address,
+  //   responseAddress: rfqResponse.address,
+  //   //@ts-ignore
+  //   confirmation: rfqResponse.confirmed,
   // });
 });
 
@@ -1383,7 +1386,7 @@ test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions 
         optionMarket as OptionMarketWithKey,
         optionMarketPubkey,
         {
-          amount: 1,
+          amount: 0.000000001,
           side: Side.Bid,
         }
       ),
@@ -2010,4 +2013,15 @@ test('[rfqModule] it can createRfqAndAddLegs, finalize, respond, confirmResponse
     $topic: 'same model',
     state: StoredResponseState.Settled,
   });
+});
+
+test('[collateralModule] it can initialize collateral if necessary', async (t: Test) => {
+  const initializationNecessary = await cvg
+    .collateral()
+    .initializationNecessary(taker.publicKey);
+
+  if (initializationNecessary) {
+    await cvg.collateral().initialize({ user: taker });
+  }
+  await cvg.collateral().fund({ user: taker, amount: 1000 });
 });
