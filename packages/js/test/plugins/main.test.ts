@@ -40,7 +40,6 @@ import {
   Signer,
   DEFAULT_RISK_CATEGORIES_INFO,
   devnetAirdrops,
-  DEFAULT_MINT_DECIMALS,
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
   LEG_MULTIPLIER_DECIMALS,
@@ -71,8 +70,13 @@ let takerUSDCWallet: Token;
 let takerBTCWallet: Token;
 let takerSOLWallet: Token;
 
-const WALLET_AMOUNT = 9_000 * 10 ** BTC_DECIMALS;
-const COLLATERAL_AMOUNT = 1_000_000_000 * 10 ** USDC_DECIMALS;
+const SOL_WALLET_AMOUNT = 9_000;
+const BTC_WALLET_AMOUNT = 9_000;
+const USER_COLLATERAL_AMOUNT = 100_000_000;
+const USER_USDC_WALLET = 10_000_000;
+const USER_COLLATERAL_AMOUNT_WITH_DECIMALS = new anchor.BN(
+  USER_COLLATERAL_AMOUNT
+).muln(10 ** USDC_DECIMALS);
 
 // SETUP
 
@@ -88,8 +92,9 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
 
   const context = await setupAccounts(
     cvg,
-    WALLET_AMOUNT,
-    COLLATERAL_AMOUNT,
+    BTC_WALLET_AMOUNT,
+    SOL_WALLET_AMOUNT,
+    USER_COLLATERAL_AMOUNT + USER_USDC_WALLET,
     dao.publicKey
   );
   maker = context.maker;
@@ -323,7 +328,9 @@ test('[protocolModule] get registered mints', async (t: Test) => {
 // RISK ENGINE
 
 test('[riskEngineModule] it can initialize the default risk engine config', async (t: Test) => {
-  const output = await cvg.riskEngine().initializeConfig();
+  const output = await cvg
+    .riskEngine()
+    .initializeConfig({ collateralMintDecimals: USDC_DECIMALS });
   assertInitRiskEngineConfig(cvg, t, output);
 });
 
@@ -450,12 +457,12 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   await cvg.collateral().fund({
     userTokens: takerUSDCWallet.address,
     user: taker,
-    amount: COLLATERAL_AMOUNT,
+    amount: USER_COLLATERAL_AMOUNT_WITH_DECIMALS,
   });
   await cvg.collateral().fund({
     userTokens: makerUSDCWallet.address,
     user: maker,
-    amount: COLLATERAL_AMOUNT,
+    amount: USER_COLLATERAL_AMOUNT_WITH_DECIMALS,
   });
 
   const takerCollateralTokenPda = cvg
@@ -487,7 +494,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   spok(t, takerCollateralTokenAccount, {
     $topic: 'collateral model',
     model: 'token',
-    amount: token(COLLATERAL_AMOUNT),
+    amount: token(USER_COLLATERAL_AMOUNT_WITH_DECIMALS),
   });
 
   t.same(
@@ -498,7 +505,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   spok(t, makerCollateralTokenAccount, {
     $topic: 'collateral model',
     model: 'token',
-    amount: token(COLLATERAL_AMOUNT),
+    amount: token(USER_COLLATERAL_AMOUNT_WITH_DECIMALS),
   });
 });
 
@@ -878,7 +885,7 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
 // RISK ENGINE UTILS
 
 function removeCollateralDecimals(value: bignum): number {
-  return Number(value) / 10 ** DEFAULT_MINT_DECIMALS;
+  return Number(value) / 10 ** USDC_DECIMALS;
 }
 
 test('[riskEngineModule] it can calculate collateral for variable size RFQ creation', async (t: Test) => {
@@ -1055,8 +1062,8 @@ test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ Psy
     cvg,
     btcMint,
     usdcMint,
-    17_500,
-    1_000_000,
+    17_500 * 10 ** USDC_DECIMALS,
+    1 * 10 ** BTC_DECIMALS,
     3_600
   );
   europeanOptionPutMint = euroMeta.putOptionMint;

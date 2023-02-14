@@ -19,6 +19,7 @@ import {
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import * as spl from '@solana/spl-token';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
+import { bignum } from '@convergence-rfq/beet';
 import {
   IDL as PseudoPythIdl,
   Pyth,
@@ -26,7 +27,6 @@ import {
 import {
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
-  DEFAULT_MINT_DECIMALS,
   DEFAULT_OVERALL_SAFETY_FACTOR,
   DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
   Convergence,
@@ -106,8 +106,9 @@ export const createWallet = async (
 
 export const setupAccounts = async (
   cvg: Convergence,
-  walletAmount: number,
-  usdcWalletAmount: number,
+  btcWalletAmount: bignum,
+  solWalletAmount: bignum,
+  usdcWalletAmount: bignum,
   dao: PublicKey
 ) => {
   const mintAuthority = Keypair.generate();
@@ -163,19 +164,19 @@ export const setupAccounts = async (
   // Mint USDC
   await cvg.tokens().mint({
     mintAddress: usdcMint.address,
-    amount: token(usdcWalletAmount),
+    amount: token(usdcWalletAmount, USDC_DECIMALS),
     toToken: makerUSDCWallet.address,
     mintAuthority,
   });
   await cvg.tokens().mint({
     mintAddress: usdcMint.address,
-    amount: token(usdcWalletAmount),
+    amount: token(usdcWalletAmount, USDC_DECIMALS),
     toToken: takerUSDCWallet.address,
     mintAuthority,
   });
   await cvg.tokens().mint({
     mintAddress: usdcMint.address,
-    amount: token(usdcWalletAmount),
+    amount: token(usdcWalletAmount, USDC_DECIMALS),
     toToken: daoUSDCWallet.address,
     mintAuthority,
   });
@@ -194,19 +195,19 @@ export const setupAccounts = async (
   // Mint BTC
   await cvg.tokens().mint({
     mintAddress: btcMint.address,
-    amount: token(walletAmount),
+    amount: token(btcWalletAmount, BTC_DECIMALS),
     toToken: takerBTCWallet.address,
     mintAuthority,
   });
   await cvg.tokens().mint({
     mintAddress: btcMint.address,
-    amount: token(walletAmount),
+    amount: token(btcWalletAmount, BTC_DECIMALS),
     toToken: makerBTCWallet.address,
     mintAuthority,
   });
   await cvg.tokens().mint({
     mintAddress: btcMint.address,
-    amount: token(walletAmount),
+    amount: token(btcWalletAmount, BTC_DECIMALS),
     toToken: daoBTCWallet.address,
     mintAuthority,
   });
@@ -219,7 +220,7 @@ export const setupAccounts = async (
   // Mint SOL
   await cvg.tokens().mint({
     mintAddress: solMint.address,
-    amount: token(walletAmount),
+    amount: token(solWalletAmount, SOL_DECIMALS),
     toToken: takerSOLWallet.address,
     mintAuthority,
   });
@@ -608,7 +609,7 @@ export const assertInitRiskEngineConfig = (
   );
   t.same(
     output.config.collateralMintDecimals.toString(),
-    DEFAULT_MINT_DECIMALS.toString(),
+    USDC_DECIMALS.toString(),
     'collateral mint decimals'
   );
   t.assert(output.response.signature.length > 0, 'signature present');
