@@ -12,6 +12,7 @@ import {
   Convergence,
   RiskCategory,
   InstrumentType,
+  BaseAsset,
   keypairIdentity,
   token,
   toRiskCategoryInfo,
@@ -24,7 +25,7 @@ type Options = any;
 /// Constants
 
 const DEFAULT_KEYPAIR_FILE = '/Users/pindaroso/.config/solana/dao.json';
-const DEFAULT_RPC_ENDPOINT = 'http://127.0.0.1:8899';
+const DEFAULT_RPC_ENDPOINT = 'https://api.devnet.solana.com';
 
 /// HELPERS
 
@@ -271,6 +272,16 @@ const getRegisteredMints = async (options: Options) => {
   console.log('Success!');
 };
 
+const getBaseAssets = async (options: Options) => {
+  console.log('Getting base assets...');
+  const cvg = await createCvg(options);
+  const baseAssets = await cvg.protocol().getBaseAssets();
+  baseAssets.map((baseAsset: BaseAsset) =>
+    console.log('Ticker:', baseAsset.ticker.toString())
+  );
+  console.log('Success!');
+};
+
 const airdropDevnetTokens = async (options: Options) => {
   console.log('Airdropping devnet tokens...');
   const cvg = await createCvg(options);
@@ -280,7 +291,7 @@ const airdropDevnetTokens = async (options: Options) => {
     owner
   );
   console.log('Collateral wallet:', collateralWallet.address.toString());
-  registeredMintWallets.map((wallet) => {
+  registeredMintWallets.map((wallet: any) => {
     console.log('Registered mint wallet:', wallet.address.toString());
   });
   console.log('Success!');
@@ -289,7 +300,7 @@ const airdropDevnetTokens = async (options: Options) => {
 /// CLI
 
 const program = new Command();
-program.name('convergence').version('3.0.4').description('Convergence RFQ CLI');
+program.name('convergence').version('4.0.8').description('Convergence RFQ CLI');
 
 addDefaultArgs(
   program
@@ -398,6 +409,12 @@ addDefaultArgs(
     .command('get-registered-mints')
     .description('Get registered mints')
     .action(getRegisteredMints)
+);
+addDefaultArgs(
+  program
+    .command('get-base-assets')
+    .description('Get base assets')
+    .action(getBaseAssets)
 );
 addDefaultArgs(
   program
