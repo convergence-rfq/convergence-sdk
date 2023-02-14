@@ -69,7 +69,7 @@ export const DEFAULT_RISK_CATEGORIES_INFO = {
   ]),
 };
 
-function toScenario(
+export function toScenario(
   baseAssetPriceChange: number,
   volatilityChange: number
 ): Scenario {
@@ -79,7 +79,7 @@ function toScenario(
   };
 }
 
-function toRiskCategoryInfo(
+export function toRiskCategoryInfo(
   interestRate: number,
   annualized30DayVolatility: number,
   scenarioPerSettlementPeriod: [
