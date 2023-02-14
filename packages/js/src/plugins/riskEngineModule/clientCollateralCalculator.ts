@@ -14,12 +14,20 @@ import {
   Scenario,
 } from '@convergence-rfq/risk-engine';
 import { Commitment, PublicKey } from '@solana/web3.js';
-import { AggregatorAccount, types } from '@switchboard-xyz/solana.js';
 // @ts-ignore this package is missing type declarations
 import { blackScholes } from 'black-scholes';
 import { toBaseAsset } from '../protocolModule';
 import { toBaseAssetAccount } from '../protocolModule/accounts';
+import { AggregatorAccount } from './switchboard/aggregatorAccount';
+import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
 import { Config } from './models';
+import {
+  FUTURE_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS,
+  OPTION_STRIKE_PRICE_DECIMALS,
+  OPTION_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS,
+  SETTLEMENT_WINDOW_BREAKPOINS,
+  SETTLEMENT_WINDOW_PEDIODS,
+} from './constants';
 import { Convergence } from '@/Convergence';
 
 export type CalculationCase = {
@@ -51,19 +59,6 @@ type LegInfo = {
   instrumentType: InstrumentType;
   data: Buffer;
 };
-
-const SETTLEMENT_WINDOW_PEDIODS = 6;
-const SETTLEMENT_WINDOW_BREAKPOINS = [
-  60 * 60,
-  4 * 60 * 60,
-  12 * 60 * 60,
-  24 * 60 * 60,
-  48 * 60 * 60,
-];
-
-const FUTURE_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS = 9;
-const OPTION_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS = 9;
-const OPTION_STRIKE_PRICE_DECIMALS = 9;
 
 export async function calculateRisk(
   convergence: Convergence,
@@ -181,9 +176,7 @@ async function fetchLatestOraclePrice(
     );
   }
 
-  const aggregatorData = types.AggregatorAccountData.decode(
-    aggregatorAccount.data
-  );
+  const aggregatorData = AggregatorAccountData.decode(aggregatorAccount.data);
   const decodedPrice = AggregatorAccount.decodeLatestValue(aggregatorData);
 
   if (decodedPrice === null) {
@@ -359,9 +352,7 @@ function calculateAssetUnitValue(
         interestRate,
         optionType
       );
-      console.log(
-        `Opiton price: ${optionPrice}, price: ${price}, strike price: ${strikePrice}, years till exp: ${yearsTillExpiration}, volatility: ${annualized30DayVolatility}, interestRate:${interestRate}, option type: ${optionType}`
-      );
+
       return optionPrice * underlyingAmountPerContract;
   }
 }

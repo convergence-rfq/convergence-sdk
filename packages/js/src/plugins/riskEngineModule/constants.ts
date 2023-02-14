@@ -13,6 +13,19 @@ export const DEFAULT_SAFETY_PRICE_SHIFT_FACTOR = 0.01;
 
 export const DEFAULT_OVERALL_SAFETY_FACTOR = 0.1;
 
+export const SETTLEMENT_WINDOW_PEDIODS = 6;
+export const SETTLEMENT_WINDOW_BREAKPOINS = [
+  60 * 60,
+  4 * 60 * 60,
+  12 * 60 * 60,
+  24 * 60 * 60,
+  48 * 60 * 60,
+];
+
+export const FUTURE_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS = 9;
+export const OPTION_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS = 9;
+export const OPTION_STRIKE_PRICE_DECIMALS = 9;
+
 export const DEFAULT_RISK_CATEGORIES_INFO = {
   veryLow: toRiskCategoryInfo(0.05, 0.5, [
     toScenario(0.02, 0.2),
