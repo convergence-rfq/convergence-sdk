@@ -1,5 +1,6 @@
 import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+import { bignum } from '@convergence-rfq/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -66,7 +67,7 @@ export type FundCollateralInput = {
    * Args
    */
 
-  amount: number;
+  amount: bignum;
 };
 
 /**
