@@ -14,11 +14,12 @@ import {
   Scenario,
 } from '@convergence-rfq/risk-engine';
 import { Commitment, PublicKey } from '@solana/web3.js';
-import { AggregatorAccount, types } from '@switchboard-xyz/solana.js';
 // @ts-ignore this package is missing type declarations
 import { blackScholes } from 'black-scholes';
 import { toBaseAsset } from '../protocolModule';
 import { toBaseAssetAccount } from '../protocolModule/accounts';
+import { AggregatorAccount } from './switchboard/aggregatorAccount';
+import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
 import { Config } from './models';
 import {
   FUTURE_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS,
@@ -175,9 +176,7 @@ async function fetchLatestOraclePrice(
     );
   }
 
-  const aggregatorData = types.AggregatorAccountData.decode(
-    aggregatorAccount.data
-  );
+  const aggregatorData = AggregatorAccountData.decode(aggregatorAccount.data);
   const decodedPrice = AggregatorAccount.decodeLatestValue(aggregatorData);
 
   if (decodedPrice === null) {
