@@ -162,7 +162,7 @@ export const fundCollateralBuilder = async (
       .findMintByAddress({ address: protocolModel.collateralMint })
   ).decimals;
 
-  amount = (amount as number) *= 10 ** collateralDecimals;
+  amount = ((amount as number) *= 10 ** collateralDecimals);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

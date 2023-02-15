@@ -110,9 +110,9 @@ const SOL_WALLET_AMOUNT = 9_000;
 const BTC_WALLET_AMOUNT = 9_000;
 const USER_COLLATERAL_AMOUNT = 100_000_000;
 const USER_USDC_WALLET = 10_000_000;
-const USER_COLLATERAL_AMOUNT_WITH_DECIMALS = new anchor.BN(
-  USER_COLLATERAL_AMOUNT
-).muln(10 ** USDC_DECIMALS);
+// const USER_COLLATERAL_AMOUNT_WITH_DECIMALS = new anchor.BN(
+//   USER_COLLATERAL_AMOUNT
+// ).muln(10 ** USDC_DECIMALS);
 
 // SETUP
 //@ts-ignore
@@ -518,11 +518,11 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 test('[collateralModule] it can fund collateral', async (t: Test) => {
   await cvg.collateral().fund({
     user: taker,
-    amount: USER_COLLATERAL_AMOUNT_WITH_DECIMALS,
+    amount: USER_COLLATERAL_AMOUNT,
   });
   await cvg.collateral().fund({
     user: maker,
-    amount: USER_COLLATERAL_AMOUNT_WITH_DECIMALS,
+    amount: USER_COLLATERAL_AMOUNT,
   });
 
   const takerCollateralTokenPda = cvg
@@ -554,7 +554,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   spok(t, takerCollateralTokenAccount, {
     $topic: 'collateral model',
     model: 'token',
-    amount: token(USER_COLLATERAL_AMOUNT_WITH_DECIMALS),
+    amount: token(USER_COLLATERAL_AMOUNT * 10 ** USDC_DECIMALS),
   });
 
   t.same(
@@ -565,7 +565,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   spok(t, makerCollateralTokenAccount, {
     $topic: 'collateral model',
     model: 'token',
-    amount: token(USER_COLLATERAL_AMOUNT_WITH_DECIMALS),
+    amount: token(USER_COLLATERAL_AMOUNT * 10 ** USDC_DECIMALS),
   });
 
   const takerCollateral = await cvg.collateral().findByUser({
@@ -1080,7 +1080,6 @@ test('[riskEngineModule] it can calculate collateral for a response to an Rfq', 
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, btcMint, {
-        // amount: 1 * 10 ** BTC_DECIMALS,
         amount: 1,
         side: Side.Bid,
       }),
@@ -1100,27 +1099,22 @@ test('[riskEngineModule] it can calculate collateral for a response to an Rfq', 
       __kind: 'Standard',
       priceQuote: {
         __kind: 'AbsolutePrice',
-        // amountBps: 22_000 * 10 ** USDC_DECIMALS,
         amountBps: 22_000,
       },
-      // legsMultiplierBps: 20 * 10 ** LEG_MULTIPLIER_DECIMALS,
       legsMultiplierBps: 20,
     },
     ask: {
       __kind: 'Standard',
       priceQuote: {
         __kind: 'AbsolutePrice',
-        // amountBps: 23_000 * 10 ** USDC_DECIMALS,
         amountBps: 23_000,
       },
-      // legsMultiplierBps: 5 * 10 ** LEG_MULTIPLIER_DECIMALS,
       legsMultiplierBps: 5,
     },
   });
 
   spok(t, riskOutput, {
     $topic: 'Calculated Collateral for response to an Rfq',
-    // requiredCollateral: 92400,
     requiredCollateral: spok.range(92399, 92400),
   });
 });
@@ -1164,7 +1158,6 @@ test('[riskEngineModule] it can calculate collateral for a confirmation of the R
         // amountBps: 23_000 * 10 ** USDC_DECIMALS,
         amountBps: 23_000,
       },
-      // legsMultiplierBps: 5 * 10 ** LEG_MULTIPLIER_DECIMALS,
       legsMultiplierBps: 5,
     },
   });
@@ -1174,7 +1167,6 @@ test('[riskEngineModule] it can calculate collateral for a confirmation of the R
     responseAddress: rfqResponse.address,
     confirmation: {
       side: Side.Bid,
-      // overrideLegMultiplierBps: 3 * 10 ** LEG_MULTIPLIER_DECIMALS,
       overrideLegMultiplierBps: 3,
     },
   });
