@@ -453,7 +453,6 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
   const { collateral: makerCollateral } = await cvg.collateral().initialize({
     user: maker,
   });
-  //@ts-ignore
   const { collateral: daoCollateral } = await cvg.collateral().initialize({
     user: dao,
   });
@@ -483,6 +482,19 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
     $topic: 'Initialize Collateral',
     model: 'collateral',
   });
+
+  const foundDaocollateral = await cvg
+  .collateral()
+  .findByAddress({ address: daoCollateral.address });
+t.same(
+  foundDaocollateral.address.toString(),
+  daoCollateral.address.toString(),
+  'same address'
+);
+spok(t, daoCollateral, {
+  $topic: 'collateral model',
+  model: 'collateral',
+});
 
   const tc = await cvg.collateral().findByUser({
     user: taker.publicKey,
@@ -929,64 +941,79 @@ function removeCollateralDecimals(value: bignum): number {
   return Number(value) / 10 ** USDC_DECIMALS;
 }
 
-// test('[riskEngineModule] it can calculate collateral for variable size RFQ creation', async (t: Test) => {
-//   const legs = [
-//     await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
-//   ];
+test('[riskEngineModule] it can calculate collateral for variable size RFQ creation', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().create({
+    taker,
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 0.000000009,
+        side: Side.Ask,
+      }),
+    ],
+    orderType: OrderType.Sell,
+    fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+  });
+  const legs = [
+    await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
+  ];
 
-//   const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
-//     fixedSize: { __kind: 'None', padding: 0 },
-//     orderType: OrderType.TwoWay,
-//     legs,
-//     settlementPeriod: 100,
-//   });
+  const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
+    fixedSize: { __kind: 'None', padding: 0 },
+    orderType: OrderType.TwoWay,
+    legs,
+    settlementPeriod: 100,
+  });
 
-//   await cvg.rfqs().finalizeRfqConstruction({
-//     taker,
-//     rfq: rfq.address,
-//   });
+  await cvg.rfqs().finalizeRfqConstruction({
+    taker,
+    rfq: rfq.address,
+  });
 
-//   spok(t, riskOutput, {
-//     $topic: 'Calculated Collateral for variable size Rfq',
-//     requiredCollateral: removeCollateralDecimals(
-//       DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ
-//     ),
-//   });
+  spok(t, riskOutput, {
+    $topic: 'Calculated Collateral for variable size Rfq',
+    requiredCollateral: removeCollateralDecimals(
+      DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ
+    ),
+  });
 
-//   const { collateralForRfqAmount } = await cvg
-//     .riskEngine()
-//     .calculateCollateralForRfq({ rfq: rfq.address });
+  // const { collateralForRfqAmount } = await cvg
+  //   .riskEngine()
+  //   .calculateCollateralForRfq({ rfq: rfq.address });
 
-//   t.assert(
-//     collateralForRfqAmount > 0,
-//     'expected collateral for Rfq to be greater than 0.'
-//   );
-// });
+  // t.assert(
+  //   collateralForRfqAmount > 0,
+  //   'expected collateral for Rfq to be greater than 0.'
+  // );
+});
 
-// test('[riskEngineModule] it can calculate collateral for response', async (t: Test) => {
-//   const { rfq } = await cvg.rfqs().createAndFinalize({
-//     instruments: [
-//       new SpotInstrument(cvg, btcMint, {
-//         amount: 5,
-//         side: Side.Ask,
-//       }),
-//     ],
-//     taker,
-//     orderType: OrderType.TwoWay,
-//     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-//     quoteAsset: cvg
-//       .instrument(new SpotInstrument(cvg, usdcMint))
-//       .toQuoteAsset(),
-//   });
-//   const { rfqResponse } = await cvg.rfqs().respond({
-//     maker,
-//     rfq: rfq.address,
-//     bid: {
-//       __kind: 'FixedSize',
-//       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-//     },
-//   });
-// });
+test('[riskEngineModule] it can calculate collateral for response', async (t: Test) => {
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 5,
+        side: Side.Ask,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+  });
+  //@ts-ignore
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+    },
+  });
+});
 
 test('[riskEngineModule] it can calculate collateral for fixed quote size RFQ creation', async (t: Test) => {
   const legs = [
