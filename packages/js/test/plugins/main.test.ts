@@ -96,8 +96,13 @@ let takerUSDCWallet: Token;
 let takerBTCWallet: Token;
 let takerSOLWallet: Token;
 
-const WALLET_AMOUNT = 9_000 * 10 ** BTC_DECIMALS;
-const COLLATERAL_AMOUNT = 1_000_000 * 10 ** USDC_DECIMALS;
+const SOL_WALLET_AMOUNT = 9_000;
+const BTC_WALLET_AMOUNT = 9_000;
+const USER_COLLATERAL_AMOUNT = 100_000_000;
+const USER_USDC_WALLET = 10_000_000;
+const USER_COLLATERAL_AMOUNT_WITH_DECIMALS = new anchor.BN(
+  USER_COLLATERAL_AMOUNT
+).muln(10 ** USDC_DECIMALS);
 
 // SETUP
 //@ts-ignore
@@ -112,7 +117,13 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
 
   dao = cvg.rpc().getDefaultFeePayer();
 
-  const context = await setupAccounts(cvg, WALLET_AMOUNT, dao.publicKey);
+  const context = await setupAccounts(
+    cvg,
+    BTC_WALLET_AMOUNT,
+    SOL_WALLET_AMOUNT,
+    USER_COLLATERAL_AMOUNT + USER_USDC_WALLET,
+    dao.publicKey
+  );
   maker = context.maker;
   taker = context.taker;
 
@@ -345,7 +356,9 @@ test('[protocolModule] get registered mints', async (t: Test) => {
 // RISK ENGINE
 
 test('[riskEngineModule] it can initialize the default risk engine config', async (t: Test) => {
-  const output = await cvg.riskEngine().initializeConfig();
+  const output = await cvg
+    .riskEngine()
+    .initializeConfig({ collateralMintDecimals: USDC_DECIMALS });
   assertInitRiskEngineConfig(cvg, t, output);
 });
 
@@ -483,11 +496,11 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
 test('[collateralModule] it can fund collateral', async (t: Test) => {
   await cvg.collateral().fund({
     user: taker,
-    amount: COLLATERAL_AMOUNT,
+    amount: USER_COLLATERAL_AMOUNT_WITH_DECIMALS,
   });
   await cvg.collateral().fund({
     user: maker,
-    amount: COLLATERAL_AMOUNT,
+    amount: USER_COLLATERAL_AMOUNT_WITH_DECIMALS,
   });
 
   const takerCollateralTokenPda = cvg
@@ -519,7 +532,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   spok(t, takerCollateralTokenAccount, {
     $topic: 'collateral model',
     model: 'token',
-    amount: token(COLLATERAL_AMOUNT),
+    amount: token(USER_COLLATERAL_AMOUNT_WITH_DECIMALS),
   });
 
   t.same(
@@ -530,7 +543,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   spok(t, makerCollateralTokenAccount, {
     $topic: 'collateral model',
     model: 'token',
-    amount: token(COLLATERAL_AMOUNT),
+    amount: token(USER_COLLATERAL_AMOUNT_WITH_DECIMALS),
   });
 
   const takerCollateral = await cvg.collateral().findByUser({
@@ -913,7 +926,7 @@ test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
 // RISK ENGINE UTILS
 
 function removeCollateralDecimals(value: bignum): number {
-  return Number(value) / 10 ** DEFAULT_MINT_DECIMALS;
+  return Number(value) / 10 ** USDC_DECIMALS;
 }
 
 // test('[riskEngineModule] it can calculate collateral for variable size RFQ creation', async (t: Test) => {
@@ -1025,14 +1038,113 @@ test('[riskEngineModule] it can calculate collateral for fixed base size RFQ cre
 });
 
 // // PSYOPTIONS EUROPEANS
+test('[riskEngineModule] it can calculate collateral for a response to an Rfq', async (t: Test) => {
+  // variable size rfq for btc
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1 * 10 ** BTC_DECIMALS,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'None', padding: 0 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    settlingWindow: 30 * 60 * 60, // 30 hours
+  });
+
+  const riskOutput = await cvg.riskEngine().calculateCollateralForResponse({
+    rfqAddress: rfq.address,
+    bid: {
+      __kind: 'Standard',
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps: 22_000 * 10 ** USDC_DECIMALS,
+      },
+      legsMultiplierBps: 20 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+    ask: {
+      __kind: 'Standard',
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps: 23_000 * 10 ** USDC_DECIMALS,
+      },
+      legsMultiplierBps: 5 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+  });
+
+  spok(t, riskOutput, {
+    $topic: 'Calculated Collateral for response to an Rfq',
+    requiredCollateral: 92400,
+  });
+});
+
+test('[riskEngineModule] it can calculate collateral for a confirmation of the Rfq', async (t: Test) => {
+  // variable size rfq for btc
+  const { rfq } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, btcMint, {
+        amount: 1 * 10 ** BTC_DECIMALS,
+        side: Side.Bid,
+      }),
+    ],
+    taker,
+    orderType: OrderType.TwoWay,
+    fixedSize: { __kind: 'None', padding: 0 },
+    quoteAsset: cvg
+      .instrument(new SpotInstrument(cvg, usdcMint))
+      .toQuoteAsset(),
+    settlingWindow: 60 * 60 * 60, // 60 hours
+  });
+
+  const { rfqResponse } = await cvg.rfqs().respond({
+    maker,
+    rfq: rfq.address,
+    bid: {
+      __kind: 'Standard',
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps: 22_000 * 10 ** USDC_DECIMALS,
+      },
+      legsMultiplierBps: 20 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+    ask: {
+      __kind: 'Standard',
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps: 23_000 * 10 ** USDC_DECIMALS,
+      },
+      legsMultiplierBps: 5 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+  });
+
+  const riskOutput = await cvg.riskEngine().calculateCollateralForConfirmation({
+    rfqAddress: rfq.address,
+    responseAddress: rfqResponse.address,
+    confirmation: {
+      side: Side.Bid,
+      overrideLegMultiplierBps: 3 * 10 ** LEG_MULTIPLIER_DECIMALS,
+    },
+  });
+
+  spok(t, riskOutput, {
+    $topic: 'Calculated Collateral for a confirmation of the Rfq',
+    requiredCollateral: spok.range(20459.9999, 20460.0001),
+  });
+});
+
+// PSYOPTIONS EUROPEANS
 
 test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
   const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
     cvg,
     btcMint,
     usdcMint,
-    17_500,
-    1_000_000,
+    17_500 * 10 ** USDC_DECIMALS,
+    1 * 10 ** BTC_DECIMALS,
     3_600
   );
   europeanOptionPutMint = euroMeta.putOptionMint;
