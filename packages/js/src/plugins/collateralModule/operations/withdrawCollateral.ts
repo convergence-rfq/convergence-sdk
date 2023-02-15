@@ -162,8 +162,17 @@ export const withdrawCollateralBuilder = async (
       owner: user.publicKey,
       programs,
     }),
-    amount,
   } = params;
+
+  let { amount } = params;
+
+  const collateralDecimals = (
+    await convergence
+      .tokens()
+      .findMintByAddress({ address: protocolModel.collateralMint })
+  ).decimals;
+
+  amount = (amount as number) *= 10 ** collateralDecimals;
 
   return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)

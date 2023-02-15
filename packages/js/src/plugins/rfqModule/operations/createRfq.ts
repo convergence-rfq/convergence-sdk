@@ -182,9 +182,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
-          //TODO: should get decimals dynamically by mint
-          
-          instrument.legInfo.amount *= Math.pow(10, 9);
+          instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
         }
 
         const instrumentClient = convergence.instrument(
@@ -271,7 +269,7 @@ export type CreateRfqBuilderParams = CreateRfqInput & {
  * const transactionBuilder = await convergence
  *   .rfqs()
  *   .builders()
- *   .create();
+ *   .create({});
  * ```
  *
  * @group Transaction Builders

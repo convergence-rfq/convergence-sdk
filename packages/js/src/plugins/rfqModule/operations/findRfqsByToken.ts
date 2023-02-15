@@ -6,7 +6,10 @@ import { psyoptionsAmericanInstrumentProgram } from '../../psyoptionsAmericanIns
 import { psyoptionsEuropeanInstrumentProgram } from '../../psyoptionsEuropeanInstrumentModule/programs';
 import { psyoptionsAmericanInstrumentDataSerializer } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { Convergence } from '@/Convergence';
-import { SpotInstrument, SpotInstrumentDataSerializer } from '@/plugins/spotInstrumentModule';
+import {
+  SpotInstrument,
+  SpotInstrumentDataSerializer,
+} from '@/plugins/spotInstrumentModule';
 import {
   Operation,
   OperationHandler,
@@ -131,8 +134,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                 );
 
               if (instrument.legInfo?.amount) {
-                leg.instrumentAmount =
-                  (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                  Math.pow(10, instrument.decimals);
               }
             } else if (
               leg.instrumentProgram.toBase58() ===
@@ -145,8 +148,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                 );
 
               if (instrument.legInfo?.amount) {
-                leg.instrumentAmount =
-                  (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                  Math.pow(10, instrument.decimals);
               }
             } else if (
               leg.instrumentProgram.toBase58() ===
@@ -158,8 +161,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               );
 
               if (instrument.legInfo?.amount) {
-                leg.instrumentAmount =
-                  (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                  Math.pow(10, instrument.decimals);
               }
             }
           }
@@ -200,8 +203,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                     );
 
                   if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount =
-                      (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                      Math.pow(10, 9);
                   }
                 } else if (
                   leg.instrumentProgram.toBase58() ===
@@ -214,8 +217,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                     );
 
                   if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount =
-                      (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                      Math.pow(10, 9);
                   }
                 } else if (
                   leg.instrumentProgram.toBase58() ===
@@ -227,8 +230,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                   );
 
                   if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount =
-                      (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                      Math.pow(10, 9);
                   }
                 }
               }
@@ -285,8 +288,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                     );
 
                   if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount =
-                      (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                      Math.pow(10, instrument.decimals);
                   }
                 } else if (
                   leg.instrumentProgram.toBase58() ===
@@ -299,8 +302,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                     );
 
                   if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount =
-                      (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                      Math.pow(10, instrument.decimals);
                   }
                 } else if (
                   leg.instrumentProgram.toBase58() ===
@@ -312,8 +315,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                   );
 
                   if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount =
-                      (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                      Math.pow(10, instrument.decimals);
                   }
                 }
               }
@@ -336,7 +339,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                 rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
               } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
                 const parsedQuoteAmount =
-                  (rfq.fixedSize.quoteAmount as number) / 1_000_000_000;
+                  (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
 
                 rfq.fixedSize.quoteAmount = parsedQuoteAmount;
               }
@@ -353,8 +356,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                     );
 
                   if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount =
-                      (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                      Math.pow(10, instrument.decimals);
                   }
                 } else if (
                   leg.instrumentProgram.toBase58() ===
@@ -367,8 +370,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                     );
 
                   if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount =
-                      (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                      Math.pow(10, instrument.decimals);
                   }
                 } else if (
                   leg.instrumentProgram.toBase58() ===
@@ -380,9 +383,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                   );
 
                   if (instrument.legInfo?.amount) {
-                    // instrument.legInfo.amount /= 1_000_000_000;
-                    leg.instrumentAmount =
-                      (leg.instrumentAmount as number) /= 1_000_000_000;
+                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                      Math.pow(10, instrument.decimals);
                   }
                 }
               }

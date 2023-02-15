@@ -164,7 +164,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= Math.pow(10, 9);
+          instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
         }
 
         const instrumentClient = convergence.instrument(

@@ -112,7 +112,7 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
 
             if (instrument.legInfo?.amount) {
               leg.instrumentAmount =
-                (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                (leg.instrumentAmount as number) /= Math.pow(10, instrument.decimals);
             }
           } else if (
             leg.instrumentProgram.toBase58() ===
@@ -125,7 +125,7 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
 
             if (instrument.legInfo?.amount) {
               leg.instrumentAmount =
-                (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                (leg.instrumentAmount as number) /= Math.pow(10, instrument.decimals);
             }
           } else if (
             leg.instrumentProgram.toBase58() ===
@@ -138,7 +138,7 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
 
             if (instrument.legInfo?.amount) {
               leg.instrumentAmount =
-                (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                (leg.instrumentAmount as number) /= Math.pow(10, instrument.decimals);
             }
           }
         }

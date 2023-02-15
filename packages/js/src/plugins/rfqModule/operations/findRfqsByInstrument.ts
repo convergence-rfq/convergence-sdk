@@ -21,7 +21,7 @@ const Key = 'FindRfqsByInstrumentOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByInstrument({ instrument: SpotInstrument };
+ *   .findByInstrument({ instrumentProgram: SpotInstrumentProgram };
  * ```
  *
  * @group Operations
@@ -125,7 +125,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
                 if (instrument.legInfo?.amount) {
                   leg.instrumentAmount =
-                    (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    (leg.instrumentAmount as number) /= Math.pow(10, instrument.decimals);
                 }
               } else if (
                 leg.instrumentProgram.toBase58() ===
@@ -139,7 +139,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
                 if (instrument.legInfo?.amount) {
                   leg.instrumentAmount =
-                    (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    (leg.instrumentAmount as number) /= Math.pow(10, instrument.decimals);
                 }
               } else if (
                 leg.instrumentProgram.toBase58() ===
@@ -152,7 +152,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
                 if (instrument.legInfo?.amount) {
                   leg.instrumentAmount =
-                    (leg.instrumentAmount as number) /= Math.pow(10, 9);
+                    (leg.instrumentAmount as number) /= Math.pow(10, instrument.decimals);
                 }
               }
             }

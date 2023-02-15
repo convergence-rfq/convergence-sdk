@@ -120,7 +120,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
                 );
 
               if (instrument.legInfo?.amount) {
-                instrument.legInfo.amount /= Math.pow(10, 9);
+                instrument.legInfo.amount /= Math.pow(10, instrument.decimals);
               }
             } else if (
               leg.instrumentProgram.toBase58() ===
@@ -133,7 +133,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
                 );
 
               if (instrument.legInfo?.amount) {
-                instrument.legInfo.amount /= Math.pow(10, 9);
+                instrument.legInfo.amount /= Math.pow(10, instrument.decimals);
               }
             } else if (
               leg.instrumentProgram.toBase58() ===
@@ -145,7 +145,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
               );
 
               if (instrument.legInfo?.amount) {
-                instrument.legInfo.amount /= Math.pow(10, 9);
+                instrument.legInfo.amount /= Math.pow(10, instrument.decimals);
               }
             }
           }
