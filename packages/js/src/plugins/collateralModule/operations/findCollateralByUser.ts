@@ -18,7 +18,7 @@ const Key = 'FindCollateralByUserOperation' as const;
  * ```ts
  * const rfqs = await convergence
  *   .collateral()
- *   .findByUser({ user };
+ *   .findByUser({ user });
  * ```
  *
  * @group Operations

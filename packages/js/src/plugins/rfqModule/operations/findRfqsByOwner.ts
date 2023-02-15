@@ -87,12 +87,12 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
           if (rfq.taker.toBase58() === owner.toBase58()) {
             if (rfq.fixedSize.__kind == 'BaseAsset') {
               const parsedLegsMultiplierBps =
-                (rfq.fixedSize.legsMultiplierBps as number) / 1_000_000_000;
+                (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
 
               rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
             } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
               const parsedQuoteAmount =
-                (rfq.fixedSize.quoteAmount as number) / 1_000_000_000;
+                (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
 
               rfq.fixedSize.quoteAmount = parsedQuoteAmount;
             }
@@ -109,9 +109,8 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
                   );
 
                 if (instrument.legInfo?.amount) {
-                  // instrument.legInfo.amount /= 1_000_000_000;
                   leg.instrumentAmount =
-                    (leg.instrumentAmount as number) /= 1_000_000_000;
+                    (leg.instrumentAmount as number) /= Math.pow(10, 9);
                 }
               } else if (
                 leg.instrumentProgram.toBase58() ===
@@ -124,9 +123,8 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
                   );
 
                 if (instrument.legInfo?.amount) {
-                  // instrument.legInfo.amount /= 1_000_000_000;
                   leg.instrumentAmount =
-                    (leg.instrumentAmount as number) /= 1_000_000_000;
+                    (leg.instrumentAmount as number) /= Math.pow(10, 9);
                 }
               } else if (
                 leg.instrumentProgram.toBase58() ===
@@ -138,7 +136,6 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
                 );
 
                 if (instrument.legInfo?.amount) {
-                  // instrument.legInfo.amount /= 1_000_000_000;
                   leg.instrumentAmount =
                     (leg.instrumentAmount as number) /= 1_000_000_000;
                 }

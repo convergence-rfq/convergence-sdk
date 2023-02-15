@@ -139,11 +139,11 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       if (fixedSize.__kind == 'BaseAsset') {
         const parsedLegsMultiplierBps =
-          (fixedSize.legsMultiplierBps as number) * 1_000_000_000;
+          (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
 
         fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
       } else if (fixedSize.__kind == 'QuoteAsset') {
-        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * (1_000_000_000);
+        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * Math.pow(10, 9);
 
         console.log(
           'fixed size quote asset before reassign: ' +
@@ -164,7 +164,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= 1_000_000_000;
+          instrument.legInfo.amount *= Math.pow(10, 9);
         }
 
         const instrumentClient = convergence.instrument(

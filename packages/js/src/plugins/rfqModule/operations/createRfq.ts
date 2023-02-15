@@ -146,7 +146,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     if (fixedSize.__kind == 'BaseAsset') {
       const parsedLegsMultiplierBps =
-        (fixedSize.legsMultiplierBps as number) * 1_000_000_000;
+        (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
       fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
 
       console.log(
@@ -159,16 +159,8 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       );
     } else if (fixedSize.__kind == 'QuoteAsset') {
       const parsedQuoteAmount =
-        (fixedSize.quoteAmount as number) * 1_000_000_000;
+        (fixedSize.quoteAmount as number) * Math.pow(10, 9);
       fixedSize.quoteAmount = parsedQuoteAmount;
-
-      console.log(
-        'quoteasset fixedSize.quoteAmount: ' + fixedSize.quoteAmount.toString()
-      );
-      console.log(
-        'quoteasset createRfq parsedQuoteAmount: ' +
-          parsedQuoteAmount.toString()
-      );
     }
 
     if (expectedLegsHash) {
@@ -190,7 +182,9 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= 1_000_000_000;
+          //TODO: should get decimals dynamically by mint
+          
+          instrument.legInfo.amount *= Math.pow(10, 9);
         }
 
         const instrumentClient = convergence.instrument(

@@ -98,12 +98,12 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
         if (rfq.state == StoredRfqState.Active) {
           if (rfq.fixedSize.__kind == 'BaseAsset') {
             const parsedLegsMultiplierBps =
-              (rfq.fixedSize.legsMultiplierBps as number) / 1_000_000_000;
+              (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
 
             rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
           } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
             const parsedQuoteAmount =
-              (rfq.fixedSize.quoteAmount as number) / 1_000_000_000;
+              (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
 
             rfq.fixedSize.quoteAmount = parsedQuoteAmount;
           }
@@ -120,7 +120,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
                 );
 
               if (instrument.legInfo?.amount) {
-                instrument.legInfo.amount /= 1_000_000_000;
+                instrument.legInfo.amount /= Math.pow(10, 9);
               }
             } else if (
               leg.instrumentProgram.toBase58() ===
@@ -133,7 +133,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
                 );
 
               if (instrument.legInfo?.amount) {
-                instrument.legInfo.amount /= 1_000_000_000;
+                instrument.legInfo.amount /= Math.pow(10, 9);
               }
             } else if (
               leg.instrumentProgram.toBase58() ===
@@ -145,7 +145,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
               );
 
               if (instrument.legInfo?.amount) {
-                instrument.legInfo.amount /= 1_000_000_000;
+                instrument.legInfo.amount /= Math.pow(10, 9);
               }
             }
           }

@@ -133,11 +133,11 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
       if (fixedSize.__kind == 'BaseAsset') {
         const parsedLegsMultiplierBps =
-          (fixedSize.legsMultiplierBps as number) * (10 ^ 9);
+          (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
 
         fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
       } else if (fixedSize.__kind == 'QuoteAsset') {
-        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * (10 ^ 9);
+        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * Math.pow(10, 9);
 
         fixedSize.quoteAmount = parsedQuoteAmount;
       }
