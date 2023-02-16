@@ -90,7 +90,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
 
         return [rfqsByOwner];
       }
-      
+
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder
@@ -113,8 +113,9 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
               .findRfqByAddress({ address: unparsedAccount.publicKey })
           );
         }
-
-        rfqPages.push(rfqPage);
+        if (rfqPage.length > 0) {
+          rfqPages.push(rfqPage);
+        }
       }
 
       for (const rfqPage of rfqPages) {

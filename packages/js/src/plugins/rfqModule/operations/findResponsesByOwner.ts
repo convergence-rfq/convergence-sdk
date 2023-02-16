@@ -59,7 +59,7 @@ export type FindResponsesByOwnerInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByOwnerOutput = Response[] | Response[][];
+export type FindResponsesByOwnerOutput = Response[][];
 
 /**
  * @group Operations
@@ -92,7 +92,7 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
         }
         scope.throwIfCanceled();
 
-        return responsesByowner;
+        return [responsesByowner];
       }
 
       const gpaBuilder = new ResponseGpaBuilder(
@@ -121,7 +121,9 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
           }
         }
 
-        responsePages.push(responsePage);
+        if (responsePage.length > 0) {
+          responsePages.push(responsePage);
+        }
       }
 
       return responsePages;

@@ -117,7 +117,9 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
           rfqPage.push(rfq);
         }
 
-        rfqPages.push(rfqPage);
+        if (rfqPage.length > 0) {
+          rfqPages.push(rfqPage);
+        }
       }
 
       for (const rfqPage of rfqPages) {

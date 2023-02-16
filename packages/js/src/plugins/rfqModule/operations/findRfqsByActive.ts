@@ -104,15 +104,16 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
           let rfq = await convergence
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
-            
+
           if (rfq.state == StoredRfqState.Active) {
             rfq = await convertRfqOutput(convergence, rfq);
 
             rfqPage.push(rfq);
           }
         }
-
-        rfqPages.push(rfqPage);
+        if (rfqPage.length > 0) {
+          rfqPages.push(rfqPage);
+        }
       }
 
       return rfqPages;

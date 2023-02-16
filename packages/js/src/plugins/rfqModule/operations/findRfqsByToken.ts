@@ -16,6 +16,7 @@ import {
 } from '@/types';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { getPages, convertRfqOutput } from '../helpers';
+import { RfqGpaBuilder } from '../RfqGpaBuilder';
 
 const Key = 'FindRfqsByTokenOperation' as const;
 
@@ -79,12 +80,11 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       scope.throwIfCanceled();
 
       const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-      const rfqProgram = convergence.programs().getRfq(programs);
 
-      const rfqGpaBuilder = convergence
-        .programs()
-        .getGpaBuilder(rfqProgram.address);
+      const rfqProgram = convergence.programs().getRfq(programs);
+      const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
+      scope.throwIfCanceled();
 
       const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
 
@@ -157,16 +157,14 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               }
             }
           }
-
+        }
+        if (rfqPage.length > 0) {
           rfqPages.push(rfqPage);
         }
 
         scope.throwIfCanceled();
-
-        // const rfqsByToken: Rfq[] = [];
       }
 
       return rfqPages;
-      // return [rfqsByToken];
     },
   };

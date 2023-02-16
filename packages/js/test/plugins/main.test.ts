@@ -1835,10 +1835,14 @@ test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
   const rfqPages = await cvg.rfqs().findRfqsByActive({});
 
   for (const rfqPage of rfqPages) {
+    console.log('new page');
+
     for (const rfq of rfqPage) {
-      console.log('<> active rfq: ', rfq.address.toString());
+      console.log('rfq address: ', rfq.address.toString());
     }
   }
+
+  console.log('number of pages: ' + rfqPages.length.toString());
 
   t.assert(rfqPages.length > 0, 'rfqs should be greater than 0');
 });
@@ -1849,37 +1853,50 @@ test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', as
     .findByToken({ mintAddress: europeanOptionPutMint });
 
   for (const rfqPage of rfqPages) {
-    for (const r of rfqPage) {
-      console.log('rfq address: ', r.address.toString());
+    console.log('new page');
+
+    for (const rfq of rfqPage) {
+      console.log('rfq address: ', rfq.address.toString());
     }
   }
 
-  // t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+  console.log('number of pages: ' + rfqPages.length.toString());
+
+  t.assert(rfqPages.length > 0, 'rfq pages should be greater than 0');
 });
 
 test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
-  //@ts-ignore
-  const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
-  // t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+  const rfqPages = await cvg
+    .rfqs()
+    .findByToken({ mintAddress: usdcMint.address });
+
+  for (const rfqPage of rfqPages) {
+    console.log('new page');
+
+    for (const rfq of rfqPage) {
+      console.log('rfq address: ', rfq.address.toString());
+    }
+  }
+
+  console.log('number of pages: ' + rfqPages.length.toString());
+
+  t.assert(rfqPages.length > 0, 'rfq pages should be greater than 0');
 });
 
 test('[rfq module] it can find all responses by maker address', async (t: Test) => {
-  const responses = await cvg
+  const responsePages = await cvg
     .rfqs()
     .findResponsesByOwner({ owner: maker.publicKey });
 
-  for (const response of responses) {
-    if (response instanceof Array) {
-      for (const r of response) {
-        console.log('<inner page> response address: ', r.address.toString());
-      }
-    } else {
-      console.log(
-        '<flat page> response address: ',
-        response.address.toString()
-      );
+  for (const responsePage of responsePages) {
+    console.log('new page');
+
+    for (const response of responsePage) {
+      console.log('response address: ', response.address.toString());
     }
   }
+
+  console.log('number of pages: ' + responsePages.length.toString());
 });
 
 test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
@@ -1933,6 +1950,8 @@ test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
       console.log('response address: ', response.address.toString());
     }
   }
+
+  console.log('number of pages: ' + responsePages.length.toString());
 });
 
 test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Test) => {
@@ -2289,6 +2308,8 @@ test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
   });
 
   for (const rfqPage of rfqPages) {
+    console.log('new page');
+
     for (const rfq of rfqPage) {
       console.log('rfq address: ' + rfq.address.toString());
     }

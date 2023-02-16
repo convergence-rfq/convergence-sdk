@@ -120,8 +120,9 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
             responsePage.push(response);
           }
         }
-
-        responsePages.push(responsePage);
+        if (responsePage.length > 0) {
+          responsePages.push(responsePage);
+        }
       }
       scope.throwIfCanceled();
 

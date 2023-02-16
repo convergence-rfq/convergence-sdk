@@ -121,13 +121,13 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
 
             if (response.rfq.toBase58() === address.toBase58()) {
               response = convertResponseOutput(response);
-              
+
               responsePage.push(response);
             }
-
           }
-
-          responsePages.push(responsePage);
+          if (responsePage.length > 0) {
+            responsePages.push(responsePage);
+          }
         }
       }
 
