@@ -1,5 +1,5 @@
-import { Rfq, toRfq } from '../models';
-import { toRfqAccount } from '../accounts';
+import { Rfq } from '../models';
+import { convertRfqOutput, getPages } from '../helpers';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import {
   Operation,
@@ -18,7 +18,7 @@ const Key = 'FindRfqsByInstrumentOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByInstrument({ instrument: SpotInstrument };
+ *   .findByInstrument({ instrumentProgram: SpotInstrumentProgram };
  * ```
  *
  * @group Operations
@@ -42,15 +42,21 @@ export type FindRfqsByInstrumentOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByInstrumentInput = {
+  rfqs?: Rfq[];
+
   /** The instrument program to search for. */
   instrumentProgram: Program;
+
+  rfqsPerPage?: number;
+
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByInstrumentOutput = Rfq[];
+export type FindRfqsByInstrumentOutput = Rfq[][];
 
 /**
  * @group Operations
@@ -63,37 +69,72 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByInstrumentOutput> => {
-      const { instrumentProgram } = operation.input;
+      const {
+        rfqs,
+        instrumentProgram,
+        rfqsPerPage = 10,
+        numPages,
+      } = operation.input;
+
+      if (rfqs) {
+        const rfqsByInstrument: Rfq[] = [];
+
+        for (let rfq of rfqs) {
+          for (const leg of rfq.legs) {
+            if (
+              leg.instrumentProgram.toBase58() ===
+              instrumentProgram.address.toBase58()
+            ) {
+              rfq = await convertRfqOutput(convergence, rfq);
+
+              rfqsByInstrument.push(rfq);
+            }
+          }
+        }
+
+        scope.throwIfCanceled();
+
+        return [rfqsByInstrument];
+      }
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const unparsedAccounts = await rfqGpaBuilder.get();
+      const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
+      scope.throwIfCanceled();
 
-      const rfqs = unparsedAccounts
-        .map<Rfq | null>((account) => {
-          if (account === null) {
-            return null;
-          }
+      const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
 
-          try {
-            return toRfq(toRfqAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((rfq): rfq is Rfq => rfq !== null);
-      const rfq: Rfq[] = [];
-      for (const r of rfqs) {
-        for (const l of r.legs) {
-          if (
-            l.instrumentProgram.toBase58() ===
-            instrumentProgram.address.toBase58()
-          ) {
-            rfq.push(r);
+      const rfqPages: Rfq[][] = [];
+
+      for (const page of pages) {
+        const rfqPage = [];
+
+        for (const unparsedAccount of page) {
+          let rfq = await convergence
+            .rfqs()
+            .findRfqByAddress({ address: unparsedAccount.publicKey });
+
+          rfqPage.push(rfq);
+        }
+
+        if (rfqPage.length > 0) {
+          rfqPages.push(rfqPage);
+        }
+      }
+
+      for (const rfqPage of rfqPages) {
+        for (let rfq of rfqPage) {
+          for (const leg of rfq.legs) {
+            if (
+              leg.instrumentProgram.toBase58() ===
+              instrumentProgram.address.toBase58()
+            ) {
+              rfq = await convertRfqOutput(convergence, rfq);
+            }
           }
         }
       }
-      const rfqSet = [...new Set(rfq)];
-      return rfqSet;
+
+      return rfqPages;
     },
   };

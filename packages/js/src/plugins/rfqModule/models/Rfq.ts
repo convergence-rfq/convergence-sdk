@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { bignum, COption } from '@convergence-rfq/beet';
+import { bignum } from '@convergence-rfq/beet';
 import {
   OrderType,
   StoredRfqState,
@@ -30,9 +30,6 @@ export type Rfq = {
   /** The order type of the Rfq. */
   readonly orderType: OrderType;
 
-  /** Flag signifying whether `last look` is enabled for this Rfq. */
-  readonly lastLookEnabled: boolean;
-
   /** Whether this Rfq is open (no size specified), or a fixed amount of the base asset,
    * or a fixed amount of the quote asset. */
   readonly fixedSize: FixedSize;
@@ -42,9 +39,6 @@ export type Rfq = {
 
   /** The quote asset mint. */
   readonly quoteMint: PublicKey;
-
-  /** The mint access manager of the Rfq. */
-  readonly accessManager: COption<PublicKey>;
 
   /** The time at which this Rfq was created. */
   readonly creationTimestamp: bignum;
@@ -58,7 +52,7 @@ export type Rfq = {
 
   /** The combined size of all legs of Rfq. This must include the sizes
    *  of any legs to be added in the future. */
-  readonly expectedLegSize: number;
+  readonly expectedLegsSize: number;
 
   /** The state of the Rfq. */
   readonly state: StoredRfqState;
@@ -100,17 +94,17 @@ export const toRfq = (account: RfqAccount): Rfq => ({
   address: account.publicKey,
   taker: account.data.taker,
   orderType: account.data.orderType,
-  lastLookEnabled: account.data.lastLookEnabled,
+  // lastLookEnabled: account.data.lastLookEnabled,
   fixedSize: account.data.fixedSize,
   quoteAsset: account.data.quoteAsset,
   quoteMint: SpotInstrument.deserializeInstrumentData(
     Buffer.from(account.data.quoteAsset.instrumentData)
   ).mint,
-  accessManager: account.data.accessManager,
+  // accessManager: account.data.accessManager,
   creationTimestamp: account.data.creationTimestamp,
   activeWindow: account.data.activeWindow,
   settlingWindow: account.data.settlingWindow,
-  expectedLegSize: account.data.expectedLegSize,
+  expectedLegsSize: account.data.expectedLegsSize,
   state: account.data.state,
   nonResponseTakerCollateralLocked:
     account.data.nonResponseTakerCollateralLocked,

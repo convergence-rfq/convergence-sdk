@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
-import { toResponseAccount } from '../accounts';
-import { /*assertResponse,*/ Response, toResponse } from '../models/Response';
+// import { toResponseAccount } from '../accounts';
+import { /*assertResponse,*/ Response } from '../models/Response';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import {
   Operation,
@@ -9,6 +9,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { convertResponseOutput, getPages } from '../helpers';
 
 const Key = 'FindResponsesByRfqOperation' as const;
 
@@ -46,13 +47,19 @@ export type FindResponsesByRfqOperation = Operation<
 export type FindResponsesByRfqInput = {
   /** The address of the Rfq. */
   address: PublicKey;
+
+  responses?: Response[];
+
+  responsesPerPage?: number;
+
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByRfqOutput = Response[];
+export type FindResponsesByRfqOutput = Response[][];
 
 /**
  * @group Operations
@@ -66,37 +73,59 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       scope: OperationScope
     ): Promise<FindResponsesByRfqOutput> => {
       const { programs } = scope;
-      const { address } = operation.input;
+      const {
+        address,
+        responses,
+        responsesPerPage = 10,
+        numPages,
+      } = operation.input;
       scope.throwIfCanceled();
+
+      const responsesByRfq: Response[] = [];
+
+      if (responses) {
+        for (let response of responses) {
+          if (response.rfq.toBase58() === address.toBase58()) {
+            response = convertResponseOutput(response);
+
+            responsesByRfq.push(response);
+          }
+        }
+        return [responsesByRfq];
+      }
 
       const rfqProgram = convergence.programs().getRfq(programs);
       const responseGpaBuilder = new ResponseGpaBuilder(
         convergence,
         rfqProgram.address
       );
-      const unparsedAccounts = await responseGpaBuilder.get();
-      const responseAccounts = unparsedAccounts
-        .map<Response | null>((account) => {
-          if (account === null) {
-            return null;
-          }
+      const unparsedAccounts = await responseGpaBuilder.withoutData().get();
+      scope.throwIfCanceled();
 
-          try {
-            return toResponse(toResponseAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((response): response is Response => response !== null);
+      const pages = getPages(unparsedAccounts, responsesPerPage, numPages);
 
-      const responsesByRfq: Response[] = [];
-      for (const response of responseAccounts) {
-        if (response.rfq.toBase58() === address.toBase58()) {
-          responsesByRfq.push(response);
+      const responsePages: Response[][] = [];
+
+      for (const page of pages) {
+        const responsePage = [];
+
+        for (const unparsedAccount of page) {
+          let response = await convergence
+            .rfqs()
+            .findResponseByAddress({ address: unparsedAccount.publicKey });
+
+          if (response.rfq.toBase58() === address.toBase58()) {
+            response = convertResponseOutput(response);
+
+            responsePage.push(response);
+          }
+        }
+        if (responsePage.length > 0) {
+          responsePages.push(responsePage);
         }
       }
       scope.throwIfCanceled();
 
-      return responsesByRfq;
+      return responsePages;
     },
   };

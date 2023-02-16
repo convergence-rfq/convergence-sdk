@@ -60,7 +60,7 @@ export type SettleInput = {
   /** The Taker public key address. */
   taker: PublicKey;
 
-  /** Optional start index to corresponding to 
+  /** Optional start index to corresponding to
    * the first leg to settle. */
   startIndex?: number;
 };
@@ -137,7 +137,8 @@ export const settleBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const { startIndex = parseInt(responseModel.settledLegs.toString()) } = params;
+  const { startIndex = parseInt(responseModel.settledLegs.toString()) } =
+    params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await convergence.protocol().get();
@@ -262,6 +263,20 @@ export const settleBuilder = async (
     program: spotInstrumentProgram.address,
   });
 
+  let quoteReceiverTokens = 1;
+  if (confirmationSide == Side.Bid) {
+    quoteReceiverTokens *= -1;
+    //@ts-ignore
+    if (responseModel.bid?.priceQuote.amountBps < 0) {
+      quoteReceiverTokens *= -1;
+    }
+  } else if (confirmationSide == Side.Ask) {
+    //@ts-ignore
+    if (responseModel.ask?.priceQuote.amountBps < 0) {
+      quoteReceiverTokens *= -1;
+    }
+  }
+
   const quoteAccounts: AccountMeta[] = [
     //`escrow`
     {
@@ -277,10 +292,8 @@ export const settleBuilder = async (
         .associatedTokenAccount({
           mint: rfqModel.quoteMint,
           owner:
-            rfqModel.fixedSize.__kind == 'QuoteAsset' &&
-            confirmationSide == Side.Ask
-              ? maker
-              : taker,
+
+            quoteReceiverTokens > 0 ? maker : taker,
           programs,
         }),
       isSigner: false,

@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.0.10
+
+### Patch Changes
+
+- add rfq / response pdas
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.10
+
 ## 3.0.4
 
 ### Patch Changes

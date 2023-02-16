@@ -9,6 +9,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { toBigNumber } from '@/types';
 
 const Key = 'FindCollateralByUserOperation' as const;
 
@@ -18,7 +19,7 @@ const Key = 'FindCollateralByUserOperation' as const;
  * ```ts
  * const rfqs = await convergence
  *   .collateral()
- *   .findByUser({ user };
+ *   .findByUser({ user });
  * ```
  *
  * @group Operations
@@ -74,7 +75,7 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
       const collateral = await gpaBuilder.whereUser(user).get();
       scope.throwIfCanceled();
 
-      return collateral
+      const collateralModel = collateral
         .map<Collateral | null>((account) => {
           if (account === null) {
             return null;
@@ -89,5 +90,12 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
         .filter(
           (collateral): collateral is Collateral => collateral !== null
         )[0];
+
+      collateralModel.lockedTokensAmount.basisPoints = toBigNumber(
+        collateralModel.lockedTokensAmount.basisPoints.toNumber() /
+          Math.pow(10, collateralModel.lockedTokensAmount.currency.decimals)
+      );
+
+      return collateralModel;
     },
   };

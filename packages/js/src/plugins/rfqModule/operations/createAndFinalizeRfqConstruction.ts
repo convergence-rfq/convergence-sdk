@@ -1,4 +1,4 @@
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { OrderType, QuoteAsset, FixedSize } from '../types';
@@ -16,6 +16,8 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { Sha256 } from '@aws-crypto/sha256-js';
+import * as anchor from '@project-serum/anchor';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -69,9 +71,6 @@ export type CreateAndFinalizeRfqConstructionInput = {
    */
   taker?: Signer;
 
-  /** Optional Rfq keypair. */
-  keypair?: Keypair;
-
   /** Quote asset account. */
   quoteAsset: QuoteAsset;
 
@@ -86,7 +85,7 @@ export type CreateAndFinalizeRfqConstructionInput = {
   orderType: OrderType;
 
   /** The type of Rfq. */
-  fixedSize?: FixedSize;
+  fixedSize: FixedSize;
 
   /** the active window. */
   activeWindow?: number;
@@ -127,13 +126,92 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       scope: OperationScope
     ): Promise<CreateAndFinalizeRfqConstructionOutput> => {
       const {
-        keypair = Keypair.generate(),
-        fixedSize = { __kind: 'None', padding: 0 },
+        taker = convergence.identity(),
+        orderType,
+        fixedSize,
+        quoteAsset,
+        instruments,
+        activeWindow = 5_000,
+        settlingWindow = 1_000,
       } = operation.input;
+
+      const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
+
+      if (fixedSize.__kind == 'BaseAsset') {
+        const parsedLegsMultiplierBps =
+          (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
+
+        fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+      } else if (fixedSize.__kind == 'QuoteAsset') {
+        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * Math.pow(10, 9);
+
+        console.log(
+          'fixed size quote asset before reassign: ' +
+            fixedSize.quoteAmount.toString()
+        );
+
+        fixedSize.quoteAmount = parsedQuoteAmount;
+
+        console.log('fixed size quote asset: ' + parsedQuoteAmount.toString());
+        console.log(
+          'fixed size quote asset: ' + fixedSize.quoteAmount.toString()
+        );
+      }
+
+      const serializedLegsData: Buffer[] = [];
+
+      let expectedLegsHash: Uint8Array;
+
+      for (const instrument of instruments) {
+        if (instrument.legInfo?.amount) {
+          instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
+        }
+
+        const instrumentClient = convergence.instrument(
+          instrument,
+          instrument.legInfo
+        );
+
+        const leg = await instrumentClient.toLegData();
+
+        serializedLegsData.push(instrumentClient.serializeLegData(leg));
+      }
+
+      const lengthBuffer = Buffer.alloc(4);
+      lengthBuffer.writeInt32LE(instruments.length);
+      const fullLegDataBuffer = Buffer.concat([
+        lengthBuffer,
+        ...serializedLegsData,
+      ]);
+
+      const hash = new Sha256();
+      hash.update(fullLegDataBuffer);
+      expectedLegsHash = hash.digestSync();
+
+      const rfqPda = convergence
+        .rfqs()
+        .pdas()
+        .rfq({
+          taker: taker.publicKey,
+          legsHash: Buffer.from(expectedLegsHash),
+          orderType,
+          quoteAsset,
+          fixedSize,
+          activeWindow,
+          settlingWindow,
+          recentTimestamp,
+        });
 
       const rfqBuilder = await createRfqBuilder(
         convergence,
-        { ...operation.input, keypair, fixedSize },
+        {
+          ...operation.input,
+          rfq: rfqPda,
+          fixedSize,
+          instruments,
+          expectedLegsHash,
+          recentTimestamp,
+        },
         scope
       );
       scope.throwIfCanceled();
@@ -150,7 +228,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       const finalizeBuilder = await finalizeRfqConstructionBuilder(
         convergence,
-        { ...operation.input, rfq: keypair.publicKey },
+        { taker, rfq: rfqPda },
         scope
       );
 
@@ -158,7 +236,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       const rfq = await convergence
         .rfqs()
-        .findRfqByAddress({ address: keypair.publicKey });
+        .findRfqByAddress({ address: rfqPda });
 
       return { ...output, rfq };
     },

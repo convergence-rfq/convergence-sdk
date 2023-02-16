@@ -8,6 +8,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { convertRfqOutput } from '../helpers';
 
 const Key = 'FindRfqsByAddressesOperation' as const;
 
@@ -17,8 +18,8 @@ const Key = 'FindRfqsByAddressesOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByAddress({ 
- *     addresses: [rfq1.address, rfq2.address] 
+ *   .findByAddress({
+ *     addresses: [rfq1.address, rfq2.address]
  *   });
  * ```
  *
@@ -75,8 +76,9 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
         .getMultipleAccounts(addresses, commitment);
 
       for (const account of accounts) {
-        const rfqAccount = toRfqAccount(account);
-        const rfq = toRfq(rfqAccount);
+        let rfq = toRfq(toRfqAccount(account));
+
+        rfq = await convertRfqOutput(convergence, rfq);
 
         rfqs.push(rfq);
       }

@@ -8,6 +8,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { toBigNumber } from '@/types';
 
 const Key = 'FindCollateralByAddressOperation' as const;
 
@@ -17,7 +18,7 @@ const Key = 'FindCollateralByAddressOperation' as const;
  * ```ts
  * const collateral = await convergence
  *   .collateral()
- *   .findByAddress({ address };
+ *   .findByAddress({ address: 0x123... });
  * ```
  *
  * @group Operations
@@ -67,9 +68,14 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      const collateral = toCollateral(toCollateralAccount(account));
+      const collateralModel = toCollateral(toCollateralAccount(account));
       scope.throwIfCanceled();
 
-      return collateral;
+      collateralModel.lockedTokensAmount.basisPoints = toBigNumber(
+        collateralModel.lockedTokensAmount.basisPoints.toNumber() /
+          Math.pow(10, collateralModel.lockedTokensAmount.currency.decimals)
+      );
+
+      return collateralModel;
     },
   };

@@ -1,7 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
-import { Rfq, toRfq } from '../models';
+import { Rfq /*toRfq*/ } from '../models';
+//@ts-ignore
 import { toRfqAccount } from '../accounts';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
+import { convertRfqOutput, getPages } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -47,13 +49,17 @@ export type FindRfqsByOwnerInput = {
 
   /** Optional array of Rfqs to search from. */
   rfqs?: Rfq[];
+
+  rfqsPerPage?: number;
+
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByOwnerOutput = Rfq[];
+export type FindRfqsByOwnerOutput = Rfq[][];
 
 /**
  * @group Operations
@@ -66,38 +72,58 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
-      const { owner, rfqs } = operation.input;
+      const { owner, rfqs, rfqsPerPage = 10, numPages } = operation.input;
       const { programs } = scope;
 
       if (rfqs) {
-        const rfqsByOwner = [];
+        const rfqsByOwner: Rfq[] = [];
 
-        for (const rfq of rfqs) {
+        for (let rfq of rfqs) {
           if (rfq.taker.toBase58() === owner.toBase58()) {
+            rfq = await convertRfqOutput(convergence, rfq);
+
             rfqsByOwner.push(rfq);
           }
         }
+
         scope.throwIfCanceled();
 
-        return rfqsByOwner;
+        return [rfqsByOwner];
       }
+
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const gotRfqs = await rfqGpaBuilder.whereTaker(owner).get();
+      const unparsedAccounts = await rfqGpaBuilder
+        .withoutData()
+        .whereTaker(owner)
+        .get();
       scope.throwIfCanceled();
 
-      return gotRfqs
-        .map<Rfq | null>((account) => {
-          if (account === null) {
-            return null;
-          }
+      const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
 
-          try {
-            return toRfq(toRfqAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((rfq): rfq is Rfq => rfq !== null);
+      const rfqPages: Rfq[][] = [];
+
+      for (const page of pages) {
+        const rfqPage = [];
+
+        for (const unparsedAccount of page) {
+          rfqPage.push(
+            await convergence
+              .rfqs()
+              .findRfqByAddress({ address: unparsedAccount.publicKey })
+          );
+        }
+        if (rfqPage.length > 0) {
+          rfqPages.push(rfqPage);
+        }
+      }
+
+      for (const rfqPage of rfqPages) {
+        for (let rfq of rfqPage) {
+          rfq = await convertRfqOutput(convergence, rfq);
+        }
+      }
+
+      return rfqPages;
     },
   };

@@ -263,8 +263,6 @@ export const cleanUpResponseLegsBuilder = async (
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
 
-  console.log('legAmountToClear', legAmountToClear);
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({

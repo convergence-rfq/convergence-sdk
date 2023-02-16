@@ -8,6 +8,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { convertResponseOutput } from '../helpers';
 
 const Key = 'FindResponseByAddressOperation' as const;
 
@@ -15,16 +16,16 @@ const Key = 'FindResponseByAddressOperation' as const;
  * Finds Response by a given address.
  *
  * ```ts
- * 
- * const { rfqResponse } = 
+ *
+ * const { rfqResponse } =
  *   await convergence
  *     .rfqs()
  *     .respond(...)
- * 
+ *
  * const rfq = await convergence
  *   .rfqs()
- *   .findResponseByAddress({ 
- *     address: rfqResponse.address 
+ *   .findResponseByAddress({
+ *     address: rfqResponse.address
  *   });
  * ```
  *
@@ -75,9 +76,11 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      const response = toResponse(toResponseAccount(account));
+      let response = toResponse(toResponseAccount(account));
       assertResponse(response);
       scope.throwIfCanceled();
+
+      response = convertResponseOutput(response);
 
       return response;
     },

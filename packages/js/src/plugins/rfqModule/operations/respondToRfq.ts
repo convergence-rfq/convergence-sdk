@@ -1,7 +1,6 @@
 import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
 import {
   PublicKey,
-  Keypair,
   AccountMeta,
   ComputeBudgetProgram,
 } from '@solana/web3.js';
@@ -69,9 +68,6 @@ export type RespondToRfqInput = {
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional Response keypair. */
-  keypair?: Keypair;
-
   /** Optional address of the Maker's collateral info account. */
   collateralInfo?: PublicKey;
 
@@ -115,13 +111,75 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<RespondToRfqOutput> => {
-      const { keypair = Keypair.generate() } = operation.input;
+      const { rfq, maker = convergence.identity(), bid, ask } = operation.input;
+
+      let pdaDistinguisher = 0;
+
+      if (bid) {
+        const parsedPriceQuoteAmountBps =
+          (bid.priceQuote.amountBps as number) * Math.pow(10, 9);
+
+        bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+        if (bid.__kind == 'Standard') {
+          const parsedLegsMultiplierBps =
+            (bid.legsMultiplierBps as number) * Math.pow(10, 9);
+
+          bid.legsMultiplierBps = parsedLegsMultiplierBps;
+        }
+      }
+      if (ask) {
+        const parsedPriceQuoteAmountBps =
+          (ask.priceQuote.amountBps as number) * Math.pow(10, 9);
+
+        ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+        if (ask.__kind == 'Standard') {
+          const parsedLegsMultiplierBps =
+            (ask.legsMultiplierBps as number) * Math.pow(10, 9);
+
+          ask.legsMultiplierBps = parsedLegsMultiplierBps;
+        }
+      }
+
+      let responsePda = convergence
+        .rfqs()
+        .pdas()
+        .response({
+          rfq,
+          maker: maker.publicKey,
+          bid: bid ?? null,
+          ask: ask ?? null,
+          pdaDistinguisher,
+        });
+
+      let account = await convergence.rpc().getAccount(responsePda);
+
+      while (account.exists) {
+        pdaDistinguisher++;
+
+        responsePda = convergence
+          .rfqs()
+          .pdas()
+          .response({
+            rfq,
+            maker: maker.publicKey,
+            bid: bid ?? null,
+            ask: ask ?? null,
+            pdaDistinguisher,
+          });
+
+        account = await convergence.rpc().getAccount(responsePda);
+      }
 
       const builder = await respondToRfqBuilder(
         convergence,
         {
           ...operation.input,
-          keypair,
+          response: responsePda,
+          bid,
+          ask,
+          pdaDistinguisher,
         },
         scope
       );
@@ -137,7 +195,7 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
 
       const rfqResponse = await convergence
         .rfqs()
-        .findResponseByAddress({ address: keypair.publicKey });
+        .findResponseByAddress({ address: responsePda });
       assertResponse(rfqResponse);
 
       return { ...output, rfqResponse };
@@ -148,7 +206,11 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
  * @group Transaction Builders
  * @category Inputs
  */
-export type RespondToRfqBuilderParams = RespondToRfqInput;
+export type RespondToRfqBuilderParams = RespondToRfqInput & {
+  response: PublicKey;
+
+  pdaDistinguisher: number;
+};
 
 /**
  * Responds to an Rfq.
@@ -172,9 +234,10 @@ export const respondToRfqBuilder = async (
   const {
     rfq,
     maker = convergence.identity(),
-    keypair = Keypair.generate(),
     bid = null,
     ask = null,
+    response,
+    pdaDistinguisher,
   } = params;
 
   if (!bid && !ask) {
@@ -198,11 +261,7 @@ export const respondToRfqBuilder = async (
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
-  //TODO: use PDA client
-  const [config] = PublicKey.findProgramAddressSync(
-    [Buffer.from('config')],
-    riskEngineProgram.address
-  );
+  const config = convergence.riskEngine().pdas().config();
   const configAccount: AccountMeta = {
     pubkey: config,
     isSigner: false,
@@ -215,7 +274,6 @@ export const respondToRfqBuilder = async (
     riskEngine = riskEngineProgram.address,
   } = params;
 
-  //@ts-ignore
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
   const baseAssetAccounts: AccountMeta[] = [];
@@ -265,7 +323,7 @@ export const respondToRfqBuilder = async (
   return TransactionBuilder.make()
     .setFeePayer(maker)
     .setContext({
-      keypair,
+      response,
     })
     .add(
       {
@@ -280,7 +338,7 @@ export const respondToRfqBuilder = async (
             maker: maker.publicKey,
             protocol: protocol.address,
             rfq,
-            response: keypair.publicKey,
+            response,
             collateralInfo,
             collateralToken,
             riskEngine,
@@ -290,10 +348,11 @@ export const respondToRfqBuilder = async (
           {
             bid,
             ask,
+            pdaDistinguisher,
           },
           rfqProgram.address
         ),
-        signers: [maker, keypair],
+        signers: [maker],
         key: 'respondToRfq',
       }
     );

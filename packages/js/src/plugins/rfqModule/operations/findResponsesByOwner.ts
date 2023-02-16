@@ -1,8 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
-import { toResponseAccount } from '../accounts';
-import { Response, toResponse } from '../models/Response';
-import { GpaBuilder } from '@/utils';
-
+import { Response } from '../models/Response';
+import { getPages, convertResponseOutput } from '../helpers';
+import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import {
   Operation,
   OperationHandler,
@@ -50,13 +49,17 @@ export type FindResponsesByOwnerInput = {
 
   /** Optional array of Responses to search from. */
   responses?: Response[];
+
+  responsesPerPage?: number;
+
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByOwnerOutput = Response[];
+export type FindResponsesByOwnerOutput = Response[][];
 
 /**
  * @group Operations
@@ -69,45 +72,60 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByOwnerOutput> => {
-      const { owner, responses } = operation.input;
+      const {
+        owner,
+        responses,
+        responsesPerPage = 10,
+        numPages,
+      } = operation.input;
       scope.throwIfCanceled();
 
       const responsesByowner: Response[] = [];
 
       if (responses) {
-        for (const response of responses) {
+        for (let response of responses) {
           if (response.maker.toBase58() === owner.toBase58()) {
+            response = convertResponseOutput(response);
+
             responsesByowner.push(response);
           }
         }
         scope.throwIfCanceled();
 
-        return responsesByowner;
+        return [responsesByowner];
       }
-      const gpaBuilder = new GpaBuilder(
+
+      const gpaBuilder = new ResponseGpaBuilder(
         convergence,
         convergence.programs().getRfq().address
       );
-      const unparsedAccounts = await gpaBuilder.get();
-      const responseAccounts = unparsedAccounts
-        .map<Response | null>((account) => {
-          if (account == null) {
-            return null;
-          }
-          try {
-            return toResponse(toResponseAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((response): response is Response => response != null);
-      for (const response of responseAccounts) {
-        if (response.maker.toBase58() === owner.toBase58()) {
-          responsesByowner.push(response);
-        }
-      }
+      const unparsedAccounts = await gpaBuilder.withoutData().get();
       scope.throwIfCanceled();
 
-      return responsesByowner;
+      const pages = getPages(unparsedAccounts, responsesPerPage, numPages);
+
+      const responsePages: Response[][] = [];
+
+      for (const page of pages) {
+        const responsePage = [];
+
+        for (const unparsedAccount of page) {
+          let response = await convergence
+            .rfqs()
+            .findResponseByAddress({ address: unparsedAccount.publicKey });
+
+          if (response.maker.toBase58() === owner.toBase58()) {
+            response = convertResponseOutput(response);
+
+            responsePage.push(response);
+          }
+        }
+
+        if (responsePage.length > 0) {
+          responsePages.push(responsePage);
+        }
+      }
+
+      return responsePages;
     },
   };

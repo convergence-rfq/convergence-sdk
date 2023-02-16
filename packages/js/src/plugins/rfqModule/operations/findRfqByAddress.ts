@@ -8,6 +8,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { convertRfqOutput } from '../helpers';
 
 const Key = 'FindRfqByAddressOperation' as const;
 
@@ -67,8 +68,10 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      const rfq = toRfq(toRfqAccount(account));
+      let rfq = toRfq(toRfqAccount(account));
       scope.throwIfCanceled();
+
+      rfq = await convertRfqOutput(convergence, rfq);
 
       return rfq;
     },
