@@ -110,23 +110,20 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
         const responsePage = [];
 
         for (const unparsedAccount of page) {
-          responsePage.push(
-            await convergence
-              .rfqs()
-              .findResponseByAddress({ address: unparsedAccount.publicKey })
-          );
+          let response = await convergence
+            .rfqs()
+            .findResponseByAddress({ address: unparsedAccount.publicKey });
+
+          if (response.maker.toBase58() === owner.toBase58()) {
+            response = convertResponseOutput(response);
+
+            responsePage.push(response);
+          }
         }
 
         responsePages.push(responsePage);
       }
 
-      for (const responsePage of responsePages) {
-        for (let response of responsePage) {
-          if (response.maker.toBase58() === owner.toBase58()) {
-            response = convertResponseOutput(response);
-          }
-        }
-      }
       return responsePages;
     },
   };

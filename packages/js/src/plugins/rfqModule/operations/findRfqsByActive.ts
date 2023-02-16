@@ -104,6 +104,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
           let rfq = await convergence
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
+            
           if (rfq.state == StoredRfqState.Active) {
             rfq = await convertRfqOutput(convergence, rfq);
 
@@ -113,14 +114,6 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
 
         rfqPages.push(rfqPage);
       }
-
-      // for (const rfqPage of rfqPages) {
-      //   for (let rfq of rfqPage) {
-      //     if (rfq.state == StoredRfqState.Active) {
-      //       rfq = await convertRfqOutput(convergence, rfq);
-      //     }
-      //   }
-      // }
 
       return rfqPages;
     },

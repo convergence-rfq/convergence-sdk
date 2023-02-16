@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
-import { Rfq } from '../models';
+import { Rfq, toRfq } from '../models';
+import { toRfqAccount } from '../accounts';
 import {
   Operation,
   OperationHandler,
@@ -7,8 +8,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { convertRfqOutput, getPages } from '../helpers';
-import { RfqGpaBuilder } from '../RfqGpaBuilder';
+import { convertRfqOutput } from '../helpers';
 
 const Key = 'FindRfqsByAddressesOperation' as const;
 
@@ -46,17 +46,13 @@ export type FindRfqsByAddressesOperation = Operation<
 export type FindRfqsByAddressesInput = {
   /** The addresses of the Rfqs. */
   addresses: PublicKey[];
-
-  rfqsPerPage?: number;
-
-  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByAddressesOutput = Rfq[][];
+export type FindRfqsByAddressesOutput = Rfq[];
 
 /**
  * @group Operations
@@ -69,40 +65,25 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByAddressesOutput> => {
-      const { addresses, rfqsPerPage = 10, numPages } = operation.input;
-      const { programs } = scope;
+      const { addresses } = operation.input;
+      const { commitment } = scope;
       scope.throwIfCanceled();
 
-      const rfqProgram = convergence.programs().getRfq(programs);
-      const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
-      scope.throwIfCanceled();
+      const rfqs: Rfq[] = [];
 
-      const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(addresses, commitment);
 
-      const rfqPages: Rfq[][] = [];
+      for (const account of accounts) {
+        let rfq = toRfq(toRfqAccount(account));
 
-      for (const page of pages) {
-        const rfqPage = [];
+        rfq = await convertRfqOutput(convergence, rfq);
 
-        for (const unparsedAccount of page) {
-          for (const address of addresses) {
-            if (unparsedAccount.publicKey.toBase58() === address.toBase58()) {
-              let rfq = await convergence
-                .rfqs()
-                .findRfqByAddress({ address: unparsedAccount.publicKey });
-
-              rfq = await convertRfqOutput(convergence, rfq);
-              rfqPage.push(rfq);
-            }
-          }
-        }
-
-        rfqPages.push(rfqPage);
+        rfqs.push(rfq);
       }
-
       scope.throwIfCanceled();
 
-      return rfqPages;
+      return rfqs;
     },
   };

@@ -918,21 +918,21 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
       addresses: [rfq1.address, rfq2.address, rfq3.address],
     });
 
-  // spok(t, rfq1, {
-  //   $topic: 'Created RFQ',
-  //   model: 'rfq',
-  //   address: spokSamePubkey(foundRfq1.address),
-  // });
-  // spok(t, rfq2, {
-  //   $topic: 'Created RFQ',
-  //   model: 'rfq',
-  //   address: spokSamePubkey(foundRfq2.address),
-  // });
-  // spok(t, rfq3, {
-  //   $topic: 'Created RFQ',
-  //   model: 'rfq',
-  //   address: spokSamePubkey(foundRfq3.address),
-  // });
+  spok(t, rfq1, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq1.address),
+  });
+  spok(t, rfq2, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq2.address),
+  });
+  spok(t, rfq3, {
+    $topic: 'Created RFQ',
+    model: 'rfq',
+    address: spokSamePubkey(foundRfq3.address),
+  });
 });
 
 test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
@@ -2078,7 +2078,7 @@ test('[rfqModule] it can create and finalize RFQ, respond twice w/ identical res
     quoteAsset: cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset(),
-    activeWindow: 2,
+    activeWindow: 3,
     settlingWindow: 1,
   });
   const { rfqResponse } = await cvg.rfqs().respond({
@@ -2332,16 +2332,11 @@ export const getPages = (
 test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
   const rfqPages = await cvg.rfqs().findByInstrument({
     instrumentProgram: cvg.programs().getSpotInstrument(),
-    pageConfig: [10, 10],
   });
 
   for (const rfqPage of rfqPages) {
-    if (rfqPage instanceof Array) {
-      for (const rfq of rfqPage) {
-        console.log('<inner page> rfq address: ' + rfq.address.toString());
-      }
-    } else {
-      console.log('<flat page> rfq address: ' + rfqPage.address.toString());
+    for (const rfq of rfqPage) {
+      console.log('rfq address: ' + rfq.address.toString());
     }
   }
 
