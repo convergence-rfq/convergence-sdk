@@ -37,15 +37,4 @@ export class ResponseGpaBuilder extends GpaBuilder {
     // TODO: Finish
     return this.where(RFQ, address);
   }
-
-  wherePage(numPages: number) {
-    const pages = [];
-
-    //each page has 10 responses
-    for (let i = 0; i < numPages; i++) {
-      pages.push(this.whereSize((ASK + 32) * 10));
-    }
-
-    return pages;
-  }
 }

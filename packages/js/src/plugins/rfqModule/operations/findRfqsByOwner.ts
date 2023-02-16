@@ -1,7 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
-import { Rfq, toRfq } from '../models';
+import { Rfq /*toRfq*/ } from '../models';
+//@ts-ignore
 import { toRfqAccount } from '../accounts';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
+import { getPages } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -50,13 +52,17 @@ export type FindRfqsByOwnerInput = {
 
   /** Optional array of Rfqs to search from. */
   rfqs?: Rfq[];
+
+  rfqsPerPage?: number;
+
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByOwnerOutput = Rfq[];
+export type FindRfqsByOwnerOutput = Rfq[] | Rfq[][];
 
 /**
  * @group Operations
@@ -69,7 +75,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
-      const { owner, rfqs } = operation.input;
+      const { owner, rfqs, rfqsPerPage = 10, numPages } = operation.input;
       const { programs } = scope;
 
       const spotInstrumentProgram = convergence.programs().getSpotInstrument();
@@ -81,7 +87,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         .getPsyoptionsAmericanInstrument();
 
       if (rfqs) {
-        const rfqsByOwner = [];
+        const rfqsByOwner: Rfq[] = [];
 
         for (const rfq of rfqs) {
           if (rfq.taker.toBase58() === owner.toBase58()) {
@@ -109,8 +115,8 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
                   );
 
                 if (instrument.legInfo?.amount) {
-                  leg.instrumentAmount =
-                    (leg.instrumentAmount as number) /= Math.pow(10, instrument.decimals);
+                  leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                    Math.pow(10, instrument.decimals);
                 }
               } else if (
                 leg.instrumentProgram.toBase58() ===
@@ -123,8 +129,8 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
                   );
 
                 if (instrument.legInfo?.amount) {
-                  leg.instrumentAmount =
-                    (leg.instrumentAmount as number) /= Math.pow(10, instrument.decimals);
+                  leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                    Math.pow(10, instrument.decimals);
                 }
               } else if (
                 leg.instrumentProgram.toBase58() ===
@@ -136,8 +142,8 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
                 );
 
                 if (instrument.legInfo?.amount) {
-                  leg.instrumentAmount =
-                    (leg.instrumentAmount as number) /= Math.pow(10, instrument.decimals);
+                  leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                    Math.pow(10, instrument.decimals);
                 }
               }
             }
@@ -145,27 +151,100 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
             rfqsByOwner.push(rfq);
           }
         }
+
         scope.throwIfCanceled();
 
         return rfqsByOwner;
       }
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const gotRfqs = await rfqGpaBuilder.whereTaker(owner).get();
+      const unparsedAccounts = await rfqGpaBuilder
+        .withoutData()
+        .whereTaker(owner)
+        .get();
       scope.throwIfCanceled();
 
-      return gotRfqs
-        .map<Rfq | null>((account) => {
-          if (account === null) {
-            return null;
+      const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
+
+      const rfqPages: Rfq[][] = [];
+
+      for (const page of pages) {
+        const rfqPage = [];
+
+        for (const unparsedAccount of page) {
+          rfqPage.push(
+            await convergence
+              .rfqs()
+              .findRfqByAddress({ address: unparsedAccount.publicKey })
+          );
+        }
+
+        rfqPages.push(rfqPage);
+      }
+
+      for (const rfqPage of rfqPages) {
+        for (const rfq of rfqPage) {
+          if (rfq.fixedSize.__kind == 'BaseAsset') {
+            const parsedLegsMultiplierBps =
+              (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
+
+            rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+          } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
+            const parsedQuoteAmount =
+              (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
+
+            rfq.fixedSize.quoteAmount = parsedQuoteAmount;
           }
 
-          try {
-            return toRfq(toRfqAccount(account));
-          } catch (e) {
-            return null;
+          for (const leg of rfq.legs) {
+            if (
+              leg.instrumentProgram.toBase58() ===
+              psyoptionsEuropeanProgram.address.toBase58()
+            ) {
+              const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+                convergence,
+                leg
+              );
+
+              if (instrument.legInfo?.amount) {
+                leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                  Math.pow(10, instrument.decimals);
+              }
+            } else if (
+              leg.instrumentProgram.toBase58() ===
+              psyoptionsAmericanProgram.address.toBase58()
+            ) {
+              const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+                convergence,
+                leg
+              );
+
+              if (instrument.legInfo?.amount) {
+                leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                  Math.pow(10, instrument.decimals);
+              }
+            } else if (
+              leg.instrumentProgram.toBase58() ===
+              spotInstrumentProgram.address.toBase58()
+            ) {
+              const instrument = await SpotInstrument.createFromLeg(
+                convergence,
+                leg
+              );
+
+              if (instrument.legInfo?.amount) {
+                leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                  Math.pow(10, instrument.decimals);
+              }
+            }
           }
-        })
-        .filter((rfq): rfq is Rfq => rfq !== null);
+        }
+      }
+
+      if (rfqPages.length === 1) {
+        return rfqPages.flat();
+      }
+
+      return rfqPages;
     },
   };

@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
-import { toRfq, Rfq } from '../models';
+import { Rfq } from '../models';
+//@ts-ignore
 import { toRfqAccount } from '../accounts';
 import { psyoptionsAmericanInstrumentProgram } from '../../psyoptionsAmericanInstrumentModule/programs';
 import { psyoptionsEuropeanInstrumentProgram } from '../../psyoptionsEuropeanInstrumentModule/programs';
@@ -18,6 +19,7 @@ import {
 } from '@/types';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { getPages } from '../helpers';
 
 const Key = 'FindRfqsByTokenOperation' as const;
 
@@ -53,13 +55,17 @@ export type FindRfqsByTokenOperation = Operation<
 export type FindRfqsByTokenInput = {
   /** The address of the mint account. */
   mintAddress: PublicKey;
+
+  rfqsPerPage?: number;
+
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByTokenOutput = Rfq[];
+export type FindRfqsByTokenOutput = Rfq[] | Rfq[][];
 
 /**
  * @group Operations
@@ -73,7 +79,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       scope: OperationScope
     ): Promise<FindRfqsByTokenOutput> => {
       const { programs } = scope;
-      const { mintAddress } = operation.input;
+      const { mintAddress, rfqsPerPage = 10, numPages } = operation.input;
       scope.throwIfCanceled();
 
       const spotInstrumentProgram = convergence.programs().getSpotInstrument();
@@ -89,312 +95,327 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       const rfqGpaBuilder = convergence
         .programs()
         .getGpaBuilder(rfqProgram.address);
-      const unparsedAccounts = await rfqGpaBuilder.get();
-      const rfqs = unparsedAccounts
-        .map<Rfq | null>((account) => {
-          if (account === null) {
-            return null;
-          }
+      const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
 
-          try {
-            return toRfq(toRfqAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((rfq): rfq is Rfq => rfq !== null);
+      const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
+
+      const rfqPages: Rfq[][] = [];
+
+      for (const page of pages) {
+        const rfqPage = [];
+
+        for (const unparsedAccount of page) {
+          rfqPage.push(
+            await convergence
+              .rfqs()
+              .findRfqByAddress({ address: unparsedAccount.publicKey })
+          );
+        }
+
+        rfqPages.push(rfqPage);
+      }
 
       scope.throwIfCanceled();
 
       const rfqsByToken: Rfq[] = [];
 
-      for (const rfq of rfqs) {
-        if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
-          if (rfq.fixedSize.__kind == 'BaseAsset') {
-            const parsedLegsMultiplierBps =
-              (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
+      for (const rfqPage of rfqPages) {
+        for (const rfq of rfqPage) {
+          if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
+            if (rfq.fixedSize.__kind == 'BaseAsset') {
+              const parsedLegsMultiplierBps =
+                (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
 
-            rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-          } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-            const parsedQuoteAmount =
-              (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
+              rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+            } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
+              const parsedQuoteAmount =
+                (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
 
-            rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+              rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+            }
+
+            for (const leg of rfq.legs) {
+              if (
+                leg.instrumentProgram.toBase58() ===
+                psyoptionsEuropeanProgram.address.toBase58()
+              ) {
+                const instrument =
+                  await PsyoptionsEuropeanInstrument.createFromLeg(
+                    convergence,
+                    leg
+                  );
+
+                if (instrument.legInfo?.amount) {
+                  leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                    Math.pow(10, instrument.decimals);
+                }
+              } else if (
+                leg.instrumentProgram.toBase58() ===
+                psyoptionsAmericanProgram.address.toBase58()
+              ) {
+                const instrument =
+                  await PsyoptionsAmericanInstrument.createFromLeg(
+                    convergence,
+                    leg
+                  );
+
+                if (instrument.legInfo?.amount) {
+                  leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                    Math.pow(10, instrument.decimals);
+                }
+              } else if (
+                leg.instrumentProgram.toBase58() ===
+                spotInstrumentProgram.address.toBase58()
+              ) {
+                const instrument = await SpotInstrument.createFromLeg(
+                  convergence,
+                  leg
+                );
+
+                if (instrument.legInfo?.amount) {
+                  leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                    Math.pow(10, instrument.decimals);
+                }
+              }
+            }
+
+            rfqsByToken.push(rfq);
           }
-
           for (const leg of rfq.legs) {
             if (
               leg.instrumentProgram.toBase58() ===
-              psyoptionsEuropeanProgram.address.toBase58()
+              psyoptionsAmericanInstrumentProgram.address.toBase58()
             ) {
+              const data =
+                psyoptionsAmericanInstrumentDataSerializer.deserialize(
+                  Buffer.from(leg.instrumentData)
+                )[0];
+
+              if (data.optionMint.toBase58() === mintAddress.toBase58()) {
+                if (rfq.fixedSize.__kind == 'BaseAsset') {
+                  const parsedLegsMultiplierBps =
+                    (rfq.fixedSize.legsMultiplierBps as number) /
+                    Math.pow(10, 9);
+
+                  rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+                } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
+                  const parsedQuoteAmount =
+                    (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
+
+                  rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+                }
+
+                for (const leg of rfq.legs) {
+                  if (
+                    leg.instrumentProgram.toBase58() ===
+                    psyoptionsEuropeanProgram.address.toBase58()
+                  ) {
+                    const instrument =
+                      await PsyoptionsEuropeanInstrument.createFromLeg(
+                        convergence,
+                        leg
+                      );
+
+                    if (instrument.legInfo?.amount) {
+                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                        Math.pow(10, 9);
+                    }
+                  } else if (
+                    leg.instrumentProgram.toBase58() ===
+                    psyoptionsAmericanProgram.address.toBase58()
+                  ) {
+                    const instrument =
+                      await PsyoptionsAmericanInstrument.createFromLeg(
+                        convergence,
+                        leg
+                      );
+
+                    if (instrument.legInfo?.amount) {
+                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                        Math.pow(10, 9);
+                    }
+                  } else if (
+                    leg.instrumentProgram.toBase58() ===
+                    spotInstrumentProgram.address.toBase58()
+                  ) {
+                    const instrument = await SpotInstrument.createFromLeg(
+                      convergence,
+                      leg
+                    );
+
+                    if (instrument.legInfo?.amount) {
+                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                        Math.pow(10, 9);
+                    }
+                  }
+                }
+
+                rfqsByToken.push(rfq);
+              }
+            } else if (
+              leg.instrumentProgram.toBase58() ===
+              psyoptionsEuropeanInstrumentProgram.address.toBase58()
+            ) {
+              // const data = psyoptionsEuropeanInstrumentDataSerializer.deserialize(
+              //   Buffer.from(leg.instrumentData)
+              // )[0];
+
+              // if (data.optionMint.toBase58() === mintAddress.toBase58()) {
+              //rfqByToken.push(rfq);
+              // }
               const instrument =
                 await PsyoptionsEuropeanInstrument.createFromLeg(
                   convergence,
                   leg
                 );
+              const euroMetaOptionMint = await convergence
+                .tokens()
+                .findMintByAddress({
+                  address:
+                    instrument.optionType == OptionType.CALL
+                      ? instrument.meta.callOptionMint
+                      : instrument.meta.putOptionMint,
+                });
+              if (
+                euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
+              ) {
+                if (rfq.fixedSize.__kind == 'BaseAsset') {
+                  const parsedLegsMultiplierBps =
+                    (rfq.fixedSize.legsMultiplierBps as number) /
+                    Math.pow(10, 9);
 
-              if (instrument.legInfo?.amount) {
-                leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                  Math.pow(10, instrument.decimals);
-              }
-            } else if (
-              leg.instrumentProgram.toBase58() ===
-              psyoptionsAmericanProgram.address.toBase58()
-            ) {
-              const instrument =
-                await PsyoptionsAmericanInstrument.createFromLeg(
-                  convergence,
-                  leg
-                );
+                  rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+                } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
+                  const parsedQuoteAmount =
+                    (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
 
-              if (instrument.legInfo?.amount) {
-                leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                  Math.pow(10, instrument.decimals);
+                  rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+                }
+
+                for (const leg of rfq.legs) {
+                  if (
+                    leg.instrumentProgram.toBase58() ===
+                    psyoptionsEuropeanProgram.address.toBase58()
+                  ) {
+                    const instrument =
+                      await PsyoptionsEuropeanInstrument.createFromLeg(
+                        convergence,
+                        leg
+                      );
+
+                    if (instrument.legInfo?.amount) {
+                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                        Math.pow(10, instrument.decimals);
+                    }
+                  } else if (
+                    leg.instrumentProgram.toBase58() ===
+                    psyoptionsAmericanProgram.address.toBase58()
+                  ) {
+                    const instrument =
+                      await PsyoptionsAmericanInstrument.createFromLeg(
+                        convergence,
+                        leg
+                      );
+
+                    if (instrument.legInfo?.amount) {
+                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                        Math.pow(10, instrument.decimals);
+                    }
+                  } else if (
+                    leg.instrumentProgram.toBase58() ===
+                    spotInstrumentProgram.address.toBase58()
+                  ) {
+                    const instrument = await SpotInstrument.createFromLeg(
+                      convergence,
+                      leg
+                    );
+
+                    if (instrument.legInfo?.amount) {
+                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                        Math.pow(10, instrument.decimals);
+                    }
+                  }
+                }
+
+                rfqsByToken.push(rfq);
               }
             } else if (
               leg.instrumentProgram.toBase58() ===
               spotInstrumentProgram.address.toBase58()
             ) {
-              const instrument = await SpotInstrument.createFromLeg(
-                convergence,
-                leg
-              );
+              const data = SpotInstrumentDataSerializer.deserialize(
+                Buffer.from(leg.instrumentData)
+              )[0];
 
-              if (instrument.legInfo?.amount) {
-                leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                  Math.pow(10, instrument.decimals);
-              }
-            }
-          }
+              if (data.mint.toBase58() === mintAddress.toBase58()) {
+                if (rfq.fixedSize.__kind == 'BaseAsset') {
+                  const parsedLegsMultiplierBps =
+                    (rfq.fixedSize.legsMultiplierBps as number) /
+                    Math.pow(10, 9);
 
-          rfqsByToken.push(rfq);
-        }
-        for (const leg of rfq.legs) {
-          if (
-            leg.instrumentProgram.toBase58() ===
-            psyoptionsAmericanInstrumentProgram.address.toBase58()
-          ) {
-            const data = psyoptionsAmericanInstrumentDataSerializer.deserialize(
-              Buffer.from(leg.instrumentData)
-            )[0];
+                  rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+                } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
+                  const parsedQuoteAmount =
+                    (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
 
-            if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-              if (rfq.fixedSize.__kind == 'BaseAsset') {
-                const parsedLegsMultiplierBps =
-                  (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
+                  rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+                }
 
-                rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-              } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-                const parsedQuoteAmount =
-                  (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
+                for (const leg of rfq.legs) {
+                  if (
+                    leg.instrumentProgram.toBase58() ===
+                    psyoptionsEuropeanProgram.address.toBase58()
+                  ) {
+                    const instrument =
+                      await PsyoptionsEuropeanInstrument.createFromLeg(
+                        convergence,
+                        leg
+                      );
 
-                rfq.fixedSize.quoteAmount = parsedQuoteAmount;
-              }
+                    if (instrument.legInfo?.amount) {
+                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                        Math.pow(10, instrument.decimals);
+                    }
+                  } else if (
+                    leg.instrumentProgram.toBase58() ===
+                    psyoptionsAmericanProgram.address.toBase58()
+                  ) {
+                    const instrument =
+                      await PsyoptionsAmericanInstrument.createFromLeg(
+                        convergence,
+                        leg
+                      );
 
-              for (const leg of rfq.legs) {
-                if (
-                  leg.instrumentProgram.toBase58() ===
-                  psyoptionsEuropeanProgram.address.toBase58()
-                ) {
-                  const instrument =
-                    await PsyoptionsEuropeanInstrument.createFromLeg(
+                    if (instrument.legInfo?.amount) {
+                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                        Math.pow(10, instrument.decimals);
+                    }
+                  } else if (
+                    leg.instrumentProgram.toBase58() ===
+                    spotInstrumentProgram.address.toBase58()
+                  ) {
+                    const instrument = await SpotInstrument.createFromLeg(
                       convergence,
                       leg
                     );
 
-                  if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                      Math.pow(10, 9);
-                  }
-                } else if (
-                  leg.instrumentProgram.toBase58() ===
-                  psyoptionsAmericanProgram.address.toBase58()
-                ) {
-                  const instrument =
-                    await PsyoptionsAmericanInstrument.createFromLeg(
-                      convergence,
-                      leg
-                    );
-
-                  if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                      Math.pow(10, 9);
-                  }
-                } else if (
-                  leg.instrumentProgram.toBase58() ===
-                  spotInstrumentProgram.address.toBase58()
-                ) {
-                  const instrument = await SpotInstrument.createFromLeg(
-                    convergence,
-                    leg
-                  );
-
-                  if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                      Math.pow(10, 9);
+                    if (instrument.legInfo?.amount) {
+                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
+                        Math.pow(10, instrument.decimals);
+                    }
                   }
                 }
+
+                rfqsByToken.push(rfq);
               }
-
-              rfqsByToken.push(rfq);
-            }
-          } else if (
-            leg.instrumentProgram.toBase58() ===
-            psyoptionsEuropeanInstrumentProgram.address.toBase58()
-          ) {
-            // const data = psyoptionsEuropeanInstrumentDataSerializer.deserialize(
-            //   Buffer.from(leg.instrumentData)
-            // )[0];
-
-            // if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-            //rfqByToken.push(rfq);
-            // }
-            const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
-              convergence,
-              leg
-            );
-            const euroMetaOptionMint = await convergence
-              .tokens()
-              .findMintByAddress({
-                address:
-                  instrument.optionType == OptionType.CALL
-                    ? instrument.meta.callOptionMint
-                    : instrument.meta.putOptionMint,
-              });
-            if (
-              euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
-            ) {
-              if (rfq.fixedSize.__kind == 'BaseAsset') {
-                const parsedLegsMultiplierBps =
-                  (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
-
-                rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-              } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-                const parsedQuoteAmount =
-                  (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
-
-                rfq.fixedSize.quoteAmount = parsedQuoteAmount;
-              }
-
-              for (const leg of rfq.legs) {
-                if (
-                  leg.instrumentProgram.toBase58() ===
-                  psyoptionsEuropeanProgram.address.toBase58()
-                ) {
-                  const instrument =
-                    await PsyoptionsEuropeanInstrument.createFromLeg(
-                      convergence,
-                      leg
-                    );
-
-                  if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                      Math.pow(10, instrument.decimals);
-                  }
-                } else if (
-                  leg.instrumentProgram.toBase58() ===
-                  psyoptionsAmericanProgram.address.toBase58()
-                ) {
-                  const instrument =
-                    await PsyoptionsAmericanInstrument.createFromLeg(
-                      convergence,
-                      leg
-                    );
-
-                  if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                      Math.pow(10, instrument.decimals);
-                  }
-                } else if (
-                  leg.instrumentProgram.toBase58() ===
-                  spotInstrumentProgram.address.toBase58()
-                ) {
-                  const instrument = await SpotInstrument.createFromLeg(
-                    convergence,
-                    leg
-                  );
-
-                  if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                      Math.pow(10, instrument.decimals);
-                  }
-                }
-              }
-
-              rfqsByToken.push(rfq);
-            }
-          } else if (
-            leg.instrumentProgram.toBase58() ===
-            spotInstrumentProgram.address.toBase58()
-          ) {
-            const data = SpotInstrumentDataSerializer.deserialize(
-              Buffer.from(leg.instrumentData)
-            )[0];
-
-            if (data.mint.toBase58() === mintAddress.toBase58()) {
-              if (rfq.fixedSize.__kind == 'BaseAsset') {
-                const parsedLegsMultiplierBps =
-                  (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
-
-                rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-              } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-                const parsedQuoteAmount =
-                  (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
-
-                rfq.fixedSize.quoteAmount = parsedQuoteAmount;
-              }
-
-              for (const leg of rfq.legs) {
-                if (
-                  leg.instrumentProgram.toBase58() ===
-                  psyoptionsEuropeanProgram.address.toBase58()
-                ) {
-                  const instrument =
-                    await PsyoptionsEuropeanInstrument.createFromLeg(
-                      convergence,
-                      leg
-                    );
-
-                  if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                      Math.pow(10, instrument.decimals);
-                  }
-                } else if (
-                  leg.instrumentProgram.toBase58() ===
-                  psyoptionsAmericanProgram.address.toBase58()
-                ) {
-                  const instrument =
-                    await PsyoptionsAmericanInstrument.createFromLeg(
-                      convergence,
-                      leg
-                    );
-
-                  if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                      Math.pow(10, instrument.decimals);
-                  }
-                } else if (
-                  leg.instrumentProgram.toBase58() ===
-                  spotInstrumentProgram.address.toBase58()
-                ) {
-                  const instrument = await SpotInstrument.createFromLeg(
-                    convergence,
-                    leg
-                  );
-
-                  if (instrument.legInfo?.amount) {
-                    leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                      Math.pow(10, instrument.decimals);
-                  }
-                }
-              }
-
-              rfqsByToken.push(rfq);
             }
           }
         }
       }
-      const rfqsTokenSorted = [...new Set(rfqsByToken)];
-      return rfqsTokenSorted;
+      if (rfqPages.length === 1) {
+        return rfqPages.flat();
+      }
+
+      return rfqPages;
     },
   };

@@ -9,10 +9,11 @@ import {
 } from '../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
-import type { Rfq } from './models';
+import type { Rfq, Response } from './models';
 import type { Leg, QuoteAsset } from './types';
 import { PublicKeyValues, token, toPublicKey } from '@/types';
 import { Convergence } from '@/Convergence';
+import { UnparsedAccount } from '@/types';
 
 export type HasMintAddress = Rfq | PublicKey;
 
@@ -185,4 +186,78 @@ export const quoteAssetToInstrument = async (
     );
   }
   throw new Error("Instrument doesn't exist");
+};
+
+export const getPages = (
+  unparsedAccounts: UnparsedAccount[],
+  rfqsPerPage: number,
+  numPages?: number
+): UnparsedAccount[][] => {
+  let unparsedAccountPages: UnparsedAccount[][] = [];
+
+  let lastPageSize = rfqsPerPage;
+
+  if (numPages) {
+    for (let i = 0; i < numPages; i++) {
+      if (lastPageSize < rfqsPerPage) {
+        return unparsedAccountPages;
+      } else {
+        lastPageSize = unparsedAccounts.slice(
+          i * rfqsPerPage,
+          (i + 1) * rfqsPerPage
+        ).length;
+
+        unparsedAccountPages.push(
+          unparsedAccounts.slice(i * rfqsPerPage, (i + 1) * rfqsPerPage)
+        );
+      }
+    }
+  } else {
+    while (lastPageSize == rfqsPerPage) {
+      lastPageSize = unparsedAccounts.slice(
+        unparsedAccountPages.length * rfqsPerPage,
+        (unparsedAccountPages.length + 1) * rfqsPerPage
+      ).length;
+
+      unparsedAccountPages.push(
+        unparsedAccounts.slice(
+          unparsedAccountPages.length * rfqsPerPage,
+          (unparsedAccountPages.length + 1) * rfqsPerPage
+        )
+      );
+    }
+  }
+
+  return unparsedAccountPages;
+};
+
+export const convertResponseOutput = (response: Response): Response => {
+  if (response.bid) {
+    const parsedPriceQuoteAmountBps =
+      (response.bid.priceQuote.amountBps as number) / Math.pow(10, 9);
+
+    response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+    if (response.bid.__kind == 'Standard') {
+      const parsedLegsMultiplierBps =
+        (response.bid.legsMultiplierBps as number) / Math.pow(10, 9);
+
+      response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
+    }
+  }
+  if (response.ask) {
+    const parsedPriceQuoteAmountBps =
+      (response.ask.priceQuote.amountBps as number) / Math.pow(10, 9);
+
+    response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+    if (response.ask.__kind == 'Standard') {
+      const parsedLegsMultiplierBps =
+        (response.ask.legsMultiplierBps as number) / Math.pow(10, 9);
+
+      response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
+    }
+  }
+
+  return response;
 };

@@ -39,22 +39,4 @@ export class RfqGpaBuilder extends GpaBuilder {
   //   // TODO: Finish
   //   return this.where(INSTRUMENT, address);
   // }
-
-  wherePage(numPages: number) {
-    // return this.slice(0, LEGS + 72);
-
-    const pages = [];
-
-    //each page has 10 rfqs
-    for (let i = 0; i < numPages; i++) {
-      pages.push(this.whereSize((LEGS + 72) * 10));
-    }
-
-    return pages;
-  }
 }
-
-// slice(offset: number, length: number) {
-//   this.config.dataSlice = { offset, length };
-//   return this;
-// }

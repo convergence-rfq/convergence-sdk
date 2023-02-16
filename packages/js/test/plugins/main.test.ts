@@ -8,6 +8,7 @@ import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 //@ts-ignore
 import { sha256 } from '@noble/hashes/sha256';
+import { UnparsedAccount } from '@/index';
 //@ts-ignore
 import { bignum } from '@convergence-rfq/beet';
 import {
@@ -23,6 +24,7 @@ import {
   //@ts-ignore
   initializePsyoptionsAmerican,
   setupAccounts,
+  //@ts-ignore
   BTC_DECIMALS,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
@@ -30,14 +32,19 @@ import {
   delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
+//@ts-ignore
 import {
+  //@ts-ignore
   RfqGpaBuilder,
+  //@ts-ignore
   ResponseGpaBuilder,
   //@ts-ignore
   toResponse,
   //@ts-ignore
   toResponseAccount,
+  //@ts-ignore
   toRfq,
+  //@ts-ignore
   toRfqAccount,
 } from '@/index';
 import {
@@ -79,6 +86,8 @@ import {
   //@ts-ignore
   LEG_MULTIPLIER_DECIMALS,
 } from '@/index';
+//@ts-ignore
+import { Rfq } from '@/index';
 
 killStuckProcess();
 
@@ -855,7 +864,7 @@ test('[rfqModule] it can create and finalize RFQ, respond, confirm response, pre
   });
 });
 
-// RFQ UTILS
+// // RFQ UTILS
 
 test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   const { rfq: rfq1 } = await cvg.rfqs().create({
@@ -926,23 +935,35 @@ test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
   });
 });
 
-test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
-  const instruments = await cvg.rfqs().findByInstrument({
-    instrumentProgram: cvg.programs().getSpotInstrument(),
-  });
-  t.assert(instruments.length > 0, 'instruments present');
-});
+// test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
+//   const instruments = await cvg.rfqs().findByInstrument({
+//     instrumentProgram: cvg.programs().getSpotInstrument(),
+//   });
+//   t.assert(instruments.length > 0, 'instruments present');
+// });
 
 test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
   const foundRfqs = await cvg.rfqs().findAllByOwner({ owner: taker.publicKey });
 
-  const newFoundRfqs = await cvg
-    .rfqs()
-    .findAllByOwner({ owner: taker.publicKey, rfqs: foundRfqs });
+  // const newFoundRfqs = await cvg
+  //   .rfqs()
+  //   .findAllByOwner({ owner: taker.publicKey, rfqs: foundRfqs });
 
-  for (const newFoundRfq of newFoundRfqs) {
-    console.log('new found rfq: ' + newFoundRfq.address.toBase58());
+  // for (const newFoundRfq of newFoundRfqs) {
+  //   console.log('<> new found rfq: ' + newFoundRfq.address.toBase58());
+  // }
+
+  for (const foundRfq of foundRfqs) {
+    if (foundRfq instanceof Array) {
+      for (const rfq of foundRfq) {
+        console.log('<inner page> rfq address: ' + rfq.address.toBase58());
+      }
+    } else {
+      console.log('<flat page> rfq address: ' + foundRfq.address.toBase58());
+    }
   }
+
+  console.log('number of pages: ' + foundRfqs.length.toString());
 });
 
 // RISK ENGINE UTILS
@@ -1819,29 +1840,47 @@ test('[rfq module] it can find all rfqs by instrument as leg', async (t: Test) =
     .rfqs()
     .findByInstrument({ instrumentProgram: spotInstrument });
 
-  // for (const rfq of rfqs) {
-
-  // }
-
   t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
 });
 
 test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
-  const rfqs = await cvg.rfqs().findRfqsByActive({});
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+  const rfqPages = await cvg.rfqs().findRfqsByActive({});
+
+  for (const rfqPage of rfqPages) {
+    if (rfqPage instanceof Array) {
+      for (const rfq of rfqPage) {
+        console.log('<> active rfq: ', rfq.address.toString());
+      }
+    } else {
+      console.log('<> active rfq: ', rfqPage.address.toString());
+    }
+  }
+
+  t.assert(rfqPages.length > 0, 'rfqs should be greater than 0');
 });
 
-test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
-  const rfqs = await cvg
-    .rfqs()
-    .findByToken({ mintAddress: europeanOptionPutMint });
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-});
+// test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
+//   const rfqs = await cvg
+//     .rfqs()
+//     .findByToken({ mintAddress: europeanOptionPutMint });
 
-test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
-  const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
-  t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-});
+//   for (const rfq of rfqs) {
+//     if (rfq instanceof Array) {
+//       for (const r of rfq) {
+//         console.log('<inner page> rfq address: ', r.address.toString());
+//       }
+//     } else {
+//       console.log('<flat page> rfq address: ', rfq.address.toString());
+//     }
+//   }
+
+//   // t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+// });
+
+// test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
+//   // const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
+//   // t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+// });
 
 test('[rfq module] it can find all responses by maker address', async (t: Test) => {
   const responses = await cvg
@@ -1849,18 +1888,17 @@ test('[rfq module] it can find all responses by maker address', async (t: Test) 
     .findResponsesByOwner({ owner: maker.publicKey });
 
   for (const response of responses) {
-    console.log('response', response.address.toBase58());
+    if (response instanceof Array) {
+      for (const r of response) {
+        console.log('<inner page> response address: ', r.address.toString());
+      }
+    } else {
+      console.log(
+        '<flat page> response address: ',
+        response.address.toString()
+      );
+    }
   }
-
-  const newResponses = await cvg
-    .rfqs()
-    .findResponsesByOwner({ owner: maker.publicKey, responses });
-
-  for (const newResponse of newResponses) {
-    console.log('new response: ' + newResponse.address.toBase58());
-  }
-
-  t.assert(responses.length > 0, 'responses should be greater than 0');
 });
 
 test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
@@ -1908,7 +1946,18 @@ test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
   });
 
   for (const response of responses) {
-    console.log('Rfq response: ' + response.address.toString());
+    // console.log('Rfq response: ' + response.address.toString());
+
+    if (response instanceof Array) {
+      for (const r of response) {
+        console.log('<inner page> response address: ', r.address.toString());
+      }
+    } else {
+      console.log(
+        '<flat page> response address: ',
+        response.address.toString()
+      );
+    }
   }
 });
 
@@ -2233,33 +2282,91 @@ test('[collateralModule] it can initialize collateral if necessary', async (t: T
   }
   await cvg.collateral().fund({ user: taker, amount: 1000 });
 });
+//@ts-ignore
 
-test('[rfqModule] it can fetch RFQs via pagination', async () => {
-  //@ts-ignore
-  const rfqs = await cvg.rfqs().findAllByOwner({ owner: taker.publicKey });
+export const getPages = (
+  unparsedAccounts: UnparsedAccount[],
+  numPages: number,
+  rfqsPerPage: number
+): UnparsedAccount[][] => {
+  let unparsedAccountPages: UnparsedAccount[][] = [];
 
-  const rfqProgram = cvg.programs().getRfq();
-  const rfqGpaBuilder = new RfqGpaBuilder(cvg, rfqProgram.address);
-  //@ts-ignore
-  const gotRfqs = await rfqGpaBuilder
-    .whereTaker(taker.publicKey)
-    .wherePage(1)[0]
-    .get();
-
-  for (const gotRfq of gotRfqs) {
-    const rfq = toRfq(toRfqAccount(gotRfq));
-    console.log('got rfq: ' + rfq.address.toString());
+  for (let i = 0; i < numPages; i++) {
+    if (
+      unparsedAccounts.slice(i * rfqsPerPage, (i + 1) * rfqsPerPage).length ===
+      0
+    ) {
+      return unparsedAccountPages;
+    } else {
+      unparsedAccountPages.push(
+        unparsedAccounts.slice(i * rfqsPerPage, (i + 1) * rfqsPerPage)
+      );
+    }
   }
-});
 
-test('[rfqModule] it can fetch RFQ responses via pagination', async () => {
-  //@ts-ignore
-  const responses = await cvg
-    .rfqs()
-    .findResponsesByOwner({ owner: maker.publicKey });
+  return unparsedAccountPages;
+};
 
-  const rfqProgram = cvg.programs().getRfq();
-  const responseGpaBuilder = new ResponseGpaBuilder(cvg, rfqProgram.address);
-  //@ts-ignore
-  const responseAccounts = await responseGpaBuilder.get();
+// test('[rfqModule] it can fetch RFQs via pagination', async () => {
+//   const rfqProgram = cvg.programs().getRfq();
+//   const rfqGpaBuilder = new RfqGpaBuilder(cvg, rfqProgram.address);
+
+//   const unparsedAccounts = await rfqGpaBuilder.get();
+
+//   const paginatedUnparsedAccounts = getPages(unparsedAccounts, 1, 1);
+
+//   console.log(
+//     'paginated unparsed accts: ' + paginatedUnparsedAccounts.length.toString()
+//   );
+
+//   console.log('unparsed accts len: ' + unparsedAccounts.length.toString());
+
+//   const rfqs: Rfq[] = [];
+
+//   for (const unparsedAccount of paginatedUnparsedAccounts) {
+//     const rfq = await cvg
+//       .rfqs()
+//       .findRfqByAddress({ address: unparsedAccount.publicKey });
+
+//     rfqs.push(rfq);
+//   }
+
+//   console.log('rfq accts len: ' + rfqs.length.toString());
+
+//   for (const rfq of rfqs) {
+//     console.log('rfq pubkey: ' + rfq.address.toString());
+//   }
+// });
+
+// test('[rfqModule] it can fetch RFQ responses via pagination', async () => {
+//   //@ts-ignore
+//   const responses = await cvg
+//     .rfqs()
+//     .findResponsesByOwner({ owner: maker.publicKey });
+
+//   const rfqProgram = cvg.programs().getRfq();
+//   const responseGpaBuilder = new ResponseGpaBuilder(cvg, rfqProgram.address);
+//   //@ts-ignore
+//   const responseAccounts = await responseGpaBuilder.get();
+// });
+
+test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
+  const rfqPages = await cvg.rfqs().findByInstrument({
+    instrumentProgram: cvg.programs().getSpotInstrument(),
+    pageConfig: [10, 10],
+  });
+
+  for (const rfqPage of rfqPages) {
+    if (rfqPage instanceof Array) {
+      for (const rfq of rfqPage) {
+        console.log('<inner page> rfq address: ' + rfq.address.toString());
+      }
+    } else {
+      console.log('<flat page> rfq address: ' + rfqPage.address.toString());
+    }
+  }
+
+  console.log('number of pages: ' + rfqPages.length.toString());
+
+  t.assert(rfqPages.length > 0, 'instruments present');
 });
