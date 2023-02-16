@@ -59,7 +59,7 @@ export type FindResponsesByRfqsInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByRfqsOutput = Response[] | Response[][];
+export type FindResponsesByRfqsOutput = Response[][];
 
 /**
  * @group Operations
@@ -94,7 +94,7 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
           }
           scope.throwIfCanceled();
 
-          return responsesByRfqs;
+          return [responsesByRfqs];
         }
       }
 
@@ -110,29 +110,35 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
 
       const responsePages: Response[][] = [];
 
-      for (const page of pages) {
-        const responsePage = [];
-
-        for (const unparsedAccount of page) {
-          responsePage.push(
-            await convergence
-              .rfqs()
-              .findResponseByAddress({ address: unparsedAccount.publicKey })
-          );
-        }
-
-        responsePages.push(responsePage);
-      }
-
       for (const address of addresses) {
-        for (const responsePage of responsePages) {
-          for (let response of responsePage) {
+        for (const page of pages) {
+          const responsePage = [];
+
+          for (const unparsedAccount of page) {
+            let response = await convergence
+              .rfqs()
+              .findResponseByAddress({ address: unparsedAccount.publicKey });
+
             if (response.rfq.toBase58() === address.toBase58()) {
               response = convertResponseOutput(response);
             }
+
+            responsePage.push(response);
           }
+
+          responsePages.push(responsePage);
         }
       }
+
+      // for (const address of addresses) {
+      //   for (const responsePage of responsePages) {
+      //     for (let response of responsePage) {
+      //       if (response.rfq.toBase58() === address.toBase58()) {
+      //         response = convertResponseOutput(response);
+      //       }
+      //     }
+      //   }
+      // }
 
       return responsePages;
     },

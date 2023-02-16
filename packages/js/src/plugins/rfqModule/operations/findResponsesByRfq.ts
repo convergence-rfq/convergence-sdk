@@ -59,7 +59,7 @@ export type FindResponsesByRfqInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByRfqOutput = Response[] | Response[][];
+export type FindResponsesByRfqOutput = Response[][];
 
 /**
  * @group Operations
@@ -91,7 +91,7 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
             responsesByRfq.push(response);
           }
         }
-        return responsesByRfq;
+        return [responsesByRfq];
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);
@@ -110,22 +110,18 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
         const responsePage = [];
 
         for (const unparsedAccount of page) {
-          responsePage.push(
-            await convergence
-              .rfqs()
-              .findResponseByAddress({ address: unparsedAccount.publicKey })
-          );
+          let response = await convergence
+            .rfqs()
+            .findResponseByAddress({ address: unparsedAccount.publicKey });
+
+          if (response.rfq.toBase58() === address.toBase58()) {
+            response = convertResponseOutput(response);
+
+            responsePage.push(response);
+          }
         }
 
         responsePages.push(responsePage);
-      }
-
-      for (const responsePage of responsePages) {
-        for (let response of responsePage) {
-          if (response.rfq.toBase58() === address.toBase58()) {
-            response = convertResponseOutput(response);
-          }
-        }
       }
       scope.throwIfCanceled();
 

@@ -44,6 +44,9 @@ export type FindRfqsByActiveOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByActiveInput = {
+  /** Optional array of Rfqs to search from. */
+  rfqs?: Rfq[];
+
   rfqsPerPage?: number;
 
   numPages?: number;
@@ -53,7 +56,7 @@ export type FindRfqsByActiveInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByActiveOutput = Rfq[] | Rfq[][];
+export type FindRfqsByActiveOutput = Rfq[][];
 
 /**
  * @group Operations
@@ -67,7 +70,23 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       scope: OperationScope
     ): Promise<FindRfqsByActiveOutput> => {
       const { programs } = scope;
-      const { rfqsPerPage = 10, numPages } = operation.input;
+      const { rfqs, rfqsPerPage = 10, numPages } = operation.input;
+
+      if (rfqs) {
+        const rfqsByActive: Rfq[] = [];
+
+        for (let rfq of rfqs) {
+          if (rfq.state == StoredRfqState.Active) {
+            rfq = await convertRfqOutput(convergence, rfq);
+
+            rfqsByActive.push(rfq);
+          }
+        }
+
+        scope.throwIfCanceled();
+
+        return [rfqsByActive];
+      }
 
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
@@ -82,27 +101,26 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
         const rfqPage = [];
 
         for (const unparsedAccount of page) {
-          rfqPage.push(
-            await convergence
-              .rfqs()
-              .findRfqByAddress({ address: unparsedAccount.publicKey })
-          );
+          let rfq = await convergence
+            .rfqs()
+            .findRfqByAddress({ address: unparsedAccount.publicKey });
+          if (rfq.state == StoredRfqState.Active) {
+            rfq = await convertRfqOutput(convergence, rfq);
+
+            rfqPage.push(rfq);
+          }
         }
 
         rfqPages.push(rfqPage);
       }
 
-      for (const rfqPage of rfqPages) {
-        for (let rfq of rfqPage) {
-          if (rfq.state == StoredRfqState.Active) {
-            rfq = await convertRfqOutput(convergence, rfq);
-          }
-        }
-      }
-
-      if (rfqPages.length === 1) {
-        return rfqPages.flat();
-      }
+      // for (const rfqPage of rfqPages) {
+      //   for (let rfq of rfqPage) {
+      //     if (rfq.state == StoredRfqState.Active) {
+      //       rfq = await convertRfqOutput(convergence, rfq);
+      //     }
+      //   }
+      // }
 
       return rfqPages;
     },

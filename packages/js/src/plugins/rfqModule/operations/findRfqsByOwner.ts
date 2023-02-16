@@ -59,7 +59,7 @@ export type FindRfqsByOwnerInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByOwnerOutput = Rfq[] | Rfq[][];
+export type FindRfqsByOwnerOutput = Rfq[][];
 
 /**
  * @group Operations
@@ -88,8 +88,9 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
 
         scope.throwIfCanceled();
 
-        return rfqsByOwner;
+        return [rfqsByOwner];
       }
+      
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder
@@ -120,10 +121,6 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         for (let rfq of rfqPage) {
           rfq = await convertRfqOutput(convergence, rfq);
         }
-      }
-
-      if (rfqPages.length === 1) {
-        return rfqPages.flat();
       }
 
       return rfqPages;
