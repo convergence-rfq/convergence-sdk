@@ -231,6 +231,79 @@ export const getPages = (
   return unparsedAccountPages;
 };
 
+export const convertRfqOutput = async (
+  convergence: Convergence,
+  rfq: Rfq
+): Promise<Rfq> => {
+  if (rfq.fixedSize.__kind == 'BaseAsset') {
+    const parsedLegsMultiplierBps =
+      (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
+
+    rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+  } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
+    const parsedQuoteAmount =
+      (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
+
+    rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+  }
+
+  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const psyoptionsEuropeanProgram = convergence
+    .programs()
+    .getPsyoptionsEuropeanInstrument();
+  const psyoptionsAmericanProgram = convergence
+    .programs()
+    .getPsyoptionsAmericanInstrument();
+
+  for (const leg of rfq.legs) {
+    if (
+      leg.instrumentProgram.toBase58() ===
+      psyoptionsEuropeanProgram.address.toBase58()
+    ) {
+      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+
+      if (instrument.legInfo?.amount) {
+        leg.instrumentAmount = (leg.instrumentAmount as number) /= Math.pow(
+          10,
+          instrument.decimals
+        );
+      }
+    } else if (
+      leg.instrumentProgram.toBase58() ===
+      psyoptionsAmericanProgram.address.toBase58()
+    ) {
+      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+        convergence,
+        leg
+      );
+
+      if (instrument.legInfo?.amount) {
+        leg.instrumentAmount = (leg.instrumentAmount as number) /= Math.pow(
+          10,
+          instrument.decimals
+        );
+      }
+    } else if (
+      leg.instrumentProgram.toBase58() ===
+      spotInstrumentProgram.address.toBase58()
+    ) {
+      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+
+      if (instrument.legInfo?.amount) {
+        leg.instrumentAmount = (leg.instrumentAmount as number) /= Math.pow(
+          10,
+          instrument.decimals
+        );
+      }
+    }
+  }
+
+  return rfq;
+};
+
 export const convertResponseOutput = (response: Response): Response => {
   if (response.bid) {
     const parsedPriceQuoteAmountBps =

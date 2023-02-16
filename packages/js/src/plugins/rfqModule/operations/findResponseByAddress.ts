@@ -8,6 +8,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { convertResponseOutput } from '../helpers';
 
 const Key = 'FindResponseByAddressOperation' as const;
 
@@ -75,36 +76,11 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      const response = toResponse(toResponseAccount(account));
+      let response = toResponse(toResponseAccount(account));
       assertResponse(response);
       scope.throwIfCanceled();
 
-      if (response.bid) {
-        const parsedPriceQuoteAmountBps =
-          (response.bid.priceQuote.amountBps as number) / 1_000_000_000;
-
-        response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
-
-        if (response.bid.__kind == 'Standard') {
-          const parsedLegsMultiplierBps =
-            (response.bid.legsMultiplierBps as number) / 1_000_000_000;
-
-          response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
-        }
-      }
-      if (response.ask) {
-        const parsedPriceQuoteAmountBps =
-          (response.ask.priceQuote.amountBps as number) / 1_000_000_000;
-
-        response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
-
-        if (response.ask.__kind == 'Standard') {
-          const parsedLegsMultiplierBps =
-            (response.ask.legsMultiplierBps as number) / 1_000_000_000;
-
-          response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
-        }
-      }
+      response = convertResponseOutput(response);
 
       return response;
     },

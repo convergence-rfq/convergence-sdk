@@ -19,7 +19,7 @@ import {
 } from '@/types';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { getPages } from '../helpers';
+import { getPages, convertRfqOutput } from '../helpers';
 
 const Key = 'FindRfqsByTokenOperation' as const;
 
@@ -120,64 +120,9 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       const rfqsByToken: Rfq[] = [];
 
       for (const rfqPage of rfqPages) {
-        for (const rfq of rfqPage) {
+        for (let rfq of rfqPage) {
           if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
-            if (rfq.fixedSize.__kind == 'BaseAsset') {
-              const parsedLegsMultiplierBps =
-                (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
-
-              rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-            } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-              const parsedQuoteAmount =
-                (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
-
-              rfq.fixedSize.quoteAmount = parsedQuoteAmount;
-            }
-
-            for (const leg of rfq.legs) {
-              if (
-                leg.instrumentProgram.toBase58() ===
-                psyoptionsEuropeanProgram.address.toBase58()
-              ) {
-                const instrument =
-                  await PsyoptionsEuropeanInstrument.createFromLeg(
-                    convergence,
-                    leg
-                  );
-
-                if (instrument.legInfo?.amount) {
-                  leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                    Math.pow(10, instrument.decimals);
-                }
-              } else if (
-                leg.instrumentProgram.toBase58() ===
-                psyoptionsAmericanProgram.address.toBase58()
-              ) {
-                const instrument =
-                  await PsyoptionsAmericanInstrument.createFromLeg(
-                    convergence,
-                    leg
-                  );
-
-                if (instrument.legInfo?.amount) {
-                  leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                    Math.pow(10, instrument.decimals);
-                }
-              } else if (
-                leg.instrumentProgram.toBase58() ===
-                spotInstrumentProgram.address.toBase58()
-              ) {
-                const instrument = await SpotInstrument.createFromLeg(
-                  convergence,
-                  leg
-                );
-
-                if (instrument.legInfo?.amount) {
-                  leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                    Math.pow(10, instrument.decimals);
-                }
-              }
-            }
+            rfq = await convertRfqOutput(convergence, rfq);
 
             rfqsByToken.push(rfq);
           }

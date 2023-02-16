@@ -2022,7 +2022,18 @@ test('[rfqModule] it can find responses by multiple rfq addresses', async (t: Te
   });
 
   for (const response of responses) {
-    console.log('Rfq response: ' + response.address.toString());
+    // console.log('Rfq response: ' + response.address.toString());
+
+    if (response instanceof Array) {
+      for (const r of response) {
+        console.log('<inner page> response address: ', r.address.toString());
+      }
+    } else {
+      console.log(
+        '<flat page> response address: ',
+        response.address.toString()
+      );
+    }
   }
 });
 

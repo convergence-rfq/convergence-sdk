@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
-import { toResponseAccount } from '../accounts';
-import { /*assertResponse,*/ Response, toResponse } from '../models/Response';
+// import { toResponseAccount } from '../accounts';
+import { /*assertResponse,*/ Response } from '../models/Response';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import {
   Operation,
@@ -9,6 +9,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { getPages, convertResponseOutput } from '../helpers';
 
 const Key = 'FindResponsesByRfqsOperation' as const;
 
@@ -46,13 +47,19 @@ export type FindResponsesByRfqsOperation = Operation<
 export type FindResponsesByRfqsInput = {
   /** The addresses of the Rfqs. */
   addresses: PublicKey[];
+
+  responses?: Response[];
+
+  responsesPerPage?: number;
+
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByRfqsOutput = Response[];
+export type FindResponsesByRfqsOutput = Response[] | Response[][];
 
 /**
  * @group Operations
@@ -66,67 +73,67 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
       scope: OperationScope
     ): Promise<FindResponsesByRfqsOutput> => {
       const { programs } = scope;
-      const { addresses } = operation.input;
+      const {
+        addresses,
+        responses,
+        responsesPerPage = 10,
+        numPages,
+      } = operation.input;
       scope.throwIfCanceled();
+
+      const responsesByRfqs: Response[] = [];
+
+      if (responses) {
+        for (const address of addresses) {
+          for (let response of responses) {
+            if (response.rfq.toBase58() === address.toBase58()) {
+              response = convertResponseOutput(response);
+
+              responsesByRfqs.push(response);
+            }
+          }
+          scope.throwIfCanceled();
+
+          return responsesByRfqs;
+        }
+      }
 
       const rfqProgram = convergence.programs().getRfq(programs);
       const responseGpaBuilder = new ResponseGpaBuilder(
         convergence,
         rfqProgram.address
       );
-      const responseAccounts = await responseGpaBuilder.get();
+      const unparsedAccounts = await responseGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
 
-      const responses = responseAccounts
-        .map<Response | null>((account) => {
-          if (account === null) {
-            return null;
-          }
+      const pages = getPages(unparsedAccounts, responsesPerPage, numPages);
 
-          try {
-            return toResponse(toResponseAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((response): response is Response => response !== null);
+      const responsePages: Response[][] = [];
 
-      const foundResponses: Response[] = [];
+      for (const page of pages) {
+        const responsePage = [];
+
+        for (const unparsedAccount of page) {
+          responsePage.push(
+            await convergence
+              .rfqs()
+              .findResponseByAddress({ address: unparsedAccount.publicKey })
+          );
+        }
+
+        responsePages.push(responsePage);
+      }
 
       for (const address of addresses) {
-        for (const response of responses) {
-          if (response.rfq.toBase58() === address.toBase58()) {
-            if (response.bid) {
-              const parsedPriceQuoteAmountBps =
-                (response.bid.priceQuote.amountBps as number) / 1_000_000_000;
-
-              response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
-
-              if (response.bid.__kind == 'Standard') {
-                const parsedLegsMultiplierBps =
-                  (response.bid.legsMultiplierBps as number) / 1_000_000_000;
-
-                response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
-              }
+        for (const responsePage of responsePages) {
+          for (let response of responsePage) {
+            if (response.rfq.toBase58() === address.toBase58()) {
+              response = convertResponseOutput(response);
             }
-            if (response.ask) {
-              const parsedPriceQuoteAmountBps =
-                (response.ask.priceQuote.amountBps as number) / 1_000_000_000;
-
-              response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
-
-              if (response.ask.__kind == 'Standard') {
-                const parsedLegsMultiplierBps =
-                  (response.ask.legsMultiplierBps as number) / 1_000_000_000;
-
-                response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
-              }
-            }
-
-            foundResponses.push(response);
           }
         }
       }
-      return foundResponses;
+
+      return responsePages;
     },
   };
