@@ -1843,28 +1843,25 @@ test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
   t.assert(rfqPages.length > 0, 'rfqs should be greater than 0');
 });
 
-// test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
-//   const rfqs = await cvg
-//     .rfqs()
-//     .findByToken({ mintAddress: europeanOptionPutMint });
+test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
+  const rfqPages = await cvg
+    .rfqs()
+    .findByToken({ mintAddress: europeanOptionPutMint });
 
-//   for (const rfq of rfqs) {
-//     if (rfq instanceof Array) {
-//       for (const r of rfq) {
-//         console.log('<inner page> rfq address: ', r.address.toString());
-//       }
-//     } else {
-//       console.log('<flat page> rfq address: ', rfq.address.toString());
-//     }
-//   }
+  for (const rfqPage of rfqPages) {
+    for (const r of rfqPage) {
+      console.log('rfq address: ', r.address.toString());
+    }
+  }
 
-//   // t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-// });
+  // t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
 
-// test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
-//   // const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
-//   // t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
-// });
+test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
+  //@ts-ignore
+  const rfqs = await cvg.rfqs().findByToken({ mintAddress: usdcMint.address });
+  // t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+});
 
 test('[rfq module] it can find all responses by maker address', async (t: Test) => {
   const responses = await cvg
@@ -2285,49 +2282,6 @@ export const getPages = (
 
   return unparsedAccountPages;
 };
-
-// test('[rfqModule] it can fetch RFQs via pagination', async () => {
-//   const rfqProgram = cvg.programs().getRfq();
-//   const rfqGpaBuilder = new RfqGpaBuilder(cvg, rfqProgram.address);
-
-//   const unparsedAccounts = await rfqGpaBuilder.get();
-
-//   const paginatedUnparsedAccounts = getPages(unparsedAccounts, 1, 1);
-
-//   console.log(
-//     'paginated unparsed accts: ' + paginatedUnparsedAccounts.length.toString()
-//   );
-
-//   console.log('unparsed accts len: ' + unparsedAccounts.length.toString());
-
-//   const rfqs: Rfq[] = [];
-
-//   for (const unparsedAccount of paginatedUnparsedAccounts) {
-//     const rfq = await cvg
-//       .rfqs()
-//       .findRfqByAddress({ address: unparsedAccount.publicKey });
-
-//     rfqs.push(rfq);
-//   }
-
-//   console.log('rfq accts len: ' + rfqs.length.toString());
-
-//   for (const rfq of rfqs) {
-//     console.log('rfq pubkey: ' + rfq.address.toString());
-//   }
-// });
-
-// test('[rfqModule] it can fetch RFQ responses via pagination', async () => {
-//   //@ts-ignore
-//   const responses = await cvg
-//     .rfqs()
-//     .findResponsesByOwner({ owner: maker.publicKey });
-
-//   const rfqProgram = cvg.programs().getRfq();
-//   const responseGpaBuilder = new ResponseGpaBuilder(cvg, rfqProgram.address);
-//   //@ts-ignore
-//   const responseAccounts = await responseGpaBuilder.get();
-// });
 
 test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
   const rfqPages = await cvg.rfqs().findByInstrument({

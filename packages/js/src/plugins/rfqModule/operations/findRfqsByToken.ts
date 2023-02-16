@@ -7,10 +7,7 @@ import { psyoptionsAmericanInstrumentProgram } from '../../psyoptionsAmericanIns
 import { psyoptionsEuropeanInstrumentProgram } from '../../psyoptionsEuropeanInstrumentModule/programs';
 import { psyoptionsAmericanInstrumentDataSerializer } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { Convergence } from '@/Convergence';
-import {
-  SpotInstrument,
-  SpotInstrumentDataSerializer,
-} from '@/plugins/spotInstrumentModule';
+import { SpotInstrumentDataSerializer } from '@/plugins/spotInstrumentModule';
 import {
   Operation,
   OperationHandler,
@@ -18,7 +15,6 @@ import {
   useOperation,
 } from '@/types';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { getPages, convertRfqOutput } from '../helpers';
 
 const Key = 'FindRfqsByTokenOperation' as const;
@@ -65,7 +61,7 @@ export type FindRfqsByTokenInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByTokenOutput = Rfq[] | Rfq[][];
+export type FindRfqsByTokenOutput = Rfq[][];
 
 /**
  * @group Operations
@@ -83,13 +79,6 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       scope.throwIfCanceled();
 
       const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-      const psyoptionsEuropeanProgram = convergence
-        .programs()
-        .getPsyoptionsEuropeanInstrument();
-      const psyoptionsAmericanProgram = convergence
-        .programs()
-        .getPsyoptionsAmericanInstrument();
-
       const rfqProgram = convergence.programs().getRfq(programs);
 
       const rfqGpaBuilder = convergence
@@ -105,26 +94,14 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
         const rfqPage = [];
 
         for (const unparsedAccount of page) {
-          rfqPage.push(
-            await convergence
-              .rfqs()
-              .findRfqByAddress({ address: unparsedAccount.publicKey })
-          );
-        }
+          let rfq = await convergence
+            .rfqs()
+            .findRfqByAddress({ address: unparsedAccount.publicKey });
 
-        rfqPages.push(rfqPage);
-      }
-
-      scope.throwIfCanceled();
-
-      const rfqsByToken: Rfq[] = [];
-
-      for (const rfqPage of rfqPages) {
-        for (let rfq of rfqPage) {
           if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
             rfq = await convertRfqOutput(convergence, rfq);
 
-            rfqsByToken.push(rfq);
+            rfqPage.push(rfq);
           }
           for (const leg of rfq.legs) {
             if (
@@ -137,77 +114,14 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                 )[0];
 
               if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-                if (rfq.fixedSize.__kind == 'BaseAsset') {
-                  const parsedLegsMultiplierBps =
-                    (rfq.fixedSize.legsMultiplierBps as number) /
-                    Math.pow(10, 9);
+                rfq = await convertRfqOutput(convergence, rfq);
 
-                  rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-                } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-                  const parsedQuoteAmount =
-                    (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
-
-                  rfq.fixedSize.quoteAmount = parsedQuoteAmount;
-                }
-
-                for (const leg of rfq.legs) {
-                  if (
-                    leg.instrumentProgram.toBase58() ===
-                    psyoptionsEuropeanProgram.address.toBase58()
-                  ) {
-                    const instrument =
-                      await PsyoptionsEuropeanInstrument.createFromLeg(
-                        convergence,
-                        leg
-                      );
-
-                    if (instrument.legInfo?.amount) {
-                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                        Math.pow(10, 9);
-                    }
-                  } else if (
-                    leg.instrumentProgram.toBase58() ===
-                    psyoptionsAmericanProgram.address.toBase58()
-                  ) {
-                    const instrument =
-                      await PsyoptionsAmericanInstrument.createFromLeg(
-                        convergence,
-                        leg
-                      );
-
-                    if (instrument.legInfo?.amount) {
-                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                        Math.pow(10, 9);
-                    }
-                  } else if (
-                    leg.instrumentProgram.toBase58() ===
-                    spotInstrumentProgram.address.toBase58()
-                  ) {
-                    const instrument = await SpotInstrument.createFromLeg(
-                      convergence,
-                      leg
-                    );
-
-                    if (instrument.legInfo?.amount) {
-                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                        Math.pow(10, 9);
-                    }
-                  }
-                }
-
-                rfqsByToken.push(rfq);
+                rfqPage.push(rfq);
               }
             } else if (
               leg.instrumentProgram.toBase58() ===
               psyoptionsEuropeanInstrumentProgram.address.toBase58()
             ) {
-              // const data = psyoptionsEuropeanInstrumentDataSerializer.deserialize(
-              //   Buffer.from(leg.instrumentData)
-              // )[0];
-
-              // if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-              //rfqByToken.push(rfq);
-              // }
               const instrument =
                 await PsyoptionsEuropeanInstrument.createFromLeg(
                   convergence,
@@ -224,65 +138,9 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               if (
                 euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
               ) {
-                if (rfq.fixedSize.__kind == 'BaseAsset') {
-                  const parsedLegsMultiplierBps =
-                    (rfq.fixedSize.legsMultiplierBps as number) /
-                    Math.pow(10, 9);
+                rfq = await convertRfqOutput(convergence, rfq);
 
-                  rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-                } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-                  const parsedQuoteAmount =
-                    (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
-
-                  rfq.fixedSize.quoteAmount = parsedQuoteAmount;
-                }
-
-                for (const leg of rfq.legs) {
-                  if (
-                    leg.instrumentProgram.toBase58() ===
-                    psyoptionsEuropeanProgram.address.toBase58()
-                  ) {
-                    const instrument =
-                      await PsyoptionsEuropeanInstrument.createFromLeg(
-                        convergence,
-                        leg
-                      );
-
-                    if (instrument.legInfo?.amount) {
-                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                        Math.pow(10, instrument.decimals);
-                    }
-                  } else if (
-                    leg.instrumentProgram.toBase58() ===
-                    psyoptionsAmericanProgram.address.toBase58()
-                  ) {
-                    const instrument =
-                      await PsyoptionsAmericanInstrument.createFromLeg(
-                        convergence,
-                        leg
-                      );
-
-                    if (instrument.legInfo?.amount) {
-                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                        Math.pow(10, instrument.decimals);
-                    }
-                  } else if (
-                    leg.instrumentProgram.toBase58() ===
-                    spotInstrumentProgram.address.toBase58()
-                  ) {
-                    const instrument = await SpotInstrument.createFromLeg(
-                      convergence,
-                      leg
-                    );
-
-                    if (instrument.legInfo?.amount) {
-                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                        Math.pow(10, instrument.decimals);
-                    }
-                  }
-                }
-
-                rfqsByToken.push(rfq);
+                rfqPage.push(rfq);
               }
             } else if (
               leg.instrumentProgram.toBase58() ===
@@ -293,74 +151,22 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               )[0];
 
               if (data.mint.toBase58() === mintAddress.toBase58()) {
-                if (rfq.fixedSize.__kind == 'BaseAsset') {
-                  const parsedLegsMultiplierBps =
-                    (rfq.fixedSize.legsMultiplierBps as number) /
-                    Math.pow(10, 9);
+                rfq = await convertRfqOutput(convergence, rfq);
 
-                  rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-                } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-                  const parsedQuoteAmount =
-                    (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
-
-                  rfq.fixedSize.quoteAmount = parsedQuoteAmount;
-                }
-
-                for (const leg of rfq.legs) {
-                  if (
-                    leg.instrumentProgram.toBase58() ===
-                    psyoptionsEuropeanProgram.address.toBase58()
-                  ) {
-                    const instrument =
-                      await PsyoptionsEuropeanInstrument.createFromLeg(
-                        convergence,
-                        leg
-                      );
-
-                    if (instrument.legInfo?.amount) {
-                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                        Math.pow(10, instrument.decimals);
-                    }
-                  } else if (
-                    leg.instrumentProgram.toBase58() ===
-                    psyoptionsAmericanProgram.address.toBase58()
-                  ) {
-                    const instrument =
-                      await PsyoptionsAmericanInstrument.createFromLeg(
-                        convergence,
-                        leg
-                      );
-
-                    if (instrument.legInfo?.amount) {
-                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                        Math.pow(10, instrument.decimals);
-                    }
-                  } else if (
-                    leg.instrumentProgram.toBase58() ===
-                    spotInstrumentProgram.address.toBase58()
-                  ) {
-                    const instrument = await SpotInstrument.createFromLeg(
-                      convergence,
-                      leg
-                    );
-
-                    if (instrument.legInfo?.amount) {
-                      leg.instrumentAmount = (leg.instrumentAmount as number) /=
-                        Math.pow(10, instrument.decimals);
-                    }
-                  }
-                }
-
-                rfqsByToken.push(rfq);
+                rfqPage.push(rfq);
               }
             }
           }
+
+          rfqPages.push(rfqPage);
         }
-      }
-      if (rfqPages.length === 1) {
-        return rfqPages.flat();
+
+        scope.throwIfCanceled();
+
+        // const rfqsByToken: Rfq[] = [];
       }
 
       return rfqPages;
+      // return [rfqsByToken];
     },
   };
