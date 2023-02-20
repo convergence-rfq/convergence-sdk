@@ -15,9 +15,11 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
+import { Leg } from '@convergence-rfq/rfq';
 import { Convergence } from '@/Convergence';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import * as anchor from '@project-serum/anchor';
+import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -143,22 +145,14 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
         fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
       } else if (fixedSize.__kind == 'QuoteAsset') {
-        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * Math.pow(10, 9);
-
-        console.log(
-          'fixed size quote asset before reassign: ' +
-            fixedSize.quoteAmount.toString()
-        );
+        const parsedQuoteAmount =
+          (fixedSize.quoteAmount as number) * Math.pow(10, 9);
 
         fixedSize.quoteAmount = parsedQuoteAmount;
-
-        console.log('fixed size quote asset: ' + parsedQuoteAmount.toString());
-        console.log(
-          'fixed size quote asset: ' + fixedSize.quoteAmount.toString()
-        );
       }
 
       const serializedLegsData: Buffer[] = [];
+      const legs: Leg[] = [];
 
       let expectedLegsHash: Uint8Array;
 
@@ -173,6 +167,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         );
 
         const leg = await instrumentClient.toLegData();
+        legs.push(leg);
 
         serializedLegsData.push(instrumentClient.serializeLegData(leg));
       }
@@ -202,15 +197,17 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           recentTimestamp,
         });
 
-      const rfqBuilder = await createRfqBuilder(
+      const builder = await createAndFinalizeRfqConstructionBuilder(
         convergence,
         {
           ...operation.input,
+          taker,
           rfq: rfqPda,
           fixedSize,
           instruments,
           expectedLegsHash,
           recentTimestamp,
+          legs,
         },
         scope
       );
@@ -220,19 +217,8 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         convergence,
         scope.confirmOptions
       );
-      const output = await rfqBuilder.sendAndConfirm(
-        convergence,
-        confirmOptions
-      );
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
-
-      const finalizeBuilder = await finalizeRfqConstructionBuilder(
-        convergence,
-        { taker, rfq: rfqPda },
-        scope
-      );
-
-      await finalizeBuilder.sendAndConfirm(convergence, confirmOptions);
 
       const rfq = await convergence
         .rfqs()
@@ -241,3 +227,48 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       return { ...output, rfq };
     },
   };
+
+/**
+ * @group Transaction Builders
+ * @category Inputs
+ */
+export type CreateAndFinalizeRfqConstructionBuilderParams =
+  CreateAndFinalizeRfqConstructionInput & {
+    expectedLegsHash: Uint8Array;
+    recentTimestamp: anchor.BN;
+    rfq: PublicKey;
+    legs: Leg[];
+  };
+
+export const createAndFinalizeRfqConstructionBuilder = async (
+  convergence: Convergence,
+  params: CreateAndFinalizeRfqConstructionBuilderParams,
+  options: TransactionBuilderOptions = {}
+): Promise<TransactionBuilder> => {
+  const { payer = convergence.rpc().getDefaultFeePayer() } = options;
+
+  const { rfq } = params;
+
+  const rfqBuilder = await createRfqBuilder(
+    convergence,
+    {
+      ...params,
+    },
+    options
+  );
+  const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(
+    convergence,
+    { ...params },
+    options
+  );
+
+  return TransactionBuilder.make()
+    .setContext({
+      rfq,
+    })
+    .setFeePayer(payer)
+    .add(
+      ...rfqBuilder.getInstructionsWithSigners(),
+      ...finalizeConstructionBuilder.getInstructionsWithSigners()
+    );
+};

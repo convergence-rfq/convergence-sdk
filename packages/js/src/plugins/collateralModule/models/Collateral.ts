@@ -1,7 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 import { CollateralAccount } from '../accounts';
 import { assert } from '@/utils';
-import { SolAmount } from '@/types';
+// import { SolAmount } from '@/types';
+import { bignum } from '@convergence-rfq/beet';
 
 /**
  * This model captures all the relevant information about a collateral account
@@ -26,7 +27,8 @@ export type Collateral = {
   readonly tokenAccountBump: number;
 
   /** The amount of locked tokens. */
-  readonly lockedTokensAmount: SolAmount;
+  // readonly lockedTokensAmount: SolAmount;
+  lockedTokensAmount: bignum;
 };
 
 /** @group Model Helpers */
@@ -45,5 +47,5 @@ export const toCollateral = (account: CollateralAccount): Collateral => ({
   bump: account.data.bump,
   user: account.data.user,
   tokenAccountBump: account.data.tokenAccountBump,
-  lockedTokensAmount: account.lamports,
+  lockedTokensAmount: account.data.lockedTokensAmount,
 });

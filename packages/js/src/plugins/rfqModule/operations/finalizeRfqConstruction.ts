@@ -1,4 +1,7 @@
-import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
+import {
+  Leg,
+  createFinalizeRfqConstructionInstruction,
+} from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
@@ -67,6 +70,11 @@ export type FinalizeRfqConstructionInput = {
 
   /** Optional address of the risk engine program. */
   riskEngine?: PublicKey;
+
+  /** Optional legs of the rfq, only needs to be passed when `createAndFinalize`
+   * is called. Else we can extract this from the rfq account.
+   */
+  legs?: Leg[];
 };
 
 /**
@@ -159,7 +167,11 @@ export const finalizeRfqConstructionBuilder = async (
     riskEngine = riskEngineProgram.address,
     rfq,
   } = params;
-  let { collateralInfo, collateralToken } = params;
+
+  let { legs, collateralInfo, collateralToken } = params;
+
+  legs =
+    legs ?? (await convergence.rfqs().findRfqByAddress({ address: rfq })).legs;
 
   const collateralInfoPda = convergence.collateral().pdas().collateralInfo({
     user: taker.publicKey,
@@ -188,14 +200,12 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-
   const baseAssetAccounts: AccountMeta[] = [];
   const baseAssetIndexValuesSet: Set<number> = new Set();
 
   const oracleAccounts: AccountMeta[] = [];
 
-  for (const leg of rfqModel.legs) {
+  for (const leg of legs) {
     baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);
   }
 

@@ -148,7 +148,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       const parsedLegsMultiplierBps =
         (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
       fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-
     } else if (fixedSize.__kind == 'QuoteAsset') {
       const parsedQuoteAmount =
         (fixedSize.quoteAmount as number) * Math.pow(10, 9);

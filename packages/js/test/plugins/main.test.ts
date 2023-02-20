@@ -553,7 +553,7 @@ test('[collateralModule] it can initialize collateral', async (t: Test) => {
   });
   console.log(
     '<initCollateral> taker locked tokens collateral amount: ' +
-      tc.lockedTokensAmount.basisPoints.toString()
+      tc.lockedTokensAmount.toString()
   );
 });
 
@@ -616,7 +616,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   });
   console.log(
     '<fundCollateral> taker locked tokens collateral amount:  ' +
-      takerCollateral.lockedTokensAmount.basisPoints.toString()
+      takerCollateral.lockedTokensAmount.toString()
   );
 });
 
@@ -668,12 +668,15 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     .collateral()
     .pdas()
     .collateralToken({ user: maker.publicKey });
-  const makerCollateralInfo = await cvg
-    .tokens()
-    .findTokenByAddress({ address: makerCollateral });
-  const takerCollateralInfo = await cvg
-    .tokens()
-    .findTokenByAddress({ address: makerCollateral });
+  const takerCollateral = cvg
+    .collateral()
+    .pdas()
+    .collateralToken({ user: taker.publicKey });
+
+  const [makerCollateralInfo, takerCollateralInfo] = await Promise.all([
+    cvg.tokens().findTokenByAddress({ address: makerCollateral }),
+    cvg.tokens().findTokenByAddress({ address: takerCollateral }),
+  ]);
 
   t.same(
     makerCollateralInfo.mintAddress.toString(),
@@ -695,20 +698,21 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     model: 'token',
   });
 
-  const takerCollateral = await cvg.collateral().findByUser({
+  const tc = await cvg.collateral().findByUser({
     user: taker.publicKey,
   });
   console.log(
     '<withdrawCollateral> taker locked tokens collateral amount:  ' +
-      takerCollateral.lockedTokensAmount.basisPoints.toString()
+      tc.lockedTokensAmount.toString()
   );
 });
 
-test('[testing] it can wrap tests that don"t rely on each other', async () => {
+test('**[Test Module] it can wrap tests that don`t depend on each other**', async () => {
   test('[collateralModule] it can find collateral by user', async (t: Test) => {
-    const makerCollateral = await cvg.collateral().findByUser({
-      user: maker.publicKey,
-    });
+    const [makerCollateral, takerCollateral] = await Promise.all([
+      cvg.collateral().findByUser({ user: maker.publicKey }),
+      cvg.collateral().findByUser({ user: taker.publicKey }),
+    ]);
     t.same(
       makerCollateral.user.toString(),
       maker.publicKey.toString(),
@@ -721,12 +725,9 @@ test('[testing] it can wrap tests that don"t rely on each other', async () => {
 
     console.log(
       'maker collateral amount: ' +
-        makerCollateral.lockedTokensAmount.basisPoints.toString()
+        makerCollateral.lockedTokensAmount.toString()
     );
 
-    const takerCollateral = await cvg.collateral().findByUser({
-      user: taker.publicKey,
-    });
     t.same(
       takerCollateral.user.toString(),
       taker.publicKey.toString(),
@@ -739,7 +740,7 @@ test('[testing] it can wrap tests that don"t rely on each other', async () => {
 
     console.log(
       'taker collateral amount: ' +
-        takerCollateral.lockedTokensAmount.basisPoints.toString()
+        takerCollateral.lockedTokensAmount.toString()
     );
   });
 
@@ -762,40 +763,15 @@ test('[testing] it can wrap tests that don"t rely on each other', async () => {
       fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     });
 
-    const collateralTokenPda = cvg.collateral().pdas().collateralToken({
-      user: taker.publicKey,
-    });
-    let takerCollat = await cvg
-      .tokens()
-      .findTokenByAddress({ address: collateralTokenPda });
-    console.log(
-      'taker collateral token balance before finalize: ' +
-        takerCollat.amount.basisPoints.toString()
-    );
-
-    const collateralInfoPda = cvg.collateral().pdas().collateralInfo({
-      user: taker.publicKey,
-    });
-
     await cvg.rfqs().finalizeRfqConstruction({
       taker,
       rfq: rfq.address,
     });
 
-    takerCollat = await cvg.tokens().refreshToken(takerCollat);
+    const takerCollateral = await cvg.collateral().findByUser({
+      user: taker.publicKey,
+    });
 
-    console.log(
-      'taker collateral token balance after finalize: ' +
-        takerCollat.amount.basisPoints.toString()
-    );
-
-    // const takerCollateral = await cvg.collateral().findByUser({
-    //   user: taker.publicKey,
-    // });
-
-    const takerCollateral = await cvg
-      .collateral()
-      .findByAddress({ address: collateralInfoPda });
     //@ts-ignore
     const refreshedTakerCollateral = await cvg
       .collateral()
@@ -803,7 +779,7 @@ test('[testing] it can wrap tests that don"t rely on each other', async () => {
 
     console.log(
       '<finalizeRfqConst> taker locked tokens collateral amount: ' +
-        refreshedTakerCollateral.lockedTokensAmount.basisPoints.toString()
+        refreshedTakerCollateral.lockedTokensAmount.toString()
     );
 
     let refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
@@ -1033,7 +1009,7 @@ test('[testing] it can wrap tests that don"t rely on each other', async () => {
 
     for (const foundRfq of foundRfqs) {
       for (const rfq of foundRfq) {
-        console.log('<inner page> rfq address: ' + rfq.address.toBase58());
+        console.log('rfq address: ' + rfq.address.toBase58());
       }
     }
 
