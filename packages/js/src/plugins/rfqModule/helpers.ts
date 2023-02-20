@@ -10,10 +10,11 @@ import {
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import type { Rfq, Response } from './models';
-import type { Leg, QuoteAsset } from './types';
+import type { FixedSize, Leg, QuoteAsset } from './types';
 import { PublicKeyValues, token, toPublicKey } from '@/types';
 import { Convergence } from '@/Convergence';
 import { UnparsedAccount } from '@/types';
+import { Sha256 } from '@aws-crypto/sha256-js';
 
 export type HasMintAddress = Rfq | PublicKey;
 
@@ -231,6 +232,35 @@ export const getPages = (
   return unparsedAccountPages;
 };
 
+export const convertFixedSizeInput = (fixedSize: FixedSize): FixedSize => {
+  if (fixedSize.__kind == 'BaseAsset') {
+    const parsedLegsMultiplierBps =
+      (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
+    fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+  } else if (fixedSize.__kind == 'QuoteAsset') {
+    const parsedQuoteAmount =
+      (fixedSize.quoteAmount as number) * Math.pow(10, 9);
+    fixedSize.quoteAmount = parsedQuoteAmount;
+  }
+
+  return fixedSize;
+};
+
+export const convertInstrumentsInput = (
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+) => {
+  for (const instrument of instruments) {
+    if (instrument.legInfo?.amount) {
+      instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
+    }
+  }
+  return instruments;
+};
+
 export const convertRfqOutput = async (
   convergence: Convergence,
   rfq: Rfq
@@ -333,4 +363,68 @@ export const convertResponseOutput = (response: Response): Response => {
   }
 
   return response;
+};
+
+export const calculateExpectedLegsHash = async (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): Promise<Uint8Array> => {
+  const serializedLegsData: Buffer[] = [];
+
+  for (const instrument of instruments) {
+    if (instrument.legInfo?.amount) {
+      instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
+    }
+    
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+
+    const leg = await instrumentClient.toLegData();
+
+    serializedLegsData.push(instrumentClient.serializeLegData(leg));
+  }
+
+  const lengthBuffer = Buffer.alloc(4);
+  lengthBuffer.writeInt32LE(instruments.length);
+  const fullLegDataBuffer = Buffer.concat([
+    lengthBuffer,
+    ...serializedLegsData,
+  ]);
+
+  const hash = new Sha256();
+  hash.update(fullLegDataBuffer);
+  const expectedLegsHash = hash.digestSync();
+
+  return expectedLegsHash;
+};
+
+export const calculateExpectedLegsSize = async (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): Promise<number> => {
+  let expectedLegsSize = 4;
+
+  for (const instrument of instruments) {
+    if (instrument.legInfo?.amount) {
+      instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
+    }
+
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+    expectedLegsSize += await instrumentClient.getLegDataSize();
+  }
+
+  return expectedLegsSize;
 };

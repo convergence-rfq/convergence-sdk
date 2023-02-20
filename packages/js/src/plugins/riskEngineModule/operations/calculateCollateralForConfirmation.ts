@@ -104,7 +104,7 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         quoteSide: confirmation.side,
       };
 
-      const [requiredCollateral] = await calculateRisk(
+      let [requiredCollateral] = await calculateRisk(
         convergence,
         config,
         rfq.legs,
@@ -112,6 +112,8 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         rfq.settlingWindow,
         scope.commitment
       );
+
+      requiredCollateral *= Math.pow(10, ABSOLUTE_PRICE_DECIMALS);
 
       return { requiredCollateral };
     },

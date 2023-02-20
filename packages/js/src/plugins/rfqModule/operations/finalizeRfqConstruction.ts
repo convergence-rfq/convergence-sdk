@@ -71,8 +71,9 @@ export type FinalizeRfqConstructionInput = {
   /** Optional address of the risk engine program. */
   riskEngine?: PublicKey;
 
-  /** Optional legs of the rfq, only needs to be passed when `createAndFinalize`
-   * is called. Else we can extract this from the rfq account.
+  /** Optional legs of the rfq, should not be passed manually.
+   * Is passed automatically when `createAndFinalize`
+   * is called. Else the legs are extracted from the rfq account.
    */
   legs?: Leg[];
 };
@@ -167,11 +168,7 @@ export const finalizeRfqConstructionBuilder = async (
     riskEngine = riskEngineProgram.address,
     rfq,
   } = params;
-
   let { legs, collateralInfo, collateralToken } = params;
-
-  legs =
-    legs ?? (await convergence.rfqs().findRfqByAddress({ address: rfq })).legs;
 
   const collateralInfoPda = convergence.collateral().pdas().collateralInfo({
     user: taker.publicKey,
@@ -181,6 +178,9 @@ export const finalizeRfqConstructionBuilder = async (
     user: taker.publicKey,
     programs,
   });
+
+  legs =
+    legs ?? (await convergence.rfqs().findRfqByAddress({ address: rfq })).legs;
 
   collateralInfo = collateralInfo ?? collateralInfoPda;
   collateralToken = collateralToken ?? collateralTokenPda;

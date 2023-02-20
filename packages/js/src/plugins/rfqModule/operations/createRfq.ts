@@ -18,6 +18,14 @@ import {
 import { Convergence } from '@/Convergence';
 import * as anchor from '@project-serum/anchor';
 import { Sha256 } from '@aws-crypto/sha256-js';
+import {
+  //@ts-ignore
+  calculateExpectedLegsHash,
+  //@ts-ignore
+  calculateExpectedLegsSize,
+  convertFixedSizeInput,
+  // convertInstrumentsInput,
+} from '../helpers';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -98,7 +106,7 @@ export type CreateRfqInput = {
    * This can be calculated automatically if
    * additional legs will not be added in
    * the future. */
-  legSize?: number;
+  expectedLegsSize?: number;
 
   /** Optional expected legs hash (of all legs).
    * This can be calculated automatically if
@@ -133,26 +141,22 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       taker = convergence.identity(),
       orderType,
       quoteAsset,
-      instruments,
-      fixedSize,
+      // instruments,
       activeWindow = 5_000,
       settlingWindow = 1_000,
     } = operation.input;
-    let { expectedLegsHash } = operation.input;
+    let { fixedSize, instruments, expectedLegsHash } = operation.input;
 
     let rfqPda: PublicKey;
 
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-    if (fixedSize.__kind == 'BaseAsset') {
-      const parsedLegsMultiplierBps =
-        (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
-      fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-    } else if (fixedSize.__kind == 'QuoteAsset') {
-      const parsedQuoteAmount =
-        (fixedSize.quoteAmount as number) * Math.pow(10, 9);
-      fixedSize.quoteAmount = parsedQuoteAmount;
-    }
+    // instruments = convertInstrumentsInput(instruments);
+    fixedSize = convertFixedSizeInput(fixedSize);
+
+    // expectedLegsHash =
+    //   expectedLegsHash ??
+    //   (await calculateExpectedLegsHash(convergence, instruments));
 
     if (expectedLegsHash) {
       rfqPda = convergence
@@ -286,7 +290,7 @@ export const createRfqBuilder = async (
     expectedLegsHash,
   } = params;
 
-  const { legSize } = params;
+  let { expectedLegsSize } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -322,11 +326,9 @@ export const createRfqBuilder = async (
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
 
-  let expectedLegsSize: number;
+  // let expectedLegsSize: number;
 
-  if (legSize) {
-    expectedLegsSize = legSize;
-  } else {
+  if (!expectedLegsSize) {
     expectedLegsSize = 4;
 
     for (const instrument of instruments) {
@@ -337,6 +339,9 @@ export const createRfqBuilder = async (
       expectedLegsSize += await instrumentClient.getLegDataSize();
     }
   }
+  // expectedLegsSize =
+  //   expectedLegsSize ??
+  //   (await calculateExpectedLegsSize(convergence, instruments));
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

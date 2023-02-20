@@ -146,7 +146,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
       let expectedLegsHash: Uint8Array;
 
-      let expectedLegSize = 4;
+      let expectedLegsSize = 4;
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
@@ -160,7 +160,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
         const leg = await instrumentClient.toLegData();
 
-        expectedLegSize += await instrumentClient.getLegDataSize();
+        expectedLegsSize += await instrumentClient.getLegDataSize();
 
         serializedLegsData.push(instrumentClient.serializeLegData(leg));
       }
@@ -197,7 +197,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         {
           ...operation.input,
           rfq: rfqPda,
-          legSize: expectedLegSize,
+          expectedLegsSize,
           fixedSize,
           instruments,
           recentTimestamp,
@@ -267,7 +267,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
             rfq: rfqPda,
             fixedSize,
             instruments: halvedInstruments,
-            legSize: expectedLegSize,
+            expectedLegsSize,
             recentTimestamp,
             expectedLegsHash,
           },

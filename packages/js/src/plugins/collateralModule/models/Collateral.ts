@@ -28,7 +28,7 @@ export type Collateral = {
 
   /** The amount of locked tokens. */
   // readonly lockedTokensAmount: SolAmount;
-  lockedTokensAmount: bignum;
+  readonly lockedTokensAmount: bignum;
 };
 
 /** @group Model Helpers */

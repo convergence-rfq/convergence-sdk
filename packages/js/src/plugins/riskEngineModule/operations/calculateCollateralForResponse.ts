@@ -105,7 +105,9 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         rfq.settlingWindow,
         scope.commitment
       );
-      const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
+      const requiredCollateral =
+        risks.reduce((x, y) => Math.max(x, y), 0) *
+        Math.pow(10, ABSOLUTE_PRICE_DECIMALS);
       return { requiredCollateral };
     },
   };

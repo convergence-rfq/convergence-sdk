@@ -1132,7 +1132,8 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
     const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
       fixedSize: {
         __kind: 'BaseAsset',
-        legsMultiplierBps: 2 * 10 ** LEG_MULTIPLIER_DECIMALS, // 2 multiplier of 5 bitcoins, so 10 bitcoins in total
+        // legsMultiplierBps: 2 * 10 ** LEG_MULTIPLIER_DECIMALS, // 2 multiplier of 5 bitcoins, so 10 bitcoins in total
+        legsMultiplierBps: 2
       },
       orderType: OrderType.TwoWay,
       legs,
@@ -1711,7 +1712,7 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
           side: Side.Ask,
         }),
       ],
-      legSize: expLegSize,
+      expectedLegsSize: expLegSize,
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
       quoteAsset: cvg
