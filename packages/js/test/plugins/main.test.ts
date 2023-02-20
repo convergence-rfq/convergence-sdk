@@ -1000,7 +1000,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker,
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000009,
+          amount: 1,
           side: Side.Ask,
         }),
       ],
@@ -1063,7 +1063,8 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       await SpotInstrument.createForLeg(
         cvg,
         btcMint,
-        5 * 10 ** BTC_DECIMALS,
+        // 5 * 10 ** BTC_DECIMALS,
+        5,
         Side.Bid
       ).toLegData(),
     ];
@@ -1487,7 +1488,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  test('**[rfqModule] it can create and finalize open RFQ, then respond w/ base quantity', async (t: Test) => {
+  test('[rfqModule] it can create and finalize open RFQ, then respond w/ base quantity', async (t: Test) => {
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {

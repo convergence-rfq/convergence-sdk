@@ -10,6 +10,7 @@ import {
   OperationScope,
   useOperation,
 } from '@/types';
+//@ts-ignore
 import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
@@ -85,14 +86,14 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
       ]);
 
       let legMultiplierBps;
-      if (confirmation.overrideLegMultiplierBps === null) {
+      if (confirmation.overrideLegMultiplierBps === null) { 
         const confirmedQuote =
           confirmation.side == Side.Bid ? response.bid : response.ask;
 
         if (confirmedQuote === null) {
           throw Error('Cannot confirm a missing quote!');
         }
-
+//remove decimals here
         legMultiplierBps = extractLegsMultiplierBps(rfq, confirmedQuote);
       } else {
         legMultiplierBps = confirmation.overrideLegMultiplierBps;
@@ -116,7 +117,7 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         scope.commitment
       );
 
-      requiredCollateral *= Math.pow(10, ABSOLUTE_PRICE_DECIMALS);
+      // requiredCollateral *= Math.pow(10, ABSOLUTE_PRICE_DECIMALS); 
 
       return { requiredCollateral };
     },

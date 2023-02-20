@@ -59,7 +59,7 @@ export class SpotInstrument implements Instrument {
     side: Side
   ): InstrumentClient {
     const instrument = new SpotInstrument(convergence, mint, {
-      amount,
+      amount: amount * Math.pow(10, mint.decimals),
       side,
     });
     return new InstrumentClient(convergence, instrument, {
