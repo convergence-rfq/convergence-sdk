@@ -695,7 +695,7 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   );
 });
 
-test('**[Test Module] it can wrap tests that don`t depend on each other**', async () => {
+test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async () => {
   test('[collateralModule] it can find collateral by user', async (t: Test) => {
     const [makerCollateral, takerCollateral] = await Promise.all([
       cvg.collateral().findByUser({ user: maker.publicKey }),
@@ -976,9 +976,11 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
   test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
     const foundRfqs = await cvg
       .rfqs()
-      .findAllByOwner({ owner: taker.publicKey });
+      .findAllByOwner({ owner: taker.publicKey, rfqsPerPage: 2 });
 
     for (const foundRfq of foundRfqs) {
+      console.log('new page');
+
       for (const rfq of foundRfq) {
         console.log('rfq address: ' + rfq.address.toBase58());
       }
@@ -1030,15 +1032,6 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
         DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ
       ),
     });
-
-    // const { collateralForRfqAmount } = await cvg
-    // .riskEngine()
-    // .calculateCollateralForRfq({ rfq: rfq.address });
-
-    // t.assert(
-    // collateralForRfqAmount > 0,
-    // 'expected collateral for Rfq to be greater than 0.'
-    // );
   });
 
   test('[riskEngineModule] it can calculate collateral for fixed quote size RFQ creation', async (t: Test) => {
@@ -1049,7 +1042,8 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
     const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
       fixedSize: {
         __kind: 'QuoteAsset',
-        quoteAmount: 100 * 10 ** USDC_DECIMALS,
+        // quoteAmount: 100 * 10 ** USDC_DECIMALS,
+        quoteAmount: 100,
       },
       orderType: OrderType.TwoWay,
       legs,
@@ -1203,8 +1197,10 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
       cvg,
       btcMint,
       usdcMint,
-      17_500 * 10 ** USDC_DECIMALS,
-      1 * 10 ** BTC_DECIMALS,
+      // 17_500 * 10 ** USDC_DECIMALS,
+      17_500,
+      // 1 * 10 ** BTC_DECIMALS,
+      1,
       3_600
     );
     europeanOptionPutMint = euroMeta.putOptionMint;
@@ -1237,8 +1233,6 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
       quoteAsset: cvg
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
-      activeWindow: 5_000,
-      settlingWindow: 1_000,
     });
 
     await cvg.rfqs().finalizeRfqConstruction({
@@ -1799,7 +1793,9 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
   });
 
   test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
-    const rfqPages = await cvg.rfqs().findRfqsByActive({});
+    const rfqPages = await cvg.rfqs().findRfqsByActive({
+      rfqsPerPage: 3,
+    });
 
     for (const rfqPage of rfqPages) {
       console.log('new page');

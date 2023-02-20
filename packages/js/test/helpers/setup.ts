@@ -342,6 +342,9 @@ export const initializeNewOptionMeta = async (
   initializeIxs.forEach((ix) => accountSetupTx.add(ix));
   await provider.sendAndConfirm(accountSetupTx);
 
+  strikePrice *= Math.pow(10, stableMint.decimals);
+  underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
+
   const {
     instruction: createIx,
     euroMeta,
