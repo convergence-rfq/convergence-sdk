@@ -52,6 +52,11 @@ export type FundCollateralInput = {
    */
   user?: Signer;
 
+  /**
+   * The address of the protocol.
+   *
+   * @defaultValue `(await convergence.protocol().get()).address`
+   */
   protocol?: PublicKey;
 
   /** Token account of user's token */
@@ -67,6 +72,7 @@ export type FundCollateralInput = {
    * Args
    */
 
+  /** The amount to fund. */
   amount: number;
 };
 
@@ -153,7 +159,6 @@ export const fundCollateralBuilder = async (
       programs,
     }),
   } = params;
-
   let { amount } = params;
 
   const collateralDecimals = (

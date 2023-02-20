@@ -53,8 +53,14 @@ export type FindRfqsByTokenInput = {
   /** The address of the mint account. */
   mintAddress: PublicKey;
 
+  /** Optional number of RFQs to return per page.
+   * @defaultValue `10`
+   */
   rfqsPerPage?: number;
 
+  /** Optional number of pages to return.
+   * If not provided, all pages will be returned.
+   */
   numPages?: number;
 };
 

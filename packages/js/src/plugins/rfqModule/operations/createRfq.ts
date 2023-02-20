@@ -17,10 +17,7 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import * as anchor from '@project-serum/anchor';
-//@ts-ignore
-import { Sha256 } from '@aws-crypto/sha256-js';
 import {
-  //@ts-ignore
   calculateExpectedLegsHash,
   //@ts-ignore
   calculateExpectedLegsSize,
@@ -96,10 +93,14 @@ export type CreateRfqInput = {
    */
   fixedSize: FixedSize;
 
-  /** The active window (in seconds). */
+  /** Optional active window (in seconds). 
+   * @defaultValue `5_000`
+  */
   activeWindow?: number;
 
-  /** The settling window (in seconds). */
+  /** The settling window (in seconds). 
+   * @defaultValue `1_000`
+  */
   settlingWindow?: number;
 
   /** The sum of the sizes of all legs of the Rfq,
@@ -152,7 +153,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-    fixedSize = convertFixedSizeInput(fixedSize);
+    fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
 
     expectedLegsHash =
       expectedLegsHash ??

@@ -60,19 +60,20 @@ export type CalculateCollateralForRfqOutput = {
  */
 export type CalculateCollateralForRfqInput = {
   /**
-   * What's the size restriction of the RFQ being created
+   * The size restriction of the RFQ being created
    */
   fixedSize: FixedSize;
+
   /**
-   * What's the order type of the RFQ being created
+   * The order type of the RFQ being created
    */
   orderType: OrderType;
   /**
-   * What's the legs of the RFQ being created
+   * The legs of the RFQ being created
    */
   legs: Leg[];
   /**
-   * What's the settlement period of the RFQ being created in seconds
+   * The settlement period of the RFQ being created in seconds
    */
   settlementPeriod: number;
 };

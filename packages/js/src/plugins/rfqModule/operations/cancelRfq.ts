@@ -53,7 +53,9 @@ export type CancelRfqInput = {
    */
   taker?: Signer;
 
-  /** The address of the protocol account. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */

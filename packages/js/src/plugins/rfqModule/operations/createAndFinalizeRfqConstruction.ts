@@ -98,10 +98,19 @@ export type CreateAndFinalizeRfqConstructionInput = {
   /** The settling window. */
   settlingWindow?: number;
 
-  /** Optional address of the Taker's collateral info account. */
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: convergence.identity().publicKey })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral token account. */
+  /** Optional address of the Taker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({ 
+   *     user: convergence.identity().publicKey, 
+   *   })`
+   */
   collateralToken?: PublicKey;
 
   /** Optional address of the risk engine account. */
@@ -143,7 +152,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-      fixedSize = convertFixedSizeInput(fixedSize);
+      fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
 
       const serializedLegsData: Buffer[] = [];
       const legs: Leg[] = [];

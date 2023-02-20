@@ -50,8 +50,12 @@ export type FindResponsesByOwnerInput = {
   /** Optional array of Responses to search from. */
   responses?: Response[];
 
+  /** Optional number of Responses to return per page.
+   * @defaultValue `10`
+   */
   responsesPerPage?: number;
 
+  /** Optional number of pages to return. */
   numPages?: number;
 };
 

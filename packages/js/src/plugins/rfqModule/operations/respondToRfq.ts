@@ -62,16 +62,27 @@ export type RespondToRfqInput = {
    */
   maker?: Signer;
 
-  /** The address of the protocol account. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional address of the Maker's collateral info account. */
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral token account. */
+  /** Optional address of the Maker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({ 
+   *     user: maker.publicKey, 
+   *   })`
+   */
   collateralToken?: PublicKey;
 
   /** Optional address of the risk engine account.
@@ -81,10 +92,10 @@ export type RespondToRfqInput = {
    */
   riskEngine?: PublicKey;
 
-  /** The optional Bid side */
+  /** The optional Bid side of the Response. */
   bid?: Option<Quote>;
 
-  /** The optional Ask side */
+  /** The optional Ask side of the Response. */
   ask?: Option<Quote>;
 };
 

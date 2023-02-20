@@ -11,9 +11,8 @@ import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentMod
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import type { Rfq, Response } from './models';
 import type { FixedSize, Leg, QuoteAsset } from './types';
-import { PublicKeyValues, token, toPublicKey } from '@/types';
 import { Convergence } from '@/Convergence';
-import { UnparsedAccount } from '@/types';
+import { UnparsedAccount, PublicKeyValues, token, toPublicKey } from '@/types';
 import { Sha256 } from '@aws-crypto/sha256-js';
 
 export type HasMintAddress = Rfq | PublicKey;
@@ -202,16 +201,15 @@ export const getPages = (
     for (let i = 0; i < numPages; i++) {
       if (lastPageSize < rfqsPerPage) {
         return unparsedAccountPages;
-      } else {
-        lastPageSize = unparsedAccounts.slice(
-          i * rfqsPerPage,
-          (i + 1) * rfqsPerPage
-        ).length;
-
-        unparsedAccountPages.push(
-          unparsedAccounts.slice(i * rfqsPerPage, (i + 1) * rfqsPerPage)
-        );
       }
+      lastPageSize = unparsedAccounts.slice(
+        i * rfqsPerPage,
+        (i + 1) * rfqsPerPage
+      ).length;
+
+      unparsedAccountPages.push(
+        unparsedAccounts.slice(i * rfqsPerPage, (i + 1) * rfqsPerPage)
+      );
     }
   } else {
     while (lastPageSize == rfqsPerPage) {
@@ -232,14 +230,18 @@ export const getPages = (
   return unparsedAccountPages;
 };
 
-export const convertFixedSizeInput = (fixedSize: FixedSize): FixedSize => {
+export const convertFixedSizeInput = (
+  fixedSize: FixedSize,
+  quoteAsset: QuoteAsset
+): FixedSize => {
   if (fixedSize.__kind == 'BaseAsset') {
     const parsedLegsMultiplierBps =
       (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
     fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
   } else if (fixedSize.__kind == 'QuoteAsset') {
     const parsedQuoteAmount =
-      (fixedSize.quoteAmount as number) * Math.pow(10, 9);
+      (fixedSize.quoteAmount as number) *
+      Math.pow(10, quoteAsset.instrumentDecimals);
     fixedSize.quoteAmount = parsedQuoteAmount;
   }
 
@@ -379,7 +381,7 @@ export const calculateExpectedLegsHash = async (
     if (instrument.legInfo?.amount) {
       instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
     }
-    
+
     const instrumentClient = convergence.instrument(
       instrument,
       instrument.legInfo

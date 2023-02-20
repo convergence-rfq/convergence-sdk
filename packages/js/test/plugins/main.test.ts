@@ -131,23 +131,6 @@ const USER_COLLATERAL_AMOUNT_WITH_DECIMALS = new anchor.BN(
   USER_COLLATERAL_AMOUNT
 ).muln(10 ** USDC_DECIMALS);
 
-// test('wrapper', () => {
-//   const testName = process.argv[3];
-
-//   const tests: { [index: string]: any } = {
-//     'Test 1': (t: Test) => {
-//       t.equal(0, 0, 'expect 0 == 0');
-//     },
-//   };
-
-//   if (tests[testName]) {
-//     test(testName, tests[testName]);
-//   } else {
-//     console.error(`Test not found: ${testName}`);
-//     process.exit(1);
-//   }
-// });
-
 // SETUP
 //@ts-ignore
 let optionMarket: OptionMarketWithKey | null;
@@ -602,7 +585,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   spok(t, takerCollateralTokenAccount, {
     $topic: 'collateral model',
     model: 'token',
-    amount: token(USER_COLLATERAL_AMOUNT * 10 ** USDC_DECIMALS),
+    amount: token(USER_COLLATERAL_AMOUNT * 10 ** USDC_DECIMALS), // * 10 ** USDC_DECIMALS
   });
 
   t.same(
@@ -782,6 +765,11 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
     );
 
     let refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
+
+    console.log(
+      'taker collateral locked: ',
+      refreshedRfq.totalTakerCollateralLocked.toString()
+    );
 
     await cvg.rfqs().cancelRfq({
       taker,
@@ -1509,7 +1497,7 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 1.23,
           side: Side.Bid,
         }),
       ],
@@ -2247,8 +2235,8 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
   test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
     const rfqPages = await cvg.rfqs().findByInstrument({
       instrumentProgram: cvg.programs().getSpotInstrument(),
-      rfqsPerPage: 6, 
-      numPages: 4
+      rfqsPerPage: 6,
+      numPages: 4,
     });
 
     for (const rfqPage of rfqPages) {

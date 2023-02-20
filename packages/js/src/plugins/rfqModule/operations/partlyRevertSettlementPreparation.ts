@@ -58,7 +58,9 @@ export type PartlyRevertSettlementPreparationOperation = Operation<
  * @category Inputs
  */
 export type PartlyRevertSettlementPreparationInput = {
-  /** The protocol address. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The Rfq address. */

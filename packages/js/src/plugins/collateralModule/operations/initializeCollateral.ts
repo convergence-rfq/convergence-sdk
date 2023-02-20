@@ -67,23 +67,18 @@ export type InitializeCollateralInput = {
    */
   collateralMint?: PublicKey;
 
-  /**
-   *  The collateral token account address.
+  /** Optional address of the Taker's collateral tokens account.
    *
-   * @defaultValue `PublicKey.findProgramAddressSync(
-   *     [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
-   * .   rfqProgram.address
-   * );
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: convergence.identity().publicKey,
+   *   })`
    */
   collateralToken?: PublicKey;
 
-  /**
-   *  The collateral token info account address.
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: convergence.identity().publicKey })`
    *
-   * @defaultValue `PublicKey.findProgramAddressSync(
-   *     [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
-   * .   rfqProgram.address
-   * );
    */
   collateralInfo?: PublicKey;
 };

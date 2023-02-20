@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/cli",
-  "version": "4.0.10",
+  "version": "4.0.11",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -33,7 +33,7 @@
     "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "^4.0.10",
+    "@convergence-rfq/sdk": "^4.0.11",
     "@solana/web3.js": "^1.73.0",
     "commander": "^10.0.0"
   }

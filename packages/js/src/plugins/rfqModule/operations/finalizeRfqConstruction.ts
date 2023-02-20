@@ -62,10 +62,19 @@ export type FinalizeRfqConstructionInput = {
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional address of the Taker's collateral info account. */
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral token account. */
+  /** Optional address of the Taker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({ 
+   *     user: convergence.identity().publicKey
+   *   })`
+   */
   collateralToken?: PublicKey;
 
   /** Optional address of the risk engine program. */

@@ -91,11 +91,6 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
           (collateral): collateral is Collateral => collateral !== null
         )[0];
 
-      // collateralModel.lockedTokensAmount.basisPoints = /*toBigNumber(*/
-      //   collateralModel.lockedTokensAmount.basisPoints.toNumber() /
-      //     Math.pow(10, collateralModel.lockedTokensAmount.currency.decimals)
-      // // );
-
       collateralModel.lockedTokensAmount /= Math.pow(10, 9);
 
       return collateralModel;

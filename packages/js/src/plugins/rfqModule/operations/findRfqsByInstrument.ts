@@ -42,13 +42,18 @@ export type FindRfqsByInstrumentOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByInstrumentInput = {
+  /** Optional array of RFQs to search through. */
   rfqs?: Rfq[];
 
   /** The instrument program to search for. */
   instrumentProgram: Program;
 
+  /** Optional number of RFQs to return per page.
+   * @defaultValue `10`
+   */
   rfqsPerPage?: number;
 
+  /** Optional number of pages to return. */
   numPages?: number;
 };
 

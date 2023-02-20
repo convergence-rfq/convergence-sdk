@@ -64,12 +64,14 @@ export type AddLegsToRfqInput = {
    */
   taker?: Signer;
 
+  /** The address of the Rfq account. */
   rfq: PublicKey;
 
   /*
    * Args
    */
 
+  /** The instruments of the order, used to construct legs. */
   instruments: (
     | SpotInstrument
     | PsyoptionsEuropeanInstrument

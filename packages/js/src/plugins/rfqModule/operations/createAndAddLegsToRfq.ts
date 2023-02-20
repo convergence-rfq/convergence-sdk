@@ -143,7 +143,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
-      fixedSize = convertFixedSizeInput(fixedSize);
+      fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
 
       let serializedLegsData: Buffer[] = [];
 

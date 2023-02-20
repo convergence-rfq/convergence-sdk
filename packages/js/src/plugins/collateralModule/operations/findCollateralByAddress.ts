@@ -71,17 +71,11 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
       const collateralModel = toCollateral(toCollateralAccount(account));
       scope.throwIfCanceled();
 
-      // collateralModel.lockedTokensAmount.basisPoints = toBigNumber(
-      //   collateralModel.lockedTokensAmount.basisPoints.toNumber() /
-      //     Math.pow(10, collateralModel.lockedTokensAmount.currency.decimals)
-      // );
-
       const protocol = await convergence.protocol().get();
       const collateralMint = await convergence
         .protocol()
         .findRegisteredMintByAddress({ address: protocol.collateralMint });
 
-      //@ts-ignore
       collateralModel.lockedTokensAmount /= Math.pow(
         10,
         collateralMint.decimals

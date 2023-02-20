@@ -65,8 +65,8 @@ export type CleanUpResponseInput = {
   /** The Maker of the Response */
   maker: PublicKey;
   
-  /**
-   * The address of the protocol
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
    */
   protocol?: PublicKey;
 

@@ -45,16 +45,24 @@ export type UnlockResponseCollateralOperation = Operation<
  * @category Inputs
  */
 export type UnlockResponseCollateralInput = {
-  /** The protocol address */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The Response address. */
   response: PublicKey;
 
-  /** Optional address of the Taker's collateral info account */
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
+   *
+   */
   takerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral info account */
+  /** Optional address of the Maker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
+   *
+   */
   makerCollateralInfo?: PublicKey;
 };
 

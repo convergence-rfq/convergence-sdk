@@ -55,8 +55,8 @@ export type CleanUpRfqInput = {
    */
   taker?: PublicKey;
 
-  /**
-   * The address of the protocol
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
    */
   protocol?: PublicKey;
 

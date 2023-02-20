@@ -45,7 +45,9 @@ export type SettleOperation = Operation<typeof Key, SettleInput, SettleOutput>;
  * @category Inputs
  */
 export type SettleInput = {
-  /** The address of the protocol. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
@@ -61,7 +63,9 @@ export type SettleInput = {
   taker: PublicKey;
 
   /** Optional start index to corresponding to
-   * the first leg to settle. */
+   * the first leg to settle.
+   * @defaultValue `0`
+   * */
   startIndex?: number;
 };
 
@@ -291,9 +295,7 @@ export const settleBuilder = async (
         .pdas()
         .associatedTokenAccount({
           mint: rfqModel.quoteMint,
-          owner:
-
-            quoteReceiverTokens > 0 ? maker : taker,
+          owner: quoteReceiverTokens > 0 ? maker : taker,
           programs,
         }),
       isSigner: false,

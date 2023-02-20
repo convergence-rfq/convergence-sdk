@@ -43,8 +43,10 @@ export type CalculateCollateralForResponseOperation = Operation<
 export type CalculateCollateralForResponseInput = {
   /** The address of the Rfq account. */
   rfqAddress: PublicKey;
+
   /** Bid answer to the Rfq. */
   bid: Quote | null;
+  
   /** Ask answer to the Rfq. */
   ask: Quote | null;
 };
