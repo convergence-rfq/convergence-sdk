@@ -157,10 +157,11 @@ export const addLegsToRfqBuilder = async (
       instrument,
       instrument.legInfo
     );
+
     legs.push(await instrumentClient.toLegData());
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
-  
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({

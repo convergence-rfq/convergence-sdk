@@ -1,6 +1,6 @@
 import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
-import { bignum } from '@convergence-rfq/beet';
+// import { bignum } from '@convergence-rfq/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -67,7 +67,7 @@ export type FundCollateralInput = {
    * Args
    */
 
-  amount: bignum;
+  amount: number;
 };
 
 /**
@@ -162,7 +162,7 @@ export const fundCollateralBuilder = async (
       .findMintByAddress({ address: protocolModel.collateralMint })
   ).decimals;
 
-  amount = ((amount as number) *= 10 ** collateralDecimals);
+  amount *= Math.pow(10, collateralDecimals);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

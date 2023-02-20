@@ -96,7 +96,8 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         legMultiplierBps = confirmation.overrideLegMultiplierBps;
       }
       const legMultiplier =
-        Number(legMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
+        // Number(legMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
+        Number(legMultiplierBps);
 
       const calculationCase = {
         legMultiplier,

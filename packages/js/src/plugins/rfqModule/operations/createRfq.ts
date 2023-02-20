@@ -17,6 +17,7 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import * as anchor from '@project-serum/anchor';
+//@ts-ignore
 import { Sha256 } from '@aws-crypto/sha256-js';
 import {
   //@ts-ignore
@@ -151,70 +152,25 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-    // instruments = convertInstrumentsInput(instruments);
     fixedSize = convertFixedSizeInput(fixedSize);
 
-    // expectedLegsHash =
-    //   expectedLegsHash ??
-    //   (await calculateExpectedLegsHash(convergence, instruments));
+    expectedLegsHash =
+      expectedLegsHash ??
+      (await calculateExpectedLegsHash(convergence, instruments));
 
-    if (expectedLegsHash) {
-      rfqPda = convergence
-        .rfqs()
-        .pdas()
-        .rfq({
-          taker: taker.publicKey,
-          legsHash: Buffer.from(expectedLegsHash),
-          orderType,
-          quoteAsset,
-          fixedSize,
-          activeWindow,
-          settlingWindow,
-          recentTimestamp,
-        });
-    } else {
-      const serializedLegsData: Buffer[] = [];
-
-      for (const instrument of instruments) {
-        if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-        }
-
-        const instrumentClient = convergence.instrument(
-          instrument,
-          instrument.legInfo
-        );
-
-        const leg = await instrumentClient.toLegData();
-
-        serializedLegsData.push(instrumentClient.serializeLegData(leg));
-      }
-
-      const lengthBuffer = Buffer.alloc(4);
-      lengthBuffer.writeInt32LE(instruments.length);
-      const fullLegDataBuffer = Buffer.concat([
-        lengthBuffer,
-        ...serializedLegsData,
-      ]);
-
-      const hash = new Sha256();
-      hash.update(fullLegDataBuffer);
-      expectedLegsHash = hash.digestSync();
-
-      rfqPda = convergence
-        .rfqs()
-        .pdas()
-        .rfq({
-          taker: taker.publicKey,
-          legsHash: Buffer.from(expectedLegsHash),
-          orderType,
-          quoteAsset,
-          fixedSize,
-          activeWindow,
-          settlingWindow,
-          recentTimestamp,
-        });
-    }
+    rfqPda = convergence
+      .rfqs()
+      .pdas()
+      .rfq({
+        taker: taker.publicKey,
+        legsHash: Buffer.from(expectedLegsHash),
+        orderType,
+        quoteAsset,
+        fixedSize,
+        activeWindow,
+        settlingWindow,
+        recentTimestamp,
+      });
 
     const builder = await createRfqBuilder(
       convergence,

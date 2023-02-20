@@ -17,9 +17,12 @@ import {
 } from '@/types';
 import { Leg } from '@convergence-rfq/rfq';
 import { Convergence } from '@/Convergence';
+//@ts-ignore
 import { Sha256 } from '@aws-crypto/sha256-js';
 import * as anchor from '@project-serum/anchor';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+//@ts-ignore
+import { calculateExpectedLegsHash, convertFixedSizeInput } from '../helpers';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -130,31 +133,26 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const {
         taker = convergence.identity(),
         orderType,
-        fixedSize,
+        // fixedSize,
         quoteAsset,
         instruments,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
+      let { fixedSize } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-      if (fixedSize.__kind == 'BaseAsset') {
-        const parsedLegsMultiplierBps =
-          (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
-
-        fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-      } else if (fixedSize.__kind == 'QuoteAsset') {
-        const parsedQuoteAmount =
-          (fixedSize.quoteAmount as number) * Math.pow(10, 9);
-
-        fixedSize.quoteAmount = parsedQuoteAmount;
-      }
+      fixedSize = convertFixedSizeInput(fixedSize);
 
       const serializedLegsData: Buffer[] = [];
       const legs: Leg[] = [];
 
       let expectedLegsHash: Uint8Array;
+      // const expectedLegsHash = await calculateExpectedLegsHash(
+      //   convergence,
+      //   instruments
+      // );
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
@@ -167,9 +165,9 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         );
 
         const leg = await instrumentClient.toLegData();
-        legs.push(leg);
 
         serializedLegsData.push(instrumentClient.serializeLegData(leg));
+        legs.push(leg);
       }
 
       const lengthBuffer = Buffer.alloc(4);

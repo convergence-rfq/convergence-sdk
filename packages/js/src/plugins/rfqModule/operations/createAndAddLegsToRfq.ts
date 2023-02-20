@@ -17,6 +17,7 @@ import {
 } from '@/types';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { Convergence } from '@/Convergence';
+import { convertFixedSizeInput } from '../helpers';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -87,13 +88,24 @@ export type CreateAndAddLegsToRfqInput = {
    */
   orderType: OrderType;
 
+  /** The type of the Rfq, specifying whether we fix the number of
+   * base assets to be exchanged, the number of quote assets,
+   * or neither.
+   */
   fixedSize: FixedSize;
 
+  /** The active window (in seconds). */
   activeWindow?: number;
 
+  /** The settling window (in seconds). */
   settlingWindow?: number;
 
-  legSize?: number;
+  /** The sum of the sizes of all legs of the Rfq,
+   * including legs added in the future (if any).
+   * This can be calculated automatically if
+   * additional legs will not be added in
+   * the future. */
+  // legSize?: number;
 };
 
 /**
@@ -123,24 +135,15 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         taker = convergence.identity(),
         instruments,
         orderType,
-        fixedSize,
         quoteAsset,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
+      let { fixedSize } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
-      if (fixedSize.__kind == 'BaseAsset') {
-        const parsedLegsMultiplierBps =
-          (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
-
-        fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-      } else if (fixedSize.__kind == 'QuoteAsset') {
-        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * Math.pow(10, 9);
-
-        fixedSize.quoteAmount = parsedQuoteAmount;
-      }
+      fixedSize = convertFixedSizeInput(fixedSize);
 
       let serializedLegsData: Buffer[] = [];
 
@@ -150,7 +153,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= 10 ^ 9;
+          instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
         }
 
         const instrumentClient = convergence.instrument(

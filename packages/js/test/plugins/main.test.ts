@@ -9,7 +9,12 @@ import * as anchor from '@project-serum/anchor';
 //@ts-ignore
 import { sha256 } from '@noble/hashes/sha256';
 //@ts-ignore
-import { UnparsedAccount } from '@/index';
+import {
+  calculateExpectedLegsSize,
+  calculateExpectedLegsHash,
+  //@ts-ignore
+  UnparsedAccount,
+} from '@/index';
 //@ts-ignore
 import { bignum } from '@convergence-rfq/beet';
 import {
@@ -754,7 +759,6 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
         .toQuoteAsset(),
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          // amount: 0.000000001,
           amount: 1,
           side: Side.Bid,
         }),
@@ -772,26 +776,12 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
       user: taker.publicKey,
     });
 
-    //@ts-ignore
-    const refreshedTakerCollateral = await cvg
-      .collateral()
-      .refresh(takerCollateral);
-
     console.log(
       '<finalizeRfqConst> taker locked tokens collateral amount: ' +
-        refreshedTakerCollateral.lockedTokensAmount.toString()
+        takerCollateral.lockedTokensAmount.toString()
     );
 
     let refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
-
-    console.log(
-      'non response taker collat locked: ' +
-        refreshedRfq.nonResponseTakerCollateralLocked.toString()
-    );
-    console.log(
-      'total taker collateral locked: ' +
-        refreshedRfq.totalTakerCollateralLocked.toString()
-    );
 
     await cvg.rfqs().cancelRfq({
       taker,
@@ -995,13 +985,6 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
     });
   });
 
-  test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
-    const instruments = await cvg.rfqs().findByInstrument({
-      instrumentProgram: cvg.programs().getSpotInstrument(),
-    });
-    t.assert(instruments.length > 0, 'instruments present');
-  });
-
   test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
     const foundRfqs = await cvg
       .rfqs()
@@ -1070,32 +1053,6 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
     // );
   });
 
-  // test('[riskEngineModule] it can calculate collateral for response', async (t: Test) => {
-  //   const { rfq } = await cvg.rfqs().createAndFinalize({
-  //     instruments: [
-  //       new SpotInstrument(cvg, btcMint, {
-  //         amount: 5,
-  //         side: Side.Ask,
-  //       }),
-  //     ],
-  //     taker,
-  //     orderType: OrderType.TwoWay,
-  //     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-  //     quoteAsset: cvg
-  //       .instrument(new SpotInstrument(cvg, usdcMint))
-  //       .toQuoteAsset(),
-  //   });
-  //   //@ts-ignore
-  //   const { rfqResponse } = await cvg.rfqs().respond({
-  //     maker,
-  //     rfq: rfq.address,
-  //     bid: {
-  //       __kind: 'FixedSize',
-  //       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
-  //     },
-  //   });
-  // });
-
   test('[riskEngineModule] it can calculate collateral for fixed quote size RFQ creation', async (t: Test) => {
     const legs = [
       await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
@@ -1133,7 +1090,7 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
       fixedSize: {
         __kind: 'BaseAsset',
         // legsMultiplierBps: 2 * 10 ** LEG_MULTIPLIER_DECIMALS, // 2 multiplier of 5 bitcoins, so 10 bitcoins in total
-        legsMultiplierBps: 2
+        legsMultiplierBps: 2,
       },
       orderType: OrderType.TwoWay,
       legs,
@@ -1682,13 +1639,13 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
       })
     );
 
-    let expLegSize = 4;
+    let expectedLegsSize = 4;
 
     const serializedLegsData: Buffer[] = [];
 
     for (const instrument of instruments) {
       const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
-      expLegSize += await instrumentClient.getLegDataSize();
+      expectedLegsSize += await instrumentClient.getLegDataSize();
 
       const leg = await instrumentClient.toLegData();
 
@@ -1704,20 +1661,23 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
 
     const expectedLegsHash = sha256(fullLegDataBuffer);
 
+    // const expectedLegsSize = await calculateExpectedLegsSize(cvg, instruments);
+    // const expectedLegsHash = await calculateExpectedLegsHash(cvg, instruments);
+
     const { rfq } = await cvg.rfqs().create({
       taker,
+      quoteAsset: cvg
+        .instrument(new SpotInstrument(cvg, usdcMint))
+        .toQuoteAsset(),
       instruments: [
         new SpotInstrument(cvg, solMint, {
           amount: 0.000000006,
           side: Side.Ask,
         }),
       ],
-      expectedLegsSize: expLegSize,
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
+      expectedLegsSize,
       expectedLegsHash,
     });
 
@@ -1756,18 +1716,27 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
     const rfqPages = await cvg.rfqs().findAllByOwner({
       owner: taker.publicKey,
     });
+
+    let instruments: (
+      | SpotInstrument
+      | PsyoptionsEuropeanInstrument
+      | PsyoptionsAmericanInstrument
+    )[][] = [[]];
+
     for (const rfqs of rfqPages) {
       await Promise.all(
         rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
       );
+
+      instruments = await Promise.all(
+        rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
+      );
     }
-    // const instruments = await Promise.all(
-    // rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
-    // );
-    // spok(t, instruments[0][0], {
-    // $topic: 'Convert RFQ Legs to Instruments',
-    // model: 'spotInstrument',
-    // });
+
+    spok(t, instruments[0][0], {
+      $topic: 'Convert RFQ Legs to Instruments',
+      model: 'spotInstrument',
+    });
   });
 
   test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlemt, partly revert settlemt prep, revert settlemt prep', async (t: Test) => {
@@ -2131,13 +2100,6 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
       side: Side.Bid,
     });
 
-    console.log(
-      'settle 2 party response collateral: ' +
-        rfqResponse.takerCollateralLocked.toString() +
-        ' .. ' +
-        rfqResponse.makerCollateralLocked.toString()
-    );
-
     await sleep(3_001).then(async () => {
       await cvg.rfqs().settleTwoPartyDefault({
         rfq: rfq.address,
@@ -2155,7 +2117,7 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
     t.assert(collateralWallet);
   });
 
-  test('[rfqModule] convert user-friendly inputs to bignum and vice versa', async () => {
+  test('[rfqModule] convert user-friendly inputs to bignum and vice versa', async (t: Test) => {
     const { rfq } = await cvg.rfqs().createAndFinalize({
       taker,
       instruments: [
@@ -2164,7 +2126,7 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
           side: Side.Bid,
         }),
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 7,
           side: Side.Ask,
         }),
       ],
@@ -2174,22 +2136,14 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
     });
-    console.log(
-      'fixed size legs multipler bps: ' +
-        //@ts-ignore
-        rfq.fixedSize.legsMultiplierBps.toString()
-    );
 
     const foundRfq = await cvg
       .rfqs()
       .findRfqByAddress({ address: rfq.address });
 
-    console.log(
-      'leg 0 instrument amt: ' + foundRfq.legs[0].instrumentAmount.toString()
-    );
-    console.log(
-      'leg 1 instrument amt: ' + foundRfq.legs[1].instrumentAmount.toString()
-    );
+    t.same(foundRfq.legs[0].instrumentAmount.toString(), '5e-9');
+    t.same(foundRfq.legs[1].instrumentAmount.toString(), '7');
+
     //@ts-ignore
     const { rfqResponse } = await cvg.rfqs().respond({
       maker,
@@ -2293,6 +2247,8 @@ test('**[Test Module] it can wrap tests that don`t depend on each other**', asyn
   test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
     const rfqPages = await cvg.rfqs().findByInstrument({
       instrumentProgram: cvg.programs().getSpotInstrument(),
+      rfqsPerPage: 6, 
+      numPages: 4
     });
 
     for (const rfqPage of rfqPages) {

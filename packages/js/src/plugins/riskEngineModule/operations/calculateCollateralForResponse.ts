@@ -81,7 +81,8 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       const getCase = (quote: Quote, side: Side) => {
         const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
         const legMultiplier =
-          Number(legsMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
+          // Number(legsMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
+          Number(legsMultiplierBps);
         return {
           legMultiplier,
           authoritySide: AuthoritySide.Maker,

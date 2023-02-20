@@ -96,7 +96,6 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
       //     Math.pow(10, collateralModel.lockedTokensAmount.currency.decimals)
       // // );
 
-      //@ts-ignore
       collateralModel.lockedTokensAmount /= Math.pow(10, 9);
 
       return collateralModel;
