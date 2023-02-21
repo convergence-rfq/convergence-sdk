@@ -20,8 +20,8 @@ const Key = 'FundCollateralOperation' as const;
  *
  * ```ts
  * const rfq = await convergence
- *   .rfqs()
- *   .fundCollateral({ address };
+ *   .collateral()
+ *   .fundCollateral({ amount: 100 };
  * ```
  *
  * @group Operations

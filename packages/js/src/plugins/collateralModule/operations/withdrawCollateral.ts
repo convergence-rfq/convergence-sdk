@@ -20,8 +20,8 @@ const Key = 'WithdrawCollateralOperation' as const;
  *
  * ```ts
  * const rfq = await convergence
- *   .rfqs()
- *   .withdrawCollateral({ address };
+ *   .collateral()
+ *   .withdrawCollateral({ amount: 100 };
  * ```
  *
  * @group Operations

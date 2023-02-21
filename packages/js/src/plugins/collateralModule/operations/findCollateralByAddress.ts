@@ -8,7 +8,6 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-// import { toBigNumber } from '@/types';
 
 const Key = 'FindCollateralByAddressOperation' as const;
 
@@ -18,7 +17,7 @@ const Key = 'FindCollateralByAddressOperation' as const;
  * ```ts
  * const collateral = await convergence
  *   .collateral()
- *   .findByAddress({ address: 0x123... });
+ *   .findByAddress({ address: user.publicKey });
  * ```
  *
  * @group Operations

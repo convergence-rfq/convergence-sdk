@@ -21,7 +21,8 @@ import {
  *
  * ```ts
  * const instrument = new SpotInstrument({ ... });
- * const instrumentClient = convergence.instrument(instrument, { amount: 1, side: Side.Bid });
+ * const instrumentClient = 
+ *   convergence.instrument(instrument, { amount: 1, side: Side.Bid });
  * ```
  *
  * @example

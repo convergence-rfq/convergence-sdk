@@ -80,6 +80,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       const { programs } = scope;
 
       if (rfqs) {
+        let rfqPages: Rfq[][] = [];
         const rfqsByOwner: Rfq[] = [];
 
         for (let rfq of rfqs) {
@@ -89,10 +90,11 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
             rfqsByOwner.push(rfq);
           }
         }
-
         scope.throwIfCanceled();
 
-        return [rfqsByOwner];
+        rfqPages = getPages(rfqsByOwner, rfqsPerPage, numPages);
+
+        return rfqPages;
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);
@@ -111,20 +113,16 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         const rfqPage = [];
 
         for (const unparsedAccount of page) {
-          rfqPage.push(
-            await convergence
-              .rfqs()
-              .findRfqByAddress({ address: unparsedAccount.publicKey })
-          );
+          let rfq = await convergence
+            .rfqs()
+            .findRfqByAddress({ address: unparsedAccount.publicKey });
+
+          rfq = await convertRfqOutput(convergence, rfq);
+
+          rfqPage.push(rfq);
         }
         if (rfqPage.length > 0) {
           rfqPages.push(rfqPage);
-        }
-      }
-
-      for (const rfqPage of rfqPages) {
-        for (let rfq of rfqPage) {
-          rfq = await convertRfqOutput(convergence, rfq);
         }
       }
 

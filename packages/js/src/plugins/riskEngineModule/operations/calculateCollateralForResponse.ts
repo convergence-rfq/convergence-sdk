@@ -17,7 +17,25 @@ const Key = 'CalculateCollateralForResponseOperation' as const;
  * Calculates the required collateral for a maker particular response for an RFQ
  *
  * ```ts
- * TODO
+ * await cvg.riskEngine().calculateCollateralForResponse({
+      rfqAddress: rfq.address,
+      bid: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 22_000,
+        },
+        legsMultiplierBps: 20,
+      },
+      ask: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 23_000,
+        },
+        legsMultiplierBps: 5,
+      },
+    });
  * ```
  *
  * @group Operations

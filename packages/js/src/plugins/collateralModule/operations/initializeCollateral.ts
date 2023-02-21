@@ -21,8 +21,8 @@ const Key = 'InitializeCollateralOperation' as const;
  *
  * ```ts
  * const rfq = await convergence
- *   .rfqs()
- *   .initializeCollateral({ user });
+ *   .collateral()
+ *   .initializeCollateral({});
  * ```
  *
  * @group Operations

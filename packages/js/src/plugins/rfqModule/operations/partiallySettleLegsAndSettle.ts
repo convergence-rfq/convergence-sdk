@@ -98,7 +98,6 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       scope: OperationScope
     ): Promise<PartiallySettleLegsAndSettleOutput> => {
       const { rfq } = operation.input;
-
       const MAX_TX_SIZE = 1232;
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(

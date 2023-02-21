@@ -26,7 +26,15 @@ const Key = 'CalculateCollateralForRfqOperation' as const;
  * Calculates the required collateral for a taker to create a particular RFQ
  *
  * ```ts
- * TODO
+ * await cvg.riskEngine().calculateCollateralForRfq({
+      fixedSize: {
+        __kind: 'BaseAsset',
+        legsMultiplierBps: 2,
+      },
+      orderType: OrderType.TwoWay,
+      legs,
+      settlementPeriod: 5 * 60 * 60, // 5 hours
+    });
  * ```
  *
  * @group Operations

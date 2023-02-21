@@ -1298,24 +1298,22 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, clean up response legs, clean up response', async (t: Test) => {
     const { rfq } = await cvg.rfqs().createAndFinalize({
-      instruments: [
-        new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
-          side: Side.Bid,
-        }),
-        new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000003,
-          side: Side.Ask,
-        }),
-      ],
       taker,
-      orderType: OrderType.TwoWay,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
       quoteAsset: cvg
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
-      activeWindow: 5_000,
-      settlingWindow: 1_000,
+      instruments: [
+        new SpotInstrument(cvg, btcMint, {
+          amount: 5,
+          side: Side.Bid,
+        }),
+        new SpotInstrument(cvg, btcMint, {
+          amount: 3,
+          side: Side.Ask,
+        }),
+      ],
+      orderType: OrderType.TwoWay,
+      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
     });
     const { rfqResponse } = await cvg.rfqs().respond({
       maker,
@@ -1397,7 +1395,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 5,
           side: Side.Bid,
         }),
       ],
@@ -1437,7 +1435,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker,
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 5,
           side: Side.Bid,
         }),
       ],
@@ -1726,11 +1724,11 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 5,
           side: Side.Bid,
         }),
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000007,
+          amount: 7,
           side: Side.Ask,
         }),
       ],
@@ -2246,6 +2244,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
     console.log('number of pages: ' + rfqPages.length.toString());
 
-    t.assert(rfqPages.length > 0, 'instruments present');
+    t.assert(rfqPages.length === 4, 'returned 4 pages');
   });
 });

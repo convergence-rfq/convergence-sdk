@@ -19,7 +19,16 @@ const Key = 'CalculateCollateralForConfirmationOperation' as const;
  * Calculates the required collateral for a taker for a particular confirmation of the response
  *
  * ```ts
- * TODO
+ * await cvg
+      .riskEngine()
+      .calculateCollateralForConfirmation({
+        rfqAddress: rfq.address,
+        responseAddress: rfqResponse.address,
+        confirmation: {
+          side: Side.Bid,
+          overrideLegMultiplierBps: 3,
+        },
+      });
  * ```
  *
  * @group Operations
@@ -48,7 +57,7 @@ export type CalculateCollateralForConfirmationInput = {
 
   /** The address of the response account. */
   responseAddress: PublicKey;
-  
+
   /** Confirmation which collateral requirements are estimated */
   confirmation: Confirmation;
 };
@@ -86,14 +95,14 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
       ]);
 
       let legMultiplierBps;
-      if (confirmation.overrideLegMultiplierBps === null) { 
+      if (confirmation.overrideLegMultiplierBps === null) {
         const confirmedQuote =
           confirmation.side == Side.Bid ? response.bid : response.ask;
 
         if (confirmedQuote === null) {
           throw Error('Cannot confirm a missing quote!');
         }
-//remove decimals here
+        //remove decimals here
         legMultiplierBps = extractLegsMultiplierBps(rfq, confirmedQuote);
       } else {
         legMultiplierBps = confirmation.overrideLegMultiplierBps;
@@ -117,7 +126,7 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         scope.commitment
       );
 
-      // requiredCollateral *= Math.pow(10, ABSOLUTE_PRICE_DECIMALS); 
+      // requiredCollateral *= Math.pow(10, ABSOLUTE_PRICE_DECIMALS);
 
       return { requiredCollateral };
     },

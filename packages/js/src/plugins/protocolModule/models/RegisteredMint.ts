@@ -16,7 +16,7 @@ export type RegisteredMint = {
   /** The address of the base asset. */
   readonly address: PublicKey;
 
-  /** The pda bump */
+  /** The PDA bump of the registered mint. */
   readonly bump: number;
 
   /** The mint address. */

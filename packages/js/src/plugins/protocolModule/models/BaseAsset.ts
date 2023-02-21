@@ -20,7 +20,7 @@ export type BaseAsset = {
   /** The address of the base asset. */
   readonly address: PublicKey;
 
-  /** The bump of the base asset. */
+  /** The PDA bump of the base asset. */
   readonly bump: number;
 
   /** The base asset index. */

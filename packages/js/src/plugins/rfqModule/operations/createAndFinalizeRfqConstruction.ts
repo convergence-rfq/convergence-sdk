@@ -142,7 +142,6 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const {
         taker = convergence.identity(),
         orderType,
-        // fixedSize,
         quoteAsset,
         instruments,
         activeWindow = 5_000,

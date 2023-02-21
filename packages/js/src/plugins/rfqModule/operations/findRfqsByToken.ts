@@ -1,8 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { Rfq } from '../models';
-//@ts-ignore
-import { toRfqAccount } from '../accounts';
 import { psyoptionsAmericanInstrumentProgram } from '../../psyoptionsAmericanInstrumentModule/programs';
 import { psyoptionsEuropeanInstrumentProgram } from '../../psyoptionsEuropeanInstrumentModule/programs';
 import { psyoptionsAmericanInstrumentDataSerializer } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
@@ -104,9 +102,9 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
 
-          if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
-            rfq = await convertRfqOutput(convergence, rfq);
+          rfq = await convertRfqOutput(convergence, rfq);
 
+          if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
             rfqPage.push(rfq);
           }
           for (const leg of rfq.legs) {
@@ -120,8 +118,6 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                 )[0];
 
               if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-                rfq = await convertRfqOutput(convergence, rfq);
-
                 rfqPage.push(rfq);
               }
             } else if (
@@ -144,8 +140,6 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               if (
                 euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
               ) {
-                rfq = await convertRfqOutput(convergence, rfq);
-
                 rfqPage.push(rfq);
               }
             } else if (
@@ -157,8 +151,6 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               )[0];
 
               if (data.mint.toBase58() === mintAddress.toBase58()) {
-                rfq = await convertRfqOutput(convergence, rfq);
-
                 rfqPage.push(rfq);
               }
             }

@@ -14,6 +14,8 @@ import type { FixedSize, Leg, QuoteAsset } from './types';
 import { Convergence } from '@/Convergence';
 import { UnparsedAccount, PublicKeyValues, token, toPublicKey } from '@/types';
 import { Sha256 } from '@aws-crypto/sha256-js';
+import { LEG_MULTIPLIER_DECIMALS } from './constants';
+import { Quote } from '@convergence-rfq/rfq';
 
 export type HasMintAddress = Rfq | PublicKey;
 
@@ -188,47 +190,25 @@ export const quoteAssetToInstrument = async (
   throw new Error("Instrument doesn't exist");
 };
 
-export const getPages = (
-  unparsedAccounts: UnparsedAccount[],
-  rfqsPerPage: number,
+export function getPages<T extends UnparsedAccount | Rfq | Response>(
+  // unparsedAccounts: (UnparsedAccount | Rfq | Response)[],
+  accounts: T[],
+  itemsPerPage: number,
   numPages?: number
-): UnparsedAccount[][] => {
-  let unparsedAccountPages: UnparsedAccount[][] = [];
+  // ): (UnparsedAccount | Rfq | Response)[][] => {
+): T[][] {
+  const pages: (UnparsedAccount | Rfq | Response)[][] = [];
+  const totalCount = accounts.length;
+  const totalPages = numPages ?? Math.ceil(totalCount / itemsPerPage);
 
-  let lastPageSize = rfqsPerPage;
-
-  if (numPages) {
-    for (let i = 0; i < numPages; i++) {
-      if (lastPageSize < rfqsPerPage) {
-        return unparsedAccountPages;
-      }
-      lastPageSize = unparsedAccounts.slice(
-        i * rfqsPerPage,
-        (i + 1) * rfqsPerPage
-      ).length;
-
-      unparsedAccountPages.push(
-        unparsedAccounts.slice(i * rfqsPerPage, (i + 1) * rfqsPerPage)
-      );
-    }
-  } else {
-    while (lastPageSize == rfqsPerPage) {
-      lastPageSize = unparsedAccounts.slice(
-        unparsedAccountPages.length * rfqsPerPage,
-        (unparsedAccountPages.length + 1) * rfqsPerPage
-      ).length;
-
-      unparsedAccountPages.push(
-        unparsedAccounts.slice(
-          unparsedAccountPages.length * rfqsPerPage,
-          (unparsedAccountPages.length + 1) * rfqsPerPage
-        )
-      );
-    }
+  for (let i = 0; i < totalPages; i++) {
+    const startIndex = i * itemsPerPage;
+    const page = accounts.slice(startIndex, startIndex + itemsPerPage);
+    pages.push(page);
   }
 
-  return unparsedAccountPages;
-};
+  return pages as T[][];
+}
 
 export const convertFixedSizeInput = (
   fixedSize: FixedSize,
@@ -236,7 +216,8 @@ export const convertFixedSizeInput = (
 ): FixedSize => {
   if (fixedSize.__kind == 'BaseAsset') {
     const parsedLegsMultiplierBps =
-      (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
+      (fixedSize.legsMultiplierBps as number) *
+      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
     fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
   } else if (fixedSize.__kind == 'QuoteAsset') {
     const parsedQuoteAmount =
@@ -269,7 +250,8 @@ export const convertRfqOutput = async (
 ): Promise<Rfq> => {
   if (rfq.fixedSize.__kind == 'BaseAsset') {
     const parsedLegsMultiplierBps =
-      (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
+      (rfq.fixedSize.legsMultiplierBps as number) /
+      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
     rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
   } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
@@ -345,7 +327,8 @@ export const convertResponseOutput = (response: Response): Response => {
 
     if (response.bid.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        (response.bid.legsMultiplierBps as number) / Math.pow(10, 9);
+        (response.bid.legsMultiplierBps as number) /
+        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
       response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
     }
@@ -358,13 +341,47 @@ export const convertResponseOutput = (response: Response): Response => {
 
     if (response.ask.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        (response.ask.legsMultiplierBps as number) / Math.pow(10, 9);
+        (response.ask.legsMultiplierBps as number) /
+        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
       response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
     }
   }
 
   return response;
+};
+
+export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
+  if (bid) {
+    const parsedPriceQuoteAmountBps =
+      (bid.priceQuote.amountBps as number) * Math.pow(10, 9);
+
+    bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+    if (bid.__kind == 'Standard') {
+      const parsedLegsMultiplierBps =
+        (bid.legsMultiplierBps as number) *
+        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+
+      bid.legsMultiplierBps = parsedLegsMultiplierBps;
+    }
+  }
+  if (ask) {
+    const parsedPriceQuoteAmountBps =
+      (ask.priceQuote.amountBps as number) * Math.pow(10, 9);
+
+    ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+    if (ask.__kind == 'Standard') {
+      const parsedLegsMultiplierBps =
+        (ask.legsMultiplierBps as number) *
+        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+
+      ask.legsMultiplierBps = parsedLegsMultiplierBps;
+    }
+  }
+
+  return { bid, ask };
 };
 
 export const calculateExpectedLegsHash = async (
