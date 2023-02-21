@@ -1459,31 +1459,18 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       },
     });
 
-    await cvg.rfqs().confirmResponse({
-      taker,
+    await cvg.rfqs().cancelResponse({
+      maker,
       rfq: rfq.address,
       response: rfqResponse.address,
-      side: Side.Bid,
     });
 
-    await cvg.rfqs().prepareSettlement({
-      caller: maker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      legAmountToPrepare: 1,
-    });
-    await cvg.rfqs().prepareSettlement({
-      caller: taker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      legAmountToPrepare: 1,
-    });
+    const refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
 
-    await cvg.rfqs().settle({
-      maker: maker.publicKey,
-      taker: taker.publicKey,
-      rfq: rfq.address,
-      response: rfqResponse.address,
+    spok(t, refreshedResponse, {
+      $topic: 'Cancelled response',
+      model: 'response',
+      state: StoredResponseState.Canceled,
     });
   });
 
@@ -2176,7 +2163,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
       expectedLegsSize,
-      expectedLegsHash
+      expectedLegsHash,
     });
 
     // await cvg.rfqs().addLegsToRfq({

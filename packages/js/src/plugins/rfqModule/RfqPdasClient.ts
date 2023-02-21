@@ -80,7 +80,8 @@ export class RfqPdasClient {
       serializeFixedSizeData(fixedSize),
       toLittleEndian(activeWindow, 4),
       toLittleEndian(settlingWindow, 4),
-      recentTimestamp.toBuffer('le', 8),
+      // recentTimestamp.toBuffer('le', 8),
+      recentTimestamp.toArrayLike(Buffer, 'le', 8),
     ]);
   }
 
