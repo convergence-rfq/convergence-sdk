@@ -9,7 +9,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
+// import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -127,8 +127,8 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         scope.commitment
       );
       const requiredCollateral =
-        risks.reduce((x, y) => Math.max(x, y), 0) *
-        Math.pow(10, ABSOLUTE_PRICE_DECIMALS);
+        risks.reduce((x, y) => Math.max(x, y), 0) 
+        // * Math.pow(10, ABSOLUTE_PRICE_DECIMALS);
       return { requiredCollateral };
     },
   };

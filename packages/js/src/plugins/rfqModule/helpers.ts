@@ -1,4 +1,4 @@
-import type { PublicKey } from '@solana/web3.js';
+import type { PublicKey, AccountMeta } from '@solana/web3.js';
 import { Keypair } from '@solana/web3.js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
@@ -214,13 +214,15 @@ export const convertFixedSizeInput = (
 ): FixedSize => {
   if (fixedSize.__kind == 'BaseAsset') {
     const parsedLegsMultiplierBps =
-      (fixedSize.legsMultiplierBps as number) *
+      Number(fixedSize.legsMultiplierBps) *
       Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+
     fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
   } else if (fixedSize.__kind == 'QuoteAsset') {
     const parsedQuoteAmount =
-      (fixedSize.quoteAmount as number) *
+      Number(fixedSize.quoteAmount) *
       Math.pow(10, quoteAsset.instrumentDecimals);
+
     fixedSize.quoteAmount = parsedQuoteAmount;
   }
 
@@ -399,10 +401,6 @@ export const calculateExpectedLegsHash = async (
   const serializedLegsData: Buffer[] = [];
 
   for (const instrument of instruments) {
-    // if (instrument.legInfo?.amount) {
-    //   instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-    // }
-
     const instrumentClient = convergence.instrument(
       instrument,
       instrument.legInfo
@@ -439,10 +437,6 @@ export const calculateExpectedLegsSize = async (
   let expectedLegsSize = 4;
 
   for (const instrument of instruments) {
-    // if (instrument.legInfo?.amount) {
-    //   instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-    // }
-
     const instrumentClient = convergence.instrument(
       instrument,
       instrument.legInfo
@@ -475,4 +469,25 @@ export const instrumentsToLegs = async (
   }
 
   return legs;
+};
+
+export const instrumentsToLegAccounts = (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): AccountMeta[] => {
+  const legAccounts: AccountMeta[] = [];
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+
+    legAccounts.push(...instrumentClient.getValidationAccounts());
+  }
+
+  return legAccounts;
 };

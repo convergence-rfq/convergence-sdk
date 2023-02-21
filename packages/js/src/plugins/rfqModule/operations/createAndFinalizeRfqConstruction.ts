@@ -232,9 +232,7 @@ export const createAndFinalizeRfqConstructionBuilder = async (
 
   const rfqBuilder = await createRfqBuilder(
     convergence,
-    {
-      ...params,
-    },
+    { ...params },
     options
   );
   const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(

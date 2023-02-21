@@ -23,6 +23,7 @@ import {
   calculateExpectedLegsSize,
   convertFixedSizeInput,
   convertInstrumentsInput,
+  instrumentsToLegAccounts,
   instrumentsToLegs,
   // convertInstrumentsInput,
 } from '../helpers';
@@ -145,7 +146,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       taker = convergence.identity(),
       orderType,
       quoteAsset,
-      // instruments,
       activeWindow = 5_000,
       settlingWindow = 1_000,
     } = operation.input;
@@ -248,13 +248,13 @@ export const createRfqBuilder = async (
     recentTimestamp,
     expectedLegsHash,
   } = params;
-
   let { expectedLegsSize } = params;
 
   expectedLegsSize =
     expectedLegsSize ??
     (await calculateExpectedLegsSize(convergence, instruments));
   const legs = await instrumentsToLegs(convergence, instruments);
+  const legAccounts = instrumentsToLegAccounts(convergence, instruments);
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -274,16 +274,6 @@ export const createRfqBuilder = async (
       isWritable: false,
     },
   ];
-
-  const legAccounts: AccountMeta[] = [];
-
-  for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
-    );
-    legAccounts.push(...instrumentClient.getValidationAccounts());
-  }
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

@@ -18,7 +18,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-// import { LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
+import { LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -114,8 +114,7 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
       } else if (isFixedSizeBaseAsset(fixedSize)) {
         const { legsMultiplierBps } = fixedSize;
         const legMultiplier =
-          Number(legsMultiplierBps)
-          //  / 10 ** LEG_MULTIPLIER_DECIMALS;
+          Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
 
         const sideToCase = (side: Side) => {
           return {
@@ -146,10 +145,8 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
           scope.commitment
         );
 
-        const requiredCollateral =
-          risks.reduce((x, y) => Math.max(x, y), 0) 
-          // *
-          // Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+        const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
+
         return { requiredCollateral };
       }
 

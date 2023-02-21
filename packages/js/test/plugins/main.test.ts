@@ -10,10 +10,13 @@ import * as anchor from '@project-serum/anchor';
 import { sha256 } from '@noble/hashes/sha256';
 //@ts-ignore
 import {
+  //@ts-ignore
   calculateExpectedLegsSize,
+  //@ts-ignore
   calculateExpectedLegsHash,
   //@ts-ignore
   UnparsedAccount,
+  convertInstrumentsInput,
 } from '@/index';
 //@ts-ignore
 import { bignum } from '@convergence-rfq/beet';
@@ -1079,7 +1082,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
 
     spok(t, riskOutput, {
-      $topic: 'Calculated Collateral for fixed quote size Rfq',
+      $topic: 'Calculated Collateral for fixed base size Rfq',
       requiredCollateral: 19800,
     });
   });
@@ -1593,7 +1596,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[rfqModule] it can add legs to rfq', async (t: Test) => {
-    const instruments: (
+    let instruments: (
       | SpotInstrument
       | PsyoptionsEuropeanInstrument
       | PsyoptionsAmericanInstrument
@@ -1601,47 +1604,49 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
     instruments.push(
       new SpotInstrument(cvg, solMint, {
-        amount: 0.000000006,
+        amount: 6,
         side: Side.Ask,
       })
     );
     instruments.push(
       new SpotInstrument(cvg, btcMint, {
-        amount: 0.00000001,
+        amount: 1,
         side: Side.Ask,
       })
     );
     instruments.push(
       new SpotInstrument(cvg, btcMint, {
-        amount: 0.000000009,
+        amount: 9,
         side: Side.Bid,
       })
     );
 
-    let expectedLegsSize = 4;
+    instruments = convertInstrumentsInput(instruments);
 
-    const serializedLegsData: Buffer[] = [];
+    // let expectedLegsSize = 4;
 
-    for (const instrument of instruments) {
-      const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
-      expectedLegsSize += await instrumentClient.getLegDataSize();
+    // const serializedLegsData: Buffer[] = [];
 
-      const leg = await instrumentClient.toLegData();
+    // for (const instrument of instruments) {
+    //   const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
+    //   // expectedLegsSize += await instrumentClient.getLegDataSize();
 
-      serializedLegsData.push(instrumentClient.serializeLegData(leg));
-    }
+    //   const leg = await instrumentClient.toLegData();
 
-    const lengthBuffer = Buffer.alloc(4);
-    lengthBuffer.writeInt32LE(instruments.length);
-    const fullLegDataBuffer = Buffer.concat([
-      lengthBuffer,
-      ...serializedLegsData,
-    ]);
+    //   serializedLegsData.push(instrumentClient.serializeLegData(leg));
+    // }
 
-    const expectedLegsHash = sha256(fullLegDataBuffer);
+    // const lengthBuffer = Buffer.alloc(4);
+    // lengthBuffer.writeInt32LE(instruments.length);
+    // const fullLegDataBuffer = Buffer.concat([
+    //   lengthBuffer,
+    //   ...serializedLegsData,
+    // ]);
 
-    // const expectedLegsSize = await calculateExpectedLegsSize(cvg, instruments);
-    // const expectedLegsHash = await calculateExpectedLegsHash(cvg, instruments);
+    // const expectedLegsHash = sha256(fullLegDataBuffer);
+
+    const expectedLegsSize = await calculateExpectedLegsSize(cvg, instruments);
+    const expectedLegsHash = await calculateExpectedLegsHash(cvg, instruments);
 
     const { rfq } = await cvg.rfqs().create({
       taker,
@@ -1650,7 +1655,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         .toQuoteAsset(),
       instruments: [
         new SpotInstrument(cvg, solMint, {
-          amount: 0.000000006,
+          amount: 6,
           side: Side.Ask,
         }),
       ],
@@ -1665,11 +1670,11 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       rfq: rfq.address,
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.00000001,
+          amount: 1,
           side: Side.Ask,
         }),
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000009,
+          amount: 9,
           side: Side.Bid,
         }),
       ],
@@ -2149,23 +2154,29 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       );
     }
 
-    let expectedLegsSize = 4;
-
-    for (const instrument of instruments) {
-      const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
-      expectedLegsSize += await instrumentClient.getLegDataSize();
-    }
+    const convertedInstruments = convertInstrumentsInput(instruments);
+    //@ts-ignore
+    const expectedLegsSize = await calculateExpectedLegsSize(
+      cvg,
+      convertedInstruments
+    );
+    //@ts-ignore
+    const expectedLegsHash = await calculateExpectedLegsHash(
+      cvg,
+      convertedInstruments
+    );
 
     const { rfq } = await cvg.rfqs().createRfqAndAddLegs({
       taker,
-      // instruments: instruments.slice(0, 20),
       instruments,
+      // instruments: instruments.slice(0, 20),
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
       quoteAsset: cvg
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
       expectedLegsSize,
+      expectedLegsHash
     });
 
     // await cvg.rfqs().addLegsToRfq({
