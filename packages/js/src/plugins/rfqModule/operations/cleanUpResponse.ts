@@ -62,7 +62,7 @@ export type CleanUpResponseOperation = Operation<
  * @category Inputs
  */
 export type CleanUpResponseInput = {
-  /** The Maker of the Response */
+  /** The Maker's public key address. */
   maker: PublicKey;
   
   /** The protocol address.

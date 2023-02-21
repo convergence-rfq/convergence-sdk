@@ -84,19 +84,22 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       } = operation.input;
       scope.throwIfCanceled();
 
-      const responsesByowner: Response[] = [];
-
       if (responses) {
+        let responsePages: Response[][] = [];
+        const responsesByOwner: Response[] = [];
+
         for (let response of responses) {
           if (response.maker.toBase58() === owner.toBase58()) {
             response = convertResponseOutput(response);
 
-            responsesByowner.push(response);
+            responsesByOwner.push(response);
           }
         }
         scope.throwIfCanceled();
 
-        return [responsesByowner];
+        responsePages = getPages(responsesByOwner, responsesPerPage, numPages);
+
+        return responsePages;
       }
 
       const gpaBuilder = new ResponseGpaBuilder(

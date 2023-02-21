@@ -86,9 +86,10 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
       } = operation.input;
       scope.throwIfCanceled();
 
-      const responsesByRfqs: Response[] = [];
-
       if (responses) {
+        let responsePages: Response[][] = [];
+        const responsesByRfqs: Response[] = [];
+
         for (const address of addresses) {
           for (let response of responses) {
             if (response.rfq.toBase58() === address.toBase58()) {
@@ -99,7 +100,9 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
           }
           scope.throwIfCanceled();
 
-          return [responsesByRfqs];
+          responsePages = getPages(responsesByRfqs, responsesPerPage, numPages);
+
+          return responsePages;
         }
       }
 

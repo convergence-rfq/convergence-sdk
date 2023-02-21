@@ -81,7 +81,6 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         numPages,
       } = operation.input;
 
-      //TODO: this has no pagination
       if (rfqs) {
         let rfqPages: Rfq[][] = [];
         const rfqsByInstrument: Rfq[] = [];

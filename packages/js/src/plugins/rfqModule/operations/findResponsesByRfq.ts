@@ -86,9 +86,10 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       } = operation.input;
       scope.throwIfCanceled();
 
-      const responsesByRfq: Response[] = [];
-
       if (responses) {
+        let responsePages: Response[][] = [];
+        const responsesByRfq: Response[] = [];
+
         for (let response of responses) {
           if (response.rfq.toBase58() === address.toBase58()) {
             response = convertResponseOutput(response);
@@ -96,7 +97,11 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
             responsesByRfq.push(response);
           }
         }
-        return [responsesByRfq];
+        scope.throwIfCanceled();
+
+        responsePages = getPages(responsesByRfq, responsesPerPage, numPages);
+
+        return responsePages;
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);

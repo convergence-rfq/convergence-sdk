@@ -949,27 +949,25 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
     });
-    //@ts-ignore
-    const [foundRfq1, foundRfq2, foundRfq3] = await cvg
-      .rfqs()
-      .findRfqsByAddresses({
-        addresses: [rfq1.address, rfq2.address, rfq3.address],
-      });
+
+    const rfqPages = await cvg.rfqs().findRfqsByAddresses({
+      addresses: [rfq1.address, rfq2.address, rfq3.address],
+    });
 
     spok(t, rfq1, {
       $topic: 'Created RFQ',
       model: 'rfq',
-      address: spokSamePubkey(foundRfq1.address),
+      address: spokSamePubkey(rfqPages[0][0].address),
     });
     spok(t, rfq2, {
       $topic: 'Created RFQ',
       model: 'rfq',
-      address: spokSamePubkey(foundRfq2.address),
+      address: spokSamePubkey(rfqPages[0][1].address),
     });
     spok(t, rfq3, {
       $topic: 'Created RFQ',
       model: 'rfq',
-      address: spokSamePubkey(foundRfq3.address),
+      address: spokSamePubkey(rfqPages[0][2].address),
     });
   });
 
@@ -1812,7 +1810,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
     const rfqPages = await cvg
       .rfqs()
-      .findByToken({ mintAddress: europeanOptionPutMint });
+      .findByToken({ mintAddress: europeanOptionPutMint, rfqsPerPage: 1 });
 
     for (const rfqPage of rfqPages) {
       console.log('new page');
@@ -1828,9 +1826,11 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
-    const rfqPages = await cvg
-      .rfqs()
-      .findByToken({ mintAddress: usdcMint.address });
+    const rfqPages = await cvg.rfqs().findByToken({
+      mintAddress: usdcMint.address,
+      rfqsPerPage: 3,
+      numPages: 2,
+    });
 
     for (const rfqPage of rfqPages) {
       console.log('new page');
@@ -2138,26 +2138,41 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  test('[rfqModule] it can createRfqAndAddLegs, finalize, respond, confirmResponse, prepareSettlementAndPrepareMoreLegs, partiallySettleLegsAndSettle', async (t: Test) => {
+  test('[rfqModule] it can createRfqAndAddLegs, addLegs, finalize, respond, confirmResponse, prepareSettlementAndPrepareMoreLegs, partiallySettleLegsAndSettle', async (t: Test) => {
     const instruments = [];
     for (let i = 0; i < 25; i++) {
       instruments.push(
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 1,
           side: Side.Ask,
         })
       );
     }
 
+    let expectedLegsSize = 4;
+
+    for (const instrument of instruments) {
+      const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
+      expectedLegsSize += await instrumentClient.getLegDataSize();
+    }
+
     const { rfq } = await cvg.rfqs().createRfqAndAddLegs({
       taker,
+      // instruments: instruments.slice(0, 20),
       instruments,
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
       quoteAsset: cvg
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
+      expectedLegsSize,
     });
+
+    // await cvg.rfqs().addLegsToRfq({
+    //   taker,
+    //   rfq: rfq.address,
+    //   instruments: instruments.slice(20),
+    // });
 
     await cvg.rfqs().finalizeRfqConstruction({
       taker,
@@ -2241,9 +2256,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         console.log('rfq address: ' + rfq.address.toString());
       }
     }
-
-    console.log('number of pages: ' + rfqPages.length.toString());
-
     t.assert(rfqPages.length === 4, 'returned 4 pages');
   });
 });

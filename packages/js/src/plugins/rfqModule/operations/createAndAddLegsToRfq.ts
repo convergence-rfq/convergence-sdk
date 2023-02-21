@@ -17,7 +17,7 @@ import {
 } from '@/types';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { Convergence } from '@/Convergence';
-import { convertFixedSizeInput } from '../helpers';
+import { convertFixedSizeInput, /*calculateExpectedLegsHash*/ } from '../helpers';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -67,7 +67,7 @@ export type CreateAndAddLegsToRfqInput = {
   /**
    * The taker of the Rfq to create.
    *
-   * @defaultValue `convergence.identity().publicKey`
+   * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
 
@@ -105,7 +105,13 @@ export type CreateAndAddLegsToRfqInput = {
    * This can be calculated automatically if
    * additional legs will not be added in
    * the future. */
-  // legSize?: number;
+  expectedLegsSize?: number;
+
+  /** Optional expected legs hash (of all legs).
+   * This can be calculated automatically if
+   * additional legs will not be added in the future.
+   */
+  expectedLegsHash?: Uint8Array;
 };
 
 /**
@@ -139,7 +145,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
-      let { fixedSize } = operation.input;
+      let { fixedSize, expectedLegsSize, expectedLegsHash } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
@@ -147,9 +153,30 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
       let serializedLegsData: Buffer[] = [];
 
-      let expectedLegsHash: Uint8Array;
+      // let expectedLegsHash: Uint8Array;
 
-      let expectedLegsSize = 4;
+      // expectedLegsHash =
+      //   expectedLegsHash ??
+      //   (await calculateExpectedLegsHash(convergence, instruments));
+
+      // expectedLegsSize = expectedLegsSize ?? 4;
+
+      if (!expectedLegsSize) {
+        expectedLegsSize = 4;
+
+        for (const instrument of instruments) {
+          if (instrument.legInfo?.amount) {
+            instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
+          }
+
+          const instrumentClient = convergence.instrument(
+            instrument,
+            instrument.legInfo
+          );
+
+          expectedLegsSize += await instrumentClient.getLegDataSize();
+        }
+      }
 
       for (const instrument of instruments) {
         if (instrument.legInfo?.amount) {
@@ -162,8 +189,6 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         );
 
         const leg = await instrumentClient.toLegData();
-
-        expectedLegsSize += await instrumentClient.getLegDataSize();
 
         serializedLegsData.push(instrumentClient.serializeLegData(leg));
       }

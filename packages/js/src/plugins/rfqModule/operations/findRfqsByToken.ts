@@ -90,6 +90,62 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
 
+      for (const unparsedAccount of unparsedAccounts) {
+        let rfq = await convergence
+          .rfqs()
+          .findRfqByAddress({ address: unparsedAccount.publicKey });
+
+        for (const leg of rfq.legs) {
+          if (
+            leg.instrumentProgram.toBase58() ===
+            psyoptionsAmericanInstrumentProgram.address.toBase58()
+          ) {
+            const data = psyoptionsAmericanInstrumentDataSerializer.deserialize(
+              Buffer.from(leg.instrumentData)
+            )[0];
+
+            if (data.optionMint.toBase58() != mintAddress.toBase58()) {
+              const index = unparsedAccounts.indexOf(unparsedAccount);
+              unparsedAccounts.splice(index, 1);
+            }
+          } else if (
+            leg.instrumentProgram.toBase58() ===
+            psyoptionsEuropeanInstrumentProgram.address.toBase58()
+          ) {
+            const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+              convergence,
+              leg
+            );
+            const euroMetaOptionMint = await convergence
+              .tokens()
+              .findMintByAddress({
+                address:
+                  instrument.optionType == OptionType.CALL
+                    ? instrument.meta.callOptionMint
+                    : instrument.meta.putOptionMint,
+              });
+            if (
+              euroMetaOptionMint.address.toBase58() != mintAddress.toBase58()
+            ) {
+              const index = unparsedAccounts.indexOf(unparsedAccount);
+              unparsedAccounts.splice(index, 1);
+            }
+          } else if (
+            leg.instrumentProgram.toBase58() ===
+            spotInstrumentProgram.address.toBase58()
+          ) {
+            const data = SpotInstrumentDataSerializer.deserialize(
+              Buffer.from(leg.instrumentData)
+            )[0];
+
+            if (data.mint.toBase58() != mintAddress.toBase58()) {
+              const index = unparsedAccounts.indexOf(unparsedAccount);
+              unparsedAccounts.splice(index, 1);
+            }
+          }
+        }
+      }
+
       const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
 
       const rfqPages: Rfq[][] = [];
@@ -104,57 +160,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
           rfq = await convertRfqOutput(convergence, rfq);
 
-          if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
-            rfqPage.push(rfq);
-          }
-          for (const leg of rfq.legs) {
-            if (
-              leg.instrumentProgram.toBase58() ===
-              psyoptionsAmericanInstrumentProgram.address.toBase58()
-            ) {
-              const data =
-                psyoptionsAmericanInstrumentDataSerializer.deserialize(
-                  Buffer.from(leg.instrumentData)
-                )[0];
-
-              if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-                rfqPage.push(rfq);
-              }
-            } else if (
-              leg.instrumentProgram.toBase58() ===
-              psyoptionsEuropeanInstrumentProgram.address.toBase58()
-            ) {
-              const instrument =
-                await PsyoptionsEuropeanInstrument.createFromLeg(
-                  convergence,
-                  leg
-                );
-              const euroMetaOptionMint = await convergence
-                .tokens()
-                .findMintByAddress({
-                  address:
-                    instrument.optionType == OptionType.CALL
-                      ? instrument.meta.callOptionMint
-                      : instrument.meta.putOptionMint,
-                });
-              if (
-                euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
-              ) {
-                rfqPage.push(rfq);
-              }
-            } else if (
-              leg.instrumentProgram.toBase58() ===
-              spotInstrumentProgram.address.toBase58()
-            ) {
-              const data = SpotInstrumentDataSerializer.deserialize(
-                Buffer.from(leg.instrumentData)
-              )[0];
-
-              if (data.mint.toBase58() === mintAddress.toBase58()) {
-                rfqPage.push(rfq);
-              }
-            }
-          }
+          rfqPage.push(rfq);
         }
         if (rfqPage.length > 0) {
           rfqPages.push(rfqPage);

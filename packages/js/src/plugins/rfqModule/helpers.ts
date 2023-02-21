@@ -191,11 +191,9 @@ export const quoteAssetToInstrument = async (
 };
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
-  // unparsedAccounts: (UnparsedAccount | Rfq | Response)[],
   accounts: T[],
   itemsPerPage: number,
   numPages?: number
-  // ): (UnparsedAccount | Rfq | Response)[][] => {
 ): T[][] {
   const pages: (UnparsedAccount | Rfq | Response)[][] = [];
   const totalCount = accounts.length;
