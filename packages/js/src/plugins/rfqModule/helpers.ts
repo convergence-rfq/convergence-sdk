@@ -10,12 +10,12 @@ import {
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import type { Rfq, Response } from './models';
-import type { FixedSize, Leg, QuoteAsset } from './types';
+// import type { FixedSize, Leg, QuoteAsset } from './types';
 import { Convergence } from '@/Convergence';
 import { UnparsedAccount, PublicKeyValues, token, toPublicKey } from '@/types';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { LEG_MULTIPLIER_DECIMALS } from './constants';
-import { Quote } from '@convergence-rfq/rfq';
+import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 
 export type HasMintAddress = Rfq | PublicKey;
 
@@ -233,7 +233,11 @@ export const convertInstrumentsInput = (
     | PsyoptionsEuropeanInstrument
     | PsyoptionsAmericanInstrument
   )[]
-) => {
+): (
+  | SpotInstrument
+  | PsyoptionsEuropeanInstrument
+  | PsyoptionsAmericanInstrument
+)[] => {
   for (const instrument of instruments) {
     if (instrument.legInfo?.amount) {
       instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
@@ -254,7 +258,8 @@ export const convertRfqOutput = async (
     rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
   } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
     const parsedQuoteAmount =
-      (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
+      (rfq.fixedSize.quoteAmount as number) /
+      Math.pow(10, rfq.quoteAsset.instrumentDecimals);
 
     rfq.fixedSize.quoteAmount = parsedQuoteAmount;
   }
@@ -352,7 +357,7 @@ export const convertResponseOutput = (response: Response): Response => {
 export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
   if (bid) {
     const parsedPriceQuoteAmountBps =
-      (bid.priceQuote.amountBps as number) * Math.pow(10, 9);
+      (bid.priceQuote.amountBps as number) * Math.pow(10, 9); //where do these decimals come from?
 
     bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
@@ -382,6 +387,7 @@ export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
   return { bid, ask };
 };
 
+//this currently takes pre-converted instruments
 export const calculateExpectedLegsHash = async (
   convergence: Convergence,
   instruments: (
@@ -393,9 +399,9 @@ export const calculateExpectedLegsHash = async (
   const serializedLegsData: Buffer[] = [];
 
   for (const instrument of instruments) {
-    if (instrument.legInfo?.amount) {
-      instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-    }
+    // if (instrument.legInfo?.amount) {
+    //   instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
+    // }
 
     const instrumentClient = convergence.instrument(
       instrument,
@@ -421,6 +427,7 @@ export const calculateExpectedLegsHash = async (
   return expectedLegsHash;
 };
 
+//TODO: this takes pre-converted instruments
 export const calculateExpectedLegsSize = async (
   convergence: Convergence,
   instruments: (
@@ -432,9 +439,9 @@ export const calculateExpectedLegsSize = async (
   let expectedLegsSize = 4;
 
   for (const instrument of instruments) {
-    if (instrument.legInfo?.amount) {
-      instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-    }
+    // if (instrument.legInfo?.amount) {
+    //   instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
+    // }
 
     const instrumentClient = convergence.instrument(
       instrument,
@@ -444,4 +451,28 @@ export const calculateExpectedLegsSize = async (
   }
 
   return expectedLegsSize;
+};
+
+export const instrumentsToLegs = async (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): Promise<Leg[]> => {
+  const legs: Leg[] = [];
+
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+
+    const leg = await instrumentClient.toLegData();
+
+    legs.push(leg);
+  }
+
+  return legs;
 };

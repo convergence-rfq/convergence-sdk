@@ -4,7 +4,7 @@ import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
-import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
+import { OrderType, FixedSize, QuoteAsset } from '../types';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
@@ -22,6 +22,8 @@ import {
   //@ts-ignore
   calculateExpectedLegsSize,
   convertFixedSizeInput,
+  convertInstrumentsInput,
+  instrumentsToLegs,
   // convertInstrumentsInput,
 } from '../helpers';
 
@@ -93,14 +95,14 @@ export type CreateRfqInput = {
    */
   fixedSize: FixedSize;
 
-  /** Optional active window (in seconds). 
+  /** Optional active window (in seconds).
    * @defaultValue `5_000`
-  */
+   */
   activeWindow?: number;
 
-  /** The settling window (in seconds). 
+  /** The settling window (in seconds).
    * @defaultValue `1_000`
-  */
+   */
   settlingWindow?: number;
 
   /** The sum of the sizes of all legs of the Rfq,
@@ -154,7 +156,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
     fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
-
+    instruments = convertInstrumentsInput(instruments);
     expectedLegsHash =
       expectedLegsHash ??
       (await calculateExpectedLegsHash(convergence, instruments));
@@ -249,6 +251,11 @@ export const createRfqBuilder = async (
 
   let { expectedLegsSize } = params;
 
+  expectedLegsSize =
+    expectedLegsSize ??
+    (await calculateExpectedLegsSize(convergence, instruments));
+  const legs = await instrumentsToLegs(convergence, instruments);
+
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
   const spotInstrumentProgram = convergence
@@ -269,36 +276,14 @@ export const createRfqBuilder = async (
   ];
 
   const legAccounts: AccountMeta[] = [];
-  const legs: Leg[] = [];
 
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
       instrument,
       instrument.legInfo
     );
-
-    const leg = await instrumentClient.toLegData();
-    legs.push(leg);
-
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
-
-  // let expectedLegsSize: number;
-
-  if (!expectedLegsSize) {
-    expectedLegsSize = 4;
-
-    for (const instrument of instruments) {
-      const instrumentClient = convergence.instrument(
-        instrument,
-        instrument.legInfo
-      );
-      expectedLegsSize += await instrumentClient.getLegDataSize();
-    }
-  }
-  // expectedLegsSize =
-  //   expectedLegsSize ??
-  //   (await calculateExpectedLegsSize(convergence, instruments));
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

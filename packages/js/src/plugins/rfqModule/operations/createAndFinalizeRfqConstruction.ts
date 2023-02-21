@@ -22,7 +22,13 @@ import { Sha256 } from '@aws-crypto/sha256-js';
 import * as anchor from '@project-serum/anchor';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 //@ts-ignore
-import { calculateExpectedLegsHash, convertFixedSizeInput } from '../helpers';
+import {
+  //@ts-ignore
+  calculateExpectedLegsHash,
+  convertFixedSizeInput,
+  convertInstrumentsInput,
+  instrumentsToLegs,
+} from '../helpers';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -107,8 +113,8 @@ export type CreateAndFinalizeRfqConstructionInput = {
   /** Optional address of the Taker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
-   *   collateralTokens({ 
-   *     user: convergence.identity().publicKey, 
+   *   collateralTokens({
+   *     user: convergence.identity().publicKey,
    *   })`
    */
   collateralToken?: PublicKey;
@@ -143,51 +149,20 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         taker = convergence.identity(),
         orderType,
         quoteAsset,
-        instruments,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
-      let { fixedSize } = operation.input;
+      let { fixedSize, instruments } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
       fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
-
-      const serializedLegsData: Buffer[] = [];
-      const legs: Leg[] = [];
-
-      let expectedLegsHash: Uint8Array;
-      // const expectedLegsHash = await calculateExpectedLegsHash(
-      //   convergence,
-      //   instruments
-      // );
-
-      for (const instrument of instruments) {
-        if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-        }
-
-        const instrumentClient = convergence.instrument(
-          instrument,
-          instrument.legInfo
-        );
-
-        const leg = await instrumentClient.toLegData();
-
-        serializedLegsData.push(instrumentClient.serializeLegData(leg));
-        legs.push(leg);
-      }
-
-      const lengthBuffer = Buffer.alloc(4);
-      lengthBuffer.writeInt32LE(instruments.length);
-      const fullLegDataBuffer = Buffer.concat([
-        lengthBuffer,
-        ...serializedLegsData,
-      ]);
-
-      const hash = new Sha256();
-      hash.update(fullLegDataBuffer);
-      expectedLegsHash = hash.digestSync();
+      instruments = convertInstrumentsInput(instruments);
+      const legs = await instrumentsToLegs(convergence, instruments);
+      const expectedLegsHash = await calculateExpectedLegsHash(
+        convergence,
+        instruments
+      );
 
       const rfqPda = convergence
         .rfqs()

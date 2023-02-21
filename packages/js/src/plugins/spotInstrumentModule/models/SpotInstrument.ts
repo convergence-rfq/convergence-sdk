@@ -63,7 +63,7 @@ export class SpotInstrument implements Instrument {
       side,
     });
     return new InstrumentClient(convergence, instrument, {
-      amount,
+      amount: amount * Math.pow(10, mint.decimals),
       side,
     });
   }
