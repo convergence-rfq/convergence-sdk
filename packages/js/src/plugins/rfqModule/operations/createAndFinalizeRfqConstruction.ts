@@ -15,9 +15,15 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
+import { Leg } from '@convergence-rfq/rfq';
 import { Convergence } from '@/Convergence';
-import { Sha256 } from '@aws-crypto/sha256-js';
 import * as anchor from '@project-serum/anchor';
+import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import {
+  calculateExpectedLegsHash,
+  convertFixedSizeInput,
+  instrumentsToLegs,
+} from '../helpers';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -93,10 +99,19 @@ export type CreateAndFinalizeRfqConstructionInput = {
   /** The settling window. */
   settlingWindow?: number;
 
-  /** Optional address of the Taker's collateral info account. */
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: convergence.identity().publicKey })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral token account. */
+  /** Optional address of the Taker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: convergence.identity().publicKey,
+   *   })`
+   */
   collateralToken?: PublicKey;
 
   /** Optional address of the risk engine account. */
@@ -128,65 +143,20 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const {
         taker = convergence.identity(),
         orderType,
-        fixedSize,
         quoteAsset,
-        instruments,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
+      let { fixedSize, instruments } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-      if (fixedSize.__kind == 'BaseAsset') {
-        const parsedLegsMultiplierBps =
-          (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
-
-        fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-      } else if (fixedSize.__kind == 'QuoteAsset') {
-        const parsedQuoteAmount = (fixedSize.quoteAmount as number) * Math.pow(10, 9);
-
-        console.log(
-          'fixed size quote asset before reassign: ' +
-            fixedSize.quoteAmount.toString()
-        );
-
-        fixedSize.quoteAmount = parsedQuoteAmount;
-
-        console.log('fixed size quote asset: ' + parsedQuoteAmount.toString());
-        console.log(
-          'fixed size quote asset: ' + fixedSize.quoteAmount.toString()
-        );
-      }
-
-      const serializedLegsData: Buffer[] = [];
-
-      let expectedLegsHash: Uint8Array;
-
-      for (const instrument of instruments) {
-        if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-        }
-
-        const instrumentClient = convergence.instrument(
-          instrument,
-          instrument.legInfo
-        );
-
-        const leg = await instrumentClient.toLegData();
-
-        serializedLegsData.push(instrumentClient.serializeLegData(leg));
-      }
-
-      const lengthBuffer = Buffer.alloc(4);
-      lengthBuffer.writeInt32LE(instruments.length);
-      const fullLegDataBuffer = Buffer.concat([
-        lengthBuffer,
-        ...serializedLegsData,
-      ]);
-
-      const hash = new Sha256();
-      hash.update(fullLegDataBuffer);
-      expectedLegsHash = hash.digestSync();
+      fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
+      const legs = await instrumentsToLegs(convergence, instruments);
+      const expectedLegsHash = await calculateExpectedLegsHash(
+        convergence,
+        instruments
+      );
 
       const rfqPda = convergence
         .rfqs()
@@ -202,15 +172,17 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           recentTimestamp,
         });
 
-      const rfqBuilder = await createRfqBuilder(
+      const builder = await createAndFinalizeRfqConstructionBuilder(
         convergence,
         {
           ...operation.input,
+          taker,
           rfq: rfqPda,
           fixedSize,
           instruments,
           expectedLegsHash,
           recentTimestamp,
+          legs,
         },
         scope
       );
@@ -220,19 +192,8 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         convergence,
         scope.confirmOptions
       );
-      const output = await rfqBuilder.sendAndConfirm(
-        convergence,
-        confirmOptions
-      );
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
-
-      const finalizeBuilder = await finalizeRfqConstructionBuilder(
-        convergence,
-        { taker, rfq: rfqPda },
-        scope
-      );
-
-      await finalizeBuilder.sendAndConfirm(convergence, confirmOptions);
 
       const rfq = await convergence
         .rfqs()
@@ -241,3 +202,46 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       return { ...output, rfq };
     },
   };
+
+/**
+ * @group Transaction Builders
+ * @category Inputs
+ */
+export type CreateAndFinalizeRfqConstructionBuilderParams =
+  CreateAndFinalizeRfqConstructionInput & {
+    expectedLegsHash: Uint8Array;
+    recentTimestamp: anchor.BN;
+    rfq: PublicKey;
+    legs: Leg[];
+  };
+
+export const createAndFinalizeRfqConstructionBuilder = async (
+  convergence: Convergence,
+  params: CreateAndFinalizeRfqConstructionBuilderParams,
+  options: TransactionBuilderOptions = {}
+): Promise<TransactionBuilder> => {
+  const { payer = convergence.rpc().getDefaultFeePayer() } = options;
+
+  const { rfq } = params;
+
+  const rfqBuilder = await createRfqBuilder(
+    convergence,
+    { ...params },
+    options
+  );
+  const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(
+    convergence,
+    { ...params },
+    options
+  );
+
+  return TransactionBuilder.make()
+    .setContext({
+      rfq,
+    })
+    .setFeePayer(payer)
+    .add(
+      ...rfqBuilder.getInstructionsWithSigners(),
+      ...finalizeConstructionBuilder.getInstructionsWithSigners()
+    );
+};

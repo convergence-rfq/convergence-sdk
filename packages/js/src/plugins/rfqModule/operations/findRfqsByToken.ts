@@ -1,8 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { Rfq } from '../models';
-//@ts-ignore
-import { toRfqAccount } from '../accounts';
 import { psyoptionsAmericanInstrumentProgram } from '../../psyoptionsAmericanInstrumentModule/programs';
 import { psyoptionsEuropeanInstrumentProgram } from '../../psyoptionsEuropeanInstrumentModule/programs';
 import { psyoptionsAmericanInstrumentDataSerializer } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
@@ -53,8 +51,14 @@ export type FindRfqsByTokenInput = {
   /** The address of the mint account. */
   mintAddress: PublicKey;
 
+  /** Optional number of RFQs to return per page.
+   * @defaultValue `10`
+   */
   rfqsPerPage?: number;
 
+  /** Optional number of pages to return.
+   * If not provided, all pages will be returned.
+   */
   numPages?: number;
 };
 
@@ -76,7 +80,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       scope: OperationScope
     ): Promise<FindRfqsByTokenOutput> => {
       const { programs } = scope;
-      const { mintAddress, rfqsPerPage = 10, numPages } = operation.input;
+      const { mintAddress, rfqsPerPage, numPages } = operation.input;
       scope.throwIfCanceled();
 
       const spotInstrumentProgram = convergence.programs().getSpotInstrument();
@@ -85,6 +89,62 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
+
+      for (const unparsedAccount of unparsedAccounts) {
+        let rfq = await convergence
+          .rfqs()
+          .findRfqByAddress({ address: unparsedAccount.publicKey });
+
+        for (const leg of rfq.legs) {
+          if (
+            leg.instrumentProgram.toBase58() ===
+            psyoptionsAmericanInstrumentProgram.address.toBase58()
+          ) {
+            const data = psyoptionsAmericanInstrumentDataSerializer.deserialize(
+              Buffer.from(leg.instrumentData)
+            )[0];
+
+            if (data.optionMint.toBase58() != mintAddress.toBase58()) {
+              const index = unparsedAccounts.indexOf(unparsedAccount);
+              unparsedAccounts.splice(index, 1);
+            }
+          } else if (
+            leg.instrumentProgram.toBase58() ===
+            psyoptionsEuropeanInstrumentProgram.address.toBase58()
+          ) {
+            const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+              convergence,
+              leg
+            );
+            const euroMetaOptionMint = await convergence
+              .tokens()
+              .findMintByAddress({
+                address:
+                  instrument.optionType == OptionType.CALL
+                    ? instrument.meta.callOptionMint
+                    : instrument.meta.putOptionMint,
+              });
+            if (
+              euroMetaOptionMint.address.toBase58() != mintAddress.toBase58()
+            ) {
+              const index = unparsedAccounts.indexOf(unparsedAccount);
+              unparsedAccounts.splice(index, 1);
+            }
+          } else if (
+            leg.instrumentProgram.toBase58() ===
+            spotInstrumentProgram.address.toBase58()
+          ) {
+            const data = SpotInstrumentDataSerializer.deserialize(
+              Buffer.from(leg.instrumentData)
+            )[0];
+
+            if (data.mint.toBase58() != mintAddress.toBase58()) {
+              const index = unparsedAccounts.indexOf(unparsedAccount);
+              unparsedAccounts.splice(index, 1);
+            }
+          }
+        }
+      }
 
       const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
 
@@ -98,65 +158,9 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
 
-          if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
-            rfq = await convertRfqOutput(convergence, rfq);
+          rfq = await convertRfqOutput(convergence, rfq);
 
-            rfqPage.push(rfq);
-          }
-          for (const leg of rfq.legs) {
-            if (
-              leg.instrumentProgram.toBase58() ===
-              psyoptionsAmericanInstrumentProgram.address.toBase58()
-            ) {
-              const data =
-                psyoptionsAmericanInstrumentDataSerializer.deserialize(
-                  Buffer.from(leg.instrumentData)
-                )[0];
-
-              if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-                rfq = await convertRfqOutput(convergence, rfq);
-
-                rfqPage.push(rfq);
-              }
-            } else if (
-              leg.instrumentProgram.toBase58() ===
-              psyoptionsEuropeanInstrumentProgram.address.toBase58()
-            ) {
-              const instrument =
-                await PsyoptionsEuropeanInstrument.createFromLeg(
-                  convergence,
-                  leg
-                );
-              const euroMetaOptionMint = await convergence
-                .tokens()
-                .findMintByAddress({
-                  address:
-                    instrument.optionType == OptionType.CALL
-                      ? instrument.meta.callOptionMint
-                      : instrument.meta.putOptionMint,
-                });
-              if (
-                euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
-              ) {
-                rfq = await convertRfqOutput(convergence, rfq);
-
-                rfqPage.push(rfq);
-              }
-            } else if (
-              leg.instrumentProgram.toBase58() ===
-              spotInstrumentProgram.address.toBase58()
-            ) {
-              const data = SpotInstrumentDataSerializer.deserialize(
-                Buffer.from(leg.instrumentData)
-              )[0];
-
-              if (data.mint.toBase58() === mintAddress.toBase58()) {
-                rfq = await convertRfqOutput(convergence, rfq);
-
-                rfqPage.push(rfq);
-              }
-            }
-          }
+          rfqPage.push(rfq);
         }
         if (rfqPage.length > 0) {
           rfqPages.push(rfqPage);

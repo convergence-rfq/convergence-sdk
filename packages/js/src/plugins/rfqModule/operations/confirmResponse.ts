@@ -63,7 +63,9 @@ export type ConfirmResponseInput = {
    */
   taker?: Signer;
 
-  /** The address of the protocol. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
@@ -72,10 +74,16 @@ export type ConfirmResponseInput = {
   /** The address of the Response. */
   response: PublicKey;
 
-  /** The address of the Taker's collateral info account. */
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: convergence.identity().publicKey })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** The address of the Maker's collateral info account. */
+  /** Optional address of the Maker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
+   *
+   */
   makerCollateralInfo?: PublicKey;
 
   /** The address of the collateral token. */

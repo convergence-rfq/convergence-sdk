@@ -74,7 +74,9 @@ export type PrepareSettlementInput = {
    */
   caller?: Signer;
 
-  /** The address of the protocol. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */

@@ -50,8 +50,8 @@ export type RegisterMintInput = {
    */
   authority?: Signer;
 
-  /**
-   * The protocol to add the instrument to.
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
    */
   protocol?: PublicKey;
 
@@ -61,7 +61,9 @@ export type RegisterMintInput = {
   mint: PublicKey;
 
   /**
-   * The base asset index.
+   * The Optional base asset index.
+   * Only needs to be passed if the mint is a base asset.
+   * @defaultValue `-1`
    */
   baseAssetIndex?: number;
 };

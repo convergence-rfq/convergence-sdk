@@ -48,10 +48,15 @@ export type FindResponsesByRfqInput = {
   /** The address of the Rfq. */
   address: PublicKey;
 
+  /** Optional array of Responses to search from. */
   responses?: Response[];
 
+  /** Optional number of Responses to return per page.
+   * @defaultValue `10`
+   */
   responsesPerPage?: number;
 
+  /** Optional number of pages to return. */
   numPages?: number;
 };
 
@@ -76,14 +81,15 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       const {
         address,
         responses,
-        responsesPerPage = 10,
+        responsesPerPage,
         numPages,
       } = operation.input;
       scope.throwIfCanceled();
 
-      const responsesByRfq: Response[] = [];
-
       if (responses) {
+        let responsePages: Response[][] = [];
+        const responsesByRfq: Response[] = [];
+
         for (let response of responses) {
           if (response.rfq.toBase58() === address.toBase58()) {
             response = convertResponseOutput(response);
@@ -91,7 +97,11 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
             responsesByRfq.push(response);
           }
         }
-        return [responsesByRfq];
+        scope.throwIfCanceled();
+
+        responsePages = getPages(responsesByRfq, responsesPerPage, numPages);
+
+        return responsePages;
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);

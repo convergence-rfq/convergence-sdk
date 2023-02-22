@@ -1,9 +1,8 @@
 import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
-import { Leg } from '../types';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -15,6 +14,7 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { instrumentsToLegAccounts, instrumentsToLegs } from '../helpers';
 const Key = 'AddLegsToRfqOperation' as const;
 
 /**
@@ -64,12 +64,14 @@ export type AddLegsToRfqInput = {
    */
   taker?: Signer;
 
+  /** The address of the Rfq account. */
   rfq: PublicKey;
 
   /*
    * Args
    */
 
+  /** The instruments of the order, used to construct legs. */
   instruments: (
     | SpotInstrument
     | PsyoptionsEuropeanInstrument
@@ -145,21 +147,14 @@ export const addLegsToRfqBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const protocolPdaClient = convergence.protocol().pdas();
   const protocol = protocolPdaClient.protocol();
-  const { taker = convergence.identity(), rfq, instruments } = params;
+  const { taker = convergence.identity(), rfq } = params;
+  let { instruments } = params;
+
+  const legs = await instrumentsToLegs(convergence, instruments);
+  const legAccounts = instrumentsToLegAccounts(convergence, instruments);
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const legAccounts: AccountMeta[] = [];
-  const legs: Leg[] = [];
-
-  for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
-    );
-    legs.push(await instrumentClient.toLegData());
-    legAccounts.push(...instrumentClient.getValidationAccounts());
-  }
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({

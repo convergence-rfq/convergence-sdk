@@ -20,8 +20,8 @@ const Key = 'WithdrawCollateralOperation' as const;
  *
  * ```ts
  * const rfq = await convergence
- *   .rfqs()
- *   .withdrawCollateral({ address };
+ *   .collateral()
+ *   .withdrawCollateral({ amount: 100 };
  * ```
  *
  * @group Operations
@@ -56,10 +56,17 @@ export type WithdrawCollateralInput = {
    * tokens will be transferred to. */
   userTokens?: PublicKey;
 
+  /**
+   * The address of the protocol.
+   *
+   * @defaultValue `(await convergence.protocol().get()).address`
+   */
   protocol?: PublicKey;
 
+  /** The address of the user's collateral info account. */
   collateralInfo?: PublicKey;
 
+  /** The Token account of the user's collateral */
   collateralToken?: PublicKey;
 
   /*

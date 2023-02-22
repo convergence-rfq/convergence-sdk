@@ -62,11 +62,11 @@ export type CleanUpResponseOperation = Operation<
  * @category Inputs
  */
 export type CleanUpResponseInput = {
-  /** The Maker of the Response */
+  /** The Maker's public key address. */
   maker: PublicKey;
   
-  /**
-   * The address of the protocol
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
    */
   protocol?: PublicKey;
 

@@ -4,7 +4,7 @@ import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
-import { OrderType, FixedSize, QuoteAsset, Leg } from '../types';
+import { OrderType, FixedSize, QuoteAsset } from '../types';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
@@ -17,7 +17,13 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import * as anchor from '@project-serum/anchor';
-import { Sha256 } from '@aws-crypto/sha256-js';
+import {
+  calculateExpectedLegsHash,
+  calculateExpectedLegsSize,
+  convertFixedSizeInput,
+  instrumentsToLegAccounts,
+  instrumentsToLegs,
+} from '../helpers';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -87,10 +93,14 @@ export type CreateRfqInput = {
    */
   fixedSize: FixedSize;
 
-  /** The active window (in seconds). */
+  /** Optional active window (in seconds).
+   * @defaultValue `5_000`
+   */
   activeWindow?: number;
 
-  /** The settling window (in seconds). */
+  /** The settling window (in seconds).
+   * @defaultValue `1_000`
+   */
   settlingWindow?: number;
 
   /** The sum of the sizes of all legs of the Rfq,
@@ -98,7 +108,7 @@ export type CreateRfqInput = {
    * This can be calculated automatically if
    * additional legs will not be added in
    * the future. */
-  legSize?: number;
+  expectedLegsSize?: number;
 
   /** Optional expected legs hash (of all legs).
    * This can be calculated automatically if
@@ -133,85 +143,33 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       taker = convergence.identity(),
       orderType,
       quoteAsset,
-      instruments,
-      fixedSize,
       activeWindow = 5_000,
       settlingWindow = 1_000,
     } = operation.input;
-    let { expectedLegsHash } = operation.input;
+    let { fixedSize, instruments, expectedLegsHash } = operation.input;
 
     let rfqPda: PublicKey;
 
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-    if (fixedSize.__kind == 'BaseAsset') {
-      const parsedLegsMultiplierBps =
-        (fixedSize.legsMultiplierBps as number) * Math.pow(10, 9);
-      fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+    fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
+    expectedLegsHash =
+      expectedLegsHash ??
+      (await calculateExpectedLegsHash(convergence, instruments));
 
-    } else if (fixedSize.__kind == 'QuoteAsset') {
-      const parsedQuoteAmount =
-        (fixedSize.quoteAmount as number) * Math.pow(10, 9);
-      fixedSize.quoteAmount = parsedQuoteAmount;
-    }
-
-    if (expectedLegsHash) {
-      rfqPda = convergence
-        .rfqs()
-        .pdas()
-        .rfq({
-          taker: taker.publicKey,
-          legsHash: Buffer.from(expectedLegsHash),
-          orderType,
-          quoteAsset,
-          fixedSize,
-          activeWindow,
-          settlingWindow,
-          recentTimestamp,
-        });
-    } else {
-      const serializedLegsData: Buffer[] = [];
-
-      for (const instrument of instruments) {
-        if (instrument.legInfo?.amount) {
-          instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-        }
-
-        const instrumentClient = convergence.instrument(
-          instrument,
-          instrument.legInfo
-        );
-
-        const leg = await instrumentClient.toLegData();
-
-        serializedLegsData.push(instrumentClient.serializeLegData(leg));
-      }
-
-      const lengthBuffer = Buffer.alloc(4);
-      lengthBuffer.writeInt32LE(instruments.length);
-      const fullLegDataBuffer = Buffer.concat([
-        lengthBuffer,
-        ...serializedLegsData,
-      ]);
-
-      const hash = new Sha256();
-      hash.update(fullLegDataBuffer);
-      expectedLegsHash = hash.digestSync();
-
-      rfqPda = convergence
-        .rfqs()
-        .pdas()
-        .rfq({
-          taker: taker.publicKey,
-          legsHash: Buffer.from(expectedLegsHash),
-          orderType,
-          quoteAsset,
-          fixedSize,
-          activeWindow,
-          settlingWindow,
-          recentTimestamp,
-        });
-    }
+    rfqPda = convergence
+      .rfqs()
+      .pdas()
+      .rfq({
+        taker: taker.publicKey,
+        legsHash: Buffer.from(expectedLegsHash),
+        orderType,
+        quoteAsset,
+        fixedSize,
+        activeWindow,
+        settlingWindow,
+        recentTimestamp,
+      });
 
     const builder = await createRfqBuilder(
       convergence,
@@ -276,18 +234,23 @@ export const createRfqBuilder = async (
 
   const {
     taker = convergence.identity(),
-    orderType,
-    instruments,
     quoteAsset,
+    instruments,
+    rfq,
+    orderType,
     fixedSize,
     activeWindow = 5_000,
     settlingWindow = 1_000,
-    rfq,
     recentTimestamp,
     expectedLegsHash,
   } = params;
+  let { expectedLegsSize } = params;
 
-  const { legSize } = params;
+  expectedLegsSize =
+    expectedLegsSize ??
+    (await calculateExpectedLegsSize(convergence, instruments));
+  const legs = await instrumentsToLegs(convergence, instruments);
+  const legAccounts = instrumentsToLegAccounts(convergence, instruments);
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -307,37 +270,6 @@ export const createRfqBuilder = async (
       isWritable: false,
     },
   ];
-
-  const legAccounts: AccountMeta[] = [];
-  const legs: Leg[] = [];
-
-  for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
-    );
-
-    const leg = await instrumentClient.toLegData();
-    legs.push(leg);
-
-    legAccounts.push(...instrumentClient.getValidationAccounts());
-  }
-
-  let expectedLegsSize: number;
-
-  if (legSize) {
-    expectedLegsSize = legSize;
-  } else {
-    expectedLegsSize = 4;
-
-    for (const instrument of instruments) {
-      const instrumentClient = convergence.instrument(
-        instrument,
-        instrument.legInfo
-      );
-      expectedLegsSize += await instrumentClient.getLegDataSize();
-    }
-  }
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

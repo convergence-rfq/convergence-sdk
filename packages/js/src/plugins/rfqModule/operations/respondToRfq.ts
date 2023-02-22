@@ -1,9 +1,5 @@
 import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
-import {
-  PublicKey,
-  AccountMeta,
-  ComputeBudgetProgram,
-} from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
 import { Convergence } from '@/Convergence';
@@ -15,7 +11,8 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions, Option } from '@/utils';
+import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { convertResponseInput } from '../helpers';
 
 const Key = 'RespondToRfqOperation' as const;
 
@@ -62,16 +59,27 @@ export type RespondToRfqInput = {
    */
   maker?: Signer;
 
-  /** The address of the protocol account. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional address of the Maker's collateral info account. */
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral token account. */
+  /** Optional address of the Maker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: maker.publicKey,
+   *   })`
+   */
   collateralToken?: PublicKey;
 
   /** Optional address of the risk engine account.
@@ -81,11 +89,11 @@ export type RespondToRfqInput = {
    */
   riskEngine?: PublicKey;
 
-  /** The optional Bid side */
-  bid?: Option<Quote>;
+  /** The optional Bid side of the Response. */
+  bid?: Quote;
 
-  /** The optional Ask side */
-  ask?: Option<Quote>;
+  /** The optional Ask side of the Response. */
+  ask?: Quote;
 };
 
 /**
@@ -115,32 +123,10 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
 
       let pdaDistinguisher = 0;
 
-      if (bid) {
-        const parsedPriceQuoteAmountBps =
-          (bid.priceQuote.amountBps as number) * Math.pow(10, 9);
-
-        bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
-
-        if (bid.__kind == 'Standard') {
-          const parsedLegsMultiplierBps =
-            (bid.legsMultiplierBps as number) * Math.pow(10, 9);
-
-          bid.legsMultiplierBps = parsedLegsMultiplierBps;
-        }
-      }
-      if (ask) {
-        const parsedPriceQuoteAmountBps =
-          (ask.priceQuote.amountBps as number) * Math.pow(10, 9);
-
-        ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
-
-        if (ask.__kind == 'Standard') {
-          const parsedLegsMultiplierBps =
-            (ask.legsMultiplierBps as number) * Math.pow(10, 9);
-
-          ask.legsMultiplierBps = parsedLegsMultiplierBps;
-        }
-      }
+      const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
+        bid,
+        ask
+      );
 
       let responsePda = convergence
         .rfqs()
@@ -148,8 +134,8 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         .response({
           rfq,
           maker: maker.publicKey,
-          bid: bid ?? null,
-          ask: ask ?? null,
+          bid: convertedBid ?? null,
+          ask: convertedAsk ?? null,
           pdaDistinguisher,
         });
 
@@ -164,8 +150,8 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
           .response({
             rfq,
             maker: maker.publicKey,
-            bid: bid ?? null,
-            ask: ask ?? null,
+            bid: convertedBid ?? null,
+            ask: convertedAsk ?? null,
             pdaDistinguisher,
           });
 
@@ -177,8 +163,8 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         {
           ...operation.input,
           response: responsePda,
-          bid,
-          ask,
+          bid: convertedBid,
+          ask: convertedAsk,
           pdaDistinguisher,
         },
         scope

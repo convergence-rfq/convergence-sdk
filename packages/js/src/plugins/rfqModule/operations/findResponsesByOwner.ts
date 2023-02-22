@@ -50,8 +50,12 @@ export type FindResponsesByOwnerInput = {
   /** Optional array of Responses to search from. */
   responses?: Response[];
 
+  /** Optional number of Responses to return per page.
+   * @defaultValue `10`
+   */
   responsesPerPage?: number;
 
+  /** Optional number of pages to return. */
   numPages?: number;
 };
 
@@ -75,24 +79,27 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       const {
         owner,
         responses,
-        responsesPerPage = 10,
+        responsesPerPage,
         numPages,
       } = operation.input;
       scope.throwIfCanceled();
 
-      const responsesByowner: Response[] = [];
-
       if (responses) {
+        let responsePages: Response[][] = [];
+        const responsesByOwner: Response[] = [];
+
         for (let response of responses) {
           if (response.maker.toBase58() === owner.toBase58()) {
             response = convertResponseOutput(response);
 
-            responsesByowner.push(response);
+            responsesByOwner.push(response);
           }
         }
         scope.throwIfCanceled();
 
-        return [responsesByowner];
+        responsePages = getPages(responsesByOwner, responsesPerPage, numPages);
+
+        return responsePages;
       }
 
       const gpaBuilder = new ResponseGpaBuilder(

@@ -8,7 +8,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { convertRfqOutput } from '../helpers';
+import { convertRfqOutput, getPages } from '../helpers';
 
 const Key = 'FindRfqsByAddressesOperation' as const;
 
@@ -46,13 +46,21 @@ export type FindRfqsByAddressesOperation = Operation<
 export type FindRfqsByAddressesInput = {
   /** The addresses of the Rfqs. */
   addresses: PublicKey[];
+
+  /** Optional number of RFQs to return per page.
+   * @defaultValue `10`
+   */
+  rfqsPerPage?: number;
+
+  /** Optional number of pages to return. */
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByAddressesOutput = Rfq[];
+export type FindRfqsByAddressesOutput = Rfq[][];
 
 /**
  * @group Operations
@@ -65,7 +73,7 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByAddressesOutput> => {
-      const { addresses } = operation.input;
+      const { addresses, rfqsPerPage, numPages } = operation.input;
       const { commitment } = scope;
       scope.throwIfCanceled();
 
@@ -84,6 +92,8 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
       }
       scope.throwIfCanceled();
 
-      return rfqs;
+      const rfqPages = getPages(rfqs, rfqsPerPage, numPages);
+
+      return rfqPages;
     },
   };

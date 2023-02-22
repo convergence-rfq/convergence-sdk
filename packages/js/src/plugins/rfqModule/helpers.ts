@@ -1,4 +1,4 @@
-import type { PublicKey } from '@solana/web3.js';
+import type { PublicKey, AccountMeta } from '@solana/web3.js';
 import { Keypair } from '@solana/web3.js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
@@ -10,10 +10,11 @@ import {
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import type { Rfq, Response } from './models';
-import type { Leg, QuoteAsset } from './types';
-import { PublicKeyValues, token, toPublicKey } from '@/types';
 import { Convergence } from '@/Convergence';
-import { UnparsedAccount } from '@/types';
+import { UnparsedAccount, PublicKeyValues, token, toPublicKey } from '@/types';
+import { Sha256 } from '@aws-crypto/sha256-js';
+import { LEG_MULTIPLIER_DECIMALS } from './constants';
+import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 
 export type HasMintAddress = Rfq | PublicKey;
 
@@ -188,48 +189,76 @@ export const quoteAssetToInstrument = async (
   throw new Error("Instrument doesn't exist");
 };
 
-export const getPages = (
-  unparsedAccounts: UnparsedAccount[],
-  rfqsPerPage: number,
+export function getPages<T extends UnparsedAccount | Rfq | Response>(
+  accounts: T[],
+  itemsPerPage?: number,
   numPages?: number
-): UnparsedAccount[][] => {
-  let unparsedAccountPages: UnparsedAccount[][] = [];
+): T[][] {
+  const pages: T[][] = [];
+  const totalCount = accounts.length;
 
-  let lastPageSize = rfqsPerPage;
+  if (itemsPerPage) {
+    const totalPages = numPages ?? Math.ceil(totalCount / itemsPerPage);
 
-  if (numPages) {
+    for (let i = 0; i < totalPages; i++) {
+      const startIndex = i * itemsPerPage;
+      const page = accounts.slice(startIndex, startIndex + itemsPerPage);
+      pages.push(page);
+    }
+  } else if (numPages && !itemsPerPage) {
+    const itemsPerPage = 10;
+
     for (let i = 0; i < numPages; i++) {
-      if (lastPageSize < rfqsPerPage) {
-        return unparsedAccountPages;
-      } else {
-        lastPageSize = unparsedAccounts.slice(
-          i * rfqsPerPage,
-          (i + 1) * rfqsPerPage
-        ).length;
-
-        unparsedAccountPages.push(
-          unparsedAccounts.slice(i * rfqsPerPage, (i + 1) * rfqsPerPage)
-        );
-      }
+      const startIndex = i * itemsPerPage;
+      const page = accounts.slice(startIndex, startIndex + itemsPerPage);
+      pages.push(page);
     }
   } else {
-    while (lastPageSize == rfqsPerPage) {
-      lastPageSize = unparsedAccounts.slice(
-        unparsedAccountPages.length * rfqsPerPage,
-        (unparsedAccountPages.length + 1) * rfqsPerPage
-      ).length;
-
-      unparsedAccountPages.push(
-        unparsedAccounts.slice(
-          unparsedAccountPages.length * rfqsPerPage,
-          (unparsedAccountPages.length + 1) * rfqsPerPage
-        )
-      );
-    }
+    pages.push(accounts);
   }
 
-  return unparsedAccountPages;
+  return pages as T[][];
+}
+
+export const convertFixedSizeInput = (
+  fixedSize: FixedSize,
+  quoteAsset: QuoteAsset
+): FixedSize => {
+  if (fixedSize.__kind == 'BaseAsset') {
+    const parsedLegsMultiplierBps =
+      Number(fixedSize.legsMultiplierBps) *
+      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+
+    fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+  } else if (fixedSize.__kind == 'QuoteAsset') {
+    const parsedQuoteAmount =
+      Number(fixedSize.quoteAmount) *
+      Math.pow(10, quoteAsset.instrumentDecimals);
+
+    fixedSize.quoteAmount = parsedQuoteAmount;
+  }
+
+  return fixedSize;
 };
+
+// export const convertInstrumentsInput = (
+//   instruments: (
+//     | SpotInstrument
+//     | PsyoptionsEuropeanInstrument
+//     | PsyoptionsAmericanInstrument
+//   )[]
+// ): (
+//   | SpotInstrument
+//   | PsyoptionsEuropeanInstrument
+//   | PsyoptionsAmericanInstrument
+// )[] => {
+//   for (const instrument of instruments) {
+//     if (instrument.legInfo?.amount) {
+//       instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
+//     }
+//   }
+//   return instruments;
+// };
 
 export const convertRfqOutput = async (
   convergence: Convergence,
@@ -237,12 +266,14 @@ export const convertRfqOutput = async (
 ): Promise<Rfq> => {
   if (rfq.fixedSize.__kind == 'BaseAsset') {
     const parsedLegsMultiplierBps =
-      (rfq.fixedSize.legsMultiplierBps as number) / Math.pow(10, 9);
+      Number(rfq.fixedSize.legsMultiplierBps) /
+      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
     rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
   } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
     const parsedQuoteAmount =
-      (rfq.fixedSize.quoteAmount as number) / Math.pow(10, 9);
+      Number(rfq.fixedSize.quoteAmount) /
+      Math.pow(10, rfq.quoteAsset.instrumentDecimals);
 
     rfq.fixedSize.quoteAmount = parsedQuoteAmount;
   }
@@ -266,10 +297,8 @@ export const convertRfqOutput = async (
       );
 
       if (instrument.legInfo?.amount) {
-        leg.instrumentAmount = (leg.instrumentAmount as number) /= Math.pow(
-          10,
-          instrument.decimals
-        );
+        leg.instrumentAmount =
+          Number(leg.instrumentAmount) / Math.pow(10, instrument.decimals);
       }
     } else if (
       leg.instrumentProgram.toBase58() ===
@@ -281,10 +310,8 @@ export const convertRfqOutput = async (
       );
 
       if (instrument.legInfo?.amount) {
-        leg.instrumentAmount = (leg.instrumentAmount as number) /= Math.pow(
-          10,
-          instrument.decimals
-        );
+        leg.instrumentAmount =
+          Number(leg.instrumentAmount) / Math.pow(10, instrument.decimals);
       }
     } else if (
       leg.instrumentProgram.toBase58() ===
@@ -293,10 +320,8 @@ export const convertRfqOutput = async (
       const instrument = await SpotInstrument.createFromLeg(convergence, leg);
 
       if (instrument.legInfo?.amount) {
-        leg.instrumentAmount = (leg.instrumentAmount as number) /= Math.pow(
-          10,
-          instrument.decimals
-        );
+        leg.instrumentAmount =
+          Number(leg.instrumentAmount) / Math.pow(10, instrument.decimals);
       }
     }
   }
@@ -307,30 +332,166 @@ export const convertRfqOutput = async (
 export const convertResponseOutput = (response: Response): Response => {
   if (response.bid) {
     const parsedPriceQuoteAmountBps =
-      (response.bid.priceQuote.amountBps as number) / Math.pow(10, 9);
+      Number(response.bid.priceQuote.amountBps) / Math.pow(10, 9);
 
     response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
     if (response.bid.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        (response.bid.legsMultiplierBps as number) / Math.pow(10, 9);
+        Number(response.bid.legsMultiplierBps) /
+        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
       response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
     }
   }
   if (response.ask) {
     const parsedPriceQuoteAmountBps =
-      (response.ask.priceQuote.amountBps as number) / Math.pow(10, 9);
+      Number(response.ask.priceQuote.amountBps) / Math.pow(10, 9);
 
     response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
     if (response.ask.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        (response.ask.legsMultiplierBps as number) / Math.pow(10, 9);
+        Number(response.ask.legsMultiplierBps) /
+        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
       response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
     }
   }
 
   return response;
+};
+
+export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
+  if (bid) {
+    const parsedPriceQuoteAmountBps =
+      Number(bid.priceQuote.amountBps) * Math.pow(10, 9); //where do these decimals come from?
+
+    bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+    if (bid.__kind == 'Standard') {
+      const parsedLegsMultiplierBps =
+        Number(bid.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+
+      bid.legsMultiplierBps = parsedLegsMultiplierBps;
+    }
+  }
+  if (ask) {
+    const parsedPriceQuoteAmountBps =
+      Number(ask.priceQuote.amountBps) * Math.pow(10, 9);
+
+    ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+
+    if (ask.__kind == 'Standard') {
+      const parsedLegsMultiplierBps =
+        Number(ask.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+
+      ask.legsMultiplierBps = parsedLegsMultiplierBps;
+    }
+  }
+
+  return { bid, ask };
+};
+
+//this currently takes pre-converted instruments
+export const calculateExpectedLegsHash = async (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): Promise<Uint8Array> => {
+  const serializedLegsData: Buffer[] = [];
+
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+
+    const leg = await instrumentClient.toLegData();
+
+    serializedLegsData.push(instrumentClient.serializeLegData(leg));
+  }
+
+  const lengthBuffer = Buffer.alloc(4);
+  lengthBuffer.writeInt32LE(instruments.length);
+  const fullLegDataBuffer = Buffer.concat([
+    lengthBuffer,
+    ...serializedLegsData,
+  ]);
+
+  const hash = new Sha256();
+  hash.update(fullLegDataBuffer);
+  const expectedLegsHash = hash.digestSync();
+
+  return expectedLegsHash;
+};
+
+//TODO: this takes pre-converted instruments
+export const calculateExpectedLegsSize = async (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): Promise<number> => {
+  let expectedLegsSize = 4;
+
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+    expectedLegsSize += await instrumentClient.getLegDataSize();
+  }
+
+  return expectedLegsSize;
+};
+
+export const instrumentsToLegs = async (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): Promise<Leg[]> => {
+  const legs: Leg[] = [];
+
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+
+    const leg = await instrumentClient.toLegData();
+
+    legs.push(leg);
+  }
+
+  return legs;
+};
+
+export const instrumentsToLegAccounts = (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): AccountMeta[] => {
+  const legAccounts: AccountMeta[] = [];
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+
+    legAccounts.push(...instrumentClient.getValidationAccounts());
+  }
+
+  return legAccounts;
 };

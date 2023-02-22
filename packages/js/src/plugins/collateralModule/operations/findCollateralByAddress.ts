@@ -8,7 +8,6 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { toBigNumber } from '@/types';
 
 const Key = 'FindCollateralByAddressOperation' as const;
 
@@ -18,7 +17,7 @@ const Key = 'FindCollateralByAddressOperation' as const;
  * ```ts
  * const collateral = await convergence
  *   .collateral()
- *   .findByAddress({ address: 0x123... });
+ *   .findByAddress({ address: user.publicKey });
  * ```
  *
  * @group Operations
@@ -71,9 +70,14 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
       const collateralModel = toCollateral(toCollateralAccount(account));
       scope.throwIfCanceled();
 
-      collateralModel.lockedTokensAmount.basisPoints = toBigNumber(
-        collateralModel.lockedTokensAmount.basisPoints.toNumber() /
-          Math.pow(10, collateralModel.lockedTokensAmount.currency.decimals)
+      const protocol = await convergence.protocol().get();
+      const collateralMint = await convergence
+        .protocol()
+        .findRegisteredMintByAddress({ address: protocol.collateralMint });
+
+      collateralModel.lockedTokensAmount /= Math.pow(
+        10,
+        collateralMint.decimals
       );
 
       return collateralModel;

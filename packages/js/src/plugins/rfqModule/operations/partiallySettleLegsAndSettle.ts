@@ -51,7 +51,9 @@ export type PartiallySettleLegsAndSettleOperation = Operation<
  * @category Inputs
  */
 export type PartiallySettleLegsAndSettleInput = {
-  /** The protocol address. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The Rfq address. */
@@ -96,7 +98,6 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       scope: OperationScope
     ): Promise<PartiallySettleLegsAndSettleOutput> => {
       const { rfq } = operation.input;
-
       const MAX_TX_SIZE = 1232;
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(

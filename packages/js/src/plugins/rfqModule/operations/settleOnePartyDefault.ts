@@ -46,7 +46,9 @@ export type SettleOnePartyDefaultOperation = Operation<
  * @category Inputs
  */
 export type SettleOnePartyDefaultInput = {
-  /** The address of the protocol. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
@@ -55,16 +57,34 @@ export type SettleOnePartyDefaultInput = {
   /** The address of the Response account. */
   response: PublicKey;
 
-  /** Optional address of the Taker's collateral info account. */
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
+   *
+   */
   takerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral info account. */
+  /** Optional address of the Maker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
+   *
+   */
   makerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral token account. */
+  /** Optional address of the Taker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({ 
+   *     user: rfq.taker, 
+   *   })`
+   */
   takerCollateralTokens?: PublicKey;
 
-  /** Optional address of the Maker's collateral token account. */
+  /** Optional address of the Maker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({ 
+   *     user: response.maker, 
+   *   })`
+   */
   makerCollateralTokens?: PublicKey;
 };
 

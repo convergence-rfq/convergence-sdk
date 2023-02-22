@@ -54,6 +54,9 @@ export const SWITCHBOARD_BTC_ORACLE = new PublicKey(
 export const SWITCHBOARD_SOL_ORACLE = new PublicKey(
   'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR'
 );
+export const SWITCHBOARD_ETH_ORACLE = new PublicKey(
+  'HNStfhaLnqwF2ZtJUizaA9uHDAVB976r2AgTUx9LrdEo'
+);
 
 export const RPC_ENDPOINT = 'http://127.0.0.1:8899';
 
@@ -338,6 +341,9 @@ export const initializeNewOptionMeta = async (
   const accountSetupTx = new web3.Transaction();
   initializeIxs.forEach((ix) => accountSetupTx.add(ix));
   await provider.sendAndConfirm(accountSetupTx);
+
+  strikePrice *= Math.pow(10, stableMint.decimals);
+  underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
 
   const {
     instruction: createIx,

@@ -71,7 +71,9 @@ export type PrepareMoreLegsSettlementInput = {
    */
   caller?: Signer;
 
-  /** The protocol address. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The Rfq address. */

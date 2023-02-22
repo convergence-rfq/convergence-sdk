@@ -42,13 +42,18 @@ export type FindRfqsByInstrumentOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByInstrumentInput = {
+  /** Optional array of RFQs to search through. */
   rfqs?: Rfq[];
 
   /** The instrument program to search for. */
   instrumentProgram: Program;
 
+  /** Optional number of RFQs to return per page.
+   * @defaultValue `10`
+   */
   rfqsPerPage?: number;
 
+  /** Optional number of pages to return. */
   numPages?: number;
 };
 
@@ -72,11 +77,12 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       const {
         rfqs,
         instrumentProgram,
-        rfqsPerPage = 10,
+        rfqsPerPage,
         numPages,
       } = operation.input;
 
       if (rfqs) {
+        let rfqPages: Rfq[][] = [];
         const rfqsByInstrument: Rfq[] = [];
 
         for (let rfq of rfqs) {
@@ -91,16 +97,33 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
             }
           }
         }
-
         scope.throwIfCanceled();
 
-        return [rfqsByInstrument];
+        rfqPages = getPages(rfqsByInstrument, rfqsPerPage, numPages);
+
+        return rfqPages;
       }
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
+
+      for (const unparsedAccount of unparsedAccounts) {
+        let rfq = await convergence
+          .rfqs()
+          .findRfqByAddress({ address: unparsedAccount.publicKey });
+
+        for (const leg of rfq.legs) {
+          if (
+            leg.instrumentProgram.toBase58() !=
+            instrumentProgram.address.toBase58()
+          ) {
+            const index = unparsedAccounts.indexOf(unparsedAccount);
+            unparsedAccounts.splice(index, 1);
+          }
+        }
+      }
 
       const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
 
@@ -119,19 +142,6 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
         if (rfqPage.length > 0) {
           rfqPages.push(rfqPage);
-        }
-      }
-
-      for (const rfqPage of rfqPages) {
-        for (let rfq of rfqPage) {
-          for (const leg of rfq.legs) {
-            if (
-              leg.instrumentProgram.toBase58() ===
-              instrumentProgram.address.toBase58()
-            ) {
-              rfq = await convertRfqOutput(convergence, rfq);
-            }
-          }
         }
       }
 

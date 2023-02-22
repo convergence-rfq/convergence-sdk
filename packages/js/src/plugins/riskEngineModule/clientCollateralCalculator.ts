@@ -76,7 +76,8 @@ export async function calculateRisk(
   const instrumentTypesMapping = config.instrumentTypes;
 
   const legInfos = legs.map((leg) => {
-    let amount = Number(leg.instrumentAmount) / 10 ** leg.instrumentDecimals;
+    // let amount = Number(leg.instrumentAmount) / 10 ** leg.instrumentDecimals;
+    let amount = Number(leg.instrumentAmount)
     if (leg.side == Side.Bid) {
       amount = -amount;
     }

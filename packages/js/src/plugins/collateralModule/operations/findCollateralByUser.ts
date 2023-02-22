@@ -9,7 +9,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { toBigNumber } from '@/types';
+// import { toBigNumber } from '@/types';
 
 const Key = 'FindCollateralByUserOperation' as const;
 
@@ -19,7 +19,7 @@ const Key = 'FindCollateralByUserOperation' as const;
  * ```ts
  * const rfqs = await convergence
  *   .collateral()
- *   .findByUser({ user });
+ *   .findByUser({ user: user.publicKey });
  * ```
  *
  * @group Operations
@@ -91,10 +91,7 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
           (collateral): collateral is Collateral => collateral !== null
         )[0];
 
-      collateralModel.lockedTokensAmount.basisPoints = toBigNumber(
-        collateralModel.lockedTokensAmount.basisPoints.toNumber() /
-          Math.pow(10, collateralModel.lockedTokensAmount.currency.decimals)
-      );
+      collateralModel.lockedTokensAmount /= Math.pow(10, 9);
 
       return collateralModel;
     },

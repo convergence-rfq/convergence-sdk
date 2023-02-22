@@ -59,7 +59,9 @@ export type PartiallySettleLegsOperation = Operation<
  * @category Inputs
  */
 export type PartiallySettleLegsInput = {
-  /** The protocol address. */
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The Rfq address. */

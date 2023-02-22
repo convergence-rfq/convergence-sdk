@@ -62,8 +62,8 @@ export type CleanUpResponseLegsOperation = Operation<
  * @category Inputs
  */
 export type CleanUpResponseLegsInput = {
-  /**
-   * The address of the protocol.
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
    */
   protocol?: PublicKey;
 

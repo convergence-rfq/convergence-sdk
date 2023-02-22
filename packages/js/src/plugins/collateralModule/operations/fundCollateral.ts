@@ -1,6 +1,6 @@
 import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
-import { bignum } from '@convergence-rfq/beet';
+// import { bignum } from '@convergence-rfq/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -20,8 +20,8 @@ const Key = 'FundCollateralOperation' as const;
  *
  * ```ts
  * const rfq = await convergence
- *   .rfqs()
- *   .fundCollateral({ address };
+ *   .collateral()
+ *   .fundCollateral({ amount: 100 };
  * ```
  *
  * @group Operations
@@ -52,6 +52,11 @@ export type FundCollateralInput = {
    */
   user?: Signer;
 
+  /**
+   * The address of the protocol.
+   *
+   * @defaultValue `(await convergence.protocol().get()).address`
+   */
   protocol?: PublicKey;
 
   /** Token account of user's token */
@@ -67,7 +72,8 @@ export type FundCollateralInput = {
    * Args
    */
 
-  amount: bignum;
+  /** The amount to fund. */
+  amount: number;
 };
 
 /**
@@ -153,7 +159,6 @@ export const fundCollateralBuilder = async (
       programs,
     }),
   } = params;
-
   let { amount } = params;
 
   const collateralDecimals = (
@@ -162,7 +167,7 @@ export const fundCollateralBuilder = async (
       .findMintByAddress({ address: protocolModel.collateralMint })
   ).decimals;
 
-  amount = ((amount as number) *= 10 ** collateralDecimals);
+  amount *= Math.pow(10, collateralDecimals);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

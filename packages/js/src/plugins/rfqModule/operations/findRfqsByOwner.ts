@@ -50,8 +50,12 @@ export type FindRfqsByOwnerInput = {
   /** Optional array of Rfqs to search from. */
   rfqs?: Rfq[];
 
+  /** Optional number of RFQs to return per page.
+   * @defaultValue `10`
+   */
   rfqsPerPage?: number;
 
+  /** Optional number of pages to return. */
   numPages?: number;
 };
 
@@ -72,10 +76,11 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
-      const { owner, rfqs, rfqsPerPage = 10, numPages } = operation.input;
+      const { owner, rfqs, rfqsPerPage, numPages } = operation.input;
       const { programs } = scope;
 
       if (rfqs) {
+        let rfqPages: Rfq[][] = [];
         const rfqsByOwner: Rfq[] = [];
 
         for (let rfq of rfqs) {
@@ -85,10 +90,11 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
             rfqsByOwner.push(rfq);
           }
         }
-
         scope.throwIfCanceled();
 
-        return [rfqsByOwner];
+        rfqPages = getPages(rfqsByOwner, rfqsPerPage, numPages);
+
+        return rfqPages;
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);
@@ -107,20 +113,16 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         const rfqPage = [];
 
         for (const unparsedAccount of page) {
-          rfqPage.push(
-            await convergence
-              .rfqs()
-              .findRfqByAddress({ address: unparsedAccount.publicKey })
-          );
+          let rfq = await convergence
+            .rfqs()
+            .findRfqByAddress({ address: unparsedAccount.publicKey });
+
+          rfq = await convertRfqOutput(convergence, rfq);
+
+          rfqPage.push(rfq);
         }
         if (rfqPage.length > 0) {
           rfqPages.push(rfqPage);
-        }
-      }
-
-      for (const rfqPage of rfqPages) {
-        for (let rfq of rfqPage) {
-          rfq = await convertRfqOutput(convergence, rfq);
         }
       }
 

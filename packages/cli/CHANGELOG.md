@@ -1,5 +1,21 @@
 # @convergence-rfq/cli
 
+## 4.0.12
+
+### Patch Changes
+
+- change type of rfq pda timestamp buffer
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.12
+
+## 4.0.11
+
+### Patch Changes
+
+- fix locked collateral, risk engine collateral calculations
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.11
+
 ## 4.0.10
 
 ### Patch Changes

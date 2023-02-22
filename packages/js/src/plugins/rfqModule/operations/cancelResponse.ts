@@ -57,11 +57,15 @@ export type CancelResponseInput = {
    */
   maker?: Signer;
 
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
+  /** The address of the Reponse account. */
   response: PublicKey;
 };
 

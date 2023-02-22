@@ -47,8 +47,12 @@ export type FindRfqsByActiveInput = {
   /** Optional array of Rfqs to search from. */
   rfqs?: Rfq[];
 
+  /** Optional number of RFQs to return per page.
+   * @defaultValue `10`
+   */
   rfqsPerPage?: number;
 
+  /** Optional number of pages to return. */
   numPages?: number;
 };
 
@@ -70,9 +74,10 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       scope: OperationScope
     ): Promise<FindRfqsByActiveOutput> => {
       const { programs } = scope;
-      const { rfqs, rfqsPerPage = 10, numPages } = operation.input;
+      const { rfqs, rfqsPerPage, numPages } = operation.input;
 
       if (rfqs) {
+        let rfqPages: Rfq[][] = [];
         const rfqsByActive: Rfq[] = [];
 
         for (let rfq of rfqs) {
@@ -82,16 +87,28 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
             rfqsByActive.push(rfq);
           }
         }
-
         scope.throwIfCanceled();
 
-        return [rfqsByActive];
+        rfqPages = getPages(rfqsByActive, rfqsPerPage, numPages);
+
+        return rfqPages;
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
+
+      for (const unparsedAccount of unparsedAccounts) {
+        let rfq = await convergence
+          .rfqs()
+          .findRfqByAddress({ address: unparsedAccount.publicKey });
+
+        if (rfq.state != StoredRfqState.Active) {
+          const index = unparsedAccounts.indexOf(unparsedAccount);
+          unparsedAccounts.splice(index, 1);
+        }
+      }
 
       const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
 
@@ -105,11 +122,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
 
-          if (rfq.state == StoredRfqState.Active) {
-            rfq = await convertRfqOutput(convergence, rfq);
-
-            rfqPage.push(rfq);
-          }
+          rfqPage.push(rfq);
         }
         if (rfqPage.length > 0) {
           rfqPages.push(rfqPage);

@@ -26,7 +26,15 @@ const Key = 'CalculateCollateralForRfqOperation' as const;
  * Calculates the required collateral for a taker to create a particular RFQ
  *
  * ```ts
- * TODO
+ * await cvg.riskEngine().calculateCollateralForRfq({
+      fixedSize: {
+        __kind: 'BaseAsset',
+        legsMultiplierBps: 2,
+      },
+      orderType: OrderType.TwoWay,
+      legs,
+      settlementPeriod: 5 * 60 * 60, // 5 hours
+    });
  * ```
  *
  * @group Operations
@@ -60,19 +68,20 @@ export type CalculateCollateralForRfqOutput = {
  */
 export type CalculateCollateralForRfqInput = {
   /**
-   * What's the size restriction of the RFQ being created
+   * The size restriction of the RFQ being created
    */
   fixedSize: FixedSize;
+
   /**
-   * What's the order type of the RFQ being created
+   * The order type of the RFQ being created
    */
   orderType: OrderType;
   /**
-   * What's the legs of the RFQ being created
+   * The legs of the RFQ being created
    */
   legs: Leg[];
   /**
-   * What's the settlement period of the RFQ being created in seconds
+   * The settlement period of the RFQ being created in seconds
    */
   settlementPeriod: number;
 };
@@ -137,6 +146,7 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
         );
 
         const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
+
         return { requiredCollateral };
       }
 

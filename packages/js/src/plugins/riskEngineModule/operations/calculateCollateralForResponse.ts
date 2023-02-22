@@ -9,7 +9,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
+// import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -17,7 +17,25 @@ const Key = 'CalculateCollateralForResponseOperation' as const;
  * Calculates the required collateral for a maker particular response for an RFQ
  *
  * ```ts
- * TODO
+ * await cvg.riskEngine().calculateCollateralForResponse({
+      rfqAddress: rfq.address,
+      bid: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 22_000,
+        },
+        legsMultiplierBps: 20,
+      },
+      ask: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 23_000,
+        },
+        legsMultiplierBps: 5,
+      },
+    });
  * ```
  *
  * @group Operations
@@ -43,8 +61,10 @@ export type CalculateCollateralForResponseOperation = Operation<
 export type CalculateCollateralForResponseInput = {
   /** The address of the Rfq account. */
   rfqAddress: PublicKey;
+
   /** Bid answer to the Rfq. */
   bid: Quote | null;
+
   /** Ask answer to the Rfq. */
   ask: Quote | null;
 };
@@ -81,7 +101,8 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       const getCase = (quote: Quote, side: Side) => {
         const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
         const legMultiplier =
-          Number(legsMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
+          // Number(legsMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
+          Number(legsMultiplierBps);
         return {
           legMultiplier,
           authoritySide: AuthoritySide.Maker,
@@ -106,6 +127,7 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         scope.commitment
       );
       const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
+      
       return { requiredCollateral };
     },
   };

@@ -50,6 +50,10 @@ export class SpotInstrument implements Instrument {
     this.mint = mint;
     this.decimals = mint.decimals;
     this.legInfo = legInfo;
+
+    if (legInfo && this.legInfo) {
+      this.legInfo.amount = legInfo.amount * Math.pow(10, mint.decimals);
+    }
   }
 
   static createForLeg(
@@ -59,11 +63,11 @@ export class SpotInstrument implements Instrument {
     side: Side
   ): InstrumentClient {
     const instrument = new SpotInstrument(convergence, mint, {
-      amount,
+      amount: amount * Math.pow(10, mint.decimals),
       side,
     });
     return new InstrumentClient(convergence, instrument, {
-      amount,
+      amount: amount * Math.pow(10, mint.decimals),
       side,
     });
   }

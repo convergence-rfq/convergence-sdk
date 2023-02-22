@@ -47,8 +47,8 @@ export type AddInstrumentInput = {
    */
   authority: Signer;
 
-  /**
-   * The protocol to add the instrument to.
+  /** The protocol address.
+   * @defaultValue `(await convergence.protocol().get()).address
    */
   protocol?: PublicKey;
 
@@ -57,6 +57,7 @@ export type AddInstrumentInput = {
    */
   instrumentProgram: PublicKey;
 
+  /** Flag to indicate if the instrument can be used as a quote. */
   canBeUsedAsQuote: boolean;
 
   /*
@@ -64,6 +65,7 @@ export type AddInstrumentInput = {
    */
   validateDataAccountAmount: number;
 
+  
   prepareToSettleAccountAmount: number;
 
   settleAccountAmount: number;
