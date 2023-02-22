@@ -41,7 +41,7 @@ export type FindBaseAssetByAddressOperation = Operation<
  * @category Inputs
  */
 export type FindBaseAssetByAddressInput = {
-  /** The address of the BaseAsset. */
+  /** The pubkey address of the BaseAssetInfo account. */
   address: PublicKey;
 };
 

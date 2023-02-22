@@ -64,7 +64,7 @@ export type CalculateCollateralForResponseInput = {
 
   /** Bid answer to the Rfq. */
   bid: Quote | null;
-  
+
   /** Ask answer to the Rfq. */
   ask: Quote | null;
 };
@@ -126,9 +126,8 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         rfq.settlingWindow,
         scope.commitment
       );
-      const requiredCollateral =
-        risks.reduce((x, y) => Math.max(x, y), 0) 
-        // * Math.pow(10, ABSOLUTE_PRICE_DECIMALS);
+      const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
+      
       return { requiredCollateral };
     },
   };

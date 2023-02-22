@@ -126,8 +126,6 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         scope.commitment
       );
 
-      // requiredCollateral *= Math.pow(10, ABSOLUTE_PRICE_DECIMALS);
-
       return { requiredCollateral };
     },
   };

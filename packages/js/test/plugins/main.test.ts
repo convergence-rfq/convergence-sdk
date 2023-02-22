@@ -388,9 +388,43 @@ test('[protocolModule] it can get base assets', async (t: Test) => {
   });
 });
 
+test('[protocolModule] it can find BTC and SOL base assets by address', async (t: Test) => {
+  const btcBaseAsset = await cvg.protocol().findBaseAssetByAddress({
+    address: cvg
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value: 0 } }),
+  });
+  const solBaseAsset = await cvg.protocol().findBaseAssetByAddress({
+    address: cvg
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value: 1 } }),
+  });
+
+  spok(t, btcBaseAsset, {
+    $topic: 'Find Base Asset By Address',
+    model: 'baseAsset',
+    index: {
+      value: 0,
+    },
+    ticker: 'BTC',
+    riskCategory: 0,
+  });
+  spok(t, solBaseAsset, {
+    $topic: 'Find Base Asset By Address',
+    model: 'baseAsset',
+    index: {
+      value: 1,
+    },
+    ticker: 'SOL',
+    riskCategory: 0,
+  });
+});
+
 test('[protocolModule] get registered mints', async (t: Test) => {
   const registeredMints = await cvg.protocol().getRegisteredMints();
-  t.assert(registeredMints.length > 0);
+  t.assert(registeredMints.length === 3);
 });
 
 // RISK ENGINE
@@ -589,7 +623,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
   spok(t, takerCollateralTokenAccount, {
     $topic: 'collateral model',
     model: 'token',
-    amount: token(USER_COLLATERAL_AMOUNT * 10 ** USDC_DECIMALS), // * 10 ** USDC_DECIMALS
+    amount: token(USER_COLLATERAL_AMOUNT * 10 ** USDC_DECIMALS),
   });
 
   t.same(
@@ -810,15 +844,15 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 5.4987,
           side: Side.Bid,
         }),
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 42.9573893,
           side: Side.Ask,
         }),
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000002,
+          amount: 999.29354,
           side: Side.Ask,
         }),
       ],
@@ -1904,11 +1938,11 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq: rfq2 } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, solMint, {
-          amount: 0.000000004,
+          amount: 450.6,
           side: Side.Ask,
         }),
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 12.6879,
           side: Side.Ask,
         }),
       ],
@@ -1953,7 +1987,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 55555,
           side: Side.Bid,
         }),
       ],
@@ -1989,13 +2023,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       legAmountToPrepare: 1,
     });
 
-    console.log(
-      'settle 1 party response collateral: ' +
-        rfqResponse.takerCollateralLocked.toString() +
-        ' .. ' +
-        rfqResponse.makerCollateralLocked.toString()
-    );
-
     await sleep(3_001).then(async () => {
       await cvg.rfqs().settleOnePartyDefault({
         rfq: rfq.address,
@@ -2008,11 +2035,11 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 45,
           side: Side.Bid,
         }),
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 98.74,
           side: Side.Ask,
         }),
       ],
@@ -2114,13 +2141,26 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       caller: taker,
       rfq: rfq.address,
       response: rfqResponse.address,
-      legAmountToPrepare: 25,
+      legAmountToPrepare: 20,
     });
     await cvg.rfqs().prepareSettlementAndPrepareMoreLegs({
       caller: maker,
       rfq: rfq.address,
       response: rfqResponse.address,
-      legAmountToPrepare: 25,
+      legAmountToPrepare: 20,
+    });
+
+    await cvg.rfqs().prepareMoreLegsSettlement({
+      caller: taker,
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      legAmountToPrepare: 5,
+    });
+    await cvg.rfqs().prepareMoreLegsSettlement({
+      caller: maker,
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      legAmountToPrepare: 5,
     });
 
     let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -2231,7 +2271,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker,
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 5.99922,
+          amount: 999999,
           side: Side.Bid,
         }),
       ],
@@ -2284,7 +2324,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
     spok(t, foundRfq3.legs[0], {
       $topic: 'Found RFQ3 by address and assert the amount of legs[0]',
-      instrumentAmount: 5.99922,
+      instrumentAmount: 999999,
     });
   });
 
@@ -2296,6 +2336,5 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     );
     t.assert(collateralWallet);
   });
-
-  //*<>*<>*END NON-INTERDEPENDENT TESTS WRAPPER*<>*<>*
+  //*<>*<>*END NON-INTERDEPENDENT TESTS WRAPPER*<>*<>*//
 });

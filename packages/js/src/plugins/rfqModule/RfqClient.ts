@@ -215,15 +215,6 @@ export class RfqClient {
     input: CreateAndFinalizeRfqConstructionInput,
     options?: OperationOptions
   ) {
-    // const { taker } = input;
-
-    // const { rfq } = await this.convergence.rfqs().createAndFinalize(
-    //   {
-    //     ...input,
-    //   },
-    //   options
-    // );
-
     return this.convergence
       .operations()
       .execute(createAndFinalizeRfqConstructionOperation(input), options);
