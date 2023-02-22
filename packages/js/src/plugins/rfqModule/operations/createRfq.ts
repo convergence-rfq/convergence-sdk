@@ -19,13 +19,10 @@ import { Convergence } from '@/Convergence';
 import * as anchor from '@project-serum/anchor';
 import {
   calculateExpectedLegsHash,
-  //@ts-ignore
   calculateExpectedLegsSize,
   convertFixedSizeInput,
-  convertInstrumentsInput,
   instrumentsToLegAccounts,
   instrumentsToLegs,
-  // convertInstrumentsInput,
 } from '../helpers';
 
 const Key = 'CreateRfqOperation' as const;
@@ -156,7 +153,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
     fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
-    instruments = convertInstrumentsInput(instruments);
     expectedLegsHash =
       expectedLegsHash ??
       (await calculateExpectedLegsHash(convergence, instruments));
@@ -238,13 +234,13 @@ export const createRfqBuilder = async (
 
   const {
     taker = convergence.identity(),
-    orderType,
-    instruments,
     quoteAsset,
+    instruments,
+    rfq,
+    orderType,
     fixedSize,
     activeWindow = 5_000,
     settlingWindow = 1_000,
-    rfq,
     recentTimestamp,
     expectedLegsHash,
   } = params;

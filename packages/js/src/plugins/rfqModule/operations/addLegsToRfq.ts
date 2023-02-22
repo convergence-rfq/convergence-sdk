@@ -1,10 +1,8 @@
 import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
-//@ts-ignore
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
-// import { Leg } from '../types';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -16,13 +14,7 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-//@ts-ignore
-import {
-  //@ts-ignore
-  convertInstrumentsInput,
-  instrumentsToLegAccounts,
-  instrumentsToLegs,
-} from '../helpers';
+import { instrumentsToLegAccounts, instrumentsToLegs } from '../helpers';
 const Key = 'AddLegsToRfqOperation' as const;
 
 /**
@@ -85,11 +77,6 @@ export type AddLegsToRfqInput = {
     | PsyoptionsEuropeanInstrument
     | PsyoptionsAmericanInstrument
   )[];
-
-  /** Optional flag for whether the instruments have already been converted.
-   *    This is used internally by the SDK, does not need to be passed manually.
-   */
-  instrumentsConverted?: boolean;
 };
 
 /**
@@ -160,13 +147,9 @@ export const addLegsToRfqBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const protocolPdaClient = convergence.protocol().pdas();
   const protocol = protocolPdaClient.protocol();
-  const { taker = convergence.identity(), rfq, instrumentsConverted } = params;
+  const { taker = convergence.identity(), rfq } = params;
   let { instruments } = params;
 
-  //if called from createAndAddLegsToRfq, then we don't need this conversion
-  if (!instrumentsConverted) {
-    instruments = convertInstrumentsInput(instruments);
-  }
   const legs = await instrumentsToLegs(convergence, instruments);
   const legAccounts = instrumentsToLegAccounts(convergence, instruments);
 

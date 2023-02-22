@@ -8,8 +8,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { convertRfqOutput } from '../helpers';
-import { getPages } from '../helpers';
+import { convertRfqOutput, getPages } from '../helpers';
 
 const Key = 'FindRfqsByAddressesOperation' as const;
 

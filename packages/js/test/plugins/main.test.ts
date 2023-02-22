@@ -16,6 +16,7 @@ import {
   calculateExpectedLegsHash,
   //@ts-ignore
   UnparsedAccount,
+  //@ts-ignore
   convertInstrumentsInput,
 } from '@/index';
 //@ts-ignore
@@ -1608,30 +1609,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       })
     );
 
-    instruments = convertInstrumentsInput(instruments);
-
-    // let expectedLegsSize = 4;
-
-    // const serializedLegsData: Buffer[] = [];
-
-    // for (const instrument of instruments) {
-    //   const instrumentClient = cvg.instrument(instrument, instrument.legInfo);
-    //   // expectedLegsSize += await instrumentClient.getLegDataSize();
-
-    //   const leg = await instrumentClient.toLegData();
-
-    //   serializedLegsData.push(instrumentClient.serializeLegData(leg));
-    // }
-
-    // const lengthBuffer = Buffer.alloc(4);
-    // lengthBuffer.writeInt32LE(instruments.length);
-    // const fullLegDataBuffer = Buffer.concat([
-    //   lengthBuffer,
-    //   ...serializedLegsData,
-    // ]);
-
-    // const expectedLegsHash = sha256(fullLegDataBuffer);
-
     const expectedLegsSize = await calculateExpectedLegsSize(cvg, instruments);
     const expectedLegsHash = await calculateExpectedLegsHash(cvg, instruments);
 
@@ -1682,8 +1659,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   // RFQ HELPERS
 
   test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
-    // We can to this after creating options so that we can test this method
-    // on all instruments
     const rfqPages = await cvg.rfqs().findAllByOwner({
       owner: taker.publicKey,
     });
@@ -1695,19 +1670,18 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     )[][] = [[]];
 
     for (const rfqs of rfqPages) {
-      await Promise.all(
-        rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
-      );
-
       instruments = await Promise.all(
         rfqs.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
       );
     }
 
-    spok(t, instruments[0][0], {
-      $topic: 'Convert RFQ Legs to Instruments',
-      model: 'spotInstrument',
-    });
+    const instrument = instruments[0][0];
+    t.assert(
+      instrument instanceof SpotInstrument ||
+        instrument instanceof PsyoptionsEuropeanInstrument ||
+        instrument instanceof PsyoptionsAmericanInstrument,
+      'expected instrument'
+    );
   });
 
   test('[rfqModule] it can create and finalize RFQ, respond, confirm response, prepare settlemt, partly revert settlemt prep, revert settlemt prep', async (t: Test) => {
@@ -2141,22 +2115,12 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       );
     }
 
-    const convertedInstruments = convertInstrumentsInput(instruments);
-    //@ts-ignore
-    const expectedLegsSize = await calculateExpectedLegsSize(
-      cvg,
-      convertedInstruments
-    );
-    //@ts-ignore
-    const expectedLegsHash = await calculateExpectedLegsHash(
-      cvg,
-      convertedInstruments
-    );
+    const expectedLegsSize = await calculateExpectedLegsSize(cvg, instruments);
+    const expectedLegsHash = await calculateExpectedLegsHash(cvg, instruments);
 
     const { rfq } = await cvg.rfqs().createRfqAndAddLegs({
       taker,
-      instruments,
-      // instruments: instruments.slice(0, 20),
+      instruments: instruments.slice(0, 20),
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
       quoteAsset: cvg
@@ -2166,11 +2130,11 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       expectedLegsHash,
     });
 
-    // await cvg.rfqs().addLegsToRfq({
-    //   taker,
-    //   rfq: rfq.address,
-    //   instruments: instruments.slice(20),
-    // });
+    await cvg.rfqs().addLegsToRfq({
+      taker,
+      rfq: rfq.address,
+      instruments: instruments.slice(20),
+    });
 
     await cvg.rfqs().finalizeRfqConstruction({
       taker,

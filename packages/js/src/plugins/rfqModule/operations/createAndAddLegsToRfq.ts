@@ -15,14 +15,11 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-//@ts-ignore
-import { Sha256 } from '@aws-crypto/sha256-js';
 import { Convergence } from '@/Convergence';
 import {
   calculateExpectedLegsHash,
   calculateExpectedLegsSize,
   convertFixedSizeInput,
-  convertInstrumentsInput /*calculateExpectedLegsHash*/,
 } from '../helpers';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
@@ -156,7 +153,8 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
       fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
-      instruments = convertInstrumentsInput(instruments);
+      //TODO: dont need to convert instruments? test passing...
+      // instruments = convertInstrumentsInput(instruments);
       expectedLegsSize =
         expectedLegsSize ??
         (await calculateExpectedLegsSize(convergence, instruments));
@@ -252,7 +250,6 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
             ...operation.input,
             rfq: rfqPda,
             instruments: addLegsSlicedInstruments,
-            instrumentsConverted: true
           },
           scope
         );
@@ -273,7 +270,6 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
               ...operation.input,
               rfq: rfqPda,
               instruments: halvedInstruments,
-              instrumentsConverted: true
             },
             scope
           );
@@ -311,7 +307,6 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
                 ...operation.input,
                 rfq: rfqPda,
                 instruments: nextAddLegsInstruments,
-                instrumentsConverted: true
               },
               scope
             );

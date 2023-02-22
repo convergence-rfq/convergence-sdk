@@ -17,16 +17,11 @@ import {
 } from '@/types';
 import { Leg } from '@convergence-rfq/rfq';
 import { Convergence } from '@/Convergence';
-//@ts-ignore
-import { Sha256 } from '@aws-crypto/sha256-js';
 import * as anchor from '@project-serum/anchor';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-//@ts-ignore
 import {
-  //@ts-ignore
   calculateExpectedLegsHash,
   convertFixedSizeInput,
-  convertInstrumentsInput,
   instrumentsToLegs,
 } from '../helpers';
 
@@ -157,7 +152,6 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
       fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
-      instruments = convertInstrumentsInput(instruments);
       const legs = await instrumentsToLegs(convergence, instruments);
       const expectedLegsHash = await calculateExpectedLegsHash(
         convergence,

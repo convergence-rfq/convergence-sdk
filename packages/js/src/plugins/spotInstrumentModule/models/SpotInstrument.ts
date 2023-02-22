@@ -50,6 +50,10 @@ export class SpotInstrument implements Instrument {
     this.mint = mint;
     this.decimals = mint.decimals;
     this.legInfo = legInfo;
+
+    if (legInfo && this.legInfo) {
+      this.legInfo.amount = legInfo.amount * Math.pow(10, mint.decimals);
+    }
   }
 
   static createForLeg(
