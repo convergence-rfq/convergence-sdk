@@ -77,7 +77,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       const {
         rfqs,
         instrumentProgram,
-        rfqsPerPage = 10,
+        rfqsPerPage,
         numPages,
       } = operation.input;
 

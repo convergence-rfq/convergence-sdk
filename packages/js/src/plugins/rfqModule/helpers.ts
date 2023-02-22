@@ -192,17 +192,23 @@ export const quoteAssetToInstrument = async (
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
-  itemsPerPage: number,
+  itemsPerPage?: number,
   numPages?: number
 ): T[][] {
-  const pages: (UnparsedAccount | Rfq | Response)[][] = [];
+  // const pages: (UnparsedAccount | Rfq | Response)[][] = [];
+  const pages: T[][] = [];
   const totalCount = accounts.length;
-  const totalPages = numPages ?? Math.ceil(totalCount / itemsPerPage);
 
-  for (let i = 0; i < totalPages; i++) {
-    const startIndex = i * itemsPerPage;
-    const page = accounts.slice(startIndex, startIndex + itemsPerPage);
-    pages.push(page);
+  if (itemsPerPage) {
+    const totalPages = numPages ?? Math.ceil(totalCount / itemsPerPage);
+
+    for (let i = 0; i < totalPages; i++) {
+      const startIndex = i * itemsPerPage;
+      const page = accounts.slice(startIndex, startIndex + itemsPerPage);
+      pages.push(page);
+    }
+  } else {
+    pages.push(accounts);
   }
 
   return pages as T[][];

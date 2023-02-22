@@ -73,7 +73,7 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByAddressesOutput> => {
-      const { addresses, rfqsPerPage = 10, numPages } = operation.input;
+      const { addresses, rfqsPerPage, numPages } = operation.input;
       const { commitment } = scope;
       scope.throwIfCanceled();
 

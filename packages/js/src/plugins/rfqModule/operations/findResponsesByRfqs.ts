@@ -81,7 +81,7 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
       const {
         addresses,
         responses,
-        responsesPerPage = 10,
+        responsesPerPage,
         numPages,
       } = operation.input;
       scope.throwIfCanceled();

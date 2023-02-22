@@ -79,7 +79,7 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       const {
         owner,
         responses,
-        responsesPerPage = 10,
+        responsesPerPage,
         numPages,
       } = operation.input;
       scope.throwIfCanceled();

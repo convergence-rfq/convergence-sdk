@@ -2204,7 +2204,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     await cvg.collateral().fund({ user: taker, amount: 1000 });
   });
 
-  test('[rfqModule] it can find RFQs by instrument', async (t: Test) => {
+  test('[rfqModule] it can find RFQs by instrument (specifying page params)', async (t: Test) => {
     const rfqPages = await cvg.rfqs().findByInstrument({
       instrumentProgram: cvg.programs().getSpotInstrument(),
       rfqsPerPage: 6,
@@ -2219,5 +2219,18 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       }
     }
     t.assert(rfqPages.length === 4, 'returned 4 pages');
+  });
+  test('[rfqModule] it can find RFQs by instrument (not specifying page params)', async (t: Test) => {
+    const rfqPages = await cvg.rfqs().findByInstrument({
+      instrumentProgram: cvg.programs().getSpotInstrument(),
+    });
+
+    for (const rfqPage of rfqPages) {
+      console.log('new page');
+
+      for (const rfq of rfqPage) {
+        console.log('rfq address: ' + rfq.address.toString());
+      }
+    }
   });
 });

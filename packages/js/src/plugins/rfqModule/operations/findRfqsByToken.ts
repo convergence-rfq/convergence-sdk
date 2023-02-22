@@ -80,7 +80,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       scope: OperationScope
     ): Promise<FindRfqsByTokenOutput> => {
       const { programs } = scope;
-      const { mintAddress, rfqsPerPage = 10, numPages } = operation.input;
+      const { mintAddress, rfqsPerPage, numPages } = operation.input;
       scope.throwIfCanceled();
 
       const spotInstrumentProgram = convergence.programs().getSpotInstrument();

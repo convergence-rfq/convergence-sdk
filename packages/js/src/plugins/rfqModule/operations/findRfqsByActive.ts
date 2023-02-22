@@ -74,7 +74,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       scope: OperationScope
     ): Promise<FindRfqsByActiveOutput> => {
       const { programs } = scope;
-      const { rfqs, rfqsPerPage = 10, numPages } = operation.input;
+      const { rfqs, rfqsPerPage, numPages } = operation.input;
 
       if (rfqs) {
         let rfqPages: Rfq[][] = [];

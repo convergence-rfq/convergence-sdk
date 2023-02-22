@@ -76,7 +76,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
-      const { owner, rfqs, rfqsPerPage = 10, numPages } = operation.input;
+      const { owner, rfqs, rfqsPerPage, numPages } = operation.input;
       const { programs } = scope;
 
       if (rfqs) {
