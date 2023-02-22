@@ -10,7 +10,6 @@ import {
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import type { Rfq, Response } from './models';
-// import type { FixedSize, Leg, QuoteAsset } from './types';
 import { Convergence } from '@/Convergence';
 import { UnparsedAccount, PublicKeyValues, token, toPublicKey } from '@/types';
 import { Sha256 } from '@aws-crypto/sha256-js';
@@ -195,7 +194,6 @@ export function getPages<T extends UnparsedAccount | Rfq | Response>(
   itemsPerPage?: number,
   numPages?: number
 ): T[][] {
-  // const pages: (UnparsedAccount | Rfq | Response)[][] = [];
   const pages: T[][] = [];
   const totalCount = accounts.length;
 
@@ -203,6 +201,14 @@ export function getPages<T extends UnparsedAccount | Rfq | Response>(
     const totalPages = numPages ?? Math.ceil(totalCount / itemsPerPage);
 
     for (let i = 0; i < totalPages; i++) {
+      const startIndex = i * itemsPerPage;
+      const page = accounts.slice(startIndex, startIndex + itemsPerPage);
+      pages.push(page);
+    }
+  } else if (numPages && !itemsPerPage) {
+    const itemsPerPage = 10;
+
+    for (let i = 0; i < numPages; i++) {
       const startIndex = i * itemsPerPage;
       const page = accounts.slice(startIndex, startIndex + itemsPerPage);
       pages.push(page);
@@ -235,24 +241,24 @@ export const convertFixedSizeInput = (
   return fixedSize;
 };
 
-export const convertInstrumentsInput = (
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[]
-): (
-  | SpotInstrument
-  | PsyoptionsEuropeanInstrument
-  | PsyoptionsAmericanInstrument
-)[] => {
-  for (const instrument of instruments) {
-    if (instrument.legInfo?.amount) {
-      instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-    }
-  }
-  return instruments;
-};
+// export const convertInstrumentsInput = (
+//   instruments: (
+//     | SpotInstrument
+//     | PsyoptionsEuropeanInstrument
+//     | PsyoptionsAmericanInstrument
+//   )[]
+// ): (
+//   | SpotInstrument
+//   | PsyoptionsEuropeanInstrument
+//   | PsyoptionsAmericanInstrument
+// )[] => {
+//   for (const instrument of instruments) {
+//     if (instrument.legInfo?.amount) {
+//       instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
+//     }
+//   }
+//   return instruments;
+// };
 
 export const convertRfqOutput = async (
   convergence: Convergence,
@@ -260,13 +266,13 @@ export const convertRfqOutput = async (
 ): Promise<Rfq> => {
   if (rfq.fixedSize.__kind == 'BaseAsset') {
     const parsedLegsMultiplierBps =
-      (rfq.fixedSize.legsMultiplierBps as number) /
+      Number(rfq.fixedSize.legsMultiplierBps) /
       Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
     rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
   } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
     const parsedQuoteAmount =
-      (rfq.fixedSize.quoteAmount as number) /
+      Number(rfq.fixedSize.quoteAmount) /
       Math.pow(10, rfq.quoteAsset.instrumentDecimals);
 
     rfq.fixedSize.quoteAmount = parsedQuoteAmount;
@@ -291,10 +297,8 @@ export const convertRfqOutput = async (
       );
 
       if (instrument.legInfo?.amount) {
-        leg.instrumentAmount = (leg.instrumentAmount as number) /= Math.pow(
-          10,
-          instrument.decimals
-        );
+        leg.instrumentAmount =
+          Number(leg.instrumentAmount) / Math.pow(10, instrument.decimals);
       }
     } else if (
       leg.instrumentProgram.toBase58() ===
@@ -306,10 +310,8 @@ export const convertRfqOutput = async (
       );
 
       if (instrument.legInfo?.amount) {
-        leg.instrumentAmount = (leg.instrumentAmount as number) /= Math.pow(
-          10,
-          instrument.decimals
-        );
+        leg.instrumentAmount =
+          Number(leg.instrumentAmount) / Math.pow(10, instrument.decimals);
       }
     } else if (
       leg.instrumentProgram.toBase58() ===
@@ -318,10 +320,8 @@ export const convertRfqOutput = async (
       const instrument = await SpotInstrument.createFromLeg(convergence, leg);
 
       if (instrument.legInfo?.amount) {
-        leg.instrumentAmount = (leg.instrumentAmount as number) /= Math.pow(
-          10,
-          instrument.decimals
-        );
+        leg.instrumentAmount =
+          Number(leg.instrumentAmount) / Math.pow(10, instrument.decimals);
       }
     }
   }
@@ -332,13 +332,13 @@ export const convertRfqOutput = async (
 export const convertResponseOutput = (response: Response): Response => {
   if (response.bid) {
     const parsedPriceQuoteAmountBps =
-      (response.bid.priceQuote.amountBps as number) / Math.pow(10, 9);
+      Number(response.bid.priceQuote.amountBps) / Math.pow(10, 9);
 
     response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
     if (response.bid.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        (response.bid.legsMultiplierBps as number) /
+        Number(response.bid.legsMultiplierBps) /
         Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
       response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
@@ -346,13 +346,13 @@ export const convertResponseOutput = (response: Response): Response => {
   }
   if (response.ask) {
     const parsedPriceQuoteAmountBps =
-      (response.ask.priceQuote.amountBps as number) / Math.pow(10, 9);
+      Number(response.ask.priceQuote.amountBps) / Math.pow(10, 9);
 
     response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
     if (response.ask.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        (response.ask.legsMultiplierBps as number) /
+        Number(response.ask.legsMultiplierBps) /
         Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
       response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
@@ -365,28 +365,26 @@ export const convertResponseOutput = (response: Response): Response => {
 export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
   if (bid) {
     const parsedPriceQuoteAmountBps =
-      (bid.priceQuote.amountBps as number) * Math.pow(10, 9); //where do these decimals come from?
+      Number(bid.priceQuote.amountBps) * Math.pow(10, 9); //where do these decimals come from?
 
     bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
     if (bid.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        (bid.legsMultiplierBps as number) *
-        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+        Number(bid.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
       bid.legsMultiplierBps = parsedLegsMultiplierBps;
     }
   }
   if (ask) {
     const parsedPriceQuoteAmountBps =
-      (ask.priceQuote.amountBps as number) * Math.pow(10, 9);
+      Number(ask.priceQuote.amountBps) * Math.pow(10, 9);
 
     ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
     if (ask.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        (ask.legsMultiplierBps as number) *
-        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+        Number(ask.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
       ask.legsMultiplierBps = parsedLegsMultiplierBps;
     }

@@ -1831,11 +1831,11 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 5,
           side: Side.Bid,
         }),
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
+          amount: 5,
           side: Side.Ask,
         }),
       ],
@@ -2057,53 +2057,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  test('[helpers] devnet airdrop tokens', async (t: Test) => {
-    const { collateralWallet } = await devnetAirdrops(
-      cvg,
-      Keypair.generate().publicKey,
-      mintAuthority
-    );
-    t.assert(collateralWallet);
-  });
-
-  test('[rfqModule] convert user-friendly inputs to bignum and vice versa', async (t: Test) => {
-    const { rfq } = await cvg.rfqs().createAndFinalize({
-      taker,
-      instruments: [
-        new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000005,
-          side: Side.Bid,
-        }),
-        new SpotInstrument(cvg, btcMint, {
-          amount: 7,
-          side: Side.Ask,
-        }),
-      ],
-      orderType: OrderType.TwoWay,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
-    });
-
-    const foundRfq = await cvg
-      .rfqs()
-      .findRfqByAddress({ address: rfq.address });
-
-    t.same(foundRfq.legs[0].instrumentAmount.toString(), '5e-9');
-    t.same(foundRfq.legs[1].instrumentAmount.toString(), '7');
-
-    //@ts-ignore
-    const { rfqResponse } = await cvg.rfqs().respond({
-      maker,
-      rfq: rfq.address,
-      bid: {
-        __kind: 'FixedSize',
-        priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.000001 },
-      },
-    });
-  });
-
   test('[rfqModule] it can createRfqAndAddLegs, addLegs, finalize, respond, confirmResponse, prepareSettlementAndPrepareMoreLegs, partiallySettleLegsAndSettle', async (t: Test) => {
     const instruments = [];
     for (let i = 0; i < 25; i++) {
@@ -2220,6 +2173,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     }
     t.assert(rfqPages.length === 4, 'returned 4 pages');
   });
+
   test('[rfqModule] it can find RFQs by instrument (not specifying page params)', async (t: Test) => {
     const rfqPages = await cvg.rfqs().findByInstrument({
       instrumentProgram: cvg.programs().getSpotInstrument(),
@@ -2232,5 +2186,116 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         console.log('rfq address: ' + rfq.address.toString());
       }
     }
+    t.assert(rfqPages.length === 1, 'returned 1 page');
   });
+
+  test('[rfqModule] it can create Rfqs with decimal amounts and find Rfqs by address', async (t: Test) => {
+    const { rfq: rfq1 } = await cvg.rfqs().createAndFinalize({
+      taker,
+      instruments: [
+        new SpotInstrument(cvg, btcMint, {
+          amount: 5,
+          side: Side.Bid,
+        }),
+        new SpotInstrument(cvg, btcMint, {
+          amount: 7,
+          side: Side.Ask,
+        }),
+      ],
+      orderType: OrderType.TwoWay,
+      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+      quoteAsset: cvg
+        .instrument(new SpotInstrument(cvg, usdcMint))
+        .toQuoteAsset(),
+    });
+    const { rfq: rfq2 } = await cvg.rfqs().createAndFinalize({
+      instruments: [
+        new SpotInstrument(cvg, btcMint, {
+          amount: 2.56,
+          side: Side.Bid,
+        }),
+        new SpotInstrument(cvg, btcMint, {
+          amount: 9.84,
+          side: Side.Bid,
+        }),
+      ],
+      taker,
+      orderType: OrderType.TwoWay,
+      fixedSize: { __kind: 'None', padding: 0 },
+      quoteAsset: cvg
+        .instrument(new SpotInstrument(cvg, usdcMint))
+        .toQuoteAsset(),
+      settlingWindow: 30 * 60 * 60, // 30 hours
+    });
+    const { rfq: rfq3 } = await cvg.rfqs().createAndFinalize({
+      taker,
+      instruments: [
+        new SpotInstrument(cvg, btcMint, {
+          amount: 5.99922,
+          side: Side.Bid,
+        }),
+      ],
+      orderType: OrderType.TwoWay,
+      fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
+      quoteAsset: cvg
+        .instrument(new SpotInstrument(cvg, usdcMint))
+        .toQuoteAsset(),
+    });
+
+    const foundRfq1 = await cvg
+      .rfqs()
+      .findRfqByAddress({ address: rfq1.address });
+    const foundRfq2 = await cvg
+      .rfqs()
+      .findRfqByAddress({ address: rfq2.address });
+    const foundRfq3 = await cvg
+      .rfqs()
+      .findRfqByAddress({ address: rfq3.address });
+
+    spok(t, foundRfq1.fixedSize, {
+      $topic: 'Found RFQ1 by address and assert the legsMultiplierBps',
+      __kind: 'BaseAsset',
+      legsMultiplierBps: 1,
+    });
+    spok(t, foundRfq1.legs[0], {
+      $topic: 'Found RFQ1 by address and assert the amount of legs[0]',
+      instrumentAmount: 5,
+    });
+    spok(t, foundRfq1.legs[1], {
+      $topic: 'Found RFQ1 by address and assert the amount of legs[1]',
+      instrumentAmount: 7,
+    });
+    spok(t, foundRfq2.fixedSize, {
+      $topic: 'Found RFQ2 by address and assert the fixedSize.__kind',
+      __kind: 'None',
+    });
+    spok(t, foundRfq2.legs[0], {
+      $topic: 'Found RFQ2 by address and assert the amount of legs[0]',
+      instrumentAmount: 2.56,
+    });
+    spok(t, foundRfq2.legs[1], {
+      $topic: 'Found RFQ2 by address and assert the amount of legs[1]',
+      instrumentAmount: 9.84,
+    });
+    spok(t, foundRfq3.fixedSize, {
+      $topic: 'Found RFQ2 by address and assert the quoteAmount',
+      __kind: 'QuoteAsset',
+      quoteAmount: 1,
+    });
+    spok(t, foundRfq3.legs[0], {
+      $topic: 'Found RFQ3 by address and assert the amount of legs[0]',
+      instrumentAmount: 5.99922,
+    });
+  });
+
+  test('[helpers] devnet airdrop tokens', async (t: Test) => {
+    const { collateralWallet } = await devnetAirdrops(
+      cvg,
+      Keypair.generate().publicKey,
+      mintAuthority
+    );
+    t.assert(collateralWallet);
+  });
+
+  //*<>*<>*END NON-INTERDEPENDENT TESTS WRAPPER*<>*<>*
 });
