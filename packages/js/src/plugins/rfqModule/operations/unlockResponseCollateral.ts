@@ -45,27 +45,34 @@ export type UnlockResponseCollateralOperation = Operation<
  * @category Inputs
  */
 export type UnlockResponseCollateralInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * 
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
   /** The Response address. */
   response: PublicKey;
 
-  /** Optional address of the Taker's collateral info account.
+  /** 
+   * Optional address of the Taker's collateral info account.
+   * 
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
    *
    */
   takerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral info account.
+  /** 
+   * Optional address of the Maker's collateral info account.
+   * 
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
    *
    */
   makerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral tokens account.
+  /** 
+   * Optional address of the Taker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
    *   collateralTokens({
@@ -74,7 +81,8 @@ export type UnlockResponseCollateralInput = {
    */
   takerCollateralTokens?: PublicKey;
 
-  /** Optional address of the Maker's collateral tokens account.
+  /** 
+   * Optional address of the Maker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
    *   collateralTokens({
@@ -83,7 +91,8 @@ export type UnlockResponseCollateralInput = {
    */
   makerCollateralTokens?: PublicKey;
 
-  /** Optional address of the DAO's collateral tokens account.
+  /** 
+   * Optional address of the DAO's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
    *   collateralTokens({

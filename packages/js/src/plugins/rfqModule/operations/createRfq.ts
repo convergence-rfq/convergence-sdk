@@ -23,6 +23,7 @@ import {
   convertFixedSizeInput,
   instrumentsToLegAccounts,
   instrumentsToLegs,
+  legsToBaseAssetAccounts,
 } from '../helpers';
 
 const Key = 'CreateRfqOperation' as const;
@@ -87,23 +88,29 @@ export type CreateRfqInput = {
   /** The type of order. */
   orderType: OrderType;
 
-  /** The type of the Rfq, specifying whether we fix the number of
+  /**
+   * The type of the Rfq, specifying whether we fix the number of
    * base assets to be exchanged, the number of quote assets,
    * or neither.
    */
   fixedSize: FixedSize;
 
-  /** Optional active window (in seconds).
+  /**
+   * Optional active window (in seconds).
+   *
    * @defaultValue `5_000`
    */
   activeWindow?: number;
 
-  /** Optional settling window (in seconds).
+  /**
+   * Optional settling window (in seconds).
+   *
    * @defaultValue `1_000`
    */
   settlingWindow?: number;
 
-  /** The sum of the sizes of all legs of the Rfq,
+  /**
+   * The sum of the sizes of all legs of the Rfq,
    * including legs added in the future (if any).
    * This can be calculated automatically if
    * additional legs will not be added in
@@ -272,28 +279,7 @@ export const createRfqBuilder = async (
     },
   ];
 
-  const baseAssetAccounts: AccountMeta[] = [];
-
-  const baseAssetIndexValues = [];
-
-  for (const leg of legs) {
-    baseAssetIndexValues.push(leg.baseAssetIndex.value)
-  }
-
-  for (const value of baseAssetIndexValues) {
-    const baseAsset = convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: { value } });
-
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-  }
+  const baseAssetAccounts = legsToBaseAssetAccounts(convergence, legs);
 
   const legAccounts = instrumentsToLegAccounts(convergence, instruments);
 

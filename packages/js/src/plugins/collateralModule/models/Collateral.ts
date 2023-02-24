@@ -28,7 +28,6 @@ export type Collateral = {
   readonly tokenAccountBump: number;
 
   /** The amount of locked tokens. */
-  // readonly lockedTokensAmount: SolAmount;
   lockedTokensAmount: number;
 };
 

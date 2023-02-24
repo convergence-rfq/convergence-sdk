@@ -54,19 +54,24 @@ export type SettleTwoPartyDefaultInput = {
   /** The address of the Response account. */
   response: PublicKey;
 
-  /** Optional address of the Taker's collateral info account.
+  /** 
+   * Optional address of the Taker's collateral info account.
+   * 
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
    *
    */
   takerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral info account.
+  /** 
+   * Optional address of the Maker's collateral info account.
+   * 
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
    *
    */
   makerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral tokens account.
+  /** 
+   * Optional address of the Taker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
    *   collateralTokens({ 
@@ -75,7 +80,8 @@ export type SettleTwoPartyDefaultInput = {
    */
   takerCollateralTokens?: PublicKey;
 
-  /** Optional address of the Maker's collateral tokens account.
+  /** 
+   * Optional address of the Maker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
    *   collateralTokens({ 
@@ -84,7 +90,8 @@ export type SettleTwoPartyDefaultInput = {
    */
   makerCollateralTokens?: PublicKey;
 
-  /** Optional address of the DAO's collateral tokens account.
+  /** 
+   * Optional address of the DAO's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
    *   collateralTokens({ 

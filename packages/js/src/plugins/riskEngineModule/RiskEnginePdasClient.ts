@@ -11,7 +11,7 @@ import { Pda, Program } from '@/types';
 export class RiskEnginePdasClient {
   constructor(protected readonly convergence: Convergence) {}
 
-  /** Finds the Protocol PDA. */
+  /** Finds the Config PDA. */
   config(): Pda {
     const programId = this.programId();
     return Pda.find(programId, [Buffer.from('config', 'utf8')]);

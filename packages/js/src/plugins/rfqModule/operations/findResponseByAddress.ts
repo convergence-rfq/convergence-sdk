@@ -50,7 +50,7 @@ export type FindResponseByAddressOperation = Operation<
  * @category Inputs
  */
 export type FindResponseByAddressInput = {
-  /** The address of the Response. */
+  /** The address of the Response account. */
   address: PublicKey;
 };
 

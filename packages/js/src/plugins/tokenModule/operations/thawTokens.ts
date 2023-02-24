@@ -23,7 +23,7 @@ const Key = 'ThawTokensOperation' as const;
  * Thaws a token account.
  *
  * ```ts
- * await convergence.tokens().thaw({ mintAddress, freezeAuthority });
+ * await convergence.tokens().thaw({ mintAddress: mint.address, freezeAuthority: user });
  * ```
  *
  * @group Operations

@@ -58,8 +58,9 @@ export type PartlyRevertSettlementPreparationOperation = Operation<
  * @category Inputs
  */
 export type PartlyRevertSettlementPreparationInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -73,7 +74,8 @@ export type PartlyRevertSettlementPreparationInput = {
    * Args
    */
 
-  /** The side (Maker or Taker) that is partly reverting
+  /** 
+   * The side (Maker or Taker) that is partly reverting
    * settlement preparation.
    */
   side: AuthoritySide;
@@ -268,7 +270,6 @@ export const partlyRevertSettlementPreparationBuilder = async (
     .add({
       instruction: createPartlyRevertSettlementPreparationInstruction(
         {
-          // protocol: protocol.address,
           protocol: convergence.protocol().pdas().protocol(),
           rfq,
           response,

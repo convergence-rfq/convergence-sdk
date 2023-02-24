@@ -59,8 +59,9 @@ export type PartiallySettleLegsOperation = Operation<
  * @category Inputs
  */
 export type PartiallySettleLegsInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /**
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -148,8 +149,6 @@ export const partiallySettleLegsBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const { rfq, response, maker, taker, legAmountToSettle } = params;
-
-  // const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -278,7 +277,6 @@ export const partiallySettleLegsBuilder = async (
       {
         instruction: createPartiallySettleLegsInstruction(
           {
-            // protocol: protocol.address,
             protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,

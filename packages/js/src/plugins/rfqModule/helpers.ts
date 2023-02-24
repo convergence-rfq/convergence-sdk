@@ -456,19 +456,29 @@ export const instrumentsToLegs = async (
   return legs;
 };
 
-// export const legsToBaseAssetAccounts = (legs: Leg[]): AccountMeta[] => {
-//   const baseAssetAccounts: AccountMeta[] = [];
+export const legsToBaseAssetAccounts = (
+  convergence: Convergence,
+  legs: Leg[]
+): AccountMeta[] => {
+  const baseAssetAccounts: AccountMeta[] = [];
 
-//   for (const leg of legs) {
-//     baseAssetAccounts.push(
-//       {
-//         pubkey: leg.baseAssetAccount,
-//         isSigner: false,
-//         isWritable: false,
-//       }
-//     )
-//   }
-// };
+  for (const leg of legs) {
+    const baseAsset = convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value: leg.baseAssetIndex.value } });
+
+    const baseAssetAccount: AccountMeta = {
+      pubkey: baseAsset,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    baseAssetAccounts.push(baseAssetAccount);
+  }
+
+  return baseAssetAccounts;
+};
 
 export const instrumentsToLegAccounts = (
   convergence: Convergence,

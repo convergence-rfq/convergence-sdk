@@ -90,31 +90,46 @@ export type CreateAndFinalizeRfqConstructionInput = {
   /** The type of order. */
   orderType: OrderType;
 
-  /** The type of Rfq. */
+  /**
+   * The type of the Rfq, specifying whether we fix the number of
+   * base assets to be exchanged, the number of quote assets,
+   * or neither.
+   */
   fixedSize: FixedSize;
 
-  /** the active window. */
+  /**
+   * Optional active window (in seconds).
+   *
+   * @defaultValue `5_000`
+   */
   activeWindow?: number;
 
-  /** The settling window. */
+  /**
+   * Optional settling window (in seconds).
+   *
+   * @defaultValue `1_000`
+   */
   settlingWindow?: number;
 
-  /** Optional address of the Taker's collateral info account.
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: convergence.identity().publicKey })`
+  /** 
+   * Optional address of the Taker's collateral info account.
+   * 
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: taker.publicKey })`
    *
    */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral tokens account.
+  /** 
+   * Optional address of the Taker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
    *   collateralTokens({
-   *     user: convergence.identity().publicKey,
+   *     user: taker.publicKey,
    *   })`
    */
   collateralToken?: PublicKey;
 
-  /** Optional address of the risk engine account. */
+  /** Optional address of the risk engine program account. */
   riskEngine?: PublicKey;
 };
 
@@ -126,6 +141,7 @@ export type CreateAndFinalizeRfqConstructionOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
+  /** The newly created Rfq. */
   rfq: Rfq;
 };
 

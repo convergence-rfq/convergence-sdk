@@ -54,14 +54,19 @@ export type InitializeConfigInput =
       /** The owner of the protocol. */
       authority?: Signer;
 
+      /** The collateral amount required to create a variable size RFQ. */
       collateralForVariableSizeRfqCreation?: number;
 
+      /** The collateral amount required to create a fixed quote amount RFQ. */
       collateralForFixedQuoteAmountRfqCreation?: number;
 
+      /** The number of decimals of the collateral mint. */
       collateralMintDecimals?: number;
 
+      /** The safety price shift factor. */
       safetyPriceShiftFactor?: number;
 
+      /** The overall safety factor. */
       overallSafetyFactor?: number;
     }
   | undefined;
@@ -171,13 +176,3 @@ export const initializeConfigBuilder = (
       key: 'initializeConfig',
     });
 };
-
-// type InitializeConfigInstructionArgs = {
-//   collateralForVariableSizeRfqCreation: beet.bignum;
-//   collateralForFixedQuoteAmountRfqCreation: beet.bignum;
-//   collateralMintDecimals: number;
-//   safetyPriceShiftFactor: number;
-//   overallSafetyFactor: number;
-//   acceptedOracleStaleness: beet.bignum;
-//   acceptedOracleConfidenceIntervalPortion: number;
-// }

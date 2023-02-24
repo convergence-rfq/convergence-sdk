@@ -51,9 +51,7 @@ export type FindResponsesByRfqInput = {
   /** Optional array of Responses to search from. */
   responses?: Response[];
 
-  /** Optional number of Responses to return per page.
-   * @defaultValue `10`
-   */
+  /** Optional number of Responses to return per page. */
   responsesPerPage?: number;
 
   /** Optional number of pages to return. */
@@ -78,12 +76,8 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       scope: OperationScope
     ): Promise<FindResponsesByRfqOutput> => {
       const { programs } = scope;
-      const {
-        address,
-        responses,
-        responsesPerPage,
-        numPages,
-      } = operation.input;
+      const { address, responses, responsesPerPage, numPages } =
+        operation.input;
       scope.throwIfCanceled();
 
       if (responses) {

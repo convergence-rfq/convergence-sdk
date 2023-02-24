@@ -58,7 +58,7 @@ export type CalculateCollateralForConfirmationInput = {
   /** The address of the response account. */
   responseAddress: PublicKey;
 
-  /** Confirmation which collateral requirements are estimated */
+  /** Confirmation which collateral requirements are estimated. */
   confirmation: Confirmation;
 };
 

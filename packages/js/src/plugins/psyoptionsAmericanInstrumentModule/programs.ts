@@ -13,6 +13,7 @@ export type PsyoptionsAmericanInstrumentProgram = Program & {
   availableGuards: string[];
 };
 
+/** @group Helpers */
 export const isPsyoptionsAmericanInstrumentProgram = (
   value: Program
 ): value is PsyoptionsAmericanInstrumentProgram =>

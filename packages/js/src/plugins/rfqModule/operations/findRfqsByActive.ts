@@ -47,9 +47,7 @@ export type FindRfqsByActiveInput = {
   /** Optional array of Rfqs to search from. */
   rfqs?: Rfq[];
 
-  /** Optional number of RFQs to return per page.
-   * @defaultValue `10`
-   */
+  /** Optional number of RFQs to return per page. */
   rfqsPerPage?: number;
 
   /** Optional number of pages to return. */

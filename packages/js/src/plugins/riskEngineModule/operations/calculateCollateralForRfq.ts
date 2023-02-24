@@ -58,7 +58,7 @@ export type CalculateCollateralForRfqOperation = Operation<
  * @category Outputs
  */
 export type CalculateCollateralForRfqOutput = {
-  /** Collateral required as a floating point number */
+  /** Collateral required as a floating point number. */
   requiredCollateral: number;
 };
 

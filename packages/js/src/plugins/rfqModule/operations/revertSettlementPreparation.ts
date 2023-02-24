@@ -53,8 +53,10 @@ export type RevertSettlementPreparationOperation = Operation<
  * @category Inputs
  */
 export type RevertSettlementPreparationInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * 
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -68,7 +70,8 @@ export type RevertSettlementPreparationInput = {
    * Args
    */
 
-  /** The side (Maker or Taker) that is reverting
+  /** 
+   * The side (Maker or Taker) that is reverting
    * settlement preparation.
    */
   side: AuthoritySide;
@@ -140,8 +143,6 @@ export const revertSettlementPreparationBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const { rfq, response, side } = params;
-
-  // const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -295,7 +296,6 @@ export const revertSettlementPreparationBuilder = async (
     .add({
       instruction: createRevertSettlementPreparationInstruction(
         {
-          // protocol: protocol.address,
           protocol: convergence.protocol().pdas().protocol(),
           rfq,
           response,

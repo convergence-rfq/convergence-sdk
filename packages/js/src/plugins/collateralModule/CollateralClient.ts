@@ -85,6 +85,9 @@ export class CollateralClient {
     ) as Promise<T extends PublicKey ? Collateral : T>;
   }
 
+  /** Helper method returning a flag to determine whether a collateral
+   * account needs to be initialized.
+   */
   async initializationNecessary(user: PublicKey): Promise<boolean> {
     const collateralInfoPda = this.pdas().collateralInfo({ user });
 

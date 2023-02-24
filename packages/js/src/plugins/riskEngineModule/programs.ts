@@ -11,11 +11,13 @@ export const riskEngineProgram: Program = {
 /** @group Programs */
 export type RiskEngineProgram = Program & { availableGuards: string[] };
 
+/**@group Helpers */
 export const isRiskEngineProgram = (
   value: Program
 ): value is RiskEngineProgram =>
   typeof value === 'object' && 'availableGuards' in value;
 
+/**@group Helpers */
 export function assertRiskEngineProgram(
   value: Program
 ): asserts value is RiskEngineProgram {

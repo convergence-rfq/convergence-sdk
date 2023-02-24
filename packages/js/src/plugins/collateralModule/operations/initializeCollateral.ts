@@ -56,7 +56,7 @@ export type InitializeCollateralInput = {
   /**
    * The address of the protocol.
    *
-   * @defaultValue `(await convergence.protocol().get()).address`
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -67,17 +67,17 @@ export type InitializeCollateralInput = {
    */
   collateralMint?: PublicKey;
 
-  /** Optional address of the Taker's collateral tokens account.
+  /** Optional address of the User's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
    *   collateralTokens({
-   *     user: convergence.identity().publicKey,
+   *     user: user.publicKey,
    *   })`
    */
   collateralToken?: PublicKey;
 
-  /** Optional address of the Taker's collateral info account.
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: convergence.identity().publicKey })`
+  /** Optional address of the User's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: user.publicKey })`
    *
    */
   collateralInfo?: PublicKey;

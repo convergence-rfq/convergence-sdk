@@ -59,21 +59,25 @@ export type RespondToRfqInput = {
    */
   maker?: Signer;
 
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol(),`
    */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional address of the Taker's collateral info account.
+  /** 
+   * Optional address of the Taker's collateral info account.
+   * 
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
    *
    */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral tokens account.
+  /** 
+   * Optional address of the Maker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
    *   collateralTokens({
@@ -82,7 +86,8 @@ export type RespondToRfqInput = {
    */
   collateralToken?: PublicKey;
 
-  /** Optional address of the risk engine account.
+  /** 
+   * Optional address of the risk engine account.
    *
    * @defaultValue `convergence.programs().getRiskEngine(programs)`
    *
@@ -230,8 +235,6 @@ export const respondToRfqBuilder = async (
     throw new Error('Must provide either a bid or an ask');
   }
 
-  // const protocol = await convergence.protocol().get();
-
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
@@ -322,7 +325,6 @@ export const respondToRfqBuilder = async (
         instruction: createRespondToRfqInstruction(
           {
             maker: maker.publicKey,
-            // protocol: protocol.address,
             protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,

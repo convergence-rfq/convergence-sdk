@@ -66,7 +66,7 @@ export type WithdrawCollateralInput = {
   /** The address of the user's collateral info account. */
   collateralInfo?: PublicKey;
 
-  /** The Token account of the user's collateral */
+  /** The address of the user's collateral token account. */
   collateralToken?: PublicKey;
 
   /*

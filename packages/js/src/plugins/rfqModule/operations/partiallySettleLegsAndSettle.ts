@@ -51,8 +51,9 @@ export type PartiallySettleLegsAndSettleOperation = Operation<
  * @category Inputs
  */
 export type PartiallySettleLegsAndSettleInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 

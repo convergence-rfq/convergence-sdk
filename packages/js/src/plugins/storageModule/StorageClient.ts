@@ -23,26 +23,32 @@ export class StorageClient implements HasDriver<StorageDriver> {
     return this._driver;
   }
 
+  /** Helper method to set the driver. */
   setDriver(newDriver: StorageDriver): void {
     this._driver = newDriver;
   }
 
+  /** Helper method to get the upload price for a specific number of bytes. */
   getUploadPriceForBytes(bytes: number): Promise<Amount> {
     return this.driver().getUploadPrice(bytes);
   }
 
+  /** Helper method to get the upload price for a specified file. */
   getUploadPriceForFile(file: ConvergenceFile): Promise<Amount> {
     return this.getUploadPriceForFiles([file]);
   }
 
+  /** Helper method to get the upload price for multiple files. */
   getUploadPriceForFiles(files: ConvergenceFile[]): Promise<Amount> {
     return this.getUploadPriceForBytes(getBytesFromConvergenceFiles(...files));
   }
 
+  /** Helper method to upload a file. */
   upload(file: ConvergenceFile): Promise<string> {
     return this.driver().upload(file);
   }
 
+  /** Helper method to upload multiple files. */
   uploadAll(files: ConvergenceFile[]): Promise<string[]> {
     const driver = this.driver();
 
@@ -51,10 +57,12 @@ export class StorageClient implements HasDriver<StorageDriver> {
       : Promise.all(files.map((file) => this.driver().upload(file)));
   }
 
+  /** Helper method to upload a JSON object. */
   uploadJson<T extends object = object>(json: T): Promise<string> {
     return this.upload(toConvergenceFileFromJson<T>(json));
   }
 
+  /** Helper method to download a file. */
   async download(
     uri: string,
     options?: StorageDownloadOptions
@@ -71,6 +79,7 @@ export class StorageClient implements HasDriver<StorageDriver> {
     return toConvergenceFile(buffer, uri);
   }
 
+  /** Helper method to download a JSON object. */
   async downloadJson<T extends object = object>(
     uri: string,
     options?: StorageDownloadOptions

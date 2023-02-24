@@ -62,8 +62,11 @@ export type SettleInput = {
   /** The Taker public key address. */
   taker: PublicKey;
 
-  /** Optional start index to corresponding to
-   * the first leg to settle.
+  /** 
+   * Optional start index to corresponding to
+   * the first leg to settle. Used internally by Convergence SDK,
+   * does not need to be passed manually.
+   * 
    * @defaultValue `0`
    * */
   startIndex?: number;
@@ -145,7 +148,6 @@ export const settleBuilder = async (
     params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  // const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -284,12 +286,6 @@ export const settleBuilder = async (
   }
 
   console.log('quote escrow pda: ', quoteEscrowPda.toString());
-
-  // Program log: Left:
-  // Program log: 9J4YRB1RQ1wQKF4EQP2U9MF4HtsqA8bUMvs82LdbN4tQ
-  // Program log: Right:
-  // Program log: B7ximEzL1LZnD3yDxHhNd99JhqSYJoVk8aamDFgbJQAK
-
 
   const quoteAccounts: AccountMeta[] = [
     //`escrow`

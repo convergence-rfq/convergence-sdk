@@ -63,7 +63,7 @@ export type CleanUpResponseLegsOperation = Operation<
  */
 export type CleanUpResponseLegsInput = {
   /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -83,6 +83,7 @@ export type CleanUpResponseLegsInput = {
    * Args
    */
 
+  /** The number of legs to clear. */
   legAmountToClear: number;
 };
 

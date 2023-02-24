@@ -71,8 +71,9 @@ export type PrepareMoreLegsSettlementInput = {
    */
   caller?: Signer;
 
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -306,7 +307,6 @@ export const prepareMoreLegsSettlementBuilder = async (
         instruction: createPrepareMoreLegsSettlementInstruction(
           {
             caller: caller.publicKey,
-            // protocol: protocol.address,
             protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,

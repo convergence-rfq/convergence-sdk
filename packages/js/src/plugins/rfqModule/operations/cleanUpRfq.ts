@@ -56,7 +56,7 @@ export type CleanUpRfqInput = {
   taker?: PublicKey;
 
   /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -135,7 +135,6 @@ export const cleanUpRfqBuilder = async (
   const { taker = convergence.identity().publicKey, rfq } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -143,7 +142,7 @@ export const cleanUpRfqBuilder = async (
       instruction: createCleanUpRfqInstruction(
         {
           taker,
-          protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
         },
         rfqProgram.address
