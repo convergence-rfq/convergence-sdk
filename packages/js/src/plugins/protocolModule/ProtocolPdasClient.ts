@@ -20,6 +20,7 @@ export class ProtocolPdasClient {
   /** Finds the Protocol PDA. */
   protocol(): Pda {
     const programId = this.programId();
+
     return Pda.find(programId, [Buffer.from('protocol', 'utf8')]);
   }
 

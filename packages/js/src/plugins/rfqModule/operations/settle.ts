@@ -145,7 +145,7 @@ export const settleBuilder = async (
     params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
+  // const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -228,6 +228,8 @@ export const settleBuilder = async (
       rfqModel,
     });
 
+    console.log('instrument escrow pda: ', instrumentEscrowPda.toString());
+
     const legAccounts: AccountMeta[] = [
       //`escrow`
       {
@@ -281,6 +283,14 @@ export const settleBuilder = async (
     }
   }
 
+  console.log('quote escrow pda: ', quoteEscrowPda.toString());
+
+  // Program log: Left:
+  // Program log: 9J4YRB1RQ1wQKF4EQP2U9MF4HtsqA8bUMvs82LdbN4tQ
+  // Program log: Right:
+  // Program log: B7ximEzL1LZnD3yDxHhNd99JhqSYJoVk8aamDFgbJQAK
+
+
   const quoteAccounts: AccountMeta[] = [
     //`escrow`
     {
@@ -318,7 +328,7 @@ export const settleBuilder = async (
       {
         instruction: createSettleInstruction(
           {
-            protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             anchorRemainingAccounts,

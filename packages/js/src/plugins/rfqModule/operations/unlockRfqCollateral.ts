@@ -131,7 +131,7 @@ export const unlockRfqCollateralBuilder = async (
   let { collateralInfo } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
+  // const protocol = await convergence.protocol().get();
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
@@ -147,7 +147,8 @@ export const unlockRfqCollateralBuilder = async (
     .add({
       instruction: createUnlockRfqCollateralInstruction(
         {
-          protocol: protocol.address,
+          // protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
           collateralInfo,
         },

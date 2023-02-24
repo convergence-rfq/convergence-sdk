@@ -292,6 +292,53 @@ export const initializeNewOptionMeta = async (
   underlyingAmountPerContract: number,
   expiresIn: number
 ) => {
+  //@ts-ignore
+  const maker = Keypair.fromSecretKey(
+    new Uint8Array(
+      JSON.parse(readFileSync('./test/fixtures/maker.json', 'utf8'))
+    )
+  );
+  //@ts-ignore
+  const taker = Keypair.fromSecretKey(
+    new Uint8Array(
+      JSON.parse(readFileSync('./test/fixtures/taker.json', 'utf8'))
+    )
+  );
+
+  const payer = convergence.rpc().getDefaultFeePayer();
+
+  const provider = new anchor.AnchorProvider(
+    convergence.connection,
+    new anchor.Wallet(payer as Keypair),
+    {}
+  );
+  anchor.setProvider(provider);
+//@ts-ignore
+  const europeanProgram = createProgram(
+    payer as Keypair,
+    convergence.connection.rpcEndpoint,
+    new PublicKey(psyoptionsEuropeanProgramId)
+  );
+  //@ts-ignore
+  const pseudoPythProgram = new Program(
+    PseudoPythIdl,
+    new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
+    provider
+  );
+//@ts-ignore
+  const oracle = new PublicKey('oracle');
+//@ts-ignore
+  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
+};
+
+export const initializeNewOptionMetaForTesting = async (
+  convergence: Convergence,
+  underlyingMint: Mint,
+  stableMint: Mint,
+  strikePrice: number,
+  underlyingAmountPerContract: number,
+  expiresIn: number
+) => {
   const maker = Keypair.fromSecretKey(
     new Uint8Array(
       JSON.parse(readFileSync('./test/fixtures/maker.json', 'utf8'))

@@ -141,7 +141,7 @@ export const revertSettlementPreparationBuilder = async (
 
   const { rfq, response, side } = params;
 
-  const protocol = await convergence.protocol().get();
+  // const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -295,7 +295,8 @@ export const revertSettlementPreparationBuilder = async (
     .add({
       instruction: createRevertSettlementPreparationInstruction(
         {
-          protocol: protocol.address,
+          // protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
           response,
           anchorRemainingAccounts,

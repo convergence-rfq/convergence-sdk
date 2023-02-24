@@ -177,7 +177,7 @@ export const confirmResponseBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const protocol = await convergence.protocol().get();
+  // const protocol = await convergence.protocol().get();
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
@@ -271,7 +271,8 @@ export const confirmResponseBuilder = async (
         instruction: createConfirmResponseInstruction(
           {
             taker: taker.publicKey,
-            protocol: protocol.address,
+            // protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             collateralInfo: takerCollateralInfoPda,

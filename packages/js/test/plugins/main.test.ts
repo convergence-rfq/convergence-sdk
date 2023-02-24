@@ -4,15 +4,10 @@ import { Keypair, PublicKey } from '@solana/web3.js';
 //@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
-//@ts-ignore
 import * as anchor from '@project-serum/anchor';
 //@ts-ignore
-import { sha256 } from '@noble/hashes/sha256';
-//@ts-ignore
 import {
-  //@ts-ignore
   calculateExpectedLegsSize,
-  //@ts-ignore
   calculateExpectedLegsHash,
   //@ts-ignore
   UnparsedAccount,
@@ -32,8 +27,7 @@ import {
   //@ts-ignore
   spokSamePubkey,
   //@ts-ignore
-  initializeNewOptionMeta,
-  //@ts-ignore
+  initializeNewOptionMetaForTesting,
   initializePsyoptionsAmerican,
   setupAccounts,
   //@ts-ignore
@@ -136,11 +130,9 @@ const USER_COLLATERAL_AMOUNT_WITH_DECIMALS = new anchor.BN(
 ).muln(10 ** USDC_DECIMALS);
 
 // SETUP
-//@ts-ignore
+
 let optionMarket: OptionMarketWithKey | null;
-//@ts-ignore
 let optionMarketPubkey: PublicKey;
-//@ts-ignore
 let europeanOptionPutMint: PublicKey;
 
 test('[setup] it can create Convergence instance', async (t: Test) => {
@@ -1230,7 +1222,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   // PSYOPTIONS EUROPEANS
 
   test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
-    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    const { euroMeta, euroMetaKey } = await initializeNewOptionMetaForTesting(
       cvg,
       btcMint,
       usdcMint,
@@ -1678,15 +1670,18 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       ],
     });
 
-    spok(t, rfq, {
-      $topic: 'Added legs to Rfq',
-      model: 'rfq',
-      address: spokSamePubkey(rfq.address),
-    });
-
     await cvg.rfqs().finalizeRfqConstruction({
       taker,
       rfq: rfq.address,
+    });
+
+    const refreshedRfq = await cvg.rfqs().refreshRfq(rfq.address);
+
+    spok(t, refreshedRfq, {
+      $topic: 'Added legs to Rfq',
+      model: 'rfq',
+      address: spokSamePubkey(rfq.address),
+      state: StoredRfqState.Active,
     });
   });
 
@@ -1987,7 +1982,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 55555,
+          amount: 5,
           side: Side.Bid,
         }),
       ],
@@ -2170,12 +2165,20 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       state: StoredResponseState.ReadyForSettling,
     });
 
+    await cvg.rfqs().partiallySettleLegs({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      maker: maker.publicKey,
+      taker: taker.publicKey,
+      legAmountToSettle: 3,
+    });
+
     await cvg.rfqs().partiallySettleLegsAndSettle({
       maker: maker.publicKey,
       taker: taker.publicKey,
       rfq: rfq.address,
       response: rfqResponse.address,
-      legAmountToSettle: 25,
+      legAmountToSettle: 22,
     });
 
     refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -2293,7 +2296,8 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       .findRfqByAddress({ address: rfq3.address });
 
     spok(t, foundRfq1.fixedSize, {
-      $topic: 'Found RFQ1 by address and assert the legsMultiplierBps',
+      $topic:
+        'Found RFQ1 by address and assert the fixedSize.legsMultiplierBps',
       __kind: 'BaseAsset',
       legsMultiplierBps: 1,
     });
@@ -2318,7 +2322,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       instrumentAmount: 9.84,
     });
     spok(t, foundRfq3.fixedSize, {
-      $topic: 'Found RFQ2 by address and assert the quoteAmount',
+      $topic: 'Found RFQ2 by address and assert the fixedSize.quoteAmount',
       __kind: 'QuoteAsset',
       quoteAmount: 1,
     });

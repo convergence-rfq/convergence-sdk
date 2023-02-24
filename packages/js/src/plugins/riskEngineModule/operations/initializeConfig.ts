@@ -144,6 +144,9 @@ export const initializeConfigBuilder = (
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const systemProgram = convergence.programs().getSystem(programs);
 
+  const acceptedOracleStaleness = 300;
+  const acceptedOracleConfidenceIntervalPortion = 0.01;
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -159,6 +162,8 @@ export const initializeConfigBuilder = (
           collateralMintDecimals,
           safetyPriceShiftFactor,
           overallSafetyFactor,
+          acceptedOracleStaleness,
+          acceptedOracleConfidenceIntervalPortion,
         },
         riskEngineProgram.address
       ),
@@ -166,3 +171,13 @@ export const initializeConfigBuilder = (
       key: 'initializeConfig',
     });
 };
+
+// type InitializeConfigInstructionArgs = {
+//   collateralForVariableSizeRfqCreation: beet.bignum;
+//   collateralForFixedQuoteAmountRfqCreation: beet.bignum;
+//   collateralMintDecimals: number;
+//   safetyPriceShiftFactor: number;
+//   overallSafetyFactor: number;
+//   acceptedOracleStaleness: beet.bignum;
+//   acceptedOracleConfidenceIntervalPortion: number;
+// }

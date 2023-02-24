@@ -65,6 +65,7 @@ export class RfqPdasClient {
     recentTimestamp,
   }: RfqInput): Pda {
     const programId = this.programId();
+    console.log('program id: ' + programId.toString());
 
     const hash = new Sha256();
     hash.update(serializeQuoteAssetData(quoteAsset));
@@ -164,7 +165,6 @@ const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
   return quoteAssetSerializer.serialize(quoteAsset);
 };
 
-//@ts-ignore
 const serializeFixedSizeData = (fixedSize: FixedSize): Buffer => {
   const fixedSizeBeet = beet.dataEnum<FixedSizeRecord>([
     [

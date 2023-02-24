@@ -230,7 +230,7 @@ export const respondToRfqBuilder = async (
     throw new Error('Must provide either a bid or an ask');
   }
 
-  const protocol = await convergence.protocol().get();
+  // const protocol = await convergence.protocol().get();
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -322,7 +322,8 @@ export const respondToRfqBuilder = async (
         instruction: createRespondToRfqInstruction(
           {
             maker: maker.publicKey,
-            protocol: protocol.address,
+            // protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             collateralInfo,

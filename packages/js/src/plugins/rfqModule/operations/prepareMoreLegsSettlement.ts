@@ -167,7 +167,7 @@ export const prepareMoreLegsSettlementBuilder = async (
 
   let { sidePreparedLegs } = params;
 
-  const protocol = await convergence.protocol().get();
+  // const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -306,7 +306,8 @@ export const prepareMoreLegsSettlementBuilder = async (
         instruction: createPrepareMoreLegsSettlementInstruction(
           {
             caller: caller.publicKey,
-            protocol: protocol.address,
+            // protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             anchorRemainingAccounts,

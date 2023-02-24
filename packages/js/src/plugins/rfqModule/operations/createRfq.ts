@@ -3,9 +3,9 @@ import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset } from '../types';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -98,7 +98,7 @@ export type CreateRfqInput = {
    */
   activeWindow?: number;
 
-  /** The settling window (in seconds).
+  /** Optional settling window (in seconds).
    * @defaultValue `1_000`
    */
   settlingWindow?: number;
@@ -178,6 +178,8 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         rfq: rfqPda,
         fixedSize,
         instruments,
+        activeWindow,
+        settlingWindow,
         expectedLegsHash,
         recentTimestamp,
       },
@@ -250,7 +252,6 @@ export const createRfqBuilder = async (
     expectedLegsSize ??
     (await calculateExpectedLegsSize(convergence, instruments));
   const legs = await instrumentsToLegs(convergence, instruments);
-  const legAccounts = instrumentsToLegAccounts(convergence, instruments);
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -271,6 +272,31 @@ export const createRfqBuilder = async (
     },
   ];
 
+  const baseAssetAccounts: AccountMeta[] = [];
+
+  const baseAssetIndexValues = [];
+
+  for (const leg of legs) {
+    baseAssetIndexValues.push(leg.baseAssetIndex.value)
+  }
+
+  for (const value of baseAssetIndexValues) {
+    const baseAsset = convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value } });
+
+    const baseAssetAccount: AccountMeta = {
+      pubkey: baseAsset,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    baseAssetAccounts.push(baseAssetAccount);
+  }
+
+  const legAccounts = instrumentsToLegAccounts(convergence, instruments);
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({
@@ -283,7 +309,11 @@ export const createRfqBuilder = async (
           protocol: convergence.protocol().pdas().protocol(),
           rfq,
           systemProgram: systemProgram.address,
-          anchorRemainingAccounts: [...quoteAccounts, ...legAccounts],
+          anchorRemainingAccounts: [
+            ...quoteAccounts,
+            ...baseAssetAccounts,
+            ...legAccounts,
+          ],
         },
         {
           expectedLegsSize,

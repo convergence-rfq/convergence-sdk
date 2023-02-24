@@ -72,8 +72,8 @@ export type SettleOnePartyDefaultInput = {
   /** Optional address of the Taker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
-   *   collateralTokens({ 
-   *     user: rfq.taker, 
+   *   collateralTokens({
+   *     user: rfq.taker,
    *   })`
    */
   takerCollateralTokens?: PublicKey;
@@ -81,11 +81,20 @@ export type SettleOnePartyDefaultInput = {
   /** Optional address of the Maker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
-   *   collateralTokens({ 
-   *     user: response.maker, 
+   *   collateralTokens({
+   *     user: response.maker,
    *   })`
    */
   makerCollateralTokens?: PublicKey;
+
+  /** Optional address of the DAO's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: dao
+   *   })`
+   */
+  protocolCollateralTokens?: PublicKey;
 };
 
 /**
@@ -171,6 +180,7 @@ export const settleOnePartyDefaultBuilder = async (
     makerCollateralInfo,
     takerCollateralTokens,
     makerCollateralTokens,
+    protocolCollateralTokens,
   } = params;
 
   const takerCollateralInfoPda = convergence
@@ -201,11 +211,20 @@ export const settleOnePartyDefaultBuilder = async (
       user: responseModel.maker,
       programs,
     });
+  const protocolCollateralTokensPda = convergence
+    .collateral()
+    .pdas()
+    .collateralToken({
+      user: protocol.authority,
+      programs,
+    });
 
   takerCollateralInfo = takerCollateralInfo ?? takerCollateralInfoPda;
   makerCollateralInfo = makerCollateralInfo ?? makerCollateralInfoPda;
   takerCollateralTokens = takerCollateralTokens ?? takerCollateralTokensPda;
   makerCollateralTokens = makerCollateralTokens ?? makerCollateralTokensPda;
+  protocolCollateralTokens =
+    protocolCollateralTokens ?? protocolCollateralTokensPda;
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -219,6 +238,7 @@ export const settleOnePartyDefaultBuilder = async (
           makerCollateralInfo,
           takerCollateralTokens,
           makerCollateralTokens,
+          protocolCollateralTokens,
           tokenProgram: tokenProgram.address,
         },
         rfqProgram.address

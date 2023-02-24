@@ -1,5 +1,5 @@
 import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
@@ -153,6 +153,29 @@ export const addLegsToRfqBuilder = async (
   const legs = await instrumentsToLegs(convergence, instruments);
   const legAccounts = instrumentsToLegAccounts(convergence, instruments);
 
+  const baseAssetAccounts: AccountMeta[] = [];
+
+  const baseAssetIndexValues = [];
+
+  for (const leg of legs) {
+    baseAssetIndexValues.push(leg.baseAssetIndex.value);
+  }
+
+  for (const value of baseAssetIndexValues) {
+    const baseAsset = convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value } });
+
+    const baseAssetAccount: AccountMeta = {
+      pubkey: baseAsset,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    baseAssetAccounts.push(baseAssetAccount);
+  }
+
   const rfqProgram = convergence.programs().getRfq(programs);
 
   return TransactionBuilder.make()
@@ -163,7 +186,7 @@ export const addLegsToRfqBuilder = async (
           taker: taker.publicKey,
           protocol,
           rfq,
-          anchorRemainingAccounts: legAccounts,
+          anchorRemainingAccounts: [...baseAssetAccounts, ...legAccounts],
         },
         {
           legs,
