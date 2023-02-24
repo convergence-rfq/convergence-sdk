@@ -1,4 +1,5 @@
 import { Buffer } from 'buffer';
+import { Sha256 } from '@aws-crypto/sha256-js';
 import {
   FixedSize,
   OrderType,
@@ -21,7 +22,6 @@ import * as anchor from '@project-serum/anchor';
 import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
 import { Option } from '@/utils';
-import { Sha256 } from '@aws-crypto/sha256-js';
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -46,7 +46,7 @@ export class RfqPdasClient {
     ]);
   }
 
-    /** Finds the PDA of a given quote asset. */
+  /** Finds the PDA of a given quote asset. */
   quote({ quoteAsset }: QuoteInput): Pda {
     const programId = this.programId();
     return Pda.find(programId, [
@@ -238,9 +238,9 @@ type RfqInput = {
   /** The number of seconds during which this Rfq can be responded to. */
   activeWindow: number;
 
-  /** 
+  /**
    * The number of seconds within which this Rfq must be settled
-   *  after starting the settlement process. 
+   *  after starting the settlement process.
    * */
   settlingWindow: number;
 

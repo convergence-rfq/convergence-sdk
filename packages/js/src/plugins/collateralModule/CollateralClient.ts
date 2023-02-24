@@ -1,3 +1,4 @@
+import { PublicKey } from '@solana/web3.js';
 import {
   fundCollateralOperation,
   FundCollateralInput,
@@ -11,10 +12,9 @@ import {
   findCollateralByUserOperation,
 } from './operations';
 import { CollateralPdasClient } from './CollateralPdasClient';
+import { Collateral } from './models';
 import { OperationOptions } from '@/types';
 import type { Convergence } from '@/Convergence';
-import { PublicKey } from '@solana/web3.js';
-import { Collateral } from './models';
 
 export class CollateralClient {
   constructor(protected readonly convergence: Convergence) {}

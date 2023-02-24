@@ -230,8 +230,6 @@ export const settleBuilder = async (
       rfqModel,
     });
 
-    console.log('instrument escrow pda: ', instrumentEscrowPda.toString());
-
     const legAccounts: AccountMeta[] = [
       //`escrow`
       {
@@ -284,8 +282,6 @@ export const settleBuilder = async (
       quoteReceiverTokens *= -1;
     }
   }
-
-  console.log('quote escrow pda: ', quoteEscrowPda.toString());
 
   const quoteAccounts: AccountMeta[] = [
     //`escrow`

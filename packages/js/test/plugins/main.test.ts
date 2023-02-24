@@ -358,6 +358,12 @@ test('[protocolModule] it can register mints', async (t: Test) => {
 
 // PROTOCOL UTILS
 
+test('[protocolModule] it can get the protocol', async (t: Test) => {
+  const protocol = await cvg.protocol().get();
+
+  t.same(protocol.address, cvg.protocol().pdas().protocol(), 'same address');
+});
+
 test('[protocolModule] it can get base assets', async (t: Test) => {
   const baseAssets = await cvg.protocol().getBaseAssets();
   spok(t, baseAssets[0], {
@@ -414,8 +420,21 @@ test('[protocolModule] it can find BTC and SOL base assets by address', async (t
   });
 });
 
+test('[protocolModule] it can find registered mint by address', async (t: Test) => {
+  const bitcoinMint = await cvg
+    .protocol()
+    .findRegisteredMintByAddress({ address: btcMint.address });
+
+  t.same(
+    bitcoinMint.address.toString(),
+    btcMint.address.toString(),
+    'expected btc mint address'
+  );
+});
+
 test('[protocolModule] get registered mints', async (t: Test) => {
   const registeredMints = await cvg.protocol().getRegisteredMints();
+
   t.assert(registeredMints.length === 3);
 });
 
@@ -426,6 +445,15 @@ test('[riskEngineModule] it can initialize the default risk engine config', asyn
     .riskEngine()
     .initializeConfig({ collateralMintDecimals: USDC_DECIMALS });
   assertInitRiskEngineConfig(cvg, t, output);
+});
+
+test('[riskEngineModule] it can fetch the config', async (t: Test) => {
+  const output = await cvg.riskEngine().fetchConfig();
+
+  spok(t, output, {
+    $topic: 'fetch risk engine config',
+    model: 'config',
+  });
 });
 
 test('[riskEngineModule] it can set instrument types', async (t: Test) => {
@@ -939,7 +967,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker,
       instruments: [
         new SpotInstrument(cvg, solMint, {
-          amount: 0.000000002,
+          amount: 2.967,
           side: Side.Bid,
         }),
       ],
@@ -954,7 +982,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker,
       instruments: [
         new SpotInstrument(cvg, solMint, {
-          amount: 0.000000006,
+          amount: 0.06,
           side: Side.Bid,
         }),
       ],
@@ -969,7 +997,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker,
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          amount: 0.000000009,
+          amount: 9.5312,
           side: Side.Ask,
         }),
       ],
@@ -1001,10 +1029,10 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  test('[rfqModule] it can find RFQs by owner', async (t: Test) => {
+  test('[rfqModule] it can find RFQs by owner and print pages', async (t: Test) => {
     const foundRfqs = await cvg
       .rfqs()
-      .findAllByOwner({ owner: taker.publicKey, rfqsPerPage: 2 });
+      .findRfqsByOwner({ owner: taker.publicKey, rfqsPerPage: 2 });
 
     for (const foundRfq of foundRfqs) {
       console.log('new page');
@@ -1395,6 +1423,14 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       response: rfqResponse.address,
     });
 
+    refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
+
+    t.same(
+      refreshedResponse.makerCollateralLocked.toString(),
+      '0',
+      'Expected 0 locked maker collateral'
+    );
+
     await cvg.rfqs().cleanUpResponseLegs({
       dao: dao.publicKey,
       rfq: rfq.address,
@@ -1688,7 +1724,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   // RFQ HELPERS
 
   test('[rfqModule] it can convert RFQ legs to instruments', async (t: Test) => {
-    const rfqPages = await cvg.rfqs().findAllByOwner({
+    const rfqPages = await cvg.rfqs().findRfqsByOwner({
       owner: taker.publicKey,
     });
 
@@ -1773,18 +1809,21 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       response: rfqResponse.address,
       side: AuthoritySide.Maker,
     });
+
+    t.equal(rfqResponse.makerPreparedLegs, 0, 'maker prepared legs should be 0');
+    t.equal(rfqResponse.takerPreparedLegs, 0, 'taker prepared legs should be 0');
   });
 
-  test('[rfq module] it can find all rfqs by instrument as leg', async (t: Test) => {
+  test('[rfqModule] it can find all rfqs by instrument as leg', async (t: Test) => {
     const spotInstrument = cvg.programs().getSpotInstrument();
     const rfqs = await cvg
       .rfqs()
-      .findByInstrument({ instrumentProgram: spotInstrument });
+      .findRfqsByInstrument({ instrumentProgram: spotInstrument });
 
     t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
   });
 
-  test('[rfq module] it can find all rfqs which are active', async (t: Test) => {
+  test('[rfqModule] it can find all rfqs which are active', async (t: Test) => {
     const rfqPages = await cvg.rfqs().findRfqsByActive({
       rfqsPerPage: 3,
     });
@@ -1802,10 +1841,10 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     t.assert(rfqPages.length > 0, 'rfqs should be greater than 0');
   });
 
-  test('[rfq module] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
+  test('[rfqModule] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
     const rfqPages = await cvg
       .rfqs()
-      .findByToken({ mintAddress: europeanOptionPutMint, rfqsPerPage: 1 });
+      .findRfqsByToken({ mintAddress: europeanOptionPutMint, rfqsPerPage: 1 });
 
     for (const rfqPage of rfqPages) {
       console.log('new page');
@@ -1821,7 +1860,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
-    const rfqPages = await cvg.rfqs().findByToken({
+    const rfqPages = await cvg.rfqs().findRfqsByToken({
       mintAddress: usdcMint.address,
       rfqsPerPage: 3,
       numPages: 2,
@@ -1854,6 +1893,42 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     }
 
     console.log('number of pages: ' + responsePages.length.toString());
+  });
+
+  test('[rfqModule] it can find a response by address', async (t: Test) => {
+    const { rfq } = await cvg.rfqs().createAndFinalize({
+      instruments: [
+        new SpotInstrument(cvg, btcMint, {
+          amount: 5,
+          side: Side.Bid,
+        }),
+      ],
+      taker,
+      orderType: OrderType.TwoWay,
+      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+      quoteAsset: cvg
+        .instrument(new SpotInstrument(cvg, usdcMint))
+        .toQuoteAsset(),
+    });
+
+    const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
+      maker,
+      rfq: rfq.address,
+      bid: {
+        __kind: 'FixedSize',
+        priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.000001 },
+      },
+    });
+
+    const response = await cvg.rfqs().findResponseByAddress({
+      address: rfqResponse1.address,
+    });
+
+    t.same(
+      response.address.toString(),
+      rfqResponse1.address.toString(),
+      'Found response by address'
+    );
   });
 
   test('[rfqModule] it can find responses by rfq address', async (t: Test) => {
@@ -2201,35 +2276,33 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[rfqModule] it can find RFQs by instrument (specifying page params)', async (t: Test) => {
-    const rfqPages = await cvg.rfqs().findByInstrument({
+    const rfqPages1 = await cvg.rfqs().findRfqsByInstrument({
       instrumentProgram: cvg.programs().getSpotInstrument(),
       rfqsPerPage: 6,
       numPages: 4,
     });
 
-    for (const rfqPage of rfqPages) {
+    for (const rfqPage of rfqPages1) {
       console.log('new page');
 
       for (const rfq of rfqPage) {
         console.log('rfq address: ' + rfq.address.toString());
       }
     }
-    t.assert(rfqPages.length === 4, 'returned 4 pages');
-  });
+    t.assert(rfqPages1.length === 4, 'returned 4 pages');
 
-  test('[rfqModule] it can find RFQs by instrument (not specifying page params)', async (t: Test) => {
-    const rfqPages = await cvg.rfqs().findByInstrument({
+    const rfqPages2 = await cvg.rfqs().findRfqsByInstrument({
       instrumentProgram: cvg.programs().getSpotInstrument(),
     });
 
-    for (const rfqPage of rfqPages) {
+    for (const rfqPage of rfqPages2) {
       console.log('new page');
 
       for (const rfq of rfqPage) {
         console.log('rfq address: ' + rfq.address.toString());
       }
     }
-    t.assert(rfqPages.length === 1, 'returned 1 page');
+    t.assert(rfqPages2.length === 1, 'returned 1 page');
   });
 
   test('[rfqModule] it can create Rfqs with decimal amounts and find Rfqs by address', async (t: Test) => {

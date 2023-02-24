@@ -1,4 +1,5 @@
 import type { PublicKey, AccountMeta } from '@solana/web3.js';
+import { Sha256 } from '@aws-crypto/sha256-js';
 import { Keypair } from '@solana/web3.js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
@@ -10,10 +11,9 @@ import {
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import type { Rfq, Response } from './models';
+import { LEG_MULTIPLIER_DECIMALS, QUOTE_AMOUNT_DECIMALS } from './constants';
 import { Convergence } from '@/Convergence';
 import { UnparsedAccount, PublicKeyValues, token, toPublicKey } from '@/types';
-import { Sha256 } from '@aws-crypto/sha256-js';
-import { LEG_MULTIPLIER_DECIMALS, QUOTE_AMOUNT_DECIMALS } from './constants';
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 
 export type HasMintAddress = Rfq | PublicKey;

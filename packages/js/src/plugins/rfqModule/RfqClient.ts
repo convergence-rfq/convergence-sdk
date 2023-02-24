@@ -211,7 +211,7 @@ export class RfqClient {
   }
 
   /** {@inheritDoc createAndFinalizeRfqConstructionOperation} */
-  async createAndFinalize(
+  createAndFinalize(
     input: CreateAndFinalizeRfqConstructionInput,
     options?: OperationOptions
   ) {
@@ -293,7 +293,7 @@ export class RfqClient {
   }
 
   /** {@inheritDoc findRfqsByInstrumentOperation} */
-  findByInstrument(
+  findRfqsByInstrument(
     input: FindRfqsByInstrumentInput,
     options?: OperationOptions
   ) {
@@ -303,14 +303,14 @@ export class RfqClient {
   }
 
   /** {@inheritDoc findRfqsByOwnerOperation} */
-  findAllByOwner(input: FindRfqsByOwnerInput, options?: OperationOptions) {
+  findRfqsByOwner(input: FindRfqsByOwnerInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findRfqsByOwnerOperation(input), options);
   }
 
   /** {@inheritDoc findRfqsByTokenOperation} */
-  findByToken(input: FindRfqsByTokenInput, options?: OperationOptions) {
+  findRfqsByToken(input: FindRfqsByTokenInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findRfqsByTokenOperation(input), options);
