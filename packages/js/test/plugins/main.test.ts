@@ -1,99 +1,48 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair, PublicKey } from '@solana/web3.js';
-//@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
-//@ts-ignore
-import {
-  calculateExpectedLegsSize,
-  calculateExpectedLegsHash,
-  //@ts-ignore
-  UnparsedAccount,
-  //@ts-ignore
-  convertInstrumentsInput,
-} from '@/index';
-//@ts-ignore
 import { bignum } from '@convergence-rfq/beet';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
-  //@ts-ignore
-  SWITCHBOARD_ETH_ORACLE,
   SKIP_PREFLIGHT,
   convergenceCli,
   killStuckProcess,
-  //@ts-ignore
   spokSamePubkey,
-  //@ts-ignore
   initializeNewOptionMetaForTesting,
   initializePsyoptionsAmerican,
   setupAccounts,
-  //@ts-ignore
-  BTC_DECIMALS,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
-  //@ts-ignore
-  delay,
 } from '../helpers';
 import { Convergence } from '@/Convergence';
-//@ts-ignore
-import {
-  //@ts-ignore
-  RfqGpaBuilder,
-  //@ts-ignore
-  ResponseGpaBuilder,
-  //@ts-ignore
-  toResponse,
-  //@ts-ignore
-  toResponseAccount,
-  //@ts-ignore
-  toRfq,
-  //@ts-ignore
-  toRfqAccount,
-} from '@/index';
 import {
   Mint,
   token,
-  //@ts-ignore
   Side,
   RiskCategory,
-  //@ts-ignore
   SpotInstrument,
-  //@ts-ignore
   OrderType,
-  //@ts-ignore
   PsyoptionsEuropeanInstrument,
-  //@ts-ignore
   PsyoptionsAmericanInstrument,
-  //@ts-ignore
   OptionType,
   InstrumentType,
   Token,
-  //@ts-ignore
   StoredResponseState,
-  //@ts-ignore
   AuthoritySide,
-  //@ts-ignore
   StoredRfqState,
-  //@ts-ignore
   legsToInstruments,
   Signer,
   DEFAULT_RISK_CATEGORIES_INFO,
-  //@ts-ignore
   devnetAirdrops,
-  //@ts-ignore
-  DEFAULT_MINT_DECIMALS,
-  //@ts-ignore
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
-  //@ts-ignore
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
-  //@ts-ignore
-  LEG_MULTIPLIER_DECIMALS,
+  calculateExpectedLegsSize,
+  calculateExpectedLegsHash,
 } from '@/index';
-//@ts-ignore
-import { Rfq } from '@/index';
 
 killStuckProcess();
 
@@ -107,7 +56,7 @@ let dao: Signer;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
-//@ts-ignore
+
 let mintAuthority: Keypair;
 
 let daoBTCWallet: Token;
@@ -124,10 +73,6 @@ const SOL_WALLET_AMOUNT = 9_000;
 const BTC_WALLET_AMOUNT = 9_000;
 const USER_COLLATERAL_AMOUNT = 100_000_000;
 const USER_USDC_WALLET = 10_000_000;
-//@ts-ignore
-const USER_COLLATERAL_AMOUNT_WITH_DECIMALS = new anchor.BN(
-  USER_COLLATERAL_AMOUNT
-).muln(10 ** USDC_DECIMALS);
 
 // SETUP
 
@@ -1810,8 +1755,16 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       side: AuthoritySide.Maker,
     });
 
-    t.equal(rfqResponse.makerPreparedLegs, 0, 'maker prepared legs should be 0');
-    t.equal(rfqResponse.takerPreparedLegs, 0, 'taker prepared legs should be 0');
+    t.equal(
+      rfqResponse.makerPreparedLegs,
+      0,
+      'maker prepared legs should be 0'
+    );
+    t.equal(
+      rfqResponse.takerPreparedLegs,
+      0,
+      'taker prepared legs should be 0'
+    );
   });
 
   test('[rfqModule] it can find all rfqs by instrument as leg', async (t: Test) => {
