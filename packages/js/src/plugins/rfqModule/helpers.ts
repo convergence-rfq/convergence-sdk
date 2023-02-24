@@ -1,4 +1,5 @@
 import type { PublicKey, AccountMeta } from '@solana/web3.js';
+import { Sha256 } from '@aws-crypto/sha256-js';
 import { Keypair } from '@solana/web3.js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
@@ -10,10 +11,9 @@ import {
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import type { Rfq, Response } from './models';
+import { LEG_MULTIPLIER_DECIMALS, QUOTE_AMOUNT_DECIMALS } from './constants';
 import { Convergence } from '@/Convergence';
 import { UnparsedAccount, PublicKeyValues, token, toPublicKey } from '@/types';
-import { Sha256 } from '@aws-crypto/sha256-js';
-import { LEG_MULTIPLIER_DECIMALS } from './constants';
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 
 export type HasMintAddress = Rfq | PublicKey;
@@ -241,25 +241,6 @@ export const convertFixedSizeInput = (
   return fixedSize;
 };
 
-// export const convertInstrumentsInput = (
-//   instruments: (
-//     | SpotInstrument
-//     | PsyoptionsEuropeanInstrument
-//     | PsyoptionsAmericanInstrument
-//   )[]
-// ): (
-//   | SpotInstrument
-//   | PsyoptionsEuropeanInstrument
-//   | PsyoptionsAmericanInstrument
-// )[] => {
-//   for (const instrument of instruments) {
-//     if (instrument.legInfo?.amount) {
-//       instrument.legInfo.amount *= Math.pow(10, instrument.decimals);
-//     }
-//   }
-//   return instruments;
-// };
-
 export const convertRfqOutput = async (
   convergence: Convergence,
   rfq: Rfq
@@ -332,7 +313,8 @@ export const convertRfqOutput = async (
 export const convertResponseOutput = (response: Response): Response => {
   if (response.bid) {
     const parsedPriceQuoteAmountBps =
-      Number(response.bid.priceQuote.amountBps) / Math.pow(10, 9);
+      Number(response.bid.priceQuote.amountBps) /
+      Math.pow(10, QUOTE_AMOUNT_DECIMALS);
 
     response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
@@ -346,7 +328,8 @@ export const convertResponseOutput = (response: Response): Response => {
   }
   if (response.ask) {
     const parsedPriceQuoteAmountBps =
-      Number(response.ask.priceQuote.amountBps) / Math.pow(10, 9);
+      Number(response.ask.priceQuote.amountBps) /
+      Math.pow(10, QUOTE_AMOUNT_DECIMALS);
 
     response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
@@ -365,7 +348,7 @@ export const convertResponseOutput = (response: Response): Response => {
 export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
   if (bid) {
     const parsedPriceQuoteAmountBps =
-      Number(bid.priceQuote.amountBps) * Math.pow(10, 9); //where do these decimals come from?
+      Number(bid.priceQuote.amountBps) * Math.pow(10, QUOTE_AMOUNT_DECIMALS);
 
     bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
@@ -378,7 +361,7 @@ export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
   }
   if (ask) {
     const parsedPriceQuoteAmountBps =
-      Number(ask.priceQuote.amountBps) * Math.pow(10, 9);
+      Number(ask.priceQuote.amountBps) * Math.pow(10, QUOTE_AMOUNT_DECIMALS);
 
     ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
@@ -393,7 +376,6 @@ export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
   return { bid, ask };
 };
 
-//this currently takes pre-converted instruments
 export const calculateExpectedLegsHash = async (
   convergence: Convergence,
   instruments: (
@@ -429,7 +411,6 @@ export const calculateExpectedLegsHash = async (
   return expectedLegsHash;
 };
 
-//TODO: this takes pre-converted instruments
 export const calculateExpectedLegsSize = async (
   convergence: Convergence,
   instruments: (
@@ -475,6 +456,30 @@ export const instrumentsToLegs = async (
   return legs;
 };
 
+export const legsToBaseAssetAccounts = (
+  convergence: Convergence,
+  legs: Leg[]
+): AccountMeta[] => {
+  const baseAssetAccounts: AccountMeta[] = [];
+
+  for (const leg of legs) {
+    const baseAsset = convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value: leg.baseAssetIndex.value } });
+
+    const baseAssetAccount: AccountMeta = {
+      pubkey: baseAsset,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    baseAssetAccounts.push(baseAssetAccount);
+  }
+
+  return baseAssetAccounts;
+};
+
 export const instrumentsToLegAccounts = (
   convergence: Convergence,
   instruments: (
@@ -484,6 +489,7 @@ export const instrumentsToLegAccounts = (
   )[]
 ): AccountMeta[] => {
   const legAccounts: AccountMeta[] = [];
+
   for (const instrument of instruments) {
     const instrumentClient = convergence.instrument(
       instrument,

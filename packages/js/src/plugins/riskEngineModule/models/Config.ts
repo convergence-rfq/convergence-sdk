@@ -17,18 +17,25 @@ export type Config = {
   /** The address of the config. */
   readonly address: PublicKey;
 
+  /** The amount of collateral required to create an RFQ with a variable size. */
   readonly collateralForVariableSizeRfqCreation: bignum;
 
+  /** The amount of collateral required to create an RFQ with a fixed size. */
   readonly collateralForFixedQuoteAmountRfqCreation: bignum;
 
+  /** The number of decimals of the collateral mint. */
   readonly collateralMintDecimals: bignum;
 
+  /** The safety price shift factor. */
   readonly safetyPriceShiftFactor: number;
 
+  /** The overall safety factor. */
   readonly overallSafetyFactor: number;
 
+  /** The risk categories info. */
   readonly riskCategoriesInfo: RiskCategoryInfo[];
 
+  /** The instrument types info. */
   readonly instrumentTypes: InstrumentInfo[];
 };
 

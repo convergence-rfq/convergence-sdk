@@ -29,7 +29,7 @@ export type Response = {
   /** The address of the Rfq this Response corresponds to. */
   readonly rfq: PublicKey;
 
-  /** The time at which this Response was created. */
+  /** The timestamp at which this Response was created. */
   readonly creationTimestamp: bignum;
 
   /** The amount of the Maker's collateral locked. */

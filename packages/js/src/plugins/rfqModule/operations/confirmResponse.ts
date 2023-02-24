@@ -63,24 +63,30 @@ export type ConfirmResponseInput = {
    */
   taker?: Signer;
 
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** The address of the Response. */
+  /** The address of the Response account. */
   response: PublicKey;
 
-  /** Optional address of the Taker's collateral info account.
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: convergence.identity().publicKey })`
+  /**
+   * Optional address of the Taker's collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: taker.publicKey })`
    *
    */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral info account.
+  /**
+   * Optional address of the Maker's collateral info account.
+   *
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
    *
    */
@@ -92,10 +98,13 @@ export type ConfirmResponseInput = {
   /** The address of the risk engine program. */
   riskEngine?: PublicKey;
 
-  /** The Side to confirm from the Response. */
+  /** The Side of the Response to confirm. */
   side: Side;
 
-  /** ??? */
+  /**
+   * Optional basis points multiplier to override the legMultiplierBps of the
+   * Rfq's fixedSize property.
+   */
   overrideLegMultiplierBps?: COption<bignum>;
 };
 
@@ -176,8 +185,6 @@ export const confirmResponseBuilder = async (
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
-
-  const protocol = await convergence.protocol().get();
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
@@ -271,7 +278,7 @@ export const confirmResponseBuilder = async (
         instruction: createConfirmResponseInstruction(
           {
             taker: taker.publicKey,
-            protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             collateralInfo: takerCollateralInfoPda,

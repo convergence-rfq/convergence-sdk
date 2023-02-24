@@ -94,13 +94,11 @@ export const toRfq = (account: RfqAccount): Rfq => ({
   address: account.publicKey,
   taker: account.data.taker,
   orderType: account.data.orderType,
-  // lastLookEnabled: account.data.lastLookEnabled,
   fixedSize: account.data.fixedSize,
   quoteAsset: account.data.quoteAsset,
   quoteMint: SpotInstrument.deserializeInstrumentData(
     Buffer.from(account.data.quoteAsset.instrumentData)
   ).mint,
-  // accessManager: account.data.accessManager,
   creationTimestamp: account.data.creationTimestamp,
   activeWindow: account.data.activeWindow,
   settlingWindow: account.data.settlingWindow,

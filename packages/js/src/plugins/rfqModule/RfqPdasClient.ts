@@ -1,4 +1,5 @@
 import { Buffer } from 'buffer';
+import { Sha256 } from '@aws-crypto/sha256-js';
 import {
   FixedSize,
   OrderType,
@@ -21,7 +22,6 @@ import * as anchor from '@project-serum/anchor';
 import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
 import { Option } from '@/utils';
-import { Sha256 } from '@aws-crypto/sha256-js';
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -37,7 +37,7 @@ function toLittleEndian(value: number, bytes: number) {
  */
 export class RfqPdasClient {
   constructor(protected readonly convergence: Convergence) {}
-
+  /** Finds the PDA of a given mint. */
   mintInfo({ mint }: MintInfoInput): Pda {
     const programId = this.programId();
     return Pda.find(programId, [
@@ -46,6 +46,7 @@ export class RfqPdasClient {
     ]);
   }
 
+  /** Finds the PDA of a given quote asset. */
   quote({ quoteAsset }: QuoteInput): Pda {
     const programId = this.programId();
     return Pda.find(programId, [
@@ -54,6 +55,7 @@ export class RfqPdasClient {
     ]);
   }
 
+  /** Finds the PDA of an RFQ. */
   rfq({
     taker,
     legsHash,
@@ -65,6 +67,7 @@ export class RfqPdasClient {
     recentTimestamp,
   }: RfqInput): Pda {
     const programId = this.programId();
+    console.log('program id: ' + programId.toString());
 
     const hash = new Sha256();
     hash.update(serializeQuoteAssetData(quoteAsset));
@@ -80,11 +83,11 @@ export class RfqPdasClient {
       serializeFixedSizeData(fixedSize),
       toLittleEndian(activeWindow, 4),
       toLittleEndian(settlingWindow, 4),
-      // recentTimestamp.toBuffer('le', 8),
       recentTimestamp.toArrayLike(Buffer, 'le', 8),
     ]);
   }
 
+  /** Finds the PDA of a Response. */
   response({ rfq, maker, bid, ask, pdaDistinguisher }: ResponseInput): Pda {
     const programId = this.programId();
     return Pda.find(programId, [
@@ -164,7 +167,6 @@ const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
   return quoteAssetSerializer.serialize(quoteAsset);
 };
 
-//@ts-ignore
 const serializeFixedSizeData = (fixedSize: FixedSize): Buffer => {
   const fixedSizeBeet = beet.dataEnum<FixedSizeRecord>([
     [
@@ -213,7 +215,6 @@ type QuoteInput = {
   programs?: Program[];
 };
 
-//@ts-ignore
 type RfqInput = {
   /** The taker's public key address. */
   taker: PublicKey;
@@ -227,22 +228,27 @@ type RfqInput = {
   /** The quote asset of the Rfq. */
   quoteAsset: QuoteAsset;
 
-  /** Whether this Rfq is open (no size specified), or a fixed amount of the base asset,
-   * or a fixed amount of the quote asset. */
+  /**
+   * The type of the Rfq, specifying whether we fix the number of
+   * base assets to be exchanged, the number of quote assets,
+   * or neither.
+   */
   fixedSize: FixedSize;
 
   /** The number of seconds during which this Rfq can be responded to. */
   activeWindow: number;
 
-  /** The number of seconds within which this Rfq must be settled
-   *  after starting the settlement process. */
+  /**
+   * The number of seconds within which this Rfq must be settled
+   *  after starting the settlement process.
+   * */
   settlingWindow: number;
 
   /** A recent timestamp. */
   recentTimestamp: anchor.BN;
   // recentTimestamp: number;
 };
-//@ts-ignore
+
 type ResponseInput = {
   /** The Rfq public key. */
   rfq: PublicKey;

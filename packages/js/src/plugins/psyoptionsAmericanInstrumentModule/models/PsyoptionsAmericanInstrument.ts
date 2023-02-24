@@ -12,12 +12,10 @@ import {
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 import { Mint } from '../../tokenModule';
-
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
 import { assert } from '@/utils';
 import { Convergence } from '@/Convergence';
-
 import { createSerializerFromFixableBeetArgsStruct } from '@/types';
 
 type PsyoptionsAmericanInstrumentData = {

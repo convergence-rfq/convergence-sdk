@@ -91,7 +91,8 @@ export type CreateAndAddLegsToRfqInput = {
    */
   orderType: OrderType;
 
-  /** The type of the Rfq, specifying whether we fix the number of
+  /** 
+   * The type of the Rfq, specifying whether we fix the number of
    * base assets to be exchanged, the number of quote assets,
    * or neither.
    */
@@ -103,14 +104,16 @@ export type CreateAndAddLegsToRfqInput = {
   /** The settling window (in seconds). */
   settlingWindow?: number;
 
-  /** The sum of the sizes of all legs of the Rfq,
+  /** 
+   * The sum of the sizes of all legs of the Rfq,
    * including legs added in the future (if any).
    * This can be calculated automatically if
    * additional legs will not be added in
    * the future. */
   expectedLegsSize?: number;
 
-  /** Optional expected legs hash (of all legs).
+  /** 
+   * Optional expected legs hash (of all legs).
    * This can be calculated automatically if
    * additional legs will not be added in the future.
    */
@@ -125,6 +128,7 @@ export type CreateAndAddLegsToRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
+  /** The newly created Rfq. */
   rfq: Rfq;
 };
 
@@ -153,8 +157,6 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
       fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
-      //TODO: dont need to convert instruments? test passing...
-      // instruments = convertInstrumentsInput(instruments);
       expectedLegsSize =
         expectedLegsSize ??
         (await calculateExpectedLegsSize(convergence, instruments));

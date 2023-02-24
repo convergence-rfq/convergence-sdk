@@ -50,9 +50,7 @@ export type FindResponsesByOwnerInput = {
   /** Optional array of Responses to search from. */
   responses?: Response[];
 
-  /** Optional number of Responses to return per page.
-   * @defaultValue `10`
-   */
+  /** Optional number of Responses to return per page. */
   responsesPerPage?: number;
 
   /** Optional number of pages to return. */
@@ -76,12 +74,7 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByOwnerOutput> => {
-      const {
-        owner,
-        responses,
-        responsesPerPage,
-        numPages,
-      } = operation.input;
+      const { owner, responses, responsesPerPage, numPages } = operation.input;
       scope.throwIfCanceled();
 
       if (responses) {

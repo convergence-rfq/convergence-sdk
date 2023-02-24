@@ -44,15 +44,13 @@ export type FindRfqsByOwnerOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByOwnerInput = {
-  /** The address of the owner. */
+  /** The address of the owner of the RFQ. */
   owner: PublicKey;
 
   /** Optional array of Rfqs to search from. */
   rfqs?: Rfq[];
 
-  /** Optional number of RFQs to return per page.
-   * @defaultValue `10`
-   */
+  /** Optional number of RFQs to return per page. */
   rfqsPerPage?: number;
 
   /** Optional number of pages to return. */

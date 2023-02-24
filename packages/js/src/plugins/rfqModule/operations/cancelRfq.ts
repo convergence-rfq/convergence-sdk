@@ -18,9 +18,9 @@ const Key = 'CancelRfqOperation' as const;
  * Cancels an existing Rfq.
  *
  * ```ts
- * 
+ *
  * const { rfq } = await convergence.rfqs.create(...);
- * 
+ *
  * await convergence
  *   .rfqs()
  *   .cancelRfq({ rfq: rfq.address });
@@ -54,7 +54,7 @@ export type CancelRfqInput = {
   taker?: Signer;
 
   /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -123,7 +123,6 @@ export const cancelRfqBuilder = async (
   const { taker = convergence.identity(), rfq } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocolPda = convergence.protocol().pdas().protocol();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -131,7 +130,7 @@ export const cancelRfqBuilder = async (
       instruction: createCancelRfqInstruction(
         {
           taker: taker.publicKey,
-          protocol: protocolPda,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
         },
         rfqProgram.address

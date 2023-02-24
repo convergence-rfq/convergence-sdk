@@ -71,7 +71,7 @@ export type FinalizeRfqConstructionInput = {
   /** Optional address of the Taker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
-   *   collateralTokens({ 
+   *   collateralTokens({
    *     user: convergence.identity().publicKey
    *   })`
    */
@@ -209,10 +209,10 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
+  const oracleAccounts: AccountMeta[] = [];
+
   const baseAssetAccounts: AccountMeta[] = [];
   const baseAssetIndexValuesSet: Set<number> = new Set();
-
-  const oracleAccounts: AccountMeta[] = [];
 
   for (const leg of legs) {
     baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);

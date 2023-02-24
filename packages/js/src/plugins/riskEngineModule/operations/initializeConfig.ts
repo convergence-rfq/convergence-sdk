@@ -54,14 +54,19 @@ export type InitializeConfigInput =
       /** The owner of the protocol. */
       authority?: Signer;
 
+      /** The collateral amount required to create a variable size RFQ. */
       collateralForVariableSizeRfqCreation?: number;
 
+      /** The collateral amount required to create a fixed quote amount RFQ. */
       collateralForFixedQuoteAmountRfqCreation?: number;
 
+      /** The number of decimals of the collateral mint. */
       collateralMintDecimals?: number;
 
+      /** The safety price shift factor. */
       safetyPriceShiftFactor?: number;
 
+      /** The overall safety factor. */
       overallSafetyFactor?: number;
     }
   | undefined;
@@ -144,6 +149,9 @@ export const initializeConfigBuilder = (
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const systemProgram = convergence.programs().getSystem(programs);
 
+  const acceptedOracleStaleness = 300;
+  const acceptedOracleConfidenceIntervalPortion = 0.01;
+
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -159,6 +167,8 @@ export const initializeConfigBuilder = (
           collateralMintDecimals,
           safetyPriceShiftFactor,
           overallSafetyFactor,
+          acceptedOracleStaleness,
+          acceptedOracleConfidenceIntervalPortion,
         },
         riskEngineProgram.address
       ),

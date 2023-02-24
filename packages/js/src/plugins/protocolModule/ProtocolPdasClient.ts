@@ -20,9 +20,11 @@ export class ProtocolPdasClient {
   /** Finds the Protocol PDA. */
   protocol(): Pda {
     const programId = this.programId();
+
     return Pda.find(programId, [Buffer.from('protocol', 'utf8')]);
   }
 
+  /** Finds the PDA of a given base asset. */
   baseAsset({ index }: BaseAssetInput): Pda {
     const programId = this.programId();
     return Pda.find(programId, [
@@ -37,5 +39,6 @@ export class ProtocolPdasClient {
 }
 
 type BaseAssetInput = {
+  /** The base asset index. */
   index: { value: number };
 };

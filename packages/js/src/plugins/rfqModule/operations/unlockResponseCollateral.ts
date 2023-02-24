@@ -45,25 +45,61 @@ export type UnlockResponseCollateralOperation = Operation<
  * @category Inputs
  */
 export type UnlockResponseCollateralInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * 
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
   /** The Response address. */
   response: PublicKey;
 
-  /** Optional address of the Taker's collateral info account.
+  /** 
+   * Optional address of the Taker's collateral info account.
+   * 
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
    *
    */
   takerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral info account.
+  /** 
+   * Optional address of the Maker's collateral info account.
+   * 
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
    *
    */
   makerCollateralInfo?: PublicKey;
+
+  /** 
+   * Optional address of the Taker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: rfq.taker,
+   *   })`
+   */
+  takerCollateralTokens?: PublicKey;
+
+  /** 
+   * Optional address of the Maker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: response.maker,
+   *   })`
+   */
+  makerCollateralTokens?: PublicKey;
+
+  /** 
+   * Optional address of the DAO's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: dao
+   *   })`
+   */
+  protocolCollateralTokens?: PublicKey;
 };
 
 /**
@@ -129,34 +165,78 @@ export const unlockResponseCollateralBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = convergence.protocol().pdas().protocol();
+  const protocol = await convergence.protocol().get();
 
   const { response } = params;
+  let {
+    takerCollateralInfo,
+    makerCollateralInfo,
+    takerCollateralTokens,
+    makerCollateralTokens,
+    protocolCollateralTokens,
+  } = params;
 
   const { maker, rfq } = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
   const { taker } = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  const takerCollateralInfo = convergence.collateral().pdas().collateralInfo({
-    user: taker,
-    programs,
-  });
-  const makerCollateralInfo = convergence.collateral().pdas().collateralInfo({
-    user: maker,
-    programs,
-  });
+  const takerCollateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({
+      user: taker,
+      programs,
+    });
+  const makerCollateralInfoPda = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({
+      user: maker,
+      programs,
+    });
+  const takerCollateralTokensPda = convergence
+    .collateral()
+    .pdas()
+    .collateralToken({
+      user: taker,
+      programs,
+    });
+  const makerCollateralTokensPda = convergence
+    .collateral()
+    .pdas()
+    .collateralToken({
+      user: maker,
+      programs,
+    });
+  const protocolCollateralTokensPda = convergence
+    .collateral()
+    .pdas()
+    .collateralToken({
+      user: protocol.authority,
+      programs,
+    });
+
+  takerCollateralInfo = takerCollateralInfo ?? takerCollateralInfoPda;
+  makerCollateralInfo = makerCollateralInfo ?? makerCollateralInfoPda;
+  takerCollateralTokens = takerCollateralTokens ?? takerCollateralTokensPda;
+  makerCollateralTokens = makerCollateralTokens ?? makerCollateralTokensPda;
+  protocolCollateralTokens =
+    protocolCollateralTokens ?? protocolCollateralTokensPda;
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createUnlockResponseCollateralInstruction(
         {
-          protocol,
+          protocol: protocol.address,
           rfq,
           response,
           takerCollateralInfo,
           makerCollateralInfo,
+          takerCollateralTokens,
+          makerCollateralTokens,
+          protocolCollateralTokens,
         },
         rfqProgram.address
       ),

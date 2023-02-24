@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.0.13
+
+### Patch Changes
+
+- make necessary changes for updated CPL
+
 ## 4.0.12
 
 ### Patch Changes

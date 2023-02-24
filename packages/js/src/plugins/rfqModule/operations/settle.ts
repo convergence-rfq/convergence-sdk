@@ -62,8 +62,11 @@ export type SettleInput = {
   /** The Taker public key address. */
   taker: PublicKey;
 
-  /** Optional start index to corresponding to
-   * the first leg to settle.
+  /** 
+   * Optional start index to corresponding to
+   * the first leg to settle. Used internally by Convergence SDK,
+   * does not need to be passed manually.
+   * 
    * @defaultValue `0`
    * */
   startIndex?: number;
@@ -145,7 +148,6 @@ export const settleBuilder = async (
     params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -318,7 +320,7 @@ export const settleBuilder = async (
       {
         instruction: createSettleInstruction(
           {
-            protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             anchorRemainingAccounts,

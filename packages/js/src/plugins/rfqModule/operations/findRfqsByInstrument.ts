@@ -48,9 +48,7 @@ export type FindRfqsByInstrumentInput = {
   /** The instrument program to search for. */
   instrumentProgram: Program;
 
-  /** Optional number of RFQs to return per page.
-   * @defaultValue `10`
-   */
+  /** Optional number of RFQs to return per page. */
   rfqsPerPage?: number;
 
   /** Optional number of pages to return. */

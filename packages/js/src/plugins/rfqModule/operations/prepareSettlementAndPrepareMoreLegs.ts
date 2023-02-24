@@ -11,7 +11,6 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-// import { TransactionBuilder } from '@/utils';
 
 const Key = 'PrepareSettlementAndPrepareMoreLegsOperation' as const;
 
@@ -56,8 +55,9 @@ export type PrepareSettlementAndPrepareMoreLegsInput = {
    */
   caller?: Signer;
 
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol(),`
    */
   protocol?: PublicKey;
 

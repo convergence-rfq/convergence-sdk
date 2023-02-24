@@ -74,8 +74,9 @@ export type PrepareSettlementInput = {
    */
   caller?: Signer;
 
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -165,7 +166,7 @@ export const prepareSettlementBuilder = async (
     legAmountToPrepare,
   } = params;
 
-  const protocol = await convergence.protocol().get();
+  // const protocol = await convergence.protocol().get();
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
@@ -340,7 +341,8 @@ export const prepareSettlementBuilder = async (
         instruction: createPrepareSettlementInstruction(
           {
             caller: caller.publicKey,
-            protocol: protocol.address,
+            // protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             anchorRemainingAccounts,

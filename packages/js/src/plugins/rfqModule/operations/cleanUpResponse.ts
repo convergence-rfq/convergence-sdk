@@ -64,9 +64,9 @@ export type CleanUpResponseOperation = Operation<
 export type CleanUpResponseInput = {
   /** The Maker's public key address. */
   maker: PublicKey;
-  
+
   /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -160,7 +160,6 @@ export const cleanUpResponseBuilder = async (
   } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -310,7 +309,7 @@ export const cleanUpResponseBuilder = async (
       instruction: createCleanUpResponseInstruction(
         {
           maker,
-          protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
           response,
           anchorRemainingAccounts,

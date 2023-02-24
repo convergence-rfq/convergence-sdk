@@ -264,6 +264,7 @@ export class RpcClient {
     }));
   }
 
+  /** Airdrops the specified amount of SOL to the specified pubkey address. */
   async airdrop(
     publicKey: PublicKey,
     amount: SolAmount,
@@ -286,6 +287,7 @@ export class RpcClient {
     return { signature, confirmResponse, ...blockhashWithExpiryBlockHeight };
   }
 
+  /** Gets the balance of the specified pubkey address. */
   async getBalance(
     publicKey: PublicKey,
     commitment?: Commitment
@@ -298,6 +300,7 @@ export class RpcClient {
     return lamports(balance);
   }
 
+  /** Gets the minimum balance required to create an account with the specified number of bytes. */
   async getRent(bytes: number, commitment?: Commitment): Promise<SolAmount> {
     const rent =
       await this.convergence.connection.getMinimumBalanceForRentExemption(
@@ -308,12 +311,14 @@ export class RpcClient {
     return lamports(rent);
   }
 
+  /** Gets the latest blockhash. */
   async getLatestBlockhash(
     commitmentOrConfig: Commitment | GetLatestBlockhashConfig = 'finalized'
   ): Promise<BlockhashWithExpiryBlockHeight> {
     return this.convergence.connection.getLatestBlockhash(commitmentOrConfig);
   }
 
+  /** Gets the Solana Explorer URL. */
   getSolanaExporerUrl(signature: string): string {
     let clusterParam = '';
     switch (this.convergence.cluster) {
@@ -333,18 +338,21 @@ export class RpcClient {
     return `https://explorer.solana.com/tx/${signature}${clusterParam}`;
   }
 
+  /** Sets the default fee payer. */
   setDefaultFeePayer(payer: Signer) {
     this.defaultFeePayer = payer;
 
     return this;
   }
 
+  /** Gets the default fee payer. */
   getDefaultFeePayer(): Signer {
     return this.defaultFeePayer
       ? this.defaultFeePayer
       : this.convergence.identity();
   }
 
+  /** Helper method to get an `UnparsedMaybeAccount` from `AccountInfo` */
   protected getUnparsedMaybeAccount(
     publicKey: PublicKey,
     accountInfo: AccountInfo<Buffer> | null
@@ -361,6 +369,7 @@ export class RpcClient {
     };
   }
 
+  /** Helper method to parse a program error. */
   protected parseProgramError(
     error: unknown,
     transaction: Transaction

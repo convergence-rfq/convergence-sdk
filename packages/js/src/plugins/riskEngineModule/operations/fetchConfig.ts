@@ -63,6 +63,7 @@ export const fetchConfigOperationHandler: OperationHandler<FetchConfigOperation>
       const account = await convergence
         .rpc()
         .getAccount(convergence.riskEngine().pdas().config(), commitment);
+        
       const config = toConfig(toConfigAccount(account));
       assertConfig(config);
 

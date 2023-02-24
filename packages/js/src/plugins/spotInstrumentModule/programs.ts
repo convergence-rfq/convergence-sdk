@@ -11,11 +11,13 @@ export const spotInstrumentProgram: Program = {
 /** @group Programs */
 export type SpotInstrumentProgram = Program & { availableGuards: string[] };
 
+/** @group Helpers */
 export const isSpotInstrumentProgram = (
   value: Program
 ): value is SpotInstrumentProgram =>
   typeof value === 'object' && 'availableGuards' in value;
 
+/** @group Helpers */
 export function assertSpotInstrumentProgram(
   value: Program
 ): asserts value is SpotInstrumentProgram {

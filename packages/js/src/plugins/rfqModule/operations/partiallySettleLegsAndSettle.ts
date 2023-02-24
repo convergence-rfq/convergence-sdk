@@ -51,8 +51,9 @@ export type PartiallySettleLegsAndSettleOperation = Operation<
  * @category Inputs
  */
 export type PartiallySettleLegsAndSettleInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /** 
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -126,7 +127,8 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
 
       while (settleTxSize == -1 || settleTxSize + 193 > MAX_TX_SIZE) {
         const index = Math.trunc(slicedIndex / 2);
-        const startIndex = rfqModel.legs.length - index;
+        // const startIndex = rfqModel.legs.length - index;
+        const startIndex = rfqModel.legs.length - index + 3;
 
         settleRfqBuilder = await settleBuilder(
           convergence,
@@ -216,6 +218,8 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
           }
         }
       }
+
+      console.log('ready to settle finally')
 
       const output = await settleRfqBuilder.sendAndConfirm(
         convergence,

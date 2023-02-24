@@ -52,12 +52,12 @@ export type SetInstrumentTypeInput = {
   authority?: Signer;
 
   /**
-   * Instrument type
+   * The instrument type.
    */
   instrumentType: InstrumentType;
 
   /**
-   * Instrument program
+   * The address of the instrument program account.
    */
   instrumentProgram: PublicKey;
 };

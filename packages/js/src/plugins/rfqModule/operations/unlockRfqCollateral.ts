@@ -43,15 +43,19 @@ export type UnlockRfqCollateralOperation = Operation<
  * @category Inputs
  */
 export type UnlockRfqCollateralInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
-  /** The Rfq address. */
+  /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional address of the Taker's collateral info account.
+  /**
+   * Optional address of the Taker's collateral info account.
+   *
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
    *
    */
@@ -131,7 +135,6 @@ export const unlockRfqCollateralBuilder = async (
   let { collateralInfo } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
@@ -147,7 +150,7 @@ export const unlockRfqCollateralBuilder = async (
     .add({
       instruction: createUnlockRfqCollateralInstruction(
         {
-          protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
           collateralInfo,
         },
