@@ -78,7 +78,11 @@ export class PsyoptionsAmericanInstrument implements Instrument {
       amount: number;
       side: Side;
     }
-  ) {}
+  ) {
+    if (legInfo && this.legInfo) {
+      this.legInfo.amount = legInfo.amount * Math.pow(10, mint.decimals);
+    }
+  }
 
   static createForLeg(
     convergence: Convergence,
@@ -100,8 +104,9 @@ export class PsyoptionsAmericanInstrument implements Instrument {
         side,
       }
     );
+    
     return new InstrumentClient(convergence, instrument, {
-      amount,
+      amount: amount * Math.pow(10, mint.decimals),
       side,
     });
   }

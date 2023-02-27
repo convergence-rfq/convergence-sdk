@@ -15,6 +15,7 @@ import {
   programId as psyoptionsEuropeanProgramId,
   instructions,
   OptionType,
+  EuroPrimitive,
 } from '@mithraic-labs/tokenized-euros';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import * as spl from '@solana/spl-token';
@@ -285,50 +286,42 @@ const createPriceFeed = async (
 };
 
 export const initializeNewOptionMeta = async (
-  convergence: Convergence,
+  oracle: PublicKey,
+  europeanProgram: Program<EuroPrimitive>,
+  provider: anchor.Provider,
   underlyingMint: Mint,
   stableMint: Mint,
   strikePrice: number,
   underlyingAmountPerContract: number,
   expiresIn: number
 ) => {
-  //@ts-ignore
-  const maker = Keypair.fromSecretKey(
-    new Uint8Array(
-      JSON.parse(readFileSync('./test/fixtures/maker.json', 'utf8'))
-    )
-  );
-  //@ts-ignore
-  const taker = Keypair.fromSecretKey(
-    new Uint8Array(
-      JSON.parse(readFileSync('./test/fixtures/taker.json', 'utf8'))
-    )
-  );
-
-  const payer = convergence.rpc().getDefaultFeePayer();
-
-  const provider = new anchor.AnchorProvider(
-    convergence.connection,
-    new anchor.Wallet(payer as Keypair),
-    {}
-  );
   anchor.setProvider(provider);
-//@ts-ignore
-  const europeanProgram = createProgram(
-    payer as Keypair,
-    convergence.connection.rpcEndpoint,
-    new PublicKey(psyoptionsEuropeanProgramId)
-  );
-  //@ts-ignore
-  const pseudoPythProgram = new Program(
-    PseudoPythIdl,
-    new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-    provider
-  );
-//@ts-ignore
-  const oracle = new PublicKey('oracle');
-//@ts-ignore
+
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
+
+  strikePrice *= Math.pow(10, stableMint.decimals);
+  underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
+
+  const {
+    euroMeta,
+    euroMetaKey,
+  } = await createEuroMetaInstruction(
+    europeanProgram,
+    underlyingMint.address,
+    underlyingMint.decimals,
+    stableMint.address,
+    stableMint.decimals,
+    expiration,
+    toBigNumber(underlyingAmountPerContract),
+    toBigNumber(strikePrice),
+    stableMint.decimals,
+    oracle
+  );
+
+  return {
+    euroMeta,
+    euroMetaKey,
+  };
 };
 
 export const initializeNewOptionMetaForTesting = async (
