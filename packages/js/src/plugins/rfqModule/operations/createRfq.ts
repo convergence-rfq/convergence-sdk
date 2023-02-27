@@ -1,11 +1,20 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
+import * as anchor from '@project-serum/anchor';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset } from '../types';
+import {
+  calculateExpectedLegsHash,
+  calculateExpectedLegsSize,
+  convertFixedSizeInput,
+  instrumentsToLegAccounts,
+  instrumentsToLegs,
+  legsToBaseAssetAccounts,
+} from '../helpers';
+import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -16,15 +25,6 @@ import {
   Signer,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import * as anchor from '@project-serum/anchor';
-import {
-  calculateExpectedLegsHash,
-  calculateExpectedLegsSize,
-  convertFixedSizeInput,
-  instrumentsToLegAccounts,
-  instrumentsToLegs,
-  legsToBaseAssetAccounts,
-} from '../helpers';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -150,12 +150,13 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       taker = convergence.identity(),
       orderType,
       quoteAsset,
+      instruments,
       activeWindow = 5_000,
       settlingWindow = 1_000,
     } = operation.input;
-    let { fixedSize, instruments, expectedLegsHash } = operation.input;
+    let { fixedSize, expectedLegsHash } = operation.input;
 
-    let rfqPda: PublicKey;
+    // let rfqPda: PublicKey;
 
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
@@ -164,7 +165,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       expectedLegsHash ??
       (await calculateExpectedLegsHash(convergence, instruments));
 
-    rfqPda = convergence
+    const rfqPda = convergence
       .rfqs()
       .pdas()
       .rfq({

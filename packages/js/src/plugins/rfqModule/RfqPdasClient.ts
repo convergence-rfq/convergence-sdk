@@ -9,7 +9,9 @@ import {
   Quote,
   priceQuoteBeet,
 } from '@convergence-rfq/rfq';
-import type { Convergence } from '@/Convergence';
+import * as anchor from '@project-serum/anchor';
+import * as beet from '@convergence-rfq/beet';
+import * as beetSolana from '@convergence-rfq/beet-solana';
 import {
   createSerializerFromFixableBeetArgsStruct,
   createSerializerFromFixableBeet,
@@ -18,9 +20,7 @@ import {
   Program,
   PublicKey,
 } from '@/types';
-import * as anchor from '@project-serum/anchor';
-import * as beet from '@convergence-rfq/beet';
-import * as beetSolana from '@convergence-rfq/beet-solana';
+import type { Convergence } from '@/Convergence';
 import { Option } from '@/utils';
 
 function toLittleEndian(value: number, bytes: number) {
@@ -67,7 +67,6 @@ export class RfqPdasClient {
     recentTimestamp,
   }: RfqInput): Pda {
     const programId = this.programId();
-    console.log('program id: ' + programId.toString());
 
     const hash = new Sha256();
     hash.update(serializeQuoteAssetData(quoteAsset));

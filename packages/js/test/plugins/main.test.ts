@@ -1976,8 +1976,8 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
     });
-    //@ts-ignore
-    const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
+
+    await cvg.rfqs().respond({
       maker,
       rfq: rfq1.address,
       bid: {
@@ -1985,8 +1985,8 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.000001 },
       },
     });
-    //@ts-ignore
-    const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
+
+    await cvg.rfqs().respond({
       maker,
       rfq: rfq2.address,
       ask: {

@@ -108,7 +108,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       scope.throwIfCanceled();
 
       for (const unparsedAccount of unparsedAccounts) {
-        let rfq = await convergence
+        const rfq = await convergence
           .rfqs()
           .findRfqByAddress({ address: unparsedAccount.publicKey });
 
@@ -131,7 +131,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         const rfqPage = [];
 
         for (const unparsedAccount of page) {
-          let rfq = await convergence
+          const rfq = await convergence
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
 

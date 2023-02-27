@@ -3,6 +3,7 @@ import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { instrumentsToLegAccounts, instrumentsToLegs } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -14,7 +15,6 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { instrumentsToLegAccounts, instrumentsToLegs } from '../helpers';
 const Key = 'AddLegsToRfqOperation' as const;
 
 /**
@@ -147,8 +147,8 @@ export const addLegsToRfqBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const protocolPdaClient = convergence.protocol().pdas();
   const protocol = protocolPdaClient.protocol();
-  const { taker = convergence.identity(), rfq } = params;
-  let { instruments } = params;
+  const { taker = convergence.identity(), instruments, rfq } = params;
+  // let { instruments } = params;
 
   const legs = await instrumentsToLegs(convergence, instruments);
   const legAccounts = instrumentsToLegAccounts(convergence, instruments);

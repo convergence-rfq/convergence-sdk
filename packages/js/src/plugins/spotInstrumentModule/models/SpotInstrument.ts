@@ -56,7 +56,7 @@ export class SpotInstrument implements Instrument {
     }
   }
 
-  /** Helper */
+  /** Helper method to create for leg. */
   static createForLeg(
     convergence: Convergence,
     mint: Mint,

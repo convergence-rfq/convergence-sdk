@@ -1,7 +1,5 @@
 import { StoredRfqState } from '@convergence-rfq/rfq';
 import { Rfq } from '../models';
-//@ts-ignore
-import { toRfqAccount } from '../accounts';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import { getPages, convertRfqOutput } from '../helpers';
 import {
@@ -98,7 +96,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       scope.throwIfCanceled();
 
       for (const unparsedAccount of unparsedAccounts) {
-        let rfq = await convergence
+        const rfq = await convergence
           .rfqs()
           .findRfqByAddress({ address: unparsedAccount.publicKey });
 
@@ -116,7 +114,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
         const rfqPage = [];
 
         for (const unparsedAccount of page) {
-          let rfq = await convergence
+          const rfq = await convergence
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
 
