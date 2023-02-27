@@ -1061,19 +1061,12 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   test('[riskEngineModule] it can calculate collateral for fixed base size RFQ creation', async (t: Test) => {
     const legs = [
-      await SpotInstrument.createForLeg(
-        cvg,
-        btcMint,
-        // 5 * 10 ** BTC_DECIMALS,
-        5,
-        Side.Bid
-      ).toLegData(),
+      await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
     ];
 
     const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
       fixedSize: {
         __kind: 'BaseAsset',
-        // legsMultiplierBps: 2 * 10 ** LEG_MULTIPLIER_DECIMALS, // 2 multiplier of 5 bitcoins, so 10 bitcoins in total
         legsMultiplierBps: 2,
       },
       orderType: OrderType.TwoWay,
@@ -1137,7 +1130,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, btcMint, {
-          // amount: 1 * 10 ** BTC_DECIMALS,
           amount: 1,
           side: Side.Bid,
         }),
@@ -1158,17 +1150,14 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         __kind: 'Standard',
         priceQuote: {
           __kind: 'AbsolutePrice',
-          // amountBps: 22_000 * 10 ** USDC_DECIMALS,
           amountBps: 22_000,
         },
-        // legsMultiplierBps: 20 * 10 ** LEG_MULTIPLIER_DECIMALS,
         legsMultiplierBps: 20,
       },
       ask: {
         __kind: 'Standard',
         priceQuote: {
           __kind: 'AbsolutePrice',
-          // amountBps: 23_000 * 10 ** USDC_DECIMALS,
           amountBps: 23_000,
         },
         legsMultiplierBps: 5,
