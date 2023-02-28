@@ -299,10 +299,28 @@ export const initializeNewOptionMeta = async (
 
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
+  const { instructions: initializeIxs } =
+    await initializeAllAccountsInstructions(
+      europeanProgram,
+      underlyingMint.address,
+      stableMint.address,
+      oracle,
+      expiration,
+      stableMint.decimals
+    );
+
+  const accountSetupTx = new web3.Transaction();
+  accountSetupTx.add(initializeIxs[2]);
+
+  if (provider.sendAndConfirm) {
+    await provider.sendAndConfirm(accountSetupTx);
+  }
+
   strikePrice *= Math.pow(10, stableMint.decimals);
   underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
 
   const {
+    instruction: createIx,
     euroMeta,
     euroMetaKey,
   } = await createEuroMetaInstruction(
@@ -317,6 +335,11 @@ export const initializeNewOptionMeta = async (
     stableMint.decimals,
     oracle
   );
+
+  const createTx = new web3.Transaction().add(createIx);
+  if (provider && provider.sendAndConfirm) {
+    await provider.sendAndConfirm(createTx);
+  }
 
   return {
     euroMeta,
@@ -384,7 +407,7 @@ export const initializeNewOptionMetaForTesting = async (
 
   strikePrice *= Math.pow(10, stableMint.decimals);
   underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
-
+  //----
   const {
     instruction: createIx,
     euroMeta,

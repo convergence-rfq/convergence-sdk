@@ -156,8 +156,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     } = operation.input;
     let { fixedSize, expectedLegsHash } = operation.input;
 
-    // let rfqPda: PublicKey;
-
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
     fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);

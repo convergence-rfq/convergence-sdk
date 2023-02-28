@@ -1168,7 +1168,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       1,
       3_600
     );
-    europeanOptionPutMint = euroMeta.putOptionMint;
 
     const legs = [
       await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
@@ -1467,6 +1466,28 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and cancel response', async (t: Test) => {
+    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+      testOracle,
+      testEuropeanProgram,
+      testProvider,
+      btcMint,
+      usdcMint,
+      23_354,
+      1,
+      3_600
+    );
+    const psyopEuroInstrument = new PsyoptionsEuropeanInstrument(
+      cvg,
+      btcMint,
+      OptionType.PUT,
+      euroMeta,
+      euroMetaKey,
+      {
+        amount: 3.769,
+        side: Side.Bid,
+      }
+    );
+
     const { rfq } = await cvg.rfqs().createAndFinalize({
       taker,
       instruments: [
@@ -1474,6 +1495,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
           amount: 5,
           side: Side.Bid,
         }),
+        psyopEuroInstrument,
       ],
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'QuoteAsset', quoteAmount: 0.0000001 },
