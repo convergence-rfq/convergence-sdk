@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
+import { convertRfqOutput, getPages } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -8,7 +9,6 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { convertRfqOutput, getPages } from '../helpers';
 
 const Key = 'FindRfqsByAddressesOperation' as const;
 

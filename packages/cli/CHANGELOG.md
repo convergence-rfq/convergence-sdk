@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.0.14
+
+### Patch Changes
+
+- add faucet airdrop helper method
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.14
+
 ## 4.0.13
 
 ### Patch Changes

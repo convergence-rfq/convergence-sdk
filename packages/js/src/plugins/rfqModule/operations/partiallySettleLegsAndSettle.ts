@@ -219,8 +219,6 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
         }
       }
 
-      console.log('ready to settle finally')
-
       const output = await settleRfqBuilder.sendAndConfirm(
         convergence,
         confirmOptions

@@ -1,8 +1,15 @@
 import { PublicKey } from '@solana/web3.js';
+import { Leg } from '@convergence-rfq/rfq';
+import * as anchor from '@project-serum/anchor';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { OrderType, QuoteAsset, FixedSize } from '../types';
 import { Rfq } from '../models';
+import {
+  calculateExpectedLegsHash,
+  convertFixedSizeInput,
+  instrumentsToLegs,
+} from '../helpers';
 import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
@@ -15,15 +22,8 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-import { Leg } from '@convergence-rfq/rfq';
 import { Convergence } from '@/Convergence';
-import * as anchor from '@project-serum/anchor';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import {
-  calculateExpectedLegsHash,
-  convertFixedSizeInput,
-  instrumentsToLegs,
-} from '../helpers';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -158,12 +158,13 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
     ): Promise<CreateAndFinalizeRfqConstructionOutput> => {
       const {
         taker = convergence.identity(),
+        instruments,
         orderType,
         quoteAsset,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
-      let { fixedSize, instruments } = operation.input;
+      let { fixedSize } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 

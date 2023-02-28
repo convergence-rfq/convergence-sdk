@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 import { AuthoritySide, Confirmation, Side } from '@convergence-rfq/rfq';
-
 import { calculateRisk } from '../clientCollateralCalculator';
 import { extractLegsMultiplierBps } from '../helpers';
 import { Convergence } from '@/Convergence';
@@ -10,8 +9,7 @@ import {
   OperationScope,
   useOperation,
 } from '@/types';
-//@ts-ignore
-import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
+// import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 
@@ -117,7 +115,7 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         quoteSide: confirmation.side,
       };
 
-      let [requiredCollateral] = await calculateRisk(
+      const [requiredCollateral] = await calculateRisk(
         convergence,
         config,
         rfq.legs,

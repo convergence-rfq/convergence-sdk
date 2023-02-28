@@ -4,6 +4,8 @@ import { Rfq } from '../models';
 import { psyoptionsAmericanInstrumentProgram } from '../../psyoptionsAmericanInstrumentModule/programs';
 import { psyoptionsEuropeanInstrumentProgram } from '../../psyoptionsEuropeanInstrumentModule/programs';
 import { psyoptionsAmericanInstrumentDataSerializer } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
+import { getPages, convertRfqOutput } from '../helpers';
+import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import { Convergence } from '@/Convergence';
 import { SpotInstrumentDataSerializer } from '@/plugins/spotInstrumentModule';
 import {
@@ -13,8 +15,6 @@ import {
   useOperation,
 } from '@/types';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { getPages, convertRfqOutput } from '../helpers';
-import { RfqGpaBuilder } from '../RfqGpaBuilder';
 
 const Key = 'FindRfqsByTokenOperation' as const;
 
@@ -87,7 +87,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       scope.throwIfCanceled();
 
       for (const unparsedAccount of unparsedAccounts) {
-        let rfq = await convergence
+        const rfq = await convergence
           .rfqs()
           .findRfqByAddress({ address: unparsedAccount.publicKey });
 

@@ -12,12 +12,15 @@ import {
   convergenceCli,
   killStuckProcess,
   spokSamePubkey,
+  initializeNewOptionMeta,
   initializeNewOptionMetaForTesting,
   initializePsyoptionsAmerican,
   setupAccounts,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
 } from '../helpers';
+//@ts-ignore
+import { InstrumentClient } from '@/index';
 import { Convergence } from '@/Convergence';
 import {
   Mint,
@@ -43,6 +46,7 @@ import {
   calculateExpectedLegsSize,
   calculateExpectedLegsHash,
 } from '@/index';
+import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 
 killStuckProcess();
 
@@ -53,6 +57,10 @@ let btcMint: Mint;
 let solMint: Mint;
 
 let dao: Signer;
+
+let testOracle: PublicKey;
+let testEuropeanProgram: anchor.Program<EuroPrimitive>;
+let testProvider: anchor.Provider;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
@@ -688,14 +696,6 @@ test('[collateralModule] it can withdraw collateral', async (t: Test) => {
     $topic: 'same model',
     model: 'token',
   });
-
-  const tc = await cvg.collateral().findByUser({
-    user: taker.publicKey,
-  });
-  console.log(
-    '<withdrawCollateral> taker locked tokens collateral amount:  ' +
-      tc.lockedTokensAmount.toString()
-  );
 });
 
 test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async () => {
@@ -757,15 +757,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker,
       rfq: rfq.address,
     });
-
-    const takerCollateral = await cvg.collateral().findByUser({
-      user: taker.publicKey,
-    });
-
-    console.log(
-      '<finalizeRfqConst> taker locked tokens collateral amount: ' +
-        takerCollateral.lockedTokensAmount.toString()
-    );
 
     let refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
 
@@ -1035,7 +1026,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  test('[riskEngineModule] it can calculate collateral for fixed quote size RFQ creation', async (t: Test) => {
+  test('[riskEngineModule] it can calculate collateral for fixed quote size RFQ creation (Spot)', async (t: Test) => {
     const legs = [
       await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
     ];
@@ -1043,7 +1034,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
       fixedSize: {
         __kind: 'QuoteAsset',
-        // quoteAmount: 100 * 10 ** USDC_DECIMALS,
         quoteAmount: 100,
       },
       orderType: OrderType.TwoWay,
@@ -1059,153 +1049,23 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  test('[riskEngineModule] it can calculate collateral for fixed base size RFQ creation', async (t: Test) => {
-    const legs = [
-      await SpotInstrument.createForLeg(
+  test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
+    const { euroMeta, euroMetaKey, oracle, europeanProgram, provider } =
+      await initializeNewOptionMetaForTesting(
         cvg,
         btcMint,
-        // 5 * 10 ** BTC_DECIMALS,
-        5,
-        Side.Bid
-      ).toLegData(),
-    ];
-
-    const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
-      fixedSize: {
-        __kind: 'BaseAsset',
-        // legsMultiplierBps: 2 * 10 ** LEG_MULTIPLIER_DECIMALS, // 2 multiplier of 5 bitcoins, so 10 bitcoins in total
-        legsMultiplierBps: 2,
-      },
-      orderType: OrderType.TwoWay,
-      legs,
-      settlementPeriod: 5 * 60 * 60, // 5 hours
-    });
-
-    spok(t, riskOutput, {
-      $topic: 'Calculated Collateral for fixed base size Rfq',
-      requiredCollateral: 19800,
-    });
-  });
-
-  // // PSYOPTIONS EUROPEANS
-  test('[riskEngineModule] it can calculate collateral for a response to an Rfq', async (t: Test) => {
-    // variable size rfq for btc
-    const { rfq } = await cvg.rfqs().createAndFinalize({
-      instruments: [
-        new SpotInstrument(cvg, btcMint, {
-          amount: 1,
-          side: Side.Bid,
-        }),
-      ],
-      taker,
-      orderType: OrderType.TwoWay,
-      fixedSize: { __kind: 'None', padding: 0 },
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
-      settlingWindow: 30 * 60 * 60, // 30 hours
-    });
-
-    const riskOutput = await cvg.riskEngine().calculateCollateralForResponse({
-      rfqAddress: rfq.address,
-      bid: {
-        __kind: 'Standard',
-        priceQuote: {
-          __kind: 'AbsolutePrice',
-          amountBps: 22_000,
-        },
-        legsMultiplierBps: 20,
-      },
-      ask: {
-        __kind: 'Standard',
-        priceQuote: {
-          __kind: 'AbsolutePrice',
-          amountBps: 23_000,
-        },
-        legsMultiplierBps: 5,
-      },
-    });
-
-    spok(t, riskOutput, {
-      $topic: 'Calculated Collateral for response to an Rfq',
-      requiredCollateral: spok.range(92399, 92400),
-    });
-  });
-
-  test('[riskEngineModule] it can calculate collateral for a confirmation of the Rfq', async (t: Test) => {
-    // variable size rfq for btc
-    const { rfq } = await cvg.rfqs().createAndFinalize({
-      instruments: [
-        new SpotInstrument(cvg, btcMint, {
-          // amount: 1 * 10 ** BTC_DECIMALS,
-          amount: 1,
-          side: Side.Bid,
-        }),
-      ],
-      taker,
-      orderType: OrderType.TwoWay,
-      fixedSize: { __kind: 'None', padding: 0 },
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
-      settlingWindow: 60 * 60 * 60, // 60 hours
-    });
-
-    const { rfqResponse } = await cvg.rfqs().respond({
-      maker,
-      rfq: rfq.address,
-      bid: {
-        __kind: 'Standard',
-        priceQuote: {
-          __kind: 'AbsolutePrice',
-          // amountBps: 22_000 * 10 ** USDC_DECIMALS,
-          amountBps: 22_000,
-        },
-        // legsMultiplierBps: 20 * 10 ** LEG_MULTIPLIER_DECIMALS,
-        legsMultiplierBps: 20,
-      },
-      ask: {
-        __kind: 'Standard',
-        priceQuote: {
-          __kind: 'AbsolutePrice',
-          // amountBps: 23_000 * 10 ** USDC_DECIMALS,
-          amountBps: 23_000,
-        },
-        legsMultiplierBps: 5,
-      },
-    });
-
-    const riskOutput = await cvg
-      .riskEngine()
-      .calculateCollateralForConfirmation({
-        rfqAddress: rfq.address,
-        responseAddress: rfqResponse.address,
-        confirmation: {
-          side: Side.Bid,
-          overrideLegMultiplierBps: 3,
-        },
-      });
-
-    spok(t, riskOutput, {
-      $topic: 'Calculated Collateral for a confirmation of the Rfq',
-      requiredCollateral: spok.range(20459.9999, 20460.0001),
-    });
-  });
-
-  // PSYOPTIONS EUROPEANS
-
-  test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
-    const { euroMeta, euroMetaKey } = await initializeNewOptionMetaForTesting(
-      cvg,
-      btcMint,
-      usdcMint,
-      // 17_500 * 10 ** USDC_DECIMALS,
-      17_500,
-      // 1 * 10 ** BTC_DECIMALS,
-      1,
-      3_600
-    );
+        usdcMint,
+        // 17_500 * 10 ** USDC_DECIMALS,
+        17_500,
+        // 1 * 10 ** BTC_DECIMALS,
+        1,
+        3_600
+      );
     europeanOptionPutMint = euroMeta.putOptionMint;
+
+    testOracle = oracle;
+    testEuropeanProgram = europeanProgram;
+    testProvider = provider;
 
     const instrument1 = new PsyoptionsEuropeanInstrument(
       cvg,
@@ -1296,6 +1156,172 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       state: StoredResponseState.Settled,
     });
   });
+
+  test('[riskEngineModule] it can calculate collateral for fixed quote size RFQ creation (Psyoptions Euro)', async (t: Test) => {
+    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+      testOracle,
+      testEuropeanProgram,
+      testProvider,
+      btcMint,
+      usdcMint,
+      17_500,
+      1,
+      3_600
+    );
+
+    const legs = [
+      await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
+      await PsyoptionsEuropeanInstrument.createForLeg(
+        cvg,
+        btcMint,
+        OptionType.PUT,
+        euroMeta,
+        euroMetaKey,
+        5,
+        Side.Bid
+      ).toLegData(),
+    ];
+
+    const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
+      fixedSize: {
+        __kind: 'QuoteAsset',
+        quoteAmount: 100,
+      },
+      orderType: OrderType.TwoWay,
+      legs,
+      settlementPeriod: 100,
+    });
+
+    spok(t, riskOutput, {
+      $topic: 'Calculated Collateral for fixed quote size Rfq',
+      requiredCollateral: removeCollateralDecimals(
+        DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ
+      ),
+    });
+  });
+
+  test('[riskEngineModule] it can calculate collateral for fixed base size RFQ creation', async (t: Test) => {
+    const legs = [
+      await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
+    ];
+
+    const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
+      fixedSize: {
+        __kind: 'BaseAsset',
+        legsMultiplierBps: 2,
+      },
+      orderType: OrderType.TwoWay,
+      legs,
+      settlementPeriod: 5 * 60 * 60, // 5 hours
+    });
+
+    spok(t, riskOutput, {
+      $topic: 'Calculated Collateral for fixed base size Rfq',
+      requiredCollateral: 19800,
+    });
+  });
+
+  test('[riskEngineModule] it can calculate collateral for a response to an Rfq', async (t: Test) => {
+    // variable size rfq for btc
+    const { rfq } = await cvg.rfqs().createAndFinalize({
+      instruments: [
+        new SpotInstrument(cvg, btcMint, {
+          amount: 1,
+          side: Side.Bid,
+        }),
+      ],
+      taker,
+      orderType: OrderType.TwoWay,
+      fixedSize: { __kind: 'None', padding: 0 },
+      quoteAsset: cvg
+        .instrument(new SpotInstrument(cvg, usdcMint))
+        .toQuoteAsset(),
+      settlingWindow: 30 * 60 * 60, // 30 hours
+    });
+
+    const riskOutput = await cvg.riskEngine().calculateCollateralForResponse({
+      rfqAddress: rfq.address,
+      bid: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 22_000,
+        },
+        legsMultiplierBps: 20,
+      },
+      ask: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 23_000,
+        },
+        legsMultiplierBps: 5,
+      },
+    });
+
+    spok(t, riskOutput, {
+      $topic: 'Calculated Collateral for response to an Rfq',
+      requiredCollateral: spok.range(92399, 92400),
+    });
+  });
+
+  test('[riskEngineModule] it can calculate collateral for a confirmation of the Rfq', async (t: Test) => {
+    // variable size rfq for btc
+    const { rfq } = await cvg.rfqs().createAndFinalize({
+      instruments: [
+        new SpotInstrument(cvg, btcMint, {
+          amount: 1,
+          side: Side.Bid,
+        }),
+      ],
+      taker,
+      orderType: OrderType.TwoWay,
+      fixedSize: { __kind: 'None', padding: 0 },
+      quoteAsset: cvg
+        .instrument(new SpotInstrument(cvg, usdcMint))
+        .toQuoteAsset(),
+      settlingWindow: 60 * 60 * 60, // 60 hours
+    });
+
+    const { rfqResponse } = await cvg.rfqs().respond({
+      maker,
+      rfq: rfq.address,
+      bid: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 22_000,
+        },
+        legsMultiplierBps: 20,
+      },
+      ask: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 23_000,
+        },
+        legsMultiplierBps: 5,
+      },
+    });
+
+    const riskOutput = await cvg
+      .riskEngine()
+      .calculateCollateralForConfirmation({
+        rfqAddress: rfq.address,
+        responseAddress: rfqResponse.address,
+        confirmation: {
+          side: Side.Bid,
+          overrideLegMultiplierBps: 3,
+        },
+      });
+
+    spok(t, riskOutput, {
+      $topic: 'Calculated Collateral for a confirmation of the Rfq',
+      requiredCollateral: spok.range(20459.9999, 20460.0001),
+    });
+  });
+
+  // PSYOPTIONS EUROPEANS
 
   test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, clean up response legs, clean up response', async (t: Test) => {
     const { rfq } = await cvg.rfqs().createAndFinalize({
@@ -1440,6 +1466,28 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and cancel response', async (t: Test) => {
+    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+      testOracle,
+      testEuropeanProgram,
+      testProvider,
+      btcMint,
+      usdcMint,
+      23_354,
+      1,
+      3_600
+    );
+    const psyopEuroInstrument = new PsyoptionsEuropeanInstrument(
+      cvg,
+      btcMint,
+      OptionType.PUT,
+      euroMeta,
+      euroMetaKey,
+      {
+        amount: 3.769,
+        side: Side.Bid,
+      }
+    );
+
     const { rfq } = await cvg.rfqs().createAndFinalize({
       taker,
       instruments: [
@@ -1447,6 +1495,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
           amount: 5,
           side: Side.Bid,
         }),
+        psyopEuroInstrument,
       ],
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'QuoteAsset', quoteAmount: 0.0000001 },
@@ -1976,8 +2025,8 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
     });
-    //@ts-ignore
-    const { rfqResponse: rfqResponse1 } = await cvg.rfqs().respond({
+
+    await cvg.rfqs().respond({
       maker,
       rfq: rfq1.address,
       bid: {
@@ -1985,8 +2034,8 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.000001 },
       },
     });
-    //@ts-ignore
-    const { rfqResponse: rfqResponse2 } = await cvg.rfqs().respond({
+
+    await cvg.rfqs().respond({
       maker,
       rfq: rfq2.address,
       ask: {

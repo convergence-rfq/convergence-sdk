@@ -2,6 +2,7 @@ import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
+import { convertResponseInput } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -12,7 +13,6 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { convertResponseInput } from '../helpers';
 
 const Key = 'RespondToRfqOperation' as const;
 
@@ -59,7 +59,7 @@ export type RespondToRfqInput = {
    */
   maker?: Signer;
 
-  /** 
+  /**
    * The protocol address.
    * @defaultValue `convergence.protocol().pdas().protocol(),`
    */
@@ -68,15 +68,15 @@ export type RespondToRfqInput = {
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** 
+  /**
    * Optional address of the Taker's collateral info account.
-   * 
+   *
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
    *
    */
   collateralInfo?: PublicKey;
 
-  /** 
+  /**
    * Optional address of the Maker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
@@ -86,7 +86,7 @@ export type RespondToRfqInput = {
    */
   collateralToken?: PublicKey;
 
-  /** 
+  /**
    * Optional address of the risk engine account.
    *
    * @defaultValue `convergence.programs().getRiskEngine(programs)`
