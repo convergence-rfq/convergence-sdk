@@ -12,15 +12,13 @@ import {
   convergenceCli,
   killStuckProcess,
   spokSamePubkey,
-  initializeNewOptionMeta,
   initializeNewOptionMetaForTesting,
   initializePsyoptionsAmerican,
   setupAccounts,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
 } from '../helpers';
-//@ts-ignore
-import { InstrumentClient } from '@/index';
+import { initializeNewOptionMeta, createEuropeanProgram } from '@/index';
 import { Convergence } from '@/Convergence';
 import {
   Mint,
@@ -58,9 +56,8 @@ let solMint: Mint;
 
 let dao: Signer;
 
-let testOracle: PublicKey;
-let testEuropeanProgram: anchor.Program<EuroPrimitive>;
-let testProvider: anchor.Provider;
+let oracle: PublicKey;
+let europeanProgram: anchor.Program<EuroPrimitive>;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
@@ -1050,22 +1047,25 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
-    const { euroMeta, euroMetaKey, oracle, europeanProgram, provider } =
-      await initializeNewOptionMetaForTesting(
-        cvg,
-        btcMint,
-        usdcMint,
-        // 17_500 * 10 ** USDC_DECIMALS,
-        17_500,
-        // 1 * 10 ** BTC_DECIMALS,
-        1,
-        3_600
-      );
+    const {
+      euroMeta,
+      euroMetaKey,
+      oracle: testOracle,
+      europeanProgram: testEuropeanProgram,
+    } = await initializeNewOptionMetaForTesting(
+      cvg,
+      btcMint,
+      usdcMint,
+      // 17_500 * 10 ** USDC_DECIMALS,
+      17_500,
+      // 1 * 10 ** BTC_DECIMALS,
+      1,
+      3_600
+    );
     europeanOptionPutMint = euroMeta.putOptionMint;
 
-    testOracle = oracle;
-    testEuropeanProgram = europeanProgram;
-    testProvider = provider;
+    oracle = testOracle;
+    europeanProgram = testEuropeanProgram;
 
     const instrument1 = new PsyoptionsEuropeanInstrument(
       cvg,
@@ -1159,9 +1159,9 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   test('[riskEngineModule] it can calculate collateral for fixed quote size RFQ creation (Psyoptions Euro)', async (t: Test) => {
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
-      testOracle,
-      testEuropeanProgram,
-      testProvider,
+      cvg,
+      oracle,
+      europeanProgram,
       btcMint,
       usdcMint,
       17_500,
@@ -1467,23 +1467,34 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   test('[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and cancel response', async (t: Test) => {
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
-      testOracle,
-      testEuropeanProgram,
-      testProvider,
+      cvg,
+      oracle,
+      europeanProgram,
       btcMint,
       usdcMint,
       23_354,
       1,
       3_600
     );
-    const psyopEuroInstrument = new PsyoptionsEuropeanInstrument(
+    const psyopEuroInstrument1 = new PsyoptionsEuropeanInstrument(
+      cvg,
+      btcMint,
+      OptionType.CALL,
+      euroMeta,
+      euroMetaKey,
+      {
+        amount: 3.769,
+        side: Side.Ask,
+      }
+    );
+    const psyopEuroInstrument2 = new PsyoptionsEuropeanInstrument(
       cvg,
       btcMint,
       OptionType.PUT,
       euroMeta,
       euroMetaKey,
       {
-        amount: 3.769,
+        amount: 3.89,
         side: Side.Bid,
       }
     );
@@ -1491,11 +1502,12 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq } = await cvg.rfqs().createAndFinalize({
       taker,
       instruments: [
-        new SpotInstrument(cvg, btcMint, {
-          amount: 5,
-          side: Side.Bid,
-        }),
-        psyopEuroInstrument,
+        // new SpotInstrument(cvg, btcMint, {
+        //   amount: 5,
+        //   side: Side.Bid,
+        // }),
+        psyopEuroInstrument1,
+        psyopEuroInstrument2,
       ],
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'QuoteAsset', quoteAmount: 0.0000001 },
@@ -2155,7 +2167,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       });
     });
   });
-
+  //---
   test('[rfqModule] it can createRfqAndAddLegs, addLegs, finalize, respond, confirmResponse, prepareSettlementAndPrepareMoreLegs, partiallySettleLegsAndSettle', async (t: Test) => {
     const instruments = [];
     for (let i = 0; i < 25; i++) {
@@ -2166,6 +2178,61 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         })
       );
     }
+    // for (let i = 0; i < 5; i++) {
+    //   instruments.push(
+    //     new SpotInstrument(cvg, btcMint, {
+    //       amount: 1,
+    //       side: Side.Ask,
+    //     })
+    //   );
+    // }
+
+    // const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    //   cvg,
+    //   oracle,
+    //   europeanProgram,
+    //   btcMint,
+    //   usdcMint,
+    //   23_354,
+    //   1,
+    //   3_600
+    // );
+    // // for (let i = 0; i < 2; i++) {
+    //   const psyopEuroInstrument1 = new PsyoptionsEuropeanInstrument(
+    //     cvg,
+    //     btcMint,
+    //     OptionType.PUT,
+    //     euroMeta,
+    //     euroMetaKey,
+    //     {
+    //       amount: 3.456,
+    //       side: Side.Bid,
+    //     }
+    //   );
+    //   instruments.push(psyopEuroInstrument1);
+
+    //   const psyopEuroInstrument2 = new PsyoptionsEuropeanInstrument(
+    //     cvg,
+    //     btcMint,
+    //     OptionType.CALL,
+    //     euroMeta,
+    //     euroMetaKey,
+    //     {
+    //       amount: 3.456,
+    //       side: Side.Bid,
+    //     }
+    //   );
+    // instruments.push(psyopEuroInstrument2);
+    // }
+
+    // for (let i = 0; i < 10; i++) {
+    //   instruments.push(
+    //     new SpotInstrument(cvg, btcMint, {
+    //       amount: 1,
+    //       side: Side.Ask,
+    //     })
+    //   );
+    // }
 
     const expectedLegsSize = await calculateExpectedLegsSize(cvg, instruments);
     const expectedLegsHash = await calculateExpectedLegsHash(cvg, instruments);
@@ -2173,6 +2240,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const { rfq } = await cvg.rfqs().createRfqAndAddLegs({
       taker,
       instruments: instruments.slice(0, 20),
+      // instruments,
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
       quoteAsset: cvg
@@ -2214,12 +2282,14 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       rfq: rfq.address,
       response: rfqResponse.address,
       legAmountToPrepare: 20,
+      // legAmountToPrepare: 2,
     });
     await cvg.rfqs().prepareSettlementAndPrepareMoreLegs({
       caller: maker,
       rfq: rfq.address,
       response: rfqResponse.address,
       legAmountToPrepare: 20,
+      // legAmountToPrepare: 2,
     });
 
     await cvg.rfqs().prepareMoreLegsSettlement({
@@ -2256,6 +2326,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       rfq: rfq.address,
       response: rfqResponse.address,
       legAmountToSettle: 22,
+      // legAmountToSettle: 2,
     });
 
     refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -2280,7 +2351,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   test('[rfqModule] it can find RFQs by instrument (specifying page params)', async (t: Test) => {
     const rfqPages1 = await cvg.rfqs().findRfqsByInstrument({
       instrumentProgram: cvg.programs().getSpotInstrument(),
-      rfqsPerPage: 6,
+      rfqsPerPage: 5,
       numPages: 4,
     });
 
@@ -2414,6 +2485,11 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       mintAuthority
     );
     t.assert(collateralWallet);
+  });
+
+  test('[helpers] create europeanProgram', async (t: Test) => {
+    const europeanProgram = await createEuropeanProgram(cvg);
+    t.assert(europeanProgram);
   });
   //*<>*<>*END NON-INTERDEPENDENT TESTS WRAPPER*<>*<>*//
 });
