@@ -320,7 +320,7 @@ export const initializeNewOptionMetaForTesting = async (
   const pseudoPythProgram = new Program(
     PseudoPythIdl,
     new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-    provider
+    // provider
   );
   const oracle = await createPriceFeed(
     pseudoPythProgram,

@@ -1,12 +1,16 @@
-import type { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { Keypair } from '@solana/web3.js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
-import { instructions, EuroPrimitive } from '@mithraic-labs/tokenized-euros';
+import {
+  instructions,
+  EuroPrimitive,
+  createProgram,
+  programId as psyoptionsEuropeanProgramId,
+} from '@mithraic-labs/tokenized-euros';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
@@ -25,8 +29,10 @@ import {
   toPublicKey,
   toBigNumber,
 } from '@/types';
-const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
-  instructions;
+const {
+  initializeAllAccountsInstructions,
+  createEuroMetaInstruction,
+} = instructions;
 import { TransactionBuilder } from '@/utils';
 
 export type HasMintAddress = Rfq | PublicKey;
@@ -604,5 +610,19 @@ export const initializeNewOptionMeta = async (
   return {
     euroMeta,
     euroMetaKey,
+  };
+};
+
+export const createEuropeanProgram = async (convergence: Convergence) => {
+  const payer = convergence.rpc().getDefaultFeePayer();
+
+  const europeanProgram = createProgram(
+    payer as Keypair,
+    convergence.connection.rpcEndpoint,
+    new PublicKey(psyoptionsEuropeanProgramId)
+  );
+
+  return {
+    europeanProgram,
   };
 };
