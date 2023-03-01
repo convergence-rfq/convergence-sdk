@@ -5,7 +5,7 @@ import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
-import { Program, web3 } from '@project-serum/anchor';
+import { Program } from '@project-serum/anchor';
 import { instructions, EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
@@ -18,9 +18,16 @@ import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { LEG_MULTIPLIER_DECIMALS, QUOTE_AMOUNT_DECIMALS } from './constants';
 import { Convergence } from '@/Convergence';
-import { UnparsedAccount, PublicKeyValues, token, toPublicKey, toBigNumber } from '@/types';
+import {
+  UnparsedAccount,
+  PublicKeyValues,
+  token,
+  toPublicKey,
+  toBigNumber,
+} from '@/types';
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
   instructions;
+import { TransactionBuilder } from '@/utils';
 
 export type HasMintAddress = Rfq | PublicKey;
 
@@ -545,17 +552,15 @@ export const instrumentsToLegAccounts = (
 };
 
 export const initializeNewOptionMeta = async (
+  convergence: Convergence,
   oracle: PublicKey,
   europeanProgram: Program<EuroPrimitive>,
-  provider: anchor.Provider,
   underlyingMint: Mint,
   stableMint: Mint,
   strikePrice: number,
   underlyingAmountPerContract: number,
   expiresIn: number
 ) => {
-  anchor.setProvider(provider);
-
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
   const { instructions: initializeIxs } =
@@ -568,12 +573,9 @@ export const initializeNewOptionMeta = async (
       stableMint.decimals
     );
 
-  const accountSetupTx = new web3.Transaction();
-  accountSetupTx.add(initializeIxs[2]);
-
-  if (provider.sendAndConfirm) {
-    await provider.sendAndConfirm(accountSetupTx);
-  }
+  TransactionBuilder.make()
+    .add({ instruction: initializeIxs[2], signers: [] })
+    .sendAndConfirm(convergence);
 
   strikePrice *= Math.pow(10, stableMint.decimals);
   underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
@@ -595,10 +597,9 @@ export const initializeNewOptionMeta = async (
     oracle
   );
 
-  const createTx = new web3.Transaction().add(createIx);
-  if (provider.sendAndConfirm) {
-    await provider.sendAndConfirm(createTx);
-  }
+  TransactionBuilder.make()
+    .add({ instruction: createIx, signers: [] })
+    .sendAndConfirm(convergence);
 
   return {
     euroMeta,

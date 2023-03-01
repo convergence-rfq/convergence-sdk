@@ -12,13 +12,14 @@ import {
   convergenceCli,
   killStuckProcess,
   spokSamePubkey,
-  initializeNewOptionMeta,
+  // initializeNewOptionMeta,
   initializeNewOptionMetaForTesting,
   initializePsyoptionsAmerican,
   setupAccounts,
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
 } from '../helpers';
+import { initializeNewOptionMeta } from '@/index';
 //@ts-ignore
 import { InstrumentClient } from '@/index';
 import { Convergence } from '@/Convergence';
@@ -58,9 +59,8 @@ let solMint: Mint;
 
 let dao: Signer;
 
-let testOracle: PublicKey;
-let testEuropeanProgram: anchor.Program<EuroPrimitive>;
-let testProvider: anchor.Provider;
+let oracle: PublicKey;
+let europeanProgram: anchor.Program<EuroPrimitive>;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
@@ -1050,22 +1050,25 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
-    const { euroMeta, euroMetaKey, oracle, europeanProgram, provider } =
-      await initializeNewOptionMetaForTesting(
-        cvg,
-        btcMint,
-        usdcMint,
-        // 17_500 * 10 ** USDC_DECIMALS,
-        17_500,
-        // 1 * 10 ** BTC_DECIMALS,
-        1,
-        3_600
-      );
+    const {
+      euroMeta,
+      euroMetaKey,
+      oracle: testOracle,
+      europeanProgram: testEuropeanProgram,
+    } = await initializeNewOptionMetaForTesting(
+      cvg,
+      btcMint,
+      usdcMint,
+      // 17_500 * 10 ** USDC_DECIMALS,
+      17_500,
+      // 1 * 10 ** BTC_DECIMALS,
+      1,
+      3_600
+    );
     europeanOptionPutMint = euroMeta.putOptionMint;
 
-    testOracle = oracle;
-    testEuropeanProgram = europeanProgram;
-    testProvider = provider;
+    oracle = testOracle;
+    europeanProgram = testEuropeanProgram;
 
     const instrument1 = new PsyoptionsEuropeanInstrument(
       cvg,
@@ -1159,9 +1162,9 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   test('[riskEngineModule] it can calculate collateral for fixed quote size RFQ creation (Psyoptions Euro)', async (t: Test) => {
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
-      testOracle,
-      testEuropeanProgram,
-      testProvider,
+      cvg,
+      oracle,
+      europeanProgram,
       btcMint,
       usdcMint,
       17_500,
@@ -1467,9 +1470,9 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   test('[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and cancel response', async (t: Test) => {
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
-      testOracle,
-      testEuropeanProgram,
-      testProvider,
+      cvg,
+      oracle,
+      europeanProgram,
       btcMint,
       usdcMint,
       23_354,

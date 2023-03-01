@@ -15,7 +15,6 @@ import {
   programId as psyoptionsEuropeanProgramId,
   instructions,
   OptionType,
-  EuroPrimitive,
 } from '@mithraic-labs/tokenized-euros';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import * as spl from '@solana/spl-token';
@@ -283,68 +282,6 @@ const createPriceFeed = async (
     }
   );
   return collateralTokenFeed.publicKey;
-};
-
-export const initializeNewOptionMeta = async (
-  oracle: PublicKey,
-  europeanProgram: Program<EuroPrimitive>,
-  provider: anchor.Provider,
-  underlyingMint: Mint,
-  stableMint: Mint,
-  strikePrice: number,
-  underlyingAmountPerContract: number,
-  expiresIn: number
-) => {
-  anchor.setProvider(provider);
-
-  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
-
-  const { instructions: initializeIxs } =
-    await initializeAllAccountsInstructions(
-      europeanProgram,
-      underlyingMint.address,
-      stableMint.address,
-      oracle,
-      expiration,
-      stableMint.decimals
-    );
-
-  const accountSetupTx = new web3.Transaction();
-  accountSetupTx.add(initializeIxs[2]);
-
-  if (provider.sendAndConfirm) {
-    await provider.sendAndConfirm(accountSetupTx);
-  }
-
-  strikePrice *= Math.pow(10, stableMint.decimals);
-  underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
-
-  const {
-    instruction: createIx,
-    euroMeta,
-    euroMetaKey,
-  } = await createEuroMetaInstruction(
-    europeanProgram,
-    underlyingMint.address,
-    underlyingMint.decimals,
-    stableMint.address,
-    stableMint.decimals,
-    expiration,
-    toBigNumber(underlyingAmountPerContract),
-    toBigNumber(strikePrice),
-    stableMint.decimals,
-    oracle
-  );
-
-  const createTx = new web3.Transaction().add(createIx);
-  if (provider.sendAndConfirm) {
-    await provider.sendAndConfirm(createTx);
-  }
-
-  return {
-    euroMeta,
-    euroMetaKey,
-  };
 };
 
 export const initializeNewOptionMetaForTesting = async (
