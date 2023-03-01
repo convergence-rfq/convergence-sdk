@@ -1,12 +1,17 @@
+import * as anchor from '@project-serum/anchor';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { OrderType, FixedSize, QuoteAsset } from '../types';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
+import {
+  calculateExpectedLegsHash,
+  calculateExpectedLegsSize,
+  convertFixedSizeInput,
+} from '../helpers';
 import { createRfqBuilder } from './createRfq';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import * as anchor from '@project-serum/anchor';
 import {
   Operation,
   OperationHandler,
@@ -16,11 +21,6 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import {
-  calculateExpectedLegsHash,
-  calculateExpectedLegsSize,
-  convertFixedSizeInput,
-} from '../helpers';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -146,12 +146,13 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
     ): Promise<CreateAndAddLegsToRfqOutput> => {
       const {
         taker = convergence.identity(),
-        orderType,
         quoteAsset,
+        instruments,
+        orderType,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
-      let { fixedSize, instruments, expectedLegsSize, expectedLegsHash } =
+      let { fixedSize, expectedLegsSize, expectedLegsHash } =
         operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
@@ -164,7 +165,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         expectedLegsHash ??
         (await calculateExpectedLegsHash(convergence, instruments));
 
-      let rfqPda = convergence
+      const rfqPda = convergence
         .rfqs()
         .pdas()
         .rfq({

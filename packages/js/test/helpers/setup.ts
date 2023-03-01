@@ -337,7 +337,7 @@ export const initializeNewOptionMeta = async (
   );
 
   const createTx = new web3.Transaction().add(createIx);
-  if (provider && provider.sendAndConfirm) {
+  if (provider.sendAndConfirm) {
     await provider.sendAndConfirm(createTx);
   }
 
@@ -407,7 +407,7 @@ export const initializeNewOptionMetaForTesting = async (
 
   strikePrice *= Math.pow(10, stableMint.decimals);
   underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
-  //----
+
   const {
     instruction: createIx,
     euroMeta,

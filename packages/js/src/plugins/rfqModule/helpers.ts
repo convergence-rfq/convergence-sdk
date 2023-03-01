@@ -4,6 +4,9 @@ import { Keypair } from '@solana/web3.js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
+import * as anchor from '@project-serum/anchor';
+import { Program, web3 } from '@project-serum/anchor';
+import { instructions, EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
@@ -11,10 +14,13 @@ import {
 } from '../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
+import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { LEG_MULTIPLIER_DECIMALS, QUOTE_AMOUNT_DECIMALS } from './constants';
 import { Convergence } from '@/Convergence';
-import { UnparsedAccount, PublicKeyValues, token, toPublicKey } from '@/types';
+import { UnparsedAccount, PublicKeyValues, token, toPublicKey, toBigNumber } from '@/types';
+const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
+  instructions;
 
 export type HasMintAddress = Rfq | PublicKey;
 
@@ -111,38 +117,41 @@ export const devnetAirdrops = async (
   };
 };
 
-
-export const faucetAirdropWithMint = async (cvg:Convergence,user:PublicKey,mintAddress:PublicKey,mintDecimlas:number) => {
+export const faucetAirdropWithMint = async (
+  cvg: Convergence,
+  user: PublicKey,
+  mintAddress: PublicKey,
+  mintDecimlas: number
+) => {
   let TokenWallet;
-  const mintAuthority =
-    Keypair.fromSecretKey(
-      new Uint8Array([
-        195, 171, 187, 206, 150, 223, 15, 222, 66, 189, 14, 34, 241, 1, 26, 95,
-        251, 154, 99, 221, 244, 134, 82, 234, 114, 163, 221, 151, 53, 171, 209,
-        189, 41, 58, 183, 52, 123, 23, 211, 220, 156, 60, 205, 23, 9, 11, 51,
-        252, 184, 116, 167, 109, 174, 140, 100, 91, 157, 252, 202, 152, 61, 246,
-        84, 87,
-      ])
-    );
-    try {
-      const { token: wallet } = await cvg
-        .tokens()
-        .createToken({ mint: mintAddress, owner: user });
-      TokenWallet = wallet;
-    } catch {
-      const address = cvg.tokens().pdas().associatedTokenAccount({
-        mint: mintAddress,
-        owner: user,
-      });
-      TokenWallet = await cvg.tokens().findTokenByAddress({ address });
-    }
-    await cvg.tokens().mint({
-      mintAddress,
-      amount: token(1_000_000, mintDecimlas),
-      toToken:TokenWallet.address,
-      mintAuthority,
+  const mintAuthority = Keypair.fromSecretKey(
+    new Uint8Array([
+      195, 171, 187, 206, 150, 223, 15, 222, 66, 189, 14, 34, 241, 1, 26, 95,
+      251, 154, 99, 221, 244, 134, 82, 234, 114, 163, 221, 151, 53, 171, 209,
+      189, 41, 58, 183, 52, 123, 23, 211, 220, 156, 60, 205, 23, 9, 11, 51, 252,
+      184, 116, 167, 109, 174, 140, 100, 91, 157, 252, 202, 152, 61, 246, 84,
+      87,
+    ])
+  );
+  try {
+    const { token: wallet } = await cvg
+      .tokens()
+      .createToken({ mint: mintAddress, owner: user });
+    TokenWallet = wallet;
+  } catch {
+    const address = cvg.tokens().pdas().associatedTokenAccount({
+      mint: mintAddress,
+      owner: user,
     });
-}
+    TokenWallet = await cvg.tokens().findTokenByAddress({ address });
+  }
+  await cvg.tokens().mint({
+    mintAddress,
+    amount: token(1_000_000, mintDecimlas),
+    toToken: TokenWallet.address,
+    mintAuthority,
+  });
+};
 
 export const legsToInstruments = async (
   convergence: Convergence,
@@ -533,4 +542,66 @@ export const instrumentsToLegAccounts = (
   }
 
   return legAccounts;
+};
+
+export const initializeNewOptionMeta = async (
+  oracle: PublicKey,
+  europeanProgram: Program<EuroPrimitive>,
+  provider: anchor.Provider,
+  underlyingMint: Mint,
+  stableMint: Mint,
+  strikePrice: number,
+  underlyingAmountPerContract: number,
+  expiresIn: number
+) => {
+  anchor.setProvider(provider);
+
+  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
+
+  const { instructions: initializeIxs } =
+    await initializeAllAccountsInstructions(
+      europeanProgram,
+      underlyingMint.address,
+      stableMint.address,
+      oracle,
+      expiration,
+      stableMint.decimals
+    );
+
+  const accountSetupTx = new web3.Transaction();
+  accountSetupTx.add(initializeIxs[2]);
+
+  if (provider.sendAndConfirm) {
+    await provider.sendAndConfirm(accountSetupTx);
+  }
+
+  strikePrice *= Math.pow(10, stableMint.decimals);
+  underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
+
+  const {
+    instruction: createIx,
+    euroMeta,
+    euroMetaKey,
+  } = await createEuroMetaInstruction(
+    europeanProgram,
+    underlyingMint.address,
+    underlyingMint.decimals,
+    stableMint.address,
+    stableMint.decimals,
+    expiration,
+    toBigNumber(underlyingAmountPerContract),
+    toBigNumber(strikePrice),
+    stableMint.decimals,
+    oracle
+  );
+
+  const createTx = new web3.Transaction().add(createIx);
+  if (provider.sendAndConfirm) {
+    await provider.sendAndConfirm(createTx);
+  }
+
+  return {
+    euroMeta,
+    euroMetaKey,
+  };
 };

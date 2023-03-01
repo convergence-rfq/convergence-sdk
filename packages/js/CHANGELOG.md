@@ -1,5 +1,17 @@
 # @convergence-rfq/sdk
 
+## 4.0.16
+
+### Patch Changes
+
+- export initializeNewOptionMeta fn
+
+## 4.0.15
+
+### Patch Changes
+
+- add initializeNewOptionMeta method
+
 ## 4.0.14
 
 ### Patch Changes
