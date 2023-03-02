@@ -8,13 +8,8 @@ import { Program } from '@project-serum/anchor';
 import {
   instructions,
   EuroPrimitive,
-  //@ts-ignore
   createProgram,
   programId as psyoptionsEuropeanProgramId,
-  //@ts-ignore
-  createProgramFromProvider,
-  //@ts-ignore
-  createProgramFromWallet,
 } from '@mithraic-labs/tokenized-euros';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
@@ -33,12 +28,9 @@ import {
   token,
   toPublicKey,
   toBigNumber,
-  //@ts-ignore
   Pda,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-//@ts-ignore
-import { KeypairSigner } from '@/types';
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
   instructions;
 import { TransactionBuilder } from '@/utils';

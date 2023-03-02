@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.0.18
+
+### Patch Changes
+
+- fix initializeNewOptionMeta
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.18
+
 ## 4.0.17
 
 ### Patch Changes
