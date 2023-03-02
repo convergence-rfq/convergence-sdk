@@ -192,7 +192,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       scope
     );
     scope.throwIfCanceled();
-
+    
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
       convergence,
       scope.confirmOptions
