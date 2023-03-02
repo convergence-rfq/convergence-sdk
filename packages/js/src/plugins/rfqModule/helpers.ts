@@ -28,11 +28,11 @@ import {
   token,
   toPublicKey,
   toBigNumber,
+  Pda,
+  makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
-const {
-  initializeAllAccountsInstructions,
-  createEuroMetaInstruction,
-} = instructions;
+const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
+  instructions;
 import { TransactionBuilder } from '@/utils';
 
 export type HasMintAddress = Rfq | PublicKey;
@@ -569,19 +569,52 @@ export const initializeNewOptionMeta = async (
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
-  const { instructions: initializeIxs } =
-    await initializeAllAccountsInstructions(
-      europeanProgram,
-      underlyingMint.address,
-      stableMint.address,
-      oracle,
-      expiration,
-      stableMint.decimals
-    );
+  let { instructions: initializeIxs } = await initializeAllAccountsInstructions(
+    europeanProgram,
+    underlyingMint.address,
+    stableMint.address,
+    oracle,
+    expiration,
+    stableMint.decimals
+  );
 
-  TransactionBuilder.make()
-    .add({ instruction: initializeIxs[2], signers: [] })
-    .sendAndConfirm(convergence);
+  const tx = TransactionBuilder.make();
+
+  const underlyingPoolKey = Pda.find(europeanProgram.programId, [
+    underlyingMint.address.toBuffer(),
+    Buffer.from('underlyingPool', 'utf-8'),
+  ]);
+  const underlyingPoolAccount = await convergence.connection.getAccountInfo(
+    underlyingPoolKey
+  );
+  if (underlyingPoolAccount && initializeIxs.length === 3) {
+    initializeIxs = initializeIxs.slice(1);
+  }
+  const stablePoolKey = Pda.find(europeanProgram.programId, [
+    stableMint.address.toBuffer(),
+    Buffer.from('stablePool', 'utf-8'),
+  ]);
+  const stablePoolAccount = await convergence.connection.getAccountInfo(
+    stablePoolKey
+  );
+  if (stablePoolAccount && initializeIxs.length === 2) {
+    initializeIxs = initializeIxs.slice(1);
+  } else if (
+    stablePoolAccount &&
+    initializeIxs.length === 3
+  ) {
+    initializeIxs.splice(1, 1);
+  }
+
+  initializeIxs.forEach((ix) => {
+    tx.add({ instruction: ix, signers: [] });
+  });
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  if (initializeIxs.length > 0) {
+    await tx.sendAndConfirm(convergence, confirmOptions);
+  }
 
   strikePrice *= Math.pow(10, stableMint.decimals);
   underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
@@ -603,7 +636,7 @@ export const initializeNewOptionMeta = async (
     oracle
   );
 
-  TransactionBuilder.make()
+  await TransactionBuilder.make()
     .add({ instruction: createIx, signers: [] })
     .sendAndConfirm(convergence);
 
@@ -622,7 +655,5 @@ export const createEuropeanProgram = async (convergence: Convergence) => {
     new PublicKey(psyoptionsEuropeanProgramId)
   );
 
-  return {
-    europeanProgram,
-  };
+  return europeanProgram;
 };

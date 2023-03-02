@@ -10,6 +10,7 @@ import {
 } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
+import { initializeNewOptionMeta } from '@/index';
 import {
   createProgram,
   programId as psyoptionsEuropeanProgramId,
@@ -39,7 +40,9 @@ import {
   Signer,
 } from '@/index';
 const {
+  //@ts-ignore
   initializeAllAccountsInstructions,
+  //@ts-ignore
   createEuroMetaInstruction,
   mintOptions,
 } = instructions;
@@ -320,50 +323,61 @@ export const initializeNewOptionMetaForTesting = async (
   const pseudoPythProgram = new Program(
     PseudoPythIdl,
     new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-    // provider
+    provider
   );
   const oracle = await createPriceFeed(
     pseudoPythProgram,
     17_000,
     stableMint.decimals * -1
   );
-  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
+  // const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
-  const { instructions: initializeIxs } =
-    await initializeAllAccountsInstructions(
-      europeanProgram,
-      underlyingMint.address,
-      stableMint.address,
-      oracle,
-      expiration,
-      stableMint.decimals
-    );
-  const accountSetupTx = new web3.Transaction();
-  initializeIxs.forEach((ix) => accountSetupTx.add(ix));
-  await provider.sendAndConfirm(accountSetupTx);
+  // const { instructions: initializeIxs } =
+  //   await initializeAllAccountsInstructions(
+  //     europeanProgram,
+  //     underlyingMint.address,
+  //     stableMint.address,
+  //     oracle,
+  //     expiration,
+  //     stableMint.decimals
+  //   );
+  // const accountSetupTx = new web3.Transaction();
+  // initializeIxs.forEach((ix) => accountSetupTx.add(ix));
+  // await provider.sendAndConfirm(accountSetupTx);
 
-  strikePrice *= Math.pow(10, stableMint.decimals);
-  underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
-
-  const {
-    instruction: createIx,
-    euroMeta,
-    euroMetaKey,
-  } = await createEuroMetaInstruction(
+  const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    convergence,
+    oracle,
     europeanProgram,
-    underlyingMint.address,
-    underlyingMint.decimals,
-    stableMint.address,
-    stableMint.decimals,
-    expiration,
-    toBigNumber(underlyingAmountPerContract),
-    toBigNumber(strikePrice),
-    stableMint.decimals,
-    oracle
+    underlyingMint,
+    stableMint,
+    17_500,
+    1,
+    3_600
   );
 
-  const createTx = new web3.Transaction().add(createIx);
-  await provider.sendAndConfirm(createTx);
+  // strikePrice *= Math.pow(10, stableMint.decimals);
+  // underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
+
+  // const {
+  //   instruction: createIx,
+  //   euroMeta,
+  //   euroMetaKey,
+  // } = await createEuroMetaInstruction(
+  //   europeanProgram,
+  //   underlyingMint.address,
+  //   underlyingMint.decimals,
+  //   stableMint.address,
+  //   stableMint.decimals,
+  //   expiration,
+  //   toBigNumber(underlyingAmountPerContract),
+  //   toBigNumber(strikePrice),
+  //   stableMint.decimals,
+  //   oracle
+  // );
+
+  // const createTx = new web3.Transaction().add(createIx);
+  // await provider.sendAndConfirm(createTx);
 
   const makerStableMintToken = convergence
     .tokens()

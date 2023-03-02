@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.0.18
+
+### Patch Changes
+
+- fix initializeNewOptionMeta
+
 ## 4.0.17
 
 ### Patch Changes
