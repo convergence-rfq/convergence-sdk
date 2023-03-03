@@ -1,4 +1,6 @@
-# @convergence-rfq/sdk
+# Cconvergence RFQ SDK
+
+[![Run Tests](https://github.com/convergence-rfq/convergence-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/convergence-rfq/convergence-sdk/actions/workflows/tests.yml)
 
 ## Overview
 
