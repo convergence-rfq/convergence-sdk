@@ -23,7 +23,9 @@ import {
 type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;
   underlyingAmountPerContract: bignum;
+  underlyingAmountPerContractDecimals: number;
   strikePrice: bignum;
+  strikePriceDecimals: number;
   expiration: bignum;
   optionMint: PublicKey;
   metaKey: PublicKey;
@@ -116,7 +118,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
         side,
       }
     );
-    
+
     return new InstrumentClient(convergence, instrument, {
       amount: amount * Math.pow(10, mint.decimals),
       side,
