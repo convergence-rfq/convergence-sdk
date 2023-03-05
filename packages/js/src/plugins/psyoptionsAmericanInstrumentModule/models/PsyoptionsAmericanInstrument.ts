@@ -21,7 +21,9 @@ import { createSerializerFromFixableBeetArgsStruct } from '@/types';
 type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;
   underlyingAmountPerContract: bignum;
+  underlyingAmountPerContractDecimals: number;
   strikePrice: bignum;
+  strikePriceDecimals: number;
   expiration: bignum;
   optionMint: PublicKey;
   metaKey: PublicKey;
@@ -163,6 +165,11 @@ export class PsyoptionsAmericanInstrument implements Instrument {
         isSigner: false,
         isWritable: false,
       },
+      {
+        pubkey: this.optionMeta.quoteAssetMint,
+        isSigner: false,
+        isWritable: false,
+      }
     ];
   }
 
