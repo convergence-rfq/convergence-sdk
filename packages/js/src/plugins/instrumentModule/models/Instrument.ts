@@ -28,14 +28,6 @@ export interface Instrument {
   getProgramId: () => PublicKey;
 
   getValidationAccounts(): AccountMeta[];
-
-  //getPrepareSettlementAccounts(side: Side): Promise<AccountMeta[]>;
-
-  //getSettleAccounts(assetReceiver: PublicKey): Promise<AccountMeta[]>;
-
-  //getRevertSettlementPreparationAccounts(side: Side): Promise<AccountMeta[]>;
-
-  //getCleanUpAccounts(): Promise<AccountMeta[]>;
 }
 
 /** @group Model Helpers */

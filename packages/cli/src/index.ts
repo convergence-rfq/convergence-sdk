@@ -268,7 +268,7 @@ const getRegisteredMints = async (options: Options) => {
   console.log('Getting registered mints...');
   const cvg = await createCvg(options);
   const mints = await cvg.protocol().getRegisteredMints();
-  mints.map((x) => console.log('Mint:', x.address.toString()));
+  mints.map((x: any) => console.log('Mint:', x.address.toString()));
   console.log('Success!');
 };
 

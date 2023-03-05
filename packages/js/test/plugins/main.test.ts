@@ -5,6 +5,7 @@ import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import { bignum } from '@convergence-rfq/beet';
+import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -18,7 +19,6 @@ import {
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
 } from '../helpers';
-import { initializeNewOptionMeta, createEuropeanProgram } from '@/index';
 import { Convergence } from '@/Convergence';
 import {
   Mint,
@@ -27,6 +27,8 @@ import {
   RiskCategory,
   SpotInstrument,
   OrderType,
+  initializeNewOptionMeta,
+  createEuropeanProgram,
   PsyoptionsEuropeanInstrument,
   PsyoptionsAmericanInstrument,
   OptionType,
@@ -44,7 +46,6 @@ import {
   calculateExpectedLegsSize,
   calculateExpectedLegsHash,
 } from '@/index';
-import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 
 killStuckProcess();
 
@@ -203,7 +204,7 @@ test('[protocolModule] it can add instruments', async () => {
       instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
         .address,
       canBeUsedAsQuote: true,
-      validateDataAccountAmount: 2,
+      validateDataAccountAmount: 3,
       prepareToSettleAccountAmount: 7,
       settleAccountAmount: 3,
       revertPreparationAccountAmount: 3,
@@ -214,7 +215,7 @@ test('[protocolModule] it can add instruments', async () => {
       instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument()
         .address,
       canBeUsedAsQuote: true,
-      validateDataAccountAmount: 2,
+      validateDataAccountAmount: 3,
       prepareToSettleAccountAmount: 7,
       settleAccountAmount: 3,
       revertPreparationAccountAmount: 3,
