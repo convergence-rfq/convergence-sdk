@@ -1,7 +1,6 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair, PublicKey } from '@solana/web3.js';
-//@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
@@ -13,10 +12,8 @@ import {
   SKIP_PREFLIGHT,
   convergenceCli,
   killStuckProcess,
-  //@ts-ignore
   spokSamePubkey,
   initializeNewOptionMetaForTesting,
-  //@ts-ignore
   initializePsyoptionsAmerican,
   setupAccounts,
   USDC_DECIMALS,
@@ -30,34 +27,23 @@ import {
   RiskCategory,
   SpotInstrument,
   OrderType,
-  //@ts-ignore
   initializeNewOptionMeta,
-  //@ts-ignore
   createEuropeanProgram,
   PsyoptionsEuropeanInstrument,
-  //@ts-ignore
   PsyoptionsAmericanInstrument,
   OptionType,
   InstrumentType,
   Token,
-  //@ts-ignore
   StoredResponseState,
-  //@ts-ignore
   AuthoritySide,
-  //@ts-ignore
   StoredRfqState,
-  //@ts-ignore
   legsToInstruments,
   Signer,
   DEFAULT_RISK_CATEGORIES_INFO,
-  //@ts-ignore
   devnetAirdrops,
-  //@ts-ignore
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
-  //@ts-ignore
   calculateExpectedLegsSize,
-  //@ts-ignore
   calculateExpectedLegsHash,
 } from '@/index';
 
@@ -70,14 +56,11 @@ let btcMint: Mint;
 let solMint: Mint;
 
 let dao: Signer;
-//@ts-ignore
 let oracle: PublicKey;
-//@ts-ignore
 let europeanProgram: anchor.Program<EuroPrimitive>;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
-//@ts-ignore
 let mintAuthority: Keypair;
 
 let daoBTCWallet: Token;
@@ -96,11 +79,8 @@ const USER_COLLATERAL_AMOUNT = 100_000_000;
 const USER_USDC_WALLET = 10_000_000;
 
 // SETUP
-//@ts-ignore
 let optionMarket: OptionMarketWithKey | null;
-//@ts-ignore
 let optionMarketPubkey: PublicKey;
-//@ts-ignore
 let europeanOptionPutMint: PublicKey;
 
 test('[setup] it can create Convergence instance', async (t: Test) => {
