@@ -5,6 +5,7 @@ import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import { bignum } from '@convergence-rfq/beet';
+import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -18,7 +19,6 @@ import {
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
 } from '../helpers';
-import { initializeNewOptionMeta, createEuropeanProgram } from '@/index';
 import { Convergence } from '@/Convergence';
 import {
   Mint,
@@ -27,6 +27,8 @@ import {
   RiskCategory,
   SpotInstrument,
   OrderType,
+  initializeNewOptionMeta,
+  createEuropeanProgram,
   PsyoptionsEuropeanInstrument,
   PsyoptionsAmericanInstrument,
   OptionType,
@@ -44,7 +46,6 @@ import {
   calculateExpectedLegsSize,
   calculateExpectedLegsHash,
 } from '@/index';
-import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 
 killStuckProcess();
 
@@ -55,14 +56,11 @@ let btcMint: Mint;
 let solMint: Mint;
 
 let dao: Signer;
-
 let oracle: PublicKey;
-
 let europeanProgram: anchor.Program<EuroPrimitive>;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
-
 let mintAuthority: Keypair;
 
 let daoBTCWallet: Token;
@@ -81,7 +79,6 @@ const USER_COLLATERAL_AMOUNT = 100_000_000;
 const USER_USDC_WALLET = 10_000_000;
 
 // SETUP
-
 let optionMarket: OptionMarketWithKey | null;
 let optionMarketPubkey: PublicKey;
 let europeanOptionPutMint: PublicKey;
@@ -203,6 +200,7 @@ test('[protocolModule] it can add instruments', async () => {
       instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
         .address,
       canBeUsedAsQuote: true,
+      // validateDataAccountAmount: 3,
       validateDataAccountAmount: 2,
       prepareToSettleAccountAmount: 7,
       settleAccountAmount: 3,
@@ -214,7 +212,7 @@ test('[protocolModule] it can add instruments', async () => {
       instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument()
         .address,
       canBeUsedAsQuote: true,
-      validateDataAccountAmount: 2,
+      validateDataAccountAmount: 3,
       prepareToSettleAccountAmount: 7,
       settleAccountAmount: 3,
       revertPreparationAccountAmount: 3,
@@ -1061,12 +1059,14 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       1,
       3_600
     );
-    europeanOptionPutMint = euroMeta.putOptionMint;
 
+    console.log('euro meta key in test: ' + euroMetaKey.toString());
+
+    europeanOptionPutMint = euroMeta.putOptionMint;
     oracle = testOracle;
     europeanProgram = testEuropeanProgram;
 
-    const instrument1 = new PsyoptionsEuropeanInstrument(
+    const instrument3 = new PsyoptionsEuropeanInstrument(
       cvg,
       btcMint,
       OptionType.PUT,
@@ -1081,7 +1081,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       amount: 0.000000005,
       side: Side.Ask,
     });
-    const instrument3 = new SpotInstrument(cvg, btcMint, {
+    const instrument1 = new SpotInstrument(cvg, btcMint, {
       amount: 0.000000011,
       side: Side.Bid,
     });
@@ -1100,7 +1100,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       rfq: rfq.address,
       taker,
     });
-
+    //@ts-ignore
     const { rfqResponse } = await cvg.rfqs().respond({
       maker,
       rfq: rfq.address,
@@ -1498,6 +1498,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         new PsyoptionsAmericanInstrument(
           cvg,
           btcMint,
+          usdcMint,
           OptionType.CALL,
           optionMarket as OptionMarketWithKey,
           optionMarketPubkey,

@@ -37,7 +37,9 @@ export const psyoptionsEuropeanInstrumentDataSerializer =
       [
         ['optionType', u8],
         ['underlyingAmountPerContract', u64],
+        ['underlyingAmountPerContractDecimals', u8],
         ['strikePrice', u64],
+        ['strikePriceDecimals', u8],
         ['expiration', u64],
         ['optionMint', publicKey],
         ['metaKey', publicKey],
@@ -125,6 +127,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     });
   }
 
+  /** Helper method to get validation accounts for a Psyoptions European instrument. */
   getValidationAccounts() {
     return [
       { pubkey: this.metaKey, isSigner: false, isWritable: false },
@@ -193,9 +196,15 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     return Buffer.from(
       new Uint8Array([
         this.optionType == OptionType.CALL ? 0 : 1,
-        ...toBigNumber(this.meta.underlyingAmountPerContract).toBuffer('le', 8),
-        ...toBigNumber(this.meta.strikePrice).toBuffer('le', 8),
-        ...toBigNumber(this.meta.expiration).toBuffer('le', 8),
+        ...toBigNumber(this.meta.underlyingAmountPerContract).toArrayLike(
+          Buffer,
+          'le',
+          8
+        ),
+        this.meta.underlyingDecimals,
+        ...toBigNumber(this.meta.strikePrice).toArrayLike(Buffer, 'le', 8),
+        this.meta.priceDecimals,
+        ...toBigNumber(this.meta.expiration).toArrayLike(Buffer, 'le', 8),
         ...(this.optionType == OptionType.CALL
           ? this.meta.callOptionMint.toBytes()
           : this.meta.putOptionMint.toBytes()),

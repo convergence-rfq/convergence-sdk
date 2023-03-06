@@ -279,7 +279,6 @@ export const createRfqBuilder = async (
   ];
 
   const baseAssetAccounts = legsToBaseAssetAccounts(convergence, legs);
-
   const legAccounts = instrumentsToLegAccounts(convergence, instruments);
 
   return TransactionBuilder.make()

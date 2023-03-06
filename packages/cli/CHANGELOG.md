@@ -1,5 +1,37 @@
 # @convergence-rfq/cli
 
+## 4.0.22
+
+### Patch Changes
+
+- fix options creation
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.22
+
+## 4.0.21
+
+### Patch Changes
+
+- fix options creation
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.21
+
+## 4.0.20
+
+### Patch Changes
+
+- fix options creation
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.20
+
+## 4.0.19
+
+### Patch Changes
+
+- fix options serialization / creation
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.19
+
 ## 4.0.18
 
 ### Patch Changes
