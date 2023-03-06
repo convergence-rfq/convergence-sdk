@@ -550,7 +550,7 @@ export const instrumentsToLegAccounts = (
       instrument,
       instrument.legInfo
     );
-
+    
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
 
@@ -599,10 +599,7 @@ export const initializeNewOptionMeta = async (
   );
   if (stablePoolAccount && initializeIxs.length === 2) {
     initializeIxs = initializeIxs.slice(1);
-  } else if (
-    stablePoolAccount &&
-    initializeIxs.length === 3
-  ) {
+  } else if (stablePoolAccount && initializeIxs.length === 3) {
     initializeIxs.splice(1, 1);
   }
 

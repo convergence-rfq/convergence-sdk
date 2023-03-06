@@ -35,7 +35,9 @@ export const psyoptionsAmericanInstrumentDataSerializer =
       [
         ['optionType', u8],
         ['underlyingAmountPerContract', u64],
+        ['underlyingAmountPerContractDecimals', u8],
         ['strikePrice', u64],
+        ['strikePriceDecimals', u8],
         ['expiration', u64],
         ['optionMint', publicKey],
         ['metaKey', publicKey],
@@ -73,6 +75,7 @@ export class PsyoptionsAmericanInstrument implements Instrument {
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
+    readonly quoteMint: Mint,
     readonly optionType: OptionType,
     readonly optionMeta: OptionMarketWithKey,
     readonly optionMetaPubKey: PublicKey,
@@ -89,6 +92,7 @@ export class PsyoptionsAmericanInstrument implements Instrument {
   static createForLeg(
     convergence: Convergence,
     mint: Mint,
+    quoteMint: Mint,
     optionType: OptionType,
     optionMeta: OptionMarketWithKey,
     optionMetaPubkey: PublicKey,
@@ -98,6 +102,7 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     const instrument = new PsyoptionsAmericanInstrument(
       convergence,
       mint,
+      quoteMint,
       optionType,
       optionMeta,
       optionMetaPubkey,
@@ -106,7 +111,7 @@ export class PsyoptionsAmericanInstrument implements Instrument {
         side,
       }
     );
-    
+
     return new InstrumentClient(convergence, instrument, {
       amount: amount * Math.pow(10, mint.decimals),
       side,
@@ -135,6 +140,9 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     const mint = await convergence
       .tokens()
       .findMintByAddress({ address: optionMarketWithKey.underlyingAssetMint });
+    const quoteMint = await convergence
+      .tokens()
+      .findMintByAddress({ address: optionMarketWithKey.quoteAssetMint });
     const amount =
       typeof instrumentAmount === 'number'
         ? instrumentAmount
@@ -143,6 +151,7 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     return new PsyoptionsAmericanInstrument(
       convergence,
       mint,
+      quoteMint,
       optionType,
       optionMarketWithKey,
       metaKey,
@@ -158,6 +167,10 @@ export class PsyoptionsAmericanInstrument implements Instrument {
       .rfqs()
       .pdas()
       .mintInfo({ mint: this.mint.address });
+    const quoteAssetMintPda = this.convergence
+      .rfqs()
+      .pdas()
+      .mintInfo({ mint: this.optionMeta.quoteAssetMint });
     return [
       { pubkey: this.optionMetaPubKey, isSigner: false, isWritable: false },
       {
@@ -166,10 +179,10 @@ export class PsyoptionsAmericanInstrument implements Instrument {
         isWritable: false,
       },
       {
-        pubkey: this.optionMeta.quoteAssetMint,
+        pubkey: quoteAssetMintPda,
         isSigner: false,
         isWritable: false,
-      }
+      },
     ];
   }
 
@@ -177,16 +190,28 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     const { optionMeta } = this;
     const callMint = this.optionMeta.optionMint.toBytes();
     const optionMarket = this.optionMeta.key.toBytes();
-
     const underlyingamountPerContract =
-      optionMeta.underlyingAmountPerContract.toBuffer('le', 8);
-    const expirationtime = optionMeta.expirationUnixTimestamp.toBuffer('le', 8);
-    const strikeprice = optionMeta.quoteAmountPerContract.toBuffer('le', 8);
+      optionMeta.underlyingAmountPerContract.toArrayLike(Buffer, 'le', 8);
+    const underlyingAmountPerContractDecimals = this.mint.decimals;
+    const expirationtime = optionMeta.expirationUnixTimestamp.toArrayLike(
+      Buffer,
+      'le',
+      8
+    );
+    const strikeprice = optionMeta.quoteAmountPerContract.toArrayLike(
+      Buffer,
+      'le',
+      8
+    );
+    const strikePriceDecimals = this.quoteMint.decimals;
+
     return Buffer.from(
       new Uint8Array([
         this.optionType == OptionType.CALL ? 0 : 1,
         ...underlyingamountPerContract,
+        underlyingAmountPerContractDecimals,
         ...strikeprice,
+        strikePriceDecimals,
         ...expirationtime,
         ...callMint,
         ...optionMarket,
