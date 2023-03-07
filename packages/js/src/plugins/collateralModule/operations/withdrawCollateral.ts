@@ -179,7 +179,7 @@ export const withdrawCollateralBuilder = async (
       .findMintByAddress({ address: protocolModel.collateralMint })
   ).decimals;
 
-  amount = (amount as number) *= 10 ** collateralDecimals;
+  amount = Number(amount) * Math.pow(10, collateralDecimals);
 
   return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)

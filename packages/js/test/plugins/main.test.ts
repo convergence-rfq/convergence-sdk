@@ -4,8 +4,11 @@ import { Keypair, PublicKey } from '@solana/web3.js';
 import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
+import { Program } from '@project-serum/anchor';
 import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
+import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
+import { createAccountsAndMintOptions } from '../helpers';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -13,7 +16,7 @@ import {
   convergenceCli,
   killStuckProcess,
   spokSamePubkey,
-  initializeNewOptionMetaForTesting,
+  createPriceFeed,
   initializePsyoptionsAmerican,
   setupAccounts,
   USDC_DECIMALS,
@@ -73,6 +76,8 @@ let takerUSDCWallet: Token;
 let takerBTCWallet: Token;
 let takerSOLWallet: Token;
 
+let payer: Signer;
+
 const SOL_WALLET_AMOUNT = 9_000;
 const BTC_WALLET_AMOUNT = 9_000;
 const USER_COLLATERAL_AMOUNT = 100_000_000;
@@ -87,6 +92,7 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   cvg = await convergenceCli(SKIP_PREFLIGHT);
 
   dao = cvg.rpc().getDefaultFeePayer();
+  payer = cvg.rpc().getDefaultFeePayer();
 
   const context = await setupAccounts(
     cvg,
@@ -114,6 +120,31 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
   takerSOLWallet = context.takerSOLWallet;
 
   mintAuthority = context.mintAuthority;
+
+  console.log(
+    'taker usdc wallet amount: ',
+    takerUSDCWallet.amount.basisPoints.toString()
+  );
+  console.log(
+    'taker btc wallet amount: ',
+    takerBTCWallet.amount.basisPoints.toString()
+  );
+  console.log(
+    'taker sol wallet amount: ',
+    takerSOLWallet.amount.basisPoints.toString()
+  );
+  console.log(
+    'maker usdc wallet amount: ',
+    makerUSDCWallet.amount.basisPoints.toString()
+  );
+  console.log(
+    'maker btc wallet amount: ',
+    makerBTCWallet.amount.basisPoints.toString()
+  );
+  console.log(
+    'dao usdc wallet amount: ',
+    daoUSDCWallet.amount.basisPoints.toString()
+  );
 
   t.same(
     daoBTCWallet.ownerAddress.toString(),
@@ -200,7 +231,6 @@ test('[protocolModule] it can add instruments', async () => {
       instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
         .address,
       canBeUsedAsQuote: true,
-      // validateDataAccountAmount: 3,
       validateDataAccountAmount: 2,
       prepareToSettleAccountAmount: 7,
       settleAccountAmount: 3,
@@ -1046,27 +1076,47 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[psyoptionsEuropeanInstrumentModule] it can create and finalize RFQ w/ PsyOptions Euro, respond, confirm, prepare, settle', async (t: Test) => {
-    const {
-      euroMeta,
-      euroMetaKey,
-      oracle: testOracle,
-      europeanProgram: testEuropeanProgram,
-    } = await initializeNewOptionMetaForTesting(
+    const provider = new anchor.AnchorProvider(
+      cvg.connection,
+      new anchor.Wallet(payer as Keypair),
+      {}
+    );
+    anchor.setProvider(provider);
+    europeanProgram = await createEuropeanProgram(cvg);
+    const pseudoPythProgram = new Program(
+      PseudoPythIdl,
+      new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
+      provider
+    );
+    oracle = await createPriceFeed(
+      pseudoPythProgram,
+      17_000,
+      usdcMint.decimals * -1
+    );
+
+    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
       cvg,
+      oracle,
+      europeanProgram,
       btcMint,
       usdcMint,
-      17_500,
+      23_354,
       1,
       3_600
     );
 
-    console.log('euro meta key in test: ' + euroMetaKey.toString());
-
     europeanOptionPutMint = euroMeta.putOptionMint;
-    oracle = testOracle;
-    europeanProgram = testEuropeanProgram;
 
-    const instrument3 = new PsyoptionsEuropeanInstrument(
+    await createAccountsAndMintOptions(
+      cvg,
+      euroMeta,
+      euroMetaKey,
+      payer,
+      europeanProgram,
+      usdcMint
+    );
+
+    const instrument1 = new PsyoptionsEuropeanInstrument(
       cvg,
       btcMint,
       OptionType.PUT,
@@ -1081,7 +1131,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       amount: 0.000000005,
       side: Side.Ask,
     });
-    const instrument1 = new SpotInstrument(cvg, btcMint, {
+    const instrument3 = new SpotInstrument(cvg, btcMint, {
       amount: 0.000000011,
       side: Side.Bid,
     });
@@ -1279,7 +1329,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   // PSYOPTIONS EUROPEANS
 
-  test('**[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, clean up response legs, clean up response', async (t: Test) => {
+  test('*failing*[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, clean up response legs, clean up response', async (t: Test) => {
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
       cvg,
       oracle,
@@ -1289,6 +1339,15 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       23_354,
       1,
       3_600
+    );
+
+    await createAccountsAndMintOptions(
+      cvg,
+      euroMeta,
+      euroMetaKey,
+      cvg.rpc().getDefaultFeePayer(),
+      europeanProgram,
+      usdcMint
     );
 
     const psyopEuroInstrument1 = new PsyoptionsEuropeanInstrument(
@@ -2101,6 +2160,15 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       3_600
     );
 
+    await createAccountsAndMintOptions(
+      cvg,
+      euroMeta,
+      euroMetaKey,
+      cvg.rpc().getDefaultFeePayer(),
+      europeanProgram,
+      usdcMint
+    );
+
     const psyopEuroInstrument1 = new PsyoptionsEuropeanInstrument(
       cvg,
       btcMint,
@@ -2117,7 +2185,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const psyopEuroInstrument2 = new PsyoptionsEuropeanInstrument(
       cvg,
       btcMint,
-      OptionType.CALL,
+      OptionType.PUT,
       euroMeta,
       euroMetaKey,
       {
@@ -2439,6 +2507,8 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[rfqModule] it can create and finalize Rfq (QuoteAsset), respond, and cancel response', async (t: Test) => {
+    await sleep(2000);
+
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
       cvg,
       oracle,

@@ -10,21 +10,22 @@ import {
 } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
-import { initializeNewOptionMeta } from '@/index';
+import { getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
 import {
+  //@ts-ignore
   createProgram,
+  //@ts-ignore
   programId as psyoptionsEuropeanProgramId,
   instructions,
   OptionType,
+  EuroMeta,
+  EuroPrimitive,
 } from '@mithraic-labs/tokenized-euros';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import * as spl from '@solana/spl-token';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { bignum } from '@convergence-rfq/beet';
-import {
-  IDL as PseudoPythIdl,
-  Pyth,
-} from '../../../../programs/pseudo_pyth_idl';
+import { Pyth } from '../../../../programs/pseudo_pyth_idl';
 import {
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
@@ -39,13 +40,7 @@ import {
   walletAdapterIdentity,
   Signer,
 } from '@/index';
-const {
-  //@ts-ignore
-  initializeAllAccountsInstructions,
-  //@ts-ignore
-  createEuroMetaInstruction,
-  mintOptions,
-} = instructions;
+const { mintOptions } = instructions;
 import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
 import { TransactionBuilder } from '@/utils';
 
@@ -251,7 +246,7 @@ export const setupAccounts = async (
 /**
  *  PSYOPTIONS EUROPEAN
  */
-const createPriceFeed = async (
+export const createPriceFeed = async (
   oracleProgram: Program<Pyth>,
   initPrice: number,
   expo: number
@@ -287,13 +282,13 @@ const createPriceFeed = async (
   return collateralTokenFeed.publicKey;
 };
 
-export const initializeNewOptionMetaForTesting = async (
+export const createAccountsAndMintOptions = async (
   convergence: Convergence,
-  underlyingMint: Mint,
-  stableMint: Mint,
-  strikePrice: number,
-  underlyingAmountPerContract: number,
-  expiresIn: number
+  euroMeta: EuroMeta,
+  euroMetaKey: PublicKey,
+  payer: Signer,
+  europeanProgram: anchor.Program<EuroPrimitive>,
+  stableMint: Mint
 ) => {
   const maker = Keypair.fromSecretKey(
     new Uint8Array(
@@ -305,79 +300,6 @@ export const initializeNewOptionMetaForTesting = async (
       JSON.parse(readFileSync('./test/fixtures/taker.json', 'utf8'))
     )
   );
-
-  const payer = convergence.rpc().getDefaultFeePayer();
-
-  const provider = new anchor.AnchorProvider(
-    convergence.connection,
-    new anchor.Wallet(payer as Keypair),
-    {}
-  );
-  anchor.setProvider(provider);
-
-  const europeanProgram = createProgram(
-    payer as Keypair,
-    convergence.connection.rpcEndpoint,
-    new PublicKey(psyoptionsEuropeanProgramId)
-  );
-  const pseudoPythProgram = new Program(
-    PseudoPythIdl,
-    new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-    provider
-  );
-  const oracle = await createPriceFeed(
-    pseudoPythProgram,
-    17_000,
-    stableMint.decimals * -1
-  );
-  // const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
-
-  // const { instructions: initializeIxs } =
-  //   await initializeAllAccountsInstructions(
-  //     europeanProgram,
-  //     underlyingMint.address,
-  //     stableMint.address,
-  //     oracle,
-  //     expiration,
-  //     stableMint.decimals
-  //   );
-  // const accountSetupTx = new web3.Transaction();
-  // initializeIxs.forEach((ix) => accountSetupTx.add(ix));
-  // await provider.sendAndConfirm(accountSetupTx);
-
-  const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
-    convergence,
-    oracle,
-    europeanProgram,
-    underlyingMint,
-    stableMint,
-    17_500,
-    1,
-    3_600
-  );
-
-  // strikePrice *= Math.pow(10, stableMint.decimals);
-  // underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
-
-  // const {
-  //   instruction: createIx,
-  //   euroMeta,
-  //   euroMetaKey,
-  // } = await createEuroMetaInstruction(
-  //   europeanProgram,
-  //   underlyingMint.address,
-  //   underlyingMint.decimals,
-  //   stableMint.address,
-  //   stableMint.decimals,
-  //   expiration,
-  //   toBigNumber(underlyingAmountPerContract),
-  //   toBigNumber(strikePrice),
-  //   stableMint.decimals,
-  //   oracle
-  // );
-
-  // const createTx = new web3.Transaction().add(createIx);
-  // await provider.sendAndConfirm(createTx);
 
   const makerStableMintToken = convergence
     .tokens()
@@ -421,6 +343,22 @@ export const initializeNewOptionMetaForTesting = async (
     payer as Keypair,
     euroMeta.putWriterMint,
     taker.publicKey
+  );
+  //@ts-ignore
+  const putBackupReceiver = await getOrCreateAssociatedTokenAccount(
+    convergence.connection,
+    convergence.rpc().getDefaultFeePayer() as Keypair,
+    euroMeta.putOptionMint,
+    // dao
+    payer.publicKey
+  );
+  //@ts-ignore
+  const callBackupReceiver = await getOrCreateAssociatedTokenAccount(
+    convergence.connection,
+    convergence.rpc().getDefaultFeePayer() as Keypair,
+    euroMeta.putOptionMint,
+    // dao
+    payer.publicKey
   );
 
   const { instruction: ix1 } = mintOptions(
@@ -471,14 +409,6 @@ export const initializeNewOptionMetaForTesting = async (
   const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
 
   await txBuilder.sendAndConfirm(convergence, confirmOptions);
-
-  return {
-    provider,
-    europeanProgram,
-    euroMeta,
-    euroMetaKey,
-    oracle,
-  };
 };
 
 const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
