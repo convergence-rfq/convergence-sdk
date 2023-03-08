@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 import { createWithdrawCollateralInstruction } from '@convergence-rfq/rfq';
-import { bignum } from '@convergence-rfq/beet';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -74,7 +73,7 @@ export type WithdrawCollateralInput = {
    */
 
   /** The amount to withdraw */
-  amount: bignum;
+  amount: number;
 };
 
 /**
@@ -179,7 +178,7 @@ export const withdrawCollateralBuilder = async (
       .findMintByAddress({ address: protocolModel.collateralMint })
   ).decimals;
 
-  amount = Number(amount) * Math.pow(10, collateralDecimals);
+  amount *= Math.pow(10, collateralDecimals);
 
   return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)

@@ -124,6 +124,27 @@ export class RpcClient {
     return transaction;
   }
 
+  async signAllTransactions(
+    transactions: Transaction[],
+    signers: Signer[]
+  ): Promise<Transaction[]> {
+    const { keypairs, identities } = getSignerHistogram(signers);
+
+    for (const transaction of transactions) {
+      // Keypair signers.
+      if (keypairs.length > 0) {
+        transaction.partialSign(...keypairs);
+      }
+
+      // Identity signers.
+      for (let i = 0; i < identities.length; i++) {
+        await identities[i].signTransaction(transaction);
+      }
+    }
+
+    return transactions;
+  }
+
   async sendTransaction(
     transaction: Transaction | TransactionBuilder,
     sendOptions: SendOptions = {},

@@ -111,6 +111,7 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       const mintInfo = convergence.rfqs().pdas().mintInfo({ mint });
       const account = await convergence.rpc().getAccount(mintInfo, commitment);
       const registeredMint = toRegisteredMint(toRegisteredMintAccount(account));
+
       scope.throwIfCanceled();
 
       return { ...output, registeredMint };

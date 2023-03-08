@@ -425,11 +425,11 @@ export const initializePsyoptionsAmerican = async (
   underlyingAmountPerContract: anchor.BN,
   expiresIn: number
 ) => {
-  const payer = taker;
+  // const payer = taker;
 
   const provider = new anchor.AnchorProvider(
     convergence.connection,
-    new anchor.Wallet(payer as Keypair),
+    new anchor.Wallet(taker as Keypair),
     {}
   );
   anchor.setProvider(provider);

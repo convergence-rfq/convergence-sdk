@@ -1,22 +1,32 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair, PublicKey } from '@solana/web3.js';
+//@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
+//@ts-ignore
 import { Program } from '@project-serum/anchor';
+//@ts-ignore
 import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
+//@ts-ignore
 import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
+//@ts-ignore
 import { createAccountsAndMintOptions } from '../helpers';
+//@ts-ignore
+// import { createAmericanProgram } from '@/index';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
   SKIP_PREFLIGHT,
   convergenceCli,
   killStuckProcess,
+  //@ts-ignore
   spokSamePubkey,
+  //@ts-ignore
   createPriceFeed,
+  //@ts-ignore
   initializePsyoptionsAmerican,
   setupAccounts,
   USDC_DECIMALS,
@@ -30,23 +40,37 @@ import {
   RiskCategory,
   SpotInstrument,
   OrderType,
+  //@ts-ignore
   initializeNewOptionMeta,
+  //@ts-ignore
   createEuropeanProgram,
+  //@ts-ignore
   PsyoptionsEuropeanInstrument,
+  //@ts-ignore
   PsyoptionsAmericanInstrument,
+  //@ts-ignore
   OptionType,
   InstrumentType,
   Token,
+  //@ts-ignore
   StoredResponseState,
+  //@ts-ignore
   AuthoritySide,
+  //@ts-ignore
   StoredRfqState,
+  //@ts-ignore
   legsToInstruments,
   Signer,
   DEFAULT_RISK_CATEGORIES_INFO,
+  //@ts-ignore
   devnetAirdrops,
+  //@ts-ignore
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
+  //@ts-ignore
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
+  //@ts-ignore
   calculateExpectedLegsSize,
+  //@ts-ignore
   calculateExpectedLegsHash,
 } from '@/index';
 
@@ -59,11 +83,14 @@ let btcMint: Mint;
 let solMint: Mint;
 
 let dao: Signer;
+//@ts-ignore
 let oracle: PublicKey;
+//@ts-ignore
 let europeanProgram: anchor.Program<EuroPrimitive>;
 
 let maker: Keypair; // LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS
 let taker: Keypair; // BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux
+//@ts-ignore
 let mintAuthority: Keypair;
 
 let daoBTCWallet: Token;
@@ -75,7 +102,7 @@ let makerBTCWallet: Token;
 let takerUSDCWallet: Token;
 let takerBTCWallet: Token;
 let takerSOLWallet: Token;
-
+//@ts-ignore
 let payer: Signer;
 
 const SOL_WALLET_AMOUNT = 9_000;
@@ -84,8 +111,11 @@ const USER_COLLATERAL_AMOUNT = 100_000_000;
 const USER_USDC_WALLET = 10_000_000;
 
 // SETUP
+//@ts-ignore
 let optionMarket: OptionMarketWithKey | null;
+//@ts-ignore
 let optionMarketPubkey: PublicKey;
+//@ts-ignore
 let europeanOptionPutMint: PublicKey;
 
 test('[setup] it can create Convergence instance', async (t: Test) => {
@@ -200,6 +230,7 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
 // PROTOCOL
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
+  console.log('usdc mint decimals: ', usdcMint.decimals.toString());
   const { protocol } = await cvg.protocol().initialize({
     collateralMint: usdcMint.address,
   });
@@ -414,7 +445,7 @@ test('[protocolModule] it can find registered mint by address', async (t: Test) 
 test('[protocolModule] get registered mints', async (t: Test) => {
   const registeredMints = await cvg.protocol().getRegisteredMints();
 
-  t.assert(registeredMints.length === 3);
+  t.assert(registeredMints.length === 3, 'expected 3 registered mints');
 });
 
 // RISK ENGINE
@@ -764,6 +795,15 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   // // RFQ
 
   test('[rfqModule] it can create and finalize RFQ, cancel RFQ, unlock RFQ collateral, and clean up RFQ', async (t: Test) => {
+    let takerCollateral = await cvg.collateral().findByUser({
+      user: taker.publicKey,
+    });
+
+    console.log(
+      '<createAndFinalize <before create> fixed quote> taker locked tokens collateral amount:  ' +
+        takerCollateral.lockedTokensAmount.toString()
+    );
+
     const { rfq } = await cvg.rfqs().create({
       taker,
       quoteAsset: cvg
@@ -779,12 +819,27 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
     });
 
+    takerCollateral = await cvg.collateral().refresh(takerCollateral);
+
+    console.log(
+      '<createAndFinalize <before finalize> fixed quote> taker locked tokens collateral amount:  ' +
+        takerCollateral.lockedTokensAmount.toString()
+    );
+
     await cvg.rfqs().finalizeRfqConstruction({
       taker,
       rfq: rfq.address,
     });
 
+    takerCollateral = await cvg.collateral().refresh(takerCollateral);
+
     let refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
+    console.log('now finding collater by user');
+
+    console.log(
+      '<createAndFinalize <after> fixed quote> taker locked tokens collateral amount:  ' +
+        takerCollateral.lockedTokensAmount.toString()
+    );
 
     console.log(
       'taker collateral locked: ',
@@ -837,6 +892,10 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
           amount: 999.29354,
           side: Side.Ask,
         }),
+        new SpotInstrument(cvg, btcMint, {
+          amount: 1,
+          side: Side.Bid,
+        }),
       ],
       taker,
       orderType: OrderType.TwoWay,
@@ -844,7 +903,22 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       quoteAsset: cvg
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
+      activeWindow: 60 * 60,
+      settlingWindow: 50 * 5,
     });
+
+    const takerCollateral = await cvg.collateral().findByUser({
+      user: taker.publicKey,
+    });
+    console.log(
+      '<createAndFinalize fixed base> taker locked tokens collateral amount:  ' +
+        takerCollateral.lockedTokensAmount.toString()
+    );
+
+    console.log(
+      'taker collateral locked: ',
+      rfq.totalTakerCollateralLocked.toString()
+    );
 
     const { rfqResponse } = await cvg.rfqs().respond({
       maker,
@@ -880,14 +954,14 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       caller: taker,
       rfq: rfq.address,
       response: rfqResponse.address,
-      legAmountToPrepare: 1,
+      legAmountToPrepare: 2,
     });
 
     await cvg.rfqs().prepareMoreLegsSettlement({
       caller: maker,
       rfq: rfq.address,
       response: rfqResponse.address,
-      legAmountToPrepare: 1,
+      legAmountToPrepare: 2,
     });
 
     let refreshedResponse = await cvg.rfqs().refreshResponse(rfqResponse);
@@ -922,7 +996,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  // // RFQ UTILS
+  // RFQ UTILS
 
   test('[rfqModule] it can find RFQs by addresses', async (t: Test) => {
     const { rfq: rfq1 } = await cvg.rfqs().create({
@@ -1081,7 +1155,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       new anchor.Wallet(payer as Keypair),
       {}
     );
-    anchor.setProvider(provider);
+    // anchor.setProvider(provider);
     europeanProgram = await createEuropeanProgram(cvg);
     const pseudoPythProgram = new Program(
       PseudoPythIdl,
@@ -1329,7 +1403,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   // PSYOPTIONS EUROPEANS
 
-  test('*failing*[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, clean up response legs, clean up response', async (t: Test) => {
+  test('[rfqModule] it can create/finalize Rfq, respond, confirm resp, prepare settlemt, settle, unlock resp collat, clean up response legs, clean up response', async (t: Test) => {
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
       cvg,
       oracle,
@@ -2689,6 +2763,12 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       );
     });
   });
+
+  // test.only('[american program] it can create american program', async (t: Test) => {
+  //   const americanProgram = createAmericanProgram(cvg);
+
+  //   t.assert(americanProgram, 'created american program');
+  // });
 
   //*<>*<>*END NON-INTERDEPENDENT TESTS WRAPPER*<>*<>*//
 });

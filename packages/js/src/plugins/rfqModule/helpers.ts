@@ -5,6 +5,14 @@ import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@conver
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
+//@ts-ignore
+import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+//@ts-ignore
+import { PsyAmerican, PsyAmericanIdl } from '@mithraic-labs/psy-american';
+//@ts-ignore
+import { AnchorProvider } from '@/utils/Provider';
+//@ts-ignore
+import { CvgWallet } from '@/utils/CvgWallet';
 import {
   instructions,
   EuroPrimitive,
@@ -300,6 +308,20 @@ export const convertRfqOutput = async (
   convergence: Convergence,
   rfq: Rfq
 ): Promise<Rfq> => {
+  const protocol = await convergence.protocol().get();
+  const collateralMintDecimals = (
+    await convergence
+      .tokens()
+      .findMintByAddress({ address: protocol.collateralMint })
+  ).decimals;
+
+  rfq.nonResponseTakerCollateralLocked =
+    Number(rfq.nonResponseTakerCollateralLocked) /
+    Math.pow(10, collateralMintDecimals);
+  rfq.totalTakerCollateralLocked =
+    Number(rfq.totalTakerCollateralLocked) /
+    Math.pow(10, collateralMintDecimals);
+
   if (rfq.fixedSize.__kind == 'BaseAsset') {
     const parsedLegsMultiplierBps =
       Number(rfq.fixedSize.legsMultiplierBps) /
@@ -550,7 +572,7 @@ export const instrumentsToLegAccounts = (
       instrument,
       instrument.legInfo
     );
-    
+
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
 
@@ -644,13 +666,40 @@ export const initializeNewOptionMeta = async (
 };
 
 export const createEuropeanProgram = async (convergence: Convergence) => {
-  const payer = convergence.rpc().getDefaultFeePayer();
-
-  const europeanProgram = createProgram(
-    payer as Keypair,
+  return createProgram(
+    convergence.rpc().getDefaultFeePayer() as Keypair,
     convergence.connection.rpcEndpoint,
     new PublicKey(psyoptionsEuropeanProgramId)
   );
-
-  return europeanProgram;
 };
+
+// export const createAmericanProgram = async (
+//   convergence: Convergence
+//   //@ts-ignore
+// ): Program<PsyAmerican> => {
+//   const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
+//     'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
+//   );
+
+//   // const anchorWallet = new anchor.Wallet(
+//   //   convergence.rpc().getDefaultFeePayer() as Keypair
+//   // );
+
+//   const provider = new AnchorProvider(
+//     convergence.connection,
+//     new CvgWallet(
+//       convergence,
+//       convergence.rpc().getDefaultFeePayer() as Keypair
+//     ),
+//     {}
+//   );
+//   // anchor.setProvider(provider);
+
+//   const americanProgram = psyoptionsAmerican.createProgram(
+//     psyOptionsAmericanLocalNetProgramId,
+//     provider
+//   );
+//   //@ts-ignore
+//   // return americanProgram;
+//   return new anchor.Program(PsyAmericanIdl, psyOptionsAmericanLocalNetProgramId, )
+// };
