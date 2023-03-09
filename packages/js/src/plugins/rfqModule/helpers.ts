@@ -550,7 +550,7 @@ export const instrumentsToLegAccounts = (
       instrument,
       instrument.legInfo
     );
-    
+
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
 
@@ -565,7 +565,8 @@ export const initializeNewOptionMeta = async (
   stableMint: Mint,
   strikePrice: number,
   underlyingAmountPerContract: number,
-  expiresIn: number
+  expiresIn: number,
+  oracleProviderId = 0
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
@@ -575,7 +576,8 @@ export const initializeNewOptionMeta = async (
     stableMint.address,
     oracle,
     expiration,
-    stableMint.decimals
+    stableMint.decimals,
+    oracleProviderId
   );
 
   const tx = TransactionBuilder.make();
@@ -630,7 +632,8 @@ export const initializeNewOptionMeta = async (
     toBigNumber(underlyingAmountPerContract),
     toBigNumber(strikePrice),
     stableMint.decimals,
-    oracle
+    oracle,
+    oracleProviderId
   );
 
   await TransactionBuilder.make()
