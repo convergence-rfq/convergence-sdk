@@ -6,16 +6,17 @@ import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 //@ts-ignore
-import { Program } from '@project-serum/anchor';
-//@ts-ignore
 import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 //@ts-ignore
 import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
 //@ts-ignore
-import { createAccountsAndMintOptions } from '../helpers';
+import {
+  createEuroAccountsAndMintOptions,
+  createAmericanAccountsAndMintOptions,
+} from '../helpers';
 //@ts-ignore
-// import { createAmericanProgram } from '@/index';
+import { createAmericanProgram, initializeNewAmericanOption } from '@/index';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -376,6 +377,7 @@ test('[protocolModule] it can get the protocol', async (t: Test) => {
 
 test('[protocolModule] it can get base assets', async (t: Test) => {
   const baseAssets = await cvg.protocol().getBaseAssets();
+  console.log('base assets: ', baseAssets);
   spok(t, baseAssets[0], {
     $topic: 'Get Base Assets',
     model: 'baseAsset',
@@ -1157,7 +1159,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     );
     // anchor.setProvider(provider);
     europeanProgram = await createEuropeanProgram(cvg);
-    const pseudoPythProgram = new Program(
+    const pseudoPythProgram = new anchor.Program(
       PseudoPythIdl,
       new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
       provider
@@ -1181,7 +1183,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
     europeanOptionPutMint = euroMeta.putOptionMint;
 
-    await createAccountsAndMintOptions(
+    await createEuroAccountsAndMintOptions(
       cvg,
       euroMeta,
       euroMetaKey,
@@ -1415,7 +1417,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       3_600
     );
 
-    await createAccountsAndMintOptions(
+    await createEuroAccountsAndMintOptions(
       cvg,
       euroMeta,
       euroMetaKey,
@@ -1609,19 +1611,45 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[psyoptionsAmericanInstrumentModule] it can mint options to taker', async () => {
-    const { op, optionMarketKey } = await initializePsyoptionsAmerican(
+    // const { op, optionMarketKey } = await initializePsyoptionsAmerican(
+    //   cvg,
+    //   btcMint,
+    //   usdcMint,
+    //   taker,
+    //   maker,
+    //   new anchor.BN(100),
+    //   new anchor.BN(1),
+    //   3_600
+    // );
+
+    const americanProgram = createAmericanProgram(cvg);
+
+    const {
+      optionMarketKey,
+      optionMarket: op,
+      optionMintKey,
+      writerMintKey,
+      // optionMint,
+    } = await initializeNewAmericanOption(
       cvg,
+      americanProgram,
       btcMint,
       usdcMint,
-      taker,
-      maker,
       new anchor.BN(100),
       new anchor.BN(1),
       3_600
     );
-
     optionMarket = op;
     optionMarketPubkey = optionMarketKey;
+
+    await createAmericanAccountsAndMintOptions(
+      cvg,
+      americanProgram,
+      btcMint,
+      optionMarket,
+      optionMintKey,
+      writerMintKey
+    );
   });
 
   test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions American, respond, confirm response, prepare settlement, settle', async (t: Test) => {
@@ -1636,7 +1664,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
           optionMarket as OptionMarketWithKey,
           optionMarketPubkey,
           {
-            amount: 0.000000001,
+            amount: 0.00000001,
             side: Side.Bid,
           }
         ),
@@ -2234,7 +2262,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       3_600
     );
 
-    await createAccountsAndMintOptions(
+    await createEuroAccountsAndMintOptions(
       cvg,
       euroMeta,
       euroMetaKey,
@@ -2764,11 +2792,11 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  // test.only('[american program] it can create american program', async (t: Test) => {
-  //   const americanProgram = createAmericanProgram(cvg);
+  test('[american program] it can create american program', async (t: Test) => {
+    const americanProgram = createAmericanProgram(cvg);
 
-  //   t.assert(americanProgram, 'created american program');
-  // });
+    t.assert(americanProgram, 'created american program');
+  });
 
   //*<>*<>*END NON-INTERDEPENDENT TESTS WRAPPER*<>*<>*//
 });

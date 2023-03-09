@@ -12,10 +12,10 @@ export class CvgWallet implements Wallet {
   convergence: Convergence;
   publicKey: PublicKey;
 
-  constructor(convergence: Convergence, payer: Keypair) {
+  constructor(convergence: Convergence) {
     this.convergence = convergence;
-    this.payer = payer;
-    this.publicKey = payer.publicKey;
+    this.payer = convergence.rpc().getDefaultFeePayer() as Keypair;
+    this.publicKey = convergence.rpc().getDefaultFeePayer().publicKey;
   }
 
   signTransaction = (tx: Transaction): Promise<Transaction> => {

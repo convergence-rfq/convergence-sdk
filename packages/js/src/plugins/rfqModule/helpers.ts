@@ -3,14 +3,16 @@ import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
+import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
-import { Program } from '@project-serum/anchor';
+//@ts-ignore
+// import NodeWallet from '@project-serum/anchor/dist/cjs/nodewallet';
 //@ts-ignore
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+
+// import { PsyAmerican, PsyAmericanIdl } from '@mithraic-labs/psy-american';
 //@ts-ignore
-import { PsyAmerican, PsyAmericanIdl } from '@mithraic-labs/psy-american';
-//@ts-ignore
-import { AnchorProvider } from '@/utils/Provider';
+// import { AnchorProvider } from '@/utils/Provider';
 //@ts-ignore
 import { CvgWallet } from '@/utils/CvgWallet';
 import {
@@ -582,7 +584,7 @@ export const instrumentsToLegAccounts = (
 export const initializeNewOptionMeta = async (
   convergence: Convergence,
   oracle: PublicKey,
-  europeanProgram: Program<EuroPrimitive>,
+  europeanProgram: anchor.Program<EuroPrimitive>,
   underlyingMint: Mint,
   stableMint: Mint,
   strikePrice: number,
@@ -665,6 +667,38 @@ export const initializeNewOptionMeta = async (
   };
 };
 
+export const initializeNewAmericanOption = async (
+  convergence: Convergence,
+  americanProgram: any,
+  underlyingMint: Mint,
+  quoteMint: Mint,
+  quoteAmountPerContract: anchor.BN,
+  underlyingAmountPerContract: anchor.BN,
+  expiresIn: number
+) => {
+  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
+
+  const { optionMarketKey, optionMintKey, writerMintKey } =
+    await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
+      expirationUnixTimestamp: expiration,
+      quoteAmountPerContract,
+      quoteMint: quoteMint.address,
+      underlyingAmountPerContract,
+      underlyingMint: underlyingMint.address,
+    });
+
+  const optionMarket = (await psyoptionsAmerican.getOptionByKey(
+    americanProgram,
+    optionMarketKey
+  )) as OptionMarketWithKey;
+
+  const optionMint = await convergence
+    .tokens()
+    .findMintByAddress({ address: optionMintKey });
+
+  return { optionMarketKey, optionMarket, optionMintKey, writerMintKey, optionMint };
+};
+
 export const createEuropeanProgram = async (convergence: Convergence) => {
   return createProgram(
     convergence.rpc().getDefaultFeePayer() as Keypair,
@@ -673,33 +707,22 @@ export const createEuropeanProgram = async (convergence: Convergence) => {
   );
 };
 
-// export const createAmericanProgram = async (
-//   convergence: Convergence
-//   //@ts-ignore
-// ): Program<PsyAmerican> => {
-//   const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
-//     'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
-//   );
+export const createAmericanProgram = (convergence: Convergence): any => {
+  const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
+    'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
+  );
+  const provider = new anchor.AnchorProvider(
+    convergence.connection,
+    new CvgWallet(convergence),
+    {}
+  );
+  // new anchor.Wallet(convergence.rpc().getDefaultFeePayer() as Keypair),
+  // new NodeWallet(convergence.rpc().getDefaultFeePayer() as Keypair),
 
-//   // const anchorWallet = new anchor.Wallet(
-//   //   convergence.rpc().getDefaultFeePayer() as Keypair
-//   // );
+  const americanProgram = psyoptionsAmerican.createProgram(
+    psyOptionsAmericanLocalNetProgramId,
+    provider
+  );
 
-//   const provider = new AnchorProvider(
-//     convergence.connection,
-//     new CvgWallet(
-//       convergence,
-//       convergence.rpc().getDefaultFeePayer() as Keypair
-//     ),
-//     {}
-//   );
-//   // anchor.setProvider(provider);
-
-//   const americanProgram = psyoptionsAmerican.createProgram(
-//     psyOptionsAmericanLocalNetProgramId,
-//     provider
-//   );
-//   //@ts-ignore
-//   // return americanProgram;
-//   return new anchor.Program(PsyAmericanIdl, psyOptionsAmericanLocalNetProgramId, )
-// };
+  return americanProgram;
+};

@@ -1,5 +1,29 @@
 # @convergence-rfq/sdk
 
+## 4.0.23-rc.2
+
+### Patch Changes
+
+- add psyoptions american program creation method, CvgWallet
+
+## 4.0.24
+
+### Patch Changes
+
+- add psyoptions american program creation method, CvgWallet
+
+## 4.0.24-rc
+
+### Patch Changes
+
+- update version number to have `rc`
+
+## 4.0.23-rc
+
+### Patch Changes
+
+- fix collateral locked tokens amount
+
 ## 4.0.22
 
 ### Patch Changes
