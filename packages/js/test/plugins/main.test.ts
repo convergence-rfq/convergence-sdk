@@ -405,6 +405,20 @@ test('[riskEngineModule] it can fetch the config', async (t: Test) => {
   });
 });
 
+test('[riskEngineModule] it can update the risk engine config', async (t: Test) => {
+  const output = await cvg.riskEngine().updateConfig();
+  assertInitRiskEngineConfig(cvg, t, output);
+});
+
+test('[riskEngineModule] it can fetch the config', async (t: Test) => {
+  const output = await cvg.riskEngine().fetchConfig();
+
+  spok(t, output, {
+    $topic: 'fetch risk engine config',
+    model: 'config',
+  });
+});
+
 test('[riskEngineModule] it can set instrument types', async (t: Test) => {
   const { response: response1 } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: cvg.programs().getSpotInstrument().address,

@@ -121,7 +121,9 @@ const initializeProtocol = async (options: Options) => {
 const initializeRiskEngine = async (options: Options) => {
   console.log('Initializing risk engine...');
   const cvg = await createCvg(options);
-  const { response } = await cvg.riskEngine().initializeConfig();
+  const { response } = await cvg.riskEngine().initializeConfig({
+    collateralMintDecimals: 6,
+  });
   console.log('Tx:', response.signature);
   console.log('Success!');
 };
