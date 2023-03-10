@@ -59,11 +59,11 @@ export type Rfq = {
 
   /** The amount of Taker collateral locked at the time
    *  of finalized construction of the Rfq. */
-  readonly nonResponseTakerCollateralLocked: bignum;
+  nonResponseTakerCollateralLocked: bignum;
 
   /** The total amount of Taker collateral locked.
    * This includes collateral added when confirming a Response. */
-  readonly totalTakerCollateralLocked: bignum;
+  totalTakerCollateralLocked: bignum;
 
   /** The total number of Responses to this Rfq. */
   readonly totalResponses: number;

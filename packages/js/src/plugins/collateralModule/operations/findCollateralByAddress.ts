@@ -72,8 +72,9 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
 
       const protocol = await convergence.protocol().get();
       const collateralMint = await convergence
-        .protocol()
-        .findRegisteredMintByAddress({ address: protocol.collateralMint });
+        .tokens()
+        .findMintByAddress({ address: protocol.collateralMint });
+
 
       collateralModel.lockedTokensAmount /= Math.pow(
         10,

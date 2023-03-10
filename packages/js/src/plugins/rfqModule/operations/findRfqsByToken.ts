@@ -79,8 +79,14 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       const { mintAddress, rfqsPerPage, numPages } = operation.input;
       scope.throwIfCanceled();
 
-      const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+      const protocol = await convergence.protocol().get();
+      const collateralMintDecimals = (
+        await convergence
+          .tokens()
+          .findMintByAddress({ address: protocol.collateralMint })
+      ).decimals;
 
+      const spotInstrumentProgram = convergence.programs().getSpotInstrument();
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
@@ -154,7 +160,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
 
-          rfq = await convertRfqOutput(convergence, rfq);
+          rfq = await convertRfqOutput(rfq, collateralMintDecimals);
 
           rfqPage.push(rfq);
         }

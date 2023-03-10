@@ -80,7 +80,14 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       assertResponse(response);
       scope.throwIfCanceled();
 
-      response = convertResponseOutput(response);
+      const rfqModel = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: response.rfq });
+
+      response = convertResponseOutput(
+        response,
+        rfqModel.quoteAsset.instrumentDecimals
+      );
 
       return response;
     },

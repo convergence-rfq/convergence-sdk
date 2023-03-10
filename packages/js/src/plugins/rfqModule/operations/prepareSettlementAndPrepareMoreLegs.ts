@@ -55,7 +55,7 @@ export type PrepareSettlementAndPrepareMoreLegsInput = {
    */
   caller?: Signer;
 
-  /** 
+  /**
    * The protocol address.
    * @defaultValue `convergence.protocol().pdas().protocol(),`
    */
@@ -119,6 +119,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
         prepareSettlementTxSize == -1 ||
         prepareSettlementTxSize + 193 > MAX_TX_SIZE
       ) {
+        console.log('prepare builder tx size too large');
         const halvedLegAmount = Math.trunc(slicedLegAmount / 2);
 
         prepareBuilder = await prepareSettlementBuilder(

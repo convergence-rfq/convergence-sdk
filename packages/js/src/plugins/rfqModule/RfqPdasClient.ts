@@ -70,7 +70,6 @@ export class RfqPdasClient {
 
     const hash = new Sha256();
     hash.update(serializeQuoteAssetData(quoteAsset));
-
     const quoteHash = hash.digestSync();
 
     return Pda.find(programId, [

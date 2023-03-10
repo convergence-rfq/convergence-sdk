@@ -25,7 +25,7 @@ type Options = any;
 /// Constants
 
 const DEFAULT_KEYPAIR_FILE = '/Users/pindaroso/.config/solana/dao.json';
-//const DEFAULT_RPC_ENDPOINT = 'https://api.devnet.solana.com';
+// const DEFAULT_RPC_ENDPOINT = 'https://api.devnet.solana.com';
 const DEFAULT_RPC_ENDPOINT = 'http://127.0.0.1:8899';
 
 /// HELPERS

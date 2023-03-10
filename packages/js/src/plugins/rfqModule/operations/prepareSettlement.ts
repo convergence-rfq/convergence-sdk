@@ -7,11 +7,9 @@ import {
   AccountMeta,
   ComputeBudgetProgram,
   SYSVAR_RENT_PUBKEY,
-  Keypair,
 } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
-  getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -74,7 +72,7 @@ export type PrepareSettlementInput = {
    */
   caller?: Signer;
 
-  /** 
+  /**
    * The protocol address.
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
@@ -299,13 +297,10 @@ export const prepareSettlementBuilder = async (
       },
       // `caller_tokens`
       {
-        pubkey: await getOrCreateAssociatedTokenAccount(
-          convergence.connection,
-          caller as Keypair,
-          baseAssetMints[legIndex].address,
-          caller.publicKey
-        ).then((account) => {
-          return account.address;
+        pubkey: convergence.tokens().pdas().associatedTokenAccount({
+          mint: baseAssetMints[legIndex].address,
+          owner: caller.publicKey,
+          programs,
         }),
         isSigner: false,
         isWritable: true,
@@ -341,7 +336,6 @@ export const prepareSettlementBuilder = async (
         instruction: createPrepareSettlementInstruction(
           {
             caller: caller.publicKey,
-            // protocol: protocol.address,
             protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,

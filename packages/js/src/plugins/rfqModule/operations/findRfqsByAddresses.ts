@@ -79,6 +79,13 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
 
       const rfqs: Rfq[] = [];
 
+      const protocol = await convergence.protocol().get();
+      const collateralMintDecimals = (
+        await convergence
+          .tokens()
+          .findMintByAddress({ address: protocol.collateralMint })
+      ).decimals;
+
       const accounts = await convergence
         .rpc()
         .getMultipleAccounts(addresses, commitment);
@@ -86,7 +93,7 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
       for (const account of accounts) {
         let rfq = toRfq(toRfqAccount(account));
 
-        rfq = await convertRfqOutput(convergence, rfq);
+        rfq = await convertRfqOutput(rfq, collateralMintDecimals);
 
         rfqs.push(rfq);
       }

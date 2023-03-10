@@ -8,10 +8,9 @@ import { assertRfq, Rfq } from '../models';
 import { OrderType, FixedSize, QuoteAsset } from '../types';
 import {
   calculateExpectedLegsHash,
-  calculateExpectedLegsSize,
+  instrumentsToLegsAndLegsSize,
   convertFixedSizeInput,
   instrumentsToLegAccounts,
-  instrumentsToLegs,
   legsToBaseAssetAccounts,
 } from '../helpers';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
@@ -192,7 +191,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       scope
     );
     scope.throwIfCanceled();
-    
+
     const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
       convergence,
       scope.confirmOptions
@@ -254,10 +253,11 @@ export const createRfqBuilder = async (
   } = params;
   let { expectedLegsSize } = params;
 
-  expectedLegsSize =
-    expectedLegsSize ??
-    (await calculateExpectedLegsSize(convergence, instruments));
-  const legs = await instrumentsToLegs(convergence, instruments);
+  const [legs, expectedLegsSizeValue] = await instrumentsToLegsAndLegsSize(
+    convergence,
+    instruments
+  );
+  expectedLegsSize = expectedLegsSize ?? expectedLegsSizeValue;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);

@@ -1,5 +1,47 @@
 # @convergence-rfq/sdk
 
+## 4.0.23-rc.5
+
+### Patch Changes
+
+- fix fixedSize, response decimals, reduce rpc calls
+
+## 4.0.23-rc.4
+
+### Patch Changes
+
+- add oracle id to psyoptions euro creation
+
+## 4.0.23-rc.3
+
+### Patch Changes
+
+- update cli script
+
+## 4.0.23-rc.2
+
+### Patch Changes
+
+- add psyoptions american program creation method, CvgWallet
+
+## 4.0.24
+
+### Patch Changes
+
+- add psyoptions american program creation method, CvgWallet
+
+## 4.0.24-rc
+
+### Patch Changes
+
+- update version number to have `rc`
+
+## 4.0.23-rc
+
+### Patch Changes
+
+- fix collateral locked tokens amount
+
 ## 4.0.22
 
 ### Patch Changes
