@@ -590,7 +590,7 @@ export const initializeNewOptionMeta = async (
   strikePrice: number,
   underlyingAmountPerContract: number,
   expiresIn: number,
-  oracleProviderId?: number
+  oracleProviderId = 0
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
@@ -600,7 +600,8 @@ export const initializeNewOptionMeta = async (
     stableMint.address,
     oracle,
     expiration,
-    stableMint.decimals
+    stableMint.decimals,
+    oracleProviderId
   );
 
   const tx = TransactionBuilder.make();
