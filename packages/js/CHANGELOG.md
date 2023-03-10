@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.0.23-rc.4
+
+### Patch Changes
+
+- add oracle id to psyoptions euro creation
+
 ## 4.0.23-rc.3
 
 ### Patch Changes

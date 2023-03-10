@@ -646,6 +646,7 @@ export const initializeNewOptionMeta = async (
     instruction: createIx,
     euroMeta,
     euroMetaKey,
+    // expirationData,
   } = await createEuroMetaInstruction(
     europeanProgram,
     underlyingMint.address,

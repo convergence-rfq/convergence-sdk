@@ -2380,7 +2380,8 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       usdcMint,
       23_354,
       1,
-      3_600
+      3_600,
+      1
     );
 
     await createEuroAccountsAndMintOptions(
@@ -2462,32 +2463,32 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       side: Side.Bid,
     });
 
-    await cvg.rfqs().prepareSettlementAndPrepareMoreLegs({
-      caller: taker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      // legAmountToPrepare: 20,
-      legAmountToPrepare: 8,
-    });
-    await cvg.rfqs().prepareSettlementAndPrepareMoreLegs({
-      caller: maker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      // legAmountToPrepare: 20,
-      legAmountToPrepare: 8,
-    });
-    // await cvg.rfqs().prepareSettlement({
+    // await cvg.rfqs().prepareSettlementAndPrepareMoreLegs({
     //   caller: taker,
     //   rfq: rfq.address,
     //   response: rfqResponse.address,
+    //   // legAmountToPrepare: 20,
     //   legAmountToPrepare: 8,
     // });
-    // await cvg.rfqs().prepareSettlement({
+    // await cvg.rfqs().prepareSettlementAndPrepareMoreLegs({
     //   caller: maker,
     //   rfq: rfq.address,
     //   response: rfqResponse.address,
+    //   // legAmountToPrepare: 20,
     //   legAmountToPrepare: 8,
     // });
+    await cvg.rfqs().prepareSettlement({
+      caller: taker,
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      legAmountToPrepare: 8,
+    });
+    await cvg.rfqs().prepareSettlement({
+      caller: maker,
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      legAmountToPrepare: 8,
+    });
 
     // await cvg.rfqs().prepareMoreLegsSettlement({
     //   caller: taker,
