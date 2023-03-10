@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.0.23-rc.5
+
+### Patch Changes
+
+- fix fixedSize, response decimals, reduce rpc calls
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.23
+
 ## 4.0.23-rc.4
 
 ### Patch Changes
