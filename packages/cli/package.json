@@ -33,7 +33,7 @@
     "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "=4.0.23-rc",
+    "@convergence-rfq/sdk": "4.0.23-rc",
     "@solana/web3.js": "^1.73.0",
     "commander": "^10.0.0"
   }
