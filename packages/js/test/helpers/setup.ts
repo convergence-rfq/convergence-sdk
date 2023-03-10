@@ -445,14 +445,14 @@ export const createAmericanAccountsAndMintOptions = async (
     taker.publicKey
   );
 
-  await spl.createAssociatedTokenAccount(
+  await spl.getOrCreateAssociatedTokenAccount(
     convergence.connection,
     maker as Keypair,
     optionMintKey,
     maker.publicKey
   );
 
-  await spl.createAssociatedTokenAccount(
+  await spl.getOrCreateAssociatedTokenAccount(
     convergence.connection,
     maker as Keypair,
     writerMintKey,
@@ -502,16 +502,16 @@ export const createAmericanAccountsAndMintOptions = async (
   await txBuilder.sendAndConfirm(convergence, confirmOptions);
 };
 
-export const initializePsyoptionsAmerican = async (
-  convergence: Convergence,
-  // underlyingMint: Mint,
-  quoteMint: Mint,
-  taker: Signer,
-  maker: Signer,
-  quoteAmountPerContract: anchor.BN,
-  underlyingAmountPerContract: anchor.BN,
-  expiresIn: number
-) => {
+// export const initializePsyoptionsAmerican = async (
+//   convergence: Convergence,
+//   // underlyingMint: Mint,
+//   quoteMint: Mint,
+//   taker: Signer,
+//   maker: Signer,
+//   quoteAmountPerContract: anchor.BN,
+//   underlyingAmountPerContract: anchor.BN,
+//   expiresIn: number
+// ) => {
   // const payer = taker;
   // const provider = new anchor.AnchorProvider(
   //   convergence.connection,
@@ -601,7 +601,7 @@ export const initializePsyoptionsAmerican = async (
   //   optionMarketKey,
   //   optionMint,
   // };
-};
+// };
 
 export const assertInitRiskEngineConfig = (
   cvg: Convergence,

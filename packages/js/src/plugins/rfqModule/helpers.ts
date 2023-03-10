@@ -13,8 +13,7 @@ import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 // import { PsyAmerican, PsyAmericanIdl } from '@mithraic-labs/psy-american';
 //@ts-ignore
 // import { AnchorProvider } from '@/utils/Provider';
-//@ts-ignore
-import { CvgWallet } from '@/utils/CvgWallet';
+
 import {
   instructions,
   EuroPrimitive,
@@ -31,6 +30,7 @@ import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstru
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { LEG_MULTIPLIER_DECIMALS, QUOTE_AMOUNT_DECIMALS } from './constants';
+import { CvgWallet } from '@/utils/CvgWallet';
 import { Convergence } from '@/Convergence';
 import {
   UnparsedAccount,
@@ -589,7 +589,8 @@ export const initializeNewOptionMeta = async (
   stableMint: Mint,
   strikePrice: number,
   underlyingAmountPerContract: number,
-  expiresIn: number
+  expiresIn: number,
+  oracleProviderId?: number
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
@@ -654,7 +655,8 @@ export const initializeNewOptionMeta = async (
     toBigNumber(underlyingAmountPerContract),
     toBigNumber(strikePrice),
     stableMint.decimals,
-    oracle
+    oracle,
+    oracleProviderId
   );
 
   await TransactionBuilder.make()
@@ -696,7 +698,13 @@ export const initializeNewAmericanOption = async (
     .tokens()
     .findMintByAddress({ address: optionMintKey });
 
-  return { optionMarketKey, optionMarket, optionMintKey, writerMintKey, optionMint };
+  return {
+    optionMarketKey,
+    optionMarket,
+    optionMintKey,
+    writerMintKey,
+    optionMint,
+  };
 };
 
 export const createEuropeanProgram = async (convergence: Convergence) => {

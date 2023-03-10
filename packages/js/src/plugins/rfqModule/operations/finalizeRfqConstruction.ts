@@ -188,11 +188,6 @@ export const finalizeRfqConstructionBuilder = async (
     programs,
   });
 
-  const x = await convergence
-    .tokens()
-    .findTokenByAddress({ address: collateralTokenPda });
-  console.log('collateral token pda amount: ', x.amount.basisPoints.toString());
-
   legs =
     legs ?? (await convergence.rfqs().findRfqByAddress({ address: rfq })).legs;
 

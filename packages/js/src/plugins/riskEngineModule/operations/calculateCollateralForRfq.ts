@@ -18,8 +18,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-//@ts-ignore
-import { LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
+// import { LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -102,7 +101,7 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
       const config = await convergence.riskEngine().fetchConfig(scope);
 
       const { fixedSize, orderType, settlementPeriod } = operation.input;
-      let { legs } = operation.input;
+      const { legs } = operation.input;
 
       legs.map((leg) => {
         leg.instrumentAmount =
@@ -110,27 +109,11 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
       });
 
       if (isFixedSizeNone(fixedSize)) {
-        const { requiredCollateral } = convertCollateralBpsToOutput(
-          config.collateralForVariableSizeRfqCreation,
-          config
-        );
-        console.log(
-          'required collateral for Variable size: ',
-          requiredCollateral.toString()
-        );
         return convertCollateralBpsToOutput(
           config.collateralForVariableSizeRfqCreation,
           config
         );
       } else if (isFixedSizeQuoteAsset(fixedSize)) {
-        const { requiredCollateral } = convertCollateralBpsToOutput(
-          config.collateralForFixedQuoteAmountRfqCreation,
-          config
-        );
-        console.log(
-          'required collateral for fixed quote asset: ',
-          requiredCollateral.toString()
-        );
         return convertCollateralBpsToOutput(
           config.collateralForFixedQuoteAmountRfqCreation,
           config
@@ -169,7 +152,6 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
         );
 
         const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
-        console.log('required collateral for fixed base: ', requiredCollateral.toString());
 
         return { requiredCollateral };
       }
