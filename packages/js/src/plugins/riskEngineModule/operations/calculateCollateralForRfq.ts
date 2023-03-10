@@ -18,7 +18,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-import { LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
+// import { LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -100,7 +100,14 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
 
       const config = await convergence.riskEngine().fetchConfig(scope);
 
-      const { fixedSize, orderType, legs, settlementPeriod } = operation.input;
+      const { fixedSize, orderType, settlementPeriod } = operation.input;
+      const { legs } = operation.input;
+
+      legs.map((leg) => {
+        leg.instrumentAmount =
+          Number(leg.instrumentAmount) / 10 ** leg.instrumentDecimals;
+      });
+
       if (isFixedSizeNone(fixedSize)) {
         return convertCollateralBpsToOutput(
           config.collateralForVariableSizeRfqCreation,
@@ -113,8 +120,7 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
         );
       } else if (isFixedSizeBaseAsset(fixedSize)) {
         const { legsMultiplierBps } = fixedSize;
-        const legMultiplier =
-          Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
+        const legMultiplier = Number(legsMultiplierBps);
 
         const sideToCase = (side: Side) => {
           return {

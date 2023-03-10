@@ -3,8 +3,10 @@ import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
+import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
-import { Program } from '@project-serum/anchor';
+import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+
 import {
   instructions,
   EuroPrimitive,
@@ -20,7 +22,9 @@ import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentMod
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
+//@ts-ignore
 import { LEG_MULTIPLIER_DECIMALS, QUOTE_AMOUNT_DECIMALS } from './constants';
+import { CvgWallet } from '@/utils/CvgWallet';
 import { Convergence } from '@/Convergence';
 import {
   UnparsedAccount,
@@ -105,12 +109,14 @@ export const devnetAirdrops = async (
       const { token: wallet } = await cvg
         .tokens()
         .createToken({ mint: registeredMint.mintAddress, owner: user });
+
       registeredMintWallet = wallet;
     } catch {
       const address = cvg.tokens().pdas().associatedTokenAccount({
         mint: registeredMint.mintAddress,
         owner: user,
       });
+
       registeredMintWallet = await cvg.tokens().findTokenByAddress({ address });
     }
 
@@ -213,9 +219,11 @@ export const quoteAssetToInstrument = async (
     const { mint: mintPublicKey } = SpotInstrument.deserializeInstrumentData(
       Buffer.from(quoteAsset.instrumentData)
     );
+
     const mint = await convergence
       .tokens()
       .findMintByAddress({ address: mintPublicKey });
+
     return new SpotInstrument(convergence, mint);
   } else if (
     quoteAsset.instrumentProgram.equals(
@@ -297,9 +305,16 @@ export const convertFixedSizeInput = (
 };
 
 export const convertRfqOutput = async (
-  convergence: Convergence,
-  rfq: Rfq
+  rfq: Rfq,
+  collateralMintDecimals: number
 ): Promise<Rfq> => {
+  rfq.nonResponseTakerCollateralLocked =
+    Number(rfq.nonResponseTakerCollateralLocked) /
+    Math.pow(10, collateralMintDecimals);
+  rfq.totalTakerCollateralLocked =
+    Number(rfq.totalTakerCollateralLocked) /
+    Math.pow(10, collateralMintDecimals);
+
   if (rfq.fixedSize.__kind == 'BaseAsset') {
     const parsedLegsMultiplierBps =
       Number(rfq.fixedSize.legsMultiplierBps) /
@@ -314,62 +329,21 @@ export const convertRfqOutput = async (
     rfq.fixedSize.quoteAmount = parsedQuoteAmount;
   }
 
-  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-  const psyoptionsEuropeanProgram = convergence
-    .programs()
-    .getPsyoptionsEuropeanInstrument();
-  const psyoptionsAmericanProgram = convergence
-    .programs()
-    .getPsyoptionsAmericanInstrument();
-
   for (const leg of rfq.legs) {
-    if (
-      leg.instrumentProgram.toBase58() ===
-      psyoptionsEuropeanProgram.address.toBase58()
-    ) {
-      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
-        convergence,
-        leg
-      );
-
-      if (instrument.legInfo?.amount) {
-        leg.instrumentAmount =
-          Number(leg.instrumentAmount) / Math.pow(10, instrument.decimals);
-      }
-    } else if (
-      leg.instrumentProgram.toBase58() ===
-      psyoptionsAmericanProgram.address.toBase58()
-    ) {
-      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
-        convergence,
-        leg
-      );
-
-      if (instrument.legInfo?.amount) {
-        leg.instrumentAmount =
-          Number(leg.instrumentAmount) / Math.pow(10, instrument.decimals);
-      }
-    } else if (
-      leg.instrumentProgram.toBase58() ===
-      spotInstrumentProgram.address.toBase58()
-    ) {
-      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
-
-      if (instrument.legInfo?.amount) {
-        leg.instrumentAmount =
-          Number(leg.instrumentAmount) / Math.pow(10, instrument.decimals);
-      }
-    }
+    leg.instrumentAmount =
+      Number(leg.instrumentAmount) / Math.pow(10, leg.instrumentDecimals);
   }
 
   return rfq;
 };
 
-export const convertResponseOutput = (response: Response): Response => {
+export const convertResponseOutput = (
+  response: Response,
+  quoteDecimals: number
+): Response => {
   if (response.bid) {
     const parsedPriceQuoteAmountBps =
-      Number(response.bid.priceQuote.amountBps) /
-      Math.pow(10, QUOTE_AMOUNT_DECIMALS);
+      Number(response.bid.priceQuote.amountBps) / Math.pow(10, quoteDecimals);
 
     response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
@@ -383,8 +357,7 @@ export const convertResponseOutput = (response: Response): Response => {
   }
   if (response.ask) {
     const parsedPriceQuoteAmountBps =
-      Number(response.ask.priceQuote.amountBps) /
-      Math.pow(10, QUOTE_AMOUNT_DECIMALS);
+      Number(response.ask.priceQuote.amountBps) / Math.pow(10, quoteDecimals);
 
     response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
@@ -400,10 +373,14 @@ export const convertResponseOutput = (response: Response): Response => {
   return response;
 };
 
-export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
+export const convertResponseInput = (
+  quoteDecimals: number,
+  bid?: Quote,
+  ask?: Quote
+) => {
   if (bid) {
     const parsedPriceQuoteAmountBps =
-      Number(bid.priceQuote.amountBps) * Math.pow(10, QUOTE_AMOUNT_DECIMALS);
+      Number(bid.priceQuote.amountBps) * Math.pow(10, quoteDecimals);
 
     bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
@@ -416,7 +393,7 @@ export const convertResponseInput = (bid?: Quote, ask?: Quote) => {
   }
   if (ask) {
     const parsedPriceQuoteAmountBps =
-      Number(ask.priceQuote.amountBps) * Math.pow(10, QUOTE_AMOUNT_DECIMALS);
+      Number(ask.priceQuote.amountBps) * Math.pow(10, quoteDecimals);
 
     ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
 
@@ -487,6 +464,33 @@ export const calculateExpectedLegsSize = async (
   return expectedLegsSize;
 };
 
+export const instrumentsToLegsAndLegsSize = async (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): Promise<[Leg[], number]> => {
+  const legs: Leg[] = [];
+  let legsSize = 4;
+
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+
+    const leg = await instrumentClient.toLegData();
+
+    legs.push(leg);
+    // legsSize += await instrumentClient.getLegDataSize();
+    legsSize += instrumentClient.serializeLegData(leg).length;
+  }
+
+  return [legs, legsSize];
+};
+
 export const instrumentsToLegs = async (
   convergence: Convergence,
   instruments: (
@@ -509,6 +513,43 @@ export const instrumentsToLegs = async (
   }
 
   return legs;
+};
+
+export const instrumentsToLegsAndExpectedLegsHash = async (
+  convergence: Convergence,
+  instruments: (
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+  )[]
+): Promise<[Leg[], Uint8Array]> => {
+  const legs: Leg[] = [];
+  const serializedLegsData: Buffer[] = [];
+
+  for (const instrument of instruments) {
+    const instrumentClient = convergence.instrument(
+      instrument,
+      instrument.legInfo
+    );
+
+    const leg = await instrumentClient.toLegData();
+
+    legs.push(leg);
+    serializedLegsData.push(instrumentClient.serializeLegData(leg));
+  }
+
+  const lengthBuffer = Buffer.alloc(4);
+  lengthBuffer.writeInt32LE(instruments.length);
+  const fullLegDataBuffer = Buffer.concat([
+    lengthBuffer,
+    ...serializedLegsData,
+  ]);
+
+  const hash = new Sha256();
+  hash.update(fullLegDataBuffer);
+  const expectedLegsHash = hash.digestSync();
+
+  return [legs, expectedLegsHash];
 };
 
 export const legsToBaseAssetAccounts = (
@@ -550,7 +591,7 @@ export const instrumentsToLegAccounts = (
       instrument,
       instrument.legInfo
     );
-    
+
     legAccounts.push(...instrumentClient.getValidationAccounts());
   }
 
@@ -560,12 +601,13 @@ export const instrumentsToLegAccounts = (
 export const initializeNewOptionMeta = async (
   convergence: Convergence,
   oracle: PublicKey,
-  europeanProgram: Program<EuroPrimitive>,
+  europeanProgram: anchor.Program<EuroPrimitive>,
   underlyingMint: Mint,
   stableMint: Mint,
   strikePrice: number,
   underlyingAmountPerContract: number,
-  expiresIn: number
+  expiresIn: number,
+  oracleProviderId = 0
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
@@ -575,7 +617,8 @@ export const initializeNewOptionMeta = async (
     stableMint.address,
     oracle,
     expiration,
-    stableMint.decimals
+    stableMint.decimals,
+    oracleProviderId
   );
 
   const tx = TransactionBuilder.make();
@@ -620,6 +663,7 @@ export const initializeNewOptionMeta = async (
     instruction: createIx,
     euroMeta,
     euroMetaKey,
+    expirationData,
   } = await createEuroMetaInstruction(
     europeanProgram,
     underlyingMint.address,
@@ -630,7 +674,8 @@ export const initializeNewOptionMeta = async (
     toBigNumber(underlyingAmountPerContract),
     toBigNumber(strikePrice),
     stableMint.decimals,
-    oracle
+    oracle,
+    oracleProviderId
   );
 
   await TransactionBuilder.make()
@@ -640,17 +685,70 @@ export const initializeNewOptionMeta = async (
   return {
     euroMeta,
     euroMetaKey,
+    expirationData,
+  };
+};
+
+export const initializeNewAmericanOption = async (
+  convergence: Convergence,
+  americanProgram: any,
+  underlyingMint: Mint,
+  quoteMint: Mint,
+  quoteAmountPerContract: anchor.BN,
+  underlyingAmountPerContract: anchor.BN,
+  expiresIn: number
+) => {
+  const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
+
+  const { optionMarketKey, optionMintKey, writerMintKey } =
+    await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
+      expirationUnixTimestamp: expiration,
+      quoteAmountPerContract,
+      quoteMint: quoteMint.address,
+      underlyingAmountPerContract,
+      underlyingMint: underlyingMint.address,
+    });
+
+  const optionMarket = (await psyoptionsAmerican.getOptionByKey(
+    americanProgram,
+    optionMarketKey
+  )) as OptionMarketWithKey;
+
+  const optionMint = await convergence
+    .tokens()
+    .findMintByAddress({ address: optionMintKey });
+
+  return {
+    optionMarketKey,
+    optionMarket,
+    optionMintKey,
+    writerMintKey,
+    optionMint,
   };
 };
 
 export const createEuropeanProgram = async (convergence: Convergence) => {
-  const payer = convergence.rpc().getDefaultFeePayer();
-
-  const europeanProgram = createProgram(
-    payer as Keypair,
+  return createProgram(
+    convergence.rpc().getDefaultFeePayer() as Keypair,
     convergence.connection.rpcEndpoint,
     new PublicKey(psyoptionsEuropeanProgramId)
   );
+};
 
-  return europeanProgram;
+export const createAmericanProgram = (convergence: Convergence): any => {
+  const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
+    'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
+  );
+  const provider = new anchor.AnchorProvider(
+    convergence.connection,
+    new CvgWallet(convergence),
+    {}
+  );
+
+  const americanProgram = psyoptionsAmerican.createProgram(
+    psyOptionsAmericanLocalNetProgramId,
+    provider
+  );
+
+  return americanProgram;
 };

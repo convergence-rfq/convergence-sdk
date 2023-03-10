@@ -1,6 +1,8 @@
 import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -239,16 +241,19 @@ export const cleanUpResponseLegsBuilder = async (
     }
 
     const legAccounts: AccountMeta[] = [
+      // `first_to_prepare`
       {
         pubkey: firstToPrepare,
         isSigner: false,
         isWritable: true,
       },
+      // `escrow`
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,
         isWritable: true,
       },
+      // `backup_receiver`
       {
         pubkey: convergence.tokens().pdas().associatedTokenAccount({
           mint: baseAssetMint!.address,

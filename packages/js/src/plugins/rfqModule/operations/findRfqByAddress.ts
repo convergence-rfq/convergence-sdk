@@ -44,6 +44,9 @@ export type FindRfqByAddressOperation = Operation<
 export type FindRfqByAddressInput = {
   /** The address of the Rfq. */
   address: PublicKey;
+
+  /** Optional number of decimals of collateral mint, used for conversion. */
+  collateralMintDecimals?: number;
 };
 
 /**
@@ -65,13 +68,23 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
     ): Promise<FindRfqByAddressOutput> => {
       const { commitment } = scope;
       const { address } = operation.input;
+      let { collateralMintDecimals } = operation.input;
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
       let rfq = toRfq(toRfqAccount(account));
       scope.throwIfCanceled();
 
-      rfq = await convertRfqOutput(convergence, rfq);
+      if (!collateralMintDecimals) {
+        const protocol = await convergence.protocol().get();
+        collateralMintDecimals = (
+          await convergence
+            .tokens()
+            .findMintByAddress({ address: protocol.collateralMint })
+        ).decimals;
+      }
+
+      rfq = await convertRfqOutput(rfq, collateralMintDecimals);
 
       return rfq;
     },

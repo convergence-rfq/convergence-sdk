@@ -83,7 +83,14 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
 
         for (let response of responses) {
           if (response.maker.toBase58() === owner.toBase58()) {
-            response = convertResponseOutput(response);
+            const rfq = await convergence
+              .rfqs()
+              .findRfqByAddress({ address: response.rfq });
+
+            response = convertResponseOutput(
+              response,
+              rfq.quoteAsset.instrumentDecimals
+            );
 
             responsesByOwner.push(response);
           }
@@ -113,9 +120,15 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
           let response = await convergence
             .rfqs()
             .findResponseByAddress({ address: unparsedAccount.publicKey });
+          const rfq = await convergence
+            .rfqs()
+            .findRfqByAddress({ address: response.rfq });
 
           if (response.maker.toBase58() === owner.toBase58()) {
-            response = convertResponseOutput(response);
+            response = convertResponseOutput(
+              response,
+              rfq.quoteAsset.instrumentDecimals
+            );
 
             responsePage.push(response);
           }

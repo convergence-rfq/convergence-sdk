@@ -72,12 +72,15 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByInstrumentOutput> => {
-      const {
-        rfqs,
-        instrumentProgram,
-        rfqsPerPage,
-        numPages,
-      } = operation.input;
+      const { rfqs, instrumentProgram, rfqsPerPage, numPages } =
+        operation.input;
+
+      const protocol = await convergence.protocol().get();
+      const collateralMintDecimals = (
+        await convergence
+          .tokens()
+          .findMintByAddress({ address: protocol.collateralMint })
+      ).decimals;
 
       if (rfqs) {
         let rfqPages: Rfq[][] = [];
@@ -89,7 +92,10 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
               leg.instrumentProgram.toBase58() ===
               instrumentProgram.address.toBase58()
             ) {
-              rfq = await convertRfqOutput(convergence, rfq);
+              rfq = await convertRfqOutput(
+                rfq,
+                collateralMintDecimals
+              );
 
               rfqsByInstrument.push(rfq);
             }
@@ -133,7 +139,10 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         for (const unparsedAccount of page) {
           const rfq = await convergence
             .rfqs()
-            .findRfqByAddress({ address: unparsedAccount.publicKey });
+            .findRfqByAddress({
+              address: unparsedAccount.publicKey,
+              collateralMintDecimals,
+            });
 
           rfqPage.push(rfq);
         }

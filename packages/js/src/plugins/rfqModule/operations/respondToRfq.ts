@@ -125,10 +125,14 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       scope: OperationScope
     ): Promise<RespondToRfqOutput> => {
       const { rfq, maker = convergence.identity(), bid, ask } = operation.input;
+      const rfqModel = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: rfq });
 
       let pdaDistinguisher = 0;
 
       const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
+        rfqModel.quoteAsset.instrumentDecimals,
         bid,
         ask
       );

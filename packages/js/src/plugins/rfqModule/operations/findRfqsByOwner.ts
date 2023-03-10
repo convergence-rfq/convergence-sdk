@@ -75,13 +75,20 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       const { owner, rfqs, rfqsPerPage, numPages } = operation.input;
       const { programs } = scope;
 
+      const protocol = await convergence.protocol().get();
+      const collateralMintDecimals = (
+        await convergence
+          .tokens()
+          .findMintByAddress({ address: protocol.collateralMint })
+      ).decimals;
+
       if (rfqs) {
         let rfqPages: Rfq[][] = [];
         const rfqsByOwner: Rfq[] = [];
 
         for (let rfq of rfqs) {
           if (rfq.taker.toBase58() === owner.toBase58()) {
-            rfq = await convertRfqOutput(convergence, rfq);
+            rfq = await convertRfqOutput(rfq, collateralMintDecimals);
 
             rfqsByOwner.push(rfq);
           }
@@ -113,7 +120,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
 
-          rfq = await convertRfqOutput(convergence, rfq);
+          rfq = await convertRfqOutput(rfq, collateralMintDecimals);
 
           rfqPage.push(rfq);
         }

@@ -109,9 +109,11 @@ export class SpotInstrument implements Instrument {
     leg: Leg
   ): Promise<SpotInstrument> {
     const { side, instrumentAmount, instrumentData } = leg;
+    
     const mint = await convergence
       .tokens()
       .findMintByAddress({ address: new PublicKey(instrumentData) });
+
     return new SpotInstrument(convergence, mint, {
       amount:
         typeof instrumentAmount === 'number'

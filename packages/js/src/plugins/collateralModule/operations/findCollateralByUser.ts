@@ -93,13 +93,10 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
 
       const protocol = await convergence.protocol().get();
       const collateralMint = await convergence
-        .protocol()
-        .findRegisteredMintByAddress({ address: protocol.collateralMint });
+        .tokens()
+        .findMintByAddress({ address: protocol.collateralMint });
 
-      collateralModel.lockedTokensAmount /= Math.pow(
-        10,
-        collateralMint.decimals
-      );
+      collateralModel.lockedTokensAmount /= 10 ** collateralMint.decimals;
 
       return collateralModel;
     },
