@@ -72,13 +72,20 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       const { programs } = scope;
       const { rfqs, rfqsPerPage, numPages } = operation.input;
 
+      const protocol = await convergence.protocol().get();
+      const collateralMintDecimals = (
+        await convergence
+          .tokens()
+          .findMintByAddress({ address: protocol.collateralMint })
+      ).decimals;
+
       if (rfqs) {
         let rfqPages: Rfq[][] = [];
         const rfqsByActive: Rfq[] = [];
 
         for (let rfq of rfqs) {
           if (rfq.state == StoredRfqState.Active) {
-            rfq = await convertRfqOutput(convergence, rfq);
+            rfq = await convertRfqOutput(rfq, collateralMintDecimals);
 
             rfqsByActive.push(rfq);
           }

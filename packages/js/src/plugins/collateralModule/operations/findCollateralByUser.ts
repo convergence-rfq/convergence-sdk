@@ -2,8 +2,6 @@ import { PublicKey } from '@solana/web3.js';
 import { Collateral, toCollateral } from '../models';
 import { toCollateralAccount } from '../accounts';
 import { CollateralGpaBuilder } from '../CollateralGpaBuilder';
-import { toRegisteredMint } from '@/plugins/protocolModule';
-import { toRegisteredMintAccount } from '@/plugins/protocolModule/accounts';
 import {
   Operation,
   OperationHandler,
@@ -94,20 +92,11 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
         )[0];
 
       const protocol = await convergence.protocol().get();
-      //@ts-ignore
       const collateralMint = await convergence
         .tokens()
         .findMintByAddress({ address: protocol.collateralMint });
 
-      const mintInfo = convergence
-        .rfqs()
-        .pdas()
-        .mintInfo({ mint: protocol.collateralMint });
-      const account = await convergence.rpc().getAccount(mintInfo);
-      const registeredMint = toRegisteredMint(toRegisteredMintAccount(account));
-
-      // collateralModel.lockedTokensAmount /= 10 ** collateralMint.decimals;
-      collateralModel.lockedTokensAmount /= 10 ** registeredMint.decimals;
+      collateralModel.lockedTokensAmount /= 10 ** collateralMint.decimals;
 
       return collateralModel;
     },

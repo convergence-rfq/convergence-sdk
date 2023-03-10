@@ -86,7 +86,14 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
         for (const address of addresses) {
           for (let response of responses) {
             if (response.rfq.toBase58() === address.toBase58()) {
-              response = convertResponseOutput(response);
+              const rfq = await convergence
+                .rfqs()
+                .findRfqByAddress({ address: response.rfq });
+
+              response = convertResponseOutput(
+                response,
+                rfq.quoteAsset.instrumentDecimals
+              );
 
               responsesByRfqs.push(response);
             }
@@ -121,7 +128,14 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
               .findResponseByAddress({ address: unparsedAccount.publicKey });
 
             if (response.rfq.toBase58() === address.toBase58()) {
-              response = convertResponseOutput(response);
+              const rfq = await convergence
+                .rfqs()
+                .findRfqByAddress({ address: response.rfq });
+
+              response = convertResponseOutput(
+                response,
+                rfq.quoteAsset.instrumentDecimals
+              );
 
               responsePage.push(response);
             }
