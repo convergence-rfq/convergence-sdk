@@ -4,6 +4,8 @@ import { RiskEngineClient } from './RiskEngineClient';
 import {
   initializeConfigOperation,
   initializeConfigOperationHandler,
+  updateConfigOperation,
+  updateConfigOperationHandler,
   setInstrumentTypeOperation,
   setInstrumentTypeOperationHandler,
   setRiskCategoriesInfoOperation,
@@ -38,6 +40,7 @@ export const riskEngineModule = (): ConvergencePlugin => ({
 
     const op = convergence.operations();
     op.register(initializeConfigOperation, initializeConfigOperationHandler);
+    op.register(updateConfigOperation, updateConfigOperationHandler);
     op.register(setInstrumentTypeOperation, setInstrumentTypeOperationHandler);
     op.register(
       setRiskCategoriesInfoOperation,

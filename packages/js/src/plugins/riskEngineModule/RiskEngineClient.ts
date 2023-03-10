@@ -1,6 +1,8 @@
 import {
   initializeConfigOperation,
   InitializeConfigInput,
+  updateConfigOperation,
+  UpdateConfigInput,
   SetInstrumentTypeInput,
   setInstrumentTypeOperation,
   calculateCollateralForConfirmationOperation,
@@ -48,6 +50,13 @@ export class RiskEngineClient {
     return this.convergence
       .operations()
       .execute(initializeConfigOperation(input), options);
+  }
+
+  /** {@inheritDoc updateConfig} */
+  updateConfig(input?: UpdateConfigInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(updateConfigOperation(input), options);
   }
 
   /** {@inheritDoc setInstrumentTypeOperation} */
