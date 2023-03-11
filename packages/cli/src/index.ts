@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 import { readFileSync } from 'fs';
+import { homedir } from 'os';
 import { Command } from 'commander';
 import {
   Connection,
@@ -24,9 +25,8 @@ type Options = any;
 
 /// Constants
 
-const DEFAULT_KEYPAIR_FILE = '/Users/pindaroso/.config/solana/dao.json';
-// const DEFAULT_RPC_ENDPOINT = 'https://api.devnet.solana.com';
-const DEFAULT_RPC_ENDPOINT = 'http://127.0.0.1:8899';
+const DEFAULT_KEYPAIR_FILE = `${homedir()}/.config/solana/id.json`;
+const DEFAULT_RPC_ENDPOINT = 'https://api.devnet.solana.com';
 
 /// HELPERS
 
@@ -122,7 +122,29 @@ const initializeRiskEngine = async (options: Options) => {
   console.log('Initializing risk engine...');
   const cvg = await createCvg(options);
   const { response } = await cvg.riskEngine().initializeConfig({
-    collateralMintDecimals: 6,
+    collateralMintDecimals: options.collateralMintDecimals,
+    collateralForVariableSizeRfqCreation:
+      options.collateralForVariableSizeRfqCreation,
+    collateralForFixedQuoteAmountRfqCreation:
+      options.collateralForFixedQuoteAmountRfqCreation,
+    safetyPriceShiftFactor: options.safetyPriceShiftFactor,
+    overallSafetyFactor: options.overallSafetyFactor,
+  });
+  console.log('Tx:', response.signature);
+  console.log('Success!');
+};
+
+const updateRiskEngine = async (options: Options) => {
+  console.log('Updating risk engine config...');
+  const cvg = await createCvg(options);
+  const { response } = await cvg.riskEngine().updateConfig({
+    collateralMintDecimals: options.collateralMintDecimals,
+    collateralForVariableSizeRfqCreation:
+      options.collateralForVariableSizeRfqCreation,
+    collateralForFixedQuoteAmountRfqCreation:
+      options.collateralForFixedQuoteAmountRfqCreation,
+    safetyPriceShiftFactor: options.safetyPriceShiftFactor,
+    overallSafetyFactor: options.overallSafetyFactor,
   });
   console.log('Tx:', response.signature);
   console.log('Success!');
@@ -305,69 +327,91 @@ const airdropDevnetTokens = async (options: Options) => {
 const program = new Command();
 program.name('convergence').version('4.0.8').description('Convergence RFQ CLI');
 
-addDefaultArgs(
+const cmds = [
   program
     .command('airdrop')
     .description('Airdrops SOL to the current user')
     .option('--amount <value>', 'Amount to airdrop in SOL', '1')
-    .action(airdrop)
-);
-addDefaultArgs(
+    .action(airdrop),
   program
     .command('create-mint')
     .description('Creates mint')
     .requiredOption('--decimals <value>', 'Decimals')
-    .action(createMint)
-);
-addDefaultArgs(
+    .action(createMint),
   program
     .command('create-wallet')
     .description('Creates wallet')
     .requiredOption('--owner <value>', 'Owner address')
     .requiredOption('--mint <value>', 'Mint address')
-    .action(createWallet)
-);
-addDefaultArgs(
+    .action(createWallet),
   program
     .command('mint-to')
     .description('Mints tokens to wallet')
     .requiredOption('--mint <value>', 'Mint address')
     .requiredOption('--wallet <value>', 'Wallet address')
     .requiredOption('--amount <value>', 'Mint amount')
-    .action(mintTo)
-);
-addDefaultArgs(
+    .action(mintTo),
   program
     .command('initialize-protocol')
     .description('Initializes protocol')
     .requiredOption('--collateral-mint <value>', 'Collateral mint address')
     .option('--maker-fee <value>', 'Maker fee')
     .option('--taker-fee <value>', 'Taker fee')
-    .action(initializeProtocol)
-);
-addDefaultArgs(
+    .action(initializeProtocol),
   program
     .command('initialize-risk-engine')
     .description('Initializes risk engine')
-    .action(initializeRiskEngine)
-);
-addDefaultArgs(
+    .option('--collateral-mint-decimals <number>', 'Collateral decimals', '6')
+    .option(
+      '--collateral-for-variable-size-rfq-creation <number>',
+      'Collateral ',
+      '1000000000'
+    )
+    .option(
+      '--collateral-for-fixed-quote-amount-rfq-creation <number>',
+      'Collateral',
+      '2000000000'
+    )
+    .option(
+      '--safety-price-shift-factor <number>',
+      'Safety price shift factor',
+      '0.01'
+    )
+    .option('--overall-safety-factor <number>', 'Overall Safety factor', '0.1')
+    .action(initializeRiskEngine),
+  program
+    .command('update-risk-engine')
+    .description('Updates risk engine')
+    .option('--collateral-mint-decimals <number>', 'Collateral decimals', '6')
+    .option(
+      '--collateral-for-variable-size-rfq-creation <number>',
+      'Collateral ',
+      '1000000000'
+    )
+    .option(
+      '--collateral-for-fixed-quote-amount-rfq-creation <number>',
+      'Collateral',
+      '2000000000'
+    )
+    .option(
+      '--safety-price-shift-factor <number>',
+      'Safety price shift factor',
+      '0.01'
+    )
+    .option('--overall-safety-factor <number>', 'Overall Safety factor', '0.1')
+    .action(updateRiskEngine),
   program
     .command('set-risk-engine-instrument-type')
     .description('Sets risk engine instrument type')
     .option('--type <value>', 'Instrument type')
     .option('--program <value>', 'Instrument program')
-    .action(setRiskEngineInstrumentType)
-);
-addDefaultArgs(
+    .action(setRiskEngineInstrumentType),
   program
     .command('set-risk-engine-risk-categories-info')
     .description('Sets risk engine risk categories info')
     .requiredOption('--category <value>', 'Category')
     .requiredOption('--new-value <value>', 'New value')
-    .action(setRiskEngineCategoriesInfo)
-);
-addDefaultArgs(
+    .action(setRiskEngineCategoriesInfo),
   program
     .command('add-instrument')
     .description('Adds instrument')
@@ -387,9 +431,7 @@ addDefaultArgs(
       'Revert preparation account amount'
     )
     .option('--clean-up-account-amount <value>', 'Clean up account amount')
-    .action(addInstrument)
-);
-addDefaultArgs(
+    .action(addInstrument),
   program
     .command('add-base-asset')
     .description('Adds base asset')
@@ -397,35 +439,29 @@ addDefaultArgs(
     .requiredOption('--oracle-address <value>', 'Oracle address')
     .option('--oracle-kind <value>', 'Oracle kind', 'Switchboard')
     .option('--risk-category <value>', 'Risk category', 'very-low')
-    .action(addBaseAsset)
-);
-addDefaultArgs(
+    .action(addBaseAsset),
   program
     .command('register-mint')
     .description('Registers mint')
     .requiredOption('--mint <value>', 'Mint address')
     .option('--base-asset-index <value>', 'Base asset index')
-    .action(registerMint)
-);
-addDefaultArgs(
+    .action(registerMint),
   program
     .command('get-registered-mints')
     .description('Get registered mints')
-    .action(getRegisteredMints)
-);
-addDefaultArgs(
+    .action(getRegisteredMints),
   program
     .command('get-base-assets')
     .description('Get base assets')
-    .action(getBaseAssets)
-);
-addDefaultArgs(
+    .action(getBaseAssets),
   program
     .command('airdrop-devnet-tokens')
     .description('Airdrops devnet tokens')
     .requiredOption('--owner <value>', 'Owner address')
-    .action(airdropDevnetTokens)
-);
+    .action(airdropDevnetTokens),
+];
+
+cmds.map(addDefaultArgs);
 
 /// EXECUTE
 
