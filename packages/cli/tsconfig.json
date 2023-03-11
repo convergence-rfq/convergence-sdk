@@ -1,9 +1,14 @@
 {
   "extends": "../../tsconfig.json",
   "include": ["src"],
+  "extensions": ["ts"],
   "compilerOptions": {
     "outDir": "dist/esm",
     "target": "es2019",
-    "declarationDir": "dist/types",
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "declarationDir": null,
+    "declaration": false,
+    "emitDeclarationOnly": false,
   }
 }
