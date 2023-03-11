@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.0.23-rc.6
+
+### Patch Changes
+
+- Updated PsyOptions European SDK version number to 0.2.3
+
 ## 4.0.23-rc.5
 
 ### Patch Changes
