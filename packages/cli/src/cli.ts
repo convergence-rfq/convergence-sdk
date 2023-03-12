@@ -19,6 +19,7 @@ import {
   toRiskCategoryInfo,
   toScenario,
   devnetAirdrops,
+  Rfq,
 } from '@convergence-rfq/sdk';
 
 type Opts = any;
@@ -315,6 +316,19 @@ const getProtocol = async (opts: Opts) => {
   }
 };
 
+const getRfqs = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const rfqPages = await cvg
+    .rfqs()
+    .findRfqsByActive({ rfqsPerPage: 5, numPages: 1 });
+  for (const rfqPage of rfqPages) {
+    for (const rfq of rfqPage) {
+      const r: Rfq = rfq;
+      console.log('Address: ', r.address.toString());
+    }
+  }
+};
+
 const getRiskEngineConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const r = await cvg.riskEngine().fetchConfig();
@@ -523,6 +537,9 @@ export const makeCli = (): Command => {
       .command('get-base-assets')
       .description('Get base assets')
       .action(getBaseAssets),
+    /// Rfq
+    cli.command('get-rfqs').description('Get RFQs').action(getRfqs),
+    /// Devnet
     cli
       .command('airdrop-devnet-tokens')
       .description('Airdrops devnet tokens')
