@@ -3,19 +3,13 @@ import fs from 'fs';
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { Keypair } from '@solana/web3.js';
+import * as spotInstrument from '@convergence-rfq/spot-instrument';
+import * as psyoptionsEuropeanInstrument from '@convergence-rfq/psyoptions-european-instrument';
+import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-american-instrument';
 
 import { makeCli } from '../src/cli';
 
 const ENDPOINT = 'http://127.0.0.1:8899';
-
-//const riskEngine = require('@convergence-rfq/risk-engine');
-//const spotInstrument = require('@convergence-rfq/spot-instrument');
-//const psyoptionsEuropeanInstrument = require('@convergence-rfq/psyoptions-european-instrument');
-//const psyoptionsAmericanInstrument = require('@convergence-rfq/psyoptions-american-instrument');
-//const PSYOPTIONS_AMERICAN = 'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs';
-const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Switchboard
-//const EURO_PRIMITIVE = 'FASQhaZQT53W9eT9wWnPoBFw8xzZDey9TbMmJj6jCQTs';
-//const PYTH_ORACLE = 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH';
 
 const id = Keypair.fromSecretKey(
   new Uint8Array(
@@ -35,6 +29,8 @@ describe('Convergence CLI', () => {
 
   let baseMint: string;
   let quoteMint: string;
+
+  const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Switchboard
 
   beforeEach(() => {
     consoleStub = sinon.stub(console, 'log');
@@ -79,6 +75,36 @@ describe('Convergence CLI', () => {
 
   it('initialize-protocol', async () => {
     const args = ['initialize-protocol', '--collateral-mint', quoteMint];
+    await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
+    expect(consoleStub.args[2][0]).toEqual(SUCCESS);
+  });
+
+  it('add-instrument', async () => {
+    const args = [
+      'add-instrument',
+      '--instrument-program',
+      spotInstrument.PROGRAM_ADDRESS,
+    ];
+    await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
+    expect(consoleStub.args[2][0]).toEqual(SUCCESS);
+  });
+
+  it('add-instrument', async () => {
+    const args = [
+      'add-instrument',
+      '--instrument-program',
+      psyoptionsAmericanInstrument.PROGRAM_ADDRESS,
+    ];
+    await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
+    expect(consoleStub.args[2][0]).toEqual(SUCCESS);
+  });
+
+  it('add-instrument', async () => {
+    const args = [
+      'add-instrument',
+      '--instrument-program',
+      psyoptionsEuropeanInstrument.PROGRAM_ADDRESS,
+    ];
     await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
   });
