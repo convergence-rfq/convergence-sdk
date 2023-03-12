@@ -324,7 +324,7 @@ const getRfqs = async (opts: Opts) => {
   for (const rfqPage of rfqPages) {
     for (const rfq of rfqPage) {
       const r: Rfq = rfq;
-      console.log('Address: ', r.address.toString());
+      console.log('Address:', r.address.toString());
     }
   }
 };
