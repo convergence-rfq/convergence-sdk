@@ -31,9 +31,8 @@ const DEFAULT_RPC_ENDPOINT = 'https://api.devnet.solana.com';
 /// HELPERS
 
 const createCvg = async (options: Options): Promise<Convergence> => {
-  const user = Keypair.fromSecretKey(
-    new Uint8Array(JSON.parse(readFileSync(options.keypairFile, 'utf8')))
-  );
+  const buffer = JSON.parse(readFileSync(options.keypairFile, 'utf8'));
+  const user = Keypair.fromSecretKey(new Uint8Array(buffer));
   const cvg = new Convergence(
     new Connection(options.rpcEndpoint, {
       commitment: 'confirmed',
@@ -41,18 +40,13 @@ const createCvg = async (options: Options): Promise<Convergence> => {
     { skipPreflight: true }
   );
   cvg.use(keypairIdentity(user));
-
-  if (options.verbose) {
-    console.log('Using user:', user.publicKey.toString());
-  }
-
   return cvg;
 };
 
 const addDefaultArgs = (cmd: any) => {
-  cmd.option('--rpc-endpoint <value>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
-  cmd.option('--keypair-file <value>', 'Keypair file', DEFAULT_KEYPAIR_FILE);
-  cmd.option('--verbose <value>', 'Verbose', false);
+  cmd.option('--rpc-endpoint <string>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
+  cmd.option('--keypair-file <string>', 'Keypair file', DEFAULT_KEYPAIR_FILE);
+  cmd.option('--verbose <boolean>', 'Verbose', false);
   return cmd;
 };
 
@@ -67,7 +61,7 @@ const airdrop = async (options: any) => {
     options.amount * LAMPORTS_PER_SOL
   );
   await cvg.connection.confirmTransaction(tx);
-  console.log('Tx:', tx, '?');
+  console.log('Tx:', tx);
   console.log('Success!');
 };
 
@@ -327,7 +321,10 @@ const airdropDevnetTokens = async (options: Options) => {
 
 export const makeCli = (): Command => {
   const cli = new Command();
-  cli.name('convergence').version('4.0.8').description('Convergence RFQ CLI');
+  cli
+    .name('convergence')
+    .version('4.0.23-rc.7')
+    .description('Convergence RFQ CLI');
 
   const cmds = [
     cli
@@ -425,22 +422,28 @@ export const makeCli = (): Command => {
     cli
       .command('add-instrument')
       .description('Adds instrument')
-      .option('--instrument-program <value>', 'Instrument program address')
-      .option('--can-be-used-as-quote <value>', 'Can be used as quote')
-      .option(
-        '--validate-data-account-amount <value>',
+      .option('--instrument-program <string>', 'Instrument program address')
+      .option('--can-be-used-as-quote <boolean>', 'Can be used as quote')
+      .requiredOption(
+        '--validate-data-account-amount <number>',
         'Validate data account amount'
       )
-      .option(
-        '--prepare-to-settle-account-amount <value>',
+      .requiredOption(
+        '--prepare-to-settle-account-amount <number>',
         'Prepare to settle account amount'
       )
-      .option('--settle-account-amount <value>', 'Settle account amount')
-      .option(
-        '--revert-preparation-account-amount <value>',
+      .requiredOption(
+        '--settle-account-amount <number>',
+        'Settle account amount'
+      )
+      .requiredOption(
+        '--revert-preparation-account-amount <number>',
         'Revert preparation account amount'
       )
-      .option('--clean-up-account-amount <value>', 'Clean up account amount')
+      .requiredOption(
+        '--clean-up-account-amount <number>',
+        'Clean up account amount'
+      )
       .action(addInstrument),
     cli
       .command('add-base-asset')

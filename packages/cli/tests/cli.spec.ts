@@ -150,6 +150,16 @@ describe('Convergence CLI', () => {
       'add-instrument',
       '--instrument-program',
       sdk.spotInstrumentProgram.address.toString(),
+      '--validate-data-account-amount',
+      '1',
+      '--prepare-to-settle-account-amount',
+      '7',
+      '--settle-account-amount',
+      '3',
+      '--revert-preparation-account-amount',
+      '3',
+      '--clean-up-account-amount',
+      '4',
     ]);
     expect(stub.args[2][0]).toEqual(SUCCESS);
   });
@@ -159,6 +169,16 @@ describe('Convergence CLI', () => {
       'add-instrument',
       '--instrument-program',
       sdk.psyoptionsAmericanInstrumentProgram.address.toString(),
+      '--validate-data-account-amount',
+      '3',
+      '--prepare-to-settle-account-amount',
+      '7',
+      '--settle-account-amount',
+      '3',
+      '--revert-preparation-account-amount',
+      '3',
+      '--clean-up-account-amount',
+      '4',
     ]);
     expect(stub.args[2][0]).toEqual(SUCCESS);
   });
@@ -168,6 +188,16 @@ describe('Convergence CLI', () => {
       'add-instrument',
       '--instrument-program',
       sdk.psyoptionsEuropeanInstrumentProgram.address.toString(),
+      '--validate-data-account-amount',
+      '2',
+      '--prepare-to-settle-account-amount',
+      '7',
+      '--settle-account-amount',
+      '3',
+      '--revert-preparation-account-amount',
+      '3',
+      '--clean-up-account-amount',
+      '4',
     ]);
     expect(stub.args[2][0]).toEqual(SUCCESS);
   });
