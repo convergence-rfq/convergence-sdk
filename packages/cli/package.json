@@ -1,10 +1,6 @@
 {
   "name": "@convergence-rfq/cli",
-<<<<<<< HEAD
   "version": "4.0.23-rc.9",
-=======
-  "version": "4.0.23-rc.6",
->>>>>>> 31c77ebcf81ec61542ca1487fe45bd98424b9482
   "license": "MIT",
   "publishConfig": {
     "access": "public"
