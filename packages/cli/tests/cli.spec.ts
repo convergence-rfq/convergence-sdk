@@ -30,7 +30,8 @@ const getPk = (user: string) => {
 };
 
 describe('Convergence CLI', () => {
-  const SUCCESS = 'Success!';
+  const TX = 'Tx:';
+  const ADDRESS = 'Address:';
 
   let stub: SinonStub;
 
@@ -59,39 +60,39 @@ describe('Convergence CLI', () => {
   it('airdrop [dao]', async () => {
     const args = ['airdrop', '--amount', '1'];
     await runCli(args);
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('airdrop [maker]', async () => {
     const args = ['airdrop', '--amount', '1'];
     await runCli(args, 'maker');
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('airdrop [taker]', async () => {
     const args = ['airdrop', '--amount', '1'];
     await runCli(args, 'taker');
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('airdrop [mint-authority]', async () => {
     const args = ['airdrop', '--amount', '1'];
     await runCli(args, 'mint-authority');
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('create-mint [base]', async () => {
     const args = ['create-mint', '--decimals', '9'];
     await runCli(args, 'mint-authority');
-    baseMint = stub.args[1][1];
-    expect(stub.args[3][0]).toEqual(SUCCESS);
+    baseMint = stub.args[0][1];
+    expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('create-mint [quote]', async () => {
     const args = ['create-mint', '--decimals', '6'];
     await runCli(args, 'mint-authority');
-    quoteMint = stub.args[1][1];
-    expect(stub.args[3][0]).toEqual(SUCCESS);
+    quoteMint = stub.args[0][1];
+    expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('create-wallet [base:maker]', async () => {
@@ -103,7 +104,7 @@ describe('Convergence CLI', () => {
       baseMint,
     ];
     await runCli(args);
-    expect(stub.args[3][0]).toEqual(SUCCESS);
+    expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('create-wallet [base:taker]', async () => {
@@ -115,7 +116,7 @@ describe('Convergence CLI', () => {
       baseMint,
     ];
     await runCli(args);
-    expect(stub.args[3][0]).toEqual(SUCCESS);
+    expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('create-wallet [quote:maker]', async () => {
@@ -126,7 +127,7 @@ describe('Convergence CLI', () => {
       '--mint',
       quoteMint,
     ]);
-    expect(stub.args[3][0]).toEqual(SUCCESS);
+    expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('create-wallet [quote:taker]', async () => {
@@ -137,12 +138,12 @@ describe('Convergence CLI', () => {
       '--mint',
       quoteMint,
     ]);
-    expect(stub.args[3][0]).toEqual(SUCCESS);
+    expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('initialize-protocol', async () => {
     await runCli(['initialize-protocol', '--collateral-mint', quoteMint]);
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('add-instrument [spot]', async () => {
@@ -161,7 +162,7 @@ describe('Convergence CLI', () => {
       '--clean-up-account-amount',
       '4',
     ]);
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('add-instrument [psyoptions american options]', async () => {
@@ -180,7 +181,7 @@ describe('Convergence CLI', () => {
       '--clean-up-account-amount',
       '4',
     ]);
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('add-instrument [psyoptions european options]', async () => {
@@ -199,7 +200,7 @@ describe('Convergence CLI', () => {
       '--clean-up-account-amount',
       '4',
     ]);
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('initialize-risk-engine', async () => {
@@ -214,7 +215,7 @@ describe('Convergence CLI', () => {
       '--overall-safety-factor',
       '0.1',
     ]);
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('add-base-asset [base]', async () => {
@@ -225,7 +226,7 @@ describe('Convergence CLI', () => {
       '--oracle-address',
       BTC_ORACLE,
     ]);
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('get-base-assets', async () => {
@@ -234,7 +235,7 @@ describe('Convergence CLI', () => {
 
   it('register-mint [quote]', async () => {
     await runCli(['register-mint', '--mint', quoteMint]);
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('register-mint [base]', async () => {
@@ -245,11 +246,11 @@ describe('Convergence CLI', () => {
       '--mint',
       baseMint,
     ]);
-    expect(stub.args[2][0]).toEqual(SUCCESS);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('get-registered-mints', async () => {
     await runCli(['get-registered-mints']);
-    expect(stub.args[3][0]).toEqual(SUCCESS);
+    expect(stub.args[1][0]).toEqual(ADDRESS);
   });
 });

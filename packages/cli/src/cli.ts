@@ -21,7 +21,7 @@ import {
   devnetAirdrops,
 } from '@convergence-rfq/sdk';
 
-type Options = any;
+type Opts = any;
 
 /// Constants
 
@@ -30,11 +30,11 @@ const DEFAULT_RPC_ENDPOINT = 'https://api.devnet.solana.com';
 
 /// HELPERS
 
-const createCvg = async (options: Options): Promise<Convergence> => {
-  const buffer = JSON.parse(readFileSync(options.keypairFile, 'utf8'));
+const createCvg = async (opts: Opts): Promise<Convergence> => {
+  const buffer = JSON.parse(readFileSync(opts.keypairFile, 'utf8'));
   const user = Keypair.fromSecretKey(new Uint8Array(buffer));
   const cvg = new Convergence(
-    new Connection(options.rpcEndpoint, {
+    new Connection(opts.rpcEndpoint, {
       commitment: 'confirmed',
     }),
     { skipPreflight: true }
@@ -52,161 +52,148 @@ const addDefaultArgs = (cmd: any) => {
 
 // ACTIONS
 
-const airdrop = async (options: any) => {
-  console.log('Airdropping...');
-  const cvg = await createCvg(options);
+const airdrop = async (opts: any) => {
+  const cvg = await createCvg(opts);
   const user = cvg.rpc().getDefaultFeePayer();
   const tx = await cvg.connection.requestAirdrop(
     user.publicKey,
-    options.amount * LAMPORTS_PER_SOL
+    opts.amount * LAMPORTS_PER_SOL
   );
   await cvg.connection.confirmTransaction(tx);
   console.log('Tx:', tx);
-  console.log('Success!');
 };
 
-const createMint = async (options: any) => {
-  console.log('Creating mint...');
-  const cvg = await createCvg(options);
+const createMint = async (opts: any) => {
+  const cvg = await createCvg(opts);
   const user = cvg.rpc().getDefaultFeePayer();
   const { mint, response } = await cvg.tokens().createMint({
     mintAuthority: user.publicKey,
-    decimals: options.decimals,
+    decimals: opts.decimals,
   });
   console.log('Address:', mint.address.toString());
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const createWallet = async (options: any) => {
-  console.log('Creating wallet...');
-  const cvg = await createCvg(options);
+const createWallet = async (opts: any) => {
+  const cvg = await createCvg(opts);
   const { token: wallet, response } = await cvg.tokens().createToken({
-    mint: new PublicKey(options.mint),
-    owner: new PublicKey(options.owner),
+    mint: new PublicKey(opts.mint),
+    owner: new PublicKey(opts.owner),
   });
   console.log('Address:', wallet.address.toString());
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const mintTo = async (options: any) => {
-  console.log('Minting to...');
-  const cvg = await createCvg(options);
+const mintTo = async (opts: any) => {
+  const cvg = await createCvg(opts);
   const user = cvg.rpc().getDefaultFeePayer();
   const { response } = await cvg.tokens().mint({
-    mintAddress: new PublicKey(options.mint),
-    amount: token(options.amount),
-    toToken: new PublicKey(options.wallet),
+    mintAddress: new PublicKey(opts.mint),
+    amount: token(opts.amount),
+    toToken: new PublicKey(opts.wallet),
     mintAuthority: user.publicKey,
   });
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const initializeProtocol = async (options: Options) => {
-  console.log('Initializing protocol...');
-  const cvg = await createCvg(options);
-  const collateralMint = new PublicKey(options.collateralMint);
+const initializeProtocol = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const collateralMint = new PublicKey(opts.collateralMint);
   const { response } = await cvg.protocol().initialize({ collateralMint });
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const initializeRiskEngine = async (options: Options) => {
-  console.log('Initializing risk engine...');
-  const cvg = await createCvg(options);
+const initializeRiskEngine = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const {
+    collateralMintDecimals,
+    collateralForVariableSizeRfqCreation,
+    collateralForFixedQuoteAmountRfqCreation,
+    safetyPriceShiftFactor,
+    overallSafetyFactor,
+  } = opts;
   const { response } = await cvg.riskEngine().initializeConfig({
-    collateralMintDecimals: options.collateralMintDecimals,
-    collateralForVariableSizeRfqCreation:
-      options.collateralForVariableSizeRfqCreation,
-    collateralForFixedQuoteAmountRfqCreation:
-      options.collateralForFixedQuoteAmountRfqCreation,
-    safetyPriceShiftFactor: options.safetyPriceShiftFactor,
-    overallSafetyFactor: options.overallSafetyFactor,
+    collateralMintDecimals,
+    collateralForVariableSizeRfqCreation,
+    collateralForFixedQuoteAmountRfqCreation,
+    safetyPriceShiftFactor,
+    overallSafetyFactor,
   });
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const updateRiskEngine = async (options: Options) => {
-  console.log('Updating risk engine config...');
-  const cvg = await createCvg(options);
+const updateRiskEngine = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const {
+    collateralMintDecimals,
+    collateralForVariableSizeRfqCreation,
+    collateralForFixedQuoteAmountRfqCreation,
+    safetyPriceShiftFactor,
+    overallSafetyFactor,
+  } = opts;
   const { response } = await cvg.riskEngine().updateConfig({
-    collateralMintDecimals: options.collateralMintDecimals,
-    collateralForVariableSizeRfqCreation:
-      options.collateralForVariableSizeRfqCreation,
-    collateralForFixedQuoteAmountRfqCreation:
-      options.collateralForFixedQuoteAmountRfqCreation,
-    safetyPriceShiftFactor: options.safetyPriceShiftFactor,
-    overallSafetyFactor: options.overallSafetyFactor,
+    collateralMintDecimals,
+    collateralForVariableSizeRfqCreation,
+    collateralForFixedQuoteAmountRfqCreation,
+    safetyPriceShiftFactor,
+    overallSafetyFactor,
   });
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const addInstrument = async (options: Options) => {
-  console.log('Adding instrument...');
-  const cvg = await createCvg(options);
+const addInstrument = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
   const { response } = await cvg.protocol().addInstrument({
     authority: cvg.rpc().getDefaultFeePayer(),
-    instrumentProgram: new PublicKey(options.instrumentProgram),
-    canBeUsedAsQuote: options.canBeUsedAsQuote,
-    validateDataAccountAmount: options.validateDataAccountAmount,
-    prepareToSettleAccountAmount: options.prepareToSettleAccountAmount,
-    settleAccountAmount: options.settleAccountAmount,
-    revertPreparationAccountAmount: options.revertPreparationAccountAmount,
-    cleanUpAccountAmount: options.cleanUpAccountAmount,
+    instrumentProgram: new PublicKey(opts.instrumentProgram),
+    canBeUsedAsQuote: opts.canBeUsedAsQuote,
+    validateDataAccountAmount: opts.validateDataAccountAmount,
+    prepareToSettleAccountAmount: opts.prepareToSettleAccountAmount,
+    settleAccountAmount: opts.settleAccountAmount,
+    revertPreparationAccountAmount: opts.revertPreparationAccountAmount,
+    cleanUpAccountAmount: opts.cleanUpAccountAmount,
   });
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const setRiskEngineInstrumentType = async (options: Options) => {
-  console.log('Setting risk engine instrument type...');
-  const cvg = await createCvg(options);
-
+const setRiskEngineInstrumentType = async (opts: Opts) => {
   let instrumentType;
-  if (options.type == 'spot') {
+  if (opts.type == 'spot') {
     instrumentType = InstrumentType.Spot;
-  } else if (options.type == 'option') {
+  } else if (opts.type == 'option') {
     instrumentType = InstrumentType.Option;
   } else {
     throw new Error('Invalid instrument type');
   }
 
+  const cvg = await createCvg(opts);
   const { response } = await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: new PublicKey(options.program),
+    instrumentProgram: new PublicKey(opts.program),
     instrumentType,
   });
 
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const setRiskEngineCategoriesInfo = async (options: Options) => {
-  console.log('Setting risk engine categories info...');
-  const cvg = await createCvg(options);
+const setRiskEngineCategoriesInfo = async (opts: Opts) => {
+  const newValue = opts.newValue.split(',').map((x: string) => parseFloat(x));
 
   let riskCategoryIndex;
-  if (options.category == 'very-low') {
+  if (opts.category == 'very-low') {
     riskCategoryIndex = RiskCategory.VeryLow;
-  } else if (options.category == 'low') {
+  } else if (opts.category == 'low') {
     riskCategoryIndex = RiskCategory.Low;
-  } else if (options.category == 'medium') {
+  } else if (opts.category == 'medium') {
     riskCategoryIndex = RiskCategory.Medium;
-  } else if (options.category == 'high') {
+  } else if (opts.category == 'high') {
     riskCategoryIndex = RiskCategory.High;
-  } else if (options.category == 'very-high') {
+  } else if (opts.category == 'very-high') {
     riskCategoryIndex = RiskCategory.VeryHigh;
   } else {
     throw new Error('Invalid risk category');
   }
 
-  const newValue = options.newValue
-    .split(',')
-    .map((x: string) => parseFloat(x));
-
+  const cvg = await createCvg(opts);
   const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
     changes: [
       {
@@ -222,26 +209,24 @@ const setRiskEngineCategoriesInfo = async (options: Options) => {
       },
     ],
   });
+
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const addBaseAsset = async (options: Options) => {
-  console.log('Adding base asset...');
-
-  const cvg = await createCvg(options);
+const addBaseAsset = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
   const baseAssets = await cvg.protocol().getBaseAssets();
 
   let riskCategory;
-  if (options.riskCategory === 'very-low') {
+  if (opts.riskCategory === 'very-low') {
     riskCategory = RiskCategory.Low;
-  } else if (options.riskCategory === 'low') {
+  } else if (opts.riskCategory === 'low') {
     riskCategory = RiskCategory.Low;
-  } else if (options.riskCategory === 'medium') {
+  } else if (opts.riskCategory === 'medium') {
     riskCategory = RiskCategory.Medium;
-  } else if (options.riskCategory === 'high') {
+  } else if (opts.riskCategory === 'high') {
     riskCategory = RiskCategory.High;
-  } else if (options.riskCategory === 'very-high') {
+  } else if (opts.riskCategory === 'very-high') {
     riskCategory = RiskCategory.VeryHigh;
   } else {
     throw new Error('Invalid risk category');
@@ -250,27 +235,24 @@ const addBaseAsset = async (options: Options) => {
   const { response } = await cvg.protocol().addBaseAsset({
     authority: cvg.rpc().getDefaultFeePayer(),
     index: { value: baseAssets.length },
-    ticker: options.ticker,
+    ticker: opts.ticker,
     riskCategory,
     priceOracle: {
-      __kind: options.oracleKind,
-      address: new PublicKey(options.oracleAddress),
+      __kind: opts.oracleKind,
+      address: new PublicKey(opts.oracleAddress),
     },
   });
   console.log('Tx:', response.signature);
-
-  console.log('Success!');
 };
 
-const registerMint = async (options: Options) => {
-  console.log('Registering mint...');
-  const cvg = await createCvg(options);
-  const mint = new PublicKey(options.mint);
+const registerMint = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const mint = new PublicKey(opts.mint);
 
   let args;
-  if (options.baseAssetIndex >= 0) {
+  if (opts.baseAssetIndex >= 0) {
     args = {
-      baseAssetIndex: options.baseAssetIndex,
+      baseAssetIndex: opts.baseAssetIndex,
       mint,
     };
   } else {
@@ -281,31 +263,49 @@ const registerMint = async (options: Options) => {
 
   const { response } = await cvg.protocol().registerMint(args);
   console.log('Tx:', response.signature);
-  console.log('Success!');
 };
 
-const getRegisteredMints = async (options: Options) => {
-  console.log('Getting registered mints...');
-  const cvg = await createCvg(options);
+const getRegisteredMints = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
   const mints = await cvg.protocol().getRegisteredMints();
-  mints.map((x: any) => console.log('Mint:', x.address.toString()));
-  console.log('Success!');
+  mints.map((x: any) => console.log('Address:', x.address.toString()));
 };
 
-const getBaseAssets = async (options: Options) => {
-  console.log('Getting base assets...');
-  const cvg = await createCvg(options);
+const getBaseAssets = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
   const baseAssets = await cvg.protocol().getBaseAssets();
   baseAssets.map((baseAsset: BaseAsset) =>
     console.log('Ticker:', baseAsset.ticker.toString())
   );
-  console.log('Success!');
 };
 
-const airdropDevnetTokens = async (options: Options) => {
-  console.log('Airdropping devnet tokens...');
-  const cvg = await createCvg(options);
-  const owner = new PublicKey(options.owner);
+const getProtocol = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const p = await cvg.protocol().get();
+  console.log('Address:', p.address.toString());
+  console.log('Authority:', p.authority.toString());
+  console.log('Active:', p.active);
+  console.log('Risk engine:', p.riskEngine.toString());
+  console.log('Collateral mint:', p.collateralMint.toString());
+  console.log(`Taker fee: ${p.settleFees.takerBps.toString()} bps`);
+  console.log(`Maker fee: ${p.settleFees.makerBps.toString()} bps`);
+  console.log(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
+  console.log(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
+  //instruments: [
+  //  {
+  //    programKey: [PublicKey [PublicKey(HNHBtGzS58xJarSbz5XbEjTTEFbAQUHdP8TjQmwjx1gW)]],
+  //    enabled: true,
+  //    canBeUsedAsQuote: true,
+  //    validateDataAccountAmount: 1,
+  //    prepareToSettleAccountAmount: 7,
+  //    settleAccountAmount: 3,
+  //    revertPreparationAccountAmount: 3,
+  //    cleanUpAccountAmount: 4
+};
+
+const airdropDevnetTokens = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const owner = new PublicKey(opts.owner);
   const { collateralWallet, registeredMintWallets } = await devnetAirdrops(
     cvg,
     owner
@@ -314,7 +314,6 @@ const airdropDevnetTokens = async (options: Options) => {
   registeredMintWallets.map((wallet: any) => {
     console.log('Registered mint wallet:', wallet.address.toString());
   });
-  console.log('Success!');
 };
 
 /// CLI
@@ -327,11 +326,13 @@ export const makeCli = (): Command => {
     .description('Convergence RFQ CLI');
 
   const cmds = [
+    /// Devnet
     cli
       .command('airdrop')
       .description('Airdrops SOL to the current user')
       .option('--amount <value>', 'Amount to airdrop in SOL', '1')
       .action(airdrop),
+    /// Utils
     cli
       .command('create-mint')
       .description('Creates mint')
@@ -350,13 +351,7 @@ export const makeCli = (): Command => {
       .requiredOption('--wallet <value>', 'Wallet address')
       .requiredOption('--amount <value>', 'Mint amount')
       .action(mintTo),
-    cli
-      .command('initialize-protocol')
-      .description('Initializes protocol')
-      .requiredOption('--collateral-mint <value>', 'Collateral mint address')
-      .option('--maker-fee <value>', 'Maker fee')
-      .option('--taker-fee <value>', 'Taker fee')
-      .action(initializeProtocol),
+    /// Risk engine
     cli
       .command('initialize-risk-engine')
       .description('Initializes risk engine')
@@ -419,6 +414,14 @@ export const makeCli = (): Command => {
       .requiredOption('--category <value>', 'Category')
       .requiredOption('--new-value <value>', 'New value')
       .action(setRiskEngineCategoriesInfo),
+    /// Protocol
+    cli
+      .command('initialize-protocol')
+      .description('Initializes protocol')
+      .requiredOption('--collateral-mint <value>', 'Collateral mint address')
+      .option('--maker-fee <value>', 'Maker fee')
+      .option('--taker-fee <value>', 'Taker fee')
+      .action(initializeProtocol),
     cli
       .command('add-instrument')
       .description('Adds instrument')
@@ -463,6 +466,7 @@ export const makeCli = (): Command => {
       .command('get-registered-mints')
       .description('Get registered mints')
       .action(getRegisteredMints),
+    cli.command('get-protocol').description('Get protocol').action(getProtocol),
     cli
       .command('get-base-assets')
       .description('Get base assets')
