@@ -67,6 +67,7 @@ const airdrop = async (options: any) => {
     options.amount * LAMPORTS_PER_SOL
   );
   await cvg.connection.confirmTransaction(tx);
+  console.log('Tx:', tx, '?');
   console.log('Success!');
 };
 
