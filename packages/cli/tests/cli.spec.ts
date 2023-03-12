@@ -45,21 +45,21 @@ describe('Convergence CLI', () => {
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
   });
 
-  it('create-mint base', async () => {
+  it('create-mint (base)', async () => {
     const args = ['create-mint', '--decimals', '9'];
     await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
     baseMint = consoleStub.args[1][1];
     expect(consoleStub.args[3][0]).toEqual(SUCCESS);
   });
 
-  it('create-mint quote', async () => {
-    const args = ['create-mint', '--decimals', '9'];
+  it('create-mint (quote)', async () => {
+    const args = ['create-mint', '--decimals', '6'];
     await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
     quoteMint = consoleStub.args[1][1];
     expect(consoleStub.args[3][0]).toEqual(SUCCESS);
   });
 
-  it('create-wallet quote', async () => {
+  it('create-wallet (quote)', async () => {
     const args = [
       'create-wallet',
       '--owner',
@@ -77,7 +77,7 @@ describe('Convergence CLI', () => {
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
   });
 
-  it('add-instrument', async () => {
+  it('add-instrument (spot)', async () => {
     const args = [
       'add-instrument',
       '--instrument-program',
@@ -87,7 +87,7 @@ describe('Convergence CLI', () => {
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
   });
 
-  it('add-instrument', async () => {
+  it('add-instrument (american options)', async () => {
     const args = [
       'add-instrument',
       '--instrument-program',
@@ -97,7 +97,7 @@ describe('Convergence CLI', () => {
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
   });
 
-  it('add-instrument', async () => {
+  it('add-instrument (european options)', async () => {
     const args = [
       'add-instrument',
       '--instrument-program',
@@ -140,13 +140,13 @@ describe('Convergence CLI', () => {
     await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
   });
 
-  it('register-mint quote', async () => {
+  it('register-mint (quote)', async () => {
     const args = ['register-mint', '--mint', quoteMint];
     await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
   });
 
-  it('register-mint base', async () => {
+  it('register-mint (base)', async () => {
     const args = [
       'register-mint',
       '--base-asset-index',
