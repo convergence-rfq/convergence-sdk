@@ -274,9 +274,13 @@ const getRegisteredMints = async (opts: Opts) => {
 const getBaseAssets = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const baseAssets = await cvg.protocol().getBaseAssets();
-  baseAssets.map((baseAsset: BaseAsset) =>
-    console.log('Ticker:', baseAsset.ticker.toString())
-  );
+  baseAssets.map((baseAsset: BaseAsset) => {
+    console.log('Address:', baseAsset.address.toString());
+    console.log('Index:', baseAsset.index.value);
+    console.log('Ticker:', baseAsset.ticker.toString());
+    console.log('Oracle:', baseAsset.priceOracle.address.toString());
+    console.log('Risk category:', parseInt(baseAsset.riskCategory.toString()));
+  });
 };
 
 const getProtocol = async (opts: Opts) => {

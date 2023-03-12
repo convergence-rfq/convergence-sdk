@@ -231,6 +231,7 @@ describe('Convergence CLI', () => {
 
   it('get-base-assets', async () => {
     await runCli(['get-base-assets']);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
   it('register-mint [quote]', async () => {
