@@ -3,9 +3,7 @@ import fs from 'fs';
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { Keypair } from '@solana/web3.js';
-import * as spotInstrument from '@convergence-rfq/spot-instrument';
-import * as psyoptionsEuropeanInstrument from '@convergence-rfq/psyoptions-european-instrument';
-import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-american-instrument';
+import * as sdk from '@convergence-rfq/sdk';
 
 import { makeCli } from '../src/cli';
 
@@ -83,7 +81,7 @@ describe('Convergence CLI', () => {
     const args = [
       'add-instrument',
       '--instrument-program',
-      spotInstrument.PROGRAM_ADDRESS,
+      sdk.spotInstrumentProgram.address.toString(),
     ];
     await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
@@ -93,7 +91,7 @@ describe('Convergence CLI', () => {
     const args = [
       'add-instrument',
       '--instrument-program',
-      psyoptionsAmericanInstrument.PROGRAM_ADDRESS,
+      sdk.psyoptionsAmericanInstrumentProgram.address.toString(),
     ];
     await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
@@ -103,7 +101,7 @@ describe('Convergence CLI', () => {
     const args = [
       'add-instrument',
       '--instrument-program',
-      psyoptionsEuropeanInstrument.PROGRAM_ADDRESS,
+      sdk.psyoptionsEuropeanInstrumentProgram.address.toString(),
     ];
     await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
