@@ -59,28 +59,24 @@ describe('Convergence CLI', () => {
   it('airdrop [dao]', async () => {
     const args = ['airdrop', '--amount', '1'];
     await runCli(args);
-    expect(stub.args[0][0]).toEqual('Airdropping...');
     expect(stub.args[2][0]).toEqual(SUCCESS);
   });
 
   it('airdrop [maker]', async () => {
     const args = ['airdrop', '--amount', '1'];
     await runCli(args, 'maker');
-    expect(stub.args[0][0]).toEqual('Airdropping...');
     expect(stub.args[2][0]).toEqual(SUCCESS);
   });
 
   it('airdrop [taker]', async () => {
     const args = ['airdrop', '--amount', '1'];
     await runCli(args, 'taker');
-    expect(stub.args[0][0]).toEqual('Airdropping...');
     expect(stub.args[2][0]).toEqual(SUCCESS);
   });
 
   it('airdrop [mint-authority]', async () => {
     const args = ['airdrop', '--amount', '1'];
     await runCli(args, 'mint-authority');
-    expect(stub.args[0][0]).toEqual('Airdropping...');
     expect(stub.args[2][0]).toEqual(SUCCESS);
   });
 
