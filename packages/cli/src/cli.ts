@@ -24,6 +24,8 @@ import {
 
 type Opts = any;
 
+const VERSION = '4.0.23-rc.9';
+
 /// Constants
 
 const DEFAULT_KEYPAIR_FILE = `${homedir()}/.config/solana/id.json`;
@@ -302,14 +304,11 @@ const getProtocol = async (opts: Opts) => {
     console.log('Instrument:', i.programKey.toString());
     console.log('Enabled:', i.enabled);
     console.log('Can be used as quote:', i.canBeUsedAsQuote);
-    console.log('Validate data account amount:', i.validateDataAccountAmount);
+    console.log('Validate data accounts:', i.validateDataAccountAmount);
+    console.log('Prepare to settle accounts:', i.prepareToSettleAccountAmount);
+    console.log('Settle accounts:', i.settleAccountAmount);
     console.log(
-      'Prepare to settle account amount:',
-      i.prepareToSettleAccountAmount
-    );
-    console.log('Settle account amount:', i.settleAccountAmount);
-    console.log(
-      'Revert preparation account amount:',
+      'Revert preparation accounts:',
       i.revertPreparationAccountAmount
     );
     console.log('Clean up accounts:', i.cleanUpAccountAmount);
@@ -382,10 +381,7 @@ const airdropDevnetTokens = async (opts: Opts) => {
 
 export const makeCli = (): Command => {
   const cli = new Command();
-  cli
-    .name('convergence')
-    .version('4.0.23-rc.7')
-    .description('Convergence RFQ CLI');
+  cli.name('convergence').version(VERSION).description('Convergence RFQ CLI');
 
   const cmds = [
     /// Devnet
