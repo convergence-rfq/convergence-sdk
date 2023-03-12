@@ -291,16 +291,21 @@ const getProtocol = async (opts: Opts) => {
   console.log(`Maker fee: ${p.settleFees.makerBps.toString()} bps`);
   console.log(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
   console.log(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
-  //instruments: [
-  //  {
-  //    programKey: [PublicKey [PublicKey(HNHBtGzS58xJarSbz5XbEjTTEFbAQUHdP8TjQmwjx1gW)]],
-  //    enabled: true,
-  //    canBeUsedAsQuote: true,
-  //    validateDataAccountAmount: 1,
-  //    prepareToSettleAccountAmount: 7,
-  //    settleAccountAmount: 3,
-  //    revertPreparationAccountAmount: 3,
-  //    cleanUpAccountAmount: 4
+
+  for (let k = 0; k < p.instruments.length; k++) {
+    const i = p.instruments[k];
+    console.log('Instrument:', i.programKey.toString());
+    console.log('Enabled:', i.enabled);
+    console.log('Can be used as quote:', i.canBeUsedAsQuote);
+    console.log('Validate data accounts:', i.validateDataAccountAmount);
+    console.log('Prepare to settle accounts:', i.prepareToSettleAccountAmount);
+    console.log('Settle accounts:', i.settleAccountAmount);
+    console.log(
+      'Revert preparation accounts:',
+      i.revertPreparationAccountAmount
+    );
+    console.log('Clean up accounts:', i.cleanUpAccountAmount);
+  }
 };
 
 const airdropDevnetTokens = async (opts: Opts) => {
