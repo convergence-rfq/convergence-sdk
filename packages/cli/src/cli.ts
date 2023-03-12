@@ -301,14 +301,53 @@ const getProtocol = async (opts: Opts) => {
     console.log('Instrument:', i.programKey.toString());
     console.log('Enabled:', i.enabled);
     console.log('Can be used as quote:', i.canBeUsedAsQuote);
-    console.log('Validate data accounts:', i.validateDataAccountAmount);
-    console.log('Prepare to settle accounts:', i.prepareToSettleAccountAmount);
-    console.log('Settle accounts:', i.settleAccountAmount);
+    console.log('Validate data account amount:', i.validateDataAccountAmount);
     console.log(
-      'Revert preparation accounts:',
+      'Prepare to settle account amount:',
+      i.prepareToSettleAccountAmount
+    );
+    console.log('Settle account amount:', i.settleAccountAmount);
+    console.log(
+      'Revert preparation account amount:',
       i.revertPreparationAccountAmount
     );
     console.log('Clean up accounts:', i.cleanUpAccountAmount);
+  }
+};
+
+const getRiskEngineConfig = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const r = await cvg.riskEngine().fetchConfig();
+  console.log('Address:', r.address.toString());
+  console.log(
+    'Collateral for variable size RFQ creation:',
+    r.collateralForVariableSizeRfqCreation.toString()
+  );
+  console.log(
+    'Collateral for fixed quote amount RFQ creation:',
+    r.collateralForFixedQuoteAmountRfqCreation.toString()
+  );
+  console.log('Collateral mint decimals:', r.collateralMintDecimals.toString());
+  console.log(
+    'Safety price shift factor:',
+    r.safetyPriceShiftFactor.toString()
+  );
+  console.log('Overall safety factor:', r.overallSafetyFactor.toString());
+
+  for (let i = 0; i < r.riskCategoriesInfo.length; i++) {
+    const c = r.riskCategoriesInfo[i];
+    console.log('Interest rate:', c.interestRate.toString());
+    console.log(
+      'Annualized 30 day volatility:',
+      c.annualized30DayVolatility.toString()
+    );
+    console.log(
+      `Scenario per settlement period (base asset price Δ/vol Δ): [${c.scenarioPerSettlementPeriod
+        .map((x: any) => {
+          return [x.baseAssetPriceChange, x.volatilityChange].join('/');
+        })
+        .join(', ')}]`
+    );
   }
 };
 
@@ -423,6 +462,10 @@ export const makeCli = (): Command => {
       .requiredOption('--category <value>', 'Category')
       .requiredOption('--new-value <value>', 'New value')
       .action(setRiskEngineCategoriesInfo),
+    cli
+      .command('get-risk-engine-config')
+      .description('Get risk engine risk config')
+      .action(getRiskEngineConfig),
     /// Protocol
     cli
       .command('initialize-protocol')
