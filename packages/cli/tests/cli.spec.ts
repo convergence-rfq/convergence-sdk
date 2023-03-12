@@ -8,7 +8,6 @@ import { makeCli } from '../src/cli';
 
 const ENDPOINT = 'http://127.0.0.1:8899';
 
-//import { rfq } from '@convergence-rfq/rfq';
 //const riskEngine = require('@convergence-rfq/risk-engine');
 //const spotInstrument = require('@convergence-rfq/spot-instrument');
 //const psyoptionsEuropeanInstrument = require('@convergence-rfq/psyoptions-european-instrument');
@@ -66,7 +65,7 @@ describe('Convergence CLI', () => {
     expect(consoleStub.args[3][0]).toEqual(SUCCESS);
   });
 
-  it('create-wallet collateral', async () => {
+  it('create-wallet quote', async () => {
     const args = [
       'create-wallet',
       '--owner',
@@ -80,6 +79,22 @@ describe('Convergence CLI', () => {
 
   it('initialize-protocol', async () => {
     const args = ['initialize-protocol', '--collateral-mint', quoteMint];
+    await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
+    expect(consoleStub.args[2][0]).toEqual(SUCCESS);
+  });
+
+  it('initialize-risk-engine', async () => {
+    const args = [
+      'initialize-risk-engine',
+      '--collateral-for-variable-size-rfq-creation',
+      '1000000000',
+      '--collateral-for-fixed-quote-amount-rfq-creation',
+      '2000000000',
+      '--safety-price-shift-factor',
+      '0.01',
+      '--overall-safety-factor',
+      '0.1',
+    ];
     await cli.parseAsync(argv.concat(args).concat(rpcEndpoint));
     expect(consoleStub.args[2][0]).toEqual(SUCCESS);
   });
