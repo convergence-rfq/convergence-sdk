@@ -21,6 +21,7 @@ import {
   setRiskEngineInstrumentType,
   setRiskEngineCategoriesInfo,
   fundCollateralAccount,
+  createRfq,
 } from './actions';
 
 // Devnet and localnet helpers
@@ -208,6 +209,24 @@ export const getBaseAssetsCmd = (cli: Command) =>
 
 export const getRfqsCmd = (cli: Command) =>
   cli.command('get-rfqs').description('Get RFQs').action(getRfqs);
+
+export const createRfqCmd = (cli: Command) =>
+  cli
+    .command('create-rfq')
+    .description('Create RFQ')
+    .requiredOption('--quote-mint <string>', 'Quote mint')
+    .requiredOption('--base-mint <string>', 'Base mint')
+    .requiredOption('--side <string>', 'Side')
+    .requiredOption('--size <string>', 'Size')
+    .requiredOption('--amount <number>', 'Amount')
+    .requiredOption('--order-type <string>', 'Order type')
+    .option('--active-window <number>', 'Active window in seconds', '60')
+    .option(
+      '--settlement-window <number>',
+      'Settlement window in seconds',
+      '60'
+    )
+    .action(createRfq);
 
 // Collateral
 

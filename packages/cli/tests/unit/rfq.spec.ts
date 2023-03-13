@@ -1,10 +1,15 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { runCli, ADDRESS } from './../helpers';
+import { runCli, ADDRESS, Ctx, readCtx } from './../helpers';
 
-describe('Convergence CLI', () => {
+describe('rfq', () => {
+  let ctx = {} as Ctx;
   let stub: SinonStub;
+
+  before(() => {
+    ctx = readCtx();
+  });
 
   beforeEach(() => {
     stub = sinon.stub(console, 'log');
@@ -14,8 +19,25 @@ describe('Convergence CLI', () => {
     stub.restore();
   });
 
-  it('get-rfqs [maker]', async () => {
-    await runCli(['create-rfq']);
+  it('create-rfq [taker]', async () => {
+    await runCli(
+      [
+        'create-rfq',
+        '--quote-mint',
+        ctx.quoteMint,
+        '--base-mint',
+        ctx.baseMint,
+        '--side',
+        'bid',
+        '--order-type',
+        'two-way',
+        '--size',
+        'fixed-base',
+        '--amount',
+        '100',
+      ],
+      'taker'
+    );
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 

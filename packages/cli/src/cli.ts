@@ -22,6 +22,7 @@ import {
   airdropDevnetTokensCmd,
   fundCollateralAccountCmd,
   initializeCollateralAccountCmd,
+  createRfqCmd,
 } from './commands';
 
 const VERSION = '4.0.24-rc.1';
@@ -61,6 +62,7 @@ export const makeCli = (): Command => {
     getRegisteredMintsCmd(cli),
     getProtocolCmd(cli),
     getBaseAssetsCmd(cli),
+    createRfqCmd(cli),
     getRfqsCmd(cli),
   ];
 

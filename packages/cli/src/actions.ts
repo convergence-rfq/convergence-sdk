@@ -7,6 +7,7 @@ import {
   toScenario,
   devnetAirdrops,
   legsToInstruments,
+  SpotInstrument,
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
@@ -14,6 +15,9 @@ import {
   getInstrumentType,
   getRiskCategoryIndex,
   getRiskCategory,
+  getSide,
+  getOrderType,
+  getSize,
   logRfq,
 } from './helpers';
 
@@ -167,6 +171,30 @@ export const getRfqDetails = async (opts: Opts) => {
   const legs = await legsToInstruments(cvg, rfq.legs);
   logRfq(rfq);
   console.log(legs);
+};
+
+export const createRfq = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const [baseMint, quoteMint] = await Promise.all([
+    cvg.tokens().findMintByAddress({ address: new PublicKey(opts.baseMint) }),
+    cvg.tokens().findMintByAddress({ address: new PublicKey(opts.quoteMint) }),
+  ]);
+  const { rfq, response } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      new SpotInstrument(cvg, baseMint, {
+        amount: opts.amount,
+        side: getSide(opts.side),
+      }),
+    ],
+    taker: cvg.rpc().getDefaultFeePayer(),
+    orderType: getOrderType(opts.orderType),
+    fixedSize: getSize(opts.size),
+    quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
+    activeWindow: opts.activeWindow,
+    settlingWindow: opts.settlingWindow,
+  });
+  console.log('Address:', rfq.address.toString());
+  console.log('Tx:', response.signature.toString());
 };
 
 // Collateral
