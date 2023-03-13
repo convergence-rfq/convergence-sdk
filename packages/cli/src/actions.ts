@@ -220,30 +220,30 @@ export const getRiskEngineConfig = async (opts: Opts) => {
   console.log('Address:', r.address.toString());
   console.log(
     'Collateral for variable size RFQ creation:',
-    r.collateralForVariableSizeRfqCreation.toString()
+    Number(r.collateralForVariableSizeRfqCreation.toString())
   );
   console.log(
     'Collateral for fixed quote amount RFQ creation:',
-    r.collateralForFixedQuoteAmountRfqCreation.toString()
+    Number(r.collateralForFixedQuoteAmountRfqCreation.toString())
   );
-  console.log('Collateral mint decimals:', r.collateralMintDecimals.toString());
+  console.log(
+    'Collateral mint decimals:',
+    Number(r.collateralMintDecimals.toString())
+  );
   console.log(
     'Safety price shift factor:',
     r.safetyPriceShiftFactor.toString()
   );
-  console.log('Overall safety factor:', r.overallSafetyFactor.toString());
+  console.log('Overall safety factor:', r.overallSafetyFactor);
   r.riskCategoriesInfo.map((c: any) => {
-    console.log('Interest rate:', c.interestRate.toString());
+    console.log('Interest rate:', c.interestRate);
+    console.log('Annualized 30 day volatility:', c.annualized30DayVolatility);
     console.log(
-      'Annualized 30 day volatility:',
-      c.annualized30DayVolatility.toString()
-    );
-    console.log(
-      `Scenario per settlement period (base asset price Δ/vol Δ): [${c.scenarioPerSettlementPeriod
+      `Scenario per settlement period (base asset price Δ/vol Δ): ${c.scenarioPerSettlementPeriod
         .map((x: any) => {
           return [x.baseAssetPriceChange, x.volatilityChange].join('/');
         })
-        .join(', ')}]`
+        .join(', ')}`
     );
   });
 };
