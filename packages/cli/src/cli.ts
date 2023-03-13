@@ -20,6 +20,8 @@ import {
   getBaseAssetsCmd,
   getRfqsCmd,
   airdropDevnetTokensCmd,
+  fundCollateralAccountCmd,
+  initializeCollateralAccountCmd,
 } from './commands';
 
 const VERSION = '4.0.24-rc.1';
@@ -45,15 +47,17 @@ export const makeCli = (): Command => {
     createMintCmd(cli),
     createWalletCmd(cli),
     mintToCmd(cli),
+    initializeProtocolCmd(cli),
     initializeRiskEngineCmd(cli),
+    initializeCollateralAccountCmd(cli),
     updateRiskEngineCmd(cli),
     setRiskEngineInstrumentTypeCmd(cli),
     setRiskEngineCategoriesInfoCmd(cli),
-    getRiskEngineConfigCmd(cli),
-    initializeProtocolCmd(cli),
     addInstrumentCmd(cli),
     addBaseAssetCmd(cli),
     registerMintCmd(cli),
+    fundCollateralAccountCmd(cli),
+    getRiskEngineConfigCmd(cli),
     getRegisteredMintsCmd(cli),
     getProtocolCmd(cli),
     getBaseAssetsCmd(cli),

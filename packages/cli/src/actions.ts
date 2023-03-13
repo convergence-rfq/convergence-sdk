@@ -6,30 +6,18 @@ import {
   toRiskCategoryInfo,
   toScenario,
   devnetAirdrops,
-  //legsToInstruments,
-  //quoteAssetToInstrument,
-  Rfq,
+  legsToInstruments,
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
 import {
-  getState,
   getInstrumentType,
-  getOrderType,
   getRiskCategoryIndex,
   getRiskCategory,
+  logRfq,
 } from './helpers';
 
-export const airdrop = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  const user = cvg.rpc().getDefaultFeePayer();
-  const tx = await cvg.connection.requestAirdrop(
-    user.publicKey,
-    opts.amount * LAMPORTS_PER_SOL
-  );
-  await cvg.connection.confirmTransaction(tx);
-  console.log('Tx:', tx);
-};
+// Utils
 
 export const createMint = async (opts: Opts) => {
   const cvg = await createCvg(opts);
@@ -64,38 +52,12 @@ export const mintTo = async (opts: Opts) => {
   console.log('Tx:', response.signature);
 };
 
+// Protocol
+
 export const initializeProtocol = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const collateralMint = new PublicKey(opts.collateralMint);
   const { response } = await cvg.protocol().initialize({ collateralMint });
-  console.log('Tx:', response.signature);
-};
-
-export const initializeRiskEngine = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  const { response } = await cvg.riskEngine().initializeConfig({
-    collateralMintDecimals: opts.collateralMintDecimals,
-    collateralForVariableSizeRfqCreation:
-      opts.collateralForVariableSizeRfqCreation,
-    collateralForFixedQuoteAmountRfqCreation:
-      opts.collateralForFixedQuoteAmountRfqCreation,
-    safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
-    overallSafetyFactor: opts.overallSafetyFace,
-  });
-  console.log('Tx:', response.signature);
-};
-
-export const updateRiskEngine = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  const { response } = await cvg.riskEngine().updateConfig({
-    collateralMintDecimals: opts.collateralMintDecimals,
-    collateralForVariableSizeRfqCreation:
-      opts.collateralForVariableSizeRfqCreation,
-    collateralForFixedQuoteAmountRfqCreation:
-      opts.collateralForFixedQuoteAmountRfqCreation,
-    safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
-    overallSafetyFactor: opts.overallSafetyFace,
-  });
   console.log('Tx:', response.signature);
 };
 
@@ -110,36 +72,6 @@ export const addInstrument = async (opts: Opts) => {
     settleAccountAmount: opts.settleAccountAmount,
     revertPreparationAccountAmount: opts.revertPreparationAccountAmount,
     cleanUpAccountAmount: opts.cleanUpAccountAmount,
-  });
-  console.log('Tx:', response.signature);
-};
-
-export const setRiskEngineInstrumentType = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  const { response } = await cvg.riskEngine().setInstrumentType({
-    instrumentProgram: new PublicKey(opts.program),
-    instrumentType: getInstrumentType(opts.type),
-  });
-  console.log('Tx:', response.signature);
-};
-
-export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
-  const newValue = opts.newValue.split(',').map((x: string) => parseFloat(x));
-  const cvg = await createCvg(opts);
-  const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
-    changes: [
-      {
-        newValue: toRiskCategoryInfo(newValue[0], newValue[1], [
-          toScenario(newValue[2], newValue[3]),
-          toScenario(newValue[4], newValue[5]),
-          toScenario(newValue[6], newValue[7]),
-          toScenario(newValue[8], newValue[9]),
-          toScenario(newValue[10], newValue[11]),
-          toScenario(newValue[12], newValue[13]),
-        ]),
-        riskCategoryIndex: getRiskCategoryIndex(opts.category),
-      },
-    ],
   });
   console.log('Tx:', response.signature);
 };
@@ -218,31 +150,69 @@ export const getProtocol = async (opts: Opts) => {
   });
 };
 
+// Rfqs
+
 export const getRfqs = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   // NOTE: Paging is not implemented yet
   const rfqs = await cvg.rfqs().findRfqs({ page: 0, pageCount: 10 });
-  rfqs.map((r: Rfq) => {
-    const created = parseInt(r.creationTimestamp.toString()) * 1_000;
-    console.log('Address:', r.address.toString());
-    console.log('Taker:', r.taker.toString());
-    console.log('Order type:', getOrderType(r.orderType));
-    console.log('Size:', r.fixedSize.__kind === 'None' ? 'open' : 'fixed');
-    console.log('Quote asset:', r.quoteMint.toString());
-    console.log('Created:', new Date(created).toString());
-    console.log(`Active window: ${r.activeWindow} seconds`);
-    console.log(`Settlement window: ${r.settlingWindow} seconds`);
-    console.log('Legs:', r.legs.length);
-    console.log('State:', getState(r.state));
-    console.log('Total responses:', r.totalResponses);
-    console.log('Confirmed responses:', r.confirmedResponses);
-    console.log('Cleared responses:', r.clearedResponses);
-  });
+  rfqs.map(logRfq);
 };
 
-//const instruments = await Promise.all(
-//  r.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
-//);
+export const getRfqDetails = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const rfq = await cvg
+    .rfqs()
+    .findRfqByAddress({ address: new PublicKey(opts.rfqAddress) });
+  const legs = await legsToInstruments(cvg, rfq.legs);
+  logRfq(rfq);
+  console.log(legs);
+};
+
+// Collateral
+
+export const initializeCollateralAccount = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const { collateral, response } = await cvg.collateral().initialize({});
+  console.log('Address:', collateral.address.toString());
+  console.log('Tx:', response.signature.toString());
+};
+
+export const fundCollateralAccount = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const { response } = await cvg.collateral().fund({ amount: opts.amount });
+  console.log('Tx:', response.signature.toString());
+};
+
+// Risk engine
+
+export const initializeRiskEngine = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const { response } = await cvg.riskEngine().initializeConfig({
+    collateralMintDecimals: opts.collateralMintDecimals,
+    collateralForVariableSizeRfqCreation:
+      opts.collateralForVariableSizeRfqCreation,
+    collateralForFixedQuoteAmountRfqCreation:
+      opts.collateralForFixedQuoteAmountRfqCreation,
+    safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
+    overallSafetyFactor: opts.overallSafetyFace,
+  });
+  console.log('Tx:', response.signature);
+};
+
+export const updateRiskEngine = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const { response } = await cvg.riskEngine().updateConfig({
+    collateralMintDecimals: opts.collateralMintDecimals,
+    collateralForVariableSizeRfqCreation:
+      opts.collateralForVariableSizeRfqCreation,
+    collateralForFixedQuoteAmountRfqCreation:
+      opts.collateralForFixedQuoteAmountRfqCreation,
+    safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
+    overallSafetyFactor: opts.overallSafetyFace,
+  });
+  console.log('Tx:', response.signature);
+};
 
 export const getRiskEngineConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
@@ -276,6 +246,49 @@ export const getRiskEngineConfig = async (opts: Opts) => {
         .join(', ')}]`
     );
   });
+};
+
+export const setRiskEngineInstrumentType = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const { response } = await cvg.riskEngine().setInstrumentType({
+    instrumentProgram: new PublicKey(opts.program),
+    instrumentType: getInstrumentType(opts.type),
+  });
+  console.log('Tx:', response.signature);
+};
+
+export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
+  const newValue = opts.newValue.split(',').map((x: string) => parseFloat(x));
+  const cvg = await createCvg(opts);
+  const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
+    changes: [
+      {
+        newValue: toRiskCategoryInfo(newValue[0], newValue[1], [
+          toScenario(newValue[2], newValue[3]),
+          toScenario(newValue[4], newValue[5]),
+          toScenario(newValue[6], newValue[7]),
+          toScenario(newValue[8], newValue[9]),
+          toScenario(newValue[10], newValue[11]),
+          toScenario(newValue[12], newValue[13]),
+        ]),
+        riskCategoryIndex: getRiskCategoryIndex(opts.category),
+      },
+    ],
+  });
+  console.log('Tx:', response.signature);
+};
+
+// Devnet and localnet helpers
+
+export const airdrop = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const user = cvg.rpc().getDefaultFeePayer();
+  const tx = await cvg.connection.requestAirdrop(
+    user.publicKey,
+    opts.amount * LAMPORTS_PER_SOL
+  );
+  await cvg.connection.confirmTransaction(tx);
+  console.log('Tx:', tx);
 };
 
 export const airdropDevnetTokens = async (opts: Opts) => {

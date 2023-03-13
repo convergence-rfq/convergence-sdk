@@ -3,6 +3,8 @@ import { Command } from 'commander';
 import {
   airdrop,
   airdropDevnetTokens,
+  initializeRiskEngine,
+  initializeCollateralAccount,
   initializeProtocol,
   getProtocol,
   getRiskEngineConfig,
@@ -15,10 +17,10 @@ import {
   registerMint,
   addBaseAsset,
   addInstrument,
-  initializeRiskEngine,
   updateRiskEngine,
   setRiskEngineInstrumentType,
   setRiskEngineCategoriesInfo,
+  fundCollateralAccount,
 } from './actions';
 
 export const airdropSolCmd = (cli: Command) =>
@@ -196,3 +198,16 @@ export const getBaseAssetsCmd = (cli: Command) =>
 
 export const getRfqsCmd = (cli: Command) =>
   cli.command('get-rfqs').description('Get RFQs').action(getRfqs);
+
+export const initializeCollateralAccountCmd = (cli: Command) =>
+  cli
+    .command('initialize-collateral-account')
+    .description('Initializes collateral account')
+    .action(initializeCollateralAccount);
+
+export const fundCollateralAccountCmd = (cli: Command) =>
+  cli
+    .command('fund-collateral-account')
+    .description('Funds collateral account')
+    .requiredOption('--amount <number>', 'Amount')
+    .action(fundCollateralAccount);

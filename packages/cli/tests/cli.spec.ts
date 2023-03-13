@@ -38,6 +38,12 @@ describe('Convergence CLI', () => {
   let baseMint: string;
   let quoteMint: string;
 
+  let takerQuoteWallet: string;
+  let takerBaseWallet: string;
+
+  //let makerBaseWallet: string;
+  //let makerQuoteWallet: string;
+
   const cli = makeCli();
 
   const runCli = async (args: string[], user = 'dao') => {
@@ -58,65 +64,61 @@ describe('Convergence CLI', () => {
   });
 
   it('airdrop-sol [dao]', async () => {
-    const args = ['airdrop-sol', '--amount', '1'];
-    await runCli(args);
+    await runCli(['airdrop-sol', '--amount', '1']);
     expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('airdrop-sol [maker]', async () => {
-    const args = ['airdrop-sol', '--amount', '1'];
-    await runCli(args, 'maker');
+    await runCli(['airdrop-sol', '--amount', '1'], 'maker');
     expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('airdrop-sol [taker]', async () => {
-    const args = ['airdrop-sol', '--amount', '1'];
-    await runCli(args, 'taker');
+    await runCli(['airdrop-sol', '--amount', '1'], 'taker');
     expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('airdrop [mint-authority]', async () => {
-    const args = ['airdrop-sol', '--amount', '1'];
-    await runCli(args, 'mint-authority');
+    await runCli(['airdrop-sol', '--amount', '1'], 'mint-authority');
     expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('create-mint [base]', async () => {
-    const args = ['create-mint', '--decimals', '9'];
-    await runCli(args, 'mint-authority');
+    await runCli(['create-mint', '--decimals', '9'], 'mint-authority');
     baseMint = stub.args[0][1];
     expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('create-mint [quote]', async () => {
-    const args = ['create-mint', '--decimals', '6'];
-    await runCli(args, 'mint-authority');
+    await runCli(['create-mint', '--decimals', '6'], 'mint-authority');
     quoteMint = stub.args[0][1];
     expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('create-wallet [base:maker]', async () => {
-    const args = [
+    await runCli([
       'create-wallet',
       '--owner',
       getPk('maker'),
       '--mint',
       baseMint,
-    ];
-    await runCli(args);
+    ]);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('create-wallet [base:taker]', async () => {
-    const args = [
+    await runCli([
       'create-wallet',
       '--owner',
       getPk('taker'),
       '--mint',
       baseMint,
-    ];
-    await runCli(args);
+    ]);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
+    takerBaseWallet = stub.args[0][1];
+    expect(takerBaseWallet).toBeTruthy();
   });
 
   it('create-wallet [quote:maker]', async () => {
@@ -138,6 +140,41 @@ describe('Convergence CLI', () => {
       '--mint',
       quoteMint,
     ]);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+    takerQuoteWallet = stub.args[0][1];
+    expect(takerQuoteWallet).toBeTruthy();
+  });
+
+  it('mint-to [quote:taker]', async () => {
+    await runCli(
+      [
+        'mint-to',
+        '--wallet',
+        getPk('taker'),
+        '--mint',
+        quoteMint,
+        '--amount',
+        '1000000000',
+      ],
+      'mint-authority'
+    );
+    expect(stub.args[1][0]).toEqual(TX);
+  });
+
+  it('mint-to [quote:maker]', async () => {
+    await runCli(
+      [
+        'mint-to',
+        '--wallet',
+        getPk('maker'),
+        '--mint',
+        quoteMint,
+        '--amount',
+        '1000000000',
+      ],
+      'mint-authority'
+    );
     expect(stub.args[1][0]).toEqual(TX);
   });
 
@@ -253,5 +290,19 @@ describe('Convergence CLI', () => {
   it('get-registered-mints', async () => {
     await runCli(['get-registered-mints']);
     expect(stub.args[1][0]).toEqual(ADDRESS);
+  });
+
+  it('initialize-collateral-account [maker]', async () => {
+    await runCli(['initialize-collateral-account'], 'maker');
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+  });
+
+  it('fund-collateral-account [maker]', async () => {
+    await runCli(
+      ['fund-collateral-account', '--amount', '1000000000'],
+      'maker'
+    );
+    expect(stub.args[0][0]).toEqual(TX);
   });
 });
