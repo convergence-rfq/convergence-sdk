@@ -118,19 +118,21 @@ export const addInstrument = async (opts: Opts) => {
 };
 
 export const setRiskEngineInstrumentType = async (opts: Opts) => {
-  let instrumentType;
-  if (opts.type == 'spot') {
-    instrumentType = InstrumentType.Spot;
-  } else if (opts.type == 'option') {
-    instrumentType = InstrumentType.Option;
-  } else {
-    throw new Error('Invalid instrument type');
-  }
+  const getInstrumentType = (type: string) => {
+    switch (type) {
+      case 'spot':
+        return InstrumentType.Spot;
+      case 'option':
+        return InstrumentType.Option;
+      default:
+        throw new Error('Invalid instrument type');
+    }
+  };
 
   const cvg = await createCvg(opts);
   const { response } = await cvg.riskEngine().setInstrumentType({
     instrumentProgram: new PublicKey(opts.program),
-    instrumentType,
+    instrumentType: getInstrumentType(opts.type),
   });
 
   console.log('Tx:', response.signature);
@@ -156,8 +158,6 @@ export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
     }
   };
 
-  const riskCategoryIndex = getRiskCategoryIndex(opts.category);
-
   const cvg = await createCvg(opts);
   const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
     changes: [
@@ -170,7 +170,7 @@ export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
           toScenario(newValue[10], newValue[11]),
           toScenario(newValue[12], newValue[13]),
         ]),
-        riskCategoryIndex,
+        riskCategoryIndex: getRiskCategoryIndex(opts.category),
       },
     ],
   });
