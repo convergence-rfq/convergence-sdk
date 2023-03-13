@@ -2,7 +2,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import * as sdk from '@convergence-rfq/sdk';
 
-import { runCli, ADDRESS, TX, BTC_ORACLE, readCtx, Ctx } from './helpers';
+import { runCli, ADDRESS, TX, BTC_ORACLE, readCtx, Ctx } from './../helpers';
 
 describe('bootstrap', () => {
   let ctx: Ctx;

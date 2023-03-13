@@ -3,7 +3,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
-import { runCli, getPk, ADDRESS, TX, CTX_FILE, Ctx } from './helpers';
+import { runCli, getPk, ADDRESS, TX, CTX_FILE, Ctx } from './../helpers';
 
 describe('setup', () => {
   const ctx = {} as Ctx;

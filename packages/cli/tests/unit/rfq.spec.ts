@@ -1,7 +1,7 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { runCli, ADDRESS } from './helpers';
+import { runCli, ADDRESS } from './../helpers';
 
 describe('Convergence CLI', () => {
   let stub: SinonStub;
