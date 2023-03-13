@@ -8,6 +8,10 @@ import {
   toRiskCategoryInfo,
   toScenario,
   devnetAirdrops,
+  //legsToInstruments,
+  //quoteAssetToInstrument,
+  OrderType,
+  StoredRfqState,
   Rfq,
 } from '@convergence-rfq/sdk';
 
@@ -276,13 +280,58 @@ export const getProtocol = async (opts: Opts) => {
 };
 
 export const getRfqs = async (opts: Opts) => {
+  const getOrderType = (orderType: OrderType) => {
+    switch (orderType) {
+      case OrderType.Buy:
+        return 'buy';
+      case OrderType.Sell:
+        return 'sell';
+      case OrderType.TwoWay:
+        return 'two-way';
+      default:
+        throw new Error('Invalid order type');
+    }
+  };
+
+  const getState = (state: StoredRfqState) => {
+    switch (state) {
+      case StoredRfqState.Constructed:
+        return 'constructed';
+      case StoredRfqState.Active:
+        return 'active';
+      case StoredRfqState.Canceled:
+        return 'canceled';
+      default:
+        throw new Error('Invalid order type');
+    }
+  };
+
   const cvg = await createCvg(opts);
   const rfqs: Rfq[] = await cvg.rfqs().findRfqs({ page: 0, pageCount: 10 });
   for (let i = 0; i < rfqs.length; i++) {
     const r = rfqs[i];
+    const ts = parseInt(r.creationTimestamp.toString());
+    const created = new Date(ts * 1000).toString();
+
     console.log('Address:', r.address.toString());
+    console.log('Taker:', r.taker.toString());
+    console.log('Order type:', getOrderType(r.orderType));
+    console.log('Size:', r.fixedSize.__kind === 'None' ? 'open' : 'fixed');
+    console.log('Quote asset:', r.quoteMint.toString());
+    console.log('Created:', created);
+    console.log(`Active window: ${r.activeWindow} seconds`);
+    console.log(`Settlement window: ${r.settlingWindow} seconds`);
+    console.log('Legs:', r.legs.length);
+    console.log('State:', getState(r.state));
+    console.log('Total responses:', r.totalResponses);
+    console.log('Confirmed responses:', r.confirmedResponses);
+    console.log('Cleared responses:', r.clearedResponses);
   }
 };
+
+//const instruments = await Promise.all(
+//  r.map(async (rfq) => legsToInstruments(cvg, rfq.legs))
+//);
 
 export const getRiskEngineConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
