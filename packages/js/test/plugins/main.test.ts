@@ -6,7 +6,8 @@ import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
-import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';import {
+import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
+import {
   createEuroAccountsAndMintOptions,
   createAmericanAccountsAndMintOptions,
 } from '../helpers';
@@ -785,11 +786,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       user: taker.publicKey,
     });
 
-    console.log(
-      '<createAndFinalize <before create> fixed quote> taker locked tokens collateral amount:  ' +
-        takerCollateral.lockedTokensAmount.toString()
-    );
-
     const { rfq } = await cvg.rfqs().create({
       taker,
       quoteAsset: cvg
@@ -807,11 +803,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
     takerCollateral = await cvg.collateral().refresh(takerCollateral);
 
-    console.log(
-      '<createAndFinalize <before finalize> fixed quote> taker locked tokens collateral amount:  ' +
-        takerCollateral.lockedTokensAmount.toString()
-    );
-
     await cvg.rfqs().finalizeRfqConstruction({
       taker,
       rfq: rfq.address,
@@ -820,11 +811,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     takerCollateral = await cvg.collateral().refresh(takerCollateral);
 
     let refreshedRfq = await cvg.rfqs().refreshRfq(rfq);
-    console.log('now finding collater by user');
-    console.log(
-      '<createAndFinalize <after> fixed quote> taker locked tokens collateral amount:  ' +
-        takerCollateral.lockedTokensAmount.toString()
-    );
 
     console.log(
       'taker collateral locked: ',
@@ -925,14 +911,10 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       activeWindow: 60 * 60,
       settlingWindow: 50 * 5,
     });
-
+    //@ts-ignore
     const takerCollateral = await cvg.collateral().findByUser({
       user: taker.publicKey,
     });
-    console.log(
-      '<createAndFinalize fixed base> taker locked tokens collateral amount:  ' +
-        takerCollateral.lockedTokensAmount.toString()
-    );
 
     console.log(
       'taker collateral locked: ',
@@ -1188,7 +1170,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       new anchor.Wallet(payer as Keypair),
       {}
     );
-    // anchor.setProvider(provider);
     europeanProgram = await createEuropeanProgram(cvg);
     const pseudoPythProgram = new anchor.Program(
       PseudoPythIdl,
@@ -1488,6 +1469,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
     });
+
     const { rfqResponse } = await cvg.rfqs().respond({
       maker,
       rfq: rfq.address,
@@ -2006,7 +1988,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     );
   });
 
-  test('%%%% [rfqModule] it can find all rfqs by instrument as leg %%%%%%%%%%%%%%%%%%%%%%%%%%%', async (t: Test) => {
+  test('[rfqModule] it can find all rfqs by instrument as leg', async (t: Test) => {
     const spotInstrument = cvg.programs().getSpotInstrument();
     const rfqs = await cvg
       .rfqs()
@@ -2036,7 +2018,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   test('[rfqModule] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
     const rfqPages = await cvg
       .rfqs()
-      .findRfqsByToken({ mintAddress: europeanOptionPutMint, rfqsPerPage: 1 });
+      .findRfqsByToken({ mintAddress: europeanOptionPutMint, rfqsPerPage: 5 });
 
     for (const rfqPage of rfqPages) {
       console.log('new page');
@@ -2054,8 +2036,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   test('[rfq module] it can find all rfqs by token mint address [usdcMint]', async (t: Test) => {
     const rfqPages = await cvg.rfqs().findRfqsByToken({
       mintAddress: usdcMint.address,
-      rfqsPerPage: 3,
-      numPages: 2,
+      rfqsPerPage: 10,
     });
 
     for (const rfqPage of rfqPages) {

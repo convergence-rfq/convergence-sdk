@@ -83,7 +83,6 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       ).decimals;
 
       if (rfqs) {
-        let rfqPages: Rfq[][] = [];
         const rfqsByInstrument: Rfq[] = [];
 
         for (let rfq of rfqs) {
@@ -92,26 +91,27 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
               leg.instrumentProgram.toBase58() ===
               instrumentProgram.address.toBase58()
             ) {
-              rfq = await convertRfqOutput(
-                rfq,
-                collateralMintDecimals
-              );
+              rfq = convertRfqOutput(rfq, collateralMintDecimals);
 
               rfqsByInstrument.push(rfq);
+
+              break;
             }
           }
         }
         scope.throwIfCanceled();
 
-        rfqPages = getPages(rfqsByInstrument, rfqsPerPage, numPages);
+        const pages = getPages(rfqsByInstrument, rfqsPerPage, numPages);
 
-        return rfqPages;
+        return pages;
       }
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
+
+      const parsedRfqs: Rfq[] = [];
 
       for (const unparsedAccount of unparsedAccounts) {
         const rfq = await convergence
@@ -120,38 +120,20 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
         for (const leg of rfq.legs) {
           if (
-            leg.instrumentProgram.toBase58() !=
+            leg.instrumentProgram.toBase58() ===
             instrumentProgram.address.toBase58()
           ) {
-            const index = unparsedAccounts.indexOf(unparsedAccount);
-            unparsedAccounts.splice(index, 1);
+            const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+            parsedRfqs.push(convertedRfq);
+
+            break;
           }
         }
       }
 
-      const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
+      const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
 
-      const rfqPages: Rfq[][] = [];
-
-      for (const page of pages) {
-        const rfqPage = [];
-
-        for (const unparsedAccount of page) {
-          const rfq = await convergence
-            .rfqs()
-            .findRfqByAddress({
-              address: unparsedAccount.publicKey,
-              collateralMintDecimals,
-            });
-
-          rfqPage.push(rfq);
-        }
-
-        if (rfqPage.length > 0) {
-          rfqPages.push(rfqPage);
-        }
-      }
-
-      return rfqPages;
+      return pages;
     },
   };
