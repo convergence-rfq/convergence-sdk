@@ -1273,7 +1273,7 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/sdk@workspace:*":
+"@convergence-rfq/sdk@4.0.24-rc.1":
   version "4.0.24-rc.1"
   resolved "https://registry.yarnpkg.com/@convergence-rfq/sdk/-/sdk-4.0.24-rc.1.tgz#ca247c0bd2c0aac7c0780e1b8c2289524a3858a4"
   integrity sha512-DZrctOaI8WRgFV6I+/O3Skf4yAQxv6ueVFH7M4Q9EWogID2d/fr6vcaXzILN1/04koVxhFV2EbZdPqImgZs/fQ==

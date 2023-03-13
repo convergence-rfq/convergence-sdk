@@ -25,7 +25,8 @@ import {
 const VERSION = '4.0.24-rc.1';
 
 const DEFAULT_KEYPAIR_FILE = `${homedir()}/.config/solana/id.json`;
-const DEFAULT_RPC_ENDPOINT = 'https://api.devnet.solana.com';
+const DEFAULT_RPC_ENDPOINT =
+  'https://muddy-white-morning.solana-devnet.quiknode.pro/637131a6924513d7c83c65efc75e55a9ba2517e9/';
 
 const addDefaultArgs = (cmd: any) => {
   cmd.option('--rpc-endpoint <string>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
