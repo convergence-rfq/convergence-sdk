@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   BaseAsset,
@@ -17,8 +16,17 @@ import {
   getSide,
   getOrderType,
   getSize,
-  logRfq,
 } from './helpers';
+import {
+  logAddress,
+  logResponse,
+  logBaseAsset,
+  logRfq,
+  logProtocol,
+  logLeg,
+  logTx,
+  logRiskEngineConfig,
+} from './logger';
 
 // Utils
 
@@ -29,8 +37,8 @@ export const createMint = async (opts: Opts) => {
     mintAuthority: user.publicKey,
     decimals: opts.decimals,
   });
-  console.log('Address:', mint.address.toString());
-  console.log('Tx:', response.signature);
+  logAddress(mint.address);
+  logResponse(response);
 };
 
 export const createWallet = async (opts: Opts) => {
@@ -39,8 +47,8 @@ export const createWallet = async (opts: Opts) => {
     mint: new PublicKey(opts.mint),
     owner: new PublicKey(opts.owner),
   });
-  console.log('Address:', wallet.address.toString());
-  console.log('Tx:', response.signature);
+  logAddress(wallet.address);
+  logResponse(response);
 };
 
 export const mintTo = async (opts: Opts) => {
@@ -52,7 +60,7 @@ export const mintTo = async (opts: Opts) => {
     toToken: new PublicKey(opts.wallet),
     mintAuthority: user.publicKey,
   });
-  console.log('Tx:', response.signature);
+  logResponse(response);
 };
 
 // Protocol
@@ -61,7 +69,7 @@ export const initializeProtocol = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const collateralMint = new PublicKey(opts.collateralMint);
   const { response } = await cvg.protocol().initialize({ collateralMint });
-  console.log('Tx:', response.signature);
+  logResponse(response);
 };
 
 export const addInstrument = async (opts: Opts) => {
@@ -76,7 +84,7 @@ export const addInstrument = async (opts: Opts) => {
     revertPreparationAccountAmount: opts.revertPreparationAccountAmount,
     cleanUpAccountAmount: opts.cleanUpAccountAmount,
   });
-  console.log('Tx:', response.signature);
+  logResponse(response);
 };
 
 export const addBaseAsset = async (opts: Opts) => {
@@ -93,7 +101,7 @@ export const addBaseAsset = async (opts: Opts) => {
       address: new PublicKey(opts.oracleAddress),
     },
   });
-  console.log('Tx:', response.signature);
+  logResponse(response);
 };
 
 export const registerMint = async (opts: Opts) => {
@@ -105,52 +113,25 @@ export const registerMint = async (opts: Opts) => {
       : { mint };
   };
   const { response } = await cvg.protocol().registerMint(getMintArgs());
-  console.log('Tx:', response.signature);
+  logResponse(response);
 };
 
 export const getRegisteredMints = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const mints = await cvg.protocol().getRegisteredMints();
-  mints.map((x: any) => console.log('Address:', x.address.toString()));
+  mints.map((x: any) => logAddress(x.address));
 };
 
 export const getBaseAssets = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const baseAssets = await cvg.protocol().getBaseAssets();
-  baseAssets.map((baseAsset: BaseAsset) => {
-    console.log('Address:', baseAsset.address.toString());
-    console.log('Index:', baseAsset.index.value);
-    console.log('Ticker:', baseAsset.ticker.toString());
-    console.log('Oracle:', baseAsset.priceOracle.address.toString());
-    console.log('Risk category:', parseInt(baseAsset.riskCategory.toString()));
-  });
+  baseAssets.map((baseAsset: BaseAsset) => logBaseAsset(baseAsset));
 };
 
 export const getProtocol = async (opts: Opts) => {
   const cvg = await createCvg(opts);
-  const p = await cvg.protocol().get();
-  console.log('Address:', p.address.toString());
-  console.log('Authority:', p.authority.toString());
-  console.log('Active:', p.active);
-  console.log('Risk engine:', p.riskEngine.toString());
-  console.log('Collateral mint:', p.collateralMint.toString());
-  console.log(`Taker fee: ${p.settleFees.takerBps.toString()} bps`);
-  console.log(`Maker fee: ${p.settleFees.makerBps.toString()} bps`);
-  console.log(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
-  console.log(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
-  p.instruments.map((i: any) => {
-    console.log('Instrument:', i.programKey.toString());
-    console.log('Enabled:', i.enabled);
-    console.log('Can be used as quote:', i.canBeUsedAsQuote);
-    console.log('Validate data accounts:', i.validateDataAccountAmount);
-    console.log('Prepare to settle accounts:', i.prepareToSettleAccountAmount);
-    console.log('Settle accounts:', i.settleAccountAmount);
-    console.log(
-      'Revert preparation accounts:',
-      i.revertPreparationAccountAmount
-    );
-    console.log('Clean up accounts:', i.cleanUpAccountAmount);
-  });
+  const protocol = await cvg.protocol().get();
+  logProtocol(protocol);
 };
 
 // Rfqs
@@ -169,7 +150,7 @@ export const getRfqDetails = async (opts: Opts) => {
     .findRfqByAddress({ address: new PublicKey(opts.rfqAddress) });
   const legs = await legsToInstruments(cvg, rfq.legs);
   logRfq(rfq);
-  console.log(legs);
+  legs.map(logLeg);
 };
 
 export const createRfq = async (opts: Opts) => {
@@ -192,8 +173,8 @@ export const createRfq = async (opts: Opts) => {
     activeWindow: opts.activeWindow,
     settlingWindow: opts.settlingWindow,
   });
-  console.log('Address:', rfq.address.toString());
-  console.log('Tx:', response.signature.toString());
+  logAddress(rfq.address);
+  logResponse(response);
 };
 
 // Collateral
@@ -201,14 +182,14 @@ export const createRfq = async (opts: Opts) => {
 export const initializeCollateralAccount = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const { collateral, response } = await cvg.collateral().initialize({});
-  console.log('Address:', collateral.address.toString());
-  console.log('Tx:', response.signature.toString());
+  logAddress(collateral.address);
+  logResponse(response);
 };
 
 export const fundCollateralAccount = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const { response } = await cvg.collateral().fund({ amount: opts.amount });
-  console.log('Tx:', response.signature.toString());
+  logResponse(response);
 };
 
 // Risk engine
@@ -224,7 +205,7 @@ export const initializeRiskEngine = async (opts: Opts) => {
     safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
     overallSafetyFactor: opts.overallSafetyFace,
   });
-  console.log('Tx:', response.signature);
+  logResponse(response);
 };
 
 export const updateRiskEngine = async (opts: Opts) => {
@@ -238,41 +219,13 @@ export const updateRiskEngine = async (opts: Opts) => {
     safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
     overallSafetyFactor: opts.overallSafetyFace,
   });
-  console.log('Tx:', response.signature);
+  logResponse(response);
 };
 
 export const getRiskEngineConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
-  const r = await cvg.riskEngine().fetchConfig();
-  console.log('Address:', r.address.toString());
-  console.log(
-    'Collateral for variable size RFQ creation:',
-    Number(r.collateralForVariableSizeRfqCreation.toString())
-  );
-  console.log(
-    'Collateral for fixed quote amount RFQ creation:',
-    Number(r.collateralForFixedQuoteAmountRfqCreation.toString())
-  );
-  console.log(
-    'Collateral mint decimals:',
-    Number(r.collateralMintDecimals.toString())
-  );
-  console.log(
-    'Safety price shift factor:',
-    r.safetyPriceShiftFactor.toString()
-  );
-  console.log('Overall safety factor:', r.overallSafetyFactor);
-  r.riskCategoriesInfo.map((c: any) => {
-    console.log('Interest rate:', c.interestRate);
-    console.log('Annualized 30 day volatility:', c.annualized30DayVolatility);
-    console.log(
-      `Scenario per settlement period (base asset price Δ/vol Δ): ${c.scenarioPerSettlementPeriod
-        .map((x: any) => {
-          return [x.baseAssetPriceChange, x.volatilityChange].join('/');
-        })
-        .join(', ')}`
-    );
-  });
+  const config = await cvg.riskEngine().fetchConfig();
+  logRiskEngineConfig(config);
 };
 
 export const setRiskEngineInstrumentType = async (opts: Opts) => {
@@ -281,7 +234,7 @@ export const setRiskEngineInstrumentType = async (opts: Opts) => {
     instrumentProgram: new PublicKey(opts.program),
     instrumentType: getInstrumentType(opts.type),
   });
-  console.log('Tx:', response.signature);
+  logResponse(response);
 };
 
 export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
@@ -302,7 +255,7 @@ export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
       },
     ],
   });
-  console.log('Tx:', response.signature);
+  logResponse(response);
 };
 
 // Devnet and localnet helpers
@@ -315,7 +268,7 @@ export const airdrop = async (opts: Opts) => {
     opts.amount * LAMPORTS_PER_SOL
   );
   await cvg.connection.confirmTransaction(tx);
-  console.log('Tx:', tx);
+  logTx(tx);
 };
 
 export const airdropDevnetTokens = async (opts: Opts) => {
@@ -325,8 +278,6 @@ export const airdropDevnetTokens = async (opts: Opts) => {
     cvg,
     owner
   );
-  console.log('Collateral wallet:', collateralWallet.address.toString());
-  registeredMintWallets.map((wallet: any) => {
-    console.log('Registered mint wallet:', wallet.address.toString());
-  });
+  logAddress(collateralWallet.address);
+  registeredMintWallets.map((wallet: any) => logAddress(wallet.address));
 };

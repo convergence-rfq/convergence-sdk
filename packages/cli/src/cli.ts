@@ -39,10 +39,7 @@ const addDefaultArgs = (cmd: any) => {
 };
 
 export const makeCli = (): Command => {
-  const cli = new Command();
-  cli.name('convergence').version(VERSION).description('Convergence RFQ CLI');
-
-  const cmdHandlers = [
+  const cmds = [
     airdropSolCmd,
     airdropDevnetTokensCmd,
     createMintCmd,
@@ -66,7 +63,9 @@ export const makeCli = (): Command => {
     getRfqsCmd,
   ];
 
-  cmdHandlers.map((c) => addDefaultArgs(c(cli)));
+  const cli = new Command();
+  cli.name('convergence').version(VERSION).description('Convergence RFQ CLI');
+  cmds.map((c) => addDefaultArgs(c(cli)));
 
   return cli;
 };
