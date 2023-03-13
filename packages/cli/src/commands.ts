@@ -25,14 +25,14 @@ export const airdropSolCmd = (cli: Command) =>
   cli
     .command('airdrop-sol')
     .description('Airdrops SOL to the current user')
-    .option('--amount <value>', 'Amount to airdrop in SOL', '1')
+    .option('--amount <number>', 'Amount to airdrop in SOL', '1')
     .action(airdrop);
 
 export const airdropDevnetTokensCmd = (cli: Command) =>
   cli
     .command('airdrop-devnet-tokens')
     .description('Airdrops Devnet tokens')
-    .requiredOption('--owner <value>', 'Owner address')
+    .requiredOption('--owner <string>', 'Owner address')
     .action(airdropDevnetTokens);
 
 export const createMintCmd = (cli: Command) =>
@@ -54,9 +54,9 @@ export const mintToCmd = (cli: Command) =>
   cli
     .command('mint-to')
     .description('Mints tokens to wallet')
-    .requiredOption('--mint <value>', 'Mint address')
-    .requiredOption('--wallet <value>', 'Wallet address')
-    .requiredOption('--amount <value>', 'Mint amount')
+    .requiredOption('--mint <string>', 'Mint address')
+    .requiredOption('--wallet <string>', 'Wallet address')
+    .requiredOption('--amount <number>', 'Mint amount')
     .action(mintTo);
 
 export const initializeRiskEngineCmd = (cli: Command) =>
@@ -109,15 +109,15 @@ export const setRiskEngineInstrumentTypeCmd = (cli: Command) =>
   cli
     .command('set-risk-engine-instrument-type')
     .description('Sets risk engine instrument type')
-    .option('--type <value>', 'Instrument type')
-    .option('--program <value>', 'Instrument program')
+    .option('--type <string>', 'Instrument type')
+    .option('--program <string>', 'Instrument program')
     .action(setRiskEngineInstrumentType);
 
 export const setRiskEngineCategoriesInfoCmd = (cli: Command) =>
   cli
     .command('set-risk-engine-risk-categories-info')
     .description('Sets risk engine risk categories info')
-    .requiredOption('--category <value>', 'Category')
+    .requiredOption('--category <string>', 'Category')
     .requiredOption('--new-value <value>', 'New value')
     .action(setRiskEngineCategoriesInfo);
 
@@ -132,8 +132,8 @@ export const initializeProtocolCmd = (cli: Command) =>
     .command('initialize-protocol')
     .description('Initializes protocol')
     .requiredOption('--collateral-mint <value>', 'Collateral mint address')
-    .option('--maker-fee <value>', 'Maker fee')
-    .option('--taker-fee <value>', 'Taker fee')
+    .option('--maker-fee <number>', 'Maker fee')
+    .option('--taker-fee <number>', 'Taker fee')
     .action(initializeProtocol);
 
 export const addInstrumentCmd = (cli: Command) =>
@@ -166,17 +166,17 @@ export const addBaseAssetCmd = (cli: Command) =>
     .command('add-base-asset')
     .description('Adds base asset')
     .requiredOption('--ticker <value>', 'Ticker')
-    .requiredOption('--oracle-address <value>', 'Oracle address')
-    .option('--oracle-kind <value>', 'Oracle kind', 'Switchboard')
-    .option('--risk-category <value>', 'Risk category', 'very-low')
+    .requiredOption('--oracle-address <string>', 'Oracle address')
+    .option('--oracle-kind <string>', 'Oracle kind', 'Switchboard')
+    .option('--risk-category <string>', 'Risk category', 'very-low')
     .action(addBaseAsset);
 
 export const registerMintCmd = (cli: Command) =>
   cli
     .command('register-mint')
     .description('Registers mint')
-    .requiredOption('--mint <value>', 'Mint address')
-    .option('--base-asset-index <value>', 'Base asset index')
+    .requiredOption('--mint <string>', 'Mint address')
+    .option('--base-asset-index <number>', 'Base asset index')
     .action(registerMint);
 
 export const getRegisteredMintsCmd = (cli: Command) =>
