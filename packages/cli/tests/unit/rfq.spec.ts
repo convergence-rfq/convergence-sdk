@@ -28,13 +28,13 @@ describe('rfq', () => {
         '--base-mint',
         ctx.baseMint,
         '--side',
-        'bid',
+        'ask',
         '--order-type',
-        'two-way',
+        'buy',
         '--size',
-        'fixed-base',
+        'open',
         '--amount',
-        '100',
+        '1',
       ],
       'taker'
     );

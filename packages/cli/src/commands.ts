@@ -151,8 +151,11 @@ export const addInstrumentCmd = (cli: Command) =>
   cli
     .command('add-instrument')
     .description('Adds instrument')
-    .option('--instrument-program <string>', 'Instrument program address')
-    .option('--can-be-used-as-quote <boolean>', 'Can be used as quote')
+    .requiredOption(
+      '--instrument-program <string>',
+      'Instrument program address'
+    )
+    .requiredOption('--can-be-used-as-quote <boolean>', 'Can be used as quote')
     .requiredOption(
       '--validate-data-account-amount <number>',
       'Validate data account amount'
