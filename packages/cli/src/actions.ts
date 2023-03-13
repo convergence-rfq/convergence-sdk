@@ -139,20 +139,24 @@ export const setRiskEngineInstrumentType = async (opts: Opts) => {
 export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
   const newValue = opts.newValue.split(',').map((x: string) => parseFloat(x));
 
-  let riskCategoryIndex;
-  if (opts.category == 'very-low') {
-    riskCategoryIndex = RiskCategory.VeryLow;
-  } else if (opts.category == 'low') {
-    riskCategoryIndex = RiskCategory.Low;
-  } else if (opts.category == 'medium') {
-    riskCategoryIndex = RiskCategory.Medium;
-  } else if (opts.category == 'high') {
-    riskCategoryIndex = RiskCategory.High;
-  } else if (opts.category == 'very-high') {
-    riskCategoryIndex = RiskCategory.VeryHigh;
-  } else {
-    throw new Error('Invalid risk category');
-  }
+  const getRiskCategoryIndex = (category: string) => {
+    switch (category) {
+      case 'very-low':
+        return RiskCategory.VeryLow;
+      case 'low':
+        return RiskCategory.Low;
+      case 'medium':
+        return RiskCategory.Medium;
+      case 'high':
+        return RiskCategory.High;
+      case 'very-high':
+        return RiskCategory.VeryHigh;
+      default:
+        throw new Error('Invalid risk category');
+    }
+  };
+
+  const riskCategoryIndex = getRiskCategoryIndex(opts.category);
 
   const cvg = await createCvg(opts);
   const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
