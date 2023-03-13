@@ -73,11 +73,9 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       const { rfqs, rfqsPerPage, numPages } = operation.input;
 
       const protocol = await convergence.protocol().get();
-      const collateralMintDecimals = (
-        await convergence
-          .tokens()
-          .findMintByAddress({ address: protocol.collateralMint })
-      ).decimals;
+      const collateralMint = await convergence
+        .tokens()
+        .findMintByAddress({ address: protocol.collateralMint });
 
       if (rfqs) {
         let rfqPages: Rfq[][] = [];
@@ -85,15 +83,12 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
 
         for (let rfq of rfqs) {
           if (rfq.state == StoredRfqState.Active) {
-            rfq = await convertRfqOutput(rfq, collateralMintDecimals);
-
+            rfq = convertRfqOutput(rfq, collateralMint.decimals);
             rfqsByActive.push(rfq);
           }
         }
-        scope.throwIfCanceled();
 
         rfqPages = getPages(rfqsByActive, rfqsPerPage, numPages);
-
         return rfqPages;
       }
 
@@ -114,19 +109,17 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       }
 
       const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
-
       const rfqPages: Rfq[][] = [];
 
       for (const page of pages) {
         const rfqPage = [];
-
         for (const unparsedAccount of page) {
           const rfq = await convergence
             .rfqs()
             .findRfqByAddress({ address: unparsedAccount.publicKey });
-
           rfqPage.push(rfq);
         }
+
         if (rfqPage.length > 0) {
           rfqPages.push(rfqPage);
         }

@@ -1,6 +1,10 @@
 {
   "include": ["packages/*/src"],
   "exclude": ["node_modules", "packages/*/node_modules"],
+  "references": [
+    { "path":"packages/js" },
+    { "path":"packages/cli" },
+  ],
   "compilerOptions": {
     "baseUrl": ".",
     "declaration": true,
@@ -16,7 +20,6 @@
     "moduleResolution": "node",
     "allowJs": false,
     "skipLibCheck": true,
-
     "noUnusedLocals": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
@@ -24,7 +27,6 @@
     "noImplicitReturns": false,
     "strict": true,
     "isolatedModules": true,
-
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "removeComments": false,

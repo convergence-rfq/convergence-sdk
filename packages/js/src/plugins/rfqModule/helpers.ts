@@ -304,10 +304,10 @@ export const convertFixedSizeInput = (
   return fixedSize;
 };
 
-export const convertRfqOutput = async (
+export const convertRfqOutput = (
   rfq: Rfq,
   collateralMintDecimals: number
-): Promise<Rfq> => {
+): Rfq => {
   rfq.nonResponseTakerCollateralLocked =
     Number(rfq.nonResponseTakerCollateralLocked) /
     Math.pow(10, collateralMintDecimals);
