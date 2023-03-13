@@ -2,7 +2,7 @@ import { homedir } from 'os';
 import { Command } from 'commander';
 
 import {
-  airdropCmd,
+  airdropSolCmd,
   createMintCmd,
   createWalletCmd,
   mintToCmd,
@@ -39,7 +39,8 @@ export const makeCli = (): Command => {
   cli.name('convergence').version(VERSION).description('Convergence RFQ CLI');
 
   const cmds = [
-    airdropCmd(cli),
+    airdropSolCmd(cli),
+    airdropDevnetTokensCmd(cli),
     createMintCmd(cli),
     createWalletCmd(cli),
     mintToCmd(cli),
@@ -56,7 +57,6 @@ export const makeCli = (): Command => {
     getProtocolCmd(cli),
     getBaseAssetsCmd(cli),
     getRfqsCmd(cli),
-    airdropDevnetTokensCmd(cli),
   ];
 
   cmds.map(addDefaultArgs);

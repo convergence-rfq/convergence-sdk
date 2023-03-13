@@ -57,26 +57,26 @@ describe('Convergence CLI', () => {
     stub.restore();
   });
 
-  it('airdrop [dao]', async () => {
-    const args = ['airdrop', '--amount', '1'];
+  it('airdrop-sol [dao]', async () => {
+    const args = ['airdrop-sol', '--amount', '1'];
     await runCli(args);
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('airdrop [maker]', async () => {
-    const args = ['airdrop', '--amount', '1'];
+  it('airdrop-sol [maker]', async () => {
+    const args = ['airdrop-sol', '--amount', '1'];
     await runCli(args, 'maker');
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('airdrop [taker]', async () => {
-    const args = ['airdrop', '--amount', '1'];
+  it('airdrop-sol [taker]', async () => {
+    const args = ['airdrop-sol', '--amount', '1'];
     await runCli(args, 'taker');
     expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('airdrop [mint-authority]', async () => {
-    const args = ['airdrop', '--amount', '1'];
+    const args = ['airdrop-sol', '--amount', '1'];
     await runCli(args, 'mint-authority');
     expect(stub.args[0][0]).toEqual(TX);
   });

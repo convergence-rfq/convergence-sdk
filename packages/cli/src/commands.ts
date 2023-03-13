@@ -21,12 +21,19 @@ import {
   setRiskEngineCategoriesInfo,
 } from './actions';
 
-export const airdropCmd = (cli: Command) =>
+export const airdropSolCmd = (cli: Command) =>
   cli
-    .command('airdrop')
+    .command('airdrop-sol')
     .description('Airdrops SOL to the current user')
     .option('--amount <value>', 'Amount to airdrop in SOL', '1')
     .action(airdrop);
+
+export const airdropDevnetTokensCmd = (cli: Command) =>
+  cli
+    .command('airdrop-devnet-tokens')
+    .description('Airdrops Devnet tokens')
+    .requiredOption('--owner <value>', 'Owner address')
+    .action(airdropDevnetTokens);
 
 export const createMintCmd = (cli: Command) =>
   cli
@@ -189,10 +196,3 @@ export const getBaseAssetsCmd = (cli: Command) =>
 
 export const getRfqsCmd = (cli: Command) =>
   cli.command('get-rfqs').description('Get RFQs').action(getRfqs);
-
-export const airdropDevnetTokensCmd = (cli: Command) =>
-  cli
-    .command('airdrop-devnet-tokens')
-    .description('Airdrops devnet tokens')
-    .requiredOption('--owner <value>', 'Owner address')
-    .action(airdropDevnetTokens);
