@@ -13,7 +13,6 @@ import {
 import { createCvg, Opts } from './cvg';
 import {
   getInstrumentType,
-  getRiskCategoryIndex,
   getRiskCategory,
   getSide,
   getOrderType,
@@ -299,7 +298,7 @@ export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
           toScenario(newValue[10], newValue[11]),
           toScenario(newValue[12], newValue[13]),
         ]),
-        riskCategoryIndex: getRiskCategoryIndex(opts.category),
+        riskCategoryIndex: getRiskCategory(opts.category),
       },
     ],
   });

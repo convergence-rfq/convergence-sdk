@@ -106,23 +106,6 @@ export const formatState = (state: StoredRfqState): string => {
   }
 };
 
-export const getRiskCategoryIndex = (category: string): RiskCategory => {
-  switch (category) {
-    case 'very-low':
-      return RiskCategory.VeryLow;
-    case 'low':
-      return RiskCategory.Low;
-    case 'medium':
-      return RiskCategory.Medium;
-    case 'high':
-      return RiskCategory.High;
-    case 'very-high':
-      return RiskCategory.VeryHigh;
-    default:
-      throw new Error('Invalid risk category');
-  }
-};
-
 export const getInstrumentType = (type: string): InstrumentType => {
   switch (type) {
     case 'spot':
