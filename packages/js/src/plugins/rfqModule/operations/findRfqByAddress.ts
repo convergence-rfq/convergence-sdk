@@ -72,7 +72,7 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      let rfq = toRfq(toRfqAccount(account));
+      const rfq = toRfq(toRfqAccount(account));
       scope.throwIfCanceled();
 
       if (!collateralMintDecimals) {
@@ -84,8 +84,8 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
         ).decimals;
       }
 
-      rfq = await convertRfqOutput(rfq, collateralMintDecimals);
+      const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
-      return rfq;
+      return convertedRfq;
     },
   };

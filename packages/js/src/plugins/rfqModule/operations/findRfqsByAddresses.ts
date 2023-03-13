@@ -91,16 +91,16 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
         .getMultipleAccounts(addresses, commitment);
 
       for (const account of accounts) {
-        let rfq = toRfq(toRfqAccount(account));
+        const rfq = toRfq(toRfqAccount(account));
 
-        rfq = await convertRfqOutput(rfq, collateralMintDecimals);
+        const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
-        rfqs.push(rfq);
+        rfqs.push(convertedRfq);
       }
       scope.throwIfCanceled();
 
-      const rfqPages = getPages(rfqs, rfqsPerPage, numPages);
+      const pages = getPages(rfqs, rfqsPerPage, numPages);
 
-      return rfqPages;
+      return pages;
     },
   };
