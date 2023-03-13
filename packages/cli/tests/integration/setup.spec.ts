@@ -1,9 +1,8 @@
-import fs from 'fs';
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
-import { runCli, getPk, ADDRESS, TX, CTX_FILE, Ctx } from './../helpers';
+import { runCli, getPk, ADDRESS, TX, Ctx, writeCtx } from './../helpers';
 
 describe('setup', () => {
   const ctx = {} as Ctx;
@@ -18,7 +17,7 @@ describe('setup', () => {
   });
 
   after(() => {
-    fs.writeFileSync(CTX_FILE, JSON.stringify(ctx));
+    writeCtx(ctx);
   });
 
   it('airdrop-sol [dao]', async () => {
