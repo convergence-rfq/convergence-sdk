@@ -2,7 +2,7 @@ import { homedir } from 'os';
 import fs from 'fs';
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
-import { Keypair } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import * as sdk from '@convergence-rfq/sdk';
 
 import { makeCli } from '../src/cli';
@@ -11,16 +11,18 @@ const ENDPOINT = 'http://127.0.0.1:8899';
 const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Switchboard
 
 const getKpFile = (user: string) => {
-  if (user === 'taker') {
-    return `${homedir()}/.config/solana/taker.json`;
-  } else if (user === 'maker') {
-    return `${homedir()}/.config/solana/maker.json`;
-  } else if (user === 'mint-authority') {
-    return `${homedir()}/.config/solana/mint-authority.json`;
-  } else if (user === 'dao') {
-    return `${homedir()}/.config/solana/id.json`;
+  switch (user) {
+    case 'taker':
+      return `${homedir()}/.config/solana/taker.json`;
+    case 'maker':
+      return `${homedir()}/.config/solana/maker.json`;
+    case 'mint-authority':
+      return `${homedir()}/.config/solana/mint-authority.json`;
+    case 'dao':
+      return `${homedir()}/.config/solana/id.json`;
+    default:
+      throw new Error('Invalid user');
   }
-  throw new Error('Invalid user');
 };
 
 const getPk = (user: string) => {
@@ -41,8 +43,8 @@ describe('Convergence CLI', () => {
   let takerQuoteWallet: string;
   let takerBaseWallet: string;
 
-  //let makerBaseWallet: string;
-  //let makerQuoteWallet: string;
+  let makerQuoteWallet: string;
+  let makerBaseWallet: string;
 
   const cli = makeCli();
 
@@ -95,7 +97,7 @@ describe('Convergence CLI', () => {
     expect(stub.args[1][0]).toEqual(TX);
   });
 
-  it('create-wallet [base:maker]', async () => {
+  it('create-wallet [maker:base]', async () => {
     await runCli([
       'create-wallet',
       '--owner',
@@ -105,9 +107,11 @@ describe('Convergence CLI', () => {
     ]);
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
+    makerBaseWallet = stub.args[0][1];
+    expect(new PublicKey(makerBaseWallet)).toBeTruthy();
   });
 
-  it('create-wallet [base:taker]', async () => {
+  it('create-wallet [taker:base]', async () => {
     await runCli([
       'create-wallet',
       '--owner',
@@ -118,10 +122,10 @@ describe('Convergence CLI', () => {
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
     takerBaseWallet = stub.args[0][1];
-    expect(takerBaseWallet).toBeTruthy();
+    expect(new PublicKey(takerBaseWallet)).toBeTruthy();
   });
 
-  it('create-wallet [quote:maker]', async () => {
+  it('create-wallet [maker:quote]', async () => {
     await runCli([
       'create-wallet',
       '--owner',
@@ -129,10 +133,13 @@ describe('Convergence CLI', () => {
       '--mint',
       quoteMint,
     ]);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
+    makerQuoteWallet = stub.args[0][1];
+    expect(new PublicKey(makerQuoteWallet)).toBeTruthy();
   });
 
-  it('create-wallet [quote:taker]', async () => {
+  it('create-wallet [taker:quote]', async () => {
     await runCli([
       'create-wallet',
       '--owner',
@@ -151,15 +158,15 @@ describe('Convergence CLI', () => {
       [
         'mint-to',
         '--wallet',
-        getPk('taker'),
+        takerQuoteWallet,
         '--mint',
         quoteMint,
         '--amount',
-        '1000000000',
+        '1000000000000',
       ],
       'mint-authority'
     );
-    expect(stub.args[1][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('mint-to [quote:maker]', async () => {
@@ -167,15 +174,15 @@ describe('Convergence CLI', () => {
       [
         'mint-to',
         '--wallet',
-        getPk('maker'),
+        makerQuoteWallet,
         '--mint',
         quoteMint,
         '--amount',
-        '1000000000',
+        '100000000000',
       ],
       'mint-authority'
     );
-    expect(stub.args[1][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('initialize-protocol', async () => {
