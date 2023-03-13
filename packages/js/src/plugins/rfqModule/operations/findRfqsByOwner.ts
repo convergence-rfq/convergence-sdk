@@ -83,21 +83,20 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       ).decimals;
 
       if (rfqs) {
-        let rfqPages: Rfq[][] = [];
         const rfqsByOwner: Rfq[] = [];
 
-        for (let rfq of rfqs) {
+        for (const rfq of rfqs) {
           if (rfq.taker.toBase58() === owner.toBase58()) {
-            rfq = await convertRfqOutput(rfq, collateralMintDecimals);
+            const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
-            rfqsByOwner.push(rfq);
+            rfqsByOwner.push(convertedRfq);
           }
         }
         scope.throwIfCanceled();
 
-        rfqPages = getPages(rfqsByOwner, rfqsPerPage, numPages);
+        const pages = getPages(rfqsByOwner, rfqsPerPage, numPages);
 
-        return rfqPages;
+        return pages;
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);
@@ -108,27 +107,19 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         .get();
       scope.throwIfCanceled();
 
-      const pages = getPages(unparsedAccounts, rfqsPerPage, numPages);
+      const parsedRfqs: Rfq[] = [];
 
-      const rfqPages: Rfq[][] = [];
+      for (const unparsedAccount of unparsedAccounts) {
+        const rfq = await convergence
+          .rfqs()
+          .findRfqByAddress({ address: unparsedAccount.publicKey });
 
-      for (const page of pages) {
-        const rfqPage = [];
+        const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
-        for (const unparsedAccount of page) {
-          let rfq = await convergence
-            .rfqs()
-            .findRfqByAddress({ address: unparsedAccount.publicKey });
-
-          rfq = await convertRfqOutput(rfq, collateralMintDecimals);
-
-          rfqPage.push(rfq);
-        }
-        if (rfqPage.length > 0) {
-          rfqPages.push(rfqPage);
-        }
+        parsedRfqs.push(convertedRfq);
       }
+      const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
 
-      return rfqPages;
+      return pages;
     },
   };
