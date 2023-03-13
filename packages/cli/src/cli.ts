@@ -25,7 +25,7 @@ import {
   createRfqCmd,
 } from './commands';
 
-const VERSION = '4.0.24-rc.1';
+const VERSION = '4.0.24-rc.2';
 
 const DEFAULT_KEYPAIR_FILE = `${homedir()}/.config/solana/id.json`;
 const DEFAULT_RPC_ENDPOINT =

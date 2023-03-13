@@ -9,23 +9,6 @@ import {
   FixedSize,
 } from '@convergence-rfq/sdk';
 
-export const logRfq = (r: Rfq) => {
-  const created = parseInt(r.creationTimestamp.toString()) * 1_000;
-  console.log('Address:', r.address.toString());
-  console.log('Taker:', r.taker.toString());
-  console.log('Order type:', formatOrderType(r.orderType));
-  console.log('Size:', r.fixedSize.__kind === 'None' ? 'open' : 'fixed');
-  console.log('Quote asset:', r.quoteMint.toString());
-  console.log('Created:', new Date(created).toString());
-  console.log(`Active window: ${r.activeWindow} seconds`);
-  console.log(`Settlement window: ${r.settlingWindow} seconds`);
-  console.log('Legs:', r.legs.length);
-  console.log('State:', formatState(r.state));
-  console.log('Total responses:', r.totalResponses);
-  console.log('Confirmed responses:', r.confirmedResponses);
-  console.log('Cleared responses:', r.clearedResponses);
-};
-
 export const getSide = (side: string): Side => {
   switch (side) {
     case 'bid':
@@ -34,19 +17,6 @@ export const getSide = (side: string): Side => {
       return Side.Ask;
     default:
       throw new Error('Invalid side');
-  }
-};
-
-export const formatOrderType = (orderType: OrderType): string => {
-  switch (orderType) {
-    case OrderType.Buy:
-      return 'buy';
-    case OrderType.Sell:
-      return 'sell';
-    case OrderType.TwoWay:
-      return 'two-way';
-    default:
-      throw new Error('Invalid order type');
   }
 };
 
@@ -73,6 +43,17 @@ export const getOrderType = (orderType: string): OrderType => {
       return OrderType.TwoWay;
     default:
       throw new Error('Invalid order type');
+  }
+};
+
+export const getInstrumentType = (type: string): InstrumentType => {
+  switch (type) {
+    case 'spot':
+      return InstrumentType.Spot;
+    case 'option':
+      return InstrumentType.Option;
+    default:
+      throw new Error('Invalid instrument type');
   }
 };
 
@@ -106,13 +87,32 @@ export const formatState = (state: StoredRfqState): string => {
   }
 };
 
-export const getInstrumentType = (type: string): InstrumentType => {
-  switch (type) {
-    case 'spot':
-      return InstrumentType.Spot;
-    case 'option':
-      return InstrumentType.Option;
+export const formatOrderType = (orderType: OrderType): string => {
+  switch (orderType) {
+    case OrderType.Buy:
+      return 'buy';
+    case OrderType.Sell:
+      return 'sell';
+    case OrderType.TwoWay:
+      return 'two-way';
     default:
-      throw new Error('Invalid instrument type');
+      throw new Error('Invalid order type');
   }
+};
+
+export const logRfq = (r: Rfq) => {
+  const created = parseInt(r.creationTimestamp.toString()) * 1_000;
+  console.log('Address:', r.address.toString());
+  console.log('Taker:', r.taker.toString());
+  console.log('Order type:', formatOrderType(r.orderType));
+  console.log('Size:', r.fixedSize.__kind === 'None' ? 'open' : 'fixed');
+  console.log('Quote asset:', r.quoteMint.toString());
+  console.log('Created:', new Date(created).toString());
+  console.log(`Active window: ${r.activeWindow} seconds`);
+  console.log(`Settlement window: ${r.settlingWindow} seconds`);
+  console.log('Legs:', r.legs.length);
+  console.log('State:', formatState(r.state));
+  console.log('Total responses:', r.totalResponses);
+  console.log('Confirmed responses:', r.confirmedResponses);
+  console.log('Cleared responses:', r.clearedResponses);
 };
