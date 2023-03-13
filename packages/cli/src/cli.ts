@@ -42,30 +42,31 @@ export const makeCli = (): Command => {
   const cli = new Command();
   cli.name('convergence').version(VERSION).description('Convergence RFQ CLI');
 
-  const cmds = [
-    airdropSolCmd(cli),
-    airdropDevnetTokensCmd(cli),
-    createMintCmd(cli),
-    createWalletCmd(cli),
-    mintToCmd(cli),
-    initializeProtocolCmd(cli),
-    initializeRiskEngineCmd(cli),
-    initializeCollateralAccountCmd(cli),
-    updateRiskEngineCmd(cli),
-    setRiskEngineInstrumentTypeCmd(cli),
-    setRiskEngineCategoriesInfoCmd(cli),
-    addInstrumentCmd(cli),
-    addBaseAssetCmd(cli),
-    registerMintCmd(cli),
-    fundCollateralAccountCmd(cli),
-    getRiskEngineConfigCmd(cli),
-    getRegisteredMintsCmd(cli),
-    getProtocolCmd(cli),
-    getBaseAssetsCmd(cli),
-    createRfqCmd(cli),
-    getRfqsCmd(cli),
+  const cmdHandlers = [
+    airdropSolCmd,
+    airdropDevnetTokensCmd,
+    createMintCmd,
+    createWalletCmd,
+    mintToCmd,
+    initializeProtocolCmd,
+    initializeRiskEngineCmd,
+    initializeCollateralAccountCmd,
+    updateRiskEngineCmd,
+    setRiskEngineInstrumentTypeCmd,
+    setRiskEngineCategoriesInfoCmd,
+    addInstrumentCmd,
+    addBaseAssetCmd,
+    registerMintCmd,
+    fundCollateralAccountCmd,
+    getRiskEngineConfigCmd,
+    getRegisteredMintsCmd,
+    getProtocolCmd,
+    getBaseAssetsCmd,
+    createRfqCmd,
+    getRfqsCmd,
   ];
 
-  cmds.map(addDefaultArgs);
+  cmdHandlers.map((c) => cli.addCommand(addDefaultArgs(c(cli))));
+
   return cli;
 };
