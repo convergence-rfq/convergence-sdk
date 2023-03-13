@@ -24,7 +24,7 @@ import {
 
 type Opts = any;
 
-const VERSION = '4.0.23-rc.9';
+const VERSION = '4.0.24-rc.1';
 
 /// Constants
 
@@ -315,12 +315,10 @@ const getProtocol = async (opts: Opts) => {
 
 const getRfqs = async (opts: Opts) => {
   const cvg = await createCvg(opts);
-  const rfqPages = await cvg.rfqs().findRfqs({ page: 0, pageCount: 10 });
-  for (const rfqPage of rfqPages) {
-    for (const rfq of rfqPage) {
-      const r: Rfq = rfq;
-      console.log('Address:', r.address.toString());
-    }
+  const rfqs: Rfq[] = await cvg.rfqs().findRfqs({ page: 0, pageCount: 10 });
+  for (let i = 0; i < rfqs.length; i++) {
+    const r = rfqs[i];
+    console.log('Address:', r.address.toString());
   }
 };
 
