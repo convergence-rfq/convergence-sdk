@@ -66,7 +66,8 @@ export const makeCli = (): Command => {
     getRfqsCmd,
   ];
 
-  cmdHandlers.map((c) => cli.addCommand(addDefaultArgs(c(cli))));
+  const cmds = cmdHandlers.map((c) => c(cli));
+  cmds.map((c) => addDefaultArgs(c));
 
   return cli;
 };
