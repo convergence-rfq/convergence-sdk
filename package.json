@@ -4,6 +4,7 @@
   "workspaces": [
     "packages/*"
   ],
+  "references": [{ "path": "packages/cli" }],
   "license": "MIT",
   "description": "Convergence RFQ JavaScript SDK",
   "keywords": [

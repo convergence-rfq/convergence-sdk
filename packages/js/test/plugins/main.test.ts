@@ -6,7 +6,8 @@ import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
-import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';import {
+import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
+import {
   createEuroAccountsAndMintOptions,
   createAmericanAccountsAndMintOptions,
 } from '../helpers';

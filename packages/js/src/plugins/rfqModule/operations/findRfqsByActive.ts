@@ -78,18 +78,11 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
         .findMintByAddress({ address: protocol.collateralMint });
 
       if (rfqs) {
-        let rfqPages: Rfq[][] = [];
-        const rfqsByActive: Rfq[] = [];
+        const activeRfqs = rfqs
+          .filter((rfq) => rfq.state === StoredRfqState.Active)
+          .map((rfq) => convertRfqOutput(rfq, collateralMint.decimals));
 
-        for (let rfq of rfqs) {
-          if (rfq.state == StoredRfqState.Active) {
-            rfq = convertRfqOutput(rfq, collateralMint.decimals);
-            rfqsByActive.push(rfq);
-          }
-        }
-
-        rfqPages = getPages(rfqsByActive, rfqsPerPage, numPages);
-        return rfqPages;
+        return getPages(activeRfqs, rfqsPerPage, numPages);
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);

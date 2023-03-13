@@ -220,18 +220,16 @@ const addBaseAsset = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const baseAssets = await cvg.protocol().getBaseAssets();
 
-  let riskCategory;
-  if (opts.riskCategory === 'very-low') {
-    riskCategory = RiskCategory.Low;
-  } else if (opts.riskCategory === 'low') {
-    riskCategory = RiskCategory.Low;
-  } else if (opts.riskCategory === 'medium') {
-    riskCategory = RiskCategory.Medium;
-  } else if (opts.riskCategory === 'high') {
-    riskCategory = RiskCategory.High;
-  } else if (opts.riskCategory === 'very-high') {
-    riskCategory = RiskCategory.VeryHigh;
-  } else {
+  const riskCategories: any = {
+    low: RiskCategory.Low,
+    medium: RiskCategory.Medium,
+    high: RiskCategory.High,
+  };
+  riskCategories['very-low'] = RiskCategory.Low;
+  riskCategories['very-high'] = RiskCategory.VeryHigh;
+
+  const riskCategory = riskCategories[opts.riskCategory];
+  if (!riskCategory) {
     throw new Error('Invalid risk category');
   }
 
@@ -317,9 +315,7 @@ const getProtocol = async (opts: Opts) => {
 
 const getRfqs = async (opts: Opts) => {
   const cvg = await createCvg(opts);
-  const rfqPages = await cvg
-    .rfqs()
-    .findRfqsByActive({ rfqsPerPage: 5, numPages: 1 });
+  const rfqPages = await cvg.rfqs().findRfqs({ page: 0, pageCount: 10 });
   for (const rfqPage of rfqPages) {
     for (const rfq of rfqPage) {
       const r: Rfq = rfq;
