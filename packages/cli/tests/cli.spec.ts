@@ -300,16 +300,13 @@ describe('Convergence CLI', () => {
   });
 
   it('initialize-collateral-account [maker]', async () => {
-    await runCli(['initialize-collateral-account'], 'maker');
+    await runCli(['initialize-collateral-account'], 'taker');
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
   });
 
   it('fund-collateral-account [maker]', async () => {
-    await runCli(
-      ['fund-collateral-account', '--amount', '1000000000'],
-      'maker'
-    );
+    await runCli(['fund-collateral-account', '--amount', '1000'], 'taker');
     expect(stub.args[0][0]).toEqual(TX);
   });
 });

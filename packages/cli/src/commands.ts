@@ -23,6 +23,8 @@ import {
   fundCollateralAccount,
 } from './actions';
 
+// Devnet and localnet helpers
+
 export const airdropSolCmd = (cli: Command) =>
   cli
     .command('airdrop-sol')
@@ -36,6 +38,8 @@ export const airdropDevnetTokensCmd = (cli: Command) =>
     .description('Airdrops Devnet tokens')
     .requiredOption('--owner <string>', 'Owner address')
     .action(airdropDevnetTokens);
+
+// Utils
 
 export const createMintCmd = (cli: Command) =>
   cli
@@ -60,6 +64,8 @@ export const mintToCmd = (cli: Command) =>
     .requiredOption('--wallet <string>', 'Wallet address')
     .requiredOption('--amount <number>', 'Mint amount')
     .action(mintTo);
+
+// Risk engine
 
 export const initializeRiskEngineCmd = (cli: Command) =>
   cli
@@ -129,6 +135,8 @@ export const getRiskEngineConfigCmd = (cli: Command) =>
     .description('Get risk engine risk config')
     .action(getRiskEngineConfig);
 
+// Protocol
+
 export const initializeProtocolCmd = (cli: Command) =>
   cli
     .command('initialize-protocol')
@@ -196,8 +204,12 @@ export const getBaseAssetsCmd = (cli: Command) =>
     .description('Get base assets')
     .action(getBaseAssets);
 
+// Rfqs
+
 export const getRfqsCmd = (cli: Command) =>
   cli.command('get-rfqs').description('Get RFQs').action(getRfqs);
+
+// Collateral
 
 export const initializeCollateralAccountCmd = (cli: Command) =>
   cli
