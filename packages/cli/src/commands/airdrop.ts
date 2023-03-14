@@ -4,7 +4,7 @@ import { airdrop, airdropDevnetTokens } from '../actions';
 import { addCmd } from './helpers';
 
 export const airdropSolCmd = (c: Command) =>
-  addCmd(c, 'airdrop-sol', 'Airdrops SOL to the current user', airdrop, [
+  addCmd(c, 'airdrop:sol', 'Airdrops SOL to the current user', airdrop, [
     {
       flags: '--amount <number>',
       description: 'Amount to airdrop in SOL',
@@ -15,7 +15,7 @@ export const airdropSolCmd = (c: Command) =>
 export const airdropDevnetTokensCmd = (c: Command) =>
   addCmd(
     c,
-    'airdop-devnet-tokens',
+    'airdrop:devnet-tokens',
     'Airdrops Devnet tokens',
     airdropDevnetTokens,
     [

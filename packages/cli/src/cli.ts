@@ -16,7 +16,7 @@ import {
   addBaseAssetCmd,
   registerMintCmd,
   getRegisteredMintsCmd,
-  getProtocolCmd,
+  getProtocolConfigCmd,
   getBaseAssetsCmd,
   getRfqsCmd,
   airdropDevnetTokensCmd,
@@ -25,7 +25,7 @@ import {
   createRfqCmd,
 } from './commands';
 
-const VERSION = '4.0.24-rc.4';
+const VERSION = '4.0.24-rc.5';
 
 const DEFAULT_KEYPAIR_FILE = `${homedir()}/.config/solana/id.json`;
 const DEFAULT_RPC_ENDPOINT =
@@ -46,19 +46,19 @@ export const makeCli = (): Command => {
     createWalletCmd,
     mintToCmd,
     initializeProtocolCmd,
+    getProtocolConfigCmd,
+    addInstrumentCmd,
+    addBaseAssetCmd,
+    getBaseAssetsCmd,
+    registerMintCmd,
+    getRegisteredMintsCmd,
     initializeRiskEngineCmd,
-    initializeCollateralAccountCmd,
+    getRiskEngineConfigCmd,
     updateRiskEngineCmd,
     setRiskEngineInstrumentTypeCmd,
     setRiskEngineCategoriesInfoCmd,
-    addInstrumentCmd,
-    addBaseAssetCmd,
-    registerMintCmd,
+    initializeCollateralAccountCmd,
     fundCollateralAccountCmd,
-    getRiskEngineConfigCmd,
-    getRegisteredMintsCmd,
-    getProtocolCmd,
-    getBaseAssetsCmd,
     createRfqCmd,
     getRfqsCmd,
   ];

@@ -18,27 +18,33 @@ describe('utils', () => {
     stub.restore();
   });
 
-  it('airdrop-sol', async () => {
-    await runCli(['airdrop-sol', '--amount', '1']);
+  it('airdrop:sol', async () => {
+    await runCli(['airdrop:sol', '--amount', '1']);
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('create-mint', async () => {
-    await runCli(['create-mint', '--decimals', '9'], 'mint-authority');
+  it('token:create-mint', async () => {
+    await runCli(['token:create-mint', '--decimals', '9'], 'mint-authority');
     mint = stub.args[0][1];
     expect(new PublicKey(mint)).toBeTruthy();
     expect(stub.args[1][0]).toEqual(TX);
   });
 
-  it('create-wallet', async () => {
-    await runCli(['create-wallet', '--owner', getPk('maker'), '--mint', mint]);
+  it('token:create-wallet', async () => {
+    await runCli([
+      'token:create-wallet',
+      '--owner',
+      getPk('maker'),
+      '--mint',
+      mint,
+    ]);
     wallet = stub.args[0][1];
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
     expect(new PublicKey(wallet)).toBeTruthy();
   });
 
-  it('mint-to', async () => {
+  it('token:mint-to', async () => {
     await runCli(
       [
         'mint-to',
