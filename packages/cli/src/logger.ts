@@ -9,99 +9,99 @@ import {
 
 import { formatOrderType, formatState } from './helpers';
 
+// NOTE: Improves readability of code
+const l = (x: any, y?: any) => console.log(x, y);
+
+// NOTE: Improves readability of code
+const N = Number;
+
 export const logAddress = (p: PublicKey): void => {
-  console.log('Address:', p.toString());
+  l('Address:', p.toString());
 };
 
 export const logResponse = (r: SendAndConfirmTransactionResponse): void => {
-  console.log('Tx:', r.signature);
+  l('Tx:', r.signature);
 };
 
 export const logBaseAsset = (b: BaseAsset): void => {
-  console.log('Address:', b.address.toString());
-  console.log('Index:', b.index.value);
-  console.log('Ticker:', b.ticker.toString());
-  console.log('Oracle:', b.priceOracle.address.toString());
-  console.log('Risk category:', parseInt(b.riskCategory.toString()));
+  l('Address:', b.address.toString());
+  l('Index:', b.index.value);
+  l('Ticker:', b.ticker.toString());
+  l('Oracle:', b.priceOracle.address.toString());
+  l('Risk category:', parseInt(b.riskCategory.toString()));
 };
 
 export const logProtocol = (p: Protocol): void => {
-  console.log('Address:', p.address.toString());
-  console.log('Authority:', p.authority.toString());
-  console.log('Active:', p.active);
-  console.log('Risk engine:', p.riskEngine.toString());
-  console.log('Collateral mint:', p.collateralMint.toString());
-  console.log(`Taker fee: ${p.settleFees.takerBps.toString()} bps`);
-  console.log(`Maker fee: ${p.settleFees.makerBps.toString()} bps`);
-  console.log(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
-  console.log(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
+  l('Address:', p.address.toString());
+  l('Authority:', p.authority.toString());
+  l('Active:', p.active);
+  l('Risk engine:', p.riskEngine.toString());
+  l('Collateral mint:', p.collateralMint.toString());
+  l(`Taker fee: ${p.settleFees.takerBps.toString()} bps`);
+  l(`Maker fee: ${p.settleFees.makerBps.toString()} bps`);
+  l(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
+  l(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
   p.instruments.map((i: any) => logProtocolInstrument(i));
 };
 
 export const logTx = (t: string): void => {
-  console.log('Tx:', t);
+  l('Tx:', t);
 };
 
 export const logLeg = (l: any): void => {
-  console.log('Leg:', JSON.stringify(l));
+  l('Leg:', JSON.stringify(l));
 };
 
 export const logRiskEngineConfig = (r: any): void => {
-  console.log('Address:', r.address.toString());
-  console.log(
+  l('Address:', r.address.toString());
+  l(
     'Collateral for variable size RFQ creation:',
-    Number(r.collateralForVariableSizeRfqCreation.toString())
+    N(r.collateralForVariableSizeRfqCreation.toString())
   );
-  console.log(
+  l(
     'Collateral for fixed quote amount RFQ creation:',
-    Number(r.collateralForFixedQuoteAmountRfqCreation.toString())
+    N(r.collateralForFixedQuoteAmountRfqCreation.toString())
   );
-  console.log(
-    'Collateral mint decimals:',
-    Number(r.collateralMintDecimals.toString())
-  );
-  console.log(
-    'Safety price shift factor:',
-    Number(r.safetyPriceShiftFactor.toString())
-  );
-  console.log('Overall safety factor:', r.overallSafetyFactor);
-  r.riskCategoriesInfo.map((c: any) => {
-    console.log('Interest rate:', c.interestRate);
-    console.log('Annualized 30 day volatility:', c.annualized30DayVolatility);
-    console.log(
-      `Scenario per settlement period (base asset price Δ/volatility Δ): ${c.scenarioPerSettlementPeriod
-        .map((x: any) => {
-          return [x.baseAssetPriceChange, x.volatilityChange].join('/');
-        })
-        .join(', ')}`
-    );
-  });
+  l('Collateral mint decimals:', N(r.collateralMintDecimals.toString()));
+  l('Safety price shift factor:', N(r.safetyPriceShiftFactor.toString()));
+  l('Overall safety factor:', r.overallSafetyFactor);
+  r.riskCategoriesInfo.map(logRiskCategoryInfo);
+};
+
+export const logRiskCategoryInfo = (c: any): void => {
+  const formatRatio = (x: any) => {
+    return [x.baseAssetPriceChange, x.volatilityChange].join('/');
+  };
+  const s = c.scenarioPerSettlementPeriod.map(formatRatio).join(', ');
+  l('Interest rate:', c.interestRate);
+  l('Annualized 30 day volatility:', c.annualized30DayVolatility);
+  l('Scenario per settlement period (base asset price/volatility):', s);
 };
 
 export const logProtocolInstrument = (i: any): void => {
-  console.log('Instrument:', i.programKey.toString());
-  console.log('Enabled:', i.enabled);
-  console.log('Can be used as quote:', i.canBeUsedAsQuote);
-  console.log('Validate data accounts:', i.validateDataAccountAmount);
-  console.log('Prepare to settle accounts:', i.prepareToSettleAccountAmount);
-  console.log('Settle accounts:', i.settleAccountAmount);
-  console.log('Revert preparation accounts:', i.revertPreparationAccountAmount);
-  console.log('Clean up accounts:', i.cleanUpAccountAmount);
+  l('Instrument:', i.programKey.toString());
+  l('Enabled:', i.enabled);
+  l('Can be used as quote:', i.canBeUsedAsQuote);
+  l('Validate data accounts:', i.validateDataAccountAmount);
+  l('Prepare to settle accounts:', i.prepareToSettleAccountAmount);
+  l('Settle accounts:', i.settleAccountAmount);
+  l('Revert preparation accounts:', i.revertPreparationAccountAmount);
+  l('Clean up accounts:', i.cleanUpAccountAmount);
 };
 
 export const logRfq = (r: Rfq) => {
   const created = parseInt(r.creationTimestamp.toString()) * 1_000;
-  console.log('Address:', r.address.toString());
-  console.log('Taker:', r.taker.toString());
-  console.log('Order type:', formatOrderType(r.orderType));
-  console.log('Size:', r.fixedSize.__kind === 'None' ? 'open' : 'fixed');
-  console.log('Quote asset:', r.quoteMint.toString());
-  console.log('Created:', new Date(created).toString());
-  console.log(`Active window: ${r.activeWindow} seconds`);
-  console.log(`Settlement window: ${r.settlingWindow} seconds`);
-  console.log('Legs:', r.legs.length);
-  console.log('State:', formatState(r.state));
-  console.log('Total responses:', r.totalResponses);
-  console.log('Confirmed responses:', r.confirmedResponses);
-  console.log('Cleared responses:', r.clearedResponses);
+  l('Address:', r.address.toString());
+  l('Taker:', r.taker.toString());
+  l('Order type:', formatOrderType(r.orderType));
+  l('Size:', r.fixedSize.__kind === 'None' ? 'open' : 'fixed');
+  l('Quote asset:', r.quoteMint.toString());
+  l('Created:', new Date(created).toString());
+  l(`Active window: ${r.activeWindow} seconds`);
+  l(`Settlement window: ${r.settlingWindow} seconds`);
+  l('Legs:', r.legs.length);
+  l('State:', formatState(r.state));
+  l('Total responses:', r.totalResponses);
+  l('Confirmed responses:', r.confirmedResponses);
+  l('Cleared responses:', r.clearedResponses);
 };
