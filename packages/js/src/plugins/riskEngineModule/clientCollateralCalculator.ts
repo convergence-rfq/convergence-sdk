@@ -332,7 +332,7 @@ function calculateAssetUnitValue(
       const underlyingAmountPerContract =
         Number(optionCommonData.underlyingAmountPerContract) /
         // 10 ** OPTION_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS;
-        10 ** optionCommonData.underlyingAmountPerContractDecimals;
+        10 ** optionCommonData.underlyingAmoundPerContractDecimals;
       const strikePrice =
         Number(optionCommonData.strikePrice) /
         // 10 ** OPTION_STRIKE_PRICE_DECIMALS;
