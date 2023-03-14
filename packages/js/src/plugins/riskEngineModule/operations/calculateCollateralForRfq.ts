@@ -120,6 +120,8 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
         );
       } else if (isFixedSizeBaseAsset(fixedSize)) {
         const { legsMultiplierBps } = fixedSize;
+        // normally we would divide by 10 ** LEG_MULTIPLIER_DECIMALS but this isn't called from the SDK side
+        //  so we don't need to. When we call this, `legsMultiplierBps` doesn't have decimals
         const legMultiplier = Number(legsMultiplierBps);
 
         const sideToCase = (side: Side) => {

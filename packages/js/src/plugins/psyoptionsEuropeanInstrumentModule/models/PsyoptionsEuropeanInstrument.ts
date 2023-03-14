@@ -96,7 +96,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     }
   ) {
     if (legInfo && this.legInfo) {
-      this.legInfo.amount = legInfo.amount * Math.pow(10, mint.decimals);
+      this.legInfo.amount = legInfo.amount * Math.pow(10, this.decimals);
     }
   }
 
@@ -122,7 +122,7 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     );
 
     return new InstrumentClient(convergence, instrument, {
-      amount: amount * Math.pow(10, mint.decimals),
+      amount: amount * Math.pow(10, instrument.decimals),
       side,
     });
   }

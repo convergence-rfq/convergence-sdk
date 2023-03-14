@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
-import { Response } from '../models/Response';
+import { Response, toResponse } from '../models/Response';
+import { toResponseAccount } from '../accounts';
 import { getPages, convertResponseOutput } from '../helpers';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import {
@@ -75,70 +76,69 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       scope: OperationScope
     ): Promise<FindResponsesByOwnerOutput> => {
       const { owner, responses, responsesPerPage, numPages } = operation.input;
+      const { programs, commitment } = scope;
       scope.throwIfCanceled();
 
       if (responses) {
-        let responsePages: Response[][] = [];
         const responsesByOwner: Response[] = [];
 
-        for (let response of responses) {
+        for (const response of responses) {
           if (response.maker.toBase58() === owner.toBase58()) {
             const rfq = await convergence
               .rfqs()
               .findRfqByAddress({ address: response.rfq });
 
-            response = convertResponseOutput(
+            const convertedResponse = convertResponseOutput(
               response,
               rfq.quoteAsset.instrumentDecimals
             );
 
-            responsesByOwner.push(response);
+            responsesByOwner.push(convertedResponse);
           }
         }
         scope.throwIfCanceled();
 
-        responsePages = getPages(responsesByOwner, responsesPerPage, numPages);
+        const pages = getPages(responsesByOwner, responsesPerPage, numPages);
 
-        return responsePages;
+        return pages;
       }
 
-      const gpaBuilder = new ResponseGpaBuilder(
+      const rfqProgram = convergence.programs().getRfq(programs);
+      const responseGpaBuilder = new ResponseGpaBuilder(
         convergence,
-        convergence.programs().getRfq().address
+        rfqProgram.address
       );
-      const unparsedAccounts = await gpaBuilder.withoutData().get();
+      const unparsedAccounts = await responseGpaBuilder.withoutData().get();
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
       scope.throwIfCanceled();
 
-      const pages = getPages(unparsedAccounts, responsesPerPage, numPages);
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(unparsedAddresses, commitment);
 
-      const responsePages: Response[][] = [];
+      const parsedResponses: Response[] = [];
 
-      for (const page of pages) {
-        const responsePage = [];
+      for (const account of accounts) {
+        const response = toResponse(toResponseAccount(account));
 
-        for (const unparsedAccount of page) {
-          let response = await convergence
-            .rfqs()
-            .findResponseByAddress({ address: unparsedAccount.publicKey });
+        if (response.maker.toBase58() === owner.toBase58()) {
           const rfq = await convergence
             .rfqs()
             .findRfqByAddress({ address: response.rfq });
 
-          if (response.maker.toBase58() === owner.toBase58()) {
-            response = convertResponseOutput(
-              response,
-              rfq.quoteAsset.instrumentDecimals
-            );
+          const convertedResponse = convertResponseOutput(
+            response,
+            rfq.quoteAsset.instrumentDecimals
+          );
 
-            responsePage.push(response);
-          }
-        }
-
-        if (responsePage.length > 0) {
-          responsePages.push(responsePage);
+          parsedResponses.push(convertedResponse);
         }
       }
 
-      return responsePages;
+      const pages = getPages(parsedResponses, responsesPerPage, numPages);
+
+      return pages;
     },
   };

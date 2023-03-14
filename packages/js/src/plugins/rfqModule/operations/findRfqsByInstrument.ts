@@ -1,4 +1,5 @@
-import { Rfq } from '../models';
+import { Rfq, toRfq } from '../models';
+import { toRfqAccount } from '../accounts';
 import { convertRfqOutput, getPages } from '../helpers';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import {
@@ -74,6 +75,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
     ): Promise<FindRfqsByInstrumentOutput> => {
       const { rfqs, instrumentProgram, rfqsPerPage, numPages } =
         operation.input;
+      const { commitment } = scope;
 
       const protocol = await convergence.protocol().get();
       const collateralMintDecimals = (
@@ -85,15 +87,15 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       if (rfqs) {
         const rfqsByInstrument: Rfq[] = [];
 
-        for (let rfq of rfqs) {
+        for (const rfq of rfqs) {
           for (const leg of rfq.legs) {
             if (
               leg.instrumentProgram.toBase58() ===
               instrumentProgram.address.toBase58()
             ) {
-              rfq = convertRfqOutput(rfq, collateralMintDecimals);
+              const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
-              rfqsByInstrument.push(rfq);
+              rfqsByInstrument.push(convertedRfq);
 
               break;
             }
@@ -113,10 +115,16 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
       const parsedRfqs: Rfq[] = [];
 
-      for (const unparsedAccount of unparsedAccounts) {
-        const rfq = await convergence
-          .rfqs()
-          .findRfqByAddress({ address: unparsedAccount.publicKey });
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
+
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(unparsedAddresses, commitment);
+
+      for (const account of accounts) {
+        const rfq = toRfq(toRfqAccount(account));
 
         for (const leg of rfq.legs) {
           if (

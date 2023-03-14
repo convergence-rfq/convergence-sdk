@@ -85,7 +85,7 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     }
   ) {
     if (legInfo && this.legInfo) {
-      this.legInfo.amount = legInfo.amount * Math.pow(10, mint.decimals);
+      this.legInfo.amount = legInfo.amount * Math.pow(10, this.decimals);
     }
   }
 
