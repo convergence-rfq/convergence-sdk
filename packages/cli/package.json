@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/cli",
-  "version": "4.0.23-rc.9",
+  "version": "4.0.24-rc.3",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -10,7 +10,7 @@
   "bin": {
     "convergence": "dist/cjs/index.cjs"
   },
-  "types": "dist/types/index.d.ts",
+  "types": "dist/types/src/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/esm/index.mjs",
@@ -24,15 +24,19 @@
     "/src"
   ],
   "scripts": {
-    "cli:run": "yarn build && node dist/cjs/index.cjs",
+    "cli": "ts-node src/index.ts",
     "lint": "eslint --ext js,ts,tsx src",
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
-    "test": "ts-mocha -p tsconfig.json --type-check --parallel --timeout 100000 tests/**/*.spec.ts"
+    "test": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/**/*.spec.ts --file tests/integration/setup.spec.ts tests/integration/bootstrap.spec.ts",
+    "test:integration:setup": "ts-mocha -p tsconfig.json --type-check --parallel --timeout 100000 tests/**/*.spec.ts -g setup",
+    "test:integration:bootstrap": "ts-mocha -p tsconfig.json --type-check --parallel --timeout 100000 tests/**/*.spec.ts -g bootstrap",
+    "test:unit:utils": "ts-mocha -p tsconfig.json --type-check --parallel --timeout 100000 tests/**/*.spec.ts -g utils",
+    "test:unit:rfq": "ts-mocha -p tsconfig.json --type-check --parallel --timeout 100000 tests/**/*.spec.ts -g rfq"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "4.0.24-rc.1",
+    "@convergence-rfq/sdk": "4.0.24-rc.2",
     "@solana/web3.js": "^1.73.0",
     "commander": "^10.0.0"
   },

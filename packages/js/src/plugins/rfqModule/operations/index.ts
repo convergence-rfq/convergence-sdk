@@ -21,6 +21,7 @@ export * from './prepareMoreLegsSettlement';
 export * from './prepareSettlement';
 export * from './prepareSettlementAndPrepareMoreLegs';
 export * from './respondToRfq';
+export * from './findRfqs';
 export * from './revertSettlementPreparation';
 export * from './settle';
 export * from './settleOnePartyDefault';
