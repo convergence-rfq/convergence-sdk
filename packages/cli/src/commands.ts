@@ -136,6 +136,33 @@ export const getRiskEngineConfigCmd = (cli: Command) =>
     .description('Get risk engine risk config')
     .action(getRiskEngineConfig);
 
+export const addCommand = (
+  cli: Command,
+  name: string,
+  description: string,
+  action: (...args: any[]) => any,
+  options?: Array<{
+    flags: string;
+    description: string;
+    required?: boolean;
+    defaultValue?: any;
+  }>
+) => {
+  const command = cli.command(name).description(description).action(action);
+
+  if (options) {
+    for (const { flags, required, description, defaultValue } of options) {
+      if (!required) {
+        command.option(flags, description, defaultValue);
+      } else {
+        command.requiredOption(flags, description, defaultValue);
+      }
+    }
+  }
+
+  return command;
+};
+
 // Protocol
 
 export const initializeProtocolCmd = (cli: Command) =>
@@ -186,62 +213,92 @@ export const addBaseAssetCmd = (cli: Command) =>
     .action(addBaseAsset);
 
 export const registerMintCmd = (cli: Command) =>
-  cli
-    .command('register-mint')
-    .description('Registers mint')
-    .requiredOption('--mint <string>', 'Mint address')
-    .option('--base-asset-index <number>', 'Base asset index')
-    .action(registerMint);
+  addCommand(cli, 'register-mint', 'Registers mint', registerMint, [
+    { flags: '--mint <string>', description: 'Mint address' },
+    {
+      flags: '--base-asset-index <number>',
+      description: 'Base asset index',
+      required: false,
+    },
+  ]);
 
 export const getRegisteredMintsCmd = (cli: Command) =>
-  cli
-    .command('get-registered-mints')
-    .description('Get registered mints')
-    .action(getRegisteredMints);
+  addCommand(
+    cli,
+    'get-registered-mints',
+    'Get registered mints',
+    getRegisteredMints
+  );
 
 export const getProtocolCmd = (cli: Command) =>
-  cli.command('get-protocol').description('Get protocol').action(getProtocol);
+  addCommand(cli, 'get-protocol', 'Get protocol', getProtocol);
 
 export const getBaseAssetsCmd = (cli: Command) =>
-  cli
-    .command('get-base-assets')
-    .description('Get base assets')
-    .action(getBaseAssets);
+  addCommand(cli, 'get-base-assets', 'Get base assets', getBaseAssets);
 
-// Rfqs
+// RFQs
 
 export const getRfqsCmd = (cli: Command) =>
-  cli.command('get-rfqs').description('Get RFQs').action(getRfqs);
+  addCommand(cli, 'get-rfqs', 'Get RFQs', getRfqs);
 
 export const createRfqCmd = (cli: Command) =>
-  cli
-    .command('create-rfq')
-    .description('Create RFQ')
-    .requiredOption('--quote-mint <string>', 'Quote mint')
-    .requiredOption('--base-mint <string>', 'Base mint')
-    .requiredOption('--side <string>', 'Side')
-    .requiredOption('--size <string>', 'Size')
-    .requiredOption('--amount <number>', 'Amount')
-    .requiredOption('--order-type <string>', 'Order type')
-    .option('--active-window <number>', 'Active window in seconds', '60')
-    .option(
-      '--settlement-window <number>',
-      'Settlement window in seconds',
-      '60'
-    )
-    .action(createRfq);
+  addCommand(cli, 'create-rfq', 'Create RFQ', createRfq, [
+    {
+      flags: '--quote-mint <string>',
+      description: 'Quote mint',
+    },
+    {
+      flags: '--base-mint <string>',
+      description: 'Base mint',
+    },
+    {
+      flags: '--side <string>',
+      description: 'Side',
+    },
+    {
+      flags: '--size <string>',
+      description: 'Size',
+    },
+    {
+      flags: '--amount <number>',
+      description: 'Amount',
+    },
+    {
+      flags: '--order-type <string>',
+      description: 'Order type',
+    },
+    {
+      flags: '--active-window <number>',
+      description: 'Active window in seconds',
+      defaultValue: '60',
+    },
+    {
+      flags: '--settlement-window <number>',
+      description: 'Settlement window in seconds',
+      defaultValue: '60',
+    },
+  ]);
 
 // Collateral
 
 export const initializeCollateralAccountCmd = (cli: Command) =>
-  cli
-    .command('initialize-collateral-account')
-    .description('Initializes collateral account')
-    .action(initializeCollateralAccount);
+  addCommand(
+    cli,
+    'initialize-collateral-account',
+    'Initializes collateral account',
+    initializeCollateralAccount
+  );
 
 export const fundCollateralAccountCmd = (cli: Command) =>
-  cli
-    .command('fund-collateral-account')
-    .description('Funds collateral account')
-    .requiredOption('--amount <number>', 'Amount')
-    .action(fundCollateralAccount);
+  addCommand(
+    cli,
+    'fund-collateral-account',
+    'Funds collateral account',
+    fundCollateralAccount,
+    [
+      {
+        flags: '--amount <number>',
+        description: 'Amount',
+      },
+    ]
+  );

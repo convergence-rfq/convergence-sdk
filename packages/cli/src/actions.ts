@@ -18,7 +18,7 @@ import {
   getSize,
 } from './helpers';
 import {
-  logAddress,
+  logPk,
   logResponse,
   logBaseAsset,
   logRfq,
@@ -37,7 +37,7 @@ export const createMint = async (opts: Opts) => {
     mintAuthority: user.publicKey,
     decimals: opts.decimals,
   });
-  logAddress(mint.address);
+  logPk(mint.address);
   logResponse(response);
 };
 
@@ -47,7 +47,7 @@ export const createWallet = async (opts: Opts) => {
     mint: new PublicKey(opts.mint),
     owner: new PublicKey(opts.owner),
   });
-  logAddress(wallet.address);
+  logPk(wallet.address);
   logResponse(response);
 };
 
@@ -119,7 +119,7 @@ export const registerMint = async (opts: Opts) => {
 export const getRegisteredMints = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const mints = await cvg.protocol().getRegisteredMints();
-  mints.map((x: any) => logAddress(x.address));
+  mints.map((x: any) => logPk(x.address));
 };
 
 export const getBaseAssets = async (opts: Opts) => {
@@ -173,7 +173,7 @@ export const createRfq = async (opts: Opts) => {
     activeWindow: opts.activeWindow,
     settlingWindow: opts.settlingWindow,
   });
-  logAddress(rfq.address);
+  logPk(rfq.address);
   logResponse(response);
 };
 
@@ -182,7 +182,7 @@ export const createRfq = async (opts: Opts) => {
 export const initializeCollateralAccount = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const { collateral, response } = await cvg.collateral().initialize({});
-  logAddress(collateral.address);
+  logPk(collateral.address);
   logResponse(response);
 };
 
@@ -278,6 +278,6 @@ export const airdropDevnetTokens = async (opts: Opts) => {
     cvg,
     owner
   );
-  logAddress(collateralWallet.address);
-  registeredMintWallets.map((wallet: any) => logAddress(wallet.address));
+  logPk(collateralWallet.address);
+  registeredMintWallets.map((wallet: any) => logPk(wallet.address));
 };

@@ -18,6 +18,7 @@ export const getSide = (side: string): Side => {
   }
 };
 
+// TODO: Account for legs multiplier bps and quote amount
 export const getSize = (size: string): FixedSize => {
   switch (size) {
     case 'fixed-base':

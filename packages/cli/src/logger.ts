@@ -9,19 +9,20 @@ import {
 
 import { formatOrderType, formatState } from './helpers';
 
-// NOTE: Improves readability of code
+// NOTE: Improves readability of code by preserving terseness
 const l = (x: any, y?: any) => console.log(x, y);
 
-// NOTE: Improves readability of code
+// NOTE: Same
 const N = Number;
 
-export const logAddress = (p: PublicKey): void => {
-  l('Address:', p.toString());
-};
+export const logPk = (p: PublicKey): void => l('Address:', p.toString());
 
-export const logResponse = (r: SendAndConfirmTransactionResponse): void => {
+export const logTx = (t: string): void => l('Tx:', t);
+
+export const logLeg = (leg: any): void => l('Leg:', JSON.stringify(leg));
+
+export const logResponse = (r: SendAndConfirmTransactionResponse): void =>
   l('Tx:', r.signature);
-};
 
 export const logBaseAsset = (b: BaseAsset): void => {
   l('Address:', b.address.toString());
@@ -42,14 +43,6 @@ export const logProtocol = (p: Protocol): void => {
   l(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
   l(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
   p.instruments.map((i: any) => logProtocolInstrument(i));
-};
-
-export const logTx = (t: string): void => {
-  l('Tx:', t);
-};
-
-export const logLeg = (l: any): void => {
-  l('Leg:', JSON.stringify(l));
 };
 
 export const logRiskEngineConfig = (r: any): void => {
