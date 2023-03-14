@@ -109,18 +109,6 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
         .rpc()
         .getMultipleAccounts(unparsedAddresses, commitment);
 
-      // for (const unparsedAccount of unparsedAccounts) {
-      //   const rfq = await convergence
-      //     .rfqs()
-      //     .findRfqByAddress({ address: unparsedAccount.publicKey });
-
-      //   if (rfq.state === StoredRfqState.Active) {
-      //     const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
-
-      //     parsedRfqs.push(convertedRfq);
-      //   }
-      // }
-      
       const parsedRfqs: Rfq[] = [];
 
       for (const account of accounts) {

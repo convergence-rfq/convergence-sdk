@@ -141,38 +141,5 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       const pages = getPages(parsedResponses, responsesPerPage, numPages);
 
       return pages;
-
-      //--------------------------------------------
-
-      // const responsePages: Response[][] = [];
-
-      // for (const page of pages) {
-      //   const responsePage = [];
-
-      //   for (const unparsedAccount of page) {
-      //     let response = await convergence
-      //       .rfqs()
-      //       .findResponseByAddress({ address: unparsedAccount.publicKey });
-
-      //     if (response.rfq.toBase58() === address.toBase58()) {
-      //       const rfq = await convergence
-      //         .rfqs()
-      //         .findRfqByAddress({ address: response.rfq });
-
-      //       response = convertResponseOutput(
-      //         response,
-      //         rfq.quoteAsset.instrumentDecimals
-      //       );
-
-      //       responsePage.push(response);
-      //     }
-      //   }
-      //   if (responsePage.length > 0) {
-      //     responsePages.push(responsePage);
-      //   }
-      // }
-      // scope.throwIfCanceled();
-
-      // return responsePages;
     },
   };

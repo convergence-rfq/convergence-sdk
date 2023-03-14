@@ -10,7 +10,7 @@
   "bin": {
     "convergence": "dist/cjs/index.cjs"
   },
-  "types": "dist/types/index.d.ts",
+  "types": "dist/types/src/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/esm/index.mjs",

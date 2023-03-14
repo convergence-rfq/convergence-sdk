@@ -288,6 +288,13 @@ export const prepareSettlementBuilder = async (
       rfqModel,
     });
 
+    const callerTokens = await getOrCreateAssociatedTokenAccount(
+      convergence.connection,
+      caller as Keypair,
+      baseAssetMints[legIndex].address,
+      caller.publicKey
+    );
+
     const legAccounts: AccountMeta[] = [
       // `caller`
       {
@@ -302,12 +309,7 @@ export const prepareSettlementBuilder = async (
         //   owner: caller.publicKey,
         //   programs,
         // }),
-        pubkey: await getOrCreateAssociatedTokenAccount(
-          convergence.connection,
-          caller as Keypair,
-          baseAssetMints[legIndex].address,
-          caller.publicKey
-        ).then((account) => account.address),
+        pubkey: callerTokens.address,
         isSigner: false,
         isWritable: true,
       },

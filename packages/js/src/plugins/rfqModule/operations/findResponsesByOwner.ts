@@ -139,34 +139,6 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
 
       const pages = getPages(parsedResponses, responsesPerPage, numPages);
 
-      // const responsePages: Response[][] = [];
-
-      // for (const page of pages) {
-      //   const responsePage = [];
-
-      //   for (const unparsedAccount of page) {
-      //     let response = await convergence
-      //       .rfqs()
-      //       .findResponseByAddress({ address: unparsedAccount.publicKey });
-      //     const rfq = await convergence
-      //       .rfqs()
-      //       .findRfqByAddress({ address: response.rfq });
-
-      //     if (response.maker.toBase58() === owner.toBase58()) {
-      //       response = convertResponseOutput(
-      //         response,
-      //         rfq.quoteAsset.instrumentDecimals
-      //       );
-
-      //       responsePage.push(response);
-      //     }
-      //   }
-
-      //   if (responsePage.length > 0) {
-      //     responsePages.push(responsePage);
-      //   }
-      // }
-
       return pages;
     },
   };

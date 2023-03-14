@@ -288,17 +288,17 @@ export const convertFixedSizeInput = (
   quoteAsset: QuoteAsset
 ): FixedSize => {
   if (fixedSize.__kind == 'BaseAsset') {
-    const parsedLegsMultiplierBps =
+    const convertedLegsMultiplierBps =
       Number(fixedSize.legsMultiplierBps) *
       Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
-    fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+    fixedSize.legsMultiplierBps = convertedLegsMultiplierBps;
   } else if (fixedSize.__kind == 'QuoteAsset') {
-    const parsedQuoteAmount =
+    const convertedQuoteAmount =
       Number(fixedSize.quoteAmount) *
       Math.pow(10, quoteAsset.instrumentDecimals);
 
-    fixedSize.quoteAmount = parsedQuoteAmount;
+    fixedSize.quoteAmount = convertedQuoteAmount;
   }
 
   return fixedSize;
@@ -482,9 +482,8 @@ export const instrumentsToLegsAndLegsSize = async (
     );
 
     const leg = await instrumentClient.toLegData();
-
     legs.push(leg);
-    // legsSize += await instrumentClient.getLegDataSize();
+
     legsSize += instrumentClient.serializeLegData(leg).length;
   }
 

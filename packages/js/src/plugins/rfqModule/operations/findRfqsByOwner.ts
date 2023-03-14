@@ -110,16 +110,6 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
 
       const parsedRfqs: Rfq[] = [];
 
-      // for (const unparsedAccount of unparsedAccounts) {
-      //   const rfq = await convergence
-      //     .rfqs()
-      //     .findRfqByAddress({ address: unparsedAccount.publicKey });
-
-      //   const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
-
-      //   parsedRfqs.push(convertedRfq);
-      // }
-
       const unparsedAddresses = unparsedAccounts.map(
         (account) => account.publicKey
       );

@@ -115,25 +115,6 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
       const parsedRfqs: Rfq[] = [];
 
-      // for (const unparsedAccount of unparsedAccounts) {
-      //   const rfq = await convergence
-      //     .rfqs()
-      //     .findRfqByAddress({ address: unparsedAccount.publicKey });
-
-      //   for (const leg of rfq.legs) {
-      //     if (
-      //       leg.instrumentProgram.toBase58() ===
-      //       instrumentProgram.address.toBase58()
-      //     ) {
-      //       const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
-
-      //       parsedRfqs.push(convertedRfq);
-
-      //       break;
-      //     }
-      //   }
-      // }
-
       const unparsedAddresses = unparsedAccounts.map(
         (account) => account.publicKey
       );
