@@ -159,15 +159,15 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         taker = convergence.identity(),
         instruments,
         orderType,
+        fixedSize,
         quoteAsset,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
-      let { fixedSize } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-      fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
+      const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
       const [legs, expectedLegsHash] =
         await instrumentsToLegsAndExpectedLegsHash(convergence, instruments);
 
@@ -179,7 +179,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           legsHash: Buffer.from(expectedLegsHash),
           orderType,
           quoteAsset,
-          fixedSize,
+          fixedSize: convertedFixedSize,
           activeWindow,
           settlingWindow,
           recentTimestamp,
@@ -191,7 +191,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           ...operation.input,
           taker,
           rfq: rfqPda,
-          fixedSize,
+          fixedSize: convertedFixedSize,
           instruments,
           expectedLegsHash,
           recentTimestamp,
@@ -234,7 +234,6 @@ export const createAndFinalizeRfqConstructionBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { payer = convergence.rpc().getDefaultFeePayer() } = options;
-
   const { rfq } = params;
 
   const rfqBuilder = await createRfqBuilder(

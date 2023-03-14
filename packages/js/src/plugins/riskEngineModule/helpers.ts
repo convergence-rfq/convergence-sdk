@@ -38,8 +38,8 @@ export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
     }
 
     return new BN(fixedSize.quoteAmount)
-      .muln(10 ** LEG_MULTIPLIER_DECIMALS)
-      .muln(10 ** ABSOLUTE_PRICE_DECIMALS)
+      .mul(new BN(10).pow(new BN(LEG_MULTIPLIER_DECIMALS)))
+      .mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)))
       .div(priceBps);
   }
 
