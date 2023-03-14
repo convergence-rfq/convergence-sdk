@@ -1,10 +1,6 @@
 {
   "include": ["packages/*/src"],
   "exclude": ["node_modules", "packages/*/node_modules"],
-  "references": [
-    { "path":"packages/js" },
-    { "path":"packages/cli" },
-  ],
   "compilerOptions": {
     "baseUrl": ".",
     "declaration": true,

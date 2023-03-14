@@ -53,8 +53,9 @@ console.log('Tx:', response.signature);
 
 - [Node (18.12.1)](https://nodejs.org/en/download/)
 - [Solana (1.14.11)](https://docs.solana.com/cli/install-solana-cli-tools#use-solanas-install-tool)
+- [PNPM (6.23.6)](https://pnpm.io/installation)
 - [Yarn (1.22.15)](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
-- [NX (14.8.6)](https://nx.dev/recipes/adopting-nx/adding-to-monorepo)
+- [Turbo (1.7.0)](https://turbo.build/)
 
 **Setup**
 
@@ -74,8 +75,8 @@ yarn test:all
 Run the validator and tests separately.
 
 ```bash
+yarn validator:run
 yarn validator:logs
-yarn test # In a separate terminal
 ```
 
 **NPM**

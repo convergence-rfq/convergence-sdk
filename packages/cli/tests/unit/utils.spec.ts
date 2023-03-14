@@ -1,0 +1,56 @@
+import { expect } from 'expect';
+import sinon, { SinonStub } from 'sinon';
+import { PublicKey } from '@solana/web3.js';
+
+import { runCli, getPk, ADDRESS, TX } from './../helpers';
+
+describe('utils', () => {
+  let stub: SinonStub;
+
+  let mint: string;
+  let wallet: string;
+
+  beforeEach(() => {
+    stub = sinon.stub(console, 'log');
+  });
+
+  afterEach(() => {
+    stub.restore();
+  });
+
+  it('airdrop-sol', async () => {
+    await runCli(['airdrop-sol', '--amount', '1']);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
+  it('create-mint', async () => {
+    await runCli(['create-mint', '--decimals', '9'], 'mint-authority');
+    mint = stub.args[0][1];
+    expect(new PublicKey(mint)).toBeTruthy();
+    expect(stub.args[1][0]).toEqual(TX);
+  });
+
+  it('create-wallet', async () => {
+    await runCli(['create-wallet', '--owner', getPk('maker'), '--mint', mint]);
+    wallet = stub.args[0][1];
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+    expect(new PublicKey(wallet)).toBeTruthy();
+  });
+
+  it('mint-to', async () => {
+    await runCli(
+      [
+        'mint-to',
+        '--wallet',
+        wallet,
+        '--mint',
+        mint,
+        '--amount',
+        '1000000000000',
+      ],
+      'mint-authority'
+    );
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+});

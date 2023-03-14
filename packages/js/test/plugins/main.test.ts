@@ -2956,6 +2956,4 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     const rfqs = await cvg.rfqs().findRfqs({});
     t.assert(rfqs.length > 0, 'found rfqs');
   });
-
-  // // *<>*<>*END NON-INTERDEPENDENT TESTS WRAPPER*<>*<>*//
 });
