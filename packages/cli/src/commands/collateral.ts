@@ -8,7 +8,7 @@ export const initializeCollateralAccountCmd = (c: Command) =>
   addCmd(
     c,
     'collateral:initialize-account',
-    'Initializes collateral account',
+    'initializes collateral account',
     initializeCollateralAccount
   );
 
@@ -16,12 +16,12 @@ export const fundCollateralAccountCmd = (c: Command) =>
   addCmd(
     c,
     'collateral:fund-account',
-    'Funds collateral account',
+    'funds collateral account',
     fundCollateralAccount,
     [
       {
         flags: '--amount <number>',
-        description: 'Amount',
+        description: 'amount',
       },
     ]
   );
