@@ -18,11 +18,13 @@ import {
   getRegisteredMintsCmd,
   getProtocolConfigCmd,
   getBaseAssetsCmd,
-  getRfqsCmd,
+  getAllRfqsCmd,
+  getActiveRfqsCmd,
   airdropDevnetTokensCmd,
   fundCollateralAccountCmd,
   initializeCollateralAccountCmd,
   createRfqCmd,
+  getRfqCmd,
 } from './commands';
 
 const VERSION = '4.0.24-rc.5';
@@ -60,7 +62,9 @@ export const makeCli = (): Command => {
     initializeCollateralAccountCmd,
     fundCollateralAccountCmd,
     createRfqCmd,
-    getRfqsCmd,
+    getRfqCmd,
+    getAllRfqsCmd,
+    getActiveRfqsCmd,
   ];
 
   const cli = new Command();

@@ -5,12 +5,19 @@ import {
   BaseAsset,
   Rfq,
   Protocol,
+  RegisteredMint,
 } from '@convergence-rfq/sdk';
 
-import { formatOrderType, formatState } from './helpers';
+import {
+  formatOrderType,
+  formatState,
+  formatSide,
+  formatInstrument,
+} from './helpers';
+import { Instrument } from './types';
 
 // NOTE: Improves readability of code by preserving terseness
-const l = (x: any, y?: any) => console.log(x, y);
+const l = (...args: any[]) => console.log(...args);
 
 // NOTE: Same
 const N = Number;
@@ -19,17 +26,32 @@ export const logPk = (p: PublicKey): void => l('Address:', p.toString());
 
 export const logTx = (t: string): void => l('Tx:', t);
 
-export const logLeg = (leg: any): void => l('Leg:', JSON.stringify(leg));
+export const logInstrument = (i: Instrument): void => {
+  if (!i.legInfo) {
+    throw new Error('Invalid instrument');
+  }
+  l('Instrument:', formatInstrument(i));
+  l('Amount:', N(i?.legInfo?.amount.toString()));
+  l('Side:', formatSide(i.legInfo.side));
+  l('Decimals:', N(i.mint.decimals.toString()));
+  l('Mint:', i.mint.address.toString());
+};
 
 export const logResponse = (r: SendAndConfirmTransactionResponse): void =>
   l('Tx:', r.signature);
 
 export const logBaseAsset = (b: BaseAsset): void => {
   l('Address:', b.address.toString());
-  l('Index:', b.index.value);
   l('Ticker:', b.ticker.toString());
+  // TODO: Update SDK model
+  //l('Active:', b.enabled);
+  l('Index:', b.index.value);
   l('Oracle:', b.priceOracle.address.toString());
   l('Risk category:', parseInt(b.riskCategory.toString()));
+};
+
+export const logRegisteredMint = (r: RegisteredMint): void => {
+  l('Address:', r.address.toString());
 };
 
 export const logProtocol = (p: Protocol): void => {
@@ -42,7 +64,7 @@ export const logProtocol = (p: Protocol): void => {
   l(`Maker fee: ${p.settleFees.makerBps.toString()} bps`);
   l(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
   l(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
-  p.instruments.map((i: any) => logProtocolInstrument(i));
+  p.instruments.map(logProtocolInstrument);
 };
 
 export const logRiskEngineConfig = (r: any): void => {

@@ -1,6 +1,5 @@
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
-  BaseAsset,
   token,
   toRiskCategoryInfo,
   toScenario,
@@ -23,9 +22,10 @@ import {
   logBaseAsset,
   logRfq,
   logProtocol,
-  logLeg,
+  logInstrument,
   logTx,
   logRiskEngineConfig,
+  logRegisteredMint,
 } from './logger';
 
 // Utils
@@ -119,13 +119,13 @@ export const registerMint = async (opts: Opts) => {
 export const getRegisteredMints = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const mints = await cvg.protocol().getRegisteredMints();
-  mints.map((x: any) => logPk(x.address));
+  mints.map(logRegisteredMint);
 };
 
 export const getBaseAssets = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const baseAssets = await cvg.protocol().getBaseAssets();
-  baseAssets.map((baseAsset: BaseAsset) => logBaseAsset(baseAsset));
+  baseAssets.map(logBaseAsset);
 };
 
 export const getProtocol = async (opts: Opts) => {
@@ -136,21 +136,28 @@ export const getProtocol = async (opts: Opts) => {
 
 // Rfqs
 
-export const getRfqs = async (opts: Opts) => {
+export const getAllRfqs = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   // NOTE: Paging is not implemented yet
   const rfqs = await cvg.rfqs().findRfqs({ page: 0, pageCount: 10 });
   rfqs.map(logRfq);
 };
 
-export const getRfqDetails = async (opts: Opts) => {
+export const getActiveRfqs = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  // NOTE: Paging is not implemented yet
+  const rfqs = await cvg.rfqs().findRfqsByActive({});
+  rfqs.map((r) => r.map(logRfq));
+};
+
+export const getRfq = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const rfq = await cvg
     .rfqs()
-    .findRfqByAddress({ address: new PublicKey(opts.rfqAddress) });
-  const legs = await legsToInstruments(cvg, rfq.legs);
+    .findRfqByAddress({ address: new PublicKey(opts.address) });
   logRfq(rfq);
-  legs.map(logLeg);
+  const legs = await legsToInstruments(cvg, rfq.legs);
+  legs.map(logInstrument);
 };
 
 export const createRfq = async (opts: Opts) => {
