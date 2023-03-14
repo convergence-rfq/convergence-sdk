@@ -12,14 +12,14 @@ export const ADDRESS = 'Address:';
 
 export const CTX_FILE = './tests/ctx.json';
 
-export type Ctx = {
-  baseMint: string;
-  quoteMint: string;
-  takerQuoteWallet: string;
-  takerBaseWallet: string;
-  makerQuoteWallet: string;
-  makerBaseWallet: string;
-};
+export class Ctx {
+  baseMint = '';
+  quoteMint = '';
+  takerQuoteWallet = '';
+  takerBaseWallet = '';
+  makerQuoteWallet = '';
+  makerBaseWallet = '';
+}
 
 export const readCtx = (): Ctx => {
   const json = fs.readFileSync(CTX_FILE, 'utf-8');

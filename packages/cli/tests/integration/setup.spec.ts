@@ -5,7 +5,7 @@ import { PublicKey } from '@solana/web3.js';
 import { runCli, getPk, ADDRESS, TX, Ctx, writeCtx } from './../helpers';
 
 describe('setup', () => {
-  const ctx = {} as Ctx;
+  const ctx = new Ctx();
   let stub: SinonStub;
 
   beforeEach(() => {

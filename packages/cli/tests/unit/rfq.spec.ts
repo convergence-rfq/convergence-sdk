@@ -4,7 +4,7 @@ import sinon, { SinonStub } from 'sinon';
 import { runCli, ADDRESS, Ctx, readCtx } from './../helpers';
 
 describe('rfq', () => {
-  let ctx = {} as Ctx;
+  let ctx = new Ctx();
   let stub: SinonStub;
 
   before(() => {

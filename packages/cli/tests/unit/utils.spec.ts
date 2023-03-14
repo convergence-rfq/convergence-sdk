@@ -47,7 +47,7 @@ describe('utils', () => {
   it('token:mint-to', async () => {
     await runCli(
       [
-        'mint-to',
+        'token:mint-to',
         '--wallet',
         wallet,
         '--mint',
