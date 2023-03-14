@@ -3,10 +3,11 @@ import { Command } from 'commander';
 import { initializeCollateralAccount, fundCollateralAccount } from '../actions';
 
 import { addCmd } from './helpers';
+
 export const initializeCollateralAccountCmd = (c: Command) =>
   addCmd(
     c,
-    'initialize-collateral-account',
+    'collateral:initialize-account',
     'Initializes collateral account',
     initializeCollateralAccount
   );
@@ -14,7 +15,7 @@ export const initializeCollateralAccountCmd = (c: Command) =>
 export const fundCollateralAccountCmd = (c: Command) =>
   addCmd(
     c,
-    'fund-collateral-account',
+    'collateral:fund-account',
     'Funds collateral account',
     fundCollateralAccount,
     [

@@ -4,7 +4,7 @@ import sinon, { SinonStub } from 'sinon';
 import { runCli, ADDRESS, Ctx, readCtx } from './../helpers';
 
 describe('rfq', () => {
-  let ctx = {} as Ctx;
+  let ctx = new Ctx();
   let stub: SinonStub;
 
   before(() => {
@@ -19,10 +19,10 @@ describe('rfq', () => {
     stub.restore();
   });
 
-  it('create-rfq [taker]', async () => {
+  it('rfq:create [taker]', async () => {
     await runCli(
       [
-        'create-rfq',
+        'rfq:create',
         '--quote-mint',
         ctx.quoteMint,
         '--base-mint',
@@ -41,8 +41,8 @@ describe('rfq', () => {
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
-  it('get-rfqs [maker]', async () => {
-    await runCli(['get-rfqs']);
+  it('rfq:get-all [maker]', async () => {
+    await runCli(['rfq:get-all']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 });

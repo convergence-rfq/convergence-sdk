@@ -20,14 +20,14 @@ describe('bootstrap', () => {
     stub.restore();
   });
 
-  it('initialize-protocol', async () => {
-    await runCli(['initialize-protocol', '--collateral-mint', ctx.quoteMint]);
+  it('protocol:initialize', async () => {
+    await runCli(['protocol:initialize', '--collateral-mint', ctx.quoteMint]);
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('add-instrument [spot]', async () => {
+  it('protocol:add-instrument [spot]', async () => {
     await runCli([
-      'add-instrument',
+      'protocol:add-instrument',
       '--instrument-program',
       sdk.spotInstrumentProgram.address.toString(),
       '--can-be-used-as-quote',
@@ -46,9 +46,9 @@ describe('bootstrap', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('add-instrument [psyoptions american options]', async () => {
+  it('protocol:add-instrument [psyoptions american options]', async () => {
     await runCli([
-      'add-instrument',
+      'protocol:add-instrument',
       '--instrument-program',
       sdk.psyoptionsAmericanInstrumentProgram.address.toString(),
       '--can-be-used-as-quote',
@@ -67,9 +67,9 @@ describe('bootstrap', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('add-instrument [psyoptions european options]', async () => {
+  it('protocol:add-instrument [psyoptions european options]', async () => {
     await runCli([
-      'add-instrument',
+      'protocol:add-instrument',
       '--instrument-program',
       sdk.psyoptionsEuropeanInstrumentProgram.address.toString(),
       '--can-be-used-as-quote',
@@ -88,9 +88,9 @@ describe('bootstrap', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('initialize-risk-engine', async () => {
+  it('risk-engine:initialize', async () => {
     await runCli([
-      'initialize-risk-engine',
+      'risk-engine:initialize',
       '--collateral-for-variable-size-rfq-creation',
       '1000000000',
       '--collateral-for-fixed-quote-amount-rfq-creation',
@@ -103,9 +103,9 @@ describe('bootstrap', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('add-base-asset [base]', async () => {
+  it('protocol:add-base-asset [base]', async () => {
     await runCli([
-      'add-base-asset',
+      'protocol:add-base-asset',
       '--ticker',
       'BTC',
       '--oracle-address',
@@ -114,19 +114,19 @@ describe('bootstrap', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('get-base-assets', async () => {
-    await runCli(['get-base-assets']);
+  it('protocol:get-base-assets', async () => {
+    await runCli(['protocol:get-base-assets']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
-  it('register-mint [quote]', async () => {
-    await runCli(['register-mint', '--mint', ctx.quoteMint]);
+  it('protocol:register-mint [quote]', async () => {
+    await runCli(['protocol:register-mint', '--mint', ctx.quoteMint]);
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('register-mint [base]', async () => {
+  it('protocol:register-mint [base]', async () => {
     await runCli([
-      'register-mint',
+      'protocol:register-mint',
       '--base-asset-index',
       '0',
       '--mint',
@@ -135,19 +135,19 @@ describe('bootstrap', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('get-registered-mints', async () => {
-    await runCli(['get-registered-mints']);
+  it('protocol:get-registered-mints', async () => {
+    await runCli(['protocol:get-registered-mints']);
     expect(stub.args[1][0]).toEqual(ADDRESS);
   });
 
-  it('initialize-collateral-account [maker]', async () => {
-    await runCli(['initialize-collateral-account'], 'taker');
+  it('collateral:initialize-account [maker]', async () => {
+    await runCli(['collateral:initialize-account'], 'taker');
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
   });
 
-  it('fund-collateral-account [maker]', async () => {
-    await runCli(['fund-collateral-account', '--amount', '1000'], 'taker');
+  it('collateral:fund-account [maker]', async () => {
+    await runCli(['collateral:fund-account', '--amount', '1000'], 'taker');
     expect(stub.args[0][0]).toEqual(TX);
   });
 });

@@ -40,7 +40,7 @@ const riskEngineOptions = [
 export const initializeRiskEngineCmd = (c: Command) =>
   addCmd(
     c,
-    'initialize-risk-engine',
+    'risk-engine:initialize',
     'Initializes risk engine',
     initializeRiskEngine,
     riskEngineOptions
@@ -49,7 +49,7 @@ export const initializeRiskEngineCmd = (c: Command) =>
 export const updateRiskEngineCmd = (c: Command) =>
   addCmd(
     c,
-    'update-risk-engine',
+    'risk-engine:update',
     'Updates risk engine',
     updateRiskEngine,
     riskEngineOptions
@@ -58,7 +58,7 @@ export const updateRiskEngineCmd = (c: Command) =>
 export const setRiskEngineInstrumentTypeCmd = (c: Command) =>
   addCmd(
     c,
-    'set-risk-engine-instrument-type',
+    'risk-engine:set-instrument-type',
     'Sets risk engine instrument type',
     setRiskEngineInstrumentType,
     [
@@ -76,7 +76,7 @@ export const setRiskEngineInstrumentTypeCmd = (c: Command) =>
 export const setRiskEngineCategoriesInfoCmd = (c: Command) =>
   addCmd(
     c,
-    'set-risk-engine-risk-categories-info',
+    'risk-engine:set-risk-categories-info',
     'Sets risk engine risk categories info',
     setRiskEngineCategoriesInfo,
     [
@@ -94,7 +94,7 @@ export const setRiskEngineCategoriesInfoCmd = (c: Command) =>
 export const getRiskEngineConfigCmd = (c: Command) =>
   addCmd(
     c,
-    'get-risk-engine-config',
-    'Get risk engine risk config',
+    'risk-engine:get-config',
+    'Gets risk engine config',
     getRiskEngineConfig
   );

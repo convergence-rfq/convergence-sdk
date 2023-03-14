@@ -1,21 +1,5 @@
 # Convergence RFQ JavaScript SDK MONOREPO Details
 
-### Building convergence
-
-`nx run packagename:command`
-
-f.e.
-`nx run packages/js:build`
-
-or run all targets
-`nx run-many --all --target=build --skip-nx-cache`
-
-`nx run packages/js:test`
-
-run only affected targets
-
-`run nx affected --target=test`
-
 ## Releases
 
 The CI server will deal with releasing and publishing.

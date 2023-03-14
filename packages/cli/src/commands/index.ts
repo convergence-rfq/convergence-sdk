@@ -4,4 +4,4 @@ export * from './helpers';
 export * from './protocol';
 export * from './rfq';
 export * from './riskEngine';
-export * from './utils';
+export * from './token';

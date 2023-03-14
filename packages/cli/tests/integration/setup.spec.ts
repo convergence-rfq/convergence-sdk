@@ -5,7 +5,7 @@ import { PublicKey } from '@solana/web3.js';
 import { runCli, getPk, ADDRESS, TX, Ctx, writeCtx } from './../helpers';
 
 describe('setup', () => {
-  const ctx = {} as Ctx;
+  const ctx = new Ctx();
   let stub: SinonStub;
 
   beforeEach(() => {
@@ -20,12 +20,12 @@ describe('setup', () => {
     writeCtx(ctx);
   });
 
-  it('airdrop-sol [dao|maker|taker|mint-authority]', async () => {
+  it('airdrop:sol [dao|maker|taker|mint-authority]', async () => {
     await Promise.all([
-      runCli(['airdrop-sol', '--amount', '1']),
-      runCli(['airdrop-sol', '--amount', '1'], 'maker'),
-      runCli(['airdrop-sol', '--amount', '1'], 'taker'),
-      runCli(['airdrop-sol', '--amount', '1'], 'mint-authority'),
+      runCli(['airdrop:sol', '--amount', '1']),
+      runCli(['airdrop:sol', '--amount', '1'], 'maker'),
+      runCli(['airdrop:sol', '--amount', '1'], 'taker'),
+      runCli(['airdrop:sol', '--amount', '1'], 'mint-authority'),
     ]);
     expect(stub.args[0][0]).toEqual(TX);
     expect(stub.args[1][0]).toEqual(TX);
@@ -33,10 +33,10 @@ describe('setup', () => {
     expect(stub.args[3][0]).toEqual(TX);
   });
 
-  it('create-mint [base|quote]', async () => {
+  it('token:create-mint [base|quote]', async () => {
     await Promise.all([
-      runCli(['create-mint', '--decimals', '9'], 'mint-authority'),
-      runCli(['create-mint', '--decimals', '6'], 'mint-authority'),
+      runCli(['token:create-mint', '--decimals', '9'], 'mint-authority'),
+      runCli(['token:create-mint', '--decimals', '6'], 'mint-authority'),
     ]);
     ctx.baseMint = stub.args[0][1];
     expect(stub.args[1][0]).toEqual(TX);
@@ -44,31 +44,31 @@ describe('setup', () => {
     expect(stub.args[3][0]).toEqual(TX);
   });
 
-  it('create-wallet [maker:base|taker:base|maker:quote|taker:quote]', async () => {
+  it('token:create-wallet [maker:base|taker:base|maker:quote|taker:quote]', async () => {
     await Promise.all([
       runCli([
-        'create-wallet',
+        'token:create-wallet',
         '--owner',
         getPk('maker'),
         '--mint',
         ctx.baseMint,
       ]),
       runCli([
-        'create-wallet',
+        'token:create-wallet',
         '--owner',
         getPk('taker'),
         '--mint',
         ctx.baseMint,
       ]),
       runCli([
-        'create-wallet',
+        'token:create-wallet',
         '--owner',
         getPk('maker'),
         '--mint',
         ctx.quoteMint,
       ]),
       runCli([
-        'create-wallet',
+        'token:create-wallet',
         '--owner',
         getPk('taker'),
         '--mint',
@@ -97,11 +97,11 @@ describe('setup', () => {
     expect(new PublicKey(ctx.takerQuoteWallet)).toBeTruthy();
   });
 
-  it('mint-to [quote:taker|quote:maker]', async () => {
+  it('token:mint-to [quote:taker|quote:maker]', async () => {
     await Promise.all([
       runCli(
         [
-          'mint-to',
+          'token:mint-to',
           '--wallet',
           ctx.takerQuoteWallet,
           '--mint',
@@ -113,7 +113,7 @@ describe('setup', () => {
       ),
       runCli(
         [
-          'mint-to',
+          'token:mint-to',
           '--wallet',
           ctx.makerQuoteWallet,
           '--mint',

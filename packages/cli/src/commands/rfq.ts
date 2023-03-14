@@ -5,10 +5,10 @@ import { getRfqs, createRfq } from '../actions';
 import { addCmd } from './helpers';
 
 export const getRfqsCmd = (c: Command) =>
-  addCmd(c, 'get-rfqs', 'Get RFQs', getRfqs);
+  addCmd(c, 'rfq:get-all', 'Get all RFQs', getRfqs);
 
 export const createRfqCmd = (c: Command) =>
-  addCmd(c, 'create-rfq', 'Create RFQ', createRfq, [
+  addCmd(c, 'rfq:create', 'Create RFQ', createRfq, [
     {
       flags: '--quote-mint <string>',
       description: 'Quote mint',
