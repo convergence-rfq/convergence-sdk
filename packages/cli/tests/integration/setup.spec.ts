@@ -97,35 +97,34 @@ describe('setup', () => {
     expect(new PublicKey(ctx.takerQuoteWallet)).toBeTruthy();
   });
 
-  it('mint-to [quote:taker]', async () => {
-    await runCli(
-      [
-        'mint-to',
-        '--wallet',
-        ctx.takerQuoteWallet,
-        '--mint',
-        ctx.quoteMint,
-        '--amount',
-        '1000000000000',
-      ],
-      'mint-authority'
-    );
+  it('mint-to [quote:taker|quote:maker]', async () => {
+    await Promise.all([
+      runCli(
+        [
+          'mint-to',
+          '--wallet',
+          ctx.takerQuoteWallet,
+          '--mint',
+          ctx.quoteMint,
+          '--amount',
+          '1000000000000',
+        ],
+        'mint-authority'
+      ),
+      runCli(
+        [
+          'mint-to',
+          '--wallet',
+          ctx.makerQuoteWallet,
+          '--mint',
+          ctx.quoteMint,
+          '--amount',
+          '100000000000',
+        ],
+        'mint-authority'
+      ),
+    ]);
     expect(stub.args[0][0]).toEqual(TX);
-  });
-
-  it('mint-to [quote:maker]', async () => {
-    await runCli(
-      [
-        'mint-to',
-        '--wallet',
-        ctx.makerQuoteWallet,
-        '--mint',
-        ctx.quoteMint,
-        '--amount',
-        '100000000000',
-      ],
-      'mint-authority'
-    );
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[1][0]).toEqual(TX);
   });
 });
