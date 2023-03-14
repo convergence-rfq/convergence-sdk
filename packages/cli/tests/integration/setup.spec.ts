@@ -44,7 +44,7 @@ describe('setup', () => {
     expect(stub.args[3][0]).toEqual(TX);
   });
 
-  it('create-wallet [maker:base|taker:base|maker:quote]', async () => {
+  it('create-wallet [maker:base|taker:base|maker:quote|taker:quote]', async () => {
     await Promise.all([
       runCli([
         'create-wallet',
@@ -67,6 +67,13 @@ describe('setup', () => {
         '--mint',
         ctx.quoteMint,
       ]),
+      runCli([
+        'create-wallet',
+        '--owner',
+        getPk('taker'),
+        '--mint',
+        ctx.quoteMint,
+      ]),
     ]);
 
     expect(stub.args[0][0]).toEqual(ADDRESS);
@@ -83,20 +90,11 @@ describe('setup', () => {
     expect(stub.args[5][0]).toEqual(TX);
     ctx.makerQuoteWallet = stub.args[4][1];
     expect(new PublicKey(ctx.makerQuoteWallet)).toBeTruthy();
-  });
 
-  it('create-wallet [taker:quote]', async () => {
-    await runCli([
-      'create-wallet',
-      '--owner',
-      getPk('taker'),
-      '--mint',
-      ctx.quoteMint,
-    ]);
-    expect(stub.args[0][0]).toEqual(ADDRESS);
-    expect(stub.args[1][0]).toEqual(TX);
-    ctx.takerQuoteWallet = stub.args[0][1];
-    expect(ctx.takerQuoteWallet).toBeTruthy();
+    expect(stub.args[6][0]).toEqual(ADDRESS);
+    expect(stub.args[7][0]).toEqual(TX);
+    ctx.takerQuoteWallet = stub.args[6][1];
+    expect(new PublicKey(ctx.takerQuoteWallet)).toBeTruthy();
   });
 
   it('mint-to [quote:taker]', async () => {
