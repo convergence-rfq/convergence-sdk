@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
-import { Response } from '../models/Response';
+import { Response, toResponse } from '../models/Response';
+import { toResponseAccount } from '../accounts';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import { convertResponseOutput, getPages } from '../helpers';
 import {
@@ -74,34 +75,33 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByRfqOutput> => {
-      const { programs } = scope;
+      const { programs, commitment } = scope;
       const { address, responses, responsesPerPage, numPages } =
         operation.input;
       scope.throwIfCanceled();
 
       if (responses) {
-        let responsePages: Response[][] = [];
         const responsesByRfq: Response[] = [];
 
-        for (let response of responses) {
+        for (const response of responses) {
           if (response.rfq.toBase58() === address.toBase58()) {
             const rfq = await convergence
               .rfqs()
               .findRfqByAddress({ address: response.rfq });
 
-            response = convertResponseOutput(
+            const convertedResponse = convertResponseOutput(
               response,
               rfq.quoteAsset.instrumentDecimals
             );
 
-            responsesByRfq.push(response);
+            responsesByRfq.push(convertedResponse);
           }
         }
         scope.throwIfCanceled();
 
-        responsePages = getPages(responsesByRfq, responsesPerPage, numPages);
+        const pages = getPages(responsesByRfq, responsesPerPage, numPages);
 
-        return responsePages;
+        return pages;
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);
@@ -110,39 +110,69 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
         rfqProgram.address
       );
       const unparsedAccounts = await responseGpaBuilder.withoutData().get();
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
       scope.throwIfCanceled();
 
-      const pages = getPages(unparsedAccounts, responsesPerPage, numPages);
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(unparsedAddresses, commitment);
 
-      const responsePages: Response[][] = [];
+      const parsedResponses: Response[] = [];
 
-      for (const page of pages) {
-        const responsePage = [];
+      for (const account of accounts) {
+        const response = toResponse(toResponseAccount(account));
 
-        for (const unparsedAccount of page) {
-          let response = await convergence
+        if (response.rfq.toBase58() === address.toBase58()) {
+          const rfq = await convergence
             .rfqs()
-            .findResponseByAddress({ address: unparsedAccount.publicKey });
+            .findRfqByAddress({ address: response.rfq });
 
-          if (response.rfq.toBase58() === address.toBase58()) {
-            const rfq = await convergence
-              .rfqs()
-              .findRfqByAddress({ address: response.rfq });
+          const convertedResponse = convertResponseOutput(
+            response,
+            rfq.quoteAsset.instrumentDecimals
+          );
 
-            response = convertResponseOutput(
-              response,
-              rfq.quoteAsset.instrumentDecimals
-            );
-
-            responsePage.push(response);
-          }
-        }
-        if (responsePage.length > 0) {
-          responsePages.push(responsePage);
+          parsedResponses.push(convertedResponse);
         }
       }
-      scope.throwIfCanceled();
 
-      return responsePages;
+      const pages = getPages(parsedResponses, responsesPerPage, numPages);
+
+      return pages;
+
+      //--------------------------------------------
+
+      // const responsePages: Response[][] = [];
+
+      // for (const page of pages) {
+      //   const responsePage = [];
+
+      //   for (const unparsedAccount of page) {
+      //     let response = await convergence
+      //       .rfqs()
+      //       .findResponseByAddress({ address: unparsedAccount.publicKey });
+
+      //     if (response.rfq.toBase58() === address.toBase58()) {
+      //       const rfq = await convergence
+      //         .rfqs()
+      //         .findRfqByAddress({ address: response.rfq });
+
+      //       response = convertResponseOutput(
+      //         response,
+      //         rfq.quoteAsset.instrumentDecimals
+      //       );
+
+      //       responsePage.push(response);
+      //     }
+      //   }
+      //   if (responsePage.length > 0) {
+      //     responsePages.push(responsePage);
+      //   }
+      // }
+      // scope.throwIfCanceled();
+
+      // return responsePages;
     },
   };

@@ -1,7 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
-import { Rfq } from '../models';
+import { Rfq, toRfq } from '../models';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import { convertRfqOutput, getPages } from '../helpers';
+import { toRfqAccount } from '../accounts';
 import {
   Operation,
   OperationHandler,
@@ -73,7 +74,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
       const { owner, rfqs, rfqsPerPage, numPages } = operation.input;
-      const { programs } = scope;
+      const { programs, commitment } = scope;
 
       const protocol = await convergence.protocol().get();
       const collateralMintDecimals = (
@@ -109,15 +110,32 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
 
       const parsedRfqs: Rfq[] = [];
 
-      for (const unparsedAccount of unparsedAccounts) {
-        const rfq = await convergence
-          .rfqs()
-          .findRfqByAddress({ address: unparsedAccount.publicKey });
+      // for (const unparsedAccount of unparsedAccounts) {
+      //   const rfq = await convergence
+      //     .rfqs()
+      //     .findRfqByAddress({ address: unparsedAccount.publicKey });
 
+      //   const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+      //   parsedRfqs.push(convertedRfq);
+      // }
+
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
+
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(unparsedAddresses, commitment);
+
+      for (const account of accounts) {
+        const rfq = toRfq(toRfqAccount(account));
         const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
         parsedRfqs.push(convertedRfq);
       }
+      scope.throwIfCanceled();
+
       const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
 
       return pages;

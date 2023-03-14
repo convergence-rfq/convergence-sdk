@@ -1,5 +1,6 @@
 import { StoredRfqState } from '@convergence-rfq/rfq';
-import { Rfq } from '../models';
+import { Rfq, toRfq } from '../models';
+import { toRfqAccount } from '../accounts';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import { getPages, convertRfqOutput } from '../helpers';
 import {
@@ -69,7 +70,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByActiveOutput> => {
-      const { programs } = scope;
+      const { programs, commitment } = scope;
       const { rfqs, rfqsPerPage, numPages } = operation.input;
 
       const protocol = await convergence.protocol().get();
@@ -100,12 +101,30 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
 
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
+
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(unparsedAddresses, commitment);
+
+      // for (const unparsedAccount of unparsedAccounts) {
+      //   const rfq = await convergence
+      //     .rfqs()
+      //     .findRfqByAddress({ address: unparsedAccount.publicKey });
+
+      //   if (rfq.state === StoredRfqState.Active) {
+      //     const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+      //     parsedRfqs.push(convertedRfq);
+      //   }
+      // }
+      
       const parsedRfqs: Rfq[] = [];
 
-      for (const unparsedAccount of unparsedAccounts) {
-        const rfq = await convergence
-          .rfqs()
-          .findRfqByAddress({ address: unparsedAccount.publicKey });
+      for (const account of accounts) {
+        const rfq = toRfq(toRfqAccount(account));
 
         if (rfq.state === StoredRfqState.Active) {
           const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
@@ -113,6 +132,7 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
           parsedRfqs.push(convertedRfq);
         }
       }
+
       const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
 
       return pages;

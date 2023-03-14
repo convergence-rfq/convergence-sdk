@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
-import { Rfq } from '../models';
+import { Rfq, toRfq } from '../models';
+import { toRfqAccount } from '../accounts';
 import { psyoptionsAmericanInstrumentProgram } from '../../psyoptionsAmericanInstrumentModule/programs';
 import { psyoptionsEuropeanInstrumentProgram } from '../../psyoptionsEuropeanInstrumentModule/programs';
 import { psyoptionsAmericanInstrumentDataSerializer } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
@@ -78,7 +79,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByTokenOutput> => {
-      const { programs } = scope;
+      const { programs, commitment } = scope;
       const { rfqs, mintAddress, rfqsPerPage, numPages } = operation.input;
       scope.throwIfCanceled();
 
@@ -185,12 +186,18 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
 
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
+
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(unparsedAddresses, commitment);
+
       const parsedRfqs: Rfq[] = [];
 
-      for (const unparsedAccount of unparsedAccounts) {
-        const rfq = await convergence
-          .rfqs()
-          .findRfqByAddress({ address: unparsedAccount.publicKey });
+      for (const account of accounts) {
+        const rfq = toRfq(toRfqAccount(account));
 
         if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
           const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);

@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Response } from '../models/Response';
+import { Response, toResponse } from '../models/Response';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import { getPages, convertResponseOutput } from '../helpers';
 import {
@@ -9,6 +9,7 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
+import { toResponseAccount } from '../accounts';
 
 const Key = 'FindResponsesByRfqsOperation' as const;
 
@@ -74,35 +75,34 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByRfqsOutput> => {
-      const { programs } = scope;
+      const { programs, commitment } = scope;
       const { addresses, responses, responsesPerPage, numPages } =
         operation.input;
       scope.throwIfCanceled();
 
       if (responses) {
-        let responsePages: Response[][] = [];
         const responsesByRfqs: Response[] = [];
 
-        for (const address of addresses) {
-          for (let response of responses) {
+        for (const response of responses) {
+          for (const address of addresses) {
             if (response.rfq.toBase58() === address.toBase58()) {
               const rfq = await convergence
                 .rfqs()
                 .findRfqByAddress({ address: response.rfq });
 
-              response = convertResponseOutput(
+              const convertedResponse = convertResponseOutput(
                 response,
                 rfq.quoteAsset.instrumentDecimals
               );
 
-              responsesByRfqs.push(response);
+              responsesByRfqs.push(convertedResponse);
             }
           }
           scope.throwIfCanceled();
 
-          responsePages = getPages(responsesByRfqs, responsesPerPage, numPages);
+          const pages = getPages(responsesByRfqs, responsesPerPage, numPages);
 
-          return responsePages;
+          return pages;
         }
       }
 
@@ -112,40 +112,72 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
         rfqProgram.address
       );
       const unparsedAccounts = await responseGpaBuilder.withoutData().get();
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
       scope.throwIfCanceled();
 
-      const pages = getPages(unparsedAccounts, responsesPerPage, numPages);
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(unparsedAddresses, commitment);
 
-      const responsePages: Response[][] = [];
+      const parsedResponses: Response[] = [];
 
-      for (const address of addresses) {
-        for (const page of pages) {
-          const responsePage = [];
+      for (const account of accounts) {
+        const response = toResponse(toResponseAccount(account));
 
-          for (const unparsedAccount of page) {
-            let response = await convergence
+        for (const address of addresses) {
+          if (response.rfq.toBase58() === address.toBase58()) {
+            const rfq = await convergence
               .rfqs()
-              .findResponseByAddress({ address: unparsedAccount.publicKey });
+              .findRfqByAddress({ address: response.rfq });
 
-            if (response.rfq.toBase58() === address.toBase58()) {
-              const rfq = await convergence
-                .rfqs()
-                .findRfqByAddress({ address: response.rfq });
+            const convertedResponse = convertResponseOutput(
+              response,
+              rfq.quoteAsset.instrumentDecimals
+            );
 
-              response = convertResponseOutput(
-                response,
-                rfq.quoteAsset.instrumentDecimals
-              );
-
-              responsePage.push(response);
-            }
-          }
-          if (responsePage.length > 0) {
-            responsePages.push(responsePage);
+            parsedResponses.push(convertedResponse);
           }
         }
       }
 
-      return responsePages;
+      //-------------------
+
+      const pages = getPages(parsedResponses, responsesPerPage, numPages);
+
+      // const responsePages: Response[][] = [];
+
+      // for (const address of addresses) {
+      //   for (const page of pages) {
+      //     const responsePage = [];
+
+      //     for (const unparsedAccount of page) {
+      //       let response = await convergence
+      //         .rfqs()
+      //         .findResponseByAddress({ address: unparsedAccount.publicKey });
+
+      //       if (response.rfq.toBase58() === address.toBase58()) {
+      //         const rfq = await convergence
+      //           .rfqs()
+      //           .findRfqByAddress({ address: response.rfq });
+
+      //         response = convertResponseOutput(
+      //           response,
+      //           rfq.quoteAsset.instrumentDecimals
+      //         );
+
+      //         responsePage.push(response);
+      //       }
+      //     }
+      //     if (responsePage.length > 0) {
+      //       responsePages.push(responsePage);
+      //     }
+      //   }
+      // }
+
+      // return responsePages;
+
+      return pages;
     },
   };
