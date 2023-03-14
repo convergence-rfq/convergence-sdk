@@ -20,24 +20,17 @@ describe('setup', () => {
     writeCtx(ctx);
   });
 
-  it('airdrop-sol [dao]', async () => {
-    await runCli(['airdrop-sol', '--amount', '1']);
+  it('airdrop-sol', async () => {
+    await Promise.all([
+      runCli(['airdrop-sol', '--amount', '1']),
+      runCli(['airdrop-sol', '--amount', '1'], 'maker'),
+      runCli(['airdrop-sol', '--amount', '1'], 'taker'),
+      runCli(['airdrop-sol', '--amount', '1'], 'mint-authority'),
+    ]);
     expect(stub.args[0][0]).toEqual(TX);
-  });
-
-  it('airdrop-sol [maker]', async () => {
-    await runCli(['airdrop-sol', '--amount', '1'], 'maker');
-    expect(stub.args[0][0]).toEqual(TX);
-  });
-
-  it('airdrop-sol [taker]', async () => {
-    await runCli(['airdrop-sol', '--amount', '1'], 'taker');
-    expect(stub.args[0][0]).toEqual(TX);
-  });
-
-  it('airdrop [mint-authority]', async () => {
-    await runCli(['airdrop-sol', '--amount', '1'], 'mint-authority');
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[1][0]).toEqual(TX);
+    expect(stub.args[2][0]).toEqual(TX);
+    expect(stub.args[3][0]).toEqual(TX);
   });
 
   it('create-mint [base]', async () => {
