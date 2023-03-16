@@ -283,6 +283,12 @@ export function getPages<T extends UnparsedAccount | Rfq | Response>(
   return pages as T[][];
 }
 
+export const convertOverrideLegMultiplierBps = (
+  overrideLegMultiplierBps: number
+): number => {
+  return overrideLegMultiplierBps * Math.pow(10, 9);
+};
+
 export const convertFixedSizeInput = (
   fixedSize: FixedSize,
   quoteAsset: QuoteAsset

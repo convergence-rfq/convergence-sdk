@@ -52,6 +52,9 @@ export type FindResponseByAddressOperation = Operation<
 export type FindResponseByAddressInput = {
   /** The address of the Response account. */
   address: PublicKey;
+
+  /** Optional flag for whether to convert the output to a human-readable format. */
+  convert?: boolean;
 };
 
 /**
@@ -72,22 +75,26 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       scope: OperationScope
     ): Promise<FindResponseByAddressOutput> => {
       const { commitment } = scope;
-      const { address } = operation.input;
+      const { address, convert = true } = operation.input;
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      let response = toResponse(toResponseAccount(account));
+      const response = toResponse(toResponseAccount(account));
       assertResponse(response);
       scope.throwIfCanceled();
 
-      const rfq = await convergence
-        .rfqs()
-        .findRfqByAddress({ address: response.rfq });
+      if (convert) {
+        const rfq = await convergence
+          .rfqs()
+          .findRfqByAddress({ address: response.rfq });
 
-      response = convertResponseOutput(
-        response,
-        rfq.quoteAsset.instrumentDecimals
-      );
+        const convertedResponse = convertResponseOutput(
+          response,
+          rfq.quoteAsset.instrumentDecimals
+        );
+
+        return convertedResponse;
+      }
 
       return response;
     },

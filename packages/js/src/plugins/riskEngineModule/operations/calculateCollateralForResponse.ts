@@ -9,7 +9,8 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-// import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
+//@ts-ignore
+import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -61,10 +62,8 @@ export type CalculateCollateralForResponseOperation = Operation<
 export type CalculateCollateralForResponseInput = {
   /** The address of the Rfq account. */
   rfqAddress: PublicKey;
-
   /** Bid answer to the Rfq. */
   bid: Quote | null;
-
   /** Ask answer to the Rfq. */
   ask: Quote | null;
 };
@@ -94,10 +93,9 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
 
       // fetching in parallel
       const [rfq, config] = await Promise.all([
-        // convergence
-        //   .rfqs()
-        //   .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
-        convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
+        convergence
+          .rfqs()
+          .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
         convergence.riskEngine().fetchConfig(scope),
       ]);
 
@@ -105,7 +103,8 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
         const legMultiplier =
           // Number(legsMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
-          Number(legsMultiplierBps);
+          Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
+
         return {
           legMultiplier,
           authoritySide: AuthoritySide.Maker,
@@ -130,7 +129,6 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         scope.commitment
       );
       const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
-
       return { requiredCollateral };
     },
   };

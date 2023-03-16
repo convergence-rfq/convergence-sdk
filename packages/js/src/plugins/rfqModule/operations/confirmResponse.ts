@@ -12,6 +12,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { convertOverrideLegMultiplierBps } from '../helpers';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -174,13 +175,14 @@ export const confirmResponseBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const {
-    taker = convergence.identity(),
-    rfq,
-    response,
-    side,
-    overrideLegMultiplierBps = null,
-  } = params;
+  const { taker = convergence.identity(), rfq, response, side } = params;
+  let { overrideLegMultiplierBps = null } = params;
+
+  if (overrideLegMultiplierBps) {
+    overrideLegMultiplierBps = convertOverrideLegMultiplierBps(
+      Number(overrideLegMultiplierBps)
+    );
+  }
 
   const responseModel = await convergence
     .rfqs()

@@ -23,8 +23,10 @@ import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData
 import { Config } from './models';
 import {
   FUTURE_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS,
-  // OPTION_STRIKE_PRICE_DECIMALS,
-  // OPTION_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS,
+  //@ts-ignore
+  OPTION_STRIKE_PRICE_DECIMALS,
+  //@ts-ignore
+  OPTION_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS,
   SETTLEMENT_WINDOW_BREAKPOINS,
   SETTLEMENT_WINDOW_PEDIODS,
 } from './constants';
@@ -76,8 +78,8 @@ export async function calculateRisk(
   const instrumentTypesMapping = config.instrumentTypes;
 
   const legInfos = legs.map((leg) => {
-    // let amount = Number(leg.instrumentAmount) / 10 ** leg.instrumentDecimals;
-    let amount = Number(leg.instrumentAmount);
+    let amount = Number(leg.instrumentAmount) / 10 ** leg.instrumentDecimals;
+    // let amount = Number(leg.instrumentAmount);
     if (leg.side == Side.Bid) {
       amount = -amount;
     }
@@ -331,11 +333,9 @@ function calculateAssetUnitValue(
         optionCommonData.optionType == OptionType.Call ? 'call' : 'put';
       const underlyingAmountPerContract =
         Number(optionCommonData.underlyingAmountPerContract) /
-        // 10 ** OPTION_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS;
         10 ** optionCommonData.underlyingAmoundPerContractDecimals;
       const strikePrice =
         Number(optionCommonData.strikePrice) /
-        // 10 ** OPTION_STRIKE_PRICE_DECIMALS;
         10 ** optionCommonData.strikePriceDecimals;
       const expirationTimestamp = Number(optionCommonData.expirationTimestamp);
 
