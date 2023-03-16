@@ -87,6 +87,9 @@ export const addInstrument = async (opts: Opts) => {
   logResponse(response);
 };
 
+const capitalize = (input: string) =>
+  input.charAt(0).toUpperCase() + input.slice(1);
+
 export const addBaseAsset = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const baseAssets = await cvg.protocol().getBaseAssets();
@@ -97,7 +100,8 @@ export const addBaseAsset = async (opts: Opts) => {
     ticker: opts.ticker,
     riskCategory,
     priceOracle: {
-      __kind: opts.oracleKind.toUppserCase(),
+      // @ts-ignore
+      __kind: capitalize(opts.oracleKind),
       address: new PublicKey(opts.oracleAddress),
     },
   });

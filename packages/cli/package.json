@@ -28,8 +28,8 @@
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
-    "test:setup": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/utils/setup.ts",
-    "test:bootstrap": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/utils/bootstrap.ts",
+    "test:setup": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/utils/setup.spec.ts",
+    "test:bootstrap": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/utils/bootstrap.spec.ts",
     "test": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/**/*.spec.ts",
     "validator": "ts-node tests/validator/run.ts",
     "run": "ts-node src/index.ts"

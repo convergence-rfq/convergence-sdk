@@ -78,6 +78,13 @@ export const readCtx = (): Ctx => {
   return JSON.parse(json);
 };
 
+export const getJsonPk = (name: string): string => {
+  const f = path.join(__dirname, '..', 'validator', 'accounts', name + '.json');
+  const fileContent = fs.readFileSync(f, 'utf-8');
+  const json = JSON.parse(fileContent);
+  return json.pubkey;
+};
+
 export const getKpFile = (user: string): string => {
   const validUsers = ['taker', 'maker', 'mint_authority', 'dao'];
   if (validUsers.includes(user)) {

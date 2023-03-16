@@ -6,7 +6,7 @@ import * as riskEngine from '@convergence-rfq/risk-engine';
 import * as spotInstrument from '@convergence-rfq/spot-instrument';
 import * as psyoptionsEuropeanInstrument from '@convergence-rfq/psyoptions-european-instrument';
 import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-american-instrument';
-import { getPk } from '../utils/helpers';
+import { getPk, getJsonPk } from '../utils/helpers';
 
 const PSYOPTIONS_AMERICAN = 'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs';
 const PSYOPTIONS_EURO = 'FASQhaZQT53W9eT9wWnPoBFw8xzZDey9TbMmJj6jCQTs';
@@ -54,6 +54,10 @@ export const baseArgs = [
 const bootstrappedArgs: string[] = [];
 
 const setupArgs: string[] = [
+  // Users
+  '--account',
+  getPk('dao'),
+  path.join(__dirname, 'accounts/dao.json'),
   '--account',
   getPk('maker'),
   path.join(__dirname, 'accounts/maker.json'),
@@ -63,6 +67,26 @@ const setupArgs: string[] = [
   '--account',
   getPk('mint_authority'),
   path.join(__dirname, 'accounts/mint_authority.json'),
+  // Mints
+  '--account',
+  getJsonPk('base_mint'),
+  path.join(__dirname, 'accounts/base_mint.json'),
+  '--account',
+  getJsonPk('quote_mint'),
+  path.join(__dirname, 'accounts/quote_mint.json'),
+  // Wallets
+  '--account',
+  getJsonPk('maker_base_wallet'),
+  path.join(__dirname, 'accounts/maker_base_wallet.json'),
+  '--account',
+  getJsonPk('taker_base_wallet'),
+  path.join(__dirname, 'accounts/taker_base_wallet.json'),
+  '--account',
+  getJsonPk('maker_quote_wallet'),
+  path.join(__dirname, 'accounts/maker_quote_wallet.json'),
+  '--account',
+  getJsonPk('taker_quote_wallet'),
+  path.join(__dirname, 'accounts/taker_quote_wallet.json'),
 ];
 
 const hasBootstrapFlag = (args: string[]) => args.includes('--bootstrap');
