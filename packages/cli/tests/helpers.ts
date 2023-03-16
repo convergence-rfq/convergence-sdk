@@ -1,6 +1,7 @@
 import { homedir } from 'os';
+import path from 'path';
 import fs from 'fs';
-import { Keypair } from '@solana/web3.js';
+import { Keypair, Connection, PublicKey } from '@solana/web3.js';
 
 import { makeCli } from '../src/cli';
 
@@ -10,7 +11,12 @@ export const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Swi
 export const TX = 'Tx:';
 export const ADDRESS = 'Address:';
 
-export const CTX_FILE = './tests/ctx.json';
+export const CTX_FILE = path.join(
+  __dirname,
+  'validator',
+  'accounts',
+  'manifest.json'
+);
 
 export class Ctx {
   baseMint = '';
@@ -21,13 +27,60 @@ export class Ctx {
   makerBaseWallet = '';
 }
 
+class SolanaAccount {
+  pubkey: string;
+  account: {
+    lamports: number;
+    data: string[];
+  };
+  owner: string;
+  executable = false;
+  rentEpoch = 0;
+
+  constructor(
+    pubkey: string,
+    owner: string,
+    account: any,
+    executable = false,
+    rentEpoch = 0
+  ) {
+    this.pubkey = pubkey;
+    this.account = account;
+    this.owner = owner;
+    this.executable = executable;
+    this.rentEpoch = rentEpoch;
+  }
+}
+
+const writeAccount = async (
+  connection: Connection,
+  pk: string,
+  name: string
+) => {
+  const accountInfo = await connection.getAccountInfo(new PublicKey(pk));
+  if (accountInfo === null) {
+    return;
+  }
+  const account = new SolanaAccount(pk, accountInfo.owner.toString(), {
+    lamports: accountInfo?.lamports,
+    data: [accountInfo.data.toString('base64'), 'base64'],
+  });
+  const f = path.join(__dirname, 'validator', 'accounts', `${name}.json`);
+  fs.writeFileSync(f, JSON.stringify(account));
+};
+
+export const writeCtx = async (ctx: Ctx) => {
+  const con = new Connection(ENDPOINT, 'confirmed');
+  writeAccount(con, ctx.baseMint, 'base_mint');
+  writeAccount(con, ctx.quoteMint, 'quote_mint');
+  writeAccount(con, ctx.takerQuoteWallet, 'taker_quote_wallet');
+  writeAccount(con, ctx.takerBaseWallet, 'taker_base_wallet');
+  fs.writeFileSync(CTX_FILE, JSON.stringify(ctx));
+};
+
 export const readCtx = (): Ctx => {
   const json = fs.readFileSync(CTX_FILE, 'utf-8');
   return JSON.parse(json);
-};
-
-export const writeCtx = (ctx: Ctx) => {
-  fs.writeFileSync(CTX_FILE, JSON.stringify(ctx));
 };
 
 export const getKpFile = (user: string) => {

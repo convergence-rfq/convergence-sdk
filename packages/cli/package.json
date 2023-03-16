@@ -24,13 +24,15 @@
     "/src"
   ],
   "scripts": {
-    "cli": "ts-node src/index.ts",
     "lint": "eslint --ext js,ts,tsx src",
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
+    "test:setup": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/utils/setup.ts",
     "mocha": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/**/*.spec.ts",
-    "test": "yarn mocha --file tests/integration/setup.spec.ts tests/integration/bootstrap.spec.ts"
+    "test": "yarn mocha --file tests/integration/setup.spec.ts tests/integration/bootstrap.spec.ts",
+    "validator": "pkill solana-test-validator | echo '' && ts-node tests/validator/run.ts",
+    "run": "ts-node src/index.ts"
   },
   "dependencies": {
     "@convergence-rfq/sdk": "4.0.24-rc.3",
