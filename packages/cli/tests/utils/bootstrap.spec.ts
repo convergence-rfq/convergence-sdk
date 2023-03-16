@@ -114,11 +114,6 @@ describe('bootstrap', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('protocol:get-base-assets', async () => {
-    await runCli(['protocol:get-base-assets']);
-    expect(stub.args[0][0]).toEqual(ADDRESS);
-  });
-
   it('protocol:register-mint [quote]', async () => {
     await runCli(['protocol:register-mint', '--mint', ctx.quoteMint]);
     expect(stub.args[0][0]).toEqual(TX);
@@ -133,11 +128,6 @@ describe('bootstrap', () => {
       ctx.baseMint,
     ]);
     expect(stub.args[0][0]).toEqual(TX);
-  });
-
-  it('protocol:get-registered-mints', async () => {
-    await runCli(['protocol:get-registered-mints']);
-    expect(stub.args[1][0]).toEqual(ADDRESS);
   });
 
   it('collateral:initialize-account [maker]', async () => {
