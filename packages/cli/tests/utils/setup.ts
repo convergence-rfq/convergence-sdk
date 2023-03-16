@@ -2,7 +2,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
-import { runCli, getPk, ADDRESS, TX, Ctx, writeCtx } from './../helpers';
+import { runCli, getPk, ADDRESS, TX, Ctx, writeCtx } from './helpers';
 
 describe('setup', () => {
   const ctx = new Ctx();
@@ -17,15 +17,19 @@ describe('setup', () => {
   });
 
   after(() => {
+    ctx.maker = getPk('maker');
+    ctx.taker = getPk('taker');
+    ctx.dao = getPk('dao');
+    ctx.mintAuthority = getPk('mint_authority');
     writeCtx(ctx);
   });
 
-  it('airdrop:sol [dao|maker|taker|mint-authority]', async () => {
+  it('airdrop:sol [dao|maker|taker|mint_authority]', async () => {
     await Promise.all([
       runCli(['airdrop:sol', '--amount', '1']),
       runCli(['airdrop:sol', '--amount', '1'], 'maker'),
       runCli(['airdrop:sol', '--amount', '1'], 'taker'),
-      runCli(['airdrop:sol', '--amount', '1'], 'mint-authority'),
+      runCli(['airdrop:sol', '--amount', '1'], 'mint_authority'),
     ]);
     expect(stub.args[0][0]).toEqual(TX);
     expect(stub.args[1][0]).toEqual(TX);
@@ -35,8 +39,8 @@ describe('setup', () => {
 
   it('token:create-mint [base|quote]', async () => {
     await Promise.all([
-      runCli(['token:create-mint', '--decimals', '9'], 'mint-authority'),
-      runCli(['token:create-mint', '--decimals', '6'], 'mint-authority'),
+      runCli(['token:create-mint', '--decimals', '9'], 'mint_authority'),
+      runCli(['token:create-mint', '--decimals', '6'], 'mint_authority'),
     ]);
     ctx.baseMint = stub.args[0][1];
     expect(stub.args[1][0]).toEqual(TX);
@@ -111,7 +115,7 @@ describe('setup', () => {
         '--amount',
         '1000000000000',
       ],
-      'mint-authority'
+      'mint_authority'
     );
     expect(stub.args[0][0]).toEqual(TX);
   });
@@ -127,7 +131,7 @@ describe('setup', () => {
         '--amount',
         '100000000000',
       ],
-      'mint-authority'
+      'mint_authority'
     );
     expect(stub.args[0][0]).toEqual(TX);
   });

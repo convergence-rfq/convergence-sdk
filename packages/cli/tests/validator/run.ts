@@ -6,14 +6,15 @@ import * as riskEngine from '@convergence-rfq/risk-engine';
 import * as spotInstrument from '@convergence-rfq/spot-instrument';
 import * as psyoptionsEuropeanInstrument from '@convergence-rfq/psyoptions-european-instrument';
 import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-american-instrument';
+import { getPk } from '../utils/helpers';
 
 const PSYOPTIONS_AMERICAN = 'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs';
 const PSYOPTIONS_EURO = 'FASQhaZQT53W9eT9wWnPoBFw8xzZDey9TbMmJj6jCQTs';
 const SWITCHBOARD_BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee';
 const SWITCHBOARD_SOL_ORACLE = 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR';
-const PSEUDO_PYTH_ORACLE = 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH';
+const PYTH_ORACLE = 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH';
 
-export const args = [
+export const baseArgs = [
   '--account',
   SWITCHBOARD_BTC_ORACLE,
   path.join(__dirname, 'accounts/btc_20000_oracle_switchboard.json'),
@@ -42,7 +43,7 @@ export const args = [
   PSYOPTIONS_EURO,
   path.join(__dirname, 'programs/euro_primitive.so'),
   '--bpf-program',
-  PSEUDO_PYTH_ORACLE,
+  PYTH_ORACLE,
   path.join(__dirname, 'programs/pseudo_pyth.so'),
   '--ledger',
   './test-ledger',
@@ -50,10 +51,36 @@ export const args = [
   '--reset',
 ];
 
-export const runValidator = (): any => {
-  return spawn('solana-test-validator', args, {
+const bootstrappedArgs: string[] = [];
+
+const setupArgs: string[] = [
+  '--account',
+  getPk('maker'),
+  path.join(__dirname, 'accounts/maker.json'),
+  '--account',
+  getPk('taker'),
+  path.join(__dirname, 'accounts/taker.json'),
+  '--account',
+  getPk('mint_authority'),
+  path.join(__dirname, 'accounts/mint_authority.json'),
+];
+
+const hasBootstrapFlag = (args: string[]) => args.includes('--bootstrap');
+const hasSetupFlag = (args: string[]) => args.includes('--setup');
+
+const runValidator = (setup: boolean, bootstrap: boolean): any => {
+  if (!setup) {
+    baseArgs.push(...setupArgs);
+  }
+  if (!bootstrap) {
+    baseArgs.push(...bootstrappedArgs);
+  }
+  return spawn('solana-test-validator', baseArgs, {
     stdio: [process.stdin, process.stdout, process.stderr],
   });
 };
 
-runValidator();
+const bootstrap = hasBootstrapFlag(process.argv);
+const setup = hasSetupFlag(process.argv);
+
+runValidator(setup, bootstrap);

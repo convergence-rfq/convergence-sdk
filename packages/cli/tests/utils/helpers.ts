@@ -1,9 +1,8 @@
-import { homedir } from 'os';
 import path from 'path';
 import fs from 'fs';
 import { Keypair, Connection, PublicKey } from '@solana/web3.js';
 
-import { makeCli } from '../src/cli';
+import { makeCli } from '../../src/cli';
 
 export const ENDPOINT = 'http://127.0.0.1:8899';
 export const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Switchboard
@@ -11,14 +10,13 @@ export const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Swi
 export const TX = 'Tx:';
 export const ADDRESS = 'Address:';
 
-export const CTX_FILE = path.join(
-  __dirname,
-  'validator',
-  'accounts',
-  'manifest.json'
-);
+export const MANIFEST = path.join(__dirname, '..', 'validator', 'ctx.json');
 
 export class Ctx {
+  dao = '';
+  maker = '';
+  taker = '';
+  mintAuthority = '';
   baseMint = '';
   quoteMint = '';
   takerQuoteWallet = '';
@@ -43,12 +41,8 @@ class SolanaAccount {
   }
 }
 
-const writeAccount = async (
-  connection: Connection,
-  pk: string,
-  name: string
-) => {
-  const accountInfo = await connection.getAccountInfo(new PublicKey(pk));
+const writeAccount = async (con: Connection, pk: string, name: string) => {
+  const accountInfo = await con.getAccountInfo(new PublicKey(pk));
   if (accountInfo === null) {
     return;
   }
@@ -60,7 +54,7 @@ const writeAccount = async (
     lamports,
     data: [data.toString('base64'), 'base64'],
   });
-  const f = path.join(__dirname, 'validator', 'accounts', `${name}.json`);
+  const f = path.join(__dirname, '..', 'validator', 'accounts', `${name}.json`);
   fs.writeFileSync(f, JSON.stringify(account));
 };
 
@@ -72,27 +66,24 @@ export const writeCtx = async (ctx: Ctx) => {
   writeAccount(con, ctx.takerBaseWallet, 'taker_base_wallet');
   writeAccount(con, ctx.makerQuoteWallet, 'maker_quote_wallet');
   writeAccount(con, ctx.makerBaseWallet, 'maker_base_wallet');
-  fs.writeFileSync(CTX_FILE, JSON.stringify(ctx));
+  writeAccount(con, ctx.maker, 'maker');
+  writeAccount(con, ctx.taker, 'taker');
+  writeAccount(con, ctx.dao, 'dao');
+  writeAccount(con, ctx.mintAuthority, 'mint_authority');
+  fs.writeFileSync(MANIFEST, JSON.stringify(ctx));
 };
 
 export const readCtx = (): Ctx => {
-  const json = fs.readFileSync(CTX_FILE, 'utf-8');
+  const json = fs.readFileSync(MANIFEST, 'utf-8');
   return JSON.parse(json);
 };
 
-export const getKpFile = (user: string) => {
-  switch (user) {
-    case 'taker':
-      return `${homedir()}/.config/solana/taker.json`;
-    case 'maker':
-      return `${homedir()}/.config/solana/maker.json`;
-    case 'mint-authority':
-      return `${homedir()}/.config/solana/mint-authority.json`;
-    case 'dao':
-      return `${homedir()}/.config/solana/id.json`;
-    default:
-      throw new Error('Invalid user');
+export const getKpFile = (user: string): string => {
+  const validUsers = ['taker', 'maker', 'mint_authority', 'dao'];
+  if (validUsers.includes(user)) {
+    return path.join(__dirname, '..', 'validator', 'keys', `${user}.json`);
   }
+  throw new Error('Invalid user');
 };
 
 export const getPk = (user: string) => {

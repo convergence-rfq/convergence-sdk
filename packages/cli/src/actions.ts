@@ -97,7 +97,7 @@ export const addBaseAsset = async (opts: Opts) => {
     ticker: opts.ticker,
     riskCategory,
     priceOracle: {
-      __kind: opts.oracleKind,
+      __kind: opts.oracleKind.toUppserCase(),
       address: new PublicKey(opts.oracleAddress),
     },
   });

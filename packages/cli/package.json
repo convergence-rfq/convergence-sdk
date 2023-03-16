@@ -29,9 +29,9 @@
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
     "test:setup": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/utils/setup.ts",
-    "mocha": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/**/*.spec.ts",
-    "test": "yarn mocha --file tests/integration/setup.spec.ts tests/integration/bootstrap.spec.ts",
-    "validator": "pkill solana-test-validator | echo '' && ts-node tests/validator/run.ts",
+    "test:bootstrap": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/utils/bootstrap.ts",
+    "test": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/**/*.spec.ts",
+    "validator": "ts-node tests/validator/run.ts",
     "run": "ts-node src/index.ts"
   },
   "dependencies": {
