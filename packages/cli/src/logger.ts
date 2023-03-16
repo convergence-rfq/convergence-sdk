@@ -54,6 +54,8 @@ export const logRegisteredMint = (r: RegisteredMint): void => {
   l('Address:', r.address.toString());
 };
 
+export const logError = (e: any) => process.stderr.write(`Error: ${e}`);
+
 export const logProtocol = (p: Protocol): void => {
   l('Address:', p.address.toString());
   l('Authority:', p.authority.toString());

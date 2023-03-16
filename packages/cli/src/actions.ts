@@ -24,6 +24,7 @@ import {
   logProtocol,
   logInstrument,
   logTx,
+  logError,
   logRiskEngineConfig,
   logRegisteredMint,
 } from './logger';
@@ -54,13 +55,17 @@ export const createWallet = async (opts: Opts) => {
 export const mintTo = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const user = cvg.rpc().getDefaultFeePayer();
-  const { response } = await cvg.tokens().mint({
-    mintAddress: new PublicKey(opts.mint),
-    amount: token(opts.amount),
-    toToken: new PublicKey(opts.wallet),
-    mintAuthority: user.publicKey,
-  });
-  logResponse(response);
+  try {
+    const { response } = await cvg.tokens().mint({
+      mintAddress: new PublicKey(opts.mint),
+      amount: token(opts.amount),
+      toToken: new PublicKey(opts.wallet),
+      mintAuthority: user.publicKey,
+    });
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
 };
 
 // Protocol

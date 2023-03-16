@@ -24,7 +24,7 @@ describe('utils', () => {
   });
 
   it('token:create-mint', async () => {
-    await runCli(['token:create-mint', '--decimals', '9'], 'mint-authority');
+    await runCli(['token:create-mint', '--decimals', '9'], 'mint_authority');
     mint = stub.args[0][1];
     expect(new PublicKey(mint)).toBeTruthy();
     expect(stub.args[1][0]).toEqual(TX);
@@ -55,7 +55,7 @@ describe('utils', () => {
         '--amount',
         '1000000000000',
       ],
-      'mint-authority'
+      'maker'
     );
     expect(stub.args[0][0]).toEqual(TX);
   });
