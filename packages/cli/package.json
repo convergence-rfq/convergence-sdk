@@ -30,7 +30,7 @@
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
     "test:setup": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/utils/setup.spec.ts",
     "test:bootstrap": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/utils/bootstrap.spec.ts",
-    "test": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/**/*.spec.ts --ignore tests/utils/setup.spec.ts --ignore tests/utils/bootstrap.spec.ts",
+    "test": "ts-mocha -p tsconfig.json --type-check --timeout 100000 --parallel tests/**/*.spec.ts --ignore tests/utils/setup.spec.ts --ignore tests/utils/bootstrap.spec.ts",
     "validator": "ts-node tests/validator/run.ts",
     "run": "ts-node src/index.ts"
   },
