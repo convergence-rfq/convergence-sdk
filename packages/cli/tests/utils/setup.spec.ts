@@ -17,10 +17,6 @@ describe('setup', () => {
   });
 
   after(() => {
-    ctx.maker = getPk('maker');
-    ctx.taker = getPk('taker');
-    ctx.dao = getPk('dao');
-    ctx.mintAuthority = getPk('mint_authority');
     writeCtx(ctx);
   });
 

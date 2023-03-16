@@ -13,16 +13,40 @@ export const ADDRESS = 'Address:';
 export const MANIFEST = path.join(__dirname, '..', 'validator', 'ctx.json');
 
 export class Ctx {
-  dao = '';
-  maker = '';
-  taker = '';
-  mintAuthority = '';
-  baseMint = '';
-  quoteMint = '';
-  takerQuoteWallet = '';
-  takerBaseWallet = '';
-  makerQuoteWallet = '';
-  makerBaseWallet = '';
+  dao: string;
+  maker: string;
+  taker: string;
+  mintAuthority: string;
+  baseMint: string;
+  quoteMint: string;
+  takerQuoteWallet: string;
+  takerBaseWallet: string;
+  makerQuoteWallet: string;
+  makerBaseWallet: string;
+
+  constructor(
+    dao = getPk('dao'),
+    maker = getPk('maker'),
+    taker = getPk('taker'),
+    mintAuthority = getPk('mint_authority'),
+    baseMint = '',
+    quoteMint = '',
+    takerQuoteWallet = '',
+    takerBaseWallet = '',
+    makerQuoteWallet = '',
+    makerBaseWallet = ''
+  ) {
+    this.maker = maker;
+    this.taker = taker;
+    this.dao = dao;
+    this.mintAuthority = mintAuthority;
+    this.baseMint = baseMint;
+    this.quoteMint = quoteMint;
+    this.takerQuoteWallet = takerQuoteWallet;
+    this.takerBaseWallet = takerBaseWallet;
+    this.makerQuoteWallet = makerQuoteWallet;
+    this.makerBaseWallet = makerBaseWallet;
+  }
 }
 
 class SolanaAccount {
