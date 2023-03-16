@@ -14,7 +14,7 @@ const SWITCHBOARD_BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee';
 const SWITCHBOARD_SOL_ORACLE = 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR';
 const PYTH_ORACLE = 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH';
 
-export const baseArgs = [
+export const getBaseArgs = () => [
   '--account',
   SWITCHBOARD_BTC_ORACLE,
   path.join(__dirname, 'accounts/btc_20000_oracle_switchboard.json'),
@@ -50,9 +50,7 @@ export const baseArgs = [
   '--reset',
 ];
 
-const bootstrappedArgs: string[] = [];
-
-const setupArgs: string[] = [
+const getSetupCompleteArgs = () => [
   // Users
   '--account',
   getPk('dao'),
@@ -88,20 +86,46 @@ const setupArgs: string[] = [
   path.join(__dirname, 'accounts/taker_quote_wallet.json'),
 ];
 
-const hasBootstrapFlag = (args: string[]) => args.includes('--bootstrap');
-const hasSetupFlag = (args: string[]) => args.includes('--setup');
+const getBootstrapCompleteArgs = () => [
+  '--account',
+  getJsonPk('protocol'),
+  path.join(__dirname, 'accounts/protocol.json'),
+  '--account',
+  getJsonPk('risk_engine'),
+  path.join(__dirname, 'accounts/risk_engine.json'),
+  '--account',
+  getJsonPk('base_asset'),
+  path.join(__dirname, 'accounts/base_asset.json'),
+  '--account',
+  getJsonPk('quote_registered_mint'),
+  path.join(__dirname, 'accounts/quote_registered_mint.json'),
+  '--account',
+  getJsonPk('base_registered_mint'),
+  path.join(__dirname, 'accounts/base_registered_mint.json'),
+];
 
 const runValidator = (setup: boolean, bootstrap: boolean): any => {
-  if (!setup) {
-    baseArgs.push(...setupArgs);
+  const args = getBaseArgs();
+
+  if (setup && bootstrap) {
+    throw new Error('Cannot run both setup and bootstrap');
   }
-  if (!bootstrap) {
-    baseArgs.push(...bootstrappedArgs);
+
+  if (bootstrap || !setup) {
+    args.push(...getSetupCompleteArgs());
   }
-  return spawn('solana-test-validator', baseArgs, {
+
+  if (!setup && !bootstrap) {
+    args.push(...getBootstrapCompleteArgs());
+  }
+
+  return spawn('solana-test-validator', args, {
     stdio: [process.stdin, process.stdout, process.stderr],
   });
 };
+
+const hasBootstrapFlag = (args: string[]) => args.includes('--bootstrap');
+const hasSetupFlag = (args: string[]) => args.includes('--setup');
 
 const bootstrap = hasBootstrapFlag(process.argv);
 const setup = hasSetupFlag(process.argv);

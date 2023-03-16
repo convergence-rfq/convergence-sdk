@@ -13,40 +13,27 @@ export const ADDRESS = 'Address:';
 export const MANIFEST = path.join(__dirname, '..', 'validator', 'ctx.json');
 
 export class Ctx {
-  dao: string;
-  maker: string;
-  taker: string;
-  mintAuthority: string;
-  baseMint: string;
-  quoteMint: string;
-  takerQuoteWallet: string;
-  takerBaseWallet: string;
-  makerQuoteWallet: string;
-  makerBaseWallet: string;
+  dao = getPk('dao');
+  maker = getPk('maker');
+  taker = getPk('taker');
+  mintAuthority = getPk('mint_authority');
 
-  constructor(
-    dao = getPk('dao'),
-    maker = getPk('maker'),
-    taker = getPk('taker'),
-    mintAuthority = getPk('mint_authority'),
-    baseMint = '',
-    quoteMint = '',
-    takerQuoteWallet = '',
-    takerBaseWallet = '',
-    makerQuoteWallet = '',
-    makerBaseWallet = ''
-  ) {
-    this.maker = maker;
-    this.taker = taker;
-    this.dao = dao;
-    this.mintAuthority = mintAuthority;
-    this.baseMint = baseMint;
-    this.quoteMint = quoteMint;
-    this.takerQuoteWallet = takerQuoteWallet;
-    this.takerBaseWallet = takerBaseWallet;
-    this.makerQuoteWallet = makerQuoteWallet;
-    this.makerBaseWallet = makerBaseWallet;
-  }
+  // Setup complete
+  baseMint = '';
+  quoteMint = '';
+  takerQuoteWallet = '';
+  takerBaseWallet = '';
+  makerQuoteWallet = '';
+  makerBaseWallet = '';
+
+  // Bootstrap complete
+  protocol = '';
+  riskEngine = '';
+  baseAsset = '';
+  quoteRegisteredMint = '';
+  baseRegisteredMint = '';
+  makerCollateral = '';
+  takerCollateral = '';
 }
 
 class SolanaAccount {
@@ -82,24 +69,28 @@ const writeAccount = async (con: Connection, pk: string, user: string) => {
   fs.writeFileSync(f, JSON.stringify(account));
 };
 
+const camelToSnakeCase = (str: string): string => {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+};
+
 export const writeCtx = async (ctx: Ctx) => {
   const con = new Connection(ENDPOINT, 'confirmed');
-  writeAccount(con, ctx.baseMint, 'base_mint');
-  writeAccount(con, ctx.quoteMint, 'quote_mint');
-  writeAccount(con, ctx.takerQuoteWallet, 'taker_quote_wallet');
-  writeAccount(con, ctx.takerBaseWallet, 'taker_base_wallet');
-  writeAccount(con, ctx.makerQuoteWallet, 'maker_quote_wallet');
-  writeAccount(con, ctx.makerBaseWallet, 'maker_base_wallet');
-  writeAccount(con, ctx.maker, 'maker');
-  writeAccount(con, ctx.taker, 'taker');
-  writeAccount(con, ctx.dao, 'dao');
-  writeAccount(con, ctx.mintAuthority, 'mint_authority');
+  // @ts-ignore
+  for (const key in ctx) {
+    if (ctx.hasOwnProperty(key)) {
+      const snakeCaseKey = camelToSnakeCase(key);
+      // @ts-ignore
+      writeAccount(con, ctx[key], snakeCaseKey);
+    }
+  }
   fs.writeFileSync(MANIFEST, JSON.stringify(ctx));
 };
 
 export const readCtx = (): Ctx => {
   const json = fs.readFileSync(MANIFEST, 'utf-8');
-  return JSON.parse(json);
+  const data = JSON.parse(json);
+  const ctx = new Ctx();
+  return { ...ctx, ...data };
 };
 
 export const getJsonPk = (user: string): string => {

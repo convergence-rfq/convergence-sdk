@@ -2,7 +2,15 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import * as sdk from '@convergence-rfq/sdk';
 
-import { runCli, ADDRESS, TX, BTC_ORACLE, readCtx, Ctx } from './helpers';
+import {
+  runCli,
+  ADDRESS,
+  TX,
+  BTC_ORACLE,
+  readCtx,
+  Ctx,
+  writeCtx,
+} from './helpers';
 
 describe('bootstrap', () => {
   let ctx: Ctx;
@@ -20,9 +28,15 @@ describe('bootstrap', () => {
     stub.restore();
   });
 
+  after(() => {
+    writeCtx(ctx);
+  });
+
   it('protocol:initialize', async () => {
     await runCli(['protocol:initialize', '--collateral-mint', ctx.quoteMint]);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+    ctx.protocol = stub.args[0][1];
   });
 
   it('protocol:add-instrument [spot]', async () => {
@@ -100,7 +114,9 @@ describe('bootstrap', () => {
       '--overall-safety-factor',
       '0.1',
     ]);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+    ctx.riskEngine = stub.args[0][1];
   });
 
   it('protocol:add-base-asset [base]', async () => {
@@ -111,12 +127,16 @@ describe('bootstrap', () => {
       '--oracle-address',
       BTC_ORACLE,
     ]);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+    ctx.baseAsset = stub.args[0][1];
   });
 
   it('protocol:register-mint [quote]', async () => {
     await runCli(['protocol:register-mint', '--mint', ctx.quoteMint]);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+    ctx.quoteRegisteredMint = stub.args[0][1];
   });
 
   it('protocol:register-mint [base]', async () => {
@@ -127,17 +147,32 @@ describe('bootstrap', () => {
       '--mint',
       ctx.baseMint,
     ]);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+    ctx.baseRegisteredMint = stub.args[0][1];
   });
 
-  it('collateral:initialize-account [maker]', async () => {
+  it('collateral:initialize-account [taker]', async () => {
     await runCli(['collateral:initialize-account'], 'taker');
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
+    ctx.makerCollateral = stub.args[0][1];
+  });
+
+  it('collateral:initialize-account [maker]', async () => {
+    await runCli(['collateral:initialize-account'], 'maker');
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+    ctx.takerCollateral = stub.args[0][1];
+  });
+
+  it('collateral:fund-account [taker]', async () => {
+    await runCli(['collateral:fund-account', '--amount', '1000'], 'taker');
+    expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('collateral:fund-account [maker]', async () => {
-    await runCli(['collateral:fund-account', '--amount', '1000'], 'taker');
+    await runCli(['collateral:fund-account', '--amount', '1000'], 'maker');
     expect(stub.args[0][0]).toEqual(TX);
   });
 });
