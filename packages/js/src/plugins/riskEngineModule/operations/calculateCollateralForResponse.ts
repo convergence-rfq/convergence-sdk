@@ -94,6 +94,9 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
 
       // fetching in parallel
       const [rfq, config] = await Promise.all([
+        // convergence
+        //   .rfqs()
+        //   .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
         convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
         convergence.riskEngine().fetchConfig(scope),
       ]);
@@ -127,7 +130,7 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         scope.commitment
       );
       const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
-      
+
       return { requiredCollateral };
     },
   };

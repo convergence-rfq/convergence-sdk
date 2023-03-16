@@ -11,7 +11,11 @@ import {
   createEuroAccountsAndMintOptions,
   createAmericanAccountsAndMintOptions,
 } from '../helpers';
-import { createAmericanProgram, initializeNewAmericanOption } from '@/index';
+import {
+  convertResponseInput,
+  createAmericanProgram,
+  initializeNewAmericanOption,
+} from '@/index';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -357,6 +361,10 @@ test('[psyoptionsEuropeanInstrument] it can create the Euro program and Pyth ora
     17_000,
     usdcMint.decimals * -1
   );
+});
+
+test('[psyoptionsAmericanInstrument] it can create the american program', async (t: Test) => {
+  americanProgram = createAmericanProgram(cvg);
 });
 
 // PROTOCOL UTILS
@@ -1337,6 +1345,26 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       settlingWindow: 30 * 60 * 60, // 30 hours
     });
 
+    // const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
+    //   6,
+    //   {
+    //     __kind: 'Standard',
+    //     priceQuote: {
+    //       __kind: 'AbsolutePrice',
+    //       amountBps: 22_000,
+    //     },
+    //     legsMultiplierBps: 20,
+    //   },
+    //   {
+    //     __kind: 'Standard',
+    //     priceQuote: {
+    //       __kind: 'AbsolutePrice',
+    //       amountBps: 23_000,
+    //     },
+    //     legsMultiplierBps: 5,
+    //   }
+    // );
+
     const riskOutput = await cvg.riskEngine().calculateCollateralForResponse({
       rfqAddress: rfq.address,
       bid: {
@@ -1355,6 +1383,8 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         },
         legsMultiplierBps: 5,
       },
+      // bid: convertedBid ?? null,
+      // ask: convertedAsk ?? null,
     });
 
     spok(t, riskOutput, {
@@ -1628,8 +1658,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   test('[psyoptionsAmericanInstrumentModule] it can mint options to taker', async () => {
-    americanProgram = createAmericanProgram(cvg);
-
     const {
       optionMarketKey,
       optionMarket: op,
@@ -1994,11 +2022,20 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   test('[rfqModule] it can find all rfqs by instrument as leg', async (t: Test) => {
     const spotInstrument = cvg.programs().getSpotInstrument();
-    const rfqs = await cvg
-      .rfqs()
-      .findRfqsByInstrument({ instrumentProgram: spotInstrument });
+    const rfqPages = await cvg.rfqs().findRfqsByInstrument({
+      instrumentProgram: spotInstrument,
+      rfqsPerPage: 6,
+      numPages: 1,
+    });
+    for (const rfqPage of rfqPages) {
+      console.log('new page');
 
-    t.assert(rfqs.length > 0, 'rfqs should be greater than 0');
+      for (const rfq of rfqPage) {
+        console.log('rfq address: ' + rfq.address.toString());
+      }
+    }
+
+    t.assert(rfqPages[0].length > 0, 'rfqs should be greater than 0');
   });
 
   test('[rfqModule] it can find all rfqs which are active', async (t: Test) => {
@@ -2757,6 +2794,56 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
+  test('[riskEngineModule] it can calculate collateral for fixed base size RFQ creation (Psyoptions Euro)', async (t: Test) => {
+    await sleep(2000);
+
+    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+      cvg,
+      oracle,
+      europeanProgram,
+      btcMint,
+      usdcMint,
+      17_500,
+      1,
+      3_600
+    );
+
+    const legs = [
+      // await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
+      await PsyoptionsEuropeanInstrument.createForLeg(
+        cvg,
+        btcMint,
+        OptionType.PUT,
+        euroMeta,
+        euroMetaKey,
+        5,
+        Side.Bid
+      ).toLegData(),
+    ];
+
+    const riskOutput = await cvg.riskEngine().calculateCollateralForRfq({
+      fixedSize: {
+        __kind: 'BaseAsset',
+        legsMultiplierBps: 1,
+      },
+      orderType: OrderType.TwoWay,
+      legs,
+      settlementPeriod: 100,
+    });
+
+    console.log(
+      '**************************************required collateral: ',
+      riskOutput.requiredCollateral.toString()
+    );
+
+    // spok(t, riskOutput, {
+    //   $topic: 'Calculated Collateral for fixed quote size Rfq',
+    //   requiredCollateral: removeCollateralDecimals(
+    //     DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ
+    //   ),
+    // });
+  });
+
   test('[rfqModule] it can create and finalize psyop euro Rfq (BaseAsset), respond, and cancel response', async (t: Test) => {
     await sleep(2000);
 
@@ -2832,6 +2919,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       state: StoredResponseState.Canceled,
     });
   });
+
   test('[rfqModule] it can create and finalize psyop euro Rfq (QuoteAsset), respond, and cancel response', async (t: Test) => {
     await sleep(3_000);
 
@@ -2877,18 +2965,54 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
     });
+
+    const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
+      6,
+      {
+        __kind: 'FixedSize',
+        priceQuote: { __kind: 'AbsolutePrice', amountBps: 100 },
+      },
+      {
+        __kind: 'FixedSize',
+        priceQuote: { __kind: 'AbsolutePrice', amountBps: 100 },
+      }
+    );
+
+    const sdkCalculatedResponseCollateral = await cvg
+      .riskEngine()
+      .calculateCollateralForResponse({
+        rfqAddress: rfq.address,
+        // bid: {
+        //   __kind: 'FixedSize',
+        //   priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
+        // },
+        // ask: {
+        //   __kind: 'FixedSize',
+        //   priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
+        // },
+        bid: convertedBid ?? null,
+        ask: convertedAsk ?? null,
+      });
+
+    console.log(
+      'sdkCalculatedResponseCollateral: ',
+      sdkCalculatedResponseCollateral.requiredCollateral.toString()
+    );
+
     const { rfqResponse } = await cvg.rfqs().respond({
       maker,
       rfq: rfq.address,
       bid: {
         __kind: 'FixedSize',
-        priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.000001 },
+        priceQuote: { __kind: 'AbsolutePrice', amountBps: 100 },
       },
       ask: {
         __kind: 'FixedSize',
-        priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.000001 },
+        priceQuote: { __kind: 'AbsolutePrice', amountBps: 100 },
       },
     });
+    //calculateCollateralForResponse:
+    //    Required collateral: 1_855_111_957_732.754432 with 6 decimals
 
     await cvg.rfqs().cancelResponse({
       maker,
@@ -2916,34 +3040,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       1,
       3_600
     );
-  });
-  test('init new option meta again x2', async () => {
-    await sleep(2000).then(async () => {
-      await initializeNewOptionMeta(
-        cvg,
-        oracle,
-        europeanProgram,
-        btcMint,
-        usdcMint,
-        23_505,
-        1,
-        3_600
-      );
-    });
-  });
-  test('init new option meta again x3', async () => {
-    await sleep(2000).then(async () => {
-      await initializeNewOptionMeta(
-        cvg,
-        oracle,
-        europeanProgram,
-        btcMint,
-        usdcMint,
-        21_505,
-        1,
-        3_600
-      );
-    });
   });
 
   test('[american program] it can create american program', async (t: Test) => {

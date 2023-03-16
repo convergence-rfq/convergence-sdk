@@ -99,25 +99,33 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
-      scope.throwIfCanceled();
-
       const unparsedAddresses = unparsedAccounts.map(
         (account) => account.publicKey
       );
+      scope.throwIfCanceled();
 
-      const accounts = await convergence
-        .rpc()
-        .getMultipleAccounts(unparsedAddresses, commitment);
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
 
       const parsedRfqs: Rfq[] = [];
 
-      for (const account of accounts) {
-        const rfq = toRfq(toRfqAccount(account));
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
 
-        if (rfq.state === StoredRfqState.Active) {
-          const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+        for (const account of accounts) {
+          const rfq = toRfq(toRfqAccount(account));
 
-          parsedRfqs.push(convertedRfq);
+          if (rfq.state === StoredRfqState.Active) {
+            const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+            parsedRfqs.push(convertedRfq);
+          }
         }
       }
 

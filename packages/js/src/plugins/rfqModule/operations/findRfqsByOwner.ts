@@ -106,25 +106,45 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         .withoutData()
         .whereTaker(owner)
         .get();
-      scope.throwIfCanceled();
-
-      const parsedRfqs: Rfq[] = [];
-
       const unparsedAddresses = unparsedAccounts.map(
         (account) => account.publicKey
       );
+      scope.throwIfCanceled();
 
-      const accounts = await convergence
-        .rpc()
-        .getMultipleAccounts(unparsedAddresses, commitment);
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
 
-      for (const account of accounts) {
-        const rfq = toRfq(toRfqAccount(account));
-        const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+      const parsedRfqs: Rfq[] = [];
 
-        parsedRfqs.push(convertedRfq);
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
+
+        for (const account of accounts) {
+          const rfq = toRfq(toRfqAccount(account));
+          const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+          parsedRfqs.push(convertedRfq);
+        }
       }
       scope.throwIfCanceled();
+
+      // const accounts = await convergence
+      //   .rpc()
+      //   .getMultipleAccounts(unparsedAddresses, commitment);
+
+      // for (const account of accounts) {
+      //   const rfq = toRfq(toRfqAccount(account));
+      //   const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+      //   parsedRfqs.push(convertedRfq);
+      // }
+      // scope.throwIfCanceled();
 
       const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
 

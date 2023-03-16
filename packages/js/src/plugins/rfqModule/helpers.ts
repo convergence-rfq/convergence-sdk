@@ -342,10 +342,10 @@ export const convertResponseOutput = (
   quoteDecimals: number
 ): Response => {
   if (response.bid) {
-    const parsedPriceQuoteAmountBps =
+    const convertedPriceQuoteAmountBps =
       Number(response.bid.priceQuote.amountBps) / Math.pow(10, quoteDecimals);
 
-    response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+    response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
     if (response.bid.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
@@ -356,10 +356,10 @@ export const convertResponseOutput = (
     }
   }
   if (response.ask) {
-    const parsedPriceQuoteAmountBps =
+    const convertedPriceQuoteAmountBps =
       Number(response.ask.priceQuote.amountBps) / Math.pow(10, quoteDecimals);
 
-    response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+    response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
     if (response.ask.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
@@ -379,29 +379,29 @@ export const convertResponseInput = (
   ask?: Quote
 ) => {
   if (bid) {
-    const parsedPriceQuoteAmountBps =
+    const convertedPriceQuoteAmountBps =
       Number(bid.priceQuote.amountBps) * Math.pow(10, quoteDecimals);
 
-    bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+    bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
     if (bid.__kind == 'Standard') {
-      const parsedLegsMultiplierBps =
+      const convertedLegsMultiplierBps =
         Number(bid.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
-      bid.legsMultiplierBps = parsedLegsMultiplierBps;
+      bid.legsMultiplierBps = convertedLegsMultiplierBps;
     }
   }
   if (ask) {
-    const parsedPriceQuoteAmountBps =
+    const convertedPriceQuoteAmountBps =
       Number(ask.priceQuote.amountBps) * Math.pow(10, quoteDecimals);
 
-    ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+    ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
     if (ask.__kind == 'Standard') {
-      const parsedLegsMultiplierBps =
+      const convertedLegsMultiplierBps =
         Number(ask.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
-      ask.legsMultiplierBps = parsedLegsMultiplierBps;
+      ask.legsMultiplierBps = convertedLegsMultiplierBps;
     }
   }
 

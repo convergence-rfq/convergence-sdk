@@ -93,7 +93,10 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
               leg.instrumentProgram.toBase58() ===
               instrumentProgram.address.toBase58()
             ) {
-              const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+              const convertedRfq = convertRfqOutput(
+                rfq,
+                collateralMintDecimals
+              );
 
               rfqsByInstrument.push(convertedRfq);
 
@@ -110,32 +113,44 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
+      let unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
-
-      const parsedRfqs: Rfq[] = [];
 
       const unparsedAddresses = unparsedAccounts.map(
         (account) => account.publicKey
       );
 
-      const accounts = await convergence
-        .rpc()
-        .getMultipleAccounts(unparsedAddresses, commitment);
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
 
-      for (const account of accounts) {
-        const rfq = toRfq(toRfqAccount(account));
+      const parsedRfqs: Rfq[] = [];
 
-        for (const leg of rfq.legs) {
-          if (
-            leg.instrumentProgram.toBase58() ===
-            instrumentProgram.address.toBase58()
-          ) {
-            const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
 
-            parsedRfqs.push(convertedRfq);
+        for (const account of accounts) {
+          const rfq = toRfq(toRfqAccount(account));
 
-            break;
+          for (const leg of rfq.legs) {
+            if (
+              leg.instrumentProgram.toBase58() ===
+              instrumentProgram.address.toBase58()
+            ) {
+              const convertedRfq = convertRfqOutput(
+                rfq,
+                collateralMintDecimals
+              );
+
+              parsedRfqs.push(convertedRfq);
+
+              break;
+            }
           }
         }
       }

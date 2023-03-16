@@ -9,7 +9,10 @@ import {
   ComputeBudgetProgram,
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  TOKEN_PROGRAM_ID,
+  getOrCreateAssociatedTokenAccount,
+} from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '@/Convergence';
@@ -27,7 +30,6 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -288,12 +290,22 @@ export const prepareSettlementBuilder = async (
       rfqModel,
     });
 
-    const callerTokens = await getOrCreateAssociatedTokenAccount(
-      convergence.connection,
-      caller as Keypair,
-      baseAssetMints[legIndex].address,
-      caller.publicKey
-    );
+    // const callerTokens = await getOrCreateAssociatedTokenAccount(
+    //   convergence.connection,
+    //   caller as Keypair,
+    //   baseAssetMints[legIndex].address,
+    //   caller.publicKey
+    // );
+
+    const callerTokensPda = convergence.tokens().pdas().associatedTokenAccount({
+      mint: baseAssetMints[legIndex].address,
+      owner: caller.publicKey,
+      programs,
+    });
+
+    const callerTokensAccount = await convergence
+      .rpc()
+      .getAccount(callerTokensPda);
 
     const legAccounts: AccountMeta[] = [
       // `caller`
@@ -309,7 +321,17 @@ export const prepareSettlementBuilder = async (
         //   owner: caller.publicKey,
         //   programs,
         // }),
-        pubkey: callerTokens.address,
+        // pubkey: callerTokens.address,
+        pubkey: callerTokensAccount.exists
+          ? callerTokensPda
+          : await getOrCreateAssociatedTokenAccount(
+              convergence.connection,
+              caller as Keypair,
+              baseAssetMints[legIndex].address,
+              caller.publicKey
+            ).then((account) => {
+              return account.address;
+            }),
         isSigner: false,
         isWritable: true,
       },

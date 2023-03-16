@@ -86,16 +86,23 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
           .findMintByAddress({ address: protocol.collateralMint })
       ).decimals;
 
-      const accounts = await convergence
-        .rpc()
-        .getMultipleAccounts(addresses, commitment);
+      const callsToGetMultipleAccounts = Math.ceil(addresses.length / 100);
 
-      for (const account of accounts) {
-        const rfq = toRfq(toRfqAccount(account));
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            addresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
 
-        const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+        for (const account of accounts) {
+          const rfq = toRfq(toRfqAccount(account));
 
-        rfqs.push(convertedRfq);
+          const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+          rfqs.push(convertedRfq);
+        }
       }
       scope.throwIfCanceled();
 

@@ -117,30 +117,40 @@ export const findResponsesByRfqsOperationHandler: OperationHandler<FindResponses
       );
       scope.throwIfCanceled();
 
-      const accounts = await convergence
-        .rpc()
-        .getMultipleAccounts(unparsedAddresses, commitment);
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
 
       const parsedResponses: Response[] = [];
 
-      for (const account of accounts) {
-        const response = toResponse(toResponseAccount(account));
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
 
-        for (const address of addresses) {
-          if (response.rfq.toBase58() === address.toBase58()) {
-            const rfq = await convergence
-              .rfqs()
-              .findRfqByAddress({ address: response.rfq });
+        for (const account of accounts) {
+          const response = toResponse(toResponseAccount(account));
 
-            const convertedResponse = convertResponseOutput(
-              response,
-              rfq.quoteAsset.instrumentDecimals
-            );
+          for (const address of addresses) {
+            if (response.rfq.toBase58() === address.toBase58()) {
+              const rfq = await convergence
+                .rfqs()
+                .findRfqByAddress({ address: response.rfq });
 
-            parsedResponses.push(convertedResponse);
+              const convertedResponse = convertResponseOutput(
+                response,
+                rfq.quoteAsset.instrumentDecimals
+              );
+
+              parsedResponses.push(convertedResponse);
+            }
           }
         }
       }
+      scope.throwIfCanceled();
 
       const pages = getPages(parsedResponses, responsesPerPage, numPages);
 
