@@ -1,7 +1,7 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { runCli, ADDRESS, Ctx, readCtx } from './../helpers';
+import { runCli, ADDRESS, Ctx, readCtx } from '../utils/helpers';
 
 describe('rfq', () => {
   let ctx = new Ctx();

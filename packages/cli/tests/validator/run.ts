@@ -47,7 +47,6 @@ export const baseArgs = [
   path.join(__dirname, 'programs/pseudo_pyth.so'),
   '--ledger',
   './test-ledger',
-  '--quiet',
   '--reset',
 ];
 

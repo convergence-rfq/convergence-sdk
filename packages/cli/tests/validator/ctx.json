@@ -1,1 +1,12 @@
-{"dao":"HMMqtjVBqxwC2kqGMd3oPQ7pSwyqbpGLzYTp1onr21G2","maker":"LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS","taker":"BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux","mintAuthority":"3mweMVQELCtNVuMJUWuXp6AhT4h1q2UB6igzjJs7oi3G","baseMint":"Gi2Qawbs8dfGxJEArDPcT4VJLHUKy1zzhs8p76NK3xDH","quoteMint":"6mxsY525xwEWAJiBfuBnXejbF2QqLekcZJKnzVZTxfYH","takerQuoteWallet":"7c6Hsohp6F2QpVr1S6JgGjigdqyrw3xUmLHAV76KhgBx","takerBaseWallet":"Gjrr5kPBFq2B9xNrhwxT2wxDGByq4K3YXiGWercPXwT6","makerQuoteWallet":"6b4uL4RC7ZqwCavA3FWTBpAJBXYvKyRaCwMcrH1i8YJj","makerBaseWallet":"2oCadYMvqWCASWwU7hNiWUYkDA157FVHZuJG7c5YL3C3"}
+{
+  "dao": "HMMqtjVBqxwC2kqGMd3oPQ7pSwyqbpGLzYTp1onr21G2",
+  "maker": "LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS",
+  "taker": "BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux",
+  "mintAuthority": "3mweMVQELCtNVuMJUWuXp6AhT4h1q2UB6igzjJs7oi3G",
+  "baseMint": "Gi2Qawbs8dfGxJEArDPcT4VJLHUKy1zzhs8p76NK3xDH",
+  "quoteMint": "6mxsY525xwEWAJiBfuBnXejbF2QqLekcZJKnzVZTxfYH",
+  "takerQuoteWallet": "7c6Hsohp6F2QpVr1S6JgGjigdqyrw3xUmLHAV76KhgBx",
+  "takerBaseWallet": "Gjrr5kPBFq2B9xNrhwxT2wxDGByq4K3YXiGWercPXwT6",
+  "makerQuoteWallet": "6b4uL4RC7ZqwCavA3FWTBpAJBXYvKyRaCwMcrH1i8YJj",
+  "makerBaseWallet": "2oCadYMvqWCASWwU7hNiWUYkDA157FVHZuJG7c5YL3C3"
+}

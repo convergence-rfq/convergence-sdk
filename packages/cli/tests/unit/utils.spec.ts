@@ -2,7 +2,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
-import { runCli, getPk, ADDRESS, TX } from './../helpers';
+import { runCli, getPk, ADDRESS, TX } from '../utils/helpers';
 
 describe('utils', () => {
   let stub: SinonStub;

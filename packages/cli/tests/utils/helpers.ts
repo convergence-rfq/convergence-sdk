@@ -41,7 +41,7 @@ class SolanaAccount {
   }
 }
 
-const writeAccount = async (con: Connection, pk: string, name: string) => {
+const writeAccount = async (con: Connection, pk: string, user: string) => {
   const accountInfo = await con.getAccountInfo(new PublicKey(pk));
   if (accountInfo === null) {
     return;
@@ -54,7 +54,7 @@ const writeAccount = async (con: Connection, pk: string, name: string) => {
     lamports,
     data: [data.toString('base64'), 'base64'],
   });
-  const f = path.join(__dirname, '..', 'validator', 'accounts', `${name}.json`);
+  const f = path.join(__dirname, '..', 'validator', 'accounts', `${user}.json`);
   fs.writeFileSync(f, JSON.stringify(account));
 };
 
@@ -78,8 +78,8 @@ export const readCtx = (): Ctx => {
   return JSON.parse(json);
 };
 
-export const getJsonPk = (name: string): string => {
-  const f = path.join(__dirname, '..', 'validator', 'accounts', name + '.json');
+export const getJsonPk = (user: string): string => {
+  const f = path.join(__dirname, '..', 'validator', 'accounts', user + '.json');
   const fileContent = fs.readFileSync(f, 'utf-8');
   const json = JSON.parse(fileContent);
   return json.pubkey;
