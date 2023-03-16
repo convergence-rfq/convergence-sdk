@@ -31,13 +31,10 @@ describe('utils', () => {
   });
 
   it('token:create-wallet', async () => {
-    await runCli([
-      'token:create-wallet',
-      '--owner',
-      getPk('maker'),
-      '--mint',
-      mint,
-    ]);
+    await runCli(
+      ['token:create-wallet', '--owner', getPk('maker'), '--mint', mint],
+      'maker'
+    );
     wallet = stub.args[0][1];
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
@@ -55,7 +52,7 @@ describe('utils', () => {
         '--amount',
         '1000000000000',
       ],
-      'maker'
+      'mint_authority'
     );
     expect(stub.args[0][0]).toEqual(TX);
   });
