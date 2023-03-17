@@ -96,9 +96,15 @@ const runValidator = (setup: boolean, bootstrap: boolean): any => {
     args.push(...getBootstrapCompleteArgs());
   }
 
-  return spawn('solana-test-validator', args, {
+  const validator = spawn('solana-test-validator', args, {
     stdio: [process.stdin, process.stdout, process.stderr],
   });
+
+  validator.on('exit', () => {
+    validator.kill();
+  });
+
+  return validator;
 };
 
 const hasBootstrapFlag = (args: string[]) => args.includes('--bootstrap');

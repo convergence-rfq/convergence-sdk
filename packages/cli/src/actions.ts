@@ -233,6 +233,7 @@ export const createRfq = async (opts: Opts) => {
       quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
       activeWindow: opts.activeWindow,
       settlingWindow: opts.settlingWindow,
+      collateralToken: new PublicKey(opts.collateralToken),
     });
     logPk(rfq.address);
     logResponse(response);

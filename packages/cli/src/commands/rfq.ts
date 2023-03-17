@@ -50,6 +50,10 @@ export const createRfqCmd = (c: Command) =>
       defaultValue: '60',
     },
     {
+      flags: '--collateral-token <string>',
+      description: 'collateral token account address',
+    },
+    {
       flags: '--settlement-window <number>',
       description: 'settlement window in seconds',
       defaultValue: '60',
