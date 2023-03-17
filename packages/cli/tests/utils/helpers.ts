@@ -52,7 +52,7 @@ class SolanaAccount {
   }
 }
 
-const writeAccount = async (con: Connection, pk: string, user: string) => {
+const writeAccount = async (con: Connection, pk: string, name: string) => {
   const accountInfo = await con.getAccountInfo(new PublicKey(pk));
   if (accountInfo === null) {
     return;
@@ -65,7 +65,7 @@ const writeAccount = async (con: Connection, pk: string, user: string) => {
     lamports,
     data: [data.toString('base64'), 'base64'],
   });
-  const f = path.join(__dirname, '..', 'validator', 'accounts', `${user}.json`);
+  const f = path.join(__dirname, '..', 'validator', 'accounts', `${name}.json`);
   fs.writeFileSync(f, JSON.stringify(account));
 };
 

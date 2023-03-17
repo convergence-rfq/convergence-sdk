@@ -106,7 +106,7 @@ describe('setup', () => {
     expect(new PublicKey(ctx.takerQuoteWallet)).toBeTruthy();
   });
 
-  it('token:mint-to [base:taker]', async () => {
+  it('token:mint-to [taker:base]', async () => {
     await runCli(
       [
         'token:mint-to',
@@ -122,7 +122,7 @@ describe('setup', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('token:mint-to [base:maker]', async () => {
+  it('token:mint-to [maker:base]', async () => {
     await runCli(
       [
         'token:mint-to',
@@ -138,7 +138,7 @@ describe('setup', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('token:mint-to [quote:taker]', async () => {
+  it('token:mint-to [taker:quote]', async () => {
     await runCli(
       [
         'token:mint-to',
@@ -154,7 +154,7 @@ describe('setup', () => {
     expect(stub.args[0][0]).toEqual(TX);
   });
 
-  it('token:mint-to [quote:maker]', async () => {
+  it('token:mint-to [maker:quote]', async () => {
     await runCli(
       [
         'token:mint-to',

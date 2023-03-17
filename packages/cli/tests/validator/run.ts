@@ -6,7 +6,8 @@ import * as riskEngine from '@convergence-rfq/risk-engine';
 import * as spotInstrument from '@convergence-rfq/spot-instrument';
 import * as psyoptionsEuropeanInstrument from '@convergence-rfq/psyoptions-european-instrument';
 import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-american-instrument';
-import { getPk, getJsonPk } from '../utils/helpers';
+
+import { getJsonPk } from '../utils/helpers';
 
 const PSYOPTIONS_AMERICAN = 'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs';
 const PSYOPTIONS_EURO = 'FASQhaZQT53W9eT9wWnPoBFw8xzZDey9TbMmJj6jCQTs';
@@ -50,64 +51,34 @@ export const getBaseArgs = () => [
   '--reset',
 ];
 
+const getAccountArgs = (name: string) => [
+  '--account',
+  getJsonPk(name),
+  path.join(__dirname, `accounts/${name}.json`),
+];
+
 const getSetupCompleteArgs = () => [
-  // Users
-  '--account',
-  getPk('dao'),
-  path.join(__dirname, 'accounts/dao.json'),
-  '--account',
-  getPk('maker'),
-  path.join(__dirname, 'accounts/maker.json'),
-  '--account',
-  getPk('taker'),
-  path.join(__dirname, 'accounts/taker.json'),
-  '--account',
-  getPk('mint_authority'),
-  path.join(__dirname, 'accounts/mint_authority.json'),
-  // Mints
-  '--account',
-  getJsonPk('base_mint'),
-  path.join(__dirname, 'accounts/base_mint.json'),
-  '--account',
-  getJsonPk('quote_mint'),
-  path.join(__dirname, 'accounts/quote_mint.json'),
-  // Wallets
-  '--account',
-  getJsonPk('maker_base_wallet'),
-  path.join(__dirname, 'accounts/maker_base_wallet.json'),
-  '--account',
-  getJsonPk('taker_base_wallet'),
-  path.join(__dirname, 'accounts/taker_base_wallet.json'),
-  '--account',
-  getJsonPk('maker_quote_wallet'),
-  path.join(__dirname, 'accounts/maker_quote_wallet.json'),
-  '--account',
-  getJsonPk('taker_quote_wallet'),
-  path.join(__dirname, 'accounts/taker_quote_wallet.json'),
+  ...getAccountArgs('dao'),
+  ...getAccountArgs('maker'),
+  ...getAccountArgs('taker'),
+  ...getAccountArgs('mint_authority'),
+  ...getAccountArgs('base_mint'),
+  ...getAccountArgs('quote_mint'),
+  ...getAccountArgs('maker_base_wallet'),
+  ...getAccountArgs('taker_base_wallet'),
+  ...getAccountArgs('maker_quote_wallet'),
+  ...getAccountArgs('taker_quote_wallet'),
 ];
 
 const getBootstrapCompleteArgs = () => [
-  '--account',
-  getJsonPk('protocol'),
-  path.join(__dirname, 'accounts/protocol.json'),
-  '--account',
-  getJsonPk('risk_engine'),
-  path.join(__dirname, 'accounts/risk_engine.json'),
-  '--account',
-  getJsonPk('base_asset'),
-  path.join(__dirname, 'accounts/base_asset.json'),
-  '--account',
-  getJsonPk('quote_registered_mint'),
-  path.join(__dirname, 'accounts/quote_registered_mint.json'),
-  '--account',
-  getJsonPk('base_registered_mint'),
-  path.join(__dirname, 'accounts/base_registered_mint.json'),
-  '--account',
-  getJsonPk('maker_collateral'),
-  path.join(__dirname, 'accounts/maker_collateral.json'),
-  '--account',
-  getJsonPk('taker_collateral'),
-  path.join(__dirname, 'accounts/taker_collateral.json'),
+  ...getAccountArgs('protocol'),
+  ...getAccountArgs('risk_engine'),
+  ...getAccountArgs('base_asset'),
+  ...getAccountArgs('risk_engine'),
+  ...getAccountArgs('quote_registered_mint'),
+  ...getAccountArgs('base_registered_mint'),
+  ...getAccountArgs('maker_collateral'),
+  ...getAccountArgs('taker_collateral'),
 ];
 
 const runValidator = (setup: boolean, bootstrap: boolean): any => {
