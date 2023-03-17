@@ -102,6 +102,12 @@ const getBootstrapCompleteArgs = () => [
   '--account',
   getJsonPk('base_registered_mint'),
   path.join(__dirname, 'accounts/base_registered_mint.json'),
+  '--account',
+  getJsonPk('maker_collateral'),
+  path.join(__dirname, 'accounts/maker_collateral.json'),
+  '--account',
+  getJsonPk('taker_collateral'),
+  path.join(__dirname, 'accounts/taker_collateral.json'),
 ];
 
 const runValidator = (setup: boolean, bootstrap: boolean): any => {
@@ -111,7 +117,7 @@ const runValidator = (setup: boolean, bootstrap: boolean): any => {
     throw new Error('Cannot run both setup and bootstrap');
   }
 
-  if (bootstrap || !setup) {
+  if (!setup || bootstrap) {
     args.push(...getSetupCompleteArgs());
   }
 
