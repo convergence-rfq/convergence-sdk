@@ -160,14 +160,14 @@ describe('bootstrap', () => {
     await runCli(['collateral:initialize-account'], 'taker');
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
-    ctx.makerCollateral = stub.args[0][1];
+    ctx.takerCollateral = stub.args[0][1];
   });
 
   it('collateral:initialize-account [maker]', async () => {
     await runCli(['collateral:initialize-account'], 'maker');
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
-    ctx.takerCollateral = stub.args[0][1];
+    ctx.makerCollateral = stub.args[0][1];
   });
 
   it('collateral:fund-account [taker]', async () => {

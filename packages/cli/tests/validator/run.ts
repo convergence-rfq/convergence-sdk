@@ -15,7 +15,7 @@ const SWITCHBOARD_BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee';
 const SWITCHBOARD_SOL_ORACLE = 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR';
 const PYTH_ORACLE = 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH';
 
-export const getBaseArgs = () => [
+const getBaseArgs = () => [
   '--account',
   SWITCHBOARD_BTC_ORACLE,
   path.join(__dirname, 'accounts/btc_20000_oracle_switchboard.json'),
@@ -82,13 +82,13 @@ const getBootstrapCompleteArgs = () => [
   ...getAccountArgs('taker_collateral'),
 ];
 
-class ValidatorConfig {
+class Config {
   setup = false;
   bootstrap = false;
   done = () => {};
 }
 
-export const spawnValidator = (config: ValidatorConfig): any => {
+export const spawnValidator = (config: Config): any => {
   const args = getBaseArgs();
 
   if (config.setup && config.bootstrap) {
