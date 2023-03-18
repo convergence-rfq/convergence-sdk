@@ -49,6 +49,7 @@ export const getBaseArgs = () => [
   '--ledger',
   './test-ledger',
   '--reset',
+  '--quiet',
 ];
 
 const getAccountArgs = (name: string) => [
@@ -81,36 +82,35 @@ const getBootstrapCompleteArgs = () => [
   ...getAccountArgs('taker_collateral'),
 ];
 
-const runValidator = (setup: boolean, bootstrap: boolean): any => {
+class ValidatorConfig {
+  setup = false;
+  bootstrap = false;
+  done = () => {};
+}
+
+export const spawnValidator = (config: ValidatorConfig): any => {
   const args = getBaseArgs();
 
-  if (setup && bootstrap) {
+  if (config.setup && config.bootstrap) {
     throw new Error('Cannot run both setup and bootstrap');
   }
 
-  if (!setup || bootstrap) {
+  if (!config.setup || config.bootstrap) {
     args.push(...getSetupCompleteArgs());
   }
 
-  if (!setup && !bootstrap) {
+  if (!config.setup && !config.bootstrap) {
     args.push(...getBootstrapCompleteArgs());
   }
 
-  const validator = spawn('solana-test-validator', args, {
-    stdio: [process.stdin, process.stdout, process.stderr],
-  });
+  const validator = spawn('solana-test-validator', args);
+  validator.on('exit', process.exit);
 
-  validator.on('exit', () => {
-    validator.kill();
+  validator.stdout.on('data', (data: any) => {
+    if (data.toString().trim() === 'Waiting for fees to stabilize 2...') {
+      config.done();
+    }
   });
 
   return validator;
 };
-
-const hasBootstrapFlag = (args: string[]) => args.includes('--bootstrap');
-const hasSetupFlag = (args: string[]) => args.includes('--setup');
-
-const bootstrap = hasBootstrapFlag(process.argv);
-const setup = hasSetupFlag(process.argv);
-
-runValidator(setup, bootstrap);

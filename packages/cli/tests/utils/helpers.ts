@@ -55,7 +55,7 @@ class SolanaAccount {
 const writeAccount = async (con: Connection, pk: string, name: string) => {
   const accountInfo = await con.getAccountInfo(new PublicKey(pk));
   if (accountInfo === null) {
-    return;
+    throw new Error('Account not found');
   }
   const { owner, lamports, executable, rentEpoch, data } = accountInfo;
   const account = new SolanaAccount(pk, {
@@ -75,14 +75,18 @@ const camelToSnakeCase = (str: string): string => {
 
 export const writeCtx = async (ctx: Ctx) => {
   const con = new Connection(ENDPOINT, 'confirmed');
-  // @ts-ignore
+
   for (const key in ctx) {
     if (ctx.hasOwnProperty(key)) {
       const snakeCaseKey = camelToSnakeCase(key);
       // @ts-ignore
-      writeAccount(con, ctx[key], snakeCaseKey);
+      const pk = ctx[key];
+      if (pk.length) {
+        await writeAccount(con, pk, snakeCaseKey);
+      }
     }
   }
+
   fs.writeFileSync(MANIFEST, JSON.stringify(ctx));
 };
 

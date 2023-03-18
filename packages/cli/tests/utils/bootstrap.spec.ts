@@ -2,6 +2,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import * as sdk from '@convergence-rfq/sdk';
 
+import { spawnValidator } from '../validator';
 import {
   runCli,
   ADDRESS,
@@ -15,9 +16,11 @@ import {
 describe('bootstrap', () => {
   let ctx: Ctx;
   let stub: SinonStub;
+  let validator: any;
 
-  before(() => {
+  before((done) => {
     ctx = readCtx();
+    validator = spawnValidator({ done, bootstrap: true, setup: false });
   });
 
   beforeEach(() => {
@@ -30,6 +33,7 @@ describe('bootstrap', () => {
 
   after(() => {
     writeCtx(ctx);
+    validator.kill();
   });
 
   it('protocol:initialize', async () => {
