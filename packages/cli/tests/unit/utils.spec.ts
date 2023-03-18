@@ -2,13 +2,19 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
+import { spawnValidator } from '../validator';
 import { runCli, getPk, ADDRESS, TX } from '../utils/helpers';
 
 describe('utils', () => {
   let stub: SinonStub;
+  let validator: any;
 
   let mint: string;
   let wallet: string;
+
+  before((done) => {
+    validator = spawnValidator({ done, bootstrap: false, setup: false });
+  });
 
   beforeEach(() => {
     stub = sinon.stub(console, 'log');
@@ -16,6 +22,10 @@ describe('utils', () => {
 
   afterEach(() => {
     stub.restore();
+  });
+
+  after(() => {
+    validator.kill();
   });
 
   it('airdrop:sol', async () => {

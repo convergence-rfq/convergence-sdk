@@ -1,14 +1,17 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
+import { spawnValidator } from '../validator';
 import { runCli, ADDRESS, Ctx, readCtx } from '../utils/helpers';
 
 describe('rfq', () => {
   let ctx: Ctx;
   let stub: SinonStub;
+  let validator: any;
 
-  before(() => {
+  before((done) => {
     ctx = readCtx();
+    validator = spawnValidator({ done, bootstrap: false, setup: false });
   });
 
   beforeEach(() => {
@@ -17,6 +20,10 @@ describe('rfq', () => {
 
   afterEach(() => {
     stub.restore();
+  });
+
+  after(async () => {
+    validator.kill();
   });
 
   it('rfq:create [taker]', async () => {

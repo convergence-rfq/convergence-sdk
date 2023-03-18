@@ -31,8 +31,8 @@ describe('bootstrap', () => {
     stub.restore();
   });
 
-  after(() => {
-    writeCtx(ctx);
+  after(async () => {
+    await writeCtx(ctx);
     validator.kill();
   });
 
