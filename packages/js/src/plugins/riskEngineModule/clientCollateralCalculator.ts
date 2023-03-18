@@ -68,9 +68,10 @@ export async function calculateRisk(
   settlementPeriod: number,
   commitment?: Commitment
 ) {
+  const baseAssetIds = new Set(legs.map((leg) => leg.baseAssetIndex.value)); // select unique base asset ids
   const baseAssetInfos = await Promise.all(
-    legs.map((leg) =>
-      fetchBaseAssetInfo(convergence, leg.baseAssetIndex, commitment)
+    Array.from(baseAssetIds).map((id) =>
+      fetchBaseAssetInfo(convergence, { value: id }, commitment)
     )
   );
   const instrumentTypesMapping = config.instrumentTypes;
