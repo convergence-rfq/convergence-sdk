@@ -52,13 +52,16 @@ describe('setup', () => {
   });
 
   it('token:create-wallet [maker:base]', async () => {
-    await runCli([
-      'token:create-wallet',
-      '--owner',
-      getPk('maker'),
-      '--mint',
-      ctx.baseMint,
-    ]);
+    await runCli(
+      [
+        'token:create-wallet',
+        '--owner',
+        getPk('maker'),
+        '--mint',
+        ctx.baseMint,
+      ],
+      'maker'
+    );
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
     ctx.makerBaseWallet = stub.args[0][1];
@@ -66,13 +69,16 @@ describe('setup', () => {
   });
 
   it('token:create-wallet [taker:base]', async () => {
-    await runCli([
-      'token:create-wallet',
-      '--owner',
-      getPk('taker'),
-      '--mint',
-      ctx.baseMint,
-    ]);
+    await runCli(
+      [
+        'token:create-wallet',
+        '--owner',
+        getPk('taker'),
+        '--mint',
+        ctx.baseMint,
+      ],
+      'taker'
+    );
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
     ctx.takerBaseWallet = stub.args[0][1];
