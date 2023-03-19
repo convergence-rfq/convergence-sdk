@@ -29,6 +29,9 @@ export type BaseAsset = {
   /** The risk category for the base asset */
   readonly riskCategory: RiskCategory;
 
+  /** Is base asset enabled or disabled. */
+  readonly enabled: boolean;
+
   /** The price oracle for the base asset. */
   readonly priceOracle: PriceOracle;
 
@@ -51,6 +54,7 @@ export const toBaseAsset = (account: BaseAssetAccount): BaseAsset => ({
   address: account.publicKey,
   bump: account.data.bump,
   index: account.data.index,
+  enabled: account.data.enabled,
   riskCategory: account.data.riskCategory,
   priceOracle: account.data.priceOracle,
   ticker: account.data.ticker,
