@@ -2,18 +2,18 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
-import { spawnValidator } from '../validator';
+import { ChildProccess, spawnValidator } from '../validator';
 import { runCli, getPk, ADDRESS, TX } from '../utils/helpers';
 
 describe('utils', () => {
   let stub: SinonStub;
-  let validator: any;
+  let validator: ChildProccess;
 
   let mint: string;
   let wallet: string;
 
   before((done) => {
-    validator = spawnValidator({ done, bootstrap: false, setup: false });
+    validator = spawnValidator(done);
   });
 
   beforeEach(() => {

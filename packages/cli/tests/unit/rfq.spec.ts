@@ -1,17 +1,17 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { spawnValidator } from '../validator';
+import { ChildProccess, spawnValidator } from '../validator';
 import { runCli, ADDRESS, Ctx, readCtx } from '../utils/helpers';
 
 describe('rfq', () => {
   let ctx: Ctx;
   let stub: SinonStub;
-  let validator: any;
+  let validator: ChildProccess;
 
   before((done) => {
     ctx = readCtx();
-    validator = spawnValidator({ done, bootstrap: false, setup: false });
+    validator = spawnValidator(done);
   });
 
   beforeEach(() => {

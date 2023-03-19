@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import path from 'path';
 
 import * as rfq from '@convergence-rfq/rfq';
@@ -8,6 +8,8 @@ import * as psyoptionsEuropeanInstrument from '@convergence-rfq/psyoptions-europ
 import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-american-instrument';
 
 import { getJsonPk } from '../utils/helpers';
+
+export type ChildProccess = ChildProcessWithoutNullStreams;
 
 const PSYOPTIONS_AMERICAN = 'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs';
 const PSYOPTIONS_EURO = 'FASQhaZQT53W9eT9wWnPoBFw8xzZDey9TbMmJj6jCQTs';
@@ -82,24 +84,22 @@ const getBootstrapCompleteArgs = () => [
   ...getAccountArgs('taker_collateral'),
 ];
 
-class Config {
-  setup = false;
-  bootstrap = false;
-  done = () => {};
-}
-
-export const spawnValidator = (config: Config): any => {
+export const spawnValidator = (
+  done = () => {},
+  setup = false,
+  bootstrap = false
+): ChildProccess => {
   const args = getBaseArgs();
 
-  if (config.setup && config.bootstrap) {
+  if (setup && bootstrap) {
     throw new Error('Cannot run both setup and bootstrap');
   }
 
-  if (!config.setup || config.bootstrap) {
+  if (!setup || bootstrap) {
     args.push(...getSetupCompleteArgs());
   }
 
-  if (!config.setup && !config.bootstrap) {
+  if (!setup && !bootstrap) {
     args.push(...getBootstrapCompleteArgs());
   }
 
@@ -108,7 +108,7 @@ export const spawnValidator = (config: Config): any => {
 
   validator.stdout.on('data', (data: any) => {
     if (data.toString().trim() === 'Waiting for fees to stabilize 2...') {
-      config.done();
+      done();
     }
   });
 
