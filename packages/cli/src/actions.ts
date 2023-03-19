@@ -219,6 +219,14 @@ export const createRfq = async (opts: Opts) => {
     cvg.tokens().findMintByAddress({ address: new PublicKey(opts.baseMint) }),
     cvg.tokens().findMintByAddress({ address: new PublicKey(opts.quoteMint) }),
   ]);
+  const collateralToken = await cvg
+    .tokens()
+    .findTokenByAddress({ address: new PublicKey(opts.collateralToken) });
+
+  process.stderr.write(
+    baseMint.decimals.toString() + ', ' + quoteMint.decimals.toString() + '\n'
+  );
+  process.stderr.write(JSON.stringify(collateralToken) + '\n');
   try {
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [

@@ -40,15 +40,16 @@ describe('setup', () => {
     expect(stub.args[3][0]).toEqual(TX);
   });
 
-  it('token:create-mint [base|quote]', async () => {
-    await Promise.all([
-      runCli(['token:create-mint', '--decimals', '9'], 'mint_authority'),
-      runCli(['token:create-mint', '--decimals', '6'], 'mint_authority'),
-    ]);
-    ctx.baseMint = stub.args[0][1];
+  it('token:create-mint [base]', async () => {
+    await runCli(['token:create-mint', '--decimals', '9'], 'mint_authority');
     expect(stub.args[1][0]).toEqual(TX);
-    ctx.quoteMint = stub.args[2][1];
-    expect(stub.args[3][0]).toEqual(TX);
+    ctx.baseMint = stub.args[0][1];
+  });
+
+  it('token:create-mint [quote]', async () => {
+    await runCli(['token:create-mint', '--decimals', '6'], 'mint_authority');
+    expect(stub.args[1][0]).toEqual(TX);
+    ctx.quoteMint = stub.args[0][1];
   });
 
   it('token:create-wallet [maker:base]', async () => {

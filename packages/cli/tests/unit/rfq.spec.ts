@@ -37,7 +37,7 @@ describe('rfq', () => {
         '--side',
         'ask',
         '--collateral-token',
-        ctx.takerBaseWallet,
+        ctx.takerQuoteWallet,
         '--order-type',
         'buy',
         '--size',
