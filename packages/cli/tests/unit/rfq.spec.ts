@@ -39,7 +39,7 @@ describe('rfq', () => {
         '--collateral-info',
         ctx.takerCollateral,
         '--collateral-token',
-        ctx.takerQuoteWallet,
+        ctx.takerTokenAccount,
         '--order-type',
         'two-way',
         '--size',

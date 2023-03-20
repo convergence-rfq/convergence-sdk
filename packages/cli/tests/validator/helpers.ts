@@ -82,6 +82,8 @@ const getBootstrapCompleteArgs = () => [
   ...getAccountArgs('base_registered_mint'),
   ...getAccountArgs('maker_collateral'),
   ...getAccountArgs('taker_collateral'),
+  ...getAccountArgs('taker_token_account'),
+  ...getAccountArgs('maker_token_account'),
 ];
 
 export const spawnValidator = (

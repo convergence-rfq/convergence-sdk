@@ -34,6 +34,8 @@ export class Ctx {
   baseRegisteredMint = '';
   makerCollateral = '';
   takerCollateral = '';
+  makerTokenAccount = '';
+  takerTokenAccount = '';
 }
 
 class SolanaAccount {

@@ -29,7 +29,8 @@ describe('collateral', () => {
   it('collateral:initialize-account [dao]', async () => {
     await runCli(['collateral:initialize-account']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
-    expect(stub.args[1][0]).toEqual(TX);
+    expect(stub.args[1][0]).toEqual('Token account address:');
+    expect(stub.args[2][0]).toEqual(TX);
   });
 
   it('collateral:fund-account [taker]', async () => {

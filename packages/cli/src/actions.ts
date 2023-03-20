@@ -25,6 +25,7 @@ import {
   logInstrument,
   logTx,
   logError,
+  logTokenAccount,
   logRiskEngineConfig,
   logRegisteredMint,
   logCollateral,
@@ -312,7 +313,12 @@ export const initializeCollateralAccount = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     const { collateral, response } = await cvg.collateral().initialize({});
+    const tokenAccount = cvg
+      .collateral()
+      .pdas()
+      .collateralToken({ user: cvg.rpc().getDefaultFeePayer().publicKey });
     logPk(collateral.address);
+    logTokenAccount(tokenAccount);
     logResponse(response);
   } catch (e) {
     logError(e);

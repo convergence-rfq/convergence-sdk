@@ -78,6 +78,10 @@ export const logMint = (m: Mint): void => {
   l('Decimals:', m.currency.decimals.toString());
 };
 
+export const logTokenAccount = (p: PublicKey): void => {
+  l('Token account address:', p.toString());
+};
+
 export const logError = (e: any) => l(`Error: ${e}`);
 
 export const logProtocol = (p: Protocol): void => {
