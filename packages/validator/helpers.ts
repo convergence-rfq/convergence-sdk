@@ -7,7 +7,7 @@ import * as spotInstrument from '@convergence-rfq/spot-instrument';
 import * as psyoptionsEuropeanInstrument from '@convergence-rfq/psyoptions-european-instrument';
 import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-american-instrument';
 
-import { getJsonPk } from '../helpers';
+import { getJsonPk } from '../cli/tests/helpers';
 
 export type ChildProccess = ChildProcessWithoutNullStreams;
 

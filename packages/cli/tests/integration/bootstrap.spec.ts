@@ -2,7 +2,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import * as sdk from '@convergence-rfq/sdk';
 
-import { ChildProccess, spawnValidator } from '../validator';
+import { ChildProccess, spawnValidator } from '../../../validator';
 import {
   runCli,
   ADDRESS,

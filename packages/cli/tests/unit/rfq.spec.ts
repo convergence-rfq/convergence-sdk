@@ -1,7 +1,7 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { ChildProccess, spawnValidator } from '../validator';
+import { ChildProccess, spawnValidator } from '../../../validator';
 import { runCli, ADDRESS, Ctx, readCtx } from '../helpers';
 
 describe('rfq', () => {

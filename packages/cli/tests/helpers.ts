@@ -10,7 +10,7 @@ export const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Swi
 export const TX = 'Tx:';
 export const ADDRESS = 'Address:';
 
-const VALIDATOR = path.join(__dirname, 'validator');
+const VALIDATOR = path.join(__dirname, '..', '..', 'validator');
 
 export const MANIFEST = path.join(VALIDATOR, 'ctx.json');
 

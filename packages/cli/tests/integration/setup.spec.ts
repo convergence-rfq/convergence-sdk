@@ -2,7 +2,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
-import { ChildProccess, spawnValidator } from '../validator';
+import { ChildProccess, spawnValidator } from '../../../validator';
 import { runCli, getPk, ADDRESS, TX, Ctx, writeCtx } from '../helpers';
 
 describe('setup', () => {
