@@ -2,7 +2,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
 import { ChildProccess, spawnValidator } from '../validator';
-import { runCli, ADDRESS } from '../utils/helpers';
+import { runCli, ADDRESS } from '../helpers';
 
 describe('protocol', () => {
   let stub: SinonStub;

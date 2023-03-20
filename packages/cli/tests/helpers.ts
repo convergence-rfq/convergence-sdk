@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { Keypair, Connection, PublicKey } from '@solana/web3.js';
 
-import { makeCli } from '../../src/cli';
+import { makeCli } from '../src/cli';
 
 export const ENDPOINT = 'http://127.0.0.1:8899';
 export const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Switchboard
@@ -10,7 +10,9 @@ export const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Swi
 export const TX = 'Tx:';
 export const ADDRESS = 'Address:';
 
-export const MANIFEST = path.join(__dirname, '..', 'validator', 'ctx.json');
+const VALIDATOR = path.join(__dirname, 'validator');
+
+export const MANIFEST = path.join(VALIDATOR, 'ctx.json');
 
 export class Ctx {
   dao = getPk('dao');
@@ -67,7 +69,7 @@ const writeAccount = async (con: Connection, pk: string, name: string) => {
     lamports,
     data: [data.toString('base64'), 'base64'],
   });
-  const f = path.join(__dirname, '..', 'validator', 'accounts', `${name}.json`);
+  const f = path.join(VALIDATOR, 'accounts', `${name}.json`);
   fs.writeFileSync(f, JSON.stringify(account));
 };
 
@@ -100,7 +102,7 @@ export const readCtx = (): Ctx => {
 };
 
 export const getJsonPk = (user: string): string => {
-  const f = path.join(__dirname, '..', 'validator', 'accounts', user + '.json');
+  const f = path.join(VALIDATOR, 'accounts', user + '.json');
   const fileContent = fs.readFileSync(f, 'utf-8');
   const json = JSON.parse(fileContent);
   return json.pubkey;
@@ -109,7 +111,7 @@ export const getJsonPk = (user: string): string => {
 export const getKpFile = (user: string): string => {
   const validUsers = ['taker', 'maker', 'mint_authority', 'dao'];
   if (validUsers.includes(user)) {
-    return path.join(__dirname, '..', 'validator', 'keys', `${user}.json`);
+    return path.join(VALIDATOR, 'keys', `${user}.json`);
   }
   throw new Error('Invalid user');
 };

@@ -11,7 +11,7 @@ import {
   readCtx,
   Ctx,
   writeCtx,
-} from './helpers';
+} from '../helpers';
 
 describe('bootstrap', () => {
   let ctx: Ctx;

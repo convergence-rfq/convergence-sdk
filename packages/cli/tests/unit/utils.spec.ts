@@ -3,7 +3,7 @@ import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
 import { ChildProccess, spawnValidator } from '../validator';
-import { Ctx, runCli, getPk, ADDRESS, TX, readCtx } from '../utils/helpers';
+import { Ctx, runCli, getPk, ADDRESS, TX, readCtx } from '../helpers';
 
 describe('utils', () => {
   let stub: SinonStub;

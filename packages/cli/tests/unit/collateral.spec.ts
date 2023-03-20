@@ -2,7 +2,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
 import { ChildProccess, spawnValidator } from '../validator';
-import { Ctx, runCli, ADDRESS, TX, readCtx } from '../utils/helpers';
+import { Ctx, runCli, ADDRESS, TX, readCtx } from '../helpers';
 
 describe('collateral', () => {
   let stub: SinonStub;
