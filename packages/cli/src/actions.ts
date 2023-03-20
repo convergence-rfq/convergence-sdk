@@ -27,6 +27,7 @@ import {
   logError,
   logRiskEngineConfig,
   logRegisteredMint,
+  logCollateral,
 } from './logger';
 
 export const createMint = async (opts: Opts) => {
@@ -213,20 +214,49 @@ export const getRfq = async (opts: Opts) => {
   }
 };
 
+const prettyPrint = (opts: Opts) => {
+  process.stdout.write(JSON.stringify(opts, null, 2) + '\n');
+};
+
 export const createRfq = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const [baseMint, quoteMint] = await Promise.all([
     cvg.tokens().findMintByAddress({ address: new PublicKey(opts.baseMint) }),
     cvg.tokens().findMintByAddress({ address: new PublicKey(opts.quoteMint) }),
   ]);
-  const collateralToken = await cvg
-    .tokens()
-    .findTokenByAddress({ address: new PublicKey(opts.collateralToken) });
 
-  process.stderr.write(
-    baseMint.decimals.toString() + ', ' + quoteMint.decimals.toString() + '\n'
-  );
-  process.stderr.write(JSON.stringify(collateralToken) + '\n');
+  const taker = cvg.rpc().getDefaultFeePayer();
+
+  if (opts.verbose) {
+    const protocol = await cvg.protocol().get();
+    const tokenAccount = await cvg
+      .tokens()
+      .findTokenByAddress({ address: new PublicKey(opts.collateralToken) });
+    const collateralAccount = await cvg
+      .collateral()
+      .findByUser({ user: taker.publicKey });
+    const obj = {
+      taker: taker.publicKey.toString(),
+      collateralAccount: {
+        address: collateralAccount.address.toString(),
+        lockedTokensAmont: collateralAccount.lockedTokensAmount.toString(),
+        user: collateralAccount.user.toString(),
+      },
+      tokenAccount: {
+        address: tokenAccount.address.toString(),
+        mint: tokenAccount.mintAddress.toString(),
+        owner: tokenAccount.ownerAddress.toString(),
+        amount: tokenAccount.amount.basisPoints.toString(),
+        decimals: tokenAccount.amount.currency.decimals.toString(),
+      },
+      protocolCollateralMint: protocol.collateralMint.toString(),
+      quoteMint: quoteMint.address.toString(),
+      baseMint: baseMint.address.toString(),
+    };
+    prettyPrint(obj);
+    prettyPrint(opts);
+  }
+
   try {
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
@@ -235,12 +265,14 @@ export const createRfq = async (opts: Opts) => {
           side: getSide(opts.side),
         }),
       ],
-      taker: cvg.rpc().getDefaultFeePayer(),
+      taker,
       orderType: getOrderType(opts.orderType),
       fixedSize: getSize(opts.size),
       quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
-      activeWindow: opts.activeWindow,
-      settlingWindow: opts.settlingWindow,
+      activeWindow: parseInt(opts.activeWindow),
+      settlingWindow: parseInt(opts.settlingWindow),
+      collateralInfo: new PublicKey(opts.collateralInfo),
+      // TODO: Find out why seed constraint validation fails
       collateralToken: new PublicKey(opts.collateralToken),
     });
     logPk(rfq.address);
@@ -268,6 +300,18 @@ export const fundCollateralAccount = async (opts: Opts) => {
   try {
     const { response } = await cvg.collateral().fund({ amount: opts.amount });
     logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
+export const getCollateralAccount = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const collateral = await cvg
+      .collateral()
+      .findByUser({ user: new PublicKey(opts.user) });
+    logCollateral(collateral);
   } catch (e) {
     logError(e);
   }

@@ -23,6 +23,7 @@ import {
   airdropDevnetTokensCmd,
   fundCollateralAccountCmd,
   initializeCollateralAccountCmd,
+  getCollateralAccountCmd,
   createRfqCmd,
   getRfqCmd,
 } from './commands';
@@ -61,6 +62,7 @@ export const makeCli = (): Command => {
     setRiskEngineCategoriesInfoCmd,
     initializeCollateralAccountCmd,
     fundCollateralAccountCmd,
+    getCollateralAccountCmd,
     createRfqCmd,
     getRfqCmd,
     getAllRfqsCmd,

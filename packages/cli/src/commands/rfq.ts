@@ -45,13 +45,21 @@ export const createRfqCmd = (c: Command) =>
       description: 'order type',
     },
     {
-      flags: '--active-window <number>',
-      description: 'active window in seconds',
-      defaultValue: '60',
+      flags: '--collateral-info <string>',
+      description: 'collateral info account',
     },
     {
       flags: '--collateral-token <string>',
-      description: 'collateral token account address',
+      description: 'collateral token account',
+    },
+    {
+      flags: '--order-type <string>',
+      description: 'order type',
+    },
+    {
+      flags: '--active-window <number>',
+      description: 'active window in seconds',
+      defaultValue: '60',
     },
     {
       flags: '--settlement-window <number>',

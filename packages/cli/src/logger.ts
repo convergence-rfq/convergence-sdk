@@ -6,6 +6,7 @@ import {
   Rfq,
   Protocol,
   RegisteredMint,
+  Collateral,
 } from '@convergence-rfq/sdk';
 
 import {
@@ -52,6 +53,12 @@ export const logBaseAsset = (b: BaseAsset): void => {
 
 export const logRegisteredMint = (r: RegisteredMint): void => {
   l('Address:', r.address.toString());
+};
+
+export const logCollateral = (c: Collateral): void => {
+  l('Address:', c.address.toString());
+  l('User:', c.user.toString());
+  l('Locked tokens:', N(c.lockedTokensAmount.toString()));
 };
 
 export const logError = (e: any) => l(`Error: ${e}`);
