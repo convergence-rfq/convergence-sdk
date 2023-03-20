@@ -1,8 +1,13 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { ChildProccess, spawnValidator } from '../../../validator';
-import { Ctx, runCli, ADDRESS, TX, readCtx } from '../helpers';
+import {
+  ChildProccess,
+  spawnValidator,
+  readCtx,
+  Ctx,
+} from '../../../validator';
+import { runCli, ADDRESS, TX } from '../helpers';
 
 describe('collateral', () => {
   let stub: SinonStub;

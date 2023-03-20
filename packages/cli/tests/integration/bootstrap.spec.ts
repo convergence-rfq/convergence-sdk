@@ -2,16 +2,14 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import * as sdk from '@convergence-rfq/sdk';
 
-import { ChildProccess, spawnValidator } from '../../../validator';
 import {
-  runCli,
-  ADDRESS,
-  TX,
-  BTC_ORACLE,
+  ChildProccess,
+  spawnValidator,
   readCtx,
   Ctx,
   writeCtx,
-} from '../helpers';
+} from '../../../validator';
+import { runCli, ADDRESS, TX, BTC_ORACLE } from '../helpers';
 
 describe('bootstrap', () => {
   let ctx: Ctx;

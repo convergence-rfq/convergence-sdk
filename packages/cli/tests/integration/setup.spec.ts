@@ -2,8 +2,14 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
-import { ChildProccess, spawnValidator } from '../../../validator';
-import { runCli, getPk, ADDRESS, TX, Ctx, writeCtx } from '../helpers';
+import {
+  ChildProccess,
+  spawnValidator,
+  getPk,
+  Ctx,
+  writeCtx,
+} from '../../../validator';
+import { runCli, ADDRESS, TX } from '../helpers';
 
 describe('setup', () => {
   const ctx = new Ctx();

@@ -2,8 +2,14 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
-import { ChildProccess, spawnValidator } from '../../../validator';
-import { Ctx, runCli, getPk, ADDRESS, TX, readCtx } from '../helpers';
+import {
+  ChildProccess,
+  spawnValidator,
+  readCtx,
+  getPk,
+  Ctx,
+} from '../../../validator';
+import { runCli, ADDRESS, TX } from '../helpers';
 
 describe('utils', () => {
   let stub: SinonStub;
