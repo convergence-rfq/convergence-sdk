@@ -80,10 +80,10 @@ const getBootstrapCompleteArgs = () => [
   ...getAccountArgs('risk_engine'),
   ...getAccountArgs('quote_registered_mint'),
   ...getAccountArgs('base_registered_mint'),
-  ...getAccountArgs('maker_collateral'),
-  ...getAccountArgs('taker_collateral'),
-  ...getAccountArgs('taker_token_account'),
-  ...getAccountArgs('maker_token_account'),
+  ...getAccountArgs('maker_collateral_info'),
+  ...getAccountArgs('taker_collateral_info'),
+  ...getAccountArgs('taker_collateral_token'),
+  ...getAccountArgs('maker_collateral_token'),
 ];
 
 export const spawnValidator = (

@@ -161,8 +161,8 @@ describe('bootstrap', () => {
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual('Token account address:');
     expect(stub.args[2][0]).toEqual(TX);
-    ctx.takerCollateral = stub.args[0][1];
-    ctx.takerTokenAccount = stub.args[1][1];
+    ctx.takerCollateralInfo = stub.args[0][1];
+    ctx.takerCollateralToken = stub.args[1][1];
   });
 
   it('collateral:initialize-account [maker]', async () => {
@@ -170,8 +170,8 @@ describe('bootstrap', () => {
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual('Token account address:');
     expect(stub.args[2][0]).toEqual(TX);
-    ctx.makerCollateral = stub.args[0][1];
-    ctx.makerTokenAccount = stub.args[1][1];
+    ctx.makerCollateralInfo = stub.args[0][1];
+    ctx.makerCollateralToken = stub.args[1][1];
   });
 
   it('collateral:fund-account [taker]', async () => {

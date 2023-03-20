@@ -32,10 +32,10 @@ export class Ctx {
   baseAsset = '';
   quoteRegisteredMint = '';
   baseRegisteredMint = '';
-  makerCollateral = '';
-  takerCollateral = '';
-  makerTokenAccount = '';
-  takerTokenAccount = '';
+  makerCollateralInfo = '';
+  takerCollateralInfo = '';
+  makerCollateralToken = '';
+  takerCollateralToken = '';
 }
 
 class SolanaAccount {
