@@ -123,6 +123,39 @@ describe('bootstrap', () => {
     ctx.riskEngine = stub.args[0][1];
   });
 
+  it('risk-engine:set-instrument-type [spot]', async () => {
+    await runCli([
+      'risk-engine:set-instrument-type',
+      '--program',
+      sdk.spotInstrumentProgram.address.toString(),
+      '--type',
+      'spot',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
+  it('risk-engine:set-instrument-type [psyoptions american options]', async () => {
+    await runCli([
+      'risk-engine:set-instrument-type',
+      '--program',
+      sdk.psyoptionsAmericanInstrumentProgram.address.toString(),
+      '--type',
+      'option',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
+  it('risk-engine:set-instrument-type [psyoptions european options]', async () => {
+    await runCli([
+      'risk-engine:set-instrument-type',
+      '--program',
+      sdk.psyoptionsEuropeanInstrumentProgram.address.toString(),
+      '--type',
+      'option',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
   it('protocol:add-base-asset [base]', async () => {
     await runCli([
       'protocol:add-base-asset',

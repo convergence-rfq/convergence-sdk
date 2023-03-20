@@ -368,6 +368,19 @@ export const initializeRiskEngine = async (opts: Opts) => {
   }
 };
 
+export const x = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const { response } = await cvg.riskEngine().setInstrumentType({
+      instrumentProgram: new PublicKey(opts.program),
+      instrumentType: getInstrumentType(opts.type),
+    });
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
 export const updateRiskEngine = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
