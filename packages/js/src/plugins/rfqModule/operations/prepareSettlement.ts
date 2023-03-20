@@ -4,6 +4,7 @@ import {
 } from '@convergence-rfq/rfq';
 import {
   PublicKey,
+  //@ts-ignore
   Keypair,
   AccountMeta,
   ComputeBudgetProgram,
@@ -11,6 +12,7 @@ import {
 } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
+  //@ts-ignore
   getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
@@ -23,6 +25,9 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
+  //@ts-ignore
+  IdentitySigner,
+  // KeypairSigner,
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
@@ -30,6 +35,7 @@ import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasC
 import { SpotInstrument } from '@/plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { getOrCreateATA } from '../helpers';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -290,22 +296,14 @@ export const prepareSettlementBuilder = async (
       rfqModel,
     });
 
-    // const callerTokens = await getOrCreateAssociatedTokenAccount(
-    //   convergence.connection,
-    //   caller as Keypair,
-    //   baseAssetMints[legIndex].address,
-    //   caller.publicKey
-    // );
-
-    const callerTokensPda = convergence.tokens().pdas().associatedTokenAccount({
-      mint: baseAssetMints[legIndex].address,
-      owner: caller.publicKey,
-      programs,
-    });
-
-    const callerTokensAccount = await convergence
-      .rpc()
-      .getAccount(callerTokensPda);
+    // const callerTokensPda = convergence.tokens().pdas().associatedTokenAccount({
+    //   mint: baseAssetMints[legIndex].address,
+    //   owner: caller.publicKey,
+    //   programs,
+    // });
+    // const callerTokensAccount = await convergence
+    //   .rpc()
+    //   .getAccount(callerTokensPda);
 
     const legAccounts: AccountMeta[] = [
       // `caller`
@@ -316,22 +314,12 @@ export const prepareSettlementBuilder = async (
       },
       // `caller_tokens`
       {
-        // pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        //   mint: baseAssetMints[legIndex].address,
-        //   owner: caller.publicKey,
-        //   programs,
-        // }),
-        // pubkey: callerTokens.address,
-        pubkey: callerTokensAccount.exists
-          ? callerTokensPda
-          : await getOrCreateAssociatedTokenAccount(
-              convergence.connection,
-              caller as Keypair,
-              baseAssetMints[legIndex].address,
-              caller.publicKey
-            ).then((account) => {
-              return account.address;
-            }),
+        pubkey: await getOrCreateATA(
+          convergence,
+          baseAssetMints[legIndex].address,
+          caller.publicKey,
+          programs
+        ),
         isSigner: false,
         isWritable: true,
       },

@@ -21,7 +21,7 @@ import {
  *
  * ```ts
  * const instrument = new SpotInstrument({ ... });
- * const instrumentClient = 
+ * const instrumentClient =
  *   convergence.instrument(instrument, { amount: 1, side: Side.Bid });
  * ```
  *
@@ -46,14 +46,17 @@ export class InstrumentClient {
 
   async getBaseAssetIndex(): Promise<number> {
     if (this.legInfo) {
+      const mintInfoPda = this.convergence
+        .rfqs()
+        .pdas()
+        .mintInfo({ mint: this.instrument.mint.address });
+
       const registeredMint = await this.convergence
         .protocol()
         .findRegisteredMintByAddress({
-          address: this.convergence
-            .rfqs()
-            .pdas()
-            .mintInfo({ mint: this.instrument.mint.address }),
+          address: mintInfoPda,
         });
+        
       if (registeredMint.mintType.__kind === 'AssetWithRisk')
         return registeredMint.mintType.baseAssetIndex.value;
     }

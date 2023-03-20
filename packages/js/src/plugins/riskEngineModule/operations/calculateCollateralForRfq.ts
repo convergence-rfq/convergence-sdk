@@ -6,6 +6,7 @@ import {
   isFixedSizeQuoteAsset,
   Leg,
   OrderType,
+  QuoteAsset,
   Side,
 } from '@convergence-rfq/rfq';
 import { bignum } from '@convergence-rfq/beet';
@@ -19,6 +20,7 @@ import {
 } from '@/types';
 import { Convergence } from '@/Convergence';
 import { LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
+import { convertFixedSizeInput } from '@/plugins/rfqModule';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -79,6 +81,8 @@ export type CalculateCollateralForRfqInput = {
    * Legs of the RFQ being created
    */
   legs: Leg[];
+
+  quoteAsset: QuoteAsset;
   /**
    * Settlement period of the RFQ being created in seconds
    */
@@ -99,19 +103,27 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
 
       const config = await convergence.riskEngine().fetchConfig(scope);
 
-      const { fixedSize, orderType, legs, settlementPeriod } = operation.input;
-      if (isFixedSizeNone(fixedSize)) {
+      const { fixedSize, orderType, legs, quoteAsset, settlementPeriod } =
+        operation.input;
+
+      const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
+
+      // if (isFixedSizeNone(fixedSize)) {
+      if (isFixedSizeNone(convertedFixedSize)) {
         return convertCollateralBpsToOutput(
           config.collateralForVariableSizeRfqCreation,
           config
         );
-      } else if (isFixedSizeQuoteAsset(fixedSize)) {
+        // } else if (isFixedSizeQuoteAsset(fixedSize)) {
+      } else if (isFixedSizeQuoteAsset(convertedFixedSize)) {
         return convertCollateralBpsToOutput(
           config.collateralForFixedQuoteAmountRfqCreation,
           config
         );
-      } else if (isFixedSizeBaseAsset(fixedSize)) {
-        const { legsMultiplierBps } = fixedSize;
+        // } else if (isFixedSizeBaseAsset(fixedSize)) {
+      } else if (isFixedSizeBaseAsset(convertedFixedSize)) {
+        // const { legsMultiplierBps } = fixedSize;
+        const { legsMultiplierBps } = convertedFixedSize;
         const legMultiplier =
           Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
 

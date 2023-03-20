@@ -9,8 +9,12 @@ import {
   useOperation,
 } from '@/types';
 import { Convergence } from '@/Convergence';
-//@ts-ignore
-import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
+import {
+  //@ts-ignore
+  ABSOLUTE_PRICE_DECIMALS,
+  LEG_MULTIPLIER_DECIMALS,
+} from '@/plugins/rfqModule/constants';
+import { convertResponseInput } from '@/plugins/rfqModule';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -99,6 +103,14 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         convergence.riskEngine().fetchConfig(scope),
       ]);
 
+      const quoteDecimals = rfq.quoteAsset.instrumentDecimals;
+
+      const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
+        quoteDecimals,
+        bid ?? undefined,
+        ask ?? undefined
+      );
+
       const getCase = (quote: Quote, side: Side) => {
         const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
         const legMultiplier =
@@ -113,11 +125,17 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       };
 
       const cases = [];
-      if (bid !== null) {
-        cases.push(getCase(bid, Side.Bid));
+      // if (bid !== null) {
+      //   cases.push(getCase(bid, Side.Bid));
+      // }
+      // if (ask !== null) {
+      //   cases.push(getCase(ask, Side.Ask));
+      // }
+      if (convertedBid !== undefined) {
+        cases.push(getCase(convertedBid, Side.Bid));
       }
-      if (ask !== null) {
-        cases.push(getCase(ask, Side.Ask));
+      if (convertedAsk !== undefined) {
+        cases.push(getCase(convertedAsk, Side.Ask));
       }
 
       const risks = await calculateRisk(

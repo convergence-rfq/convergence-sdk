@@ -70,9 +70,10 @@ export async function calculateRisk(
   settlementPeriod: number,
   commitment?: Commitment
 ) {
+  const baseAssetIds = new Set(legs.map((leg) => leg.baseAssetIndex.value)); // select unique base asset ids
   const baseAssetInfos = await Promise.all(
-    legs.map((leg) =>
-      fetchBaseAssetInfo(convergence, leg.baseAssetIndex, commitment)
+    Array.from(baseAssetIds).map((id) =>
+      fetchBaseAssetInfo(convergence, { value: id }, commitment)
     )
   );
   const instrumentTypesMapping = config.instrumentTypes;
@@ -331,12 +332,15 @@ function calculateAssetUnitValue(
       const [optionCommonData] = optionCommonDataBeet.deserialize(leg.data);
       const optionType =
         optionCommonData.optionType == OptionType.Call ? 'call' : 'put';
+
       const underlyingAmountPerContract =
         Number(optionCommonData.underlyingAmountPerContract) /
         10 ** optionCommonData.underlyingAmoundPerContractDecimals;
+
       const strikePrice =
         Number(optionCommonData.strikePrice) /
         10 ** optionCommonData.strikePriceDecimals;
+
       const expirationTimestamp = Number(optionCommonData.expirationTimestamp);
 
       const currentTimestamp = Math.floor(Date.now() / 1000);

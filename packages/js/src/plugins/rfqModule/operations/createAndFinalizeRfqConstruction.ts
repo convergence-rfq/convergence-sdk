@@ -4,7 +4,7 @@ import * as anchor from '@project-serum/anchor';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { OrderType, QuoteAsset, FixedSize } from '../types';
-import { Rfq } from '../models';
+import { assertRfq, Rfq } from '../models';
 import {
   instrumentsToLegsAndExpectedLegsHash,
   convertFixedSizeInput,
@@ -211,6 +211,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const rfq = await convergence
         .rfqs()
         .findRfqByAddress({ address: rfqPda });
+      assertRfq(rfq);
 
       return { ...output, rfq };
     },

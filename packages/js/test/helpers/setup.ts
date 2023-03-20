@@ -11,6 +11,7 @@ import {
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
 import { getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
+import { getOrCreateATA } from '@/index';
 import {
   //@ts-ignore
   createProgram,
@@ -195,10 +196,13 @@ export const setupAccounts = async (
   const { token: daoBTCWallet } = await cvg
     .tokens()
     .createToken({ mint: btcMint.address, owner: dao });
+  //@ts-ignore
+  const newBtcWalletAmount = Number(btcWalletAmount) * 1_000;
 
   // Mint BTC
   await cvg.tokens().mint({
     mintAddress: btcMint.address,
+    // amount: token(newBtcWalletAmount, BTC_DECIMALS),
     amount: token(btcWalletAmount, BTC_DECIMALS),
     toToken: takerBTCWallet.address,
     mintAuthority,
@@ -285,7 +289,7 @@ export const createPriceFeed = async (
   return collateralTokenFeed.publicKey;
 };
 
-export const createEuroAccountsAndMintOptions = async (
+export const createEuroAccountsAndMintOptionsForTesting = async (
   convergence: Convergence,
   euroMeta: EuroMeta,
   euroMetaKey: PublicKey,
@@ -418,56 +422,45 @@ const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
   'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
 );
 
-export const createAmericanAccountsAndMintOptions = async (
+export const createAmericanAccountsAndMintOptionsForTesting = async (
   convergence: Convergence,
   americanProgram: any,
   underlyingMint: Mint,
   optionMarket: any,
-  // optionMarketKey: PublicKey,
   optionMintKey: PublicKey,
   writerMintKey: PublicKey
+  // optionMarketKey: PublicKey,
 ) => {
-  const maker = Keypair.fromSecretKey(
-    new Uint8Array(
-      JSON.parse(readFileSync('./test/fixtures/maker.json', 'utf8'))
-    )
-  );
+  // const maker = Keypair.fromSecretKey(
+  //   new Uint8Array(
+  //     JSON.parse(readFileSync('./test/fixtures/maker.json', 'utf8'))
+  //   )
+  // );
   const taker = Keypair.fromSecretKey(
     new Uint8Array(
       JSON.parse(readFileSync('./test/fixtures/taker.json', 'utf8'))
     )
   );
 
-  const takerOptionToken = await spl.createAssociatedTokenAccount(
-    convergence.connection,
-    taker as Keypair,
-    optionMintKey,
-    taker.publicKey
+  const takerOptionToken = await getOrCreateATA(
+    convergence,
+    taker.publicKey,
+    optionMintKey
   );
 
-  await spl.getOrCreateAssociatedTokenAccount(
-    convergence.connection,
-    maker as Keypair,
-    optionMintKey,
-    maker.publicKey
-  );
+  // await getOrCreateATA(convergence, maker.publicKey, optionMintKey);
 
-  await spl.getOrCreateAssociatedTokenAccount(
-    convergence.connection,
-    maker as Keypair,
-    writerMintKey,
-    maker.publicKey
-  );
+  // await getOrCreateATA(convergence, maker.publicKey, writerMintKey);
 
-  const takerWriterToken = await spl.createAssociatedTokenAccount(
-    convergence.connection,
-    taker as Keypair,
-    writerMintKey,
-    taker.publicKey
+  const takerWriterToken = await getOrCreateATA(
+    convergence,
+    taker.publicKey,
+    writerMintKey
   );
-  const takerUnderlyingToken = await spl.getAssociatedTokenAddress(
-    underlyingMint.address,
-    taker.publicKey
+  const takerUnderlyingToken = await getOrCreateATA(
+    convergence,
+    taker.publicKey,
+    underlyingMint.address
   );
 
   const ixs = await psyoptionsAmerican.instructions.mintOptionV2Instruction(
@@ -475,7 +468,7 @@ export const createAmericanAccountsAndMintOptions = async (
     takerOptionToken,
     takerWriterToken,
     takerUnderlyingToken,
-    new anchor.BN(10),
+    new anchor.BN(10), // number of contracts to mint ... should be same as `amount` in instrument creation?
     optionMarket as psyoptionsAmerican.OptionMarketWithKey
   );
   const ix1 = ixs.ix;
@@ -512,95 +505,95 @@ export const createAmericanAccountsAndMintOptions = async (
 //   underlyingAmountPerContract: anchor.BN,
 //   expiresIn: number
 // ) => {
-  // const payer = taker;
-  // const provider = new anchor.AnchorProvider(
-  //   convergence.connection,
-  //   new anchor.Wallet(taker as Keypair),
-  //   {}
-  // );
-  // anchor.setProvider(provider);
-  // const AmericanProgram = psyoptionsAmerican.createProgram(
-  //   psyOptionsAmericanLocalNetProgramId,
-  //   provider
-  // );
-  // const americanProgram = createAmericanProgram(convergence);
-  // const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
-  // const { optionMarketKey, optionMintKey, writerMintKey } =
-  //   await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
-  //     expirationUnixTimestamp: expiration,
-  //     quoteAmountPerContract,
-  //     quoteMint: quoteMint.address,
-  //     underlyingAmountPerContract,
-  //     underlyingMint: underlyingMint.address,
-  //   });
-  // const op = (await psyoptionsAmerican.getOptionByKey(
-  //   americanProgram,
-  //   optionMarketKey
-  // )) as OptionMarketWithKey;
-  // const takerOptionToken = await spl.createAssociatedTokenAccount(
-  //   convergence.connection,
-  //   taker as Keypair,
-  //   optionMintKey,
-  //   taker.publicKey
-  // );
-  // await spl.createAssociatedTokenAccount(
-  //   convergence.connection,
-  //   maker as Keypair,
-  //   optionMintKey,
-  //   maker.publicKey
-  // );
-  // await spl.createAssociatedTokenAccount(
-  //   convergence.connection,
-  //   maker as Keypair,
-  //   writerMintKey,
-  //   maker.publicKey
-  // );
-  // const takerWriterToken = await spl.createAssociatedTokenAccount(
-  //   convergence.connection,
-  //   taker as Keypair,
-  //   writerMintKey,
-  //   taker.publicKey
-  // );
-  // const takerUnderlyingToken = await spl.getAssociatedTokenAddress(
-  //   underlyingMint.address,
-  //   taker.publicKey
-  // );
-  // const makerUnderlyingToken = await spl.getAssociatedTokenAddress(
-  //   underlyingMint.address,
-  //   maker.publicKey
-  // );
-  // const optionMint = await convergence
-  //   .tokens()
-  //   .findMintByAddress({ address: optionMintKey });
-  // const ixs = await psyoptionsAmerican.instructions.mintOptionV2Instruction(
-  //   AmericanProgram,
-  //   takerOptionToken,
-  //   takerWriterToken,
-  //   takerUnderlyingToken,
-  //   new anchor.BN(10),
-  //   op as psyoptionsAmerican.OptionMarketWithKey
-  // );
-  // const ix1 = ixs.ix;
-  // ixs.signers.push(taker as Keypair);
-  // ixs.ix.keys[0] = {
-  //   pubkey: taker.publicKey,
-  //   isSigner: true,
-  //   isWritable: false,
-  // };
-  // const txBuilder = TransactionBuilder.make().setFeePayer(
-  //   convergence.rpc().getDefaultFeePayer()
-  // );
-  // txBuilder.add({
-  //   instruction: ix1,
-  //   signers: ixs.signers,
-  // });
-  // const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
-  // await txBuilder.sendAndConfirm(convergence, confirmOptions);
-  // return {
-  //   op,
-  //   optionMarketKey,
-  //   optionMint,
-  // };
+// const payer = taker;
+// const provider = new anchor.AnchorProvider(
+//   convergence.connection,
+//   new anchor.Wallet(taker as Keypair),
+//   {}
+// );
+// anchor.setProvider(provider);
+// const AmericanProgram = psyoptionsAmerican.createProgram(
+//   psyOptionsAmericanLocalNetProgramId,
+//   provider
+// );
+// const americanProgram = createAmericanProgram(convergence);
+// const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
+// const { optionMarketKey, optionMintKey, writerMintKey } =
+//   await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
+//     expirationUnixTimestamp: expiration,
+//     quoteAmountPerContract,
+//     quoteMint: quoteMint.address,
+//     underlyingAmountPerContract,
+//     underlyingMint: underlyingMint.address,
+//   });
+// const op = (await psyoptionsAmerican.getOptionByKey(
+//   americanProgram,
+//   optionMarketKey
+// )) as OptionMarketWithKey;
+// const takerOptionToken = await spl.createAssociatedTokenAccount(
+//   convergence.connection,
+//   taker as Keypair,
+//   optionMintKey,
+//   taker.publicKey
+// );
+// await spl.createAssociatedTokenAccount(
+//   convergence.connection,
+//   maker as Keypair,
+//   optionMintKey,
+//   maker.publicKey
+// );
+// await spl.createAssociatedTokenAccount(
+//   convergence.connection,
+//   maker as Keypair,
+//   writerMintKey,
+//   maker.publicKey
+// );
+// const takerWriterToken = await spl.createAssociatedTokenAccount(
+//   convergence.connection,
+//   taker as Keypair,
+//   writerMintKey,
+//   taker.publicKey
+// );
+// const takerUnderlyingToken = await spl.getAssociatedTokenAddress(
+//   underlyingMint.address,
+//   taker.publicKey
+// );
+// const makerUnderlyingToken = await spl.getAssociatedTokenAddress(
+//   underlyingMint.address,
+//   maker.publicKey
+// );
+// const optionMint = await convergence
+//   .tokens()
+//   .findMintByAddress({ address: optionMintKey });
+// const ixs = await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+//   AmericanProgram,
+//   takerOptionToken,
+//   takerWriterToken,
+//   takerUnderlyingToken,
+//   new anchor.BN(10),
+//   op as psyoptionsAmerican.OptionMarketWithKey
+// );
+// const ix1 = ixs.ix;
+// ixs.signers.push(taker as Keypair);
+// ixs.ix.keys[0] = {
+//   pubkey: taker.publicKey,
+//   isSigner: true,
+//   isWritable: false,
+// };
+// const txBuilder = TransactionBuilder.make().setFeePayer(
+//   convergence.rpc().getDefaultFeePayer()
+// );
+// txBuilder.add({
+//   instruction: ix1,
+//   signers: ixs.signers,
+// });
+// const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+// await txBuilder.sendAndConfirm(convergence, confirmOptions);
+// return {
+//   op,
+//   optionMarketKey,
+//   optionMint,
+// };
 // };
 
 export const assertInitRiskEngineConfig = (
@@ -644,23 +637,3 @@ export const assertInitRiskEngineConfig = (
     model: 'config',
   });
 };
-
-// export const x = (
-//   provider: anchor.AnchorProvider,
-//   convergence: Convergence
-// ) => {
-//   const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
-//     'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
-//   );
-//   // const provider = new anchor.AnchorProvider(
-//   //   convergence.connection,
-//   //   new anchor.Wallet(convergence.rpc().getDefaultFeePayer() as Keypair),
-//   //   {}
-//   // );
-//   // anchor.setProvider(provider);
-
-//   return psyoptionsAmerican.createProgram(
-//     psyOptionsAmericanLocalNetProgramId,
-//     provider
-//   );
-// };

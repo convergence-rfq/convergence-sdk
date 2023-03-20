@@ -15,6 +15,7 @@ import {
   ABSOLUTE_PRICE_DECIMALS,
   LEG_MULTIPLIER_DECIMALS,
 } from '@/plugins/rfqModule/constants';
+import { convertOverrideLegMultiplierBps } from '@/plugins/rfqModule';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 
@@ -85,6 +86,15 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
       scope.throwIfCanceled();
 
       const { rfqAddress, responseAddress, confirmation } = operation.input;
+
+      // const convertedOverrideLegMultiplierBps = convertOverrideLegMultiplierBps(
+      //   Number(confirmation.overrideLegMultiplierBps)
+      // );
+      if (confirmation.overrideLegMultiplierBps) {
+        confirmation.overrideLegMultiplierBps = convertOverrideLegMultiplierBps(
+          Number(confirmation.overrideLegMultiplierBps)
+        );
+      }
 
       // fetching in parallel
       const [rfq, response, config] = await Promise.all([

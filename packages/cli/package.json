@@ -33,7 +33,7 @@
     "test": "yarn mocha --file tests/integration/setup.spec.ts tests/integration/bootstrap.spec.ts"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "4.0.24-rc.3",
+    "@convergence-rfq/sdk": "4.0.24",
     "@solana/web3.js": "^1.73.0",
     "commander": "^10.0.0"
   },

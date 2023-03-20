@@ -1,5 +1,21 @@
 # @convergence-rfq/cli
 
+## 4.0.24-rc.5
+
+### Patch Changes
+
+- use getAccount and createToken in prepareSettlement instead of getOrCreateAssociatedTokenAccount
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.24
+
+## 4.0.24-rc.4
+
+### Patch Changes
+
+- call getMultipleAccounts with only leq 100 pubkeys
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.24
+
 ## 4.0.24-rc.3
 
 ### Patch Changes

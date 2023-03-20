@@ -1,4 +1,5 @@
-import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
+//@ts-ignore
+import { PublicKey, Signer, AccountMeta, Keypair } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
@@ -6,13 +7,18 @@ import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
-
+import { Program } from '@/types';
+//@ts-ignore
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 import {
   instructions,
+  //@ts-ignore
+  EuroMeta,
   EuroPrimitive,
   createProgram,
   programId as psyoptionsEuropeanProgramId,
 } from '@mithraic-labs/tokenized-euros';
+const { mintOptions } = instructions;
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
@@ -705,6 +711,13 @@ export const initializeNewAmericanOption = async (
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
+  quoteAmountPerContract = new anchor.BN(
+    Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
+  );
+  underlyingAmountPerContract = new anchor.BN(
+    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
+  );
+
   const { optionMarketKey, optionMintKey, writerMintKey } =
     await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
       expirationUnixTimestamp: expiration,
@@ -756,4 +769,171 @@ export const createAmericanProgram = (convergence: Convergence): any => {
   );
 
   return americanProgram;
+};
+
+export const getOrCreateATA = async (
+  convergence: Convergence,
+  mint: PublicKey,
+  owner: PublicKey,
+  programs?: Program[]
+): Promise<PublicKey> => {
+  const pda = convergence.tokens().pdas().associatedTokenAccount({
+    mint,
+    owner,
+    programs,
+  });
+  const account = await convergence.rpc().getAccount(pda);
+
+  const ata = account.exists
+    ? pda
+    : (
+        await convergence.tokens().createToken({
+          mint,
+          owner,
+        })
+      ).token.address;
+
+  return ata;
+};
+
+export const createEuroAccountsAndMintOptions = async (
+  convergence: Convergence,
+  caller: Keypair,
+  euroMeta: EuroMeta,
+  euroMetaKey: PublicKey,
+  // payer: Signer, //dao
+  europeanProgram: anchor.Program<EuroPrimitive>,
+  underlyingMint: Mint,
+  stableMint: Mint,
+  optionType: OptionType,
+  amount: number // amount of options to mint
+) => {
+  const stableMintToken = convergence.tokens().pdas().associatedTokenAccount({
+    mint: stableMint.address,
+    owner: caller.publicKey,
+  });
+
+  const underlyingMintToken = convergence
+    .tokens()
+    .pdas()
+    .associatedTokenAccount({
+      mint: underlyingMint.address,
+      owner: caller.publicKey,
+    });
+
+  const minterCollateralKey =
+    optionType == OptionType.PUT ? stableMintToken : underlyingMintToken;
+
+  const optionDestination = await getOrCreateATA(
+    convergence,
+    optionType == OptionType.PUT
+      ? euroMeta.putOptionMint
+      : euroMeta.callOptionMint,
+    caller.publicKey
+  );
+  const writerDestination = await getOrCreateATA(
+    convergence,
+    optionType == OptionType.PUT
+      ? euroMeta.putWriterMint
+      : euroMeta.callWriterMint,
+    caller.publicKey
+  );
+
+  //@ts-ignore
+  const backupReceiver = await getOrCreateATA(
+    convergence,
+    optionType == OptionType.PUT
+      ? euroMeta.putOptionMint
+      : euroMeta.callOptionMint,
+    caller.publicKey
+  );
+
+  const { instruction: ix1 } = mintOptions(
+    europeanProgram,
+    euroMetaKey,
+    euroMeta,
+    minterCollateralKey,
+    optionDestination,
+    writerDestination,
+    new anchor.BN(amount),
+    optionType
+  );
+
+  ix1.keys[0] = {
+    pubkey: caller.publicKey,
+    isSigner: true,
+    isWritable: false,
+  };
+
+  const txBuilder = TransactionBuilder.make().setFeePayer(
+    convergence.rpc().getDefaultFeePayer()
+  );
+
+  txBuilder.add({
+    instruction: ix1,
+    signers: [caller],
+  });
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  await txBuilder.sendAndConfirm(convergence, confirmOptions);
+};
+
+export const createAmericanAccountsAndMintOptions = async (
+  convergence: Convergence,
+  caller: Keypair,
+  americanProgram: any,
+  underlyingMint: Mint,
+  optionMarket: any,
+  optionMintKey: PublicKey,
+  writerMintKey: PublicKey,
+  amount: number
+) => {
+  const optionToken = await getOrCreateATA(
+    convergence,
+    optionMintKey,
+    caller.publicKey
+  );
+
+  const writerToken = await getOrCreateATA(
+    convergence,
+    writerMintKey,
+    caller.publicKey
+  );
+  const underlyingToken = await getOrCreateATA(
+    convergence,
+    underlyingMint.address,
+    caller.publicKey
+  );
+
+  const ixs = await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+    americanProgram,
+    optionToken,
+    writerToken,
+    underlyingToken,
+    new anchor.BN(amount),
+    optionMarket as psyoptionsAmerican.OptionMarketWithKey
+  );
+  const ix1 = ixs.ix;
+
+  ixs.signers.push(caller);
+
+  ixs.ix.keys[0] = {
+    pubkey: caller.publicKey,
+    isSigner: true,
+    isWritable: false,
+  };
+
+  const txBuilder = TransactionBuilder.make().setFeePayer(
+    convergence.rpc().getDefaultFeePayer()
+  );
+
+  txBuilder.add({
+    instruction: ix1,
+    signers: ixs.signers,
+  });
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  await txBuilder.sendAndConfirm(convergence, confirmOptions);
 };
