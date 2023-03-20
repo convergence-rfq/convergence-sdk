@@ -73,6 +73,7 @@ describe('utils', () => {
     await runCli(['token:get-mint', '--address', ctx.quoteMint]);
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual('Owner:');
+    expect(stub.args[1][1]).toEqual(ctx.mintAuthority);
     expect(stub.args[2][0]).toEqual('Supply:');
     expect(stub.args[3][0]).toEqual('Decimals:');
     expect(stub.args[3][1]).toEqual('6');
@@ -82,6 +83,7 @@ describe('utils', () => {
     await runCli(['token:get-mint', '--address', ctx.baseMint]);
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual('Owner:');
+    expect(stub.args[1][1]).toEqual(ctx.mintAuthority);
     expect(stub.args[2][0]).toEqual('Supply:');
     expect(stub.args[3][0]).toEqual('Decimals:');
     expect(stub.args[3][1]).toEqual('9');
