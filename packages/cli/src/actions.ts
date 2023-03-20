@@ -241,48 +241,12 @@ export const getRfq = async (opts: Opts) => {
   }
 };
 
-const prettyPrint = (opts: Opts) => {
-  process.stdout.write(JSON.stringify(opts, null, 2) + '\n');
-};
-
 export const createRfq = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   const [baseMint, quoteMint] = await Promise.all([
     cvg.tokens().findMintByAddress({ address: new PublicKey(opts.baseMint) }),
     cvg.tokens().findMintByAddress({ address: new PublicKey(opts.quoteMint) }),
   ]);
-
-  const taker = cvg.rpc().getDefaultFeePayer();
-
-  if (opts.verbose) {
-    const protocol = await cvg.protocol().get();
-    const tokenAccount = await cvg
-      .tokens()
-      .findTokenByAddress({ address: new PublicKey(opts.collateralToken) });
-    const collateralAccount = await cvg
-      .collateral()
-      .findByUser({ user: taker.publicKey });
-    const obj = {
-      taker: taker.publicKey.toString(),
-      collateralAccount: {
-        address: collateralAccount.address.toString(),
-        lockedTokensAmont: collateralAccount.lockedTokensAmount.toString(),
-        user: collateralAccount.user.toString(),
-      },
-      tokenAccount: {
-        address: tokenAccount.address.toString(),
-        mint: tokenAccount.mintAddress.toString(),
-        owner: tokenAccount.ownerAddress.toString(),
-        amount: tokenAccount.amount.basisPoints.toString(),
-        decimals: tokenAccount.amount.currency.decimals.toString(),
-      },
-      protocolCollateralMint: protocol.collateralMint.toString(),
-      quoteMint: quoteMint.address.toString(),
-      baseMint: baseMint.address.toString(),
-    };
-    prettyPrint(obj);
-    prettyPrint(opts);
-  }
 
   try {
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
@@ -292,14 +256,13 @@ export const createRfq = async (opts: Opts) => {
           side: getSide(opts.side),
         }),
       ],
-      taker,
+      taker: cvg.rpc().getDefaultFeePayer(),
       orderType: getOrderType(opts.orderType),
       fixedSize: getSize(opts.size),
       quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
       activeWindow: parseInt(opts.activeWindow),
       settlingWindow: parseInt(opts.settlingWindow),
       collateralInfo: new PublicKey(opts.collateralInfo),
-      // TODO: Find out why seed constraint validation fails
       collateralToken: new PublicKey(opts.collateralToken),
     });
     logPk(rfq.address);
