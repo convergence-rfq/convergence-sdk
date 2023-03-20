@@ -28,6 +28,8 @@ import {
   logRiskEngineConfig,
   logRegisteredMint,
   logCollateral,
+  logToken,
+  logMint,
 } from './logger';
 
 export const createMint = async (opts: Opts) => {
@@ -44,6 +46,18 @@ export const createMint = async (opts: Opts) => {
   }
 };
 
+export const getMint = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const mint = await cvg.tokens().findMintByAddress({
+      address: new PublicKey(opts.address),
+    });
+    logMint(mint);
+  } catch (e) {
+    logError(e);
+  }
+};
+
 export const createWallet = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
@@ -53,6 +67,18 @@ export const createWallet = async (opts: Opts) => {
     });
     logPk(wallet.address);
     logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
+export const getWallet = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const token = await cvg.tokens().findTokenByAddress({
+      address: new PublicKey(opts.address),
+    });
+    logToken(token);
   } catch (e) {
     logError(e);
   }
@@ -281,8 +307,6 @@ export const createRfq = async (opts: Opts) => {
     logError(e);
   }
 };
-
-// Collateral
 
 export const initializeCollateralAccount = async (opts: Opts) => {
   const cvg = await createCvg(opts);

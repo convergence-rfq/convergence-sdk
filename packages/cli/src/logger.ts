@@ -7,6 +7,8 @@ import {
   Protocol,
   RegisteredMint,
   Collateral,
+  Token,
+  Mint,
 } from '@convergence-rfq/sdk';
 
 import {
@@ -59,6 +61,21 @@ export const logCollateral = (c: Collateral): void => {
   l('Address:', c.address.toString());
   l('User:', c.user.toString());
   l('Locked tokens:', N(c.lockedTokensAmount.toString()));
+};
+
+export const logToken = (t: Token): void => {
+  l('Address:', t.address.toString());
+  l('Owner:', t.ownerAddress.toString());
+  l('Mint:', t.mintAddress.toString());
+  l('Amount:', N(t.amount.basisPoints.toString()));
+  l('Decimals:', t.amount.currency.decimals.toString());
+};
+
+export const logMint = (m: Mint): void => {
+  l('Address:', m.address.toString());
+  l('Owner:', m.mintAuthorityAddress?.toString());
+  l('Supply:', N(m.supply.toString()));
+  l('Decimals:', m.currency.decimals.toString());
 };
 
 export const logError = (e: any) => l(`Error: ${e}`);

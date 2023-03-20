@@ -26,6 +26,8 @@ import {
   getCollateralAccountCmd,
   createRfqCmd,
   getRfqCmd,
+  getWalletCmd,
+  getMintCmd,
 } from './commands';
 
 const VERSION = '4.0.24-rc.5';
@@ -46,7 +48,9 @@ export const makeCli = (): Command => {
     airdropSolCmd,
     airdropDevnetTokensCmd,
     createMintCmd,
+    getMintCmd,
     createWalletCmd,
+    getWalletCmd,
     mintToCmd,
     initializeProtocolCmd,
     getProtocolConfigCmd,

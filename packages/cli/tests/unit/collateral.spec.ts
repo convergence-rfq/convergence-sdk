@@ -26,6 +26,14 @@ describe('collateral', () => {
     validator.kill();
   });
 
+  it('collateral:initialize-account [taker]', async () => {
+    await runCli(['collateral:initialize-account'], 'taker');
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(TX);
+    ctx.takerCollateral = stub.args[0][1];
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
   it('collateral:fund-account [taker]', async () => {
     await runCli(['collateral:fund-account', '--amount', '1000'], 'taker');
     expect(stub.args[0][0]).toEqual(TX);
