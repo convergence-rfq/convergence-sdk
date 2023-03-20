@@ -32,8 +32,7 @@
     "test:setup": "yarn mocha tests/integration/setup.spec.ts",
     "test:bootstrap": "yarn mocha tests/integration/bootstrap.spec.ts",
     "test": "yarn mocha --parallel tests/**/*.spec.ts --ignore tests/integration/setup.spec.ts --ignore tests/integration/bootstrap.spec.ts",
-    "validator": "ts-node tests/validator/run.ts",
-    "run": "ts-node src/index.ts"
+    "cli": "ts-node src/index.ts"
   },
   "dependencies": {
     "@convergence-rfq/sdk": "4.0.24-rc.3",
