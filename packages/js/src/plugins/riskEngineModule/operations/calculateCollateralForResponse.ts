@@ -10,6 +10,12 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import {
+  //@ts-ignore
+  ABSOLUTE_PRICE_DECIMALS,
+  LEG_MULTIPLIER_DECIMALS,
+} from '../../rfqModule/constants';
+import { convertResponseInput } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -61,10 +67,8 @@ export type CalculateCollateralForResponseOperation = Operation<
 export type CalculateCollateralForResponseInput = {
   /** The address of the Rfq account. */
   rfqAddress: PublicKey;
-
   /** Bid answer to the Rfq. */
   bid: Quote | null;
-
   /** Ask answer to the Rfq. */
   ask: Quote | null;
 };
@@ -94,15 +98,26 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
 
       // fetching in parallel
       const [rfq, config] = await Promise.all([
-        convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
+        convergence
+          .rfqs()
+          .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
         convergence.riskEngine().fetchConfig(scope),
       ]);
+
+      const quoteDecimals = rfq.quoteAsset.instrumentDecimals;
+
+      const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
+        quoteDecimals,
+        bid ?? undefined,
+        ask ?? undefined
+      );
 
       const getCase = (quote: Quote, side: Side) => {
         const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
         const legMultiplier =
           // Number(legsMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
-          Number(legsMultiplierBps);
+          Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
+
         return {
           legMultiplier,
           authoritySide: AuthoritySide.Maker,
@@ -111,11 +126,17 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       };
 
       const cases = [];
-      if (bid !== null) {
-        cases.push(getCase(bid, Side.Bid));
+      // if (bid !== null) {
+      //   cases.push(getCase(bid, Side.Bid));
+      // }
+      // if (ask !== null) {
+      //   cases.push(getCase(ask, Side.Ask));
+      // }
+      if (convertedBid !== undefined) {
+        cases.push(getCase(convertedBid, Side.Bid));
       }
-      if (ask !== null) {
-        cases.push(getCase(ask, Side.Ask));
+      if (convertedAsk !== undefined) {
+        cases.push(getCase(convertedAsk, Side.Ask));
       }
 
       const risks = await calculateRisk(

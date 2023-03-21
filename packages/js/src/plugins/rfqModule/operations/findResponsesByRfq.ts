@@ -116,26 +116,35 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       );
       scope.throwIfCanceled();
 
-      const accounts = await convergence
-        .rpc()
-        .getMultipleAccounts(unparsedAddresses, commitment);
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
 
       const parsedResponses: Response[] = [];
 
-      for (const account of accounts) {
-        const response = toResponse(toResponseAccount(account));
-
-        if (response.rfq.toBase58() === address.toBase58()) {
-          const rfq = await convergence
-            .rfqs()
-            .findRfqByAddress({ address: response.rfq });
-
-          const convertedResponse = convertResponseOutput(
-            response,
-            rfq.quoteAsset.instrumentDecimals
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
           );
 
-          parsedResponses.push(convertedResponse);
+        for (const account of accounts) {
+          const response = toResponse(toResponseAccount(account));
+
+          if (response.rfq.toBase58() === address.toBase58()) {
+            const rfq = await convergence
+              .rfqs()
+              .findRfqByAddress({ address: response.rfq });
+
+            const convertedResponse = convertResponseOutput(
+              response,
+              rfq.quoteAsset.instrumentDecimals
+            );
+
+            parsedResponses.push(convertedResponse);
+          }
         }
       }
 

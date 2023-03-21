@@ -4,7 +4,6 @@ import {
 } from '@convergence-rfq/rfq';
 import {
   PublicKey,
-  Keypair,
   AccountMeta,
   ComputeBudgetProgram,
   SYSVAR_RENT_PUBKEY,
@@ -24,6 +23,7 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
+  IdentitySigner,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { Mint } from '../../tokenModule';
@@ -31,6 +31,7 @@ import { InstrumentPdasClient } from '../../instrumentModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
+import { getOrCreateATA } from '../helpers';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -291,12 +292,14 @@ export const prepareSettlementBuilder = async (
       rfqModel,
     });
 
-    const callerTokens = await getOrCreateAssociatedTokenAccount(
-      convergence.connection,
-      caller as Keypair,
-      baseAssetMints[legIndex].address,
-      caller.publicKey
-    );
+    // const callerTokensPda = convergence.tokens().pdas().associatedTokenAccount({
+    //   mint: baseAssetMints[legIndex].address,
+    //   owner: caller.publicKey,
+    //   programs,
+    // });
+    // const callerTokensAccount = await convergence
+    //   .rpc()
+    //   .getAccount(callerTokensPda);
 
     const legAccounts: AccountMeta[] = [
       // `caller`
@@ -307,12 +310,12 @@ export const prepareSettlementBuilder = async (
       },
       // `caller_tokens`
       {
-        // pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        //   mint: baseAssetMints[legIndex].address,
-        //   owner: caller.publicKey,
-        //   programs,
-        // }),
-        pubkey: callerTokens.address,
+        pubkey: await getOrCreateATA(
+          convergence,
+          baseAssetMints[legIndex].address,
+          caller.publicKey,
+          programs
+        ),
         isSigner: false,
         isWritable: true,
       },

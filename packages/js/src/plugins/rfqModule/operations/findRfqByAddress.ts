@@ -48,6 +48,9 @@ export type FindRfqByAddressInput = {
 
   /** Optional number of decimals of collateral mint, used for conversion. */
   collateralMintDecimals?: number;
+
+  /** Optional flag for whether to convert the output to a human-readable format. */
+  convert?: boolean;
 };
 
 /**
@@ -68,7 +71,7 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
       scope: OperationScope
     ): Promise<FindRfqByAddressOutput> => {
       const { commitment } = scope;
-      const { address } = operation.input;
+      const { address, convert = true } = operation.input;
       let { collateralMintDecimals } = operation.input;
       scope.throwIfCanceled();
 
@@ -76,17 +79,21 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
       const rfq = toRfq(toRfqAccount(account));
       scope.throwIfCanceled();
 
-      if (!collateralMintDecimals) {
-        const protocol = await convergence.protocol().get();
-        collateralMintDecimals = (
-          await convergence
-            .tokens()
-            .findMintByAddress({ address: protocol.collateralMint })
-        ).decimals;
+      if (convert) {
+        if (!collateralMintDecimals) {
+          const protocol = await convergence.protocol().get();
+          collateralMintDecimals = (
+            await convergence
+              .tokens()
+              .findMintByAddress({ address: protocol.collateralMint })
+          ).decimals;
+        }
+
+        const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+        return convertedRfq;
       }
 
-      const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
-
-      return convertedRfq;
+      return rfq;
     },
   };

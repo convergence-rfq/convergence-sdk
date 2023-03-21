@@ -10,6 +10,12 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
+import {
+  //@ts-ignore
+  ABSOLUTE_PRICE_DECIMALS,
+  LEG_MULTIPLIER_DECIMALS,
+} from '../../rfqModule/constants';
+import { convertOverrideLegMultiplierBps } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 
@@ -52,11 +58,9 @@ export type CalculateCollateralForConfirmationOperation = Operation<
 export type CalculateCollateralForConfirmationInput = {
   /** The address of the Rfq account. */
   rfqAddress: PublicKey;
-
   /** The address of the response account. */
   responseAddress: PublicKey;
-
-  /** Confirmation which collateral requirements are estimated. */
+  /** Confirmation which collateral requirements are estimated */
   confirmation: Confirmation;
 };
 
@@ -83,12 +87,26 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
 
       const { rfqAddress, responseAddress, confirmation } = operation.input;
 
+      // const convertedOverrideLegMultiplierBps = convertOverrideLegMultiplierBps(
+      //   Number(confirmation.overrideLegMultiplierBps)
+      // );
+      if (confirmation.overrideLegMultiplierBps) {
+        confirmation.overrideLegMultiplierBps = convertOverrideLegMultiplierBps(
+          Number(confirmation.overrideLegMultiplierBps)
+        );
+      }
+
       // fetching in parallel
       const [rfq, response, config] = await Promise.all([
-        convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
         convergence
           .rfqs()
-          .findResponseByAddress({ address: responseAddress }, scope),
+          .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
+        convergence
+          .rfqs()
+          .findResponseByAddress(
+            { address: responseAddress, convert: false },
+            scope
+          ),
         convergence.riskEngine().fetchConfig(scope),
       ]);
 
@@ -100,14 +118,14 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         if (confirmedQuote === null) {
           throw Error('Cannot confirm a missing quote!');
         }
-        //remove decimals here
+
         legMultiplierBps = extractLegsMultiplierBps(rfq, confirmedQuote);
       } else {
         legMultiplierBps = confirmation.overrideLegMultiplierBps;
       }
       const legMultiplier =
         // Number(legMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
-        Number(legMultiplierBps);
+        Number(legMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
 
       const calculationCase = {
         legMultiplier,

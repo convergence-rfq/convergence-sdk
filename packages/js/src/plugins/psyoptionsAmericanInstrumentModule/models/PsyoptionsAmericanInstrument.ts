@@ -187,6 +187,14 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     ];
   }
 
+  static deserializeInstrumentData(
+    buffer: Buffer
+  ): PsyoptionsAmericanInstrumentData {
+    const [instrumentData] =
+      psyoptionsAmericanInstrumentDataSerializer.deserialize(buffer);
+    return instrumentData;
+  }
+
   serializeInstrumentData(): Buffer {
     const { optionMeta } = this;
     const callMint = this.optionMeta.optionMint.toBytes();

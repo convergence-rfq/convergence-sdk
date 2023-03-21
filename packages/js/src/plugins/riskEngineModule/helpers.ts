@@ -8,6 +8,7 @@ import {
 } from '@convergence-rfq/rfq';
 import BN from 'bn.js';
 import {
+  //@ts-ignore
   ABSOLUTE_PRICE_DECIMALS,
   LEG_MULTIPLIER_DECIMALS,
 } from '../rfqModule/constants';
@@ -37,10 +38,12 @@ export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
       throw Error('Negative prices are not allowed for fixed quote amount rfq');
     }
 
-    return new BN(fixedSize.quoteAmount)
-      .mul(new BN(10).pow(new BN(LEG_MULTIPLIER_DECIMALS)))
-      .mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)))
-      .div(priceBps);
+    return (
+      new BN(fixedSize.quoteAmount)
+        .mul(new BN(10).pow(new BN(LEG_MULTIPLIER_DECIMALS)))
+        .mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)))
+        .div(priceBps)
+    );
   }
 
   throw new Error('Invalid fixed size');

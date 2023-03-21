@@ -4,6 +4,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   ComputeBudgetProgram,
 } from '@solana/web3.js';
+import { getOrCreateATA } from '../helpers';
 import {
   createPrepareMoreLegsSettlementInstruction,
   AuthoritySide,
@@ -247,7 +248,7 @@ export const prepareMoreLegsSettlementBuilder = async (
         leg
       );
       const americanOptionMint = await convergence.tokens().findMintByAddress({
-        address: instrument.mint.address,
+        address: instrument.optionMeta.optionMint,
       });
 
       baseAssetMint = americanOptionMint;
@@ -264,25 +265,35 @@ export const prepareMoreLegsSettlementBuilder = async (
     }
 
     const legAccounts: AccountMeta[] = [
+      // `caller
       {
         pubkey: caller.publicKey,
         isSigner: true,
         isWritable: true,
       },
+      // `caller_token_account`
       {
-        pubkey: convergence.tokens().pdas().associatedTokenAccount({
-          mint: baseAssetMint!.address,
-          owner: caller.publicKey,
-          programs,
-        }),
+        // pubkey: convergence.tokens().pdas().associatedTokenAccount({
+        //   mint: baseAssetMint!.address,
+        //   owner: caller.publicKey,
+        //   programs,
+        // }),
+        pubkey: await getOrCreateATA(
+          convergence,
+          baseAssetMint!.address,
+          caller.publicKey,
+          programs
+        ),
         isSigner: false,
         isWritable: true,
       },
+      // `mint`
       {
         pubkey: baseAssetMint!.address,
         isSigner: false,
         isWritable: false,
       },
+      // `escrow`
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,
