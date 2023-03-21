@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.0.24-rc.3
+
+### Patch Changes
+
+- Updated Solita versions to 2.2.2-rc.2
+
 ## 4.0.23-rc.6
 
 ### Patch Changes
