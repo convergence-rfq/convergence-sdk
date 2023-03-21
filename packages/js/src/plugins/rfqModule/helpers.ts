@@ -1,17 +1,14 @@
-//@ts-ignore
-import { PublicKey, Signer, AccountMeta, Keypair } from '@solana/web3.js';
+import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
-import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
-//@ts-ignore
-import { OptionType } from '@mithraic-labs/tokenized-euros';
+import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import {
   instructions,
-  //@ts-ignore
+  OptionType,
   EuroMeta,
   EuroPrimitive,
   createProgram,
@@ -28,7 +25,7 @@ import {
   toBigNumber,
   Pda,
   makeConfirmOptionsFinalizedOnMainnet,
-  Program
+  Program,
 } from '../../types';
 import { TransactionBuilder } from '../../utils';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
@@ -620,7 +617,7 @@ export const initializeNewOptionMeta = async (
   strikePrice: number,
   underlyingAmountPerContract: number,
   expiresIn: number,
-  oracleProviderId = 0
+  oracleProviderId = 1
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 

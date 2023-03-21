@@ -1,20 +1,13 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair, PublicKey } from '@solana/web3.js';
-import { instrumentsToLegs } from '@/index';
-//@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
-import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
-import {
-  createAmericanAccountsAndMintOptions,
-  createEuroAccountsAndMintOptions,
-  createAmericanProgram,
-  initializeNewAmericanOption
-} from '../src';
+
+import { IDL as PseudoPythIdl } from '../../../validator/programs/pseudo_pyth_idl';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -27,8 +20,8 @@ import {
   USDC_DECIMALS,
   assertInitRiskEngineConfig,
 } from '../helpers';
-import { Convergence } from '@/Convergence';
 import {
+  Convergence,
   Mint,
   token,
   Side,
@@ -39,30 +32,26 @@ import {
   createEuropeanProgram,
   PsyoptionsEuropeanInstrument,
   PsyoptionsAmericanInstrument,
-  //@ts-ignore
   OptionType,
   InstrumentType,
   Token,
   StoredResponseState,
-  //@ts-ignore
   AuthoritySide,
   StoredRfqState,
-  //@ts-ignore
   legsToInstruments,
   Signer,
   DEFAULT_RISK_CATEGORIES_INFO,
-  //@ts-ignore
   devnetAirdrops,
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
-  //@ts-ignore
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
-  //@ts-ignore
   calculateExpectedLegsSize,
-  //@ts-ignore
   calculateExpectedLegsHash,
+  createAmericanAccountsAndMintOptions,
+  createEuroAccountsAndMintOptions,
   createAmericanProgram,
   initializeNewAmericanOption,
-} from '@/index';
+  instrumentsToLegs,
+} from '../../src';
 
 killStuckProcess();
 
@@ -98,17 +87,12 @@ let takerSOLWallet: Token;
 
 let payer: Signer;
 
-//@ts-ignore
-const SOL_WALLET_AMOUNT = 9_000;
 const BIG_SOL_WALLET_AMOUNT = 9_000_000;
-//@ts-ignore
-const BTC_WALLET_AMOUNT = 9_000;
 const BIG_BTC_WALLET_AMOUNT = 9_000_000;
 const USER_COLLATERAL_AMOUNT = 100_000_000;
 const USER_USDC_WALLET = 10_000_000;
 
 // SETUP
-//@ts-ignore
 let europeanOptionPutMint: PublicKey;
 
 test('[setup] it can create Convergence instance', async (t: Test) => {
@@ -119,9 +103,7 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
 
   const context = await setupAccounts(
     cvg,
-    // BTC_WALLET_AMOUNT,
     BIG_BTC_WALLET_AMOUNT,
-    // SOL_WALLET_AMOUNT,
     BIG_SOL_WALLET_AMOUNT,
     USER_COLLATERAL_AMOUNT + USER_USDC_WALLET,
     dao.publicKey
@@ -200,7 +182,6 @@ test('[setup] it can create Convergence instance', async (t: Test) => {
 // PROTOCOL
 
 test('[protocolModule] it can initialize the protocol', async (t: Test) => {
-  console.log('usdc mint decimals: ', usdcMint.decimals.toString());
   const { protocol } = await cvg.protocol().initialize({
     collateralMint: usdcMint.address,
   });
@@ -336,7 +317,7 @@ test('[protocolModule] it can register mints', async (t: Test) => {
   });
 });
 
-test('[psyoptionsEuropeanInstrument] it can create the Euro program and Pyth oracle', async (t: Test) => {
+test('[psyoptionsEuropeanInstrument] it can create the Euro program and Pyth oracle', async () => {
   const provider = new anchor.AnchorProvider(
     cvg.connection,
     new anchor.Wallet(payer as Keypair),
@@ -355,7 +336,7 @@ test('[psyoptionsEuropeanInstrument] it can create the Euro program and Pyth ora
   );
 });
 
-test('[psyoptionsAmericanInstrument] it can create the american program', async (t: Test) => {
+test('[psyoptionsAmericanInstrument] it can create the american program', async () => {
   americanProgram = createAmericanProgram(cvg);
 });
 
@@ -669,13 +650,9 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     amount: token(USER_COLLATERAL_AMOUNT * 10 ** USDC_DECIMALS),
   });
 
-  const takerCollateral = await cvg.collateral().findByUser({
+  await cvg.collateral().findByUser({
     user: taker.publicKey,
   });
-  console.log(
-    '<fundCollateral> taker locked tokens collateral amount:  ' +
-      takerCollateral.lockedTokensAmount.toString()
-  );
 });
 
 test('[collateralModule] it can withdraw collateral', async (t: Test) => {

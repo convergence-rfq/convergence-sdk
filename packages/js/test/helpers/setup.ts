@@ -11,7 +11,6 @@ import {
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
 import { getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
-import { getOrCreateATA } from '@/index';
 import {
   instructions,
   OptionType,
@@ -22,7 +21,9 @@ import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import * as spl from '@solana/spl-token';
 import { bignum } from '@convergence-rfq/beet';
 
-import { Pyth } from '../../../../programs/pseudo_pyth_idl';
+import { makeConfirmOptionsFinalizedOnMainnet } from '../../src/types';
+import { TransactionBuilder } from '../../src/utils';
+import { Pyth } from '../../../validator/programs/pseudo_pyth_idl';
 import {
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
@@ -36,10 +37,10 @@ import {
   token,
   walletAdapterIdentity,
   Signer,
-} from '@/index';
+  getOrCreateATA,
+} from '../../src';
+
 const { mintOptions } = instructions;
-import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';
-import { TransactionBuilder } from '@/utils';
 
 // CONSTANTS
 
