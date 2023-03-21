@@ -97,11 +97,9 @@ describe('european', () => {
           }
         ),
       ],
-      orderType: OrderType.TwoWay,
+      orderType: OrderType.Sell,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
       quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
-      activeWindow: 60 * 60,
-      settlingWindow: 50 * 5,
     });
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
