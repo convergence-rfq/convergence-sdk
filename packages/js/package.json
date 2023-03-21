@@ -1,10 +1,10 @@
 {
   "name": "@convergence-rfq/sdk",
-  "version": "4.0.24-rc.12",
+  "version": "4.0.24-rc.13",
   "sideEffects": false,
   "module": "dist/esm/index.mjs",
   "main": "dist/cjs/index.cjs",
-  "types": "dist/types/src/index.d.ts",
+  "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/esm/index.mjs",
