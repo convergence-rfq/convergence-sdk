@@ -1,6 +1,5 @@
 import { expect } from 'expect';
-import { PublicKey, Keypair } from '@solana/web3.js';
-import * as anchor from '@project-serum/anchor';
+import { PublicKey } from '@solana/web3.js';
 
 import {
   ChildProccess,
@@ -9,20 +8,19 @@ import {
   spawnValidator,
 } from '../../../validator';
 import { createSdk } from '../helpers';
-import { IDL as PseudoPythIdl } from '../../../validator/programs/pseudo_pyth_idl';
-import { createPriceFeed } from '../../test/helpers';
 import {
   OrderType,
   OptionType,
-  PsyoptionsEuropeanInstrument,
+  PsyoptionsAmericanInstrument,
   SpotInstrument,
   Side,
   Mint,
-  initializeNewOptionMeta,
-  createEuropeanProgram,
+  initializeNewAmericanOption,
+  toBigNumber,
+  createAmericanProgram,
 } from '../../src';
 
-describe('european', () => {
+describe('american', () => {
   let validator: ChildProccess;
   let ctx: Ctx;
 
@@ -70,31 +68,14 @@ describe('european', () => {
 
   it('create', async () => {
     const cvg = await createSdk('taker');
-    const europeanProgram = await createEuropeanProgram(cvg);
-    const provider = new anchor.AnchorProvider(
-      cvg.connection,
-      new anchor.Wallet(cvg.rpc().getDefaultFeePayer() as Keypair),
-      {}
-    );
-    const pseudoPythProgram = new anchor.Program(
-      PseudoPythIdl,
-      new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-      provider
-    );
-    const oracle = await createPriceFeed(
-      pseudoPythProgram,
-      17_000,
-      quoteMint.decimals * -1
-    );
-    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
       cvg,
-      oracle,
-      europeanProgram,
+      createAmericanProgram(cvg),
       baseMint,
       quoteMint,
-      23_354,
-      1,
-      3_600
+      toBigNumber(18_000),
+      toBigNumber(1),
+      3_500
     );
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
@@ -102,12 +83,13 @@ describe('european', () => {
           amount: 1.0,
           side: Side.Bid,
         }),
-        new PsyoptionsEuropeanInstrument(
+        new PsyoptionsAmericanInstrument(
           cvg,
           baseMint,
+          quoteMint,
           OptionType.CALL,
-          euroMeta,
-          euroMetaKey,
+          optionMarket,
+          optionMarketKey,
           {
             amount: 5,
             side: Side.Bid,

@@ -3,7 +3,8 @@ import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { Specification, Specifications } from 'spok';
 import { Test } from 'tape';
-import { Amount, BigNumber, sameAmounts } from '@/types';
+
+import { Amount, BigNumber, sameAmounts } from '../../src';
 
 const concatKey = (key: string | undefined) => {
   return key
