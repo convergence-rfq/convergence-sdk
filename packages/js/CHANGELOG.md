@@ -1,6 +1,6 @@
 # @convergence-rfq/sdk
 
-## 4.0.24-rc.3
+## 4.0.24-rc.10
 
 ### Patch Changes
 
