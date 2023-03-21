@@ -37,7 +37,7 @@ describe('european', () => {
       }
     };
 
-    createSdk('dao').then((cvg) => {
+    createSdk().then((cvg) => {
       cvg
         .tokens()
         .findMintByAddress({ address: new PublicKey(ctx.baseMint) })
@@ -68,10 +68,9 @@ describe('european', () => {
 
   it('create', async () => {
     const cvg = await createSdk('taker');
-    const americanProgram = createAmericanProgram(cvg);
     const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
       cvg,
-      americanProgram,
+      createAmericanProgram(cvg),
       baseMint,
       quoteMint,
       toBigNumber(18_000),
@@ -81,7 +80,7 @@ describe('european', () => {
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(cvg, baseMint, {
-          amount: 1.5,
+          amount: 1.0,
           side: Side.Bid,
         }),
         new PsyoptionsAmericanInstrument(
