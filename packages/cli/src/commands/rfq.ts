@@ -1,46 +1,69 @@
 import { Command } from 'commander';
 
-import { getRfqs, createRfq } from '../actions';
+import { getRfq, getActiveRfqs, getAllRfqs, createRfq } from '../actions';
 
 import { addCmd } from './helpers';
 
-export const getRfqsCmd = (c: Command) =>
-  addCmd(c, 'rfq:get-all', 'Get all RFQs', getRfqs);
+export const getAllRfqsCmd = (c: Command) =>
+  addCmd(c, 'rfq:get-all', 'gets all RFQs', getAllRfqs);
+
+export const getActiveRfqsCmd = (c: Command) =>
+  addCmd(c, 'rfq:get-active', 'get active RFQs', getActiveRfqs);
+
+export const getRfqCmd = (c: Command) =>
+  addCmd(c, 'rfq:get', 'gets RFQ details', getRfq, [
+    {
+      flags: '--address <string>',
+      description: 'RFQ address',
+    },
+  ]);
 
 export const createRfqCmd = (c: Command) =>
-  addCmd(c, 'rfq:create', 'Create RFQ', createRfq, [
+  addCmd(c, 'rfq:create', 'creates RFQ', createRfq, [
     {
       flags: '--quote-mint <string>',
-      description: 'Quote mint',
+      description: 'quote mint',
     },
     {
       flags: '--base-mint <string>',
-      description: 'Base mint',
+      description: 'base mint',
     },
     {
       flags: '--side <string>',
-      description: 'Side',
+      description: 'side',
     },
     {
       flags: '--size <string>',
-      description: 'Size',
+      description: 'size',
     },
     {
       flags: '--amount <number>',
-      description: 'Amount',
+      description: 'amount',
     },
     {
       flags: '--order-type <string>',
-      description: 'Order type',
+      description: 'order type',
+    },
+    {
+      flags: '--collateral-info <string>',
+      description: 'collateral info account',
+    },
+    {
+      flags: '--collateral-token <string>',
+      description: 'collateral token account',
+    },
+    {
+      flags: '--order-type <string>',
+      description: 'order type',
     },
     {
       flags: '--active-window <number>',
-      description: 'Active window in seconds',
+      description: 'active window in seconds',
       defaultValue: '60',
     },
     {
       flags: '--settlement-window <number>',
-      description: 'Settlement window in seconds',
+      description: 'settlement window in seconds',
       defaultValue: '60',
     },
   ]);

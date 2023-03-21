@@ -10,15 +10,16 @@ import {
   bignum,
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
+
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
-import { assert } from '@/utils';
-import { Convergence } from '@/Convergence';
+import { assert } from '../../../utils';
+import { Convergence } from '../../../Convergence';
 import {
   createSerializerFromFixableBeetArgsStruct,
   toBigNumber,
-} from '@/types';
+} from '../../../types';
 
 type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;

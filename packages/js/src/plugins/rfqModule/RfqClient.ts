@@ -1,4 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
+
+import { PartialKeys } from '../../utils';
+import { OperationOptions, token } from '../../types';
+import type { Convergence } from '../../Convergence';
 import { SendTokensInput } from '../tokenModule';
 import { Rfq } from './models';
 import { RfqPdasClient } from './RfqPdasClient';
@@ -77,9 +81,6 @@ import {
   createAndFinalizeRfqConstructionOperation,
 } from './operations';
 import { Response } from './models/Response';
-import { PartialKeys } from '@/utils';
-import { OperationOptions, token } from '@/types';
-import type { Convergence } from '@/Convergence';
 
 /**
  * This is a client for the Rfq module.

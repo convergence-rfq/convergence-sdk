@@ -7,7 +7,6 @@ import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
-import { Program } from '@/types';
 //@ts-ignore
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import {
@@ -18,7 +17,20 @@ import {
   createProgram,
   programId as psyoptionsEuropeanProgramId,
 } from '@mithraic-labs/tokenized-euros';
-const { mintOptions } = instructions;
+
+import { CvgWallet } from '../../utils/CvgWallet';
+import { Convergence } from '../../Convergence';
+import {
+  UnparsedAccount,
+  PublicKeyValues,
+  token,
+  toPublicKey,
+  toBigNumber,
+  Pda,
+  makeConfirmOptionsFinalizedOnMainnet,
+  Program
+} from '../../types';
+import { TransactionBuilder } from '../../utils';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
@@ -28,22 +40,12 @@ import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentMod
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
-//@ts-ignore
-import { LEG_MULTIPLIER_DECIMALS, QUOTE_AMOUNT_DECIMALS } from './constants';
-import { CvgWallet } from '@/utils/CvgWallet';
-import { Convergence } from '@/Convergence';
-import {
-  UnparsedAccount,
-  PublicKeyValues,
-  token,
-  toPublicKey,
-  toBigNumber,
-  Pda,
-  makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
+import { LEG_MULTIPLIER_DECIMALS } from './constants';
+
+const { mintOptions } = instructions;
+
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
   instructions;
-import { TransactionBuilder } from '@/utils';
 
 export type HasMintAddress = Rfq | PublicKey;
 

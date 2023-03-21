@@ -1,8 +1,9 @@
 import { createConfirmResponseInstruction, Side } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { bignum, COption } from '@convergence-rfq/beet';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
@@ -10,9 +11,9 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
 import { convertOverrideLegMultiplierBps } from '../helpers';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'ConfirmResponseOperation' as const;
 

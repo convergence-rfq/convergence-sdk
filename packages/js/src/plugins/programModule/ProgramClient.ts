@@ -1,8 +1,12 @@
 import { PublicKey } from '@solana/web3.js';
-import type { Convergence } from '@/Convergence';
-import { MissingGpaBuilderError, ProgramNotRecognizedError } from '@/errors';
-import { Program, Cluster } from '@/types';
-import { GpaBuilder } from '@/utils';
+
+import type { Convergence } from '../../Convergence';
+import {
+  MissingGpaBuilderError,
+  ProgramNotRecognizedError,
+} from '../../errors';
+import { Program, Cluster } from '../../types';
+import { GpaBuilder } from '../../utils';
 
 /**
  * @group Modules

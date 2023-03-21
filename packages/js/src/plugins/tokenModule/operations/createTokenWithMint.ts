@@ -1,8 +1,13 @@
 import { Keypair, PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { MintAuthorityMustBeSignerToMintInitialSupplyError } from '../errors';
 import { TokenWithMint } from '../models/Token';
-import { Option, TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import {
+  Option,
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils';
 import {
   isSigner,
   makeConfirmOptionsFinalizedOnMainnet,
@@ -13,12 +18,8 @@ import {
   SplTokenAmount,
   toPublicKey,
   useOperation,
-} from '@/types';
-import type { Convergence } from '@/Convergence';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import type { Convergence } from '../../../Convergence';
 
 const Key = 'CreateTokenWithMintOperation' as const;
 

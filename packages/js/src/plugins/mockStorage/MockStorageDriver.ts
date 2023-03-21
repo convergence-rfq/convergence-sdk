@@ -1,6 +1,6 @@
 import { ConvergenceFile, StorageDriver } from '../storageModule';
-import { Amount, BigNumber, lamports, toBigNumber } from '@/types';
-import { AssetNotFoundError } from '@/errors';
+import { Amount, BigNumber, lamports, toBigNumber } from '../../types';
+import { AssetNotFoundError } from '../../errors';
 
 const DEFAULT_BASE_URL = 'https://mockstorage.example.com/';
 const DEFAULT_COST_PER_BYTE = 1;

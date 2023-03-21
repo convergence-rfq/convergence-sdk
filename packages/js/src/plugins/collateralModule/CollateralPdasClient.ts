@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
-import type { Convergence } from '@/Convergence';
-import { Pda, Program, PublicKey } from '@/types';
+
+import type { Convergence } from '../../Convergence';
+import { Pda, Program, PublicKey } from '../../types';
 
 /**
  * This client allows you to build PDAs related to the Collateral module.

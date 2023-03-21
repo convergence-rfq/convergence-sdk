@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { Response, toResponse } from '../models/Response';
 import { Rfq } from '../models';
 import { toResponseAccount } from '../accounts';
@@ -9,8 +10,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindResponsesByOwnerOperation' as const;
 

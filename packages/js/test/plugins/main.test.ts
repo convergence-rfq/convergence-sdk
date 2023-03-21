@@ -12,8 +12,9 @@ import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
 import {
   createAmericanAccountsAndMintOptions,
   createEuroAccountsAndMintOptions,
-} from '@/index';
-import { createAmericanProgram, initializeNewAmericanOption } from '@/index';
+  createAmericanProgram,
+  initializeNewAmericanOption
+} from '../src';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -59,6 +60,8 @@ import {
   calculateExpectedLegsSize,
   //@ts-ignore
   calculateExpectedLegsHash,
+  createAmericanProgram,
+  initializeNewAmericanOption,
 } from '@/index';
 
 killStuckProcess();

@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { Rfq, toRfq } from '../models';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import { convertRfqOutput, getPages } from '../helpers';
@@ -8,8 +9,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindRfqsByOwnerOperation' as const;
 

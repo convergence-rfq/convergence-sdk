@@ -1,7 +1,8 @@
 import { createApproveInstruction } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   isSigner,
   KeypairSigner,
@@ -12,12 +13,8 @@ import {
   SplTokenAmount,
   token,
   useOperation,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'ApproveTokenDelegateAuthorityOperation' as const;
 
