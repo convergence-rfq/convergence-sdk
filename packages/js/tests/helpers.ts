@@ -1,9 +1,7 @@
 import { Commitment, Connection } from '@solana/web3.js';
 
-import { getKeypair } from '../../validator';
+import { getKeypair, RPC_ENDPOINT } from '../../validator';
 import { Convergence, keypairIdentity } from '../src';
-
-const RPC_ENDPOINT = 'http://127.0.0.1:8899';
 
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
@@ -19,6 +17,7 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
   return Convergence.make(connection, { skipPreflight: options.skipPreflight });
 };
 
+// Default user is dao but could be maker, taker or mint_authority
 export const createSdk = async (user = 'dao'): Promise<Convergence> => {
   const cvg = createCvg();
   return cvg.use(keypairIdentity(getKeypair(user)));

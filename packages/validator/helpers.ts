@@ -11,6 +11,8 @@ import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-ameri
 
 export type ChildProccess = ChildProcessWithoutNullStreams;
 
+export const RPC_ENDPOINT = 'http://127.0.0.1:8899';
+
 export const VALIDATOR = path.join(__dirname);
 export const MANIFEST = path.join(VALIDATOR, 'ctx.json');
 
