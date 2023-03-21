@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.0.24-rc.11
+
+### Patch Changes
+
+- Fixed build via updated tsconfig.json configuration
+
 ## 4.0.24-rc.10
 
 ### Patch Changes

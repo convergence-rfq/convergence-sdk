@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/sdk",
-  "version": "4.0.24-rc.10",
+  "version": "4.0.24-rc.11",
   "sideEffects": false,
   "module": "dist/esm/index.mjs",
   "main": "dist/cjs/index.cjs",
@@ -14,7 +14,6 @@
   "files": [
     "/dist/cjs",
     "/dist/esm",
-    "/dist/types",
     "/src"
   ],
   "publishConfig": {
@@ -37,7 +36,7 @@
     "lint": "eslint --ext js,ts,tsx src",
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
-    "build": "pnpm clean && tsc && tsc-alias && tsc -p tests/tsconfig.json && tsc-alias -p tests/tsconfig.json && rollup -c",
+    "build": "pnpm clean && tsc && tsc-alias && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && rollup -c",
     "mocha": "ts-mocha -p tests/tsconfig.json --timeout 100000 tests/**/*.spec.ts",
     "test": "yarn mocha",
     "test:tape": "tape dist/test/**/*.test.js && pnpm test:exports",
