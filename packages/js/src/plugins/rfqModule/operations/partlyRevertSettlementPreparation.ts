@@ -5,6 +5,7 @@ import {
 } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -12,14 +13,14 @@ import {
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Mint } from '@/plugins/tokenModule';
-import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Mint } from '../../tokenModule';
+import { InstrumentPdasClient } from '../../instrumentModule';
+import { SpotInstrument } from '../../spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 
@@ -58,7 +59,7 @@ export type PartlyRevertSettlementPreparationOperation = Operation<
  * @category Inputs
  */
 export type PartlyRevertSettlementPreparationInput = {
-  /** 
+  /**
    * The protocol address.
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
@@ -74,7 +75,7 @@ export type PartlyRevertSettlementPreparationInput = {
    * Args
    */
 
-  /** 
+  /**
    * The side (Maker or Taker) that is partly reverting
    * settlement preparation.
    */

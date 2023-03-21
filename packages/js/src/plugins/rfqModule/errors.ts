@@ -3,7 +3,7 @@ import {
   ConvergenceError,
   ConvergenceErrorInputWithoutSource,
   ConvergenceErrorOptions,
-} from '@/errors';
+} from '../../errors';
 
 /** @group Errors */
 export class RfqError extends ConvergenceError {

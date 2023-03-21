@@ -1,18 +1,19 @@
 import { createSetInstrumentTypeInstruction } from '@convergence-rfq/risk-engine';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Config, toConfig, assertConfig } from '../models';
 import { toConfigAccount } from '../accounts';
 import { InstrumentType } from '../types';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'SetInstrumentTypeOperation' as const;
 

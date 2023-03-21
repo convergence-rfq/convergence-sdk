@@ -1,7 +1,8 @@
 import { createRevokeInstruction } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   isSigner,
   KeypairSigner,
@@ -10,12 +11,8 @@ import {
   OperationScope,
   Signer,
   useOperation,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'RevokeTokenDelegateAuthorityOperation' as const;
 

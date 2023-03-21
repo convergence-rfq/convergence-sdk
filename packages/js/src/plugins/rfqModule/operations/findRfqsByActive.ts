@@ -1,4 +1,5 @@
 import { StoredRfqState } from '@convergence-rfq/rfq';
+
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
@@ -8,8 +9,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindRfqsByActiveOperation' as const;
 

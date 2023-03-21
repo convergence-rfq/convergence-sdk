@@ -1,8 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
 import { MINT_SIZE, ACCOUNT_SIZE, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Convergence } from '@/Convergence';
-import { GpaBuilder } from '@/utils';
-import { BigNumber } from '@/types';
+
+import { Convergence } from '../../Convergence';
+import { GpaBuilder } from '../../utils';
+import { BigNumber } from '../../types';
 
 export class MintGpaBuilder extends GpaBuilder {
   constructor(convergence: Convergence, programId?: PublicKey) {

@@ -4,8 +4,9 @@ import {
   RiskCategory,
   PriceOracle,
 } from '@convergence-rfq/rfq';
+
 import { BaseAssetAccount } from '../accounts';
-import { assert } from '@/utils';
+import { assert } from '../../../utils';
 
 /**
  * This model captures all the relevant information about a base asset

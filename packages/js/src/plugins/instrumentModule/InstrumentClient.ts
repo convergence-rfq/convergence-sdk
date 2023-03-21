@@ -2,15 +2,15 @@ import { Leg, Side, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
 import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
+
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { SpotInstrument } from '../spotInstrumentModule';
-// import { InstrumentPdasClient } from './InstrumentPdasClient';
-import type { Convergence } from '@/Convergence';
+import type { Convergence } from '../../Convergence';
 import {
   toBigNumber,
   createSerializerFromFixableBeetArgsStruct,
-} from '@/types';
+} from '../../types';
 
 /**
  * This is a client for the Instrument Module.
@@ -21,7 +21,7 @@ import {
  *
  * ```ts
  * const instrument = new SpotInstrument({ ... });
- * const instrumentClient = 
+ * const instrumentClient =
  *   convergence.instrument(instrument, { amount: 1, side: Side.Bid });
  * ```
  *

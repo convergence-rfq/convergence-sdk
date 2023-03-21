@@ -1,4 +1,5 @@
 import { createUpdateConfigInstruction } from '@convergence-rfq/risk-engine';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Config } from '../models';
 import {
@@ -10,15 +11,15 @@ import {
   DEFAULT_ORACLE_STALENESS,
   DEFAULT_ACCEPTED_ORACLE_CONFIDENCE_INTERVAL_POSITION,
 } from '../constants';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'UpdateConfigOperation' as const;
 

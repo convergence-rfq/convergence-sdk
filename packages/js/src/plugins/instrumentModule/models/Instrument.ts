@@ -1,8 +1,9 @@
 import { Side } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
-import type { Convergence } from '@/Convergence';
-import { PublicKey, BigNumber } from '@/types';
-import { assert } from '@/utils';
+
+import type { Convergence } from '../../../Convergence';
+import { PublicKey, BigNumber } from '../../../types';
+import { assert } from '../../../utils';
 
 export interface InstrumentData {
   instrument: PublicKey;

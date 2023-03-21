@@ -10,12 +10,13 @@ import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
 import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
+
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
-import { assert } from '@/utils';
-import { Convergence } from '@/Convergence';
-import { createSerializerFromFixableBeetArgsStruct } from '@/types';
+import { assert } from '../../../utils';
+import { Convergence } from '../../../Convergence';
+import { createSerializerFromFixableBeetArgsStruct } from '../../../types';
 
 type InstrumentData = {
   mint: PublicKey;
@@ -109,7 +110,7 @@ export class SpotInstrument implements Instrument {
     leg: Leg
   ): Promise<SpotInstrument> {
     const { side, instrumentAmount, instrumentData } = leg;
-    
+
     const mint = await convergence
       .tokens()
       .findMintByAddress({ address: new PublicKey(instrumentData) });

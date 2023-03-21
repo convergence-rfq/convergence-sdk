@@ -18,12 +18,12 @@ export type ConvergenceTestOptions = {
 
 export const createWallet = async (
   cvg: Convergence,
-  solsToAirdrop = 100
+  sol = 1
 ): Promise<KeypairSigner> => {
   const wallet = Keypair.generate();
   const tx = await cvg.connection.requestAirdrop(
     wallet.publicKey,
-    solsToAirdrop * LAMPORTS_PER_SOL
+    sol * LAMPORTS_PER_SOL
   );
   await cvg.connection.confirmTransaction(tx);
   return wallet;
@@ -36,7 +36,7 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
   return Convergence.make(connection, { skipPreflight: options.skipPreflight });
 };
 
-export const convergenceCli = async (options: ConvergenceTestOptions = {}) => {
+export const createSdk = async (options: ConvergenceTestOptions = {}) => {
   const cvg = createCvg(options);
   const wallet = await createWallet(cvg, options.solsToAirdrop);
   return cvg.use(keypairIdentity(wallet as Keypair));

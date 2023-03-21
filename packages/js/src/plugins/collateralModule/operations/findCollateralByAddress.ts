@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { Collateral, toCollateral } from '../models';
 import { toCollateralAccount } from '../accounts';
 import {
@@ -6,8 +7,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindCollateralByAddressOperation' as const;
 
@@ -74,7 +75,6 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
       const collateralMint = await convergence
         .tokens()
         .findMintByAddress({ address: protocol.collateralMint });
-
 
       collateralModel.lockedTokensAmount /= Math.pow(
         10,

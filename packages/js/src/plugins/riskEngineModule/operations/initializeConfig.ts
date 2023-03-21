@@ -1,4 +1,5 @@
 import { createInitializeConfigInstruction } from '@convergence-rfq/risk-engine';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Config } from '../models';
 import {
@@ -8,15 +9,15 @@ import {
   DEFAULT_OVERALL_SAFETY_FACTOR,
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
 } from '../constants';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'InitalizeConfigOperation' as const;
 

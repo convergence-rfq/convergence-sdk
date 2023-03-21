@@ -1,5 +1,6 @@
 import { RiskCategoryInfo, Scenario } from '@convergence-rfq/risk-engine';
-import { toBigNumber } from '@/types';
+
+import { toBigNumber } from '../../types';
 
 export const DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ =
   toBigNumber(1_000_000_000);

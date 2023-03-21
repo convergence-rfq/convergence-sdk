@@ -3,17 +3,18 @@ import {
   FeeParameters,
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertProtocol, Protocol } from '../models';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'InitializeProtocolOperation' as const;
 

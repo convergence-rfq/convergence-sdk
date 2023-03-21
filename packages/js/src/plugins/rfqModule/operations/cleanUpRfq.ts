@@ -1,15 +1,16 @@
 import { createCleanUpRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'CleanUpRfqOperation' as const;
 

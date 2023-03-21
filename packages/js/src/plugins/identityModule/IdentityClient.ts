@@ -1,14 +1,15 @@
 import * as ed25519 from '@noble/ed25519';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { IdentityDriver } from './IdentityDriver';
+
 import {
   HasDriver,
   IdentitySigner,
   isSigner,
   KeypairSigner,
   Signer,
-} from '@/types';
-import { DriverNotProvidedError } from '@/errors';
+} from '../../types';
+import { DriverNotProvidedError } from '../../errors';
+import { IdentityDriver } from './IdentityDriver';
 
 /**
  * @group Modules

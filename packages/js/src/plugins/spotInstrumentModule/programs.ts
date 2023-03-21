@@ -1,6 +1,7 @@
 import { PROGRAM_ID as DEFAULT_SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
-import { assert } from '@/utils';
-import { Program } from '@/types';
+
+import { assert } from '../../utils';
+import { Program } from '../../types';
 
 /** @group Programs */
 export const spotInstrumentProgram: Program = {

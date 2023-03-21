@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { Response, toResponse } from '../models/Response';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import { getPages, convertResponseOutput } from '../helpers';
@@ -7,8 +8,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 import { toResponseAccount } from '../accounts';
 
 const Key = 'FindResponsesByRfqsOperation' as const;

@@ -5,17 +5,18 @@ import {
   PriceOracle,
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertBaseAsset, BaseAsset } from '../models/BaseAsset';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'AddBaseAssetOperation' as const;
 

@@ -1,15 +1,16 @@
 import { PublicKey } from '@solana/web3.js';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { settleBuilder } from './settle';
-import { partiallySettleLegsBuilder } from './partiallySettleLegs';
-import { Convergence } from '@/Convergence';
+
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
+} from '../../../types';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { settleBuilder } from './settle';
+import { partiallySettleLegsBuilder } from './partiallySettleLegs';
 
 const Key = 'PartiallySettleLegsAndSettleOperation' as const;
 
@@ -51,7 +52,7 @@ export type PartiallySettleLegsAndSettleOperation = Operation<
  * @category Inputs
  */
 export type PartiallySettleLegsAndSettleInput = {
-  /** 
+  /**
    * The protocol address.
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */

@@ -1,9 +1,10 @@
 import { PublicKey, Transaction } from '@solana/web3.js';
+
 import { IdentityDriver } from '../identityModule';
 import {
   OperationNotSupportedByWalletAdapterError,
   UninitializedWalletAdapterError,
-} from '@/errors';
+} from '../../errors';
 
 export type WalletAdapter = {
   publicKey: PublicKey | null;

@@ -3,9 +3,10 @@ import {
   createFinalizeRfqConstructionInstruction,
 } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
@@ -13,8 +14,8 @@ import {
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
