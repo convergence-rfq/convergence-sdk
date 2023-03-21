@@ -1,4 +1,7 @@
 import fetch, { RequestInit } from 'node-fetch';
+
+import { Amount, HasDriver } from '../../types';
+import { DriverNotProvidedError, InvalidJsonStringError } from '../../errors';
 import {
   getBytesFromConvergenceFiles,
   ConvergenceFile,
@@ -6,8 +9,6 @@ import {
   toConvergenceFileFromJson,
 } from './ConvergenceFile';
 import { StorageDownloadOptions, StorageDriver } from './StorageDriver';
-import { Amount, HasDriver } from '@/types';
-import { DriverNotProvidedError, InvalidJsonStringError } from '@/errors';
 
 /**
  * @group Modules

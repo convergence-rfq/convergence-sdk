@@ -9,6 +9,7 @@ import {
   Side,
 } from '@convergence-rfq/rfq';
 import { bignum } from '@convergence-rfq/beet';
+
 import { calculateRisk } from '../clientCollateralCalculator';
 import { Config } from '../models';
 import {
@@ -16,9 +17,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-// import { LEG_MULTIPLIER_DECIMALS } from '@/plugins/rfqModule/constants';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 

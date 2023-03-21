@@ -8,8 +8,8 @@ import {
   OperationScope,
   useOperation,
   Program,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
@@ -93,7 +93,10 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
               leg.instrumentProgram.toBase58() ===
               instrumentProgram.address.toBase58()
             ) {
-              const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+              const convertedRfq = convertRfqOutput(
+                rfq,
+                collateralMintDecimals
+              );
 
               rfqsByInstrument.push(convertedRfq);
 

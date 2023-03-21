@@ -1,7 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 import { FeeParameters, Instrument } from '@convergence-rfq/rfq';
+
 import { ProtocolAccount } from '../accounts';
-import { assert } from '@/utils';
+import { assert } from '../../../utils';
 
 /**
  * This model captures all the relevant information about an RFQ

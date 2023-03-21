@@ -2,18 +2,19 @@ import {
   createSetRiskCategoriesInfoInstruction,
   RiskCategoryChange,
 } from '@convergence-rfq/risk-engine';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertConfig, Config, toConfig } from '../models';
 import { toConfigAccount } from '../accounts';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'SetRiskCategoriesInfoOperation' as const;
 
@@ -93,8 +94,8 @@ export const setRiskCategoriesInfoOperationHandler: OperationHandler<SetRiskCate
       );
 
       const account = await convergence
-       .rpc()
-       .getAccount(convergence.riskEngine().pdas().config(), commitment);
+        .rpc()
+        .getAccount(convergence.riskEngine().pdas().config(), commitment);
       const config = toConfig(toConfigAccount(account));
       scope.throwIfCanceled();
       assertConfig(config);

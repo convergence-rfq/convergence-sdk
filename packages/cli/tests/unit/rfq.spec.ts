@@ -1,14 +1,22 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { runCli, ADDRESS, Ctx, readCtx } from './../helpers';
+import {
+  ChildProccess,
+  spawnValidator,
+  Ctx,
+  readCtx,
+} from '../../../validator';
+import { runCli, ADDRESS } from '../helpers';
 
 describe('rfq', () => {
-  let ctx = new Ctx();
+  let ctx: Ctx;
   let stub: SinonStub;
+  let validator: ChildProccess;
 
-  before(() => {
+  before((done) => {
     ctx = readCtx();
+    validator = spawnValidator(done);
   });
 
   beforeEach(() => {
@@ -17,6 +25,10 @@ describe('rfq', () => {
 
   afterEach(() => {
     stub.restore();
+  });
+
+  after(async () => {
+    validator.kill();
   });
 
   it('rfq:create [taker]', async () => {
@@ -28,13 +40,19 @@ describe('rfq', () => {
         '--base-mint',
         ctx.baseMint,
         '--side',
-        'ask',
+        'bid',
+        '--collateral-info',
+        ctx.takerCollateralInfo,
+        '--collateral-token',
+        ctx.takerCollateralToken,
         '--order-type',
-        'buy',
+        'two-way',
         '--size',
-        'open',
+        'fixed-base',
         '--amount',
         '1',
+        '--verbose',
+        'true',
       ],
       'taker'
     );

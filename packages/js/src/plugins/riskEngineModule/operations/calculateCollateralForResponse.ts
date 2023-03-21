@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { AuthoritySide, Quote, Side } from '@convergence-rfq/rfq';
+
 import { calculateRisk } from '../clientCollateralCalculator';
 import { extractLegsMultiplierBps } from '../helpers';
 import {
@@ -7,9 +8,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-// import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -127,7 +127,7 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         scope.commitment
       );
       const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
-      
+
       return { requiredCollateral };
     },
   };

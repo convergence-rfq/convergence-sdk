@@ -12,6 +12,7 @@ import {
 import * as anchor from '@project-serum/anchor';
 import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
+
 import {
   createSerializerFromFixableBeetArgsStruct,
   createSerializerFromFixableBeet,
@@ -19,9 +20,9 @@ import {
   Pda,
   Program,
   PublicKey,
-} from '@/types';
-import type { Convergence } from '@/Convergence';
-import { Option } from '@/utils';
+} from '../../types';
+import type { Convergence } from '../../Convergence';
+import { Option } from '../../utils';
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);

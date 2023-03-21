@@ -5,8 +5,9 @@ import {
   baseAssetInfoDiscriminator,
   mintInfoDiscriminator,
 } from '@convergence-rfq/rfq';
-import { Convergence } from '@/Convergence';
-import { GpaBuilder } from '@/utils';
+
+import { Convergence } from '../../Convergence';
+import { GpaBuilder } from '../../utils';
 
 const BUMP = 8;
 const INDEX = BUMP + 8;

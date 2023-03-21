@@ -7,6 +7,8 @@ import {
   FixedSize,
 } from '@convergence-rfq/sdk';
 
+import { Instrument } from './types';
+
 export const getSide = (side: string): Side => {
   switch (side) {
     case 'bid':
@@ -96,5 +98,29 @@ export const formatOrderType = (orderType: OrderType): string => {
       return 'two-way';
     default:
       throw new Error('Invalid order type');
+  }
+};
+
+export const formatInstrument = (instrument: Instrument): string => {
+  switch (instrument.model) {
+    case 'spotInstrument':
+      return 'spot';
+    case 'psyoptionsAmericanInstrument':
+      return 'psyoptions american option';
+    case 'psyoptionsEuropeanInstrument':
+      return 'psyoptions european option';
+    default:
+      throw new Error('Invalid instrument');
+  }
+};
+
+export const formatSide = (side: Side): string => {
+  switch (side) {
+    case Side.Bid:
+      return 'bid';
+    case Side.Ask:
+      return 'ask';
+    default:
+      throw new Error('Invalid side');
   }
 };

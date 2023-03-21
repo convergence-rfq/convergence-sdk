@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
-import { getContentType, getExtension, randomStr } from '@/utils';
-import { InvalidJsonVariableError } from '@/errors';
+
+import { getContentType, getExtension, randomStr } from '../../utils';
+import { InvalidJsonVariableError } from '../../errors';
 
 export type ConvergenceFile = {
   readonly buffer: Buffer;

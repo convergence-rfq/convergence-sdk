@@ -1,6 +1,6 @@
 import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
-// import { bignum } from '@convergence-rfq/beet';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -9,9 +9,9 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FundCollateralOperation' as const;
 

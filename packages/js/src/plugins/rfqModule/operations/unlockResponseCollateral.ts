@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { createUnlockResponseCollateralInstruction } from '@convergence-rfq/rfq';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -7,9 +8,9 @@ import {
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'UnlockResponseCollateralOperation' as const;
 
@@ -45,9 +46,9 @@ export type UnlockResponseCollateralOperation = Operation<
  * @category Inputs
  */
 export type UnlockResponseCollateralInput = {
-  /** 
+  /**
    * The protocol address.
-   * 
+   *
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
@@ -55,23 +56,23 @@ export type UnlockResponseCollateralInput = {
   /** The Response address. */
   response: PublicKey;
 
-  /** 
+  /**
    * Optional address of the Taker's collateral info account.
-   * 
+   *
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
    *
    */
   takerCollateralInfo?: PublicKey;
 
-  /** 
+  /**
    * Optional address of the Maker's collateral info account.
-   * 
+   *
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
    *
    */
   makerCollateralInfo?: PublicKey;
 
-  /** 
+  /**
    * Optional address of the Taker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
@@ -81,7 +82,7 @@ export type UnlockResponseCollateralInput = {
    */
   takerCollateralTokens?: PublicKey;
 
-  /** 
+  /**
    * Optional address of the Maker's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().
@@ -91,7 +92,7 @@ export type UnlockResponseCollateralInput = {
    */
   makerCollateralTokens?: PublicKey;
 
-  /** 
+  /**
    * Optional address of the DAO's collateral tokens account.
    *
    * @defaultValue `convergence.collateral().pdas().

@@ -1,15 +1,15 @@
 import { PublicKey } from '@solana/web3.js';
 import { AuthoritySide, Confirmation, Side } from '@convergence-rfq/rfq';
+
 import { calculateRisk } from '../clientCollateralCalculator';
 import { extractLegsMultiplierBps } from '../helpers';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-// import { ABSOLUTE_PRICE_DECIMALS } from '@/plugins/rfqModule/constants';
+} from '../../../types';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 

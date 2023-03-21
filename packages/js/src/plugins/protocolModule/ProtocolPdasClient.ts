@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
-import type { Convergence } from '@/Convergence';
-import { Pda, Program } from '@/types';
+
+import type { Convergence } from '../../Convergence';
+import { Pda, Program } from '../../types';
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);

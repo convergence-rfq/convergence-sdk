@@ -1,7 +1,8 @@
 import { Buffer } from 'buffer';
+
 import { Rfq } from '../rfqModule';
-import type { Convergence } from '@/Convergence';
-import { Pda, PublicKey } from '@/types';
+import type { Convergence } from '../../Convergence';
+import { Pda, PublicKey } from '../../types';
 
 /**
  * This client allows you to build PDAs related to the Instrument module.

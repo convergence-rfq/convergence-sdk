@@ -1,8 +1,13 @@
 import { createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token';
 import { Keypair, PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Mint } from '../models/Mint';
-import { Option, TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import {
+  Option,
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
@@ -10,12 +15,8 @@ import {
   OperationScope,
   Signer,
   useOperation,
-} from '@/types';
-import type { Convergence } from '@/Convergence';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import type { Convergence } from '../../../Convergence';
 
 const Key = 'CreateMintOperation' as const;
 

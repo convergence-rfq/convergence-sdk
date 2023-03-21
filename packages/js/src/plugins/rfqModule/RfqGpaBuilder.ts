@@ -1,7 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 import { OrderType, PROGRAM_ID, rfqDiscriminator } from '@convergence-rfq/rfq';
-import { Convergence } from '@/Convergence';
-import { GpaBuilder } from '@/utils';
+
+import { Convergence } from '../../Convergence';
+import { GpaBuilder } from '../../utils';
 
 const TAKER = 8;
 const ORDER_TYPE = TAKER + 32;

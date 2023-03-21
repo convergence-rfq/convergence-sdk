@@ -13,6 +13,7 @@ import {
   Transaction,
   TransactionSignature,
 } from '@solana/web3.js';
+
 import {
   FailedToConfirmTransactionError,
   FailedToConfirmTransactionWithResponseError,
@@ -20,8 +21,8 @@ import {
   ConvergenceError,
   ParsedProgramError,
   UnknownProgramError,
-} from '@/errors';
-import type { Convergence } from '@/Convergence';
+} from '../../errors';
+import type { Convergence } from '../../Convergence';
 import {
   assertSol,
   getSignerHistogram,
@@ -32,8 +33,8 @@ import {
   SolAmount,
   UnparsedAccount,
   UnparsedMaybeAccount,
-} from '@/types';
-import { TransactionBuilder, zipMap } from '@/utils';
+} from '../../types';
+import { TransactionBuilder, zipMap } from '../../utils';
 
 export type ConfirmTransactionResponse = RpcResponseAndContext<SignatureResult>;
 export type SendAndConfirmTransactionResponse = {

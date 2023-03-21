@@ -1,11 +1,12 @@
 import { PublicKey } from '@solana/web3.js';
+
+import { AccountNotFoundError } from '../errors';
 import { SolAmount } from './Amount';
 import {
   createSerializerFromSolitaType,
   deserializeAccount,
   SolitaType,
 } from './Serializer';
-import { AccountNotFoundError } from '@/errors';
 
 export type AccountInfo = {
   readonly executable: boolean;

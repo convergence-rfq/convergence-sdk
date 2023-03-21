@@ -1,8 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { prepareSettlementBuilder } from './prepareSettlement';
-import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
-import { Convergence } from '@/Convergence';
+
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
@@ -10,7 +8,10 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
+} from '../../../types';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { prepareSettlementBuilder } from './prepareSettlement';
+import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
 
 const Key = 'PrepareSettlementAndPrepareMoreLegsOperation' as const;
 
