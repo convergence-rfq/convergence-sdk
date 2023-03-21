@@ -10,9 +10,6 @@ import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
 import {
   createEuroAccountsAndMintOptions,
   createAmericanAccountsAndMintOptions,
-} from '../helpers';
-import { createAmericanProgram, initializeNewAmericanOption } from '@/index';
-import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
   SKIP_PREFLIGHT,
@@ -50,6 +47,8 @@ import {
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
   calculateExpectedLegsSize,
   calculateExpectedLegsHash,
+  createAmericanProgram,
+  initializeNewAmericanOption,
 } from '@/index';
 
 killStuckProcess();
