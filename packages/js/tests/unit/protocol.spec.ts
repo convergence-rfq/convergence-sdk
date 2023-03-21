@@ -2,8 +2,7 @@ import { expect } from 'expect';
 
 import { ChildProccess, spawnValidator } from '../../../validator';
 import { createCvg } from '../helpers';
-
-import { Convergence } from '@/index';
+import { Convergence } from '../../src';
 
 describe('protocol', () => {
   let validator: ChildProccess;

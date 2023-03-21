@@ -185,9 +185,13 @@ export const getKpFile = (user: string): string => {
 };
 
 export const getPk = (user: string) => {
-  const buffer = JSON.parse(fs.readFileSync(getKpFile(user), 'utf8'));
-  const owner = Keypair.fromSecretKey(new Uint8Array(buffer));
+  const owner = getKeypair(user);
   return owner.publicKey.toString();
+};
+
+export const getKeypair = (user: string) => {
+  const buffer = JSON.parse(fs.readFileSync(getKpFile(user), 'utf8'));
+  return Keypair.fromSecretKey(new Uint8Array(buffer));
 };
 
 export const readCtx = (): Ctx => {
