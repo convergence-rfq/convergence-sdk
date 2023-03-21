@@ -16,6 +16,8 @@ import {
 import { Commitment, PublicKey } from '@solana/web3.js';
 // @ts-ignore this package is missing type declarations
 import { blackScholes } from 'black-scholes';
+
+import { Convergence } from '../../Convergence';
 import { toBaseAsset } from '../protocolModule';
 import { toBaseAssetAccount } from '../protocolModule/accounts';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
@@ -23,14 +25,9 @@ import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData
 import { Config } from './models';
 import {
   FUTURE_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS,
-  //@ts-ignore
-  OPTION_STRIKE_PRICE_DECIMALS,
-  //@ts-ignore
-  OPTION_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS,
   SETTLEMENT_WINDOW_BREAKPOINS,
   SETTLEMENT_WINDOW_PEDIODS,
 } from './constants';
-import { Convergence } from '@/Convergence';
 
 export type CalculationCase = {
   legMultiplier: number;
@@ -80,7 +77,6 @@ export async function calculateRisk(
 
   const legInfos = legs.map((leg) => {
     let amount = Number(leg.instrumentAmount) / 10 ** leg.instrumentDecimals;
-    // let amount = Number(leg.instrumentAmount);
     if (leg.side == Side.Bid) {
       amount = -amount;
     }
