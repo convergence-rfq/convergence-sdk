@@ -6,6 +6,7 @@ import {
   isFixedSizeQuoteAsset,
   Leg,
   OrderType,
+  QuoteAsset,
   Side,
 } from '@convergence-rfq/rfq';
 import { bignum } from '@convergence-rfq/beet';
@@ -19,6 +20,9 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
+import { convertFixedSizeInput } from '../../rfqModule';
+
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -58,7 +62,7 @@ export type CalculateCollateralForRfqOperation = Operation<
  * @category Outputs
  */
 export type CalculateCollateralForRfqOutput = {
-  /** Collateral required as a floating point number. */
+  /** Collateral required as a floating point number */
   requiredCollateral: number;
 };
 
@@ -68,20 +72,21 @@ export type CalculateCollateralForRfqOutput = {
  */
 export type CalculateCollateralForRfqInput = {
   /**
-   * The size restriction of the RFQ being created
+   * Size restriction of the RFQ being created
    */
   fixedSize: FixedSize;
-
   /**
-   * The order type of the RFQ being created
+   * Order type of the RFQ being created
    */
   orderType: OrderType;
   /**
-   * The legs of the RFQ being created
+   * Legs of the RFQ being created
    */
   legs: Leg[];
+
+  quoteAsset: QuoteAsset;
   /**
-   * The settlement period of the RFQ being created in seconds
+   * Settlement period of the RFQ being created in seconds
    */
   settlementPeriod: number;
 };
@@ -100,29 +105,29 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
 
       const config = await convergence.riskEngine().fetchConfig(scope);
 
-      const { fixedSize, orderType, settlementPeriod } = operation.input;
-      const { legs } = operation.input;
+      const { fixedSize, orderType, legs, quoteAsset, settlementPeriod } =
+        operation.input;
 
-      legs.map((leg) => {
-        leg.instrumentAmount =
-          Number(leg.instrumentAmount) / 10 ** leg.instrumentDecimals;
-      });
+      const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
 
-      if (isFixedSizeNone(fixedSize)) {
+      // if (isFixedSizeNone(fixedSize)) {
+      if (isFixedSizeNone(convertedFixedSize)) {
         return convertCollateralBpsToOutput(
           config.collateralForVariableSizeRfqCreation,
           config
         );
-      } else if (isFixedSizeQuoteAsset(fixedSize)) {
+        // } else if (isFixedSizeQuoteAsset(fixedSize)) {
+      } else if (isFixedSizeQuoteAsset(convertedFixedSize)) {
         return convertCollateralBpsToOutput(
           config.collateralForFixedQuoteAmountRfqCreation,
           config
         );
-      } else if (isFixedSizeBaseAsset(fixedSize)) {
-        const { legsMultiplierBps } = fixedSize;
-        // normally we would divide by 10 ** LEG_MULTIPLIER_DECIMALS but this isn't called from the SDK side
-        //  so we don't need to. When we call this, `legsMultiplierBps` doesn't have decimals
-        const legMultiplier = Number(legsMultiplierBps);
+        // } else if (isFixedSizeBaseAsset(fixedSize)) {
+      } else if (isFixedSizeBaseAsset(convertedFixedSize)) {
+        // const { legsMultiplierBps } = fixedSize;
+        const { legsMultiplierBps } = convertedFixedSize;
+        const legMultiplier =
+          Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
 
         const sideToCase = (side: Side) => {
           return {
@@ -154,7 +159,6 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
         );
 
         const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
-
         return { requiredCollateral };
       }
 

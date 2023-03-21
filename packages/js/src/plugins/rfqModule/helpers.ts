@@ -1,4 +1,5 @@
-import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
+//@ts-ignore
+import { PublicKey, Signer, AccountMeta, Keypair } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
@@ -6,8 +7,12 @@ import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+//@ts-ignore
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 import {
   instructions,
+  //@ts-ignore
+  EuroMeta,
   EuroPrimitive,
   createProgram,
   programId as psyoptionsEuropeanProgramId,
@@ -23,6 +28,7 @@ import {
   toBigNumber,
   Pda,
   makeConfirmOptionsFinalizedOnMainnet,
+  Program
 } from '../../types';
 import { TransactionBuilder } from '../../utils';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
@@ -35,6 +41,8 @@ import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstru
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { LEG_MULTIPLIER_DECIMALS } from './constants';
+
+const { mintOptions } = instructions;
 
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
   instructions;
@@ -283,6 +291,12 @@ export function getPages<T extends UnparsedAccount | Rfq | Response>(
   return pages as T[][];
 }
 
+export const convertOverrideLegMultiplierBps = (
+  overrideLegMultiplierBps: number
+): number => {
+  return overrideLegMultiplierBps * Math.pow(10, 9);
+};
+
 export const convertFixedSizeInput = (
   fixedSize: FixedSize,
   quoteAsset: QuoteAsset
@@ -342,10 +356,10 @@ export const convertResponseOutput = (
   quoteDecimals: number
 ): Response => {
   if (response.bid) {
-    const parsedPriceQuoteAmountBps =
+    const convertedPriceQuoteAmountBps =
       Number(response.bid.priceQuote.amountBps) / Math.pow(10, quoteDecimals);
 
-    response.bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+    response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
     if (response.bid.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
@@ -356,10 +370,10 @@ export const convertResponseOutput = (
     }
   }
   if (response.ask) {
-    const parsedPriceQuoteAmountBps =
+    const convertedPriceQuoteAmountBps =
       Number(response.ask.priceQuote.amountBps) / Math.pow(10, quoteDecimals);
 
-    response.ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+    response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
     if (response.ask.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
@@ -379,29 +393,29 @@ export const convertResponseInput = (
   ask?: Quote
 ) => {
   if (bid) {
-    const parsedPriceQuoteAmountBps =
+    const convertedPriceQuoteAmountBps =
       Number(bid.priceQuote.amountBps) * Math.pow(10, quoteDecimals);
 
-    bid.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+    bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
     if (bid.__kind == 'Standard') {
-      const parsedLegsMultiplierBps =
+      const convertedLegsMultiplierBps =
         Number(bid.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
-      bid.legsMultiplierBps = parsedLegsMultiplierBps;
+      bid.legsMultiplierBps = convertedLegsMultiplierBps;
     }
   }
   if (ask) {
-    const parsedPriceQuoteAmountBps =
+    const convertedPriceQuoteAmountBps =
       Number(ask.priceQuote.amountBps) * Math.pow(10, quoteDecimals);
 
-    ask.priceQuote.amountBps = parsedPriceQuoteAmountBps;
+    ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
     if (ask.__kind == 'Standard') {
-      const parsedLegsMultiplierBps =
+      const convertedLegsMultiplierBps =
         Number(ask.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
-      ask.legsMultiplierBps = parsedLegsMultiplierBps;
+      ask.legsMultiplierBps = convertedLegsMultiplierBps;
     }
   }
 
@@ -699,6 +713,13 @@ export const initializeNewAmericanOption = async (
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
+  quoteAmountPerContract = new anchor.BN(
+    Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
+  );
+  underlyingAmountPerContract = new anchor.BN(
+    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
+  );
+
   const { optionMarketKey, optionMintKey, writerMintKey } =
     await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
       expirationUnixTimestamp: expiration,
@@ -750,4 +771,171 @@ export const createAmericanProgram = (convergence: Convergence): any => {
   );
 
   return americanProgram;
+};
+
+export const getOrCreateATA = async (
+  convergence: Convergence,
+  mint: PublicKey,
+  owner: PublicKey,
+  programs?: Program[]
+): Promise<PublicKey> => {
+  const pda = convergence.tokens().pdas().associatedTokenAccount({
+    mint,
+    owner,
+    programs,
+  });
+  const account = await convergence.rpc().getAccount(pda);
+
+  const ata = account.exists
+    ? pda
+    : (
+        await convergence.tokens().createToken({
+          mint,
+          owner,
+        })
+      ).token.address;
+
+  return ata;
+};
+
+export const createEuroAccountsAndMintOptions = async (
+  convergence: Convergence,
+  caller: Keypair,
+  euroMeta: EuroMeta,
+  euroMetaKey: PublicKey,
+  // payer: Signer, //dao
+  europeanProgram: anchor.Program<EuroPrimitive>,
+  underlyingMint: Mint,
+  stableMint: Mint,
+  optionType: OptionType,
+  amount: number // amount of options to mint
+) => {
+  const stableMintToken = convergence.tokens().pdas().associatedTokenAccount({
+    mint: stableMint.address,
+    owner: caller.publicKey,
+  });
+
+  const underlyingMintToken = convergence
+    .tokens()
+    .pdas()
+    .associatedTokenAccount({
+      mint: underlyingMint.address,
+      owner: caller.publicKey,
+    });
+
+  const minterCollateralKey =
+    optionType == OptionType.PUT ? stableMintToken : underlyingMintToken;
+
+  const optionDestination = await getOrCreateATA(
+    convergence,
+    optionType == OptionType.PUT
+      ? euroMeta.putOptionMint
+      : euroMeta.callOptionMint,
+    caller.publicKey
+  );
+  const writerDestination = await getOrCreateATA(
+    convergence,
+    optionType == OptionType.PUT
+      ? euroMeta.putWriterMint
+      : euroMeta.callWriterMint,
+    caller.publicKey
+  );
+
+  //@ts-ignore
+  const backupReceiver = await getOrCreateATA(
+    convergence,
+    optionType == OptionType.PUT
+      ? euroMeta.putOptionMint
+      : euroMeta.callOptionMint,
+    caller.publicKey
+  );
+
+  const { instruction: ix1 } = mintOptions(
+    europeanProgram,
+    euroMetaKey,
+    euroMeta,
+    minterCollateralKey,
+    optionDestination,
+    writerDestination,
+    new anchor.BN(amount),
+    optionType
+  );
+
+  ix1.keys[0] = {
+    pubkey: caller.publicKey,
+    isSigner: true,
+    isWritable: false,
+  };
+
+  const txBuilder = TransactionBuilder.make().setFeePayer(
+    convergence.rpc().getDefaultFeePayer()
+  );
+
+  txBuilder.add({
+    instruction: ix1,
+    signers: [caller],
+  });
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  await txBuilder.sendAndConfirm(convergence, confirmOptions);
+};
+
+export const createAmericanAccountsAndMintOptions = async (
+  convergence: Convergence,
+  caller: Keypair,
+  americanProgram: any,
+  underlyingMint: Mint,
+  optionMarket: any,
+  optionMintKey: PublicKey,
+  writerMintKey: PublicKey,
+  amount: number
+) => {
+  const optionToken = await getOrCreateATA(
+    convergence,
+    optionMintKey,
+    caller.publicKey
+  );
+
+  const writerToken = await getOrCreateATA(
+    convergence,
+    writerMintKey,
+    caller.publicKey
+  );
+  const underlyingToken = await getOrCreateATA(
+    convergence,
+    underlyingMint.address,
+    caller.publicKey
+  );
+
+  const ixs = await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+    americanProgram,
+    optionToken,
+    writerToken,
+    underlyingToken,
+    new anchor.BN(amount),
+    optionMarket as psyoptionsAmerican.OptionMarketWithKey
+  );
+  const ix1 = ixs.ix;
+
+  ixs.signers.push(caller);
+
+  ixs.ix.keys[0] = {
+    pubkey: caller.publicKey,
+    isSigner: true,
+    isWritable: false,
+  };
+
+  const txBuilder = TransactionBuilder.make().setFeePayer(
+    convergence.rpc().getDefaultFeePayer()
+  );
+
+  txBuilder.add({
+    instruction: ix1,
+    signers: ixs.signers,
+  });
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  await txBuilder.sendAndConfirm(convergence, confirmOptions);
 };

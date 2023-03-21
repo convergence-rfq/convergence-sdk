@@ -189,93 +189,103 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
       const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
-      scope.throwIfCanceled();
-
       const unparsedAddresses = unparsedAccounts.map(
         (account) => account.publicKey
       );
+      scope.throwIfCanceled();
 
-      const accounts = await convergence
-        .rpc()
-        .getMultipleAccounts(unparsedAddresses, commitment);
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
 
       const parsedRfqs: Rfq[] = [];
 
-      for (const account of accounts) {
-        const rfq = toRfq(toRfqAccount(account));
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
 
-        if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
-          const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+        for (const account of accounts) {
+          const rfq = toRfq(toRfqAccount(account));
 
-          parsedRfqs.push(convertedRfq);
+          if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
+            const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
-          continue;
-        }
+            parsedRfqs.push(convertedRfq);
 
-        for (const leg of rfq.legs) {
-          if (
-            leg.instrumentProgram.toBase58() ===
-            psyoptionsAmericanInstrumentProgram.address.toBase58()
-          ) {
-            const data = psyoptionsAmericanInstrumentDataSerializer.deserialize(
-              Buffer.from(leg.instrumentData)
-            )[0];
+            continue;
+          }
 
-            if (data.optionMint.toBase58() === mintAddress.toBase58()) {
-              const convertedRfq = convertRfqOutput(
-                rfq,
-                collateralMintDecimals
-              );
-
-              parsedRfqs.push(convertedRfq);
-
-              break;
-            }
-          } else if (
-            leg.instrumentProgram.toBase58() ===
-            psyoptionsEuropeanInstrumentProgram.address.toBase58()
-          ) {
-            const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
-              convergence,
-              leg
-            );
-            const euroMetaOptionMint = await convergence
-              .tokens()
-              .findMintByAddress({
-                address:
-                  instrument.optionType === OptionType.CALL
-                    ? instrument.meta.callOptionMint
-                    : instrument.meta.putOptionMint,
-              });
+          for (const leg of rfq.legs) {
             if (
-              euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
+              leg.instrumentProgram.toBase58() ===
+              psyoptionsAmericanInstrumentProgram.address.toBase58()
             ) {
-              const convertedRfq = convertRfqOutput(
-                rfq,
-                collateralMintDecimals
-              );
+              const data =
+                psyoptionsAmericanInstrumentDataSerializer.deserialize(
+                  Buffer.from(leg.instrumentData)
+                )[0];
 
-              parsedRfqs.push(convertedRfq);
+              if (data.optionMint.toBase58() === mintAddress.toBase58()) {
+                const convertedRfq = convertRfqOutput(
+                  rfq,
+                  collateralMintDecimals
+                );
 
-              break;
-            }
-          } else if (
-            leg.instrumentProgram.toBase58() ===
-            spotInstrumentProgram.address.toBase58()
-          ) {
-            const data = SpotInstrumentDataSerializer.deserialize(
-              Buffer.from(leg.instrumentData)
-            )[0];
+                parsedRfqs.push(convertedRfq);
 
-            if (data.mint.toBase58() === mintAddress.toBase58()) {
-              const convertedRfq = convertRfqOutput(
-                rfq,
-                collateralMintDecimals
-              );
+                break;
+              }
+            } else if (
+              leg.instrumentProgram.toBase58() ===
+              psyoptionsEuropeanInstrumentProgram.address.toBase58()
+            ) {
+              const instrument =
+                await PsyoptionsEuropeanInstrument.createFromLeg(
+                  convergence,
+                  leg
+                );
+              const euroMetaOptionMint = await convergence
+                .tokens()
+                .findMintByAddress({
+                  address:
+                    instrument.optionType === OptionType.CALL
+                      ? instrument.meta.callOptionMint
+                      : instrument.meta.putOptionMint,
+                });
+              if (
+                euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
+              ) {
+                const convertedRfq = convertRfqOutput(
+                  rfq,
+                  collateralMintDecimals
+                );
 
-              parsedRfqs.push(convertedRfq);
+                parsedRfqs.push(convertedRfq);
 
-              break;
+                break;
+              }
+            } else if (
+              leg.instrumentProgram.toBase58() ===
+              spotInstrumentProgram.address.toBase58()
+            ) {
+              const data = SpotInstrumentDataSerializer.deserialize(
+                Buffer.from(leg.instrumentData)
+              )[0];
+
+              if (data.mint.toBase58() === mintAddress.toBase58()) {
+                const convertedRfq = convertRfqOutput(
+                  rfq,
+                  collateralMintDecimals
+                );
+
+                parsedRfqs.push(convertedRfq);
+
+                break;
+              }
             }
           }
         }

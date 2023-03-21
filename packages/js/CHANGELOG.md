@@ -6,6 +6,24 @@
 
 - Updated Solita versions to 2.2.2-rc.2
 
+## 4.0.24-rc.5
+
+### Patch Changes
+
+- use getAccount and createToken in prepareSettlement instead of getOrCreateAssociatedTokenAccount
+
+## 4.0.24-rc.4
+
+### Patch Changes
+
+- call getMultipleAccounts with only leq 100 pubkeys
+
+## 4.0.24-rc.3
+
+### Patch Changes
+
+- use getMultipleAccounts to fetch rfq, response, fix psyop euro fixed base rfq creation collateral
+
 ## 4.0.23-rc.6
 
 ### Patch Changes

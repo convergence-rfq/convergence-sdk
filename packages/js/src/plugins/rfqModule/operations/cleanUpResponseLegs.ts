@@ -4,6 +4,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { getOrCreateATA } from '../helpers';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -254,11 +255,7 @@ export const cleanUpResponseLegsBuilder = async (
       },
       // `backup_receiver`
       {
-        pubkey: convergence.tokens().pdas().associatedTokenAccount({
-          mint: baseAssetMint!.address,
-          owner: dao,
-          programs,
-        }),
+        pubkey: await getOrCreateATA(convergence, baseAssetMint!.address, dao),
         isSigner: false,
         isWritable: true,
       },
