@@ -354,7 +354,7 @@ export const convertResponseOutput = (
 ): Response => {
   if (response.bid) {
     const convertedPriceQuoteAmountBps =
-      Number(response.bid.priceQuote.amountBps) / Math.pow(10, quoteDecimals);
+      Number(response.bid.priceQuote.amountBps) / Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
 
     response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
@@ -368,7 +368,7 @@ export const convertResponseOutput = (
   }
   if (response.ask) {
     const convertedPriceQuoteAmountBps =
-      Number(response.ask.priceQuote.amountBps) / Math.pow(10, quoteDecimals);
+      Number(response.ask.priceQuote.amountBps) / Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
 
     response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
@@ -800,7 +800,6 @@ export const getOrCreateATA = async (
 export const createEuroAccountsAndMintOptions = async (
   convergence: Convergence,
   caller: Keypair, // TODO: not needed when we return the tx
-  // rfqAddress: PublicKey,
   rfqAddress: PublicKey,
   europeanProgram: anchor.Program<EuroPrimitive>,
   amount: number

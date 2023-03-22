@@ -12,15 +12,6 @@ import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
 import {
-  //@ts-ignore
-  createAmericanAccountsAndMintOptions,
-  //@ts-ignore
-  createBigAmericanAccountsAndMintOptions,
-  createEuroAccountsAndMintOptions,
-  createAmericanProgram,
-  initializeNewAmericanOption
-} from '../src';
-import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
   SKIP_PREFLIGHT,
@@ -67,6 +58,8 @@ import {
   calculateExpectedLegsHash,
   createAmericanProgram,
   initializeNewAmericanOption,
+  createAmericanAccountsAndMintOptions,
+  createEuroAccountsAndMintOptions,
 } from '@/index';
 
 killStuckProcess();
@@ -1399,18 +1392,16 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
   //only
   test('[riskEngineModule] it can calculate collateral for a confirmation of the Rfq', async (t: Test) => {
-    const {
-      optionMarketKey: optionMarketKey1,
-      optionMarket: optionMarket1,
-    } = await initializeNewAmericanOption(
-      cvg,
-      americanProgram,
-      btcMint,
-      usdcMint,
-      new anchor.BN(27_000),
-      new anchor.BN(1),
-      3_600
-    );
+    const { optionMarketKey: optionMarketKey1, optionMarket: optionMarket1 } =
+      await initializeNewAmericanOption(
+        cvg,
+        americanProgram,
+        btcMint,
+        usdcMint,
+        new anchor.BN(27_000),
+        new anchor.BN(1),
+        3_600
+      );
     const americanInstrument1 = new PsyoptionsAmericanInstrument(
       cvg,
       btcMint,
@@ -3347,7 +3338,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       quoteAsset: cvg
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
-      settlingWindow: 60 * 60 * 60
+      settlingWindow: 60 * 60 * 60,
     });
 
     //sdkCalculatedResponseCollateral:  1_855_111.9577327545

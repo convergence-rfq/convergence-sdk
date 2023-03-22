@@ -10,7 +10,6 @@ import {
 } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
-  getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 
@@ -23,7 +22,6 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-  IdentitySigner,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { Mint } from '../../tokenModule';
