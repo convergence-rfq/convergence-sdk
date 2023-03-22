@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/sdk",
-  "version": "4.0.24-rc.14",
+  "version": "4.0.24-rc.15",
   "sideEffects": false,
   "module": "dist/esm/index.mjs",
   "main": "dist/cjs/index.cjs",
@@ -12,8 +12,7 @@
     }
   },
   "files": [
-    "/dist/cjs",
-    "/dist/esm",
+    "/dist",
     "/src"
   ],
   "publishConfig": {
