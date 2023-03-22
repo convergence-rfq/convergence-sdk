@@ -1,21 +1,19 @@
-//@ts-ignore
-import { PublicKey, Signer, AccountMeta, Keypair } from '@solana/web3.js';
+import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
-import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import {
   instructions,
-  //@ts-ignore
-  EuroMeta,
   EuroPrimitive,
   createProgram,
   OptionType,
   programId as psyoptionsEuropeanProgramId,
 } from '@mithraic-labs/tokenized-euros';
+
 import {
   UnparsedAccount,
   PublicKeyValues,
@@ -24,7 +22,7 @@ import {
   toBigNumber,
   Pda,
   makeConfirmOptionsFinalizedOnMainnet,
-  Program
+  Program,
 } from '../../types';
 import { TransactionBuilder } from '../../utils';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
@@ -36,10 +34,7 @@ import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentMod
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
-import {
-  ABSOLUTE_PRICE_DECIMALS,
-  LEG_MULTIPLIER_DECIMALS,
-} from './constants';
+import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
 import { CvgWallet } from '@/utils/CvgWallet';
 import { Convergence } from '@/Convergence';
 
@@ -354,7 +349,8 @@ export const convertResponseOutput = (
 ): Response => {
   if (response.bid) {
     const convertedPriceQuoteAmountBps =
-      Number(response.bid.priceQuote.amountBps) / Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
+      Number(response.bid.priceQuote.amountBps) /
+      Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
 
     response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
@@ -368,7 +364,8 @@ export const convertResponseOutput = (
   }
   if (response.ask) {
     const convertedPriceQuoteAmountBps =
-      Number(response.ask.priceQuote.amountBps) / Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
+      Number(response.ask.priceQuote.amountBps) /
+      Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
 
     response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
@@ -619,7 +616,7 @@ export const initializeNewOptionMeta = async (
   strikePrice: number,
   underlyingAmountPerContract: number,
   expiresIn: number,
-  oracleProviderId = 0
+  oracleProviderId = 1
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 

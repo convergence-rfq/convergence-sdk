@@ -8,9 +8,7 @@ import {
   ComputeBudgetProgram,
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
-import {
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
