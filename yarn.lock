@@ -1282,6 +1282,8 @@
 
 "@convergence-rfq/sdk@4.0.24":
   version "4.0.24-rc.5"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/sdk/-/sdk-4.0.24-rc.5.tgz#8f5423e1ccccae7150286bb3f8c2458c2490a5aa"
+  integrity sha512-skvtHfX+9cF4JL+fE19YIr/1nTdEPDj+MZ00x4YEd6+yRXZ2Zoq1LgnmFIImztrsu96XRNlD38r61/WBAGyNbg==
   dependencies:
     "@aws-crypto/sha256-js" "3.0.0"
     "@bundlr-network/client" "^0.8.8"

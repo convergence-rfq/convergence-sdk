@@ -1,16 +1,21 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair, PublicKey } from '@solana/web3.js';
+//@ts-ignore
 import { instrumentsToLegs } from '@/index';
 //@ts-ignore
 import { sleep } from '@bundlr-network/client/build/common/utils';
+//@ts-ignore
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import { IDL as PseudoPythIdl } from 'programs/pseudo_pyth_idl';
 import {
+  //@ts-ignore
   createAmericanAccountsAndMintOptions,
+  //@ts-ignore
+  createBigAmericanAccountsAndMintOptions,
   createEuroAccountsAndMintOptions,
 } from '@/index';
 import { createAmericanProgram, initializeNewAmericanOption } from '@/index';
@@ -1133,11 +1138,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       await SpotInstrument.createForLeg(cvg, btcMint, 5, Side.Bid).toLegData(),
     ];
 
-    // const convertedFixedSize = convertFixedSizeInput(
-    //   { __kind: 'None', padding: 0 },
-    //   cvg.instrument(new SpotInstrument(cvg, usdcMint)).toQuoteAsset()
-    // );
-
     const quoteAsset = cvg
       .instrument(new SpotInstrument(cvg, usdcMint))
       .toQuoteAsset();
@@ -1205,37 +1205,15 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
     europeanOptionPutMint = euroMeta.putOptionMint;
 
-    await createEuroAccountsAndMintOptions(
-      cvg,
-      taker,
-      euroMeta,
-      euroMetaKey,
-      europeanProgram,
-      btcMint,
-      usdcMint,
-      OptionType.PUT,
-      1_000_000
-    );
-    // await createEuroAccountsAndMintOptions(
-    //   cvg,
-    //   maker,
-    //   euroMeta,
-    //   euroMetaKey,
-    //   europeanProgram,
-    //   btcMint,
-    //   usdcMint,
-    //   OptionType.PUT,
-    //   1_000_000
-    // );
     const instrument1 = new PsyoptionsEuropeanInstrument(
       cvg,
       btcMint,
-      OptionType.PUT,
+      OptionType.CALL,
       euroMeta,
       euroMetaKey,
       {
         amount: 1,
-        side: Side.Bid,
+        side: Side.Ask,
       }
     );
     const instrument2 = new SpotInstrument(cvg, btcMint, {
@@ -1270,6 +1248,15 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
       },
     });
+
+    // if Side.Ask for option, mint to maker. else mint to taker.
+    await createEuroAccountsAndMintOptions(
+      cvg,
+      maker,
+      rfq.address,
+      europeanProgram,
+      1_000_000
+    );
 
     await cvg.rfqs().confirmResponse({
       taker,
@@ -1408,46 +1395,21 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   //only
-  test.only('[riskEngineModule] it can calculate collateral for a confirmation of the Rfq', async (t: Test) => {
+  test('[riskEngineModule] it can calculate collateral for a confirmation of the Rfq', async (t: Test) => {
     const {
       optionMarketKey: optionMarketKey1,
       optionMarket: optionMarket1,
-      optionMintKey: optionMintKey1,
-      writerMintKey: writerMintKey1,
     } = await initializeNewAmericanOption(
       cvg,
       americanProgram,
-      // solMint,
       btcMint,
       usdcMint,
       new anchor.BN(27_000),
       new anchor.BN(1),
       3_600
     );
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      taker,
-      americanProgram,
-      // solMint
-      btcMint,
-      optionMarket1,
-      optionMintKey1,
-      writerMintKey1,
-      1_000_000
-    );
-    // await createAmericanAccountsAndMintOptions(
-    //   cvg,
-    //   maker,
-    //   americanProgram,
-    //   btcMint,
-    //   optionMarket1,
-    //   optionMintKey1,
-    //   writerMintKey1,
-    //   1_000_000
-    // );
     const americanInstrument1 = new PsyoptionsAmericanInstrument(
       cvg,
-      // solMint,
       btcMint,
       usdcMint,
       OptionType.CALL,
@@ -1469,12 +1431,21 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'None', padding: 0 },
       quoteAsset,
-      settlingWindow: 60 * 60 * 60,
+      settlingWindow: 60 * 60 * 48,
     });
     await cvg.rfqs().finalizeRfqConstruction({
       taker,
       rfq: rfq.address,
     });
+
+    await createAmericanAccountsAndMintOptions(
+      cvg,
+      taker,
+      rfq.address,
+      optionMarket1,
+      americanProgram,
+      1_000_000
+    );
 
     const legs = await instrumentsToLegs(cvg, [americanInstrument1]);
 
@@ -1485,7 +1456,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         orderType: OrderType.TwoWay,
         legs,
         quoteAsset,
-        settlementPeriod: 60 * 60 * 60,
+        settlementPeriod: 60 * 60 * 48,
       });
 
     console.log('rfq risk output: ', requiredCollateral.toString());
@@ -1604,29 +1575,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
     const optionType: OptionType = OptionType.PUT;
 
-    await createEuroAccountsAndMintOptions(
-      cvg,
-      taker,
-      euroMeta,
-      euroMetaKey,
-      europeanProgram,
-      btcMint,
-      usdcMint,
-      optionType,
-      1_000_000
-    );
-    // await createEuroAccountsAndMintOptions(
-    //   cvg,
-    //   maker,
-    //   euroMeta,
-    //   euroMetaKey,
-    //   europeanProgram,
-    //   btcMint,
-    //   usdcMint,
-    //   optionType,
-    //   1_000_000
-    // );
-
     const psyopEuroInstrument1 = new PsyoptionsEuropeanInstrument(
       cvg,
       btcMint,
@@ -1667,6 +1615,14 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.000001 },
       },
     });
+
+    await createEuroAccountsAndMintOptions(
+      cvg,
+      taker,
+      rfq.address,
+      europeanProgram,
+      1_000_000
+    );
 
     await cvg.rfqs().confirmResponse({
       taker,
@@ -1812,201 +1768,201 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions American, respond, confirm response, prepare settlement, settle', async (t: Test) => {
-    const {
-      optionMarketKey,
-      optionMarket,
-      optionMintKey,
-      writerMintKey,
-      // optionMint,
-    } = await initializeNewAmericanOption(
-      cvg,
-      americanProgram,
-      btcMint,
-      usdcMint,
-      new anchor.BN(100),
-      new anchor.BN(1),
-      3_600
-    );
+  // test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions American, respond, confirm response, prepare settlement, settle', async (t: Test) => {
+  //   const {
+  //     optionMarketKey,
+  //     optionMarket,
+  //     optionMintKey,
+  //     writerMintKey,
+  //     // optionMint,
+  //   } = await initializeNewAmericanOption(
+  //     cvg,
+  //     americanProgram,
+  //     btcMint,
+  //     usdcMint,
+  //     new anchor.BN(100),
+  //     new anchor.BN(1),
+  //     3_600
+  //   );
 
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      taker,
-      americanProgram,
-      btcMint,
-      optionMarket,
-      optionMintKey,
-      writerMintKey,
-      1_000_000
-    );
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      maker,
-      americanProgram,
-      btcMint,
-      optionMarket,
-      optionMintKey,
-      writerMintKey,
-      1_000_000
-    );
+  //   await createAmericanAccountsAndMintOptions(
+  //     cvg,
+  //     taker,
+  //     americanProgram,
+  //     btcMint,
+  //     optionMarket,
+  //     optionMintKey,
+  //     writerMintKey,
+  //     1_000_000
+  //   );
+  //   await createAmericanAccountsAndMintOptions(
+  //     cvg,
+  //     maker,
+  //     americanProgram,
+  //     btcMint,
+  //     optionMarket,
+  //     optionMintKey,
+  //     writerMintKey,
+  //     1_000_000
+  //   );
 
-    const { rfq, response } = await cvg.rfqs().createAndFinalize({
-      taker,
-      instruments: [
-        new PsyoptionsAmericanInstrument(
-          cvg,
-          btcMint,
-          usdcMint,
-          OptionType.CALL,
-          optionMarket as OptionMarketWithKey,
-          optionMarketKey,
-          {
-            amount: 2,
-            side: Side.Bid,
-          }
-        ),
-      ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
-    });
-    t.assert(response.signature.length > 0, 'signature present');
+  //   const { rfq, response } = await cvg.rfqs().createAndFinalize({
+  //     taker,
+  //     instruments: [
+  //       new PsyoptionsAmericanInstrument(
+  //         cvg,
+  //         btcMint,
+  //         usdcMint,
+  //         OptionType.CALL,
+  //         optionMarket as OptionMarketWithKey,
+  //         optionMarketKey,
+  //         {
+  //           amount: 2,
+  //           side: Side.Bid,
+  //         }
+  //       ),
+  //     ],
+  //     orderType: OrderType.Sell,
+  //     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+  //     quoteAsset: cvg
+  //       .instrument(new SpotInstrument(cvg, usdcMint))
+  //       .toQuoteAsset(),
+  //   });
+  //   t.assert(response.signature.length > 0, 'signature present');
 
-    const { rfqResponse } = await cvg.rfqs().respond({
-      maker,
-      rfq: rfq.address,
-      bid: {
-        __kind: 'FixedSize',
-        priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
-      },
-    });
+  //   const { rfqResponse } = await cvg.rfqs().respond({
+  //     maker,
+  //     rfq: rfq.address,
+  //     bid: {
+  //       __kind: 'FixedSize',
+  //       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
+  //     },
+  //   });
 
-    await cvg.rfqs().confirmResponse({
-      taker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      side: Side.Bid,
-    });
+  //   await cvg.rfqs().confirmResponse({
+  //     taker,
+  //     rfq: rfq.address,
+  //     response: rfqResponse.address,
+  //     side: Side.Bid,
+  //   });
 
-    await cvg.rfqs().prepareSettlement({
-      caller: taker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      legAmountToPrepare: 1,
-    });
+  //   await cvg.rfqs().prepareSettlement({
+  //     caller: taker,
+  //     rfq: rfq.address,
+  //     response: rfqResponse.address,
+  //     legAmountToPrepare: 1,
+  //   });
 
-    await cvg.rfqs().prepareSettlement({
-      caller: maker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      legAmountToPrepare: 1,
-    });
+  //   await cvg.rfqs().prepareSettlement({
+  //     caller: maker,
+  //     rfq: rfq.address,
+  //     response: rfqResponse.address,
+  //     legAmountToPrepare: 1,
+  //   });
 
-    await cvg.rfqs().settle({
-      taker: taker.publicKey,
-      maker: maker.publicKey,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-    });
-  });
+  //   await cvg.rfqs().settle({
+  //     taker: taker.publicKey,
+  //     maker: maker.publicKey,
+  //     rfq: rfq.address,
+  //     response: rfqResponse.address,
+  //   });
+  // });
 
-  test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions American, respond, confirm response, prepare settlement, settle', async (t: Test) => {
-    //@ts-ignore
-    const { optionMarketKey, optionMarket, optionMintKey, writerMintKey } =
-      await initializeNewAmericanOption(
-        cvg,
-        americanProgram,
-        btcMint,
-        usdcMint,
-        new anchor.BN(100),
-        new anchor.BN(1),
-        3_600
-      );
+  // test('[psyoptionsAmericanInstrumentModule] it can create an RFQ with PsyOptions American, respond, confirm response, prepare settlement, settle', async (t: Test) => {
+  //   //@ts-ignore
+  //   const { optionMarketKey, optionMarket, optionMintKey, writerMintKey } =
+  //     await initializeNewAmericanOption(
+  //       cvg,
+  //       americanProgram,
+  //       btcMint,
+  //       usdcMint,
+  //       new anchor.BN(100),
+  //       new anchor.BN(1),
+  //       3_600
+  //     );
 
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      taker,
-      americanProgram,
-      btcMint,
-      optionMarket,
-      optionMintKey,
-      writerMintKey,
-      1_000_000
-    );
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      maker,
-      americanProgram,
-      btcMint,
-      optionMarket,
-      optionMintKey,
-      writerMintKey,
-      1_000_000
-    );
+  //   await createAmericanAccountsAndMintOptions(
+  //     cvg,
+  //     taker,
+  //     americanProgram,
+  //     btcMint,
+  //     optionMarket,
+  //     optionMintKey,
+  //     writerMintKey,
+  //     1_000_000
+  //   );
+  //   await createAmericanAccountsAndMintOptions(
+  //     cvg,
+  //     maker,
+  //     americanProgram,
+  //     btcMint,
+  //     optionMarket,
+  //     optionMintKey,
+  //     writerMintKey,
+  //     1_000_000
+  //   );
 
-    const { rfq, response } = await cvg.rfqs().createAndFinalize({
-      taker,
-      instruments: [
-        new PsyoptionsAmericanInstrument(
-          cvg,
-          btcMint,
-          usdcMint,
-          OptionType.CALL,
-          optionMarket as OptionMarketWithKey,
-          optionMarketKey,
-          {
-            amount: 1,
-            side: Side.Bid,
-          }
-        ),
-      ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: cvg
-        .instrument(new SpotInstrument(cvg, usdcMint))
-        .toQuoteAsset(),
-    });
-    t.assert(response.signature.length > 0, 'signature present');
+  //   const { rfq, response } = await cvg.rfqs().createAndFinalize({
+  //     taker,
+  //     instruments: [
+  //       new PsyoptionsAmericanInstrument(
+  //         cvg,
+  //         btcMint,
+  //         usdcMint,
+  //         OptionType.CALL,
+  //         optionMarket as OptionMarketWithKey,
+  //         optionMarketKey,
+  //         {
+  //           amount: 1,
+  //           side: Side.Bid,
+  //         }
+  //       ),
+  //     ],
+  //     orderType: OrderType.Sell,
+  //     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+  //     quoteAsset: cvg
+  //       .instrument(new SpotInstrument(cvg, usdcMint))
+  //       .toQuoteAsset(),
+  //   });
+  //   t.assert(response.signature.length > 0, 'signature present');
 
-    const { rfqResponse } = await cvg.rfqs().respond({
-      maker,
-      rfq: rfq.address,
-      bid: {
-        __kind: 'FixedSize',
-        priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
-      },
-    });
+  //   const { rfqResponse } = await cvg.rfqs().respond({
+  //     maker,
+  //     rfq: rfq.address,
+  //     bid: {
+  //       __kind: 'FixedSize',
+  //       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
+  //     },
+  //   });
 
-    await cvg.rfqs().confirmResponse({
-      taker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      side: Side.Bid,
-    });
+  //   await cvg.rfqs().confirmResponse({
+  //     taker,
+  //     rfq: rfq.address,
+  //     response: rfqResponse.address,
+  //     side: Side.Bid,
+  //   });
 
-    await cvg.rfqs().prepareSettlement({
-      caller: taker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      legAmountToPrepare: 1,
-    });
+  //   await cvg.rfqs().prepareSettlement({
+  //     caller: taker,
+  //     rfq: rfq.address,
+  //     response: rfqResponse.address,
+  //     legAmountToPrepare: 1,
+  //   });
 
-    await cvg.rfqs().prepareSettlement({
-      caller: maker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      legAmountToPrepare: 1,
-    });
+  //   await cvg.rfqs().prepareSettlement({
+  //     caller: maker,
+  //     rfq: rfq.address,
+  //     response: rfqResponse.address,
+  //     legAmountToPrepare: 1,
+  //   });
 
-    await cvg.rfqs().settle({
-      taker: taker.publicKey,
-      maker: maker.publicKey,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-    });
-  });
+  //   await cvg.rfqs().settle({
+  //     taker: taker.publicKey,
+  //     maker: maker.publicKey,
+  //     rfq: rfq.address,
+  //     response: rfqResponse.address,
+  //   });
+  // });
 
   test('[rfqModule] it can add legs to rfq', async (t: Test) => {
     let instruments: (
@@ -2554,32 +2510,13 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         new anchor.BN(1),
         3_600
       );
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      taker,
-      americanProgram,
-      btcMint,
-      optionMarket,
-      optionMintKey,
-      writerMintKey,
-      100_000
-    );
-    // await createAmericanAccountsAndMintOptions(
-    //   cvg,
-    //   maker,
-    //   americanProgram,
-    //   btcMint,
-    //   optionMarket,
-    //   optionMintKey,
-    //   writerMintKey,
-    //   100_000
-    // );
+
     const americanInstrument1 = new PsyoptionsAmericanInstrument(
       cvg,
       btcMint,
       usdcMint,
       OptionType.CALL,
-      optionMarket as OptionMarketWithKey,
+      optionMarket,
       optionMarketKey,
       {
         amount: 1,
@@ -2604,51 +2541,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     // euroMeta.oracleProviderId = 1;
     // expirationData.oracleProviderId = 1;
 
-    await createEuroAccountsAndMintOptions(
-      cvg,
-      taker,
-      euroMeta,
-      euroMetaKey,
-      europeanProgram,
-      btcMint,
-      usdcMint,
-      OptionType.PUT,
-      1_000_000
-    );
-    // await createEuroAccountsAndMintOptions(
-    //   cvg,
-    //   maker,
-    //   euroMeta,
-    //   euroMetaKey,
-    //   europeanProgram,
-    //   btcMint,
-    //   usdcMint,
-    //   OptionType.PUT,
-    //   1_000_000
-    // );
-    await createEuroAccountsAndMintOptions(
-      cvg,
-      taker,
-      euroMeta,
-      euroMetaKey,
-      europeanProgram,
-      btcMint,
-      usdcMint,
-      OptionType.CALL,
-      1_000_000
-    );
-    // await createEuroAccountsAndMintOptions(
-    //   cvg,
-    //   maker,
-    //   euroMeta,
-    //   euroMetaKey,
-    //   europeanProgram,
-    //   btcMint,
-    //   usdcMint,
-    //   OptionType.CALL,
-    //   1_000_000
-    // );
-
     const psyopEuroInstrument1 = new PsyoptionsEuropeanInstrument(
       cvg,
       btcMint,
@@ -2670,20 +2562,16 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       euroMetaKey,
       {
         amount: 1,
-        side: Side.Bid,
+        side: Side.Ask,
       }
     );
     instruments.push(psyopEuroInstrument2);
 
-    //@ts-ignore
     const expectedLegsSize = await calculateExpectedLegsSize(cvg, instruments);
-    //@ts-ignore
     const expectedLegsHash = await calculateExpectedLegsHash(cvg, instruments);
     //@ts-ignore
     const { rfq } = await cvg.rfqs().createRfqAndAddLegs({
       taker,
-      // instruments: instruments.slice(0, 20),
-      // instruments: [psyopEuroInstrument1, psyopEuroInstrument2],
       instruments,
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
@@ -2693,12 +2581,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       expectedLegsSize,
       expectedLegsHash,
     });
-
-    // await cvg.rfqs().addLegsToRfq({
-    //   taker,
-    //   rfq: rfq.address,
-    //   instruments: instruments.slice(20),
-    // });
 
     await cvg.rfqs().finalizeRfqConstruction({
       taker,
@@ -2714,6 +2596,29 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       },
     });
 
+    await createAmericanAccountsAndMintOptions(
+      cvg,
+      taker,
+      rfq.address,
+      optionMarket,
+      americanProgram,
+      1_000_000
+    );
+    await createEuroAccountsAndMintOptions(
+      cvg,
+      taker,
+      rfq.address,
+      europeanProgram,
+      1_000_000
+    );
+    await createEuroAccountsAndMintOptions(
+      cvg,
+      maker,
+      rfq.address,
+      europeanProgram,
+      1_000_000
+    );
+
     await cvg.rfqs().confirmResponse({
       taker,
       rfq: rfq.address,
@@ -2725,14 +2630,12 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       caller: taker,
       rfq: rfq.address,
       response: rfqResponse.address,
-      // legAmountToPrepare: 20,
       legAmountToPrepare: 8,
     });
     await cvg.rfqs().prepareSettlementAndPrepareMoreLegs({
       caller: maker,
       rfq: rfq.address,
       response: rfqResponse.address,
-      // legAmountToPrepare: 20,
       legAmountToPrepare: 8,
     });
 
@@ -2756,7 +2659,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker: taker.publicKey,
       rfq: rfq.address,
       response: rfqResponse.address,
-      // legAmountToSettle: 22,
       legAmountToSettle: 5,
     });
 
@@ -2972,183 +2874,183 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  //only
-  test('[riskEngineModule] it can calculate collateral for fixed base size american RFQ creation', async (t: Test) => {
-    const {
-      optionMarketKey: optionMarketKey1,
-      optionMarket: optionMarket1,
-      optionMintKey: optionMintKey1,
-      writerMintKey: writerMintKey1,
-    } = await initializeNewAmericanOption(
-      cvg,
-      americanProgram,
-      solMint,
-      usdcMint,
-      new anchor.BN(18_000),
-      new anchor.BN(1),
-      3_500
-    );
+  // //only
+  // test('[riskEngineModule] it can calculate collateral for fixed base size american RFQ creation', async (t: Test) => {
+  //   const {
+  //     optionMarketKey: optionMarketKey1,
+  //     optionMarket: optionMarket1,
+  //     optionMintKey: optionMintKey1,
+  //     writerMintKey: writerMintKey1,
+  //   } = await initializeNewAmericanOption(
+  //     cvg,
+  //     americanProgram,
+  //     solMint,
+  //     usdcMint,
+  //     new anchor.BN(18_000),
+  //     new anchor.BN(1),
+  //     3_500
+  //   );
 
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      taker,
-      americanProgram,
-      solMint,
-      optionMarket1,
-      optionMintKey1,
-      writerMintKey1,
-      1_000_000
-    );
-    // await createAmericanAccountsAndMintOptions(
-    //   cvg,
-    //   maker,
-    //   americanProgram,
-    //   solMint,
-    //   optionMarket1,
-    //   optionMintKey1,
-    //   writerMintKey1,
-    //   1_000_000
-    // );
+  //   await createAmericanAccountsAndMintOptions(
+  //     cvg,
+  //     taker,
+  //     americanProgram,
+  //     solMint,
+  //     optionMarket1,
+  //     optionMintKey1,
+  //     writerMintKey1,
+  //     1_000_000
+  //   );
+  //   // await createAmericanAccountsAndMintOptions(
+  //   //   cvg,
+  //   //   maker,
+  //   //   americanProgram,
+  //   //   solMint,
+  //   //   optionMarket1,
+  //   //   optionMintKey1,
+  //   //   writerMintKey1,
+  //   //   1_000_000
+  //   // );
 
-    const americanInstrument1 = new PsyoptionsAmericanInstrument(
-      cvg,
-      solMint,
-      usdcMint,
-      OptionType.CALL,
-      optionMarket1 as OptionMarketWithKey,
-      optionMarketKey1,
-      {
-        amount: 5,
-        side: Side.Bid,
-      }
-    );
+  //   const americanInstrument1 = new PsyoptionsAmericanInstrument(
+  //     cvg,
+  //     solMint,
+  //     usdcMint,
+  //     OptionType.CALL,
+  //     optionMarket1 as OptionMarketWithKey,
+  //     optionMarketKey1,
+  //     {
+  //       amount: 5,
+  //       side: Side.Bid,
+  //     }
+  //   );
 
-    // const legs = [
-    //   await PsyoptionsAmericanInstrument.createForLeg(
-    //     cvg,
-    //     solMint,
-    //     usdcMint,
-    //     OptionType.CALL,
-    //     optionMarket1 as OptionMarketWithKey,
-    //     optionMarketKey1,
-    //     5,
-    //     Side.Bid
-    //   ).toLegData(),
-    // ];
+  //   // const legs = [
+  //   //   await PsyoptionsAmericanInstrument.createForLeg(
+  //   //     cvg,
+  //   //     solMint,
+  //   //     usdcMint,
+  //   //     OptionType.CALL,
+  //   //     optionMarket1 as OptionMarketWithKey,
+  //   //     optionMarketKey1,
+  //   //     5,
+  //   //     Side.Bid
+  //   //   ).toLegData(),
+  //   // ];
 
-    const legs = await instrumentsToLegs(cvg, [americanInstrument1]);
+  //   const legs = await instrumentsToLegs(cvg, [americanInstrument1]);
 
-    const quoteAsset = cvg
-      .instrument(new SpotInstrument(cvg, usdcMint))
-      .toQuoteAsset();
-    //@ts-ignore
-    const { rfq } = await cvg.rfqs().createAndFinalize({
-      instruments: [americanInstrument1],
-      taker,
-      orderType: OrderType.TwoWay,
-      // fixedSize: {
-      //   __kind: 'BaseAsset',
-      //   legsMultiplierBps: 1,
-      // },
-      fixedSize: { __kind: 'None', padding: 0 },
-      quoteAsset,
-      settlingWindow: 1_000,
-    });
+  //   const quoteAsset = cvg
+  //     .instrument(new SpotInstrument(cvg, usdcMint))
+  //     .toQuoteAsset();
+  //   //@ts-ignore
+  //   const { rfq } = await cvg.rfqs().createAndFinalize({
+  //     instruments: [americanInstrument1],
+  //     taker,
+  //     orderType: OrderType.TwoWay,
+  //     // fixedSize: {
+  //     //   __kind: 'BaseAsset',
+  //     //   legsMultiplierBps: 1,
+  //     // },
+  //     fixedSize: { __kind: 'None', padding: 0 },
+  //     quoteAsset,
+  //     settlingWindow: 1_000,
+  //   });
 
-    const rfqRiskOutput = await cvg.riskEngine().calculateCollateralForRfq({
-      legs,
-      orderType: OrderType.TwoWay,
-      // fixedSize: {
-      //   __kind: 'BaseAsset',
-      //   legsMultiplierBps: 1,
-      // },
-      fixedSize: { __kind: 'None', padding: 0 },
-      quoteAsset,
-      settlementPeriod: 1_000,
-    });
+  //   const rfqRiskOutput = await cvg.riskEngine().calculateCollateralForRfq({
+  //     legs,
+  //     orderType: OrderType.TwoWay,
+  //     // fixedSize: {
+  //     //   __kind: 'BaseAsset',
+  //     //   legsMultiplierBps: 1,
+  //     // },
+  //     fixedSize: { __kind: 'None', padding: 0 },
+  //     quoteAsset,
+  //     settlementPeriod: 1_000,
+  //   });
 
-    console.log('rfqRiskOutput: ', rfqRiskOutput.requiredCollateral.toString());
-    //@ts-ignore
-    const { rfqResponse } = await cvg.rfqs().respond({
-      maker,
-      rfq: rfq.address,
-      // bid: {
-      //   __kind: 'FixedSize',
-      //   priceQuote: { __kind: 'AbsolutePrice', amountBps: 5 },
-      // },
-      bid: {
-        __kind: 'Standard',
-        priceQuote: {
-          __kind: 'AbsolutePrice',
-          amountBps: 22_000,
-        },
-        legsMultiplierBps: 20,
-      },
-      ask: {
-        __kind: 'Standard',
-        priceQuote: {
-          __kind: 'AbsolutePrice',
-          amountBps: 23_000,
-        },
-        legsMultiplierBps: 5,
-      },
-    });
+  //   console.log('rfqRiskOutput: ', rfqRiskOutput.requiredCollateral.toString());
+  //   //@ts-ignore
+  //   const { rfqResponse } = await cvg.rfqs().respond({
+  //     maker,
+  //     rfq: rfq.address,
+  //     // bid: {
+  //     //   __kind: 'FixedSize',
+  //     //   priceQuote: { __kind: 'AbsolutePrice', amountBps: 5 },
+  //     // },
+  //     bid: {
+  //       __kind: 'Standard',
+  //       priceQuote: {
+  //         __kind: 'AbsolutePrice',
+  //         amountBps: 22_000,
+  //       },
+  //       legsMultiplierBps: 20,
+  //     },
+  //     ask: {
+  //       __kind: 'Standard',
+  //       priceQuote: {
+  //         __kind: 'AbsolutePrice',
+  //         amountBps: 23_000,
+  //       },
+  //       legsMultiplierBps: 5,
+  //     },
+  //   });
 
-    const responseRiskOutput = await cvg
-      .riskEngine()
-      .calculateCollateralForResponse({
-        rfqAddress: rfq.address,
-        // bid: {
-        //   __kind: 'FixedSize',
-        //   priceQuote: { __kind: 'AbsolutePrice', amountBps: 5 },
-        // },
-        bid: {
-          __kind: 'Standard',
-          priceQuote: {
-            __kind: 'AbsolutePrice',
-            amountBps: 22_000,
-          },
-          legsMultiplierBps: 20,
-        },
-        ask: {
-          __kind: 'Standard',
-          priceQuote: {
-            __kind: 'AbsolutePrice',
-            amountBps: 23_000,
-          },
-          legsMultiplierBps: 5,
-        },
-      });
+  //   const responseRiskOutput = await cvg
+  //     .riskEngine()
+  //     .calculateCollateralForResponse({
+  //       rfqAddress: rfq.address,
+  //       // bid: {
+  //       //   __kind: 'FixedSize',
+  //       //   priceQuote: { __kind: 'AbsolutePrice', amountBps: 5 },
+  //       // },
+  //       bid: {
+  //         __kind: 'Standard',
+  //         priceQuote: {
+  //           __kind: 'AbsolutePrice',
+  //           amountBps: 22_000,
+  //         },
+  //         legsMultiplierBps: 20,
+  //       },
+  //       ask: {
+  //         __kind: 'Standard',
+  //         priceQuote: {
+  //           __kind: 'AbsolutePrice',
+  //           amountBps: 23_000,
+  //         },
+  //         legsMultiplierBps: 5,
+  //       },
+  //     });
 
-    console.log(
-      'responseRiskOutput: ',
-      responseRiskOutput.requiredCollateral.toString()
-    );
+  //   console.log(
+  //     'responseRiskOutput: ',
+  //     responseRiskOutput.requiredCollateral.toString()
+  //   );
 
-    await cvg.rfqs().confirmResponse({
-      taker,
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      side: Side.Bid,
-      overrideLegMultiplierBps: 3,
-    });
+  //   await cvg.rfqs().confirmResponse({
+  //     taker,
+  //     rfq: rfq.address,
+  //     response: rfqResponse.address,
+  //     side: Side.Bid,
+  //     overrideLegMultiplierBps: 3,
+  //   });
 
-    const confirmationOutput = await cvg
-      .riskEngine()
-      .calculateCollateralForConfirmation({
-        rfqAddress: rfq.address,
-        responseAddress: rfqResponse.address,
-        confirmation: {
-          side: Side.Bid,
-          overrideLegMultiplierBps: 3,
-        },
-      });
+  //   const confirmationOutput = await cvg
+  //     .riskEngine()
+  //     .calculateCollateralForConfirmation({
+  //       rfqAddress: rfq.address,
+  //       responseAddress: rfqResponse.address,
+  //       confirmation: {
+  //         side: Side.Bid,
+  //         overrideLegMultiplierBps: 3,
+  //       },
+  //     });
 
-    console.log(
-      'confirmationOutput: ',
-      confirmationOutput.requiredCollateral.toString()
-    );
-  });
+  //   console.log(
+  //     'confirmationOutput: ',
+  //     confirmationOutput.requiredCollateral.toString()
+  //   );
+  // });
 
   test('[riskEngineModule] it can calculate collateral for fixed base size RFQ creation (Psyoptions Euro)', async (t: Test) => {
     await sleep(2000);
@@ -3438,33 +3340,18 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker,
       instruments: [psyopEuroInstrument1, psyopEuroInstrument2],
       orderType: OrderType.TwoWay,
-      // fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
-      // fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 * Math.pow(10, 6) },
-      fixedSize: { __kind: 'QuoteAsset', quoteAmount: 0.000001 },
+      fixedSize: { __kind: 'QuoteAsset', quoteAmount: 1 },
       quoteAsset: cvg
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
+      settlingWindow: 60 * 60 * 60
     });
-
-    // const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
-    //   6,
-    //   {
-    //     __kind: 'FixedSize',
-    //     priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
-    //   },
-    //   {
-    //     __kind: 'FixedSize',
-    //     priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
-    //   }
-    // );
 
     //sdkCalculatedResponseCollateral:  1_855_111.9577327545
     const sdkCalculatedResponseCollateral = await cvg
       .riskEngine()
       .calculateCollateralForResponse({
         rfqAddress: rfq.address,
-        // bid: convertedBid ?? null,
-        // ask: convertedAsk ?? null,
         bid: {
           __kind: 'FixedSize',
           priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },

@@ -95,7 +95,6 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
 
       const { rfqAddress, bid, ask } = operation.input;
 
-      // fetching in parallel
       const [rfq, config] = await Promise.all([
         convergence
           .rfqs()
@@ -114,7 +113,6 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       const getCase = (quote: Quote, side: Side) => {
         const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
         const legMultiplier =
-          // Number(legsMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
           Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
 
         return {
@@ -125,12 +123,6 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       };
 
       const cases = [];
-      // if (bid !== null) {
-      //   cases.push(getCase(bid, Side.Bid));
-      // }
-      // if (ask !== null) {
-      //   cases.push(getCase(ask, Side.Ask));
-      // }
       if (convertedBid !== undefined) {
         cases.push(getCase(convertedBid, Side.Bid));
       }

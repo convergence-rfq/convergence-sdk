@@ -150,14 +150,15 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       orderType,
       quoteAsset,
       instruments,
+      fixedSize,
       activeWindow = 5_000,
       settlingWindow = 1_000,
     } = operation.input;
-    let { fixedSize, expectedLegsHash } = operation.input;
+    let { expectedLegsHash } = operation.input;
 
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-    fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
+    const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
     expectedLegsHash =
       expectedLegsHash ??
       (await calculateExpectedLegsHash(convergence, instruments));
@@ -170,7 +171,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         legsHash: Buffer.from(expectedLegsHash),
         orderType,
         quoteAsset,
-        fixedSize,
+        fixedSize: convertedFixedSize,
         activeWindow,
         settlingWindow,
         recentTimestamp,
@@ -181,7 +182,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       {
         ...operation.input,
         rfq: rfqPda,
-        fixedSize,
+        fixedSize: convertedFixedSize,
         instruments,
         activeWindow,
         settlingWindow,
