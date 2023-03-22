@@ -13,10 +13,6 @@ import * as anchor from '@project-serum/anchor';
 import { getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
 import { getOrCreateATA } from '@/index';
 import {
-  //@ts-ignore
-  createProgram,
-  //@ts-ignore
-  programId as psyoptionsEuropeanProgramId,
   instructions,
   OptionType,
   EuroMeta,
@@ -24,9 +20,8 @@ import {
 } from '@mithraic-labs/tokenized-euros';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import * as spl from '@solana/spl-token';
-//@ts-ignore
-import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { bignum } from '@convergence-rfq/beet';
+
 import { Pyth } from '../../../../programs/pseudo_pyth_idl';
 import {
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
@@ -41,8 +36,6 @@ import {
   token,
   walletAdapterIdentity,
   Signer,
-  //@ts-ignore
-  createAmericanProgram,
 } from '@/index';
 const { mintOptions } = instructions;
 import { makeConfirmOptionsFinalizedOnMainnet } from '@/types';

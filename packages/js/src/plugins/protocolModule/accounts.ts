@@ -1,9 +1,10 @@
 import { ProtocolState, BaseAssetInfo, MintInfo } from '@convergence-rfq/rfq';
+
 import {
   Account,
   getAccountParsingAndAssertingFunction,
   getAccountParsingFunction,
-} from '@/types';
+} from '../../types';
 
 /** @group Accounts */
 export type ProtocolAccount = Account<ProtocolState>;

@@ -16,7 +16,17 @@ import {
   OptionType,
   programId as psyoptionsEuropeanProgramId,
 } from '@mithraic-labs/tokenized-euros';
-const { mintOptions } = instructions;
+import {
+  UnparsedAccount,
+  PublicKeyValues,
+  token,
+  toPublicKey,
+  toBigNumber,
+  Pda,
+  makeConfirmOptionsFinalizedOnMainnet,
+  Program
+} from '../../types';
+import { TransactionBuilder } from '../../utils';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
@@ -32,19 +42,11 @@ import {
 } from './constants';
 import { CvgWallet } from '@/utils/CvgWallet';
 import { Convergence } from '@/Convergence';
-import {
-  UnparsedAccount,
-  PublicKeyValues,
-  token,
-  toPublicKey,
-  toBigNumber,
-  Pda,
-  makeConfirmOptionsFinalizedOnMainnet,
-  Program,
-} from '@/types';
+
+const { mintOptions } = instructions;
+
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
   instructions;
-import { TransactionBuilder } from '@/utils';
 
 export type HasMintAddress = Rfq | PublicKey;
 

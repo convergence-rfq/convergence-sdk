@@ -1,9 +1,10 @@
 import { createRegisterMintInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { RegisteredMint, toRegisteredMint } from '../models';
 import { toRegisteredMintAccount } from '../accounts';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
@@ -11,8 +12,8 @@ import {
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'RegisterMintOperation' as const;
 

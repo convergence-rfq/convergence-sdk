@@ -3,19 +3,19 @@ import { AuthoritySide, Confirmation, Side } from '@convergence-rfq/rfq';
 
 import { calculateRisk } from '../clientCollateralCalculator';
 import { extractLegsMultiplierBps } from '../helpers';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
+} from '../../../types';
 import {
   //@ts-ignore
   ABSOLUTE_PRICE_DECIMALS,
   LEG_MULTIPLIER_DECIMALS,
-} from '@/plugins/rfqModule/constants';
-import { convertOverrideLegMultiplierBps } from '@/plugins/rfqModule';
+} from '../../rfqModule/constants';
+import { convertOverrideLegMultiplierBps } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 

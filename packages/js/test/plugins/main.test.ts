@@ -17,8 +17,9 @@ import {
   //@ts-ignore
   createBigAmericanAccountsAndMintOptions,
   createEuroAccountsAndMintOptions,
-} from '@/index';
-import { createAmericanProgram, initializeNewAmericanOption } from '@/index';
+  createAmericanProgram,
+  initializeNewAmericanOption
+} from '../src';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
@@ -64,6 +65,8 @@ import {
   calculateExpectedLegsSize,
   //@ts-ignore
   calculateExpectedLegsHash,
+  createAmericanProgram,
+  initializeNewAmericanOption,
 } from '@/index';
 
 killStuckProcess();

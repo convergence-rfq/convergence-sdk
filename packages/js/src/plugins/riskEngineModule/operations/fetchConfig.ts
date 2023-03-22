@@ -1,12 +1,13 @@
 import { toConfigAccount } from '../accounts';
 import { toConfig, assertConfig, Config } from '../models';
-import { Convergence } from '@/Convergence';
+
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
+} from '../../../types';
 
 const Key = 'FetchConfigOperation' as const;
 
@@ -63,7 +64,7 @@ export const fetchConfigOperationHandler: OperationHandler<FetchConfigOperation>
       const account = await convergence
         .rpc()
         .getAccount(convergence.riskEngine().pdas().config(), commitment);
-        
+
       const config = toConfig(toConfigAccount(account));
       assertConfig(config);
 

@@ -1,6 +1,7 @@
 import { PublicKey, SystemProgram } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import type { Convergence } from '@/Convergence';
+import type { Convergence } from '../../../Convergence';
 import {
   assertSol,
   Operation,
@@ -9,12 +10,8 @@ import {
   Signer,
   SolAmount,
   useOperation,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'TransferSolOperation' as const;
 

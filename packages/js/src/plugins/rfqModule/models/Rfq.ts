@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { bignum } from '@convergence-rfq/beet';
+
 import {
   OrderType,
   StoredRfqState,
@@ -8,8 +9,8 @@ import {
   Leg,
 } from '../types';
 import { RfqAccount } from '../accounts';
-import { assert } from '@/utils';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { assert } from '../../../utils';
+import { SpotInstrument } from '../../../plugins/spotInstrumentModule';
 
 /**
  * This model captures all the relevant information about an RFQ

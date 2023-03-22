@@ -1,15 +1,16 @@
 import { createSettleOnePartyDefaultInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'SettleOnePartyDefaultOperation' as const;
 
@@ -46,9 +47,9 @@ export type SettleOnePartyDefaultOperation = Operation<
  * @category Inputs
  */
 export type SettleOnePartyDefaultInput = {
-  /** 
+  /**
    * The protocol address.
-   * 
+   *
    * @defaultValue `convergence.protocol().pdas().protocol(),`
    */
   protocol?: PublicKey;
@@ -59,17 +60,17 @@ export type SettleOnePartyDefaultInput = {
   /** The address of the Response account. */
   response: PublicKey;
 
-  /** 
+  /**
    * Optional address of the Taker's collateral info account.
-   * 
+   *
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
    *
    */
   takerCollateralInfo?: PublicKey;
 
-  /** 
+  /**
    * Optional address of the Maker's collateral info account.
-   * 
+   *
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
    *
    */

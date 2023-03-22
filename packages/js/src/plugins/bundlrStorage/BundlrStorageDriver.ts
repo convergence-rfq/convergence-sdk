@@ -10,6 +10,7 @@ import {
   Transaction,
   TransactionSignature,
 } from '@solana/web3.js';
+
 import {
   getBytesFromConvergenceFiles,
   ConvergenceFile,
@@ -17,7 +18,7 @@ import {
   StorageDriver,
 } from '../storageModule';
 import { KeypairIdentityDriver } from '../keypairIdentity';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../Convergence';
 import {
   Amount,
   IdentitySigner,
@@ -27,13 +28,13 @@ import {
   lamports,
   Signer,
   toBigNumber,
-} from '@/types';
+} from '../../types';
 import {
   AssetUploadFailedError,
   BundlrWithdrawError,
   FailedToConnectToBundlrAddressError,
   FailedToInitializeBundlrError,
-} from '@/errors';
+} from '../../errors';
 
 /**
  * This method is necessary to import the Bundlr package on both ESM and CJS modules.

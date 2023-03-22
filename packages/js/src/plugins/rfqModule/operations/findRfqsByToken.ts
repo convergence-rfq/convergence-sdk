@@ -1,21 +1,26 @@
 import { PublicKey } from '@solana/web3.js';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
-import { psyoptionsAmericanInstrumentProgram } from '../../psyoptionsAmericanInstrumentModule/programs';
-import { psyoptionsEuropeanInstrumentProgram } from '../../psyoptionsEuropeanInstrumentModule/programs';
-import { psyoptionsAmericanInstrumentDataSerializer } from '../../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
+import {
+  psyoptionsAmericanInstrumentProgram,
+  psyoptionsAmericanInstrumentDataSerializer,
+} from '../../psyoptionsAmericanInstrumentModule';
+import {
+  PsyoptionsEuropeanInstrument,
+  psyoptionsEuropeanInstrumentProgram,
+} from '../../psyoptionsEuropeanInstrumentModule';
 import { getPages, convertRfqOutput } from '../helpers';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
-import { Convergence } from '@/Convergence';
-import { SpotInstrumentDataSerializer } from '@/plugins/spotInstrumentModule';
+import { Convergence } from '../../../Convergence';
+import { SpotInstrumentDataSerializer } from '../../spotInstrumentModule';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+} from '../../../types';
 
 const Key = 'FindRfqsByTokenOperation' as const;
 

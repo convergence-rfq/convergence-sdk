@@ -5,13 +5,14 @@ import {
   RawMint as SplMintAccount,
 } from '@solana/spl-token';
 import { MintInfo } from '@convergence-rfq/rfq';
-import { NotYetImplementedError } from '@/errors';
+
+import { NotYetImplementedError } from '../../errors';
 import {
   Account,
   SolitaType,
   getAccountParsingAndAssertingFunction,
   getAccountParsingFunction,
-} from '@/types';
+} from '../../types';
 
 const mintAccountParser: SolitaType<SplMintAccount> = {
   name: 'MintAccount',

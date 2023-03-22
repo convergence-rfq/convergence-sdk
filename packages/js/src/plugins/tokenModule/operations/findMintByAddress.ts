@@ -1,4 +1,5 @@
 import type { PublicKey } from '@solana/web3.js';
+
 import { toMintAccount } from '../accounts';
 import { Mint, toMint } from '../models/Mint';
 import {
@@ -6,12 +7,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindMintByAddressOperation' as const;
 

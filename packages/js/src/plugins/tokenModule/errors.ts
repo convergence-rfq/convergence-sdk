@@ -1,9 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
+
 import {
   ConvergenceError,
   ConvergenceErrorInputWithoutSource,
   ConvergenceErrorOptions,
-} from '@/errors';
+} from '../../errors';
 
 /** @group Errors */
 export class TokenError extends ConvergenceError {

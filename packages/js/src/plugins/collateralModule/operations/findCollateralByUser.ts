@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { Collateral, toCollateral } from '../models';
 import { toCollateralAccount } from '../accounts';
 import { CollateralGpaBuilder } from '../CollateralGpaBuilder';
@@ -7,9 +8,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-// import { toBigNumber } from '@/types';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindCollateralByUserOperation' as const;
 

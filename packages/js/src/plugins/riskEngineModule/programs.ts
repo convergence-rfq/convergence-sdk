@@ -1,6 +1,7 @@
 import { PROGRAM_ID as DEFAULT_RISK_ENGINE_PROGRAM_ID } from '@convergence-rfq/risk-engine';
-import { assert } from '@/utils';
-import { Program } from '@/types';
+
+import { assert } from '../../utils';
+import { Program } from '../../types';
 
 /** @group Programs */
 export const riskEngineProgram: Program = {

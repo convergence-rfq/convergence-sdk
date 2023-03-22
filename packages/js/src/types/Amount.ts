@@ -1,7 +1,8 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import BN from 'bn.js';
+
+import { CurrencyMismatchError, UnexpectedCurrencyError } from '../errors';
 import { BigNumber, BigNumberValues, toBigNumber } from './BigNumber';
-import { CurrencyMismatchError, UnexpectedCurrencyError } from '@/errors';
 
 export type Amount<T extends Currency = Currency> = {
   basisPoints: BigNumber;

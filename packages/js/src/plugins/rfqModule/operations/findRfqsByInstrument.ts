@@ -8,8 +8,8 @@ import {
   OperationScope,
   useOperation,
   Program,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 

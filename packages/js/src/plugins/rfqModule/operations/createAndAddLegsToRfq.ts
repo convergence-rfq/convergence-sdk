@@ -1,8 +1,19 @@
 import * as anchor from '@project-serum/anchor';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { OrderType, FixedSize, QuoteAsset } from '../types';
 import { SpotInstrument } from '../../spotInstrumentModule';
+import {
+  Operation,
+  OperationHandler,
+  OperationScope,
+  useOperation,
+  Signer,
+  makeConfirmOptionsFinalizedOnMainnet,
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import {
   calculateExpectedLegsHash,
@@ -11,16 +22,6 @@ import {
 } from '../helpers';
 import { createRfqBuilder } from './createRfq';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import {
-  Operation,
-  OperationHandler,
-  OperationScope,
-  useOperation,
-  Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { Convergence } from '@/Convergence';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -91,7 +92,7 @@ export type CreateAndAddLegsToRfqInput = {
    */
   orderType: OrderType;
 
-  /** 
+  /**
    * The type of the Rfq, specifying whether we fix the number of
    * base assets to be exchanged, the number of quote assets,
    * or neither.
@@ -104,7 +105,7 @@ export type CreateAndAddLegsToRfqInput = {
   /** The settling window (in seconds). */
   settlingWindow?: number;
 
-  /** 
+  /**
    * The sum of the sizes of all legs of the Rfq,
    * including legs added in the future (if any).
    * This can be calculated automatically if
@@ -112,7 +113,7 @@ export type CreateAndAddLegsToRfqInput = {
    * the future. */
   expectedLegsSize?: number;
 
-  /** 
+  /**
    * Optional expected legs hash (of all legs).
    * This can be calculated automatically if
    * additional legs will not be added in the future.
@@ -152,8 +153,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
-      let { fixedSize, expectedLegsSize, expectedLegsHash } =
-        operation.input;
+      let { fixedSize, expectedLegsSize, expectedLegsHash } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
