@@ -1,5 +1,37 @@
 # @convergence-rfq/cli
 
+## 4.0.24-rc.9
+
+### Patch Changes
+
+- pull options mint receiver dynamically
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.24
+
+## 4.0.24-rc.8
+
+### Patch Changes
+
+- add method to get tx to mint american options
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.24
+
+## 4.0.24-rc.7
+
+### Patch Changes
+
+- change caller to signer in createAndMintAmerican
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.24
+
+## 4.0.24-rc.6
+
+### Patch Changes
+
+- add mint options methods
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.24
+
 ## 4.0.24-rc.5
 
 ### Patch Changes
