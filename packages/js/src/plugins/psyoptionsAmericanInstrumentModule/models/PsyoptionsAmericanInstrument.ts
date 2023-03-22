@@ -119,6 +119,20 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     });
   }
 
+  static async fetchMeta(
+    convergence: Convergence,
+    metaKey: PublicKey
+  ): Promise<OptionMarketWithKey> {
+    const account = await convergence.rpc().getAccount(metaKey);
+    assert(account.exists, 'Account not found');
+
+    const [meta] = optionMarketWithKeySerializer.deserialize(
+      Buffer.from(account.data),
+      8
+    );
+    return meta;
+  }
+
   static async createFromLeg(
     convergence: Convergence,
     leg: Leg

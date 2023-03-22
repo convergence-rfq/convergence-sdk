@@ -38,12 +38,10 @@ export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
       throw Error('Negative prices are not allowed for fixed quote amount rfq');
     }
 
-    return (
-      new BN(fixedSize.quoteAmount)
-        .mul(new BN(10).pow(new BN(LEG_MULTIPLIER_DECIMALS)))
-        .mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)))
-        .div(priceBps)
-    );
+    return new BN(fixedSize.quoteAmount)
+      .mul(new BN(10).pow(new BN(LEG_MULTIPLIER_DECIMALS)))
+      .mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)))
+      .div(priceBps); //15 decimals (we multiply by ABSOLUTE_PRICE_DECIMALS)
   }
 
   throw new Error('Invalid fixed size');
