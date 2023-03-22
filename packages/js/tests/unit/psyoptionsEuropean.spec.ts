@@ -94,7 +94,8 @@ describe('european', () => {
       quoteMint,
       23_354,
       1,
-      3_600
+      3_600,
+      0
     );
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
