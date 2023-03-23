@@ -1,4 +1,4 @@
-import { Commitment, Connection } from '@solana/web3.js';
+import { Commitment, Connection, Keypair } from '@solana/web3.js';
 
 import { getKeypair, RPC_ENDPOINT, Ctx } from '../../validator';
 import {
@@ -14,6 +14,9 @@ import {
   Side,
   PublicKey,
   Rfq,
+  Response,
+  createAmericanAccountsAndMintOptions,
+  legsToInstruments,
 } from '../src';
 
 export type ConvergenceTestOptions = {
@@ -43,6 +46,7 @@ export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
   const quoteMint = await cvg
     .tokens()
     .findMintByAddress({ address: new PublicKey(ctx.quoteMint) });
+
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
     createAmericanProgram(cvg),
@@ -98,4 +102,48 @@ export const respondWithBid = async (cvg: Convergence, rfq: Rfq) => {
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.000001 },
     },
   });
+};
+
+export const prepareSettlement = async (
+  cvg: Convergence,
+  rfq: Rfq,
+  response: Response
+) => {
+  return await cvg.rfqs().prepareSettlement({
+    caller: cvg.rpc().getDefaultFeePayer(),
+    rfq: rfq.address,
+    response: response.address,
+    legAmountToPrepare: 1,
+  });
+};
+
+export const settle = async (
+  cvg: Convergence,
+  rfq: Rfq,
+  response: Response
+) => {
+  return await cvg.rfqs().settle({
+    rfq: rfq.address,
+    response: response.address,
+    maker: response.maker,
+    taker: rfq.taker,
+  });
+};
+
+export const setupAmericanAccounts = async (cvg: Convergence, rfq: Rfq) => {
+  const instruments = await legsToInstruments(cvg, rfq.legs);
+  for (let i = 0; i < instruments.length; i++) {
+    if (instruments[i].model === 'psyoptionsAmericanInstrument') {
+      const optionMarket = instruments[i].getValidationAccounts()[0].pubkey;
+      return await createAmericanAccountsAndMintOptions(
+        cvg,
+        cvg.rpc().getDefaultFeePayer() as Keypair,
+        rfq.address,
+        optionMarket,
+        createAmericanProgram(cvg),
+        1_000_000
+      );
+    }
+  }
+  throw new Error('No option market found');
 };

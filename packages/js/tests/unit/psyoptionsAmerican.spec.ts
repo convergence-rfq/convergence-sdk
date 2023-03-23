@@ -11,6 +11,9 @@ import {
   sellCoveredCall,
   confirmBid,
   respondWithBid,
+  prepareSettlement,
+  settle,
+  setupAmericanAccounts,
 } from '../helpers';
 
 describe('american', () => {
@@ -28,14 +31,26 @@ describe('american', () => {
 
   it('covered call', async () => {
     const takerCvg = await createSdk('taker');
+    const makerCvg = await createSdk('maker');
+
     const { rfq } = await sellCoveredCall(takerCvg, ctx);
     expect(rfq).toHaveProperty('address');
 
-    const makerCvg = await createSdk('maker');
     const { rfqResponse } = await respondWithBid(makerCvg, rfq);
     expect(rfqResponse).toHaveProperty('address');
 
     const { response } = await confirmBid(takerCvg, rfq, rfqResponse);
     expect(response).toHaveProperty('signature');
+
+    const takerResult = await prepareSettlement(takerCvg, rfq, rfqResponse);
+    expect(takerResult.response).toHaveProperty('signature');
+
+    const makerResult = await prepareSettlement(makerCvg, rfq, rfqResponse);
+    expect(makerResult.response).toHaveProperty('signature');
+
+    await setupAmericanAccounts(takerCvg, rfq);
+
+    const settleResult = await settle(takerCvg, rfq, rfqResponse);
+    expect(settleResult.response).toHaveProperty('signature');
   });
 });
