@@ -13,7 +13,7 @@ import {
   respondWithBid,
   prepareSettlement,
   settle,
-  setupAmericanAccounts,
+  createAmericanAccountsAndMint,
 } from '../helpers';
 
 describe('american', () => {
@@ -33,7 +33,7 @@ describe('american', () => {
     const takerCvg = await createSdk('taker');
     const makerCvg = await createSdk('maker');
 
-    const { rfq } = await sellCoveredCall(takerCvg, ctx);
+    const { rfq, optionMarket } = await sellCoveredCall(takerCvg, ctx);
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondWithBid(makerCvg, rfq);
@@ -42,13 +42,14 @@ describe('american', () => {
     const { response } = await confirmBid(takerCvg, rfq, rfqResponse);
     expect(response).toHaveProperty('signature');
 
+    await createAmericanAccountsAndMint(takerCvg, rfq, optionMarket);
+    await createAmericanAccountsAndMint(makerCvg, rfq, optionMarket);
+
     const takerResult = await prepareSettlement(takerCvg, rfq, rfqResponse);
     expect(takerResult.response).toHaveProperty('signature');
 
     const makerResult = await prepareSettlement(makerCvg, rfq, rfqResponse);
     expect(makerResult.response).toHaveProperty('signature');
-
-    await setupAmericanAccounts(takerCvg, rfq);
 
     const settleResult = await settle(takerCvg, rfq, rfqResponse);
     expect(settleResult.response).toHaveProperty('signature');

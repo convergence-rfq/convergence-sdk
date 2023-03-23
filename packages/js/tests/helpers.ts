@@ -1,3 +1,4 @@
+import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { Commitment, Connection, Keypair } from '@solana/web3.js';
 
 import { getKeypair, RPC_ENDPOINT, Ctx } from '../../validator';
@@ -16,7 +17,6 @@ import {
   Rfq,
   Response,
   createAmericanAccountsAndMintOptions,
-  legsToInstruments,
 } from '../src';
 
 export type ConvergenceTestOptions = {
@@ -46,7 +46,6 @@ export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
   const quoteMint = await cvg
     .tokens()
     .findMintByAddress({ address: new PublicKey(ctx.quoteMint) });
-
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
     createAmericanProgram(cvg),
@@ -56,7 +55,6 @@ export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
     toBigNumber(1),
     3_600
   );
-
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, baseMint, {
@@ -81,7 +79,7 @@ export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
     quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
   });
 
-  return { rfq, response };
+  return { rfq, response, optionMarket };
 };
 
 export const confirmBid = async (cvg: Convergence, rfq: Rfq, response: any) => {
@@ -113,7 +111,7 @@ export const prepareSettlement = async (
     caller: cvg.rpc().getDefaultFeePayer(),
     rfq: rfq.address,
     response: response.address,
-    legAmountToPrepare: 1,
+    legAmountToPrepare: 2,
   });
 };
 
@@ -130,20 +128,17 @@ export const settle = async (
   });
 };
 
-export const setupAmericanAccounts = async (cvg: Convergence, rfq: Rfq) => {
-  const instruments = await legsToInstruments(cvg, rfq.legs);
-  for (let i = 0; i < instruments.length; i++) {
-    if (instruments[i].model === 'psyoptionsAmericanInstrument') {
-      const optionMarket = instruments[i].getValidationAccounts()[0].pubkey;
-      return await createAmericanAccountsAndMintOptions(
-        cvg,
-        cvg.rpc().getDefaultFeePayer() as Keypair,
-        rfq.address,
-        optionMarket,
-        createAmericanProgram(cvg),
-        1_000_000
-      );
-    }
-  }
-  throw new Error('No option market found');
+export const createAmericanAccountsAndMint = async (
+  cvg: Convergence,
+  rfq: Rfq,
+  optionMarket: OptionMarketWithKey
+) => {
+  await createAmericanAccountsAndMintOptions(
+    cvg,
+    cvg.rpc().getDefaultFeePayer() as Keypair,
+    rfq.address,
+    optionMarket,
+    createAmericanProgram(cvg),
+    1_000_000
+  );
 };
