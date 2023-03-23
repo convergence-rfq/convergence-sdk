@@ -24,7 +24,8 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
   Program,
 } from '../../types';
-import { TransactionBuilder } from '../../utils';
+import { CvgWallet, TransactionBuilder } from '../../utils';
+import { Convergence } from '../../Convergence';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
@@ -35,8 +36,6 @@ import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstru
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
-import { CvgWallet } from '@/utils/CvgWallet';
-import { Convergence } from '@/Convergence';
 
 const { mintOptions } = instructions;
 
