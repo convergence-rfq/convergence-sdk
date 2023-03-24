@@ -1116,9 +1116,8 @@ export const createAmericanAccountsAndMintOptions = async (
         isWritable: false,
       };
 
-      const txBuilder = TransactionBuilder.make().setFeePayer(
-        convergence.rpc().getDefaultFeePayer()
-      );
+      const payer = convergence.rpc().getDefaultFeePayer();
+      const txBuilder = TransactionBuilder.make().setFeePayer(payer);
 
       txBuilder.add({
         instruction: ix,
