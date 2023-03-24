@@ -28,7 +28,7 @@ describe('spot', () => {
     validator.kill();
   });
 
-  it('one leg', async () => {
+  it('spot', async () => {
     const takerCvg = await createSdk('taker');
     const makerCvg = await createSdk('maker');
 

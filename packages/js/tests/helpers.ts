@@ -46,15 +46,17 @@ export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
   const quoteMint = await cvg
     .tokens()
     .findMintByAddress({ address: new PublicKey(ctx.quoteMint) });
+
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
     createAmericanProgram(cvg),
     baseMint,
     quoteMint,
-    toBigNumber(18_000),
+    toBigNumber(27_000),
     toBigNumber(1),
     3_600
   );
+
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, baseMint, {
@@ -75,7 +77,7 @@ export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
       ),
     ],
     orderType: OrderType.Sell,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 0.0000001 },
     quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
   });
 
@@ -119,7 +121,7 @@ export const respondWithBid = async (cvg: Convergence, rfq: Rfq) => {
     rfq: rfq.address,
     bid: {
       __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.0000001 },
     },
   });
 };
@@ -161,6 +163,6 @@ export const createAmericanAccountsAndMint = async (
     rfq.address,
     optionMarket,
     createAmericanProgram(cvg),
-    1_000_000_000
+    100
   );
 };
