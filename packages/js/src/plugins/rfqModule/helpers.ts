@@ -2,7 +2,7 @@ import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
-import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
+import { Leg, QuoteAsset } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
@@ -33,8 +33,7 @@ import {
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import { Mint } from '../tokenModule';
-import type { Rfq, Response } from './models';
-import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
+import { ApiRfq } from './models';
 import { CvgWallet } from '@/utils/CvgWallet';
 import { Convergence } from '@/Convergence';
 
@@ -43,7 +42,7 @@ const { mintOptions } = instructions;
 const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
   instructions;
 
-export type HasMintAddress = Rfq | PublicKey;
+export type HasMintAddress = ApiRfq | PublicKey;
 
 export const toMintAddress = (
   value: PublicKeyValues | HasMintAddress
@@ -252,7 +251,7 @@ export const quoteAssetToInstrument = async (
   throw new Error("Instrument doesn't exist");
 };
 
-export function getPages<T extends UnparsedAccount | Rfq | Response>(
+export function getPages<T extends UnparsedAccount>(
   accounts: T[],
   itemsPerPage?: number,
   numPages?: number
@@ -282,141 +281,6 @@ export function getPages<T extends UnparsedAccount | Rfq | Response>(
 
   return pages as T[][];
 }
-
-export const convertOverrideLegMultiplierBps = (
-  overrideLegMultiplierBps: number
-): number => {
-  return overrideLegMultiplierBps * Math.pow(10, 9);
-};
-
-export const convertFixedSizeInput = (
-  fixedSize: FixedSize,
-  quoteAsset: QuoteAsset
-): FixedSize => {
-  if (fixedSize.__kind == 'BaseAsset') {
-    const convertedLegsMultiplierBps =
-      Number(fixedSize.legsMultiplierBps) *
-      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-    fixedSize.legsMultiplierBps = convertedLegsMultiplierBps;
-  } else if (fixedSize.__kind == 'QuoteAsset') {
-    const convertedQuoteAmount =
-      Number(fixedSize.quoteAmount) *
-      Math.pow(10, quoteAsset.instrumentDecimals);
-
-    fixedSize.quoteAmount = convertedQuoteAmount;
-  }
-
-  return fixedSize;
-};
-
-export const convertRfqOutput = (
-  rfq: Rfq,
-  collateralMintDecimals: number
-): Rfq => {
-  rfq.nonResponseTakerCollateralLocked =
-    Number(rfq.nonResponseTakerCollateralLocked) /
-    Math.pow(10, collateralMintDecimals);
-  rfq.totalTakerCollateralLocked =
-    Number(rfq.totalTakerCollateralLocked) /
-    Math.pow(10, collateralMintDecimals);
-
-  if (rfq.fixedSize.__kind == 'BaseAsset') {
-    const parsedLegsMultiplierBps =
-      Number(rfq.fixedSize.legsMultiplierBps) /
-      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-    rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-  } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-    const parsedQuoteAmount =
-      Number(rfq.fixedSize.quoteAmount) /
-      Math.pow(10, rfq.quoteAsset.instrumentDecimals);
-
-    rfq.fixedSize.quoteAmount = parsedQuoteAmount;
-  }
-
-  for (const leg of rfq.legs) {
-    leg.instrumentAmount =
-      Number(leg.instrumentAmount) / Math.pow(10, leg.instrumentDecimals);
-  }
-
-  return rfq;
-};
-
-export const convertResponseOutput = (
-  response: Response,
-  quoteDecimals: number
-): Response => {
-  if (response.bid) {
-    const convertedPriceQuoteAmountBps =
-      Number(response.bid.priceQuote.amountBps) /
-      Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
-
-    response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
-
-    if (response.bid.__kind == 'Standard') {
-      const parsedLegsMultiplierBps =
-        Number(response.bid.legsMultiplierBps) /
-        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-      response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
-    }
-  }
-  if (response.ask) {
-    const convertedPriceQuoteAmountBps =
-      Number(response.ask.priceQuote.amountBps) /
-      Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
-
-    response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
-
-    if (response.ask.__kind == 'Standard') {
-      const parsedLegsMultiplierBps =
-        Number(response.ask.legsMultiplierBps) /
-        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-      response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
-    }
-  }
-
-  return response;
-};
-
-export const convertResponseInput = (
-  quoteDecimals: number,
-  bid?: Quote,
-  ask?: Quote
-) => {
-  if (bid) {
-    const convertedPriceQuoteAmountBps =
-      Number(bid.priceQuote.amountBps) *
-      Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
-
-    bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
-
-    if (bid.__kind == 'Standard') {
-      const convertedLegsMultiplierBps =
-        Number(bid.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-      bid.legsMultiplierBps = convertedLegsMultiplierBps;
-    }
-  }
-  if (ask) {
-    const convertedPriceQuoteAmountBps =
-      Number(ask.priceQuote.amountBps) *
-      Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
-
-    ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
-
-    if (ask.__kind == 'Standard') {
-      const convertedLegsMultiplierBps =
-        Number(ask.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-      ask.legsMultiplierBps = convertedLegsMultiplierBps;
-    }
-  }
-
-  return { bid, ask };
-};
 
 export const calculateExpectedLegsHash = async (
   convergence: Convergence,

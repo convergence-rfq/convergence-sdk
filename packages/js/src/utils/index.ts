@@ -1,5 +1,6 @@
 export * from './assert';
 export * from './common';
+export * from './conversions';
 export * from './Disposable';
 export * from './GmaBuilder';
 export * from './GpaBuilder';

@@ -1,16 +1,12 @@
 import { PublicKey } from '@solana/web3.js';
-import { bignum } from '@convergence-rfq/beet';
 
-import {
-  OrderType,
-  StoredRfqState,
-  FixedSize,
-  QuoteAsset,
-  Leg,
-} from '../types';
+import { OrderType, StoredRfqState, QuoteAsset, Leg } from '../types';
 import { RfqAccount } from '../accounts';
-import { assert } from '../../../utils';
-import { SpotInstrument } from '../../../plugins/spotInstrumentModule';
+import { ApiFixedSize, toApiFixedSize } from '.';
+import { solitaNumberToApi } from '@/utils';
+
+export type ApiRfqState = StoredRfqState;
+export type ApiOrderType = OrderType;
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -18,98 +14,110 @@ import { SpotInstrument } from '../../../plugins/spotInstrumentModule';
  *
  * @group Models
  */
-export type Rfq = {
-  /** A model identifier to distinguish models in the SDK. */
-  readonly model: 'rfq';
-
+export type ApiRfq = Readonly<{
   /** The address of the Rfq. */
-  readonly address: PublicKey;
+  address: PublicKey;
 
   /** The Taker's pubkey address. */
-  readonly taker: PublicKey;
+  taker: PublicKey;
 
   /** The order type of the Rfq. */
-  readonly orderType: OrderType;
+  orderType: ApiOrderType;
 
   /** Whether this Rfq is open (no size specified), or a fixed amount of the base asset,
    * or a fixed amount of the quote asset. */
-  readonly fixedSize: FixedSize;
+  fixedSize: ApiFixedSize;
 
   /** The quote asset of the Rfq. */
-  readonly quoteAsset: QuoteAsset;
-
-  /** The quote asset mint. */
-  readonly quoteMint: PublicKey;
+  quoteAsset: QuoteAsset; // TODO PARSE
 
   /** The time at which this Rfq was created. */
-  readonly creationTimestamp: bignum;
+  creationTimestamp: number;
 
   /** The number of seconds during which this Rfq can be responded to. */
-  readonly activeWindow: number;
+  activeWindow: number;
 
   /** The number of seconds within which this Rfq must be settled
    *  after starting the settlement process. */
-  readonly settlingWindow: number;
+  settlingWindow: number;
 
   /** The combined size of all legs of Rfq. This must include the sizes
    *  of any legs to be added in the future. */
-  readonly expectedLegsSize: number;
+  expectedLegsSize: number;
 
   /** The state of the Rfq. */
-  readonly state: StoredRfqState;
+  state: ApiRfqState;
 
   /** The amount of Taker collateral locked at the time
    *  of finalized construction of the Rfq. */
-  nonResponseTakerCollateralLocked: bignum;
+  nonResponseTakerCollateralLocked: number;
 
   /** The total amount of Taker collateral locked.
    * This includes collateral added when confirming a Response. */
-  totalTakerCollateralLocked: bignum;
+  totalTakerCollateralLocked: number;
 
   /** The total number of Responses to this Rfq. */
-  readonly totalResponses: number;
+  totalResponses: number;
 
   /** The number of Responses to this Rfq which have been
    *  cleared during the Rfq cleanup process. */
-  readonly clearedResponses: number;
+  clearedResponses: number;
 
   /** The number of confirmed Responses to the Rfq. */
-  readonly confirmedResponses: number;
+  confirmedResponses: number;
 
   /** The legs of the Rfq. */
-  readonly legs: Leg[];
-};
+  legs: Leg[]; // TODO PARSE
+}>;
 
-/** @group Model Helpers */
-export const isRfq = (value: any): value is Rfq =>
-  typeof value === 'object' && value.model === 'rfq';
+export function toApiRfq(
+  account: RfqAccount,
+  collateralDecimals: number,
+  quoteDecimals: number
+): ApiRfq {
+  const {
+    publicKey,
+    data: {
+      taker,
+      orderType,
+      fixedSize,
+      quoteAsset,
+      creationTimestamp,
+      activeWindow,
+      settlingWindow,
+      expectedLegsSize,
+      state,
+      nonResponseTakerCollateralLocked,
+      totalTakerCollateralLocked,
+      totalResponses,
+      clearedResponses,
+      confirmedResponses,
+      legs,
+    },
+  } = account;
 
-/** @group Model Helpers */
-export function assertRfq(value: any): asserts value is Rfq {
-  assert(isRfq(value), `Expected Rfq model`);
+  return {
+    address: publicKey,
+    taker,
+    orderType,
+    fixedSize: toApiFixedSize(fixedSize, quoteDecimals),
+    quoteAsset,
+    creationTimestamp: Number(creationTimestamp),
+    activeWindow,
+    settlingWindow,
+    expectedLegsSize,
+    state,
+    nonResponseTakerCollateralLocked: solitaNumberToApi(
+      nonResponseTakerCollateralLocked,
+      collateralDecimals
+    ),
+    totalTakerCollateralLocked: solitaNumberToApi(
+      totalTakerCollateralLocked,
+      collateralDecimals
+    ),
+    totalResponses,
+    clearedResponses,
+    confirmedResponses,
+    legs,
+  };
 }
-
-/** @group Model Helpers */
-export const toRfq = (account: RfqAccount): Rfq => ({
-  model: 'rfq',
-  address: account.publicKey,
-  taker: account.data.taker,
-  orderType: account.data.orderType,
-  fixedSize: account.data.fixedSize,
-  quoteAsset: account.data.quoteAsset,
-  quoteMint: SpotInstrument.deserializeInstrumentData(
-    Buffer.from(account.data.quoteAsset.instrumentData)
-  ).mint,
-  creationTimestamp: account.data.creationTimestamp,
-  activeWindow: account.data.activeWindow,
-  settlingWindow: account.data.settlingWindow,
-  expectedLegsSize: account.data.expectedLegsSize,
-  state: account.data.state,
-  nonResponseTakerCollateralLocked:
-    account.data.nonResponseTakerCollateralLocked,
-  totalTakerCollateralLocked: account.data.totalTakerCollateralLocked,
-  totalResponses: account.data.totalResponses,
-  clearedResponses: account.data.clearedResponses,
-  confirmedResponses: account.data.confirmedResponses,
-  legs: account.data.legs,
-});

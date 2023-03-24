@@ -1,15 +1,16 @@
 import { PublicKey } from '@solana/web3.js';
-import { bignum, COption } from '@convergence-rfq/beet';
 import {
   AuthoritySide,
-  Confirmation,
   DefaultingParty,
-  Quote,
   StoredResponseState,
 } from '@convergence-rfq/rfq';
-
+import { solitaNumberToApi } from '../../../utils';
 import { ResponseAccount } from '../accounts';
-import { assert } from '../../../utils';
+import { ApiConfirmation, ApiQuote, toApiConfirmation, toApiQuote } from '.';
+
+type ApiDefaultingParty = DefaultingParty;
+type ApiAuthoritySide = AuthoritySide;
+type ApiResponseState = StoredResponseState;
 
 /**
  * This model captures all the relevant information about an Response
@@ -17,84 +18,102 @@ import { assert } from '../../../utils';
  *
  * @group Models
  */
-export type Response = {
-  /** A model identifier to distinguish models in the SDK. */
-  readonly model: 'response';
-
-  /** The address of the Response. */
-  readonly address: PublicKey;
+export type ApiResponse = Readonly<{
+  /** The address of the Rfq. */
+  address: PublicKey;
 
   /** The Maker's pubkey address. */
-  readonly maker: PublicKey;
+  maker: PublicKey;
 
   /** The address of the Rfq this Response corresponds to. */
-  readonly rfq: PublicKey;
+  rfq: PublicKey;
 
   /** The timestamp at which this Response was created. */
-  readonly creationTimestamp: bignum;
+  creationTimestamp: number;
 
   /** The amount of the Maker's collateral locked. */
-  readonly makerCollateralLocked: bignum;
+  makerCollateralLocked: number;
 
   /** The amount of the Taker's collateral locked. */
-  readonly takerCollateralLocked: bignum;
+  takerCollateralLocked: number;
 
   /** The current state of the Response. */
-  readonly state: StoredResponseState;
+  state: ApiResponseState;
 
   /** The number of legs prepared by the Taker. */
-  readonly takerPreparedLegs: number;
+  takerPreparedLegs: number;
 
   /** The number of legs prepared by the Maker. */
-  readonly makerPreparedLegs: number;
+  makerPreparedLegs: number;
 
   /** The number of legs that have already been settled. */
-  readonly settledLegs: number;
+  settledLegs: number;
 
   /** The Confirmation of this Response, if any. */
-  readonly confirmed: COption<Confirmation>;
+  confirmed: ApiConfirmation | null;
 
   /** The defaulting party of this Response, if any. */
-  readonly defaultingParty: COption<DefaultingParty>;
+  defaultingParty: ApiDefaultingParty | null;
 
   /** An array of `AuthoritySide`s showing whether the Maker or Taker
    *  initialized leg preparation for each prepared leg */
-  readonly legPreparationsInitializedBy: AuthoritySide[];
+  legPreparationsInitializedBy: ApiAuthoritySide[];
 
   /** The bid, if any. If the `orderType` of the RFQ is
    * OrderType.Sell then this field is required. */
-  readonly bid: COption<Quote>;
+  bid: ApiQuote | null;
 
   /** The ask, if any. If the `orderType` of the RFQ is
    * OrderType.Buy then this field is required. */
-  readonly ask: COption<Quote>;
-};
+  ask: ApiQuote | null;
+}>;
 
-/** @group Model Helpers */
-export const isResponse = (value: any): value is Response =>
-  typeof value === 'object' && value.model === 'response';
+export function toApiResponse(
+  account: ResponseAccount,
+  collateralDecimals: number,
+  quoteDecimals: number
+): ApiResponse {
+  const {
+    publicKey,
+    data: {
+      maker,
+      rfq,
+      creationTimestamp,
+      makerCollateralLocked,
+      takerCollateralLocked,
+      state,
+      takerPreparedLegs,
+      makerPreparedLegs,
+      settledLegs,
+      confirmed,
+      defaultingParty,
+      legPreparationsInitializedBy,
+      bid,
+      ask,
+    },
+  } = account;
 
-/** @group Model Helpers */
-export function assertResponse(value: any): asserts value is Response {
-  assert(isResponse(value), `Expected Response model`);
+  return {
+    address: publicKey,
+    maker,
+    rfq,
+    creationTimestamp: Number(creationTimestamp),
+    makerCollateralLocked: solitaNumberToApi(
+      makerCollateralLocked,
+      collateralDecimals
+    ),
+    takerCollateralLocked: solitaNumberToApi(
+      takerCollateralLocked,
+      collateralDecimals
+    ),
+    state,
+    takerPreparedLegs,
+    makerPreparedLegs,
+    settledLegs,
+    confirmed: confirmed ? toApiConfirmation(confirmed) : null,
+    defaultingParty,
+    legPreparationsInitializedBy,
+    bid: bid ? toApiQuote(bid, quoteDecimals) : null,
+    ask: ask ? toApiQuote(ask, quoteDecimals) : null,
+  };
 }
-
-/** @group Model Helpers */
-export const toResponse = (account: ResponseAccount): Response => ({
-  model: 'response',
-  address: account.publicKey,
-  maker: account.data.maker,
-  rfq: account.data.rfq,
-  creationTimestamp: account.data.creationTimestamp,
-  makerCollateralLocked: account.data.makerCollateralLocked,
-  takerCollateralLocked: account.data.takerCollateralLocked,
-  state: account.data.state,
-  takerPreparedLegs: account.data.takerPreparedLegs,
-  makerPreparedLegs: account.data.makerPreparedLegs,
-  settledLegs: account.data.settledLegs,
-  confirmed: account.data.confirmed,
-  defaultingParty: account.data.defaultingParty,
-  legPreparationsInitializedBy: account.data.legPreparationsInitializedBy,
-  bid: account.data.bid,
-  ask: account.data.ask,
-});

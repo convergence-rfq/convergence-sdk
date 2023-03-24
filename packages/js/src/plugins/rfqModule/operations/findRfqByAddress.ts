@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { Rfq, toRfq } from '../models';
+import { ApiRfq } from '../models';
 import { toRfqAccount } from '../accounts';
 import { convertRfqOutput } from '../helpers';
 import {
@@ -57,7 +57,7 @@ export type FindRfqByAddressInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindRfqByAddressOutput = Rfq;
+export type FindRfqByAddressOutput = ApiRfq;
 
 /**
  * @group Operations

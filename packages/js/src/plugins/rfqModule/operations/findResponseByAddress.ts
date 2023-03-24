@@ -1,8 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { toResponseAccount } from '../accounts';
-import { assertResponse, Response, toResponse } from '../models/Response';
-import { convertResponseOutput } from '../helpers';
+import { toResponseAccount, toRfqAccount } from '../accounts';
 import {
   Operation,
   OperationHandler,
@@ -10,6 +8,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { ApiResponse, toApiResponse } from '..';
 
 const Key = 'FindResponseByAddressOperation' as const;
 
@@ -46,6 +45,7 @@ export type FindResponseByAddressOperation = Operation<
   FindResponseByAddressOutput
 >;
 
+// TODO add optional rfq address or model to pre-fetch it
 /**
  * @group Operations
  * @category Inputs
@@ -53,16 +53,13 @@ export type FindResponseByAddressOperation = Operation<
 export type FindResponseByAddressInput = {
   /** The address of the Response account. */
   address: PublicKey;
-
-  /** Optional flag for whether to convert the output to a human-readable format. */
-  convert?: boolean;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindResponseByAddressOutput = Response;
+export type FindResponseByAddressOutput = ApiResponse;
 
 /**
  * @group Operations
@@ -76,27 +73,28 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       scope: OperationScope
     ): Promise<FindResponseByAddressOutput> => {
       const { commitment } = scope;
-      const { address, convert = true } = operation.input;
+      const { address } = operation.input;
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      const response = toResponse(toResponseAccount(account));
-      assertResponse(response);
+      const response = toResponseAccount(account);
       scope.throwIfCanceled();
 
-      if (convert) {
-        const rfq = await convergence
-          .rfqs()
-          .findRfqByAddress({ address: response.rfq });
+      // TODO add caching to protocol and collateral meta
+      const protocolModel = await convergence.protocol().get();
+      const collateralDecimals = (
+        await convergence
+          .tokens()
+          .findMintByAddress({ address: protocolModel.collateralMint })
+      ).decimals;
+      const rfq = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: response.data.rfq });
 
-        const convertedResponse = convertResponseOutput(
-          response,
-          rfq.quoteAsset.instrumentDecimals
-        );
-
-        return convertedResponse;
-      }
-
-      return response;
+      return toApiResponse(
+        response,
+        collateralDecimals,
+        rfq.quoteAsset.instrumentDecimals
+      );
     },
   };

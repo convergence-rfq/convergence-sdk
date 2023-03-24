@@ -1,7 +1,6 @@
 import { Buffer } from 'buffer';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import {
-  FixedSize,
   OrderType,
   QuoteAsset,
   QuoteRecord,
