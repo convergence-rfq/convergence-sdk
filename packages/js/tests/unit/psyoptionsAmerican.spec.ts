@@ -33,25 +33,25 @@ describe('american', () => {
     const takerCvg = await createSdk('taker');
     const makerCvg = await createSdk('maker');
 
-    const { rfq, optionMarket } = await sellCoveredCall(takerCvg, ctx);
-    expect(rfq).toHaveProperty('address');
+    const res0 = await sellCoveredCall(takerCvg, ctx);
+    expect(res0.rfq).toHaveProperty('address');
 
-    const { rfqResponse } = await respondWithBid(makerCvg, rfq);
-    expect(rfqResponse).toHaveProperty('address');
+    const res1 = await respondWithBid(makerCvg, res0.rfq);
+    expect(res1.rfqResponse).toHaveProperty('address');
 
-    const { response } = await confirmBid(takerCvg, rfq, rfqResponse);
-    expect(response).toHaveProperty('signature');
+    const res2 = await confirmBid(takerCvg, res0.rfq, res1.rfqResponse);
+    expect(res2.response).toHaveProperty('signature');
 
-    await createAmericanAccountsAndMint(takerCvg, rfq, optionMarket);
-    await createAmericanAccountsAndMint(makerCvg, rfq, optionMarket);
+    await createAmericanAccountsAndMint(takerCvg, res0.rfq, res0.optionMarket);
+    await createAmericanAccountsAndMint(makerCvg, res0.rfq, res0.optionMarket);
 
-    const takerResult = await prepareSettlement(takerCvg, rfq, rfqResponse);
-    expect(takerResult.response).toHaveProperty('signature');
+    const res3 = await prepareSettlement(takerCvg, res0.rfq, res1.rfqResponse);
+    expect(res3.response).toHaveProperty('signature');
 
-    const makerResult = await prepareSettlement(makerCvg, rfq, rfqResponse);
-    expect(makerResult.response).toHaveProperty('signature');
+    const res4 = await prepareSettlement(makerCvg, res0.rfq, res1.rfqResponse);
+    expect(res4.response).toHaveProperty('signature');
 
-    const settleResult = await settle(takerCvg, rfq, rfqResponse);
-    expect(settleResult.response).toHaveProperty('signature');
+    const res5 = await settle(takerCvg, res0.rfq, res1.rfqResponse);
+    expect(res5.response).toHaveProperty('signature');
   });
 });
