@@ -155,7 +155,8 @@ export const settle = async (
 export const createAmericanAccountsAndMint = async (
   cvg: Convergence,
   rfq: Rfq,
-  optionMarket: OptionMarketWithKey
+  optionMarket: OptionMarketWithKey,
+  amount: number
 ) => {
   await createAmericanAccountsAndMintOptions(
     cvg,
@@ -163,6 +164,6 @@ export const createAmericanAccountsAndMint = async (
     rfq.address,
     optionMarket,
     createAmericanProgram(cvg),
-    100
+    amount
   );
 };
