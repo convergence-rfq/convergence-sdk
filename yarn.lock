@@ -1280,10 +1280,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/sdk@4.0.24-rc.14":
-  version "4.0.24-rc.14"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/sdk/-/sdk-4.0.24-rc.14.tgz#fdd477fb2b27a7b3c89b5cf6f49aabf7d2bc4abc"
-  integrity sha512-QAA72NCqFC22C60t0N4eZk90O9lu16QkgdD0YErNAylONLt8KsAMZAEK8OsmIO2KWps3Pb/q+PlKxMElEuuMzQ==
+"@convergence-rfq/sdk@4.0.24":
+  version "4.0.24-rc.16"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/sdk/-/sdk-4.0.24-rc.16.tgz#e3235bf5ba93360ea73be19ec608b3dc52c3612d"
+  integrity sha512-iGhrxZz+TFrJSkQAy8pGQODb9RJlNtrC9MGtIFz/p97n/Bn02k1T7+ZI+6eiZo7H+uI019T6rSXgfv63ltwtSw==
   dependencies:
     "@aws-crypto/sha256-js" "3.0.0"
     "@bundlr-network/client" "^0.8.8"

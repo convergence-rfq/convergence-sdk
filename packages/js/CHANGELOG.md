@@ -1,5 +1,23 @@
 # @convergence-rfq/sdk
 
+## 4.0.24-rc.18
+
+### Patch Changes
+
+- use BN in convertResponseOutput
+
+## 4.0.24-rc.17
+
+### Patch Changes
+
+- don't mutate state in convertResponseOutput
+
+## 4.0.24-rc.16
+
+### Patch Changes
+
+- dont change bid ask state in convertResponseInput
+
 ## 4.0.24-rc.11
 
 ### Patch Changes

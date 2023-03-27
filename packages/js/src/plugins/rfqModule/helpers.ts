@@ -2,7 +2,7 @@ import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
-import { Quote, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
+import { Quote, Side, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
@@ -13,7 +13,6 @@ import {
   OptionType,
   programId as psyoptionsEuropeanProgramId,
 } from '@mithraic-labs/tokenized-euros';
-
 import {
   UnparsedAccount,
   PublicKeyValues,
@@ -24,7 +23,6 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
   Program,
 } from '../../types';
-import { TransactionBuilder } from '../../utils';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
@@ -35,7 +33,8 @@ import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstru
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
-import { CvgWallet } from '@/utils/CvgWallet';
+// import { CvgWallet } from '@/utils/CvgWallet';
+import { TransactionBuilder, CvgWallet } from '../../utils';
 import { Convergence } from '@/Convergence';
 
 const { mintOptions } = instructions;
@@ -175,6 +174,33 @@ export const faucetAirdropWithMint = async (
     mintAuthority,
   });
 };
+
+export async function legToInstrument<
+  T extends
+    | SpotInstrument
+    | PsyoptionsEuropeanInstrument
+    | PsyoptionsAmericanInstrument
+>(convergence: Convergence, leg: Leg): Promise<T> {
+  if (leg.instrumentProgram.equals(spotInstrumentProgram.address)) {
+    return (await SpotInstrument.createFromLeg(convergence, leg)) as T;
+  } else if (
+    leg.instrumentProgram.equals(psyoptionsEuropeanInstrumentProgram.address)
+  ) {
+    return (await PsyoptionsEuropeanInstrument.createFromLeg(
+      convergence,
+      leg
+    )) as T;
+  } else if (
+    leg.instrumentProgram.equals(psyoptionsAmericanInstrumentProgram.address)
+  ) {
+    return (await PsyoptionsAmericanInstrument.createFromLeg(
+      convergence,
+      leg
+    )) as T;
+  }
+
+  throw new Error('Unsupported instrument program');
+}
 
 export async function legsToInstruments<
   T extends
@@ -347,38 +373,48 @@ export const convertResponseOutput = (
   response: Response,
   quoteDecimals: number
 ): Response => {
-  if (response.bid) {
+  let convertedResponse = structuredClone(response);
+
+  if (convertedResponse.bid) {
     const convertedPriceQuoteAmountBps =
-      Number(response.bid.priceQuote.amountBps) /
+      Number(convertedResponse.bid.priceQuote.amountBps) /
       Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
 
-    response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
+    convertedResponse.bid.priceQuote.amountBps = new anchor.BN(
+      convertedPriceQuoteAmountBps
+    );
 
-    if (response.bid.__kind == 'Standard') {
+    if (convertedResponse.bid.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        Number(response.bid.legsMultiplierBps) /
+        Number(convertedResponse.bid.legsMultiplierBps) /
         Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
-      response.bid.legsMultiplierBps = parsedLegsMultiplierBps;
+      convertedResponse.bid.legsMultiplierBps = new anchor.BN(
+        parsedLegsMultiplierBps
+      );
     }
   }
-  if (response.ask) {
+  if (convertedResponse.ask) {
     const convertedPriceQuoteAmountBps =
-      Number(response.ask.priceQuote.amountBps) /
+      Number(convertedResponse.ask.priceQuote.amountBps) /
       Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
 
-    response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
+    convertedResponse.ask.priceQuote.amountBps = new anchor.BN(
+      convertedPriceQuoteAmountBps
+    );
 
-    if (response.ask.__kind == 'Standard') {
+    if (convertedResponse.ask.__kind == 'Standard') {
       const parsedLegsMultiplierBps =
-        Number(response.ask.legsMultiplierBps) /
+        Number(convertedResponse.ask.legsMultiplierBps) /
         Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
-      response.ask.legsMultiplierBps = parsedLegsMultiplierBps;
+      convertedResponse.ask.legsMultiplierBps = new anchor.BN(
+        parsedLegsMultiplierBps
+      );
     }
   }
 
-  return response;
+  return convertedResponse;
 };
 
 export const convertResponseInput = (
@@ -386,36 +422,41 @@ export const convertResponseInput = (
   bid?: Quote,
   ask?: Quote
 ) => {
-  if (bid) {
+  let convertedBid = structuredClone(bid);
+  let convertedAsk = structuredClone(ask);
+
+  if (convertedBid) {
     const convertedPriceQuoteAmountBps =
-      Number(bid.priceQuote.amountBps) *
+      Number(convertedBid.priceQuote.amountBps) *
       Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
 
-    bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
+    convertedBid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
-    if (bid.__kind == 'Standard') {
+    if (convertedBid.__kind == 'Standard') {
       const convertedLegsMultiplierBps =
-        Number(bid.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+        Number(convertedBid.legsMultiplierBps) *
+        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
-      bid.legsMultiplierBps = convertedLegsMultiplierBps;
+      convertedBid.legsMultiplierBps = convertedLegsMultiplierBps;
     }
   }
-  if (ask) {
+  if (convertedAsk) {
     const convertedPriceQuoteAmountBps =
-      Number(ask.priceQuote.amountBps) *
+      Number(convertedAsk.priceQuote.amountBps) *
       Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
 
-    ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
+    convertedAsk.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
-    if (ask.__kind == 'Standard') {
+    if (convertedAsk.__kind == 'Standard') {
       const convertedLegsMultiplierBps =
-        Number(ask.legsMultiplierBps) * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
+        Number(convertedAsk.legsMultiplierBps) *
+        Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
-      ask.legsMultiplierBps = convertedLegsMultiplierBps;
+      convertedAsk.legsMultiplierBps = convertedLegsMultiplierBps;
     }
   }
 
-  return { bid, ask };
+  return { convertedBid, convertedAsk };
 };
 
 export const calculateExpectedLegsHash = async (
@@ -911,6 +952,9 @@ export const getCreateEuroAccountsAndMintOptionsTransaction = async (
     .rfqs()
     .findRfqByAddress({ address: rfqAddress });
 
+  const EURO_DECIMALS = 4;
+  amount *= Math.pow(10, EURO_DECIMALS);
+
   const instructions: anchor.web3.TransactionInstruction[] = [];
 
   for (const leg of rfq.legs) {
@@ -1015,58 +1059,70 @@ export const getCreateAmericanAccountsAndMintOptionsTransaction = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: rfqAddress });
+  const callerIsTaker = caller == rfq.taker;
+
+  const AMERICAN_DECIMALS = 0;
+  amount *= Math.pow(10, AMERICAN_DECIMALS);
 
   const instructions: anchor.web3.TransactionInstruction[] = [];
 
   for (const leg of rfq.legs) {
+    const instrument = await legToInstrument(convergence, leg);
+
     if (
-      leg.instrumentProgram.equals(psyoptionsAmericanInstrumentProgram.address)
+      (instrument.legInfo?.side == Side.Bid && callerIsTaker) ||
+      (instrument.legInfo?.side == Side.Ask && !callerIsTaker)
     ) {
-      const instrumentData =
-        PsyoptionsAmericanInstrument.deserializeInstrumentData(
-          Buffer.from(leg.instrumentData)
+      if (
+        leg.instrumentProgram.equals(
+          psyoptionsAmericanInstrumentProgram.address
+        )
+      ) {
+        const instrumentData =
+          PsyoptionsAmericanInstrument.deserializeInstrumentData(
+            Buffer.from(leg.instrumentData)
+          );
+
+        const metaKey = instrumentData.metaKey;
+        const meta = await PsyoptionsAmericanInstrument.fetchMeta(
+          convergence,
+          metaKey
+        );
+        const optionMintKey = meta.optionMint;
+        const writerMintKey = meta.writerTokenMint;
+        const underlyingMint = meta.underlyingAssetMint;
+
+        const optionToken = await getOrCreateATA(
+          convergence,
+          optionMintKey,
+          caller
+        );
+        const writerToken = await getOrCreateATA(
+          convergence,
+          writerMintKey,
+          caller
+        );
+        const underlyingToken = await getOrCreateATA(
+          convergence,
+          underlyingMint,
+          caller
         );
 
-      const metaKey = instrumentData.metaKey;
-      const meta = await PsyoptionsAmericanInstrument.fetchMeta(
-        convergence,
-        metaKey
-      );
-      const optionMintKey = meta.optionMint;
-      const writerMintKey = meta.writerTokenMint;
-      const underlyingMint = meta.underlyingAssetMint;
+        const ixWithSigners =
+          await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+            americanProgram,
+            optionToken,
+            writerToken,
+            underlyingToken,
+            new anchor.BN(amount),
+            optionMarket
+          );
+        const ix = ixWithSigners.ix;
 
-      const optionToken = await getOrCreateATA(
-        convergence,
-        optionMintKey,
-        caller
-      );
-      const writerToken = await getOrCreateATA(
-        convergence,
-        writerMintKey,
-        caller
-      );
-      const underlyingToken = await getOrCreateATA(
-        convergence,
-        underlyingMint,
-        caller
-      );
-
-      const ixWithSigners =
-        await psyoptionsAmerican.instructions.mintOptionV2Instruction(
-          americanProgram,
-          optionToken,
-          writerToken,
-          underlyingToken,
-          new anchor.BN(amount),
-          optionMarket
-        );
-      const ix = ixWithSigners.ix;
-
-      instructions.push(ix);
+        instructions.push(ix);
+      }
     }
   }
-
   const tx = new anchor.web3.Transaction();
   tx.instructions = instructions;
 
@@ -1074,6 +1130,258 @@ export const getCreateAmericanAccountsAndMintOptionsTransaction = async (
   tx.recentBlockhash = recentBlockhash.blockhash;
 
   return tx;
+};
+
+export const getCreateAccountsAndMintOptionsTransaction = async (
+  convergence: Convergence,
+  rfqAddress: PublicKey,
+  caller: PublicKey,
+  // optionMarket: any, //american option market
+  europeanProgram: any,
+  americanProgram: any
+): Promise<anchor.web3.Transaction> => {
+  const rfq = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: rfqAddress });
+  const callerIsTaker = caller == rfq.taker;
+
+  const instructions: anchor.web3.TransactionInstruction[] = [];
+
+  for (const leg of rfq.legs) {
+    const instrument = await legToInstrument(convergence, leg);
+
+    if (
+      (instrument.legInfo?.side == Side.Bid && callerIsTaker) ||
+      (instrument.legInfo?.side == Side.Ask && !callerIsTaker)
+    ) {
+      if (
+        leg.instrumentProgram.equals(
+          psyoptionsAmericanInstrumentProgram.address
+        )
+      ) {
+        const amount = instrument.legInfo.amount;
+        const instrumentData =
+          PsyoptionsAmericanInstrument.deserializeInstrumentData(
+            Buffer.from(leg.instrumentData)
+          );
+        const metaKey = instrumentData.metaKey;
+        const meta = await PsyoptionsAmericanInstrument.fetchMeta(
+          convergence,
+          metaKey
+        );
+        const optionMarket = meta;
+        const optionMintKey = meta.optionMint;
+        const writerMintKey = meta.writerTokenMint;
+        const underlyingMint = meta.underlyingAssetMint;
+        const optionToken = await getOrCreateATA(
+          convergence,
+          optionMintKey,
+          caller
+        );
+        const writerToken = await getOrCreateATA(
+          convergence,
+          writerMintKey,
+          caller
+        );
+        const underlyingToken = await getOrCreateATA(
+          convergence,
+          underlyingMint,
+          caller
+        );
+
+        const ixWithSigners =
+          await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+            americanProgram,
+            optionToken,
+            writerToken,
+            underlyingToken,
+            new anchor.BN(amount),
+            optionMarket as OptionMarketWithKey
+          );
+        const ix = ixWithSigners.ix;
+
+        instructions.push(ix);
+      } else if (
+        leg.instrumentProgram.equals(
+          psyoptionsEuropeanInstrumentProgram.address
+        )
+      ) {
+        const amount = instrument.legInfo.amount;
+        const instrumentData =
+          PsyoptionsEuropeanInstrument.deserializeInstrumentData(
+            Buffer.from(leg.instrumentData)
+          );
+        const euroMetaKey = instrumentData.metaKey;
+        const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
+          convergence,
+          euroMetaKey
+        );
+        // euroMeta.underlyingAmountPerContract = new BN(
+        //   euroMeta.underlyingAmountPerContract
+        // );
+        const optionType = instrumentData.optionType;
+        const stableMint = euroMeta.stableMint;
+        const underlyingMint = euroMeta.underlyingMint;
+        const stableMintToken = convergence
+          .tokens()
+          .pdas()
+          .associatedTokenAccount({
+            mint: stableMint,
+            owner: caller,
+          });
+        const underlyingMintToken = convergence
+          .tokens()
+          .pdas()
+          .associatedTokenAccount({
+            mint: underlyingMint,
+            owner: caller,
+          });
+        const minterCollateralKey =
+          optionType == OptionType.PUT ? stableMintToken : underlyingMintToken;
+
+        const optionDestination = await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putOptionMint
+            : euroMeta.callOptionMint,
+          caller
+        );
+        const writerDestination = await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putWriterMint
+            : euroMeta.callWriterMint,
+          caller
+        );
+        //@ts-ignore
+        const backupReceiver = await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putOptionMint
+            : euroMeta.callOptionMint,
+          caller
+        );
+
+        const { instruction: ix } = mintOptions(
+          europeanProgram,
+          euroMetaKey,
+          //@ts-ignore
+          euroMeta,
+          minterCollateralKey,
+          optionDestination,
+          writerDestination,
+          new anchor.BN(amount),
+          optionType
+        );
+
+        ix.keys[0] = {
+          pubkey: caller,
+          isSigner: true,
+          isWritable: false,
+        };
+
+        instructions.push(ix);
+      }
+    }
+  }
+  const tx = new anchor.web3.Transaction();
+  tx.instructions.push(...instructions);
+
+  const recentBlockhash = await convergence.connection.getRecentBlockhash();
+  tx.recentBlockhash = recentBlockhash.blockhash;
+
+  return tx;
+};
+
+export const createAmericanAccountsGetReceiverAndMintOptions = async (
+  convergence: Convergence,
+  caller: Keypair,
+  rfqAddress: PublicKey,
+  optionMarket: any,
+  americanProgram: any,
+  amount: number
+) => {
+  const rfq = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: rfqAddress });
+
+  const callerIsTaker = caller.publicKey == rfq.taker;
+
+  for (const leg of rfq.legs) {
+    if (
+      leg.instrumentProgram.equals(psyoptionsAmericanInstrumentProgram.address)
+    ) {
+      const instrument = await legToInstrument(convergence, leg);
+
+      if (
+        (instrument.legInfo?.side == Side.Bid && callerIsTaker) ||
+        (instrument.legInfo?.side == Side.Ask && !callerIsTaker)
+      ) {
+        const instrumentData =
+          PsyoptionsAmericanInstrument.deserializeInstrumentData(
+            Buffer.from(leg.instrumentData)
+          );
+
+        const metaKey = instrumentData.metaKey;
+        const meta = await PsyoptionsAmericanInstrument.fetchMeta(
+          convergence,
+          metaKey
+        );
+        const optionMintKey = meta.optionMint;
+        const writerMintKey = meta.writerTokenMint;
+        const underlyingMint = meta.underlyingAssetMint;
+
+        const optionToken = await getOrCreateATA(
+          convergence,
+          optionMintKey,
+          caller.publicKey
+        );
+        const writerToken = await getOrCreateATA(
+          convergence,
+          writerMintKey,
+          caller.publicKey
+        );
+        const underlyingToken = await getOrCreateATA(
+          convergence,
+          underlyingMint,
+          caller.publicKey
+        );
+
+        const ixWithSigners =
+          await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+            americanProgram,
+            optionToken,
+            writerToken,
+            underlyingToken,
+            new anchor.BN(amount),
+            optionMarket
+          );
+        const ix = ixWithSigners.ix;
+
+        ixWithSigners.signers.push(caller);
+
+        ixWithSigners.ix.keys[0] = {
+          pubkey: caller.publicKey,
+          isSigner: true,
+          isWritable: false,
+        };
+
+        const txBuilder = TransactionBuilder.make().setFeePayer(
+          convergence.rpc().getDefaultFeePayer()
+        );
+
+        txBuilder.add({
+          instruction: ix,
+          signers: ixWithSigners.signers,
+        });
+
+        const confirmOptions =
+          makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+        await txBuilder.sendAndConfirm(convergence, confirmOptions);
+      }
+    }
+  }
 };
 
 export const createAmericanAccountsAndMintOptions = async (
@@ -1155,64 +1463,6 @@ export const createAmericanAccountsAndMintOptions = async (
       await txBuilder.sendAndConfirm(convergence, confirmOptions);
     }
   }
-};
-
-export const createBigAmericanAccountsAndMintOptions = async (
-  convergence: Convergence,
-  caller: Keypair,
-  americanProgram: any,
-  underlyingMint: Mint,
-  optionMarket: any,
-  optionMintKey: PublicKey,
-  writerMintKey: PublicKey,
-  amount: number
-) => {
-  const optionToken = await getOrCreateATA(
-    convergence,
-    optionMintKey,
-    caller.publicKey
-  );
-  const writerToken = await getOrCreateATA(
-    convergence,
-    writerMintKey,
-    caller.publicKey
-  );
-  const underlyingToken = await getOrCreateATA(
-    convergence,
-    underlyingMint.address,
-    caller.publicKey
-  );
-
-  const ixs = await psyoptionsAmerican.instructions.mintOptionV2Instruction(
-    americanProgram,
-    optionToken,
-    writerToken,
-    underlyingToken,
-    new anchor.BN(amount),
-    optionMarket
-  );
-  const ix1 = ixs.ix;
-
-  ixs.signers.push(caller);
-
-  ixs.ix.keys[0] = {
-    pubkey: caller.publicKey,
-    isSigner: true,
-    isWritable: false,
-  };
-
-  const txBuilder = TransactionBuilder.make().setFeePayer(
-    convergence.rpc().getDefaultFeePayer()
-  );
-
-  txBuilder.add({
-    instruction: ix1,
-    signers: ixs.signers,
-  });
-
-  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
-
-  await txBuilder.sendAndConfirm(convergence, confirmOptions);
 };
 
 // export const createEuroAccountsAndMintOptions = async (

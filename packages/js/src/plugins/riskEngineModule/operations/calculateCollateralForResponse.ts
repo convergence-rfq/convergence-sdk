@@ -105,7 +105,7 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
 
       const quoteDecimals = rfq.quoteAsset.instrumentDecimals;
 
-      const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
+      const { convertedBid, convertedAsk } = convertResponseInput(
         quoteDecimals,
         bid ?? undefined,
         ask ?? undefined

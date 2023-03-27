@@ -132,7 +132,7 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
 
       let pdaDistinguisher = 0;
 
-      const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
+      const { convertedBid, convertedAsk } = convertResponseInput(
         rfqModel.quoteAsset.instrumentDecimals,
         bid,
         ask
@@ -193,6 +193,8 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         .rfqs()
         .findResponseByAddress({ address: responsePda });
       assertResponse(rfqResponse);
+
+      console.log(rfqResponse.ask?.priceQuote.amountBps)
 
       return { ...output, rfqResponse };
     },

@@ -1,13 +1,11 @@
 import test, { Test } from 'tape';
 import spok from 'spok';
 import { Keypair, PublicKey } from '@solana/web3.js';
-import {  } from '@/index';
 import { sleep } from '@bundlr-network/client/build/common/utils';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
-
 import { IDL as PseudoPythIdl } from '../../../validator/programs/pseudo_pyth_idl';
 import {
   SWITCHBOARD_BTC_ORACLE,
