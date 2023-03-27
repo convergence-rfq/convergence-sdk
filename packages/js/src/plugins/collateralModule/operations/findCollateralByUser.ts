@@ -10,6 +10,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../cache';
 
 const Key = 'FindCollateralByUserOperation' as const;
 
@@ -91,10 +92,7 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
           (collateral): collateral is Collateral => collateral !== null
         )[0];
 
-      const protocol = await convergence.protocol().get();
-      const collateralMint = await convergence
-        .tokens()
-        .findMintByAddress({ address: protocol.collateralMint });
+      const collateralMint = await collateralMintCache.get(convergence);
 
       collateralModel.lockedTokensAmount /= 10 ** collateralMint.decimals;
 

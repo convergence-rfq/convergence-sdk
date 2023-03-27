@@ -11,6 +11,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolAccountCache } from '../cache';
 
 const Key = 'AddInstrumentOperation' as const;
 
@@ -143,6 +144,8 @@ export const addInstrumentBuilder = (
     revertPreparationAccountAmount,
     cleanUpAccountAmount,
   } = params;
+
+  protocolAccountCache.clear();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

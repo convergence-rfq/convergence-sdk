@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { toResponseAccount, toRfqAccount } from '../accounts';
+import { toResponseAccount } from '../accounts';
 import {
   Operation,
   OperationHandler,
@@ -8,7 +8,8 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { ApiResponse, toApiResponse } from '..';
+import { ApiResponse, ApiRfq, toApiResponse } from '..';
+import { collateralMintCache } from '../../collateralModule/cache';
 
 const Key = 'FindResponseByAddressOperation' as const;
 
@@ -53,6 +54,8 @@ export type FindResponseByAddressOperation = Operation<
 export type FindResponseByAddressInput = {
   /** The address of the Response account. */
   address: PublicKey;
+  /** Pass already parsed rfq to avoid refetching of it */
+  rfq: ApiRfq | null;
 };
 
 /**
@@ -80,20 +83,21 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       const response = toResponseAccount(account);
       scope.throwIfCanceled();
 
-      // TODO add caching to protocol and collateral meta
-      const protocolModel = await convergence.protocol().get();
-      const collateralDecimals = (
-        await convergence
-          .tokens()
-          .findMintByAddress({ address: protocolModel.collateralMint })
-      ).decimals;
-      const rfq = await convergence
-        .rfqs()
-        .findRfqByAddress({ address: response.data.rfq });
+      const collateralMint = await collateralMintCache.get(convergence);
+      let { rfq } = operation.input;
+      if (rfq == null) {
+        rfq = await convergence
+          .rfqs()
+          .findRfqByAddress({ address: response.data.rfq });
+      } else {
+        if (response.data.rfq != rfq.address) {
+          throw Error("Passed rfq doesn't match a response!");
+        }
+      }
 
       return toApiResponse(
         response,
-        collateralDecimals,
+        collateralMint.decimals,
         rfq.quoteAsset.instrumentDecimals
       );
     },

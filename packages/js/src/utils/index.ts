@@ -1,4 +1,5 @@
 export * from './assert';
+export * from './cache';
 export * from './common';
 export * from './conversions';
 export * from './Disposable';
