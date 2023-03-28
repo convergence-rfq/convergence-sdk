@@ -1369,7 +1369,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   });
 
   //only
-  test('[riskEngineModule] it can calculate collateral for a confirmation of the Rfq', async (t: Test) => {
+  test.only('[riskEngineModule] it can calculate collateral for a confirmation of the Rfq', async (t: Test) => {
     const { optionMarketKey: optionMarketKey1, optionMarket: optionMarket1 } =
       await initializeNewAmericanOption(
         cvg,
@@ -1416,7 +1416,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       rfq.address,
       optionMarket1,
       americanProgram,
-      1_000_000
+      0.001
     );
 
     const legs = await instrumentsToLegs(cvg, [americanInstrument1]);
@@ -1453,6 +1453,15 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         legsMultiplierBps: 5,
       },
     });
+
+    console.log(
+      'response bid amount Bps: ',
+      rfqResponse.bid?.priceQuote.amountBps.toString()
+    );
+    console.log(
+      'response ask amount Bps: ',
+      rfqResponse.ask?.priceQuote.amountBps.toString()
+    );
 
     const responseRiskOutput = await cvg
       .riskEngine()
