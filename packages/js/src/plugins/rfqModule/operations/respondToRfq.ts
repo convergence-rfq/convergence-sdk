@@ -194,8 +194,6 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         .findResponseByAddress({ address: responsePda });
       assertResponse(rfqResponse);
 
-      console.log(rfqResponse.ask?.priceQuote.amountBps)
-
       return { ...output, rfqResponse };
     },
   };

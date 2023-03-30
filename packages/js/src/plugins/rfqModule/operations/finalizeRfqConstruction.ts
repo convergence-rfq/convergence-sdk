@@ -189,8 +189,8 @@ export const finalizeRfqConstructionBuilder = async (
     programs,
   });
 
-  legs =
-    legs ?? (await convergence.rfqs().findRfqByAddress({ address: rfq })).legs;
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  legs = legs ?? rfqModel.legs;
 
   collateralInfo = collateralInfo ?? collateralInfoPda;
   collateralToken = collateralToken ?? collateralTokenPda;

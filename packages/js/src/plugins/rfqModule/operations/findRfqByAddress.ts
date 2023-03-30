@@ -82,6 +82,7 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
       if (convert) {
         if (!collateralMintDecimals) {
           const protocol = await convergence.protocol().get();
+          
           collateralMintDecimals = (
             await convergence
               .tokens()

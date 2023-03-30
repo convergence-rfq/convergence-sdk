@@ -164,7 +164,6 @@ export const prepareSettlementBuilder = async (
     legAmountToPrepare,
   } = params;
 
-  // const protocol = await convergence.protocol().get();
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
@@ -288,15 +287,6 @@ export const prepareSettlementBuilder = async (
       rfqModel,
     });
 
-    // const callerTokensPda = convergence.tokens().pdas().associatedTokenAccount({
-    //   mint: baseAssetMints[legIndex].address,
-    //   owner: caller.publicKey,
-    //   programs,
-    // });
-    // const callerTokensAccount = await convergence
-    //   .rpc()
-    //   .getAccount(callerTokensPda);
-
     const legAccounts: AccountMeta[] = [
       // `caller`
       {
@@ -304,7 +294,7 @@ export const prepareSettlementBuilder = async (
         isSigner: true,
         isWritable: true,
       },
-      // `caller_tokens`
+      // `caller_token_account`
       {
         pubkey: await getOrCreateATA(
           convergence,
@@ -321,6 +311,7 @@ export const prepareSettlementBuilder = async (
         isSigner: false,
         isWritable: false,
       },
+      // `escrow`
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,

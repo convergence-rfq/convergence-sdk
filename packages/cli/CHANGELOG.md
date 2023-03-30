@@ -1,5 +1,29 @@
 # @convergence-rfq/cli
 
+## 4.0.24-rc.21
+
+### Patch Changes
+
+- remove console.log
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.24
+
+## 4.0.24-rc.20
+
+### Patch Changes
+
+- fix minting receiver logic for options
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.24
+
+## 4.0.24-rc.19
+
+### Patch Changes
+
+- fix response conversion, bid,ask, getCreateAccountsAndMintOptionsTransaction
+- Updated dependencies
+  - @convergence-rfq/sdk@4.0.24
+
 ## 4.0.24-rc.18
 
 ### Patch Changes

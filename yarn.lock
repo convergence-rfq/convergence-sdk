@@ -1281,9 +1281,7 @@
     bn.js "^5.2.0"
 
 "@convergence-rfq/sdk@4.0.24":
-  version "4.0.24-rc.16"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/sdk/-/sdk-4.0.24-rc.16.tgz#e3235bf5ba93360ea73be19ec608b3dc52c3612d"
-  integrity sha512-iGhrxZz+TFrJSkQAy8pGQODb9RJlNtrC9MGtIFz/p97n/Bn02k1T7+ZI+6eiZo7H+uI019T6rSXgfv63ltwtSw==
+  version "4.0.24-rc.21"
   dependencies:
     "@aws-crypto/sha256-js" "3.0.0"
     "@bundlr-network/client" "^0.8.8"
