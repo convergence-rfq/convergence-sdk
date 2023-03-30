@@ -211,29 +211,7 @@ export async function legsToInstruments<
 >(convergence: Convergence, legs: Leg[]): Promise<T[]> {
   return await Promise.all(
     legs.map(async (leg: Leg) => {
-      if (leg.instrumentProgram.equals(spotInstrumentProgram.address)) {
-        return (await SpotInstrument.createFromLeg(convergence, leg)) as T;
-      } else if (
-        leg.instrumentProgram.equals(
-          psyoptionsEuropeanInstrumentProgram.address
-        )
-      ) {
-        return (await PsyoptionsEuropeanInstrument.createFromLeg(
-          convergence,
-          leg
-        )) as T;
-      } else if (
-        leg.instrumentProgram.equals(
-          psyoptionsAmericanInstrumentProgram.address
-        )
-      ) {
-        return (await PsyoptionsAmericanInstrument.createFromLeg(
-          convergence,
-          leg
-        )) as T;
-      }
-
-      throw new Error('Unsupported instrument program');
+      return await legToInstrument<T>(convergence, leg);
     })
   );
 }
@@ -404,7 +382,6 @@ export const convertResponseOutput = (
     }
   }
   if (response.ask) {
-
     let convertedPriceQuoteAmountBps =
       response.ask.priceQuote.amountBps instanceof anchor.BN
         ? response.ask.priceQuote.amountBps
@@ -435,73 +412,50 @@ export const convertResponseOutput = (
   return response;
 };
 
+const convertQuoteInput = (quote: Quote | undefined, quoteDecimals: number) => {
+  if (!quote) return;
+
+  const convertedQuote = structuredClone(quote);
+  convertedQuote.priceQuote.amountBps = quote.priceQuote.amountBps;
+
+  let convertedPriceQuoteAmountBps =
+    convertedQuote.priceQuote.amountBps instanceof anchor.BN
+      ? convertedQuote.priceQuote.amountBps
+      : new anchor.BN(convertedQuote.priceQuote.amountBps);
+
+  convertedQuote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(
+    new anchor.BN(Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS))
+  );
+
+  if (convertedQuote.__kind == 'Standard') {
+    let convertedLegsMultiplierBps =
+      convertedQuote.legsMultiplierBps instanceof anchor.BN
+        ? convertedQuote.legsMultiplierBps
+        : new anchor.BN(convertedQuote.legsMultiplierBps);
+
+    convertedQuote.legsMultiplierBps = convertedLegsMultiplierBps.mul(
+      new anchor.BN(Math.pow(10, LEG_MULTIPLIER_DECIMALS))
+    );
+  }
+
+  return convertedQuote;
+};
+
 export const convertResponseInput = (
   quoteDecimals: number,
   bid?: Quote,
   ask?: Quote
 ) => {
-  let convertedBid = structuredClone(bid);
-  if (convertedBid && bid) {
-    convertedBid.priceQuote.amountBps = bid?.priceQuote.amountBps;
-  }
-  let convertedAsk = structuredClone(ask);
-  if (convertedAsk && ask) {
-    convertedAsk.priceQuote.amountBps = ask?.priceQuote.amountBps;
-  }
+  const convertedBid = convertQuoteInput(bid, quoteDecimals);
+  const convertedAsk = convertQuoteInput(ask, quoteDecimals);
 
-  if (convertedBid) {
-    let convertedPriceQuoteAmountBps =
-      convertedBid.priceQuote.amountBps instanceof anchor.BN
-        ? convertedBid.priceQuote.amountBps
-        : new anchor.BN(convertedBid.priceQuote.amountBps);
-
-    convertedPriceQuoteAmountBps = convertedPriceQuoteAmountBps.mul(
-      new anchor.BN(Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS))
-    );
-
-    convertedBid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
-
-    if (convertedBid.__kind == 'Standard') {
-      let convertedLegsMultiplierBps =
-        convertedBid.legsMultiplierBps instanceof anchor.BN
-          ? convertedBid.legsMultiplierBps
-          : new anchor.BN(convertedBid.legsMultiplierBps);
-
-      convertedLegsMultiplierBps = convertedLegsMultiplierBps.mul(
-        new anchor.BN(Math.pow(10, LEG_MULTIPLIER_DECIMALS))
-      );
-
-      convertedBid.legsMultiplierBps = convertedLegsMultiplierBps;
-    }
-  }
-  if (convertedAsk) {
-    let convertedPriceQuoteAmountBps =
-      convertedAsk.priceQuote.amountBps instanceof anchor.BN
-        ? convertedAsk.priceQuote.amountBps
-        : new anchor.BN(convertedAsk.priceQuote.amountBps);
-
-    convertedPriceQuoteAmountBps = convertedPriceQuoteAmountBps.mul(
-      new anchor.BN(Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS))
-    );
-
-    convertedAsk.priceQuote.amountBps = convertedPriceQuoteAmountBps;
-
-    if (convertedAsk.__kind == 'Standard') {
-      let convertedLegsMultiplierBps =
-        convertedAsk.legsMultiplierBps instanceof anchor.BN
-          ? convertedAsk.legsMultiplierBps
-          : new anchor.BN(convertedAsk.legsMultiplierBps);
-
-      convertedLegsMultiplierBps = convertedLegsMultiplierBps.mul(
-        new anchor.BN(Math.pow(10, LEG_MULTIPLIER_DECIMALS))
-      );
-
-      convertedAsk.legsMultiplierBps = convertedLegsMultiplierBps;
-    }
-  }
+  console.log('convertedBid', convertedBid);
+  console.log('convertedAsk', convertedAsk);
 
   return { convertedBid, convertedAsk };
 };
+
+// --------------------------------------------
 
 export const calculateExpectedLegsHash = async (
   convergence: Convergence,
