@@ -2,7 +2,7 @@ import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
-import { Quote, Side, Leg, FixedSize, QuoteAsset } from '@convergence-rfq/rfq';
+import { Quote, Side, Leg, FixedSize, QuoteAsset, StoredRfqState } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
@@ -449,13 +449,8 @@ export const convertResponseInput = (
   const convertedBid = convertQuoteInput(bid, quoteDecimals);
   const convertedAsk = convertQuoteInput(ask, quoteDecimals);
 
-  console.log('convertedBid', convertedBid);
-  console.log('convertedAsk', convertedAsk);
-
   return { convertedBid, convertedAsk };
 };
-
-// --------------------------------------------
 
 export const calculateExpectedLegsHash = async (
   convergence: Convergence,
@@ -1553,3 +1548,19 @@ export const createAccountsAndMintOptions = async (
     await txBuilder.sendAndConfirm(convergence, confirmOptions);
   }
 };
+
+export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
+  return rfqs
+  .sort((a, b) => {
+    return b.state === StoredRfqState.Active ? 1 : -1;
+  })
+  .sort((a, b) => {
+    if (a.state === b.state) {
+      const aTimeToExpiry = Number(a.creationTimestamp) + a.activeWindow;
+      const bTimeToExpiry = Number(b.creationTimestamp) + b.activeWindow;
+      return aTimeToExpiry - bTimeToExpiry;
+    } else {
+      return 0;
+    }
+  });
+}

@@ -92,6 +92,12 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
           }
         }
 
+        rfqsByActive.sort((a, b) => {
+          const aTimeToExpiry = Number(a.creationTimestamp) + a.activeWindow;
+          const bTimeToExpiry = Number(b.creationTimestamp) + b.activeWindow;
+          return aTimeToExpiry - bTimeToExpiry;
+        });
+
         const pages = getPages(rfqsByActive, rfqsPerPage, numPages);
 
         return pages;
@@ -99,7 +105,10 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
 
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
+      const unparsedAccounts = await rfqGpaBuilder
+        .withoutData()
+        // .whereState(StoredRfqState.Active)
+        .get();
       const unparsedAddresses = unparsedAccounts.map(
         (account) => account.publicKey
       );
@@ -129,6 +138,12 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
           }
         }
       }
+
+      parsedRfqs.sort((a, b) => {
+        const aTimeToExpiry = Number(a.creationTimestamp) + a.activeWindow;
+        const bTimeToExpiry = Number(b.creationTimestamp) + b.activeWindow;
+        return aTimeToExpiry - bTimeToExpiry;
+      });
 
       const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
 

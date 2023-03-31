@@ -2,7 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 
 import { Rfq, toRfq } from '../models';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
-import { convertRfqOutput, getPages } from '../helpers';
+import { convertRfqOutput, getPages, sortByActiveAndExpiry } from '../helpers';
 import { toRfqAccount } from '../accounts';
 import {
   Operation,
@@ -85,7 +85,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       ).decimals;
 
       if (rfqs) {
-        const rfqsByOwner: Rfq[] = [];
+        let rfqsByOwner: Rfq[] = [];
 
         for (const rfq of rfqs) {
           if (rfq.taker.toBase58() === owner.toBase58()) {
@@ -95,6 +95,8 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
           }
         }
         scope.throwIfCanceled();
+
+        rfqsByOwner = sortByActiveAndExpiry(rfqsByOwner);
 
         const pages = getPages(rfqsByOwner, rfqsPerPage, numPages);
 
@@ -116,7 +118,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
         unparsedAddresses.length / 100
       );
 
-      const parsedRfqs: Rfq[] = [];
+      let parsedRfqs: Rfq[] = [];
 
       for (let i = 0; i < callsToGetMultipleAccounts; i++) {
         const accounts = await convergence
@@ -135,18 +137,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       }
       scope.throwIfCanceled();
 
-      // const accounts = await convergence
-      //   .rpc()
-      //   .getMultipleAccounts(unparsedAddresses, commitment);
-
-      // for (const account of accounts) {
-      //   const rfq = toRfq(toRfqAccount(account));
-      //   const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
-
-      //   parsedRfqs.push(convertedRfq);
-      // }
-      // scope.throwIfCanceled();
-
+      parsedRfqs = sortByActiveAndExpiry(parsedRfqs);
       const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
 
       return pages;

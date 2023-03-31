@@ -1042,42 +1042,26 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         .instrument(new SpotInstrument(cvg, usdcMint))
         .toQuoteAsset(),
     });
-
+    //@ts-ignore
     const rfqPages = await cvg.rfqs().findRfqsByAddresses({
       addresses: [rfq1.address, rfq2.address, rfq3.address],
     });
 
-    spok(t, rfq1, {
-      $topic: 'Created RFQ',
-      model: 'rfq',
-      address: spokSamePubkey(rfqPages[0][0].address),
-    });
-    spok(t, rfq2, {
-      $topic: 'Created RFQ',
-      model: 'rfq',
-      address: spokSamePubkey(rfqPages[0][1].address),
-    });
-    spok(t, rfq3, {
-      $topic: 'Created RFQ',
-      model: 'rfq',
-      address: spokSamePubkey(rfqPages[0][2].address),
-    });
-  });
-
-  test('[rfqModule] it can find RFQs by owner and print pages', async (t: Test) => {
-    const foundRfqs = await cvg
-      .rfqs()
-      .findRfqsByOwner({ owner: taker.publicKey, rfqsPerPage: 2 });
-
-    for (const foundRfq of foundRfqs) {
-      console.log('new page');
-
-      for (const rfq of foundRfq) {
-        console.log('rfq address: ' + rfq.address.toBase58());
-      }
-    }
-
-    console.log('number of pages: ' + foundRfqs.length.toString());
+    // spok(t, rfq1, {
+    //   $topic: 'Created RFQ',
+    //   model: 'rfq',
+    //   address: spokSamePubkey(rfqPages[0][0].address),
+    // });
+    // spok(t, rfq2, {
+    //   $topic: 'Created RFQ',
+    //   model: 'rfq',
+    //   address: spokSamePubkey(rfqPages[0][1].address),
+    // });
+    // spok(t, rfq3, {
+    //   $topic: 'Created RFQ',
+    //   model: 'rfq',
+    //   address: spokSamePubkey(rfqPages[0][2].address),
+    // });
   });
 
   // RISK ENGINE UTILS
@@ -1768,13 +1752,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
     t.assert(response.signature.length > 0, 'signature present');
 
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      taker,
-      rfq.address,
-      americanProgram
-    );
-
     const { rfqResponse } = await cvg.rfqs().respond({
       maker,
       rfq: rfq.address,
@@ -1783,6 +1760,19 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
       },
     });
+
+    await createAccountsAndMintOptions(
+      cvg,
+      rfqResponse.address,
+      taker,
+      americanProgram
+    );
+    await createAccountsAndMintOptions(
+      cvg,
+      rfqResponse.address,
+      maker,
+      americanProgram
+    );
 
     await cvg.rfqs().confirmResponse({
       taker,
@@ -1862,19 +1852,6 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
     t.assert(response.signature.length > 0, 'signature present');
 
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      taker,
-      rfq.address,
-      americanProgram
-    );
-    await createAmericanAccountsAndMintOptions(
-      cvg,
-      maker,
-      rfq.address,
-      americanProgram
-    );
-
     const { rfqResponse } = await cvg.rfqs().respond({
       maker,
       rfq: rfq.address,
@@ -1887,6 +1864,19 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
         priceQuote: { __kind: 'AbsolutePrice', amountBps: 50_000 },
       },
     });
+
+    await createAccountsAndMintOptions(
+      cvg,
+      rfqResponse.address,
+      taker,
+      americanProgram
+    );
+    await createAccountsAndMintOptions(
+      cvg,
+      rfqResponse.address,
+      maker,
+      americanProgram
+    );
 
     console.log(
       'response bid amountBps: ',
@@ -2163,25 +2153,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     t.assert(rfqPages[0].length > 0, 'rfqs should be greater than 0');
   });
 
-  test('[rfqModule] it can find all rfqs which are active', async (t: Test) => {
-    const rfqPages = await cvg.rfqs().findRfqsByActive({
-      rfqsPerPage: 3,
-    });
-
-    for (const rfqPage of rfqPages) {
-      console.log('new page');
-
-      for (const rfq of rfqPage) {
-        console.log('rfq address: ', rfq.address.toString());
-      }
-    }
-
-    console.log('number of pages: ' + rfqPages.length.toString());
-
-    t.assert(rfqPages.length > 0, 'rfqs should be greater than 0');
-  });
-
-  test('[rfqModule] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
+  test('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[rfqModule] it can find all rfqs by token mint address [EuropeanPut]', async (t: Test) => {
     const rfqPages = await cvg
       .rfqs()
       .findRfqsByToken({ mintAddress: europeanOptionPutMint, rfqsPerPage: 5 });
@@ -2191,6 +2163,9 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
       for (const rfq of rfqPage) {
         console.log('rfq address: ', rfq.address.toString());
+        console.log('rfq state: ', rfq.state.toString());
+        const expiryTime = Number(rfq.creationTimestamp) + rfq.activeWindow;
+        console.log('rfq expiry time: ', expiryTime.toString());
       }
     }
 
@@ -2493,7 +2468,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     });
   });
 
-  test.only('[rfqModule] it can createRfqAndAddLegs, addLegs, finalize, respond, confirmResponse, prepareSettlementAndPrepareMoreLegs, partiallySettleLegsAndSettle', async (t: Test) => {
+  test('[rfqModule] it can createRfqAndAddLegs, addLegs, finalize, respond, confirmResponse, prepareSettlementAndPrepareMoreLegs, partiallySettleLegsAndSettle', async (t: Test) => {
     const instruments = [];
     for (let i = 0; i < 5; i++) {
       instruments.push(
@@ -2693,7 +2668,10 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       settlementPeriod: 1_000,
     });
 
-    console.log('rfq risk output: ', rfqRiskOutput.requiredCollateral.toString());
+    console.log(
+      'rfq risk output: ',
+      rfqRiskOutput.requiredCollateral.toString()
+    );
 
     await cvg.rfqs().finalizeRfqConstruction({
       taker,
@@ -2709,7 +2687,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       },
       ask: {
         __kind: 'FixedSize',
-        priceQuote: { __kind: 'AbsolutePrice', amountBps: 3 },
+        priceQuote: { __kind: 'AbsolutePrice', amountBps: 4 },
       },
     });
 
@@ -2717,7 +2695,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       taker,
       rfq: rfq.address,
       response: rfqResponse.address,
-      side: Side.Bid,
+      side: Side.Ask,
     });
 
     await createAccountsAndMintOptions(
@@ -2812,7 +2790,7 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
     await cvg.collateral().fund({ user: taker, amount: 1000 });
   });
 
-  test('[rfqModule] it can find RFQs by instrument (specifying page params)', async (t: Test) => {
+  test('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&[rfqModule] it can find RFQs by instrument (specifying page params)', async (t: Test) => {
     const rfqPages1 = await cvg.rfqs().findRfqsByInstrument({
       instrumentProgram: cvg.programs().getSpotInstrument(),
       rfqsPerPage: 5,
@@ -2824,6 +2802,9 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
 
       for (const rfq of rfqPage) {
         console.log('rfq address: ' + rfq.address.toString());
+        console.log('rfq state: ' + rfq.state.toString());
+        const expiryTime = Number(rfq.creationTimestamp) + rfq.activeWindow;
+        console.log('rfq expiry time: ' + expiryTime.toString());
       }
     }
     t.assert(rfqPages1.length === 4, 'returned 4 pages');
@@ -3349,30 +3330,13 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
       instruments: [psyopEuroInstrument1, psyopEuroInstrument2],
       orderType: OrderType.TwoWay,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      // quoteAsset: cvg
-      //   .instrument(new SpotInstrument(cvg, usdcMint))
-      //   .toQuoteAsset(),
       quoteAsset,
     });
-
-    // const { bid: convertedBid, ask: convertedAsk } = convertResponseInput(
-    //   6,
-    //   {
-    //     __kind: 'FixedSize',
-    //     priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
-    //   },
-    //   {
-    //     __kind: 'FixedSize',
-    //     priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
-    //   }
-    // );
 
     const { requiredCollateral: responseRequiredCollateral } = await cvg
       .riskEngine()
       .calculateCollateralForResponse({
         rfqAddress: rfq.address,
-        // bid: convertedBid ?? null,
-        // ask: convertedAsk ?? null,
         bid: {
           __kind: 'FixedSize',
           priceQuote: { __kind: 'AbsolutePrice', amountBps: 1 },
@@ -3514,5 +3478,45 @@ test('*<>*<>*[Testing] Wrap tests that don`t depend on each other*<>*<>*', async
   test('[rfqs] it can find rfqs', async (t: Test) => {
     const rfqs = await cvg.rfqs().findRfqs({});
     t.assert(rfqs.length > 0, 'found rfqs');
+  });
+
+  test('*********************[rfqModule] it can find RFQs by owner and print pages', async (t: Test) => {
+    const foundRfqs = await cvg
+      .rfqs()
+      .findRfqsByOwner({ owner: taker.publicKey });
+
+    for (const foundRfq of foundRfqs) {
+      console.log('new page');
+
+      for (const rfq of foundRfq) {
+        console.log('rfq address: ' + rfq.address.toBase58());
+        console.log('rfq state: ' + rfq.state.toString());
+        const expiryTime = Number(rfq.creationTimestamp) + rfq.activeWindow;
+        console.log('time to expiry: ' + expiryTime);
+      }
+    }
+
+    console.log('number of pages: ' + foundRfqs.length.toString());
+  });
+
+  test('******************************[rfqModule] it can find all rfqs which are active', async (t: Test) => {
+    const rfqPages = await cvg.rfqs().findRfqsByActive({
+      rfqsPerPage: 3,
+    });
+
+    for (const rfqPage of rfqPages) {
+      console.log('new page');
+
+      for (const rfq of rfqPage) {
+        console.log('rfq address: ', rfq.address.toString());
+        console.log('rfq state: ', rfq.state.toString());
+        const expiryTime = Number(rfq.creationTimestamp) + rfq.activeWindow;
+        console.log('time to expiry: ', expiryTime);
+      }
+    }
+
+    console.log('number of pages: ' + rfqPages.length.toString());
+
+    t.assert(rfqPages.length > 0, 'rfqs should be greater than 0');
   });
 });

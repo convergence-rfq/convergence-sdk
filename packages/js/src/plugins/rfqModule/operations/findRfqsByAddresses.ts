@@ -1,8 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
-
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
-import { convertRfqOutput, getPages } from '../helpers';
+import { convertRfqOutput, getPages, sortByActiveAndExpiry } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -78,7 +77,7 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
       const { commitment } = scope;
       scope.throwIfCanceled();
 
-      const rfqs: Rfq[] = [];
+      let rfqs: Rfq[] = [];
 
       const protocol = await convergence.protocol().get();
       const collateralMintDecimals = (
@@ -106,6 +105,8 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
         }
       }
       scope.throwIfCanceled();
+
+      rfqs = sortByActiveAndExpiry(rfqs);
 
       const pages = getPages(rfqs, rfqsPerPage, numPages);
 
