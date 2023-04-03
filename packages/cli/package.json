@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/cli",
-  "version": "4.0.24-rc.14",
+  "version": "4.0.24-rc.21",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -35,7 +35,7 @@
     "cli": "ts-node src/index.ts"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "4.0.24-rc.15",
+    "@convergence-rfq/sdk": "4.0.24-rc.21",
     "@solana/web3.js": "^1.73.0",
     "commander": "^10.0.0"
   },

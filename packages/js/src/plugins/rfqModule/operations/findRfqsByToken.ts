@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
-
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
 import {
@@ -11,7 +10,7 @@ import {
   PsyoptionsEuropeanInstrument,
   psyoptionsEuropeanInstrumentProgram,
 } from '../../psyoptionsEuropeanInstrumentModule';
-import { getPages, convertRfqOutput } from '../helpers';
+import { getPages, convertRfqOutput, sortByActiveAndExpiry } from '../helpers';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import { Convergence } from '../../../Convergence';
 import { SpotInstrumentDataSerializer } from '../../spotInstrumentModule';
@@ -98,7 +97,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       ).decimals;
 
       if (rfqs) {
-        const rfqsByToken: Rfq[] = [];
+        let rfqsByToken: Rfq[] = [];
 
         for (const rfq of rfqs) {
           if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
@@ -181,6 +180,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
         }
         scope.throwIfCanceled();
 
+        rfqsByToken = sortByActiveAndExpiry(rfqsByToken);
+
         const pages = getPages(rfqsByToken, rfqsPerPage, numPages);
 
         return pages;
@@ -198,7 +199,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
         unparsedAddresses.length / 100
       );
 
-      const parsedRfqs: Rfq[] = [];
+      let parsedRfqs: Rfq[] = [];
 
       for (let i = 0; i < callsToGetMultipleAccounts; i++) {
         const accounts = await convergence
@@ -290,6 +291,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
           }
         }
       }
+
+      parsedRfqs = sortByActiveAndExpiry(parsedRfqs);
 
       const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
 

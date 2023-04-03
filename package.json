@@ -26,7 +26,7 @@
     "test": "turbo run test --filter=[origin/main]",
     "test:all": "turbo run test",
     "test:filter": "CI=1 ./infra/run-filtered-tests.sh",
-    "test:validator": "pkill solana-test-validator | echo '' && node ./infra/validator.js & && yarn test",
+    "test:validator": "pkill solana-test-validator | echo '' && node ./infra/validator.js && yarn test",
     "validator:run": "pkill solana-test-validator | echo '' && node ./infra/validator.js",
     "validator:logs": "node ./infra/logs.js",
     "lint": "turbo run lint",

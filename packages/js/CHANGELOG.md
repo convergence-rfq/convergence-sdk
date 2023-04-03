@@ -1,5 +1,41 @@
 # @convergence-rfq/sdk
 
+## 4.0.24-rc.21
+
+### Patch Changes
+
+- remove console.log
+
+## 4.0.24-rc.20
+
+### Patch Changes
+
+- fix minting receiver logic for options
+
+## 4.0.24-rc.19
+
+### Patch Changes
+
+- fix response conversion, bid,ask, getCreateAccountsAndMintOptionsTransaction
+
+## 4.0.24-rc.18
+
+### Patch Changes
+
+- use BN in convertResponseOutput
+
+## 4.0.24-rc.17
+
+### Patch Changes
+
+- don't mutate state in convertResponseOutput
+
+## 4.0.24-rc.16
+
+### Patch Changes
+
+- dont change bid ask state in convertResponseInput
+
 ## 4.0.24-rc.11
 
 ### Patch Changes

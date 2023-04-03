@@ -31,7 +31,6 @@ export class ResponseGpaBuilder extends GpaBuilder {
   }
 
   whereRfq(address: PublicKey) {
-    // TODO: Finish
     return this.where(RFQ, address);
   }
 }

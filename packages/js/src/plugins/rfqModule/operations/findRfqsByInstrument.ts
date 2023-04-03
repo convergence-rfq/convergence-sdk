@@ -1,6 +1,6 @@
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
-import { convertRfqOutput, getPages } from '../helpers';
+import { convertRfqOutput, getPages, sortByActiveAndExpiry } from '../helpers';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import {
   Operation,
@@ -85,7 +85,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       ).decimals;
 
       if (rfqs) {
-        const rfqsByInstrument: Rfq[] = [];
+        let rfqsByInstrument: Rfq[] = [];
 
         for (const rfq of rfqs) {
           for (const leg of rfq.legs) {
@@ -106,6 +106,8 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         }
         scope.throwIfCanceled();
 
+        rfqsByInstrument = sortByActiveAndExpiry(rfqsByInstrument);
+
         const pages = getPages(rfqsByInstrument, rfqsPerPage, numPages);
 
         return pages;
@@ -124,7 +126,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         unparsedAddresses.length / 100
       );
 
-      const parsedRfqs: Rfq[] = [];
+      let parsedRfqs: Rfq[] = [];
 
       for (let i = 0; i < callsToGetMultipleAccounts; i++) {
         const accounts = await convergence
@@ -154,6 +156,8 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
           }
         }
       }
+
+      parsedRfqs = sortByActiveAndExpiry(parsedRfqs);
 
       const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
 

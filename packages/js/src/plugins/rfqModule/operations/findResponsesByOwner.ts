@@ -110,7 +110,10 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
         convergence,
         rfqProgram.address
       );
-      const unparsedAccounts = await responseGpaBuilder.withoutData().get();
+      const unparsedAccounts = await responseGpaBuilder
+        .withoutData()
+        .whereMaker(owner)
+        .get();
       const unparsedAddresses = unparsedAccounts.map(
         (account) => account.publicKey
       );

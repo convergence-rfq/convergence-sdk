@@ -1,5 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
-import { OrderType, PROGRAM_ID, rfqDiscriminator } from '@convergence-rfq/rfq';
+import {
+  OrderType,
+  PROGRAM_ID,
+  rfqDiscriminator,
+  StoredRfqState,
+} from '@convergence-rfq/rfq';
 
 import { Convergence } from '../../Convergence';
 import { GpaBuilder } from '../../utils';
@@ -34,6 +39,10 @@ export class RfqGpaBuilder extends GpaBuilder {
 
   whereOrderType(orderType: OrderType) {
     return this.where(ORDER_TYPE, orderType);
+  }
+
+  whereState(state: StoredRfqState) {
+    return this.where(STATE, Number(state));
   }
 
   // whereInstrument(address: PublicKey) {

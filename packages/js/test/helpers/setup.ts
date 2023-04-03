@@ -218,12 +218,21 @@ export const setupAccounts = async (
   const { token: takerSOLWallet } = await cvg
     .tokens()
     .createToken({ mint: solMint.address, owner: taker.publicKey });
+  const { token: makerSOLWallet } = await cvg
+    .tokens()
+    .createToken({ mint: solMint.address, owner: maker.publicKey });
 
   // Mint SOL
   await cvg.tokens().mint({
     mintAddress: solMint.address,
     amount: token(solWalletAmount, SOL_DECIMALS),
     toToken: takerSOLWallet.address,
+    mintAuthority,
+  });
+  await cvg.tokens().mint({
+    mintAddress: solMint.address,
+    amount: token(solWalletAmount, SOL_DECIMALS),
+    toToken: makerSOLWallet.address,
     mintAuthority,
   });
 
