@@ -30,5 +30,10 @@ describe('collateral', () => {
       .collateral()
       .findByUser({ user: new PublicKey(ctx.taker) });
     expect(collateral).toHaveProperty('address');
+
   });
+
+  it('fund',async () =>{
+    cvg.collateral().fund({amount:1000})
+  })
 });
