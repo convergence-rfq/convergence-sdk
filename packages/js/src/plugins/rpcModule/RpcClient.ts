@@ -112,9 +112,9 @@ export class RpcClient {
   ): Promise<Transaction> {
     const { keypairs, identities } = getSignerHistogram(signers);
 
-    const recentBlockhash =
-      await this.convergence.connection.getRecentBlockhash();
-    transaction.recentBlockhash = recentBlockhash.blockhash;
+    // const recentBlockhash =
+    //   await this.convergence.connection.getRecentBlockhash();
+    // transaction.recentBlockhash = recentBlockhash.blockhash;
 
     // Keypair signers.
     if (keypairs.length > 0) {
