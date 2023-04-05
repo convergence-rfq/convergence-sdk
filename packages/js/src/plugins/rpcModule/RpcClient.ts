@@ -167,10 +167,10 @@ export class RpcClient {
 
     transaction = await this.signTransaction(transaction, signers);
     const rawTransaction = transaction.serialize();
-    sendOptions.skipPreflight = this.convergence.skipPreflight;
+    // sendOptions.skipPreflight = this.convergence.skipPreflight; // diff from metaplex need to remove 
 
-    // TODO: Make this configurable.
-    sendOptions.skipPreflight = true;
+    // // TODO: Make this configurable.
+    // sendOptions.skipPreflight = true; // diff from metaplex need to remove 
 
     try {
       return await this.convergence.connection.sendRawTransaction(

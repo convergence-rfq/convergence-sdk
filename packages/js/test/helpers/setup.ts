@@ -73,7 +73,7 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
   const connection = new Connection(options.rpcEndpoint ?? RPC_ENDPOINT, {
     commitment: options.commitment ?? 'confirmed',
   });
-  return Convergence.make(connection, { skipPreflight: options.skipPreflight });
+  return Convergence.make(connection);
 };
 
 export const convergenceCli = async (options: ConvergenceTestOptions = {}) => {
