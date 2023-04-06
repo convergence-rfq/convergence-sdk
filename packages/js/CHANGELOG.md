@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.0.24-rc.32
+
+### Patch Changes
+
+- the dist folder(RpcClient.mjs) was missing recentBlockhash , built sdk again and now its there
+
 ## 4.0.24-rc.21
 
 ### Patch Changes
