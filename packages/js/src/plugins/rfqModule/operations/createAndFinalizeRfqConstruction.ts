@@ -167,7 +167,9 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         settlingWindow = 1_000,
       } = operation.input;
 
-      const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
+      const recentTimestamp = new anchor.BN(
+        Math.floor(Date.now() / 1_000) - 10
+      );
 
       const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
       const [legs, expectedLegsHash] =

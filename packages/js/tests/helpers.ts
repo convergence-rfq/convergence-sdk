@@ -35,7 +35,7 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
 
 // Default user is dao but could be maker, taker or mint_authority
 export const createSdk = async (user = 'dao'): Promise<Convergence> => {
-  const cvg = createCvg();
+  const cvg = createCvg({ skipPreflight: false });
   return cvg.use(keypairIdentity(getKeypair(user)));
 };
 
@@ -152,18 +152,18 @@ export const settle = async (
   });
 };
 
-export const createAmericanAccountsAndMint = async (
-  cvg: Convergence,
-  rfq: Rfq,
-  optionMarket: OptionMarketWithKey,
-  amount: number
-) => {
-  await createAmericanAccountsAndMintOptions(
-    cvg,
-    cvg.rpc().getDefaultFeePayer() as Keypair,
-    rfq.address,
-    optionMarket,
-    createAmericanProgram(cvg),
-    amount
-  );
-};
+export const createAmericanAccountsAndMint = async () =>
+  //cvg: Convergence,
+  //rfq: Rfq,
+  //optionMarket: OptionMarketWithKey,
+  //amount: number
+  {
+    //await createAmericanAccountsAndMintOptions(
+    //  cvg,
+    //  cvg.rpc().getDefaultFeePayer() as Keypair,
+    //  rfq.address,
+    //  optionMarket,
+    //  createAmericanProgram(cvg),
+    //  amount
+    //);
+  };
