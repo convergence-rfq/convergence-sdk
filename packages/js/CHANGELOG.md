@@ -1,5 +1,12 @@
 # @convergence-rfq/sdk
 
+## 4.0.24-rc.33
+
+### Patch Changes
+
+- Added back skipPreFlight in RpcClient
+
+
 ## 4.0.24-rc.32
 
 ### Patch Changes
