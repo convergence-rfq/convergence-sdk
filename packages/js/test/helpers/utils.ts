@@ -21,7 +21,7 @@ export function delay(ms: number) {
 }
 
 export const SKIP_PREFLIGHT: ConfirmOptions = {
-  skipPreflight: true,
+  skipPreflight: false,
   commitment: 'confirmed',
 };
 
