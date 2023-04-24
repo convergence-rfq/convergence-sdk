@@ -65,30 +65,30 @@ const getAccountArgs = (name: string) => [
   path.join(__dirname, `accounts/${name}.json`),
 ];
 
-const getSetupCompleteArgs = () => [
-  ...getAccountArgs('account-dao'),
-  ...getAccountArgs('account-maker'),
-  ...getAccountArgs('account-taker'),
-  ...getAccountArgs('mint-authority'),
-  ...getAccountArgs('mint-btc'),
-  ...getAccountArgs('mint-usd-quote'),
-  ...getAccountArgs('token-account-btc-maker'),
-  ...getAccountArgs('token-account-btc-taker'),
-  ...getAccountArgs('token-account-usd-quote-maker'),
-  ...getAccountArgs('token-account-usd-quote-taker'),
-];
+// const getSetupCompleteArgs = () => [
+//   ...getAccountArgs('account-dao'),
+//   ...getAccountArgs('account-maker'),
+//   ...getAccountArgs('account-taker'),
+//   ...getAccountArgs('mint-authority'),
+//   ...getAccountArgs('mint-btc'),
+//   ...getAccountArgs('mint-usd-quote'),
+//   ...getAccountArgs('token-account-btc-maker'),
+//   ...getAccountArgs('token-account-btc-taker'),
+//   ...getAccountArgs('token-account-usd-quote-maker'),
+//   ...getAccountArgs('token-account-usd-quote-taker'),
+// ];
 
-const getBootstrapCompleteArgs = () => [
-  ...getAccountArgs('rfq-protocol'),
-  ...getAccountArgs('risk-engine-config'),
-  ...getAccountArgs('rfq-base-asset-btc'),
-  ...getAccountArgs('rfq-mint-info-usd-quote'),
-  ...getAccountArgs('rfq-mint-info-btc'),
-  ...getAccountArgs('rfq-collateral-info-maker'),
-  ...getAccountArgs('rfq-collateral-info-taker'),
-  ...getAccountArgs('rfq-collateral-token-taker'),
-  ...getAccountArgs('rfq-collateral-token-maker'),
-];
+// const getBootstrapCompleteArgs = () => [
+//   ...getAccountArgs('rfq-protocol'),
+//   ...getAccountArgs('risk-engine-config'),
+//   ...getAccountArgs('rfq-base-asset-btc'),
+//   ...getAccountArgs('rfq-mint-info-usd-quote'),
+//   ...getAccountArgs('rfq-mint-info-btc'),
+//   ...getAccountArgs('rfq-collateral-info-maker'),
+//   ...getAccountArgs('rfq-collateral-info-taker'),
+//   ...getAccountArgs('rfq-collateral-token-taker'),
+//   ...getAccountArgs('rfq-collateral-token-maker'),
+// ];
 
 export class Ctx {
   dao = getPk('dao');
@@ -97,23 +97,23 @@ export class Ctx {
   mintAuthority = getPk('mint_authority');
 
   // Setup complete
-  baseMint = '';
-  quoteMint = '';
-  takerQuoteWallet = '';
-  takerBaseWallet = '';
-  makerQuoteWallet = '';
-  makerBaseWallet = '';
+  baseMint = getJsonPk('mint-btc');
+  quoteMint = getJsonPk('rfq-mint-info-usd-quote');
+  takerQuoteWallet = getJsonPk('token-account-usd-quote-taker');
+  takerBaseWallet = getJsonPk('token-account-btc-taker');
+  makerQuoteWallet = getJsonPk('token-account-usd-quote-maker');
+  makerBaseWallet = getJsonPk('token-account-btc-maker');
 
   // Bootstrap complete
-  protocol = '';
-  riskEngine = '';
-  baseAsset = '';
-  quoteRegisteredMint = '';
-  baseRegisteredMint = '';
-  makerCollateralInfo = '';
-  takerCollateralInfo = '';
-  makerCollateralToken = '';
-  takerCollateralToken = '';
+  protocol = getJsonPk('rfq-protocol');
+  riskEngine = getJsonPk('risk-engine-config');
+  baseAsset = getJsonPk('rfq-base-asset-btc');
+  quoteRegisteredMint = getJsonPk('rfq-mint-info-usd-quote');
+  baseRegisteredMint = getJsonPk('rfq-mint-info-btc');
+  makerCollateralInfo = getJsonPk('rfq-collateral-info-maker');
+  takerCollateralInfo = getJsonPk('rfq-collateral-info-taker');
+  makerCollateralToken = getJsonPk('rfq-collateral-token-maker');
+  takerCollateralToken = getJsonPk('rfq-collateral-token-taker');
 }
 
 class SolanaAccount {
@@ -208,21 +208,10 @@ export const spawnValidator = (
   bootstrap = false,
 ): ChildProccess => {
   const args = getBaseArgs();
-  // args.push("--account-dir"); //accounts
-  // args.push(path.join(__dirname, 'accounts'),)
-  if (setup && bootstrap) {
-    throw new Error('Cannot run both setup and bootstrap');
-  }
-
-  if (!setup || bootstrap) {
-    args.push(...getSetupCompleteArgs());
-  }
-
-  if (!setup && !bootstrap) {
-    args.push(...getBootstrapCompleteArgs());
-  }
-
-  const validator = spawn('solana-test-validator', args);
+  args.push("--account-dir"); //accounts
+  args.push(path.join(__dirname, 'accounts'),)
+ 
+  const validator = spawn('solana-test-validator',args);
 
   validator.on('exit', process.exit);
   

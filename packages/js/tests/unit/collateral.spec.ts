@@ -32,7 +32,6 @@ describe('collateral', () => {
     cvg.collateral().fund({amount:1000})
   })
   it('get', async () => {
-    console.log("get")
     const collateral = await cvg
       .collateral()
       .findByUser({ user: new PublicKey(ctx.taker) });
