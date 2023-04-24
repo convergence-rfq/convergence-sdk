@@ -17,14 +17,20 @@ describe('collateral', () => {
 
   before((done) => {
     ctx = readCtx();
+    // console.log("ctx:",ctx)
     cvg = createCvg();
+    // console.log("cvg:",cvg)
     validator = spawnValidator(done);
+    // console.log(validator)
   });
 
   after(() => {
     validator.kill();
   });
-
+  
+  it('fund',async () =>{
+    cvg.collateral().fund({amount:1000})
+  })
   it('get', async () => {
     const collateral = await cvg
       .collateral()
@@ -33,7 +39,5 @@ describe('collateral', () => {
 
   });
 
-  it('fund',async () =>{
-    cvg.collateral().fund({amount:1000})
-  })
+ 
 });
