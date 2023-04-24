@@ -66,29 +66,28 @@ const getAccountArgs = (name: string) => [
 ];
 
 const getSetupCompleteArgs = () => [
-  ...getAccountArgs('dao'),
-  ...getAccountArgs('maker'),
-  ...getAccountArgs('taker'),
-  ...getAccountArgs('mint_authority'),
-  ...getAccountArgs('base_mint'),
-  ...getAccountArgs('quote_mint'),
-  ...getAccountArgs('maker_base_wallet'),
-  ...getAccountArgs('taker_base_wallet'),
-  ...getAccountArgs('maker_quote_wallet'),
-  ...getAccountArgs('taker_quote_wallet'),
+  ...getAccountArgs('account-dao'),
+  ...getAccountArgs('account-maker'),
+  ...getAccountArgs('account-taker'),
+  ...getAccountArgs('mint-authority'),
+  ...getAccountArgs('mint-btc'),
+  ...getAccountArgs('mint-usd-quote'),
+  ...getAccountArgs('token-account-btc-maker'),
+  ...getAccountArgs('token-account-btc-taker'),
+  ...getAccountArgs('token-account-usd-quote-maker'),
+  ...getAccountArgs('token-account-usd-quote-taker'),
 ];
 
 const getBootstrapCompleteArgs = () => [
-  ...getAccountArgs('protocol'),
-  ...getAccountArgs('risk_engine'),
-  ...getAccountArgs('base_asset'),
-  ...getAccountArgs('risk_engine'),
-  ...getAccountArgs('quote_registered_mint'),
-  ...getAccountArgs('base_registered_mint'),
-  ...getAccountArgs('maker_collateral_info'),
-  ...getAccountArgs('taker_collateral_info'),
-  ...getAccountArgs('taker_collateral_token'),
-  ...getAccountArgs('maker_collateral_token'),
+  ...getAccountArgs('rfq-protocol'),
+  ...getAccountArgs('risk-engine-config'),
+  ...getAccountArgs('rfq-base-asset-btc'),
+  ...getAccountArgs('rfq-mint-info-usd-quote'),
+  ...getAccountArgs('rfq-mint-info-btc'),
+  ...getAccountArgs('rfq-collateral-info-maker'),
+  ...getAccountArgs('rfq-collateral-info-taker'),
+  ...getAccountArgs('rfq-collateral-token-taker'),
+  ...getAccountArgs('rfq-collateral-token-maker'),
 ];
 
 export class Ctx {
@@ -206,10 +205,11 @@ export const readCtx = (): Ctx => {
 export const spawnValidator = (
   done = () => {},
   setup = false,
-  bootstrap = false
+  bootstrap = false,
 ): ChildProccess => {
   const args = getBaseArgs();
-
+  // args.push("--account-dir"); //accounts
+  // args.push(path.join(__dirname, 'accounts'),)
   if (setup && bootstrap) {
     throw new Error('Cannot run both setup and bootstrap');
   }
@@ -221,7 +221,6 @@ export const spawnValidator = (
   if (!setup && !bootstrap) {
     args.push(...getBootstrapCompleteArgs());
   }
-
   const validator = spawn('solana-test-validator', args);
   validator.on('exit', process.exit);
 
