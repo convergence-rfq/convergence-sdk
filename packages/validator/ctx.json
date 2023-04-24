@@ -1,1 +1,21 @@
-{"dao":"HMMqtjVBqxwC2kqGMd3oPQ7pSwyqbpGLzYTp1onr21G2","maker":"LxnEKWoRhZizxg4nZJG8zhjQhCLYxcTjvLp9ATDUqNS","taker":"BDiiVDF1aLJsxV6BDnP3sSVkCEm9rBt7n1T1Auq1r4Ux","mintAuthority":"3mweMVQELCtNVuMJUWuXp6AhT4h1q2UB6igzjJs7oi3G","baseMint":"HFVotP9VVGPjEKY4jgECWoR4UXXU4VBTqFWkBwRQAcp","quoteMint":"Ek8baYJB7m6hsJkX6t67GuCku5tsJ4ebybSo1zacNCLD","takerQuoteWallet":"DjytePsnFDfpwyMGQkrstZ8rL6T6DyhawwSKuJq36pwc","takerBaseWallet":"HHDN89ke9XhoFwaWTzyBqS7aREdGNWXz3VrUwLHdMPmN","makerQuoteWallet":"5MwYp8y6KS1tSi8cwF8KhFMQeKKQTzawjxSqaSso9FfZ","makerBaseWallet":"CR8XCZN4RSnKY3WL74bnfdU4W9b9Xadj3KyEUjBoxA7w","protocol":"6Kypa3GAUyziMXGCMLf5vgkQx2UAheYQBoZTKZGJdWen","riskEngine":"AP7xm8uBoUGvN3CsPRyufv3XD2ULU8p9muY6cJAG18tz","baseAsset":"VpRMSMwHZC5xXCEHZsd2QXMDvudm1r2Ushax1TMshDY","quoteRegisteredMint":"APyMTExziRHtdRGRwySn2RZCtz4ybqkoKhMNaauonUgk","baseRegisteredMint":"AzYiygDcijoyxE5zW1E82QLKLhkwN4XRkFs8wbdkRfwd","makerCollateralInfo":"3CddxFwFpWU51pqWeXLtG26bzk9mmcfg1n14EWryPsCb","takerCollateralInfo":"DF4Kd2GAAwkHLMtR1h8RjGzVQcigeHGEG9pT12nJKUh8","makerCollateralToken":"CvX6NhJGgjH5jnJc5fxe6XL1LdGiVLmf5hPoALz26YVw","takerCollateralToken":"GxkCrjvzma2ospj2aSVZ63bQLvemDs97iZ3FBpWLcxYc"}
+{
+    "dao": "7mbGUAWCyC2NRpx9LsGNyAQbcp9VdRunZrjVvFQUYMNY",
+    "maker": "5c1yzmnQg2bL8bdbUeBdgZ2RB5CAcjWN1yz6P1B8ccf8",
+    "taker": "EfotJvuqAdsPx4RFTNsnEABBuAyACNnjEKKR5zyE4HVx",
+    "mintAuthority": "3mweMVQELCtNVuMJUWuXp6AhT4h1q2UB6igzjJs7oi3G",
+    "baseMint": "FLaFgJ3Qa3bSGxUhiPCF3cgU1XhpTZKaSev7RUMbFYJZ",
+    "quoteMint": "9JgYBxL6w11XJ4xtvEicRhXGse6A1akPgZJaKjM1JnZ",
+    "takerQuoteWallet": "7Q4CtjBBJJwXbuFstgsjpPKcupaRahgoAVPuDy6MjgQF",
+    "takerBaseWallet": "EB25yJhPe4X4ZWkDoeTm8HRpKgtqZGWKZAS58ifBkmGV",
+    "makerQuoteWallet": "G47NrfrvTpdiUc3m9jZn6x98qQYkuD6nYy98tmUMMuvn",
+    "makerBaseWallet": "24z1PN6o4swFd1ztLevjSbM6hnLd96wd65BVv3QkeCrU",
+    "protocol": "6Kypa3GAUyziMXGCMLf5vgkQx2UAheYQBoZTKZGJdWen",
+    "riskEngine": "AP7xm8uBoUGvN3CsPRyufv3XD2ULU8p9muY6cJAG18tz",
+    "baseAsset": "VpRMSMwHZC5xXCEHZsd2QXMDvudm1r2Ushax1TMshDY",
+    "quoteRegisteredMint": "7G8EGQg8QjDGLxfWmCp3HBosVyNgM13Xtq4BNB1fnNuM",
+    "baseRegisteredMint": "8c7oReAxJaxnPiRvA1ANZDA2dqboTrifGNdJyqwDXDAq",
+    "makerCollateralInfo": "9VwM7CsqU8Q5XxfTDQM2ywtv6YmNPNBj2WPCq8bYaTh6",
+    "takerCollateralInfo": "J18nQA41AhLVZjgdCxRkc6h2GTgPvhiYnnHs1QicvtHr",
+    "makerCollateralToken": "4BPzsvRcNt6SGnhLN3Z5y81yuEwnysRsGrJ14tBLjKi6",
+    "takerCollateralToken": "7DTftDbxGPfDi6fA7ooGgEW4ELcmZDfrjXXJHbcKgpbt"
+}

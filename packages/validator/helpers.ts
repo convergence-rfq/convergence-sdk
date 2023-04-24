@@ -221,9 +221,11 @@ export const spawnValidator = (
   if (!setup && !bootstrap) {
     args.push(...getBootstrapCompleteArgs());
   }
-  const validator = spawn('solana-test-validator', args);
-  validator.on('exit', process.exit);
 
+  const validator = spawn('solana-test-validator', args);
+
+  validator.on('exit', process.exit);
+  
   validator.stdout.on('data', (data: any) => {
     if (data.toString().trim() === 'Waiting for fees to stabilize 2...') {
       done();
