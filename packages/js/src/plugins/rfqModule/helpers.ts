@@ -413,9 +413,7 @@ export const convertResponseOutput = (
   return response;
 };
 
-const convertQuoteInput = (quote: Quote | undefined, quoteDecimals: number) => {
-  if (!quote) return;
-
+const convertQuoteInput = (quote: Quote, quoteDecimals: number) => {
   const convertedQuote = structuredClone(quote);
   convertedQuote.priceQuote.amountBps = quote.priceQuote.amountBps;
 
@@ -444,11 +442,23 @@ const convertQuoteInput = (quote: Quote | undefined, quoteDecimals: number) => {
 
 export const convertResponseInput = (
   quoteDecimals: number,
-  bid?: Quote,
-  ask?: Quote
+  bid: Quote,
+  ask: Quote
 ) => {
-  const convertedBid = convertQuoteInput(bid, quoteDecimals);
-  const convertedAsk = convertQuoteInput(ask, quoteDecimals);
+  let convertedBid;
+  let convertedAsk;
+
+  try {
+    convertedBid = convertQuoteInput(bid, quoteDecimals);
+  } catch {
+    // Skip
+  }
+
+  try {
+    convertedAsk = convertQuoteInput(ask, quoteDecimals);
+  } catch {
+    // Skip
+  }
 
   return { convertedBid, convertedAsk };
 };
