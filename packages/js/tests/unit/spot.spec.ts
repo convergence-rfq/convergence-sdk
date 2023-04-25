@@ -1,11 +1,6 @@
 import { expect } from 'expect';
 
-import {
-  ChildProccess,
-  Ctx,
-  readCtx,
-  spawnValidator,
-} from '../../../validator';
+import { ChildProccess, Ctx, spawnValidator } from '../../../validator';
 import {
   createSdk,
   sellSpot,
@@ -16,11 +11,11 @@ import {
 } from '../helpers';
 
 describe('spot', () => {
+  const ctx = new Ctx();
+
   let validator: ChildProccess;
-  let ctx: Ctx;
 
   before((done) => {
-    ctx = readCtx();
     validator = spawnValidator(done);
   });
 

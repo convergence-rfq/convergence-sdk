@@ -9,7 +9,7 @@ import {
   spawnValidator,
 } from '../../../validator';
 import { createSdk } from '../helpers';
-import { IDL as PseudoPythIdl } from '../../../validator/programs/pseudo_pyth_idl';
+import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import { createPriceFeed } from '../../test/helpers';
 import {
   OrderType,
