@@ -7,10 +7,8 @@ import {
   Quote,
 } from '@convergence-rfq/rfq';
 import BN from 'bn.js';
-import {
-  ABSOLUTE_PRICE_DECIMALS,
-  LEG_MULTIPLIER_DECIMALS,
-} from '../rfqModule/constants';
+
+import { LEG_MULTIPLIER_DECIMALS } from '../rfqModule/constants';
 import { Rfq } from '../rfqModule/models';
 
 export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
@@ -39,8 +37,7 @@ export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
 
     return new BN(fixedSize.quoteAmount)
       .mul(new BN(10).pow(new BN(LEG_MULTIPLIER_DECIMALS)))
-      .mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)))
-      .div(priceBps); //15 decimals (we multiply by ABSOLUTE_PRICE_DECIMALS)
+      .div(priceBps);
   }
 
   throw new Error('Invalid fixed size');
