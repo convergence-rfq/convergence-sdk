@@ -8,7 +8,6 @@ import {
 } from '@convergence-rfq/rfq';
 import BN from 'bn.js';
 import {
-  //@ts-ignore
   ABSOLUTE_PRICE_DECIMALS,
   LEG_MULTIPLIER_DECIMALS,
 } from '../rfqModule/constants';

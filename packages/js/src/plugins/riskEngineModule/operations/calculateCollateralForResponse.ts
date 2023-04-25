@@ -10,11 +10,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import {
-  //@ts-ignore
-  ABSOLUTE_PRICE_DECIMALS,
-  LEG_MULTIPLIER_DECIMALS,
-} from '../../rfqModule/constants';
+import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
 import { convertResponseInput } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;

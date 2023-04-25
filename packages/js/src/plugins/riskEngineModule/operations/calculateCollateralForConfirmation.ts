@@ -10,11 +10,7 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
-import {
-  //@ts-ignore
-  ABSOLUTE_PRICE_DECIMALS,
-  LEG_MULTIPLIER_DECIMALS,
-} from '../../rfqModule/constants';
+import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
 import { convertOverrideLegMultiplierBps } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
@@ -87,9 +83,6 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
 
       const { rfqAddress, responseAddress, confirmation } = operation.input;
 
-      // const convertedOverrideLegMultiplierBps = convertOverrideLegMultiplierBps(
-      //   Number(confirmation.overrideLegMultiplierBps)
-      // );
       if (confirmation.overrideLegMultiplierBps) {
         confirmation.overrideLegMultiplierBps = convertOverrideLegMultiplierBps(
           Number(confirmation.overrideLegMultiplierBps)
@@ -124,7 +117,6 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         legMultiplierBps = confirmation.overrideLegMultiplierBps;
       }
       const legMultiplier =
-        // Number(legMultiplierBps) / 10 ** ABSOLUTE_PRICE_DECIMALS;
         Number(legMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
 
       const calculationCase = {

@@ -44,7 +44,6 @@ import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstru
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
-// import { CvgWallet } from '@/utils/CvgWallet';
 
 const { mintOptions } = instructions;
 
@@ -360,8 +359,6 @@ export const convertResponseOutput = (
   response: Response,
   quoteDecimals: number
 ): Response => {
-  // let convertedResponse = structuredClone(response);
-
   if (response.bid) {
     let convertedPriceQuoteAmountBps =
       response.bid.priceQuote.amountBps instanceof anchor.BN
