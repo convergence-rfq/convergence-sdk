@@ -442,24 +442,11 @@ const convertQuoteInput = (quote: Quote, quoteDecimals: number) => {
 
 export const convertResponseInput = (
   quoteDecimals: number,
-  bid: Quote,
-  ask: Quote
+  bid?: Quote,
+  ask?: Quote
 ) => {
-  let convertedBid;
-  let convertedAsk;
-
-  try {
-    convertedBid = convertQuoteInput(bid, quoteDecimals);
-  } catch {
-    // Skip
-  }
-
-  try {
-    convertedAsk = convertQuoteInput(ask, quoteDecimals);
-  } catch {
-    // Skip
-  }
-
+  const convertedBid = bid ? convertQuoteInput(bid, quoteDecimals) : undefined;
+  const convertedAsk = ask ? convertQuoteInput(ask, quoteDecimals) : undefined;
   return { convertedBid, convertedAsk };
 };
 
