@@ -431,16 +431,9 @@ const convertQuoteInput = (quote: Quote | undefined, quoteDecimals: number) => {
       ? convertedQuote.priceQuote.amountBps
       : new anchor.BN(convertedQuote.priceQuote.amountBps);
 
-  console.log(convertedPriceQuoteAmountBps.toNumber());
-  console.log(quoteDecimals);
-  console.log(ABSOLUTE_PRICE_DECIMALS);
-
-  const x = Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
-  console.log(x);
-  const y = new anchor.BN(x);
-  console.log(y);
-
-  convertedQuote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(y);
+  convertedQuote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(
+    new anchor.BN(Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS))
+  );
 
   if (convertedQuote.__kind == 'Standard') {
     const convertedLegsMultiplierBps =

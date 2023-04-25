@@ -60,12 +60,12 @@ const getBaseArgs = () => [
 
 export class Ctx {
   // Keypairs
-  dao = getPk('dao');
-  maker = getPk('maker');
-  taker = getPk('taker');
-  mintAuthority = getPk('mint-authority');
-  baseMint = getPk('mint-btc');
-  quoteMint = getPk('mint-usd-quote');
+  dao = getKeypairPk('dao');
+  maker = getKeypairPk('maker');
+  taker = getKeypairPk('taker');
+  mintAuthority = getKeypairPk('mint-authority');
+  baseMint = getKeypairPk('mint-btc');
+  quoteMint = getKeypairPk('mint-usd-quote');
 
   // Wallets
   takerQuoteWallet = getAccountPk('token-account-usd-quote-taker');
@@ -96,7 +96,7 @@ export const getKpFile = (user: string): string => {
   return path.join(FIXTURES, 'keypairs', `${user}.json`);
 };
 
-export const getPk = (user: string) => {
+export const getKeypairPk = (user: string) => {
   const owner = getKeypair(user);
   return owner.publicKey.toString();
 };
@@ -104,10 +104,6 @@ export const getPk = (user: string) => {
 export const getKeypair = (user: string) => {
   const buffer = JSON.parse(fs.readFileSync(getKpFile(user), 'utf8'));
   return Keypair.fromSecretKey(new Uint8Array(buffer));
-};
-
-export const readCtx = (): Ctx => {
-  return new Ctx();
 };
 
 export const spawnValidator = (done = () => {}): ChildProccess => {

@@ -2,12 +2,7 @@ import { expect } from 'expect';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
-import {
-  ChildProccess,
-  Ctx,
-  readCtx,
-  spawnValidator,
-} from '../../../validator';
+import { ChildProccess, Ctx, spawnValidator } from '../../../validator';
 import { createSdk } from '../helpers';
 import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import { createPriceFeed } from '../../test/helpers';
@@ -23,8 +18,9 @@ import {
 } from '../../src';
 
 describe('european', () => {
+  const ctx = new Ctx();
+
   let validator: ChildProccess;
-  let ctx: Ctx;
 
   let baseMint: Mint;
   let quoteMint: Mint;
@@ -58,8 +54,6 @@ describe('european', () => {
   };
 
   before((done) => {
-    ctx = readCtx();
-
     // Validator takes a callback so if we need to set data like mints do it here
     validator = spawnValidator(() => setMints(done));
   });
