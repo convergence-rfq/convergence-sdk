@@ -158,7 +158,8 @@ export const initializeConfigBuilder = (
     .add({
       instruction: createInitializeConfigInstruction(
         {
-          signer: authority.publicKey,
+          authority: authority.publicKey,
+          protocol: convergence.protocol().pdas().protocol(),
           config: convergence.riskEngine().pdas().config(),
           systemProgram: systemProgram.address,
         },

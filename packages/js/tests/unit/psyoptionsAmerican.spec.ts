@@ -13,7 +13,7 @@ import {
   respondWithBid,
   prepareSettlement,
   settle,
-  createAmericanAccountsAndMint,
+  //createAmericanAccountsAndMint,
 } from '../helpers';
 
 describe('american', () => {
@@ -34,7 +34,7 @@ describe('american', () => {
     const makerCvg = await createSdk('maker');
 
     const res0 = await sellCoveredCall(takerCvg, ctx);
-    const { rfq, optionMarket } = res0;
+    const { rfq } = res0;
     expect(rfq).toHaveProperty('address');
 
     const res1 = await respondWithBid(makerCvg, rfq);
@@ -44,8 +44,8 @@ describe('american', () => {
     const res2 = await confirmBid(takerCvg, rfq, rfqResponse);
     expect(res2.response).toHaveProperty('signature');
 
-    await createAmericanAccountsAndMint(takerCvg, rfq, optionMarket, 100);
-    await createAmericanAccountsAndMint(makerCvg, rfq, optionMarket, 100);
+    //await createAmericanAccountsAndMint(takerCvg, rfq, optionMarket, 100);
+    //await createAmericanAccountsAndMint(makerCvg, rfq, optionMarket, 100);
 
     const res3 = await prepareSettlement(takerCvg, rfq, rfqResponse);
     expect(res3.response).toHaveProperty('signature');

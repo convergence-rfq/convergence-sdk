@@ -23,7 +23,7 @@ import { bignum } from '@convergence-rfq/beet';
 
 import { makeConfirmOptionsFinalizedOnMainnet } from '../../src/types';
 import { TransactionBuilder } from '../../src/utils';
-import { Pyth } from '../../../validator/programs/pseudo_pyth_idl';
+import { Pyth } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import {
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,

@@ -6,7 +6,7 @@ import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import * as anchor from '@project-serum/anchor';
 import { bignum } from '@convergence-rfq/beet';
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
-import { IDL as PseudoPythIdl } from '../../../validator/programs/pseudo_pyth_idl';
+import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import {
   SWITCHBOARD_BTC_ORACLE,
   SWITCHBOARD_SOL_ORACLE,
