@@ -29,13 +29,13 @@
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
     "mocha": "ts-mocha -p tsconfig.json --type-check --timeout 100000",
-    "test:setup": "yarn mocha tests/integration/setup.spec.ts",
-    "test:bootstrap": "yarn mocha tests/integration/bootstrap.spec.ts",
-    "test": "yarn mocha --parallel tests/**/*.spec.ts --ignore tests/integration/setup.spec.ts --ignore tests/integration/bootstrap.spec.ts",
+    "test:setup": "yarn mocha tests/integration/setup.ts",
+    "test:bootstrap": "yarn mocha tests/integration/bootstrap.ts",
+    "test": "yarn mocha --parallel tests/**/*.spec.ts",
     "cli": "ts-node src/index.ts"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "4.0.24-rc.21",
+    "@convergence-rfq/sdk": "=4.0.24-rc.37",
     "@solana/web3.js": "^1.73.0",
     "commander": "^10.0.0"
   },

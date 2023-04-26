@@ -2,23 +2,12 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
-import {
-  ChildProccess,
-  spawnValidator,
-  getPk,
-  Ctx,
-  writeCtx,
-} from '../../../validator';
+import { Ctx, getAccountPk } from '../../../validator';
 import { runCli, ADDRESS, TX } from '../helpers';
 
 describe('setup', () => {
   const ctx = new Ctx();
   let stub: SinonStub;
-  let validator: ChildProccess;
-
-  before((done) => {
-    validator = spawnValidator(done, true);
-  });
 
   beforeEach(() => {
     stub = sinon.stub(console, 'log');
@@ -28,17 +17,12 @@ describe('setup', () => {
     stub.restore();
   });
 
-  after(async () => {
-    await writeCtx(ctx);
-    validator.kill();
-  });
-
-  it('airdrop:sol [dao|maker|taker|mint_authority]', async () => {
+  it('airdrop:sol [dao|maker|taker|mint-authority]', async () => {
     await Promise.all([
       runCli(['airdrop:sol', '--amount', '1']),
       runCli(['airdrop:sol', '--amount', '1'], 'maker'),
       runCli(['airdrop:sol', '--amount', '1'], 'taker'),
-      runCli(['airdrop:sol', '--amount', '1'], 'mint_authority'),
+      runCli(['airdrop:sol', '--amount', '1'], 'mint-authority'),
     ]);
     expect(stub.args[0][0]).toEqual(TX);
     expect(stub.args[1][0]).toEqual(TX);
@@ -47,13 +31,13 @@ describe('setup', () => {
   });
 
   it('token:create-mint [base]', async () => {
-    await runCli(['token:create-mint', '--decimals', '9'], 'mint_authority');
+    await runCli(['token:create-mint', '--decimals', '9'], 'mint-authority');
     expect(stub.args[1][0]).toEqual(TX);
     ctx.baseMint = stub.args[0][1];
   });
 
   it('token:create-mint [quote]', async () => {
-    await runCli(['token:create-mint', '--decimals', '6'], 'mint_authority');
+    await runCli(['token:create-mint', '--decimals', '6'], 'mint-authority');
     expect(stub.args[1][0]).toEqual(TX);
     ctx.quoteMint = stub.args[0][1];
   });
@@ -63,7 +47,7 @@ describe('setup', () => {
       [
         'token:create-wallet',
         '--owner',
-        getPk('maker'),
+        getAccountPk('maker'),
         '--mint',
         ctx.baseMint,
       ],
@@ -80,7 +64,7 @@ describe('setup', () => {
       [
         'token:create-wallet',
         '--owner',
-        getPk('taker'),
+        getAccountPk('taker'),
         '--mint',
         ctx.baseMint,
       ],
@@ -97,7 +81,7 @@ describe('setup', () => {
       [
         'token:create-wallet',
         '--owner',
-        getPk('maker'),
+        getAccountPk('maker'),
         '--mint',
         ctx.quoteMint,
       ],
@@ -114,7 +98,7 @@ describe('setup', () => {
       [
         'token:create-wallet',
         '--owner',
-        getPk('taker'),
+        getAccountPk('taker'),
         '--mint',
         ctx.quoteMint,
       ],

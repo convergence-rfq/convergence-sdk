@@ -2,24 +2,12 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 import * as sdk from '@convergence-rfq/sdk';
 
-import {
-  ChildProccess,
-  spawnValidator,
-  readCtx,
-  Ctx,
-  writeCtx,
-} from '../../../validator';
+import { Ctx } from '../../../validator';
 import { runCli, ADDRESS, TX, BTC_ORACLE } from '../helpers';
 
 describe('bootstrap', () => {
-  let ctx: Ctx;
+  const ctx = new Ctx();
   let stub: SinonStub;
-  let validator: ChildProccess;
-
-  before((done) => {
-    ctx = readCtx();
-    validator = spawnValidator(done, false, true);
-  });
 
   beforeEach(() => {
     stub = sinon.stub(console, 'log');
@@ -27,11 +15,6 @@ describe('bootstrap', () => {
 
   afterEach(() => {
     stub.restore();
-  });
-
-  after(async () => {
-    await writeCtx(ctx);
-    validator.kill();
   });
 
   it('protocol:initialize', async () => {
