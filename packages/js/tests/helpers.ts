@@ -84,7 +84,7 @@ export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
   return { rfq, response, optionMarket };
 };
 
-export const sellSpot = async (cvg: Convergence, ctx: Ctx) => {
+export const sellSpot = async (cvg: Convergence, ctx: Ctx, amount: 1.0) => {
   const baseMint = await cvg
     .tokens()
     .findMintByAddress({ address: new PublicKey(ctx.baseMint) });
@@ -94,7 +94,7 @@ export const sellSpot = async (cvg: Convergence, ctx: Ctx) => {
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, baseMint, {
-        amount: 1.0,
+        amount,
         side: Side.Bid,
       }),
     ],

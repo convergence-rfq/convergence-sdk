@@ -83,6 +83,8 @@ export class Ctx {
   takerCollateralInfo = getAccountPk('rfq-collateral-info-taker');
   makerCollateralToken = getAccountPk('rfq-collateral-token-maker');
   takerCollateralToken = getAccountPk('rfq-collateral-token-taker');
+
+  // TODO: Consider adding additional accounts
 }
 
 export const getAccountPk = (user: string): string => {

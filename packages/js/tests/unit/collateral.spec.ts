@@ -21,8 +21,10 @@ describe('collateral', () => {
   });
 
   it('fund', async () => {
-    cvg.collateral().fund({ amount: 1000 });
+    // TODO: Add a balance diff for before and after check
+    cvg.collateral().fund({ amount: 1000.5 });
   });
+
   it('get', async () => {
     const collateral = await cvg
       .collateral()

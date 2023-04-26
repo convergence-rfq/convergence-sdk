@@ -27,7 +27,8 @@ describe('spot', () => {
     const takerCvg = await createSdk('taker');
     const makerCvg = await createSdk('maker');
 
-    const { rfq } = await sellSpot(takerCvg, ctx);
+    const amount = 1.0;
+    const { rfq } = await sellSpot(takerCvg, ctx, amount);
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondWithBid(makerCvg, rfq);

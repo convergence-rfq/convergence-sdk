@@ -43,7 +43,7 @@ import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentMod
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
-import { LEG_MULTIPLIER_DECIMALS } from './constants';
+import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
 
 const { mintOptions } = instructions;
 
@@ -366,7 +366,9 @@ export const convertResponseOutput = (
         : new anchor.BN(response.bid.priceQuote.amountBps);
 
     convertedPriceQuoteAmountBps = convertedPriceQuoteAmountBps.div(
-      new anchor.BN(10).pow(new anchor.BN(quoteDecimals))
+      new anchor.BN(10).pow(
+        new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
+      )
     );
 
     response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
@@ -391,7 +393,9 @@ export const convertResponseOutput = (
         : new anchor.BN(response.ask.priceQuote.amountBps);
 
     convertedPriceQuoteAmountBps = convertedPriceQuoteAmountBps.div(
-      new anchor.BN(10).pow(new anchor.BN(quoteDecimals))
+      new anchor.BN(10).pow(
+        new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
+      )
     );
 
     response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
@@ -423,7 +427,9 @@ const convertQuoteInput = (quote: Quote, quoteDecimals: number) => {
       : new anchor.BN(convertedQuote.priceQuote.amountBps);
 
   convertedQuote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(
-    new anchor.BN(Math.pow(10, quoteDecimals))
+    new anchor.BN(10).pow(
+      new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
+    )
   );
 
   if (convertedQuote.__kind == 'Standard') {
