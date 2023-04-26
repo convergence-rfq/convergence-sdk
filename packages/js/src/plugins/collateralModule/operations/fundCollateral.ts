@@ -12,6 +12,8 @@ import {
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { Convergence } from '../../../Convergence';
+import { protocolCache } from '../../protocolModule/cache';
+import { collateralMintCache } from '../cache';
 
 const Key = 'FundCollateralOperation' as const;
 
@@ -150,7 +152,7 @@ export const fundCollateralBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { user = convergence.identity() } = params;
 
-  const protocolModel = await convergence.protocol().get();
+  const protocolModel = await protocolCache.get(convergence);
 
   const {
     protocol = convergence.protocol().pdas().protocol(),
@@ -170,11 +172,8 @@ export const fundCollateralBuilder = async (
   } = params;
   let { amount } = params;
 
-  const collateralDecimals = (
-    await convergence
-      .tokens()
-      .findMintByAddress({ address: protocolModel.collateralMint })
-  ).decimals;
+  const collateralMint = await collateralMintCache.get(convergence);
+  const collateralDecimals = collateralMint.decimals;
 
   amount *= Math.pow(10, collateralDecimals);
 

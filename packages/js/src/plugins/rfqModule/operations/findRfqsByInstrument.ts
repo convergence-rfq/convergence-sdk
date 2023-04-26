@@ -10,7 +10,7 @@ import {
   Program,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { collateralMintCache } from '@/plugins/collateralModule';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
@@ -112,7 +112,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      let unparsedAccounts = await rfqGpaBuilder.withoutData().get();
+      const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
 
       const unparsedAddresses = unparsedAccounts.map(

@@ -10,7 +10,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { collateralMintCache } from '@/plugins/collateralModule';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqByAddressOperation' as const;
 

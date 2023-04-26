@@ -6,7 +6,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { protocolAccountCache } from '../cache';
+import { protocolCache } from '../cache';
 
 const Key = 'GetProtocolOperation' as const;
 
@@ -57,10 +57,7 @@ export const getProtocolOperationHandler: OperationHandler<GetProtocolOperation>
       convergence: Convergence,
       scope: OperationScope
     ): Promise<GetProtocolOutput> => {
-      const { commitment } = scope;
-      scope.throwIfCanceled();
-
-      const protocol = await protocolAccountCache.get(convergence, commitment);
+      const protocol = await protocolCache.get(convergence);
       scope.throwIfCanceled();
 
       return protocol;

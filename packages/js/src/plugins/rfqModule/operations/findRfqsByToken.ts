@@ -20,7 +20,7 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
-import { collateralMintCache } from '@/plugins/collateralModule';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqsByTokenOperation' as const;
 

@@ -99,9 +99,13 @@ export const getKpFile = (user: string): string => {
 };
 
 export const getKeypairPk = (user: string) => {
-  const buffer = JSON.parse(fs.readFileSync(getKpFile(user), 'utf8'));
-  const owner = Keypair.fromSecretKey(new Uint8Array(buffer));
+  const owner = getUserKp(user);
   return owner.publicKey.toString();
+};
+
+export const getUserKp = (user: string) => {
+  const buffer = JSON.parse(fs.readFileSync(getKpFile(user), 'utf8'));
+  return Keypair.fromSecretKey(new Uint8Array(buffer));
 };
 
 export const spawnValidator = (done = () => {}): ChildProccess => {
