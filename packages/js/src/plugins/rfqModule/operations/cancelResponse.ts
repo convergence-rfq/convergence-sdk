@@ -53,21 +53,23 @@ export type CancelResponseOperation = Operation<
  */
 export type CancelResponseInput = {
   /**
-   * The Maker as a Signer
+   * The maker as a signer
    *
    * @defaultValue `convergence.identity()`
    */
   maker?: Signer;
 
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().get()`
    */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account. */
+  /** The address of the RFQ account. */
   rfq: PublicKey;
 
-  /** The address of the Reponse account. */
+  /** The address of the reponse account. */
   response: PublicKey;
 };
 

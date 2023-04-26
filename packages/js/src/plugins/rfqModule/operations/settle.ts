@@ -46,27 +46,28 @@ export type SettleOperation = Operation<typeof Key, SettleInput, SettleOutput>;
  * @category Inputs
  */
 export type SettleInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account. */
+  /** The address of the RFQ account. */
   rfq: PublicKey;
 
-  /** The address of the Response account. */
+  /** The address of the response account. */
   response: PublicKey;
 
-  /** The Maker public key address. */
+  /** The maker public key address. */
   maker: PublicKey;
 
-  /** The Taker public key address. */
+  /** The taker public key address. */
   taker: PublicKey;
 
   /**
-   * Optional start index to corresponding to
-   * the first leg to settle. Used internally by Convergence SDK,
-   * does not need to be passed manually.
+   * Optional start index to corresponding to the first leg to settle. Used internally by
+   * Convergence SDK and does not need to be passed manually.
    *
    * @defaultValue `0`
    * */
@@ -314,7 +315,7 @@ export const settleBuilder = async (
     .add(
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1400000,
+          units: 1_400_000,
         }),
         signers: [],
       },

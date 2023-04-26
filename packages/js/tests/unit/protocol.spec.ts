@@ -26,4 +26,10 @@ describe('protocol', () => {
     const protocol = await protocolCache.get(cvg);
     expect(protocol).toHaveProperty('address');
   });
+
+  it('pda', async () => {
+    const protocol = await cvg.protocol().get();
+    const pda = cvg.protocol().pdas().protocol();
+    expect(protocol.address).toEqual(pda);
+  });
 });

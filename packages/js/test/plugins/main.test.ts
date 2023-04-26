@@ -344,11 +344,6 @@ test('[psyoptionsAmericanInstrument] it can create the american program', async 
 
 // PROTOCOL UTILS
 
-test('[protocolModule] it can get the protocol', async (t: Test) => {
-  const protocol = await cvg.protocol().get();
-  t.same(protocol.address, cvg.protocol().pdas().protocol(), 'same address');
-});
-
 test('[protocolModule] it can get base assets', async (t: Test) => {
   const baseAssets = await cvg.protocol().getBaseAssets();
   spok(t, baseAssets[0], {

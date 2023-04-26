@@ -49,8 +49,10 @@ export type AddInstrumentInput = {
    */
   authority: Signer;
 
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 

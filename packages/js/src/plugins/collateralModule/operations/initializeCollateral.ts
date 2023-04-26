@@ -65,7 +65,7 @@ export type InitializeCollateralInput = {
   /**
    * The address of the collateral mint.
    *
-   * @defaultValue `(await convergence.protocol().get()).collateralMint`
+   * @defaultValue `protocol.collateralMint`
    */
   collateralMint?: PublicKey;
 
