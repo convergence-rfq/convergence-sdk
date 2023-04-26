@@ -15,7 +15,7 @@ describe('spot', () => {
   const takerCvg = createSdk('taker');
   const makerCvg = createSdk('maker');
 
-  it('spot', async () => {
+  it('sell 1.0 BTC 2-way', async () => {
     const amount = 1.0;
     const { rfq } = await sellSpot(takerCvg, ctx, amount);
     expect(rfq).toHaveProperty('address');

@@ -66,17 +66,22 @@ yarn build
 
 **TDD**
 
-Run the Solana test validator, Solana logs, and the tests.
+First run the Solana test validator.
 
 ```bash
-yarn test:all
+yarn validator
 ```
 
-Run the validator and tests separately.
+Run the validator logs separately.
 
 ```bash
-yarn validator:run
-yarn validator:logs
+yarn validator-logs
+```
+
+Finally run the tests.
+  
+```bash
+yarn test
 ```
 
 **NPM**

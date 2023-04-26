@@ -19,4 +19,11 @@ describe('collateral', () => {
       .findByUser({ user: new PublicKey(ctx.taker) });
     expect(collateral).toHaveProperty('address');
   });
+
+  it('cache', async () => {
+    const collateral = await cvg
+      .collateral()
+      .findByUser({ user: new PublicKey(ctx.taker) });
+    expect(collateral).toHaveProperty('address');
+  });
 });
