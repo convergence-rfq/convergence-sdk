@@ -64,24 +64,19 @@ export type FundCollateralInput = {
   /** Token account of user's token */
   userTokens?: PublicKey;
 
-  /** Optional address of the User's collateral info account.
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: user.publicKey })`
+  /**
+   * Optional address of the User's collateral info account.
    *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: user.publicKey })`
    */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the User's collateral tokens account.
+  /**
+   * Optional address of the User's collateral tokens account.
    *
-   * @defaultValue `convergence.collateral().pdas().
-   *   collateralTokens({
-   *     user: user.publicKey,
-   *   })`
+   * @defaultValue `convergence.collateral().pdas().collateralTokens({ user: user.publicKey })`
    */
   collateralToken?: PublicKey;
-
-  /*
-   * Args
-   */
 
   /** The amount to fund. */
   amount: number;
