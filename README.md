@@ -82,6 +82,8 @@ Finally run the tests.
   
 ```bash
 yarn test
+# It is possible to run individual module tests
+yarn test -g spot
 ```
 
 **NPM**
