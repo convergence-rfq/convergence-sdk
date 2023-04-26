@@ -152,18 +152,15 @@ export const settle = async (
   });
 };
 
-export const createAmericanAccountsAndMint = async () =>
-  //cvg: Convergence,
-  //rfq: Rfq,
-  //optionMarket: OptionMarketWithKey,
-  //amount: number
-  {
-    //await createAmericanAccountsAndMintOptions(
-    //  cvg,
-    //  cvg.rpc().getDefaultFeePayer() as Keypair,
-    //  rfq.address,
-    //  optionMarket,
-    //  createAmericanProgram(cvg),
-    //  amount
-    //);
-  };
+export const createAmericanAccountsAndMint = async (
+  cvg: Convergence,
+  rfq: Rfq,
+  optionMarket: OptionMarketWithKey
+) => {
+  await createAmericanAccountsAndMintOptions(
+    cvg,
+    cvg.rpc().getDefaultFeePayer() as Keypair,
+    rfq.address,
+    optionMarket
+  );
+};
