@@ -2,10 +2,9 @@ import { expect } from 'expect';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
-import { ChildProccess, Ctx, spawnValidator } from '../../../validator';
-import { createSdk } from '../helpers';
+import { Ctx } from '../../../validator';
+import { createSdk, createPriceFeed } from '../helpers';
 import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
-import { createPriceFeed } from '../../test/helpers';
 import {
   OrderType,
   OptionType,

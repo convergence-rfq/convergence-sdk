@@ -1,7 +1,10 @@
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { Commitment, Connection, Keypair } from '@solana/web3.js';
+import { Program, web3 } from '@project-serum/anchor';
 
 import { getUserKp, RPC_ENDPOINT, Ctx } from '../../validator';
+import { Pyth } from '../../validator/fixtures/programs/pseudo_pyth_idl';
+
 import {
   Convergence,
   keypairIdentity,
@@ -162,4 +165,43 @@ export const createAmericanAccountsAndMint = async (
     rfq.address,
     optionMarket
   );
+};
+
+/**
+ *  PSYOPTIONS EUROPEAN
+ */
+export const createPriceFeed = async (
+  oracleProgram: Program<Pyth>,
+  initPrice: number,
+  expo: number
+) => {
+  const conf = toBigNumber((initPrice / 10) * 10 ** -expo);
+  const collateralTokenFeed = new web3.Account();
+
+  if (!oracleProgram?.provider?.publicKey) {
+    throw new Error('oracleProgram not initialized');
+  }
+
+  await oracleProgram.rpc.initialize(
+    toBigNumber(initPrice * 10 ** -expo),
+    expo,
+    conf,
+    {
+      accounts: { price: collateralTokenFeed.publicKey },
+      signers: [collateralTokenFeed],
+      instructions: [
+        web3.SystemProgram.createAccount({
+          fromPubkey: oracleProgram.provider.publicKey,
+          newAccountPubkey: collateralTokenFeed.publicKey,
+          space: 3312,
+          lamports:
+            await oracleProgram.provider.connection.getMinimumBalanceForRentExemption(
+              3312
+            ),
+          programId: oracleProgram.programId,
+        }),
+      ],
+    }
+  );
+  return collateralTokenFeed.publicKey;
 };
