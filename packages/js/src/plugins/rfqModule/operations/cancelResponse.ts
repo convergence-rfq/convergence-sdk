@@ -12,6 +12,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'CancelResponseOperation' as const;
 
@@ -142,7 +143,7 @@ export const cancelResponseBuilder = async (
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const protocol = await convergence.protocol().get();
+  const protocol = await protocolCache.get(convergence);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

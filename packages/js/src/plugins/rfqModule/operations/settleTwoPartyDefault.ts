@@ -11,6 +11,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'SettleTwoPartyDefaultOperation' as const;
 
@@ -173,7 +174,7 @@ export const settleTwoPartyDefaultBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
   const tokenProgram = convergence.programs().getToken(programs);
 
-  const protocol = await convergence.protocol().get();
+  const protocol = await protocolCache.get(convergence);
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence

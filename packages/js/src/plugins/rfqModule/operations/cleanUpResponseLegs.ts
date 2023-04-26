@@ -19,6 +19,7 @@ import { InstrumentPdasClient } from '../../../plugins/instrumentModule/Instrume
 import { SpotInstrument } from '../../../plugins/spotInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../../../plugins/psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../../../plugins/psyoptionsAmericanInstrumentModule';
+import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
@@ -160,7 +161,7 @@ export const cleanUpResponseLegsBuilder = async (
   const { dao, rfq, response, firstToPrepare, legAmountToClear } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
+  const protocol = await protocolCache.get(convergence);
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
