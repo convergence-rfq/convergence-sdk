@@ -1,7 +1,8 @@
 {
     "name": "validator",
     "scripts": {
-      "solana-test-validator": "ts-node run.ts"
+      "validator": "ts-node run.ts",
+      "logs": "echo 'Not implemented yet'"
     }
   }
   

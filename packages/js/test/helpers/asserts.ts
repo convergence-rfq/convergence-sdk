@@ -1,4 +1,4 @@
-import type { bignum } from '@metaplex-foundation/beet';
+import type { bignum } from '@convergence-rfq/beet';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { Specification, Specifications } from 'spok';
