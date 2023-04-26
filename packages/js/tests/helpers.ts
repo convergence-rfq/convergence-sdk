@@ -102,7 +102,6 @@ export const sellSpot = async (cvg: Convergence, ctx: Ctx, amount: 1.0) => {
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
     quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
   });
-
   return { rfq, response };
 };
 

@@ -21,9 +21,7 @@ const Key = 'FundCollateralOperation' as const;
  * Funds a collateral account.
  *
  * ```ts
- * const rfq = await convergence
- *   .collateral()
- *   .fundCollateral({ amount: 100 };
+ * const rfq = await convergence.collateral().fundCollateral({ amount: 100 };
  * ```
  *
  * @group Operations
