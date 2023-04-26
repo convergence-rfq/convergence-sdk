@@ -57,7 +57,7 @@ export type FundCollateralInput = {
   /**
    * The address of the protocol.
    *
-   * @defaultValue `(await convergence.protocol().get()).address`
+   * @defaultValue `await convergence.protocol().pdas().protcol()`
    */
   protocol?: PublicKey;
 

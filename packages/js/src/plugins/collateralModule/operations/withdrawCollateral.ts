@@ -12,6 +12,7 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'WithdrawCollateralOperation' as const;
 
@@ -151,7 +152,7 @@ export const withdrawCollateralBuilder = async (
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const protocolModel = await convergence.protocol().get();
+  const protocolModel = await protocolCache.get(convergence);
 
   const {
     user = convergence.identity(),

@@ -14,6 +14,7 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'InitializeCollateralOperation' as const;
 
@@ -174,7 +175,7 @@ export const initializeCollateralBuilder = async (
   params: InitializeCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<InitializeCollateralBuilderContext>> => {
-  const protocolModel = await convergence.protocol().get();
+  const protocolModel = await protocolCache.get(convergence);
   const { programs } = options;
   const {
     user = convergence.identity(),
