@@ -11,6 +11,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '@/plugins/collateralModule';
 
 const Key = 'FindRfqsByOwnerOperation' as const;
 
@@ -77,12 +78,8 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       const { owner, rfqs, rfqsPerPage, numPages } = operation.input;
       const { programs, commitment } = scope;
 
-      const protocol = await convergence.protocol().get();
-      const collateralMintDecimals = (
-        await convergence
-          .tokens()
-          .findMintByAddress({ address: protocol.collateralMint })
-      ).decimals;
+      const collateralMint = await collateralMintCache.get(convergence);
+      const collateralMintDecimals = collateralMint.decimals;
 
       if (rfqs) {
         let rfqsByOwner: Rfq[] = [];

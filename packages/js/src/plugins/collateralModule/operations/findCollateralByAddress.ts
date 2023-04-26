@@ -9,6 +9,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../cache';
 
 const Key = 'FindCollateralByAddressOperation' as const;
 
@@ -71,10 +72,7 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
       const collateralModel = toCollateral(toCollateralAccount(account));
       scope.throwIfCanceled();
 
-      const protocol = await convergence.protocol().get();
-      const collateralMint = await convergence
-        .tokens()
-        .findMintByAddress({ address: protocol.collateralMint });
+      const collateralMint = await collateralMintCache.get(convergence);
 
       collateralModel.lockedTokensAmount /= Math.pow(
         10,

@@ -44,6 +44,7 @@ import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstru
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
+import { collateralMintCache } from '../collateralModule';
 
 const { mintOptions } = instructions;
 
@@ -83,10 +84,7 @@ export const devnetAirdrops = async (
       ])
     );
 
-  const protocol = await cvg.protocol().get();
-  const collateralMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: protocol.collateralMint });
+  const collateralMint = await collateralMintCache.get(cvg);
 
   let collateralWallet;
   try {

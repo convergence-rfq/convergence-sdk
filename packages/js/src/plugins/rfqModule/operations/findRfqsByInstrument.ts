@@ -10,6 +10,7 @@ import {
   Program,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '@/plugins/collateralModule';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
@@ -77,12 +78,8 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         operation.input;
       const { commitment } = scope;
 
-      const protocol = await convergence.protocol().get();
-      const collateralMintDecimals = (
-        await convergence
-          .tokens()
-          .findMintByAddress({ address: protocol.collateralMint })
-      ).decimals;
+      const collateralMint = await collateralMintCache.get(convergence);
+      const collateralMintDecimals = collateralMint.decimals;
 
       if (rfqs) {
         let rfqsByInstrument: Rfq[] = [];

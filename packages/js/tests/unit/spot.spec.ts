@@ -31,6 +31,8 @@ describe('spot', () => {
     const { rfq } = await sellSpot(takerCvg, ctx, amount);
     expect(rfq).toHaveProperty('address');
 
+    // TODO: Get taker token amount
+
     const { rfqResponse } = await respondWithBid(makerCvg, rfq);
     expect(rfqResponse).toHaveProperty('address');
 
@@ -45,5 +47,7 @@ describe('spot', () => {
 
     const settleResult = await settle(takerCvg, rfq, rfqResponse);
     expect(settleResult.response).toHaveProperty('signature');
+
+    // TODO: Verify token amounts via conversions are correct
   });
 });

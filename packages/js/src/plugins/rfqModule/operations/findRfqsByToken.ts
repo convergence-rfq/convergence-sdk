@@ -20,6 +20,7 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
+import { collateralMintCache } from '@/plugins/collateralModule';
 
 const Key = 'FindRfqsByTokenOperation' as const;
 
@@ -89,12 +90,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
       const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
-      const protocol = await convergence.protocol().get();
-      const collateralMintDecimals = (
-        await convergence
-          .tokens()
-          .findMintByAddress({ address: protocol.collateralMint })
-      ).decimals;
+      const collateralMint = await collateralMintCache.get(convergence);
+      const collateralMintDecimals = collateralMint.decimals;
 
       if (rfqs) {
         let rfqsByToken: Rfq[] = [];

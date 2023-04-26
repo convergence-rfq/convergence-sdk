@@ -11,6 +11,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolAccountCache } from '../cache';
 
 const Key = 'AddInstrumentOperation' as const;
 
@@ -143,6 +144,11 @@ export const addInstrumentBuilder = (
     revertPreparationAccountAmount,
     cleanUpAccountAmount,
   } = params;
+
+  // TODO: Check remainder of code for cases where protocol is changed
+  // and clear cache if necessary. May cause issues if protocol is changed.
+  // In the future we will add this cache clearing via websockets.
+  protocolAccountCache.clear();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

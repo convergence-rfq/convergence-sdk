@@ -52,6 +52,7 @@ import {
   instrumentsToLegs,
   getCreateAccountsAndMintOptionsTransaction,
   createAccountsAndMintOptions,
+  collateralMintCache,
 } from '../../src';
 
 killStuckProcess();
@@ -618,10 +619,8 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
     .pdas()
     .collateralToken({ user: maker.publicKey });
 
-  const protocol = await cvg.protocol().get();
-  const collateralMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: protocol.collateralMint });
+  const collateralMint = await collateralMintCache.get(cvg);
+  collateralMintCache.clear();
 
   const [takerCollateralTokenAccount, makerCollateralTokenAccount] =
     await Promise.all([
@@ -659,10 +658,7 @@ test('[collateralModule] it can fund collateral', async (t: Test) => {
 test('[collateralModule] it can withdraw collateral', async (t: Test) => {
   const amount = 10;
 
-  const protocol = await cvg.protocol().get();
-  const collateralMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: protocol.collateralMint });
+  const collateralMint = await collateralMintCache.get(cvg);
 
   await cvg.collateral().withdraw({
     user: taker,

@@ -99,13 +99,9 @@ export const getKpFile = (user: string): string => {
 };
 
 export const getKeypairPk = (user: string) => {
-  const owner = getKeypair(user);
-  return owner.publicKey.toString();
-};
-
-export const getKeypair = (user: string) => {
   const buffer = JSON.parse(fs.readFileSync(getKpFile(user), 'utf8'));
-  return Keypair.fromSecretKey(new Uint8Array(buffer));
+  const owner = Keypair.fromSecretKey(new Uint8Array(buffer));
+  return owner.publicKey.toString();
 };
 
 export const spawnValidator = (done = () => {}): ChildProccess => {
@@ -113,9 +109,7 @@ export const spawnValidator = (done = () => {}): ChildProccess => {
   args.push('--account-dir', path.join(FIXTURES, 'accounts'));
 
   const validator = spawn('solana-test-validator', args);
-
   validator.on('exit', process.exit);
-
   validator.stdout.on('data', (data: any) => {
     if (data.toString().trim() === 'Waiting for fees to stabilize 2...') {
       done();

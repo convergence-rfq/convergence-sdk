@@ -1,7 +1,7 @@
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { Commitment, Connection, Keypair } from '@solana/web3.js';
 
-import { getKeypair, RPC_ENDPOINT, Ctx } from '../../validator';
+import { getUserKp, RPC_ENDPOINT, Ctx } from '../../validator';
 import {
   Convergence,
   keypairIdentity,
@@ -36,7 +36,7 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
 // Default user is dao but could be maker, taker or mint_authority
 export const createSdk = async (user = 'dao'): Promise<Convergence> => {
   const cvg = createCvg({ skipPreflight: false });
-  return cvg.use(keypairIdentity(getKeypair(user)));
+  return cvg.use(keypairIdentity(getUserKp(user)));
 };
 
 export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
