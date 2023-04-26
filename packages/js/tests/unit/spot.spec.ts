@@ -12,21 +12,10 @@ import {
 
 describe('spot', () => {
   const ctx = new Ctx();
-
-  let validator: ChildProccess;
-
-  before((done) => {
-    validator = spawnValidator(done);
-  });
-
-  after(() => {
-    validator.kill();
-  });
+  const takerCvg = createSdk('taker');
+  const makerCvg = createSdk('maker');
 
   it('spot', async () => {
-    const takerCvg = await createSdk('taker');
-    const makerCvg = await createSdk('maker');
-
     const amount = 1.0;
     const { rfq } = await sellSpot(takerCvg, ctx, amount);
     expect(rfq).toHaveProperty('address');

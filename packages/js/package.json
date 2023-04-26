@@ -36,7 +36,7 @@
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && tsc -p tsconfig.json && tsc -p test/tsconfig.json && tsc-alias -p test/tsconfig.json && tsc-alias -p tsconfig.json && rollup -c",
-    "mocha": "ts-mocha -p tests/tsconfig.json --timeout 100000 tests/**/*.spec.ts",
+    "mocha": "ts-mocha -p tests/tsconfig.json --parallel --timeout 100000 tests/**/*.spec.ts",
     "test": "yarn mocha",
     "test:tape": "tape dist/test/**/**/**/*.test.js && pnpm test:exports",
     "test:exports": "node ./test/cjs-export.test.cjs && node ./test/esm-export.test.mjs"

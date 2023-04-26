@@ -1,0 +1,7 @@
+{
+    "name": "validator",
+    "scripts": {
+      "solana-test-validator": "ts-node run.ts"
+    }
+  }
+  

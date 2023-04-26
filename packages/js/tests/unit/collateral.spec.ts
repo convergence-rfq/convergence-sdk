@@ -1,28 +1,16 @@
 import { expect } from 'expect';
 import { PublicKey } from '@solana/web3.js';
 
-import { ChildProccess, Ctx, spawnValidator } from '../../../validator';
+import { Ctx } from '../../../validator';
 import { createCvg } from '../helpers';
-import { Convergence } from '../../src';
 
 describe('collateral', () => {
   const ctx = new Ctx();
-
-  let validator: ChildProccess;
-  let cvg: Convergence;
-
-  before((done) => {
-    cvg = createCvg();
-    validator = spawnValidator(done);
-  });
-
-  after(() => {
-    validator.kill();
-  });
+  const cvg = createCvg();
 
   it('fund', async () => {
     // TODO: Add a balance diff for before and after check
-    cvg.collateral().fund({ amount: 1000.5 });
+    cvg.collateral().fund({ amount: 10_000.5 });
   });
 
   it('get', async () => {

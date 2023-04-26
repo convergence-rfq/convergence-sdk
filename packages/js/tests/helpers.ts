@@ -33,8 +33,8 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
   return Convergence.make(connection, { skipPreflight: options.skipPreflight });
 };
 
-// Default user is dao but could be maker, taker or mint_authority
-export const createSdk = async (user = 'dao'): Promise<Convergence> => {
+// Default user is dao but could be maker or taker
+export const createSdk = (user = 'dao'): Convergence => {
   const cvg = createCvg({ skipPreflight: false });
   return cvg.use(keypairIdentity(getUserKp(user)));
 };

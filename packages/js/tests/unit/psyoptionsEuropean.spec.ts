@@ -19,55 +19,25 @@ import {
 
 describe('european', () => {
   const ctx = new Ctx();
-
-  let validator: ChildProccess;
+  const takerCvg = createSdk('taker');
 
   let baseMint: Mint;
   let quoteMint: Mint;
 
-  const setMints = (done: any) => {
-    let counter = 2;
-
-    const tryDone = () => {
-      counter -= 1;
-      if (counter === 0) {
-        done();
-      }
-    };
-
-    createSdk().then((cvg) => {
-      cvg
-        .tokens()
-        .findMintByAddress({ address: new PublicKey(ctx.baseMint) })
-        .then((mint) => {
-          baseMint = mint;
-          tryDone();
-        });
-      cvg
-        .tokens()
-        .findMintByAddress({ address: new PublicKey(ctx.quoteMint) })
-        .then((mint) => {
-          quoteMint = mint;
-          tryDone();
-        });
-    });
-  };
-
-  before((done) => {
-    // Validator takes a callback so if we need to set data like mints do it here
-    validator = spawnValidator(() => setMints(done));
+  before(async () => {
+    baseMint = await takerCvg
+      .tokens()
+      .findMintByAddress({ address: new PublicKey(ctx.baseMint) });
+    quoteMint = await takerCvg
+      .tokens()
+      .findMintByAddress({ address: new PublicKey(ctx.quoteMint) });
   });
 
-  after(() => {
-    validator.kill();
-  });
-
-  it('create', async () => {
-    const cvg = await createSdk('taker');
-    const europeanProgram = await createEuropeanProgram(cvg);
+  it('covered call', async () => {
+    const europeanProgram = await createEuropeanProgram(takerCvg);
     const provider = new anchor.AnchorProvider(
-      cvg.connection,
-      new anchor.Wallet(cvg.rpc().getDefaultFeePayer() as Keypair),
+      takerCvg.connection,
+      new anchor.Wallet(takerCvg.rpc().getDefaultFeePayer() as Keypair),
       {}
     );
     const pseudoPythProgram = new anchor.Program(
@@ -81,7 +51,7 @@ describe('european', () => {
       quoteMint.decimals * -1
     );
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
-      cvg,
+      takerCvg,
       oracle,
       europeanProgram,
       baseMint,
@@ -91,14 +61,14 @@ describe('european', () => {
       3_600,
       0
     );
-    const { rfq, response } = await cvg.rfqs().createAndFinalize({
+    const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        new SpotInstrument(cvg, baseMint, {
+        new SpotInstrument(takerCvg, baseMint, {
           amount: 1.0,
           side: Side.Bid,
         }),
         new PsyoptionsEuropeanInstrument(
-          cvg,
+          takerCvg,
           baseMint,
           OptionType.CALL,
           euroMeta,
@@ -111,7 +81,7 @@ describe('european', () => {
       ],
       orderType: OrderType.Sell,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
+      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
     });
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
