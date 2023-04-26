@@ -1,5 +1,4 @@
-import { Protocol, toProtocol } from '../models';
-import { toProtocolAccount } from '../accounts';
+import { Protocol } from '../models';
 import {
   Operation,
   OperationHandler,
@@ -7,6 +6,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { protocolAccountCache } from '../cache';
 
 const Key = 'GetProtocolOperation' as const;
 
@@ -60,9 +60,7 @@ export const getProtocolOperationHandler: OperationHandler<GetProtocolOperation>
       const { commitment } = scope;
       scope.throwIfCanceled();
 
-      const address = convergence.protocol().pdas().protocol();
-      const account = await convergence.rpc().getAccount(address, commitment);
-      const protocol = toProtocol(toProtocolAccount(account));
+      const protocol = await protocolAccountCache.get(convergence, commitment);
       scope.throwIfCanceled();
 
       return protocol;
