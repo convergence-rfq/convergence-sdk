@@ -1,10 +1,9 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
-import * as sdk from '@convergence-rfq/sdk';
 
 import { TX, runCli } from '../helpers';
 
-describe('riskEngine', () => {
+describe('utils', () => {
   let stub: SinonStub;
 
   beforeEach(() => {
@@ -15,14 +14,8 @@ describe('riskEngine', () => {
     stub.restore();
   });
 
-  it('set-instrument-type [spot]', async () => {
-    await runCli([
-      'risk-engine:set-instrument-type',
-      '--program',
-      sdk.spotInstrumentProgram.address.toString(),
-      '--type',
-      'spot',
-    ]);
+  it('airdrop sol', async () => {
+    await runCli(['airdrop:sol', '--amount', '1']);
     expect(stub.args[0][0]).toEqual(TX);
   });
 });

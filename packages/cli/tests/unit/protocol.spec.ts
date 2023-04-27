@@ -15,22 +15,22 @@ describe('protocol', () => {
     stub.restore();
   });
 
-  it('protocol:get-config', async () => {
+  it('get-config', async () => {
     await runCli(['protocol:get-config']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
-  it('protocol:get-base-assets', async () => {
+  it('get-base-assets', async () => {
     await runCli(['protocol:get-base-assets']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
-  it('protocol:get-registered-mints', async () => {
+  it('get-registered-mints', async () => {
     await runCli(['protocol:get-registered-mints']);
     expect(stub.args[1][0]).toEqual(ADDRESS);
   });
 
-  it('protocol:register-mint [quote]', async () => {
+  it('register-mint [quote]', async () => {
     await runCli(['token:create-mint', '--decimals', '9'], 'mint-authority');
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
@@ -39,8 +39,8 @@ describe('protocol', () => {
     expect(stub.args[3][0]).toEqual(TX);
   });
 
-  //it('protocol:add-instrument', async () => {
-  //  // TODO: Prevent duplicate instruments
+  //it('add-instrument', async () => {
+  //  // TODO: Prevent duplicate instruments as this only works the first time
   //  await runCli([
   //    'protocol:add-instrument',
   //    '--instrument-program',

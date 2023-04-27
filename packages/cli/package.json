@@ -29,8 +29,7 @@
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
     "mocha": "ts-mocha -p tsconfig.json --type-check --timeout 100000",
-    "test:setup": "yarn mocha tests/integration/setup.ts",
-    "test:bootstrap": "yarn mocha tests/integration/bootstrap.ts",
+    "test:init": "yarn mocha tests/integration/init.ts",
     "test": "yarn mocha --parallel tests/**/*.spec.ts",
     "cli": "ts-node src/index.ts"
   },
