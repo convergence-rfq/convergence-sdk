@@ -1,11 +1,9 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { Ctx } from '../../../validator';
-import { runCli, ADDRESS } from '../helpers';
+import { CTX, ADDRESS, runCli } from '../helpers';
 
 describe('rfq', () => {
-  const ctx = new Ctx();
   let stub: SinonStub;
 
   beforeEach(() => {
@@ -21,15 +19,15 @@ describe('rfq', () => {
       [
         'rfq:create',
         '--quote-mint',
-        ctx.quoteMint,
+        CTX.quoteMint,
         '--base-mint',
-        ctx.baseMint,
+        CTX.baseMint,
         '--side',
         'bid',
         '--collateral-info',
-        ctx.takerCollateralInfo,
+        CTX.takerCollateralInfo,
         '--collateral-token',
-        ctx.takerCollateralToken,
+        CTX.takerCollateralToken,
         '--order-type',
         'two-way',
         '--size',

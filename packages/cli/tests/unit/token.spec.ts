@@ -3,15 +3,12 @@ import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
 //import { getKpFile } from '../../../validator';
-import { Ctx } from '../../../validator';
-import { runCli, ADDRESS, TX } from '../helpers';
+import { CTX, ADDRESS, TX, runCli } from '../helpers';
 
-describe('utils', () => {
-  const ctx = new Ctx();
-
+describe('token', () => {
   let stub: SinonStub;
 
-  let mint: string;
+  //let mint: string;
   //let wallet: string;
 
   beforeEach(() => {
@@ -29,8 +26,7 @@ describe('utils', () => {
 
   it('token:create-mint', async () => {
     await runCli(['token:create-mint', '--decimals', '9'], 'mint-authority');
-    mint = stub.args[0][1];
-    expect(new PublicKey(mint)).toBeTruthy();
+    expect(new PublicKey(stub.args[0][1])).toBeTruthy();
     expect(stub.args[1][0]).toEqual(TX);
   });
 
@@ -63,20 +59,20 @@ describe('utils', () => {
   //});
 
   it('token:get-mint [quote]', async () => {
-    await runCli(['token:get-mint', '--address', ctx.quoteMint]);
+    await runCli(['token:get-mint', '--address', CTX.quoteMint]);
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual('Owner:');
-    expect(stub.args[1][1]).toEqual(ctx.dao);
+    expect(stub.args[1][1]).toEqual(CTX.dao);
     expect(stub.args[2][0]).toEqual('Supply:');
     expect(stub.args[3][0]).toEqual('Decimals:');
     expect(stub.args[3][1]).toEqual('9');
   });
 
   it('token:get-mint [base]', async () => {
-    await runCli(['token:get-mint', '--address', ctx.baseMint]);
+    await runCli(['token:get-mint', '--address', CTX.baseMint]);
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual('Owner:');
-    expect(stub.args[1][1]).toEqual(ctx.dao);
+    expect(stub.args[1][1]).toEqual(CTX.dao);
     expect(stub.args[2][0]).toEqual('Supply:');
     expect(stub.args[3][0]).toEqual('Decimals:');
     expect(stub.args[3][1]).toEqual('9');
@@ -84,15 +80,15 @@ describe('utils', () => {
 
   it('token:get-wallet', async () => {
     await runCli(
-      ['token:get-wallet', '--address', ctx.takerQuoteWallet],
+      ['token:get-wallet', '--address', CTX.takerQuoteWallet],
       'taker'
     );
     expect(stub.args[0][0]).toEqual(ADDRESS);
-    expect(stub.args[0][1]).toEqual(ctx.takerQuoteWallet);
+    expect(stub.args[0][1]).toEqual(CTX.takerQuoteWallet);
     expect(stub.args[1][0]).toEqual('Owner:');
-    expect(stub.args[1][1]).toEqual(ctx.taker);
+    expect(stub.args[1][1]).toEqual(CTX.taker);
     expect(stub.args[2][0]).toEqual('Mint:');
-    expect(stub.args[2][1]).toEqual(ctx.quoteMint);
+    expect(stub.args[2][1]).toEqual(CTX.quoteMint);
     expect(stub.args[3][0]).toEqual('Amount:');
     expect(stub.args[3][1]).toBeGreaterThan(0);
     expect(stub.args[4][0]).toEqual('Decimals:');

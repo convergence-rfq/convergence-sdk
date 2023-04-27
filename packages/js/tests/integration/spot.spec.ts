@@ -1,7 +1,6 @@
 import { expect } from 'expect';
 
 import {
-  CTX,
   createUserCvg,
   sellSpot,
   confirmBid,
@@ -16,7 +15,7 @@ describe('spot', () => {
 
   it('sell 1.0 BTC 2-way', async () => {
     const amount = 1.0;
-    const { rfq } = await sellSpot(takerCvg, CTX, amount);
+    const { rfq } = await sellSpot(takerCvg, amount);
     expect(rfq).toHaveProperty('address');
 
     // TODO: Get taker token amount
