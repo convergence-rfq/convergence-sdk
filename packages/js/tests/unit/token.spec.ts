@@ -11,7 +11,7 @@ import {
 import { token } from '../../src';
 
 describe('token', () => {
-  const cvg = createSdk('mint-authority');
+  const cvg = createSdk('dao');
 
   it('create mint', async () => {
     const { mint } = await cvg
@@ -30,8 +30,7 @@ describe('token', () => {
   });
 
   it('mint', async () => {
-    const daoSdk = createSdk('dao');
-    const { response } = await daoSdk.tokens().mint({
+    const { response } = await cvg.tokens().mint({
       mintAddress: BASE_MINT_PK,
       amount: token(100),
       toToken: new PublicKey(CTX.takerBaseWallet),

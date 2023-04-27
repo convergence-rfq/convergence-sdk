@@ -16,9 +16,23 @@ describe('protocol', () => {
     expect(protocol).toHaveProperty('address');
   });
 
-  it('pda', async () => {
+  it('pda [protocol]', async () => {
     const protocol = await cvg.protocol().get();
     const pda = cvg.protocol().pdas().protocol();
     expect(protocol.address).toEqual(pda);
+  });
+
+  it('pda [baseAsset]', async () => {
+    const baseAssetPda = cvg
+      .protocol()
+      .pdas()
+      .baseAsset({ index: { value: 0 } });
+    const baseAssets = await cvg.protocol().getBaseAssets();
+    expect(baseAssetPda.toBase58()).toEqual(baseAssets[0].address.toBase58());
+  });
+
+  it('get base assets', async () => {
+    const baseAssets = await cvg.protocol().getBaseAssets();
+    expect(baseAssets).toHaveLength(2);
   });
 });
