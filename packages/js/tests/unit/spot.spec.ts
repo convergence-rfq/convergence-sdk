@@ -1,7 +1,7 @@
 import { expect } from 'expect';
 
-import { ChildProccess, Ctx, spawnValidator } from '../../../validator';
 import {
+  CTX,
   createSdk,
   sellSpot,
   confirmBid,
@@ -11,13 +11,12 @@ import {
 } from '../helpers';
 
 describe('spot', () => {
-  const ctx = new Ctx();
   const takerCvg = createSdk('taker');
   const makerCvg = createSdk('maker');
 
   it('sell 1.0 BTC 2-way', async () => {
     const amount = 1.0;
-    const { rfq } = await sellSpot(takerCvg, ctx, amount);
+    const { rfq } = await sellSpot(takerCvg, CTX, amount);
     expect(rfq).toHaveProperty('address');
 
     // TODO: Get taker token amount

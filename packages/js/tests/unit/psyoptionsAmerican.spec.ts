@@ -1,7 +1,7 @@
 import { expect } from 'expect';
 
-import { Ctx } from '../../../validator';
 import {
+  CTX,
   createSdk,
   sellCoveredCall,
   confirmBid,
@@ -12,12 +12,11 @@ import {
 } from '../helpers';
 
 describe('american', () => {
-  const ctx = new Ctx();
   const takerCvg = createSdk('taker');
   const makerCvg = createSdk('maker');
 
   it('covered call', async () => {
-    const res0 = await sellCoveredCall(takerCvg, ctx);
+    const res0 = await sellCoveredCall(takerCvg, CTX);
     const { rfq } = res0;
     expect(rfq).toHaveProperty('address');
 

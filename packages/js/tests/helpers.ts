@@ -1,6 +1,8 @@
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { Commitment, Connection, Keypair } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
+import { PROGRAM_ID } from '@convergence-rfq/rfq';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getUserKp, RPC_ENDPOINT, Ctx } from '../../validator';
 import { Pyth } from '../../validator/fixtures/programs/pseudo_pyth_idl';
@@ -22,6 +24,11 @@ import {
   createAmericanAccountsAndMintOptions,
 } from '../src';
 
+// This comes from the CPL fixtures used in validator
+export const CTX = new Ctx();
+export const BASE_MINT_DECIMALS = 9;
+export const BASE_MINT_PK = new PublicKey(CTX.baseMint);
+
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
   skipPreflight?: boolean;
@@ -38,7 +45,7 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
 
 // Default user is dao but could be maker or taker
 export const createSdk = (user = 'dao'): Convergence => {
-  const cvg = createCvg({ skipPreflight: false });
+  const cvg = createCvg({ skipPreflight: true });
   return cvg.use(keypairIdentity(getUserKp(user)));
 };
 
@@ -204,4 +211,8 @@ export const createPriceFeed = async (
     }
   );
   return collateralTokenFeed.publicKey;
+};
+
+export const generatePk = async (): Promise<PublicKey> => {
+  return await PublicKey.createWithSeed(PROGRAM_ID, uuidv4(), PROGRAM_ID);
 };

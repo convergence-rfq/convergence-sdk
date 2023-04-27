@@ -1,11 +1,9 @@
 import { expect } from 'expect';
 import { PublicKey } from '@solana/web3.js';
 
-import { Ctx } from '../../../validator';
-import { createCvg } from '../helpers';
+import { CTX, createCvg } from '../helpers';
 
 describe('collateral', () => {
-  const ctx = new Ctx();
   const cvg = createCvg();
 
   it('fund', async () => {
@@ -16,14 +14,14 @@ describe('collateral', () => {
   it('get', async () => {
     const collateral = await cvg
       .collateral()
-      .findByUser({ user: new PublicKey(ctx.taker) });
+      .findByUser({ user: new PublicKey(CTX.taker) });
     expect(collateral).toHaveProperty('address');
   });
 
   it('cache', async () => {
     const collateral = await cvg
       .collateral()
-      .findByUser({ user: new PublicKey(ctx.taker) });
+      .findByUser({ user: new PublicKey(CTX.taker) });
     expect(collateral).toHaveProperty('address');
   });
 });
