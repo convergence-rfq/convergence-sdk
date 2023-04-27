@@ -11,18 +11,18 @@ describe('protocol', () => {
     expect(protocol).toHaveProperty('address');
   });
 
-  it('cache', async () => {
+  it('get cache', async () => {
     const protocol = await protocolCache.get(cvg);
     expect(protocol).toHaveProperty('address');
   });
 
-  it('pda [protocol]', async () => {
+  it('get pda [protocol]', async () => {
     const protocol = await cvg.protocol().get();
     const pda = cvg.protocol().pdas().protocol();
     expect(protocol.address).toEqual(pda);
   });
 
-  it('pda [base asset]', async () => {
+  it('get pda [base asset]', async () => {
     const baseAssetPda = cvg
       .protocol()
       .pdas()
