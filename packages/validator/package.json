@@ -2,7 +2,7 @@
     "name": "validator",
     "scripts": {
       "validator": "ts-node run.ts",
-      "logs": "echo 'Not implemented yet'"
+      "logs": "ts-node logs.ts"
     }
   }
   

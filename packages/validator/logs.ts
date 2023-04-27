@@ -1,3 +1,5 @@
+import { spawn } from 'child_process';
+
 const run = new Promise((resolve) => {
   const child = spawn(
     'sh',
@@ -8,9 +10,8 @@ const run = new Promise((resolve) => {
   );
   resolve(child);
 });
-
 async function main() {
-  await run();
+  await run;
 }
 
 main().then().catch(console.error);
