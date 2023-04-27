@@ -22,7 +22,7 @@ describe('protocol', () => {
     expect(protocol.address).toEqual(pda);
   });
 
-  it('pda [baseAsset]', async () => {
+  it('pda [base asset]', async () => {
     const baseAssetPda = cvg
       .protocol()
       .pdas()

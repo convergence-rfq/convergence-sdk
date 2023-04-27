@@ -2,7 +2,7 @@ import { expect } from 'expect';
 import { PublicKey } from '@solana/web3.js';
 
 import {
-  createSdk,
+  createUserCvg,
   generatePk,
   CTX,
   BASE_MINT_DECIMALS,
@@ -11,7 +11,7 @@ import {
 import { token } from '../../src';
 
 describe('token', () => {
-  const cvg = createSdk('dao');
+  const cvg = createUserCvg('dao');
 
   it('create mint', async () => {
     const { mint } = await cvg

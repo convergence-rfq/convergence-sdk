@@ -28,6 +28,7 @@ import {
 export const CTX = new Ctx();
 export const BASE_MINT_DECIMALS = 9;
 export const BASE_MINT_PK = new PublicKey(CTX.baseMint);
+export const QUOTE_MINT_PK = new PublicKey(CTX.quoteMint);
 
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
@@ -44,18 +45,18 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
 };
 
 // Default user is dao but could be maker or taker
-export const createSdk = (user = 'dao'): Convergence => {
+export const createUserCvg = (user = 'dao'): Convergence => {
   const cvg = createCvg({ skipPreflight: true });
   return cvg.use(keypairIdentity(getUserKp(user)));
 };
 
-export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
+export const sellCoveredCall = async (cvg: Convergence) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: new PublicKey(ctx.baseMint) });
+    .findMintByAddress({ address: new PublicKey(CTX.baseMint) });
   const quoteMint = await cvg
     .tokens()
-    .findMintByAddress({ address: new PublicKey(ctx.quoteMint) });
+    .findMintByAddress({ address: new PublicKey(CTX.quoteMint) });
 
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
@@ -94,13 +95,13 @@ export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
   return { rfq, response, optionMarket };
 };
 
-export const sellSpot = async (cvg: Convergence, ctx: Ctx, amount: 1.0) => {
+export const sellSpot = async (cvg: Convergence, amount: 1.0) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: new PublicKey(ctx.baseMint) });
+    .findMintByAddress({ address: new PublicKey(CTX.baseMint) });
   const quoteMint = await cvg
     .tokens()
-    .findMintByAddress({ address: new PublicKey(ctx.quoteMint) });
+    .findMintByAddress({ address: new PublicKey(CTX.quoteMint) });
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, baseMint, {

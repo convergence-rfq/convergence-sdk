@@ -2,7 +2,12 @@ import { expect } from 'expect';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
-import { CTX, createSdk, createPriceFeed } from '../helpers';
+import {
+  QUOTE_MINT_PK,
+  createUserCvg,
+  createPriceFeed,
+  BASE_MINT_PK,
+} from '../helpers';
 import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import {
   OrderType,
@@ -16,7 +21,7 @@ import {
 } from '../../src';
 
 describe('european', () => {
-  const takerCvg = createSdk('taker');
+  const takerCvg = createUserCvg('taker');
 
   let baseMint: Mint;
   let quoteMint: Mint;
@@ -24,10 +29,10 @@ describe('european', () => {
   before(async () => {
     baseMint = await takerCvg
       .tokens()
-      .findMintByAddress({ address: new PublicKey(CTX.baseMint) });
+      .findMintByAddress({ address: BASE_MINT_PK });
     quoteMint = await takerCvg
       .tokens()
-      .findMintByAddress({ address: new PublicKey(CTX.quoteMint) });
+      .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
   it('covered call', async () => {

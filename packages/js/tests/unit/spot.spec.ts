@@ -2,7 +2,7 @@ import { expect } from 'expect';
 
 import {
   CTX,
-  createSdk,
+  createUserCvg,
   sellSpot,
   confirmBid,
   respondWithBid,
@@ -11,8 +11,8 @@ import {
 } from '../helpers';
 
 describe('spot', () => {
-  const takerCvg = createSdk('taker');
-  const makerCvg = createSdk('maker');
+  const takerCvg = createUserCvg('taker');
+  const makerCvg = createUserCvg('maker');
 
   it('sell 1.0 BTC 2-way', async () => {
     const amount = 1.0;
