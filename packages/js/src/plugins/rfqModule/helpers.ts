@@ -1,8 +1,8 @@
 /* eslint-disable no-else-return */
-import { PublicKey, AccountMeta, Keypair } from "@solana/web3.js";
-import { Sha256 } from "@aws-crypto/sha256-js";
-import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from "@convergence-rfq/spot-instrument";
-import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from "@convergence-rfq/psyoptions-european-instrument";
+import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
+import { Sha256 } from '@aws-crypto/sha256-js';
+import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
+import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import {
   Quote,
   Side,
@@ -10,10 +10,10 @@ import {
   FixedSize,
   QuoteAsset,
   StoredRfqState,
-} from "@convergence-rfq/rfq";
-import * as anchor from "@project-serum/anchor";
-import * as psyoptionsAmerican from "@mithraic-labs/psy-american";
-import { OptionMarketWithKey } from "@mithraic-labs/psy-american";
+} from '@convergence-rfq/rfq';
+import * as anchor from '@project-serum/anchor';
+import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import {
   instructions,
   EuroPrimitive,
@@ -21,7 +21,7 @@ import {
   createProgram,
   OptionType,
   programId as psyoptionsEuropeanProgramId,
-} from "@mithraic-labs/tokenized-euros";
+} from '@mithraic-labs/tokenized-euros';
 import {
   UnparsedAccount,
   PublicKeyValues,
@@ -31,19 +31,19 @@ import {
   Pda,
   makeConfirmOptionsFinalizedOnMainnet,
   Program,
-} from "../../types";
-import { CvgWallet, TransactionBuilder } from "../../utils";
-import { Convergence } from "../../Convergence";
-import { spotInstrumentProgram, SpotInstrument } from "../spotInstrumentModule";
+} from '../../types';
+import { CvgWallet, TransactionBuilder } from '../../utils';
+import { Convergence } from '../../Convergence';
+import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
   psyoptionsEuropeanInstrumentProgram,
-} from "../psyoptionsEuropeanInstrumentModule";
-import { PsyoptionsAmericanInstrument } from "../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument";
-import { psyoptionsAmericanInstrumentProgram } from "../psyoptionsAmericanInstrumentModule/programs";
-import { Mint } from "../tokenModule";
-import type { Rfq, Response } from "./models";
-import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from "./constants";
+} from '../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
+import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
+import { Mint } from '../tokenModule';
+import type { Rfq, Response } from './models';
+import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
 // import { CvgWallet } from '@/utils/CvgWallet';
 
 const { mintOptions } = instructions;
@@ -208,7 +208,7 @@ export async function legToInstrument<
     )) as T;
   }
 
-  throw new Error("Unsupported instrument program");
+  throw new Error('Unsupported instrument program');
 }
 
 export async function legsToInstruments<
@@ -262,7 +262,7 @@ export const quoteAssetToInstrument = async (
       metaKey
     );
   }
-  throw new Error("Instrument doesn't exist");
+  throw new Error('Instrument doesn\'t exist');
 };
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
@@ -306,13 +306,13 @@ export const convertFixedSizeInput = (
   fixedSize: FixedSize,
   quoteAsset: QuoteAsset
 ): FixedSize => {
-  if (fixedSize.__kind == "BaseAsset") {
+  if (fixedSize.__kind == 'BaseAsset') {
     const convertedLegsMultiplierBps =
       Number(fixedSize.legsMultiplierBps) *
       Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
     fixedSize.legsMultiplierBps = convertedLegsMultiplierBps;
-  } else if (fixedSize.__kind == "QuoteAsset") {
+  } else if (fixedSize.__kind == 'QuoteAsset') {
     const convertedQuoteAmount =
       Number(fixedSize.quoteAmount) *
       Math.pow(10, quoteAsset.instrumentDecimals);
@@ -334,13 +334,13 @@ export const convertRfqOutput = (
     Number(rfq.totalTakerCollateralLocked) /
     Math.pow(10, collateralMintDecimals);
 
-  if (rfq.fixedSize.__kind == "BaseAsset") {
+  if (rfq.fixedSize.__kind == 'BaseAsset') {
     const parsedLegsMultiplierBps =
       Number(rfq.fixedSize.legsMultiplierBps) /
       Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 
     rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
-  } else if (rfq.fixedSize.__kind == "QuoteAsset") {
+  } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
     const parsedQuoteAmount =
       Number(rfq.fixedSize.quoteAmount) /
       Math.pow(10, rfq.quoteAsset.instrumentDecimals);
@@ -376,7 +376,7 @@ export const convertResponseOutput = (
 
     response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
-    if (response.bid.__kind == "Standard") {
+    if (response.bid.__kind == 'Standard') {
       let convertedLegsMultiplierBps =
         response.bid.legsMultiplierBps instanceof anchor.BN
           ? response.bid.legsMultiplierBps
@@ -403,7 +403,7 @@ export const convertResponseOutput = (
 
     response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
 
-    if (response.ask.__kind == "Standard") {
+    if (response.ask.__kind == 'Standard') {
       let convertedLegsMultiplierBps =
         response.ask.legsMultiplierBps instanceof anchor.BN
           ? response.ask.legsMultiplierBps
@@ -435,7 +435,7 @@ const convertQuoteInput = (quote: Quote | undefined, quoteDecimals: number) => {
     new anchor.BN(Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS))
   );
 
-  if (convertedQuote.__kind == "Standard") {
+  if (convertedQuote.__kind == 'Standard') {
     const convertedLegsMultiplierBps =
       convertedQuote.legsMultiplierBps instanceof anchor.BN
         ? convertedQuote.legsMultiplierBps
@@ -676,7 +676,7 @@ export const initializeNewOptionMeta = async (
 
   const underlyingPoolKey = Pda.find(europeanProgram.programId, [
     underlyingMint.address.toBuffer(),
-    Buffer.from("underlyingPool", "utf-8"),
+    Buffer.from('underlyingPool', 'utf-8'),
   ]);
   const underlyingPoolAccount = await convergence.connection.getAccountInfo(
     underlyingPoolKey
@@ -686,7 +686,7 @@ export const initializeNewOptionMeta = async (
   }
   const stablePoolKey = Pda.find(europeanProgram.programId, [
     stableMint.address.toBuffer(),
-    Buffer.from("stablePool", "utf-8"),
+    Buffer.from('stablePool', 'utf-8'),
   ]);
   const stablePoolAccount = await convergence.connection.getAccountInfo(
     stablePoolKey
@@ -795,7 +795,7 @@ export const createEuropeanProgram = async (convergence: Convergence) => {
 
 export const createAmericanProgram = (convergence: Convergence): any => {
   const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
-    "R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs"
+    'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
   );
   const provider = new anchor.AnchorProvider(
     convergence.connection,
