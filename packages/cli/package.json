@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/cli",
-  "version": "4.0.24-rc.21",
+  "version": "4.0.24-rc.22",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -28,9 +28,8 @@
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
-    "mocha": "ts-mocha -p tsconfig.json --type-check --timeout 100000",
-    "test:init": "yarn mocha tests/integration/init.ts",
-    "test": "yarn mocha --parallel tests/**/*.spec.ts",
+    "test:init": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/integration/init.ts",
+    "test": "ts-mocha -p tsconfig.json --type-check --timeout 100000 --parallel tests/**/*.spec.ts",
     "cli": "ts-node src/index.ts"
   },
   "dependencies": {

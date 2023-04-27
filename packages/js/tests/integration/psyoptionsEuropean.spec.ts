@@ -2,12 +2,7 @@ import { expect } from 'expect';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
-import {
-  QUOTE_MINT_PK,
-  createUserCvg,
-  createPriceFeed,
-  BASE_MINT_PK,
-} from '../helpers';
+import { QUOTE_MINT_PK, createUserCvg, BASE_MINT_PK } from '../helpers';
 import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import {
   OrderType,
@@ -19,6 +14,7 @@ import {
   initializeNewOptionMeta,
   createEuropeanProgram,
 } from '../../src';
+import { createPythPriceFeed } from '../human';
 
 describe('european', () => {
   const takerCvg = createUserCvg('taker');
@@ -47,7 +43,7 @@ describe('european', () => {
       new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
       provider
     );
-    const oracle = await createPriceFeed(
+    const oracle = await createPythPriceFeed(
       pseudoPythProgram,
       17_000,
       quoteMint.decimals * -1

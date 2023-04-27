@@ -1,29 +1,34 @@
 import { expect } from 'expect';
 
+import { createUserCvg } from '../helpers';
 import {
-  createUserCvg,
-  sellSpot,
-  confirmBid,
-  respondWithBid,
+  confirmResponse,
+  respond,
   prepareSettlement,
   settle,
-} from '../helpers';
+  createRfq,
+} from '../human';
 
 describe('spot', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
-  it('sell 1.0 BTC 2-way', async () => {
+  it('sell 1.0 BTC', async () => {
     const amount = 1.0;
-    const { rfq } = await sellSpot(takerCvg, amount);
+    const { rfq } = await createRfq(takerCvg, amount, 'sell');
     expect(rfq).toHaveProperty('address');
 
     // TODO: Get taker token amount
 
-    const { rfqResponse } = await respondWithBid(makerCvg, rfq);
+    const { rfqResponse } = await respond(makerCvg, rfq, 'bid');
     expect(rfqResponse).toHaveProperty('address');
 
-    const { response } = await confirmBid(takerCvg, rfq, rfqResponse);
+    const { response } = await confirmResponse(
+      takerCvg,
+      rfq,
+      rfqResponse,
+      'bid'
+    );
     expect(response).toHaveProperty('signature');
 
     const takerResult = await prepareSettlement(takerCvg, rfq, rfqResponse);

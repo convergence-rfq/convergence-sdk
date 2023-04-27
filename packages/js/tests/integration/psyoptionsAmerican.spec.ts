@@ -1,29 +1,29 @@
 import { expect } from 'expect';
 
 import {
-  createUserCvg,
-  sellCoveredCall,
-  confirmBid,
-  respondWithBid,
+  createAmericanCoveredCall,
+  confirmResponse,
+  respond,
   //prepareSettlement,
   //settle,
   //createAmericanAccountsAndMint,
-} from '../helpers';
+} from '../human';
+import { createUserCvg } from '../helpers';
 
 describe('american', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
   it('covered call', async () => {
-    const res0 = await sellCoveredCall(takerCvg);
+    const res0 = await createAmericanCoveredCall(takerCvg, 'sell');
     const { rfq } = res0;
     expect(rfq).toHaveProperty('address');
 
-    const res1 = await respondWithBid(makerCvg, rfq);
+    const res1 = await respond(makerCvg, rfq, 'bid');
     const { rfqResponse } = res1;
     expect(rfqResponse).toHaveProperty('address');
 
-    const res2 = await confirmBid(takerCvg, rfq, rfqResponse);
+    const res2 = await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
     expect(res2.response).toHaveProperty('signature');
 
     //await createAmericanAccountsAndMint(takerCvg, rfq, optionMarket, 100);
