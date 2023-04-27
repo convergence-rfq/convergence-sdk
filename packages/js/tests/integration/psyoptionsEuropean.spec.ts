@@ -2,7 +2,8 @@ import { expect } from 'expect';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
-import { QUOTE_MINT_PK, createUserCvg, BASE_MINT_PK } from '../helpers';
+import { createUserCvg } from '../helpers';
+import { QUOTE_MINT_PK, BASE_MINT_PK } from '../constants';
 import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import {
   OrderType,

@@ -1,13 +1,8 @@
 import { expect } from 'expect';
 import { PublicKey } from '@solana/web3.js';
 
-import {
-  createUserCvg,
-  generatePk,
-  CTX,
-  BASE_MINT_DECIMALS,
-  BASE_MINT_PK,
-} from '../helpers';
+import { createUserCvg, generatePk } from '../helpers';
+import { CTX, BASE_MINT_DECIMALS, BASE_MINT_PK } from '../constants';
 import { token } from '../../src';
 
 describe('token', () => {

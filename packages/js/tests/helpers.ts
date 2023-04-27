@@ -2,14 +2,8 @@ import { Commitment, Connection } from '@solana/web3.js';
 import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 
-import { getUserKp, RPC_ENDPOINT, Ctx } from '../../validator';
+import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { Convergence, keypairIdentity, PublicKey } from '../src';
-
-// This comes from the CPL fixtures used in validator
-export const CTX = new Ctx();
-export const BASE_MINT_DECIMALS = 9;
-export const BASE_MINT_PK = new PublicKey(CTX.baseMint);
-export const QUOTE_MINT_PK = new PublicKey(CTX.quoteMint);
 
 export type ConvergenceTestOptions = {
   commitment?: Commitment;

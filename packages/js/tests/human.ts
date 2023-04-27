@@ -13,23 +13,27 @@ import {
   SpotInstrument,
   createAmericanProgram,
   Side,
-  PublicKey,
   Rfq,
   Response,
   createAmericanAccountsAndMintOptions,
 } from '../src';
-import { CTX } from './helpers';
+import { BASE_MINT_PK, QUOTE_MINT_PK } from './constants';
 
 export type HumanOrderType = 'sell' | 'buy' | 'two-way';
 export type HumanSide = 'bid' | 'ask';
 
+const fromHumanSide = (side: HumanSide) =>
+  side === 'bid' ? Side.Bid : Side.Ask;
+
 const fromHumanOrderType = (orderType: HumanOrderType): OrderType => {
-  // eslint-disable-next-line no-nested-ternary
-  return orderType === 'sell'
-    ? OrderType.Sell
-    : orderType === 'buy'
-    ? OrderType.Buy
-    : OrderType.TwoWay;
+  switch (orderType) {
+    case 'sell':
+      return OrderType.Sell;
+    case 'buy':
+      return OrderType.Buy;
+    case 'two-way':
+      return OrderType.TwoWay;
+  }
 };
 
 export const createAmericanCoveredCall = async (
@@ -38,10 +42,10 @@ export const createAmericanCoveredCall = async (
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: new PublicKey(CTX.baseMint) });
+    .findMintByAddress({ address: BASE_MINT_PK });
   const quoteMint = await cvg
     .tokens()
-    .findMintByAddress({ address: new PublicKey(CTX.quoteMint) });
+    .findMintByAddress({ address: QUOTE_MINT_PK });
 
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
@@ -87,10 +91,10 @@ export const createRfq = async (
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: new PublicKey(CTX.baseMint) });
+    .findMintByAddress({ address: BASE_MINT_PK });
   const quoteMint = await cvg
     .tokens()
-    .findMintByAddress({ address: new PublicKey(CTX.quoteMint) });
+    .findMintByAddress({ address: QUOTE_MINT_PK });
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, baseMint, {
@@ -108,14 +112,14 @@ export const createRfq = async (
 export const confirmResponse = async (
   cvg: Convergence,
   rfq: Rfq,
-  response: any,
+  response: Response,
   side: HumanSide
 ) => {
   return await cvg.rfqs().confirmResponse({
     taker: cvg.rpc().getDefaultFeePayer(),
     rfq: rfq.address,
     response: response.address,
-    side: side === 'bid' ? Side.Bid : Side.Ask,
+    side: fromHumanSide(side),
   });
 };
 
