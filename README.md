@@ -75,7 +75,7 @@ yarn validator
 Run the validator logs separately.
 
 ```bash
-yarn validator-logs
+yarn validator:logs
 ```
 
 Finally run the tests.
