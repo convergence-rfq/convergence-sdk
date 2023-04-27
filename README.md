@@ -78,11 +78,12 @@ Run the validator logs separately.
 yarn validator:logs
 ```
 
-Finally run the tests.
+Finally run the test in a new terminal.
   
 ```bash
 yarn test
 # It is possible to run individual module tests
+cd packages/js
 yarn test -g spot
 ```
 
