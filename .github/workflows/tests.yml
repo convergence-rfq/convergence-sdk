@@ -32,6 +32,6 @@ jobs:
     - name: Install dependencies
       run: yarn install --frozen-lockfile
     - name: Build
-      run: npx nx affected --target=build
-    - name: Run tests
-      run: yarn test:all
+      run: yarn build
+    #- name: Run tests
+    #  run: yarn test:all

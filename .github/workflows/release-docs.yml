@@ -21,3 +21,9 @@ jobs:
           jekyll: false
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Install Yarn
+        run: npm install --global yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Build docs
+        run: yarn docs
