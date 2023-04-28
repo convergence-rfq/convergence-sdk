@@ -18,7 +18,6 @@ import {
   Response,
 } from '../rfqModule';
 
-import { Pyth } from '../../../../validator/fixtures/programs/pseudo_pyth_idl';
 import { toBigNumber } from '../../../src/types';
 import { BASE_MINT_PK, QUOTE_MINT_PK } from '../../../tests/constants';
 import { HumanOrderType, HumanSide } from './types';
@@ -194,7 +193,7 @@ export const createAmericanAccountsAndMint = async (
 };
 
 export const createPythPriceFeed = async (
-  oracleProgram: Program<Pyth>,
+  oracleProgram: Program<any>,
   initPrice: number,
   expo: number
 ) => {

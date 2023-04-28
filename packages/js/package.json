@@ -1,7 +1,11 @@
 {
   "name": "@convergence-rfq/sdk",
+  "description": "Official Convergence RFQ SDK",
   "version": "4.0.24-rc.38",
-  "sideEffects": false,
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "module": "dist/esm/index.mjs",
   "main": "dist/cjs/index.cjs",
   "types": "dist/types/index.d.ts",
@@ -12,19 +16,17 @@
     }
   },
   "files": [
-    "/dist",
+    "/dist/cjs",
+    "/dist/esm",
+    "/dist/types",
     "/src"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "license": "MIT",
-  "description": "Official Convergence RFQ SDK",
   "keywords": [
-    "rfq",
     "convergence",
+    "rfq",
     "solana",
-    "blockchain"
+    "blockchain",
+    "sdk"
   ],
   "author": "Convergence RFQ Maintainers <convergencerfq@tradersguild.so>",
   "homepage": "https://www.convergence.so",
@@ -38,7 +40,12 @@
     "build": "pnpm clean && tsc && tsc-alias && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && rollup -c",
     "test": "ts-mocha -p tests/tsconfig.json --parallel --timeout 100000 tests/**/*.spec.ts"
   },
-  "dependencies": {
+  "typedoc": {
+    "entryPoint": "./src/index.ts",
+    "readmeFile": "./README.md",
+    "displayName": "@convergence-rfq/sdk"
+  },
+ "dependencies": {
     "@aws-crypto/sha256-js": "3.0.0",
     "@bundlr-network/client": "^0.8.8",
     "@convergence-rfq/beet": "=0.7.10",
@@ -69,19 +76,6 @@
     "mime": "^3.0.0",
     "node-fetch": "^2.6.7",
     "uuid": "^9.0.0"
-  },
-  "engines": {
-    "node": ">=16.0"
-  },
-  "browserslist": [
-    "defaults",
-    "not IE 11",
-    "maintained node versions"
-  ],
-  "typedoc": {
-    "entryPoint": "./src/index.ts",
-    "readmeFile": "./README.md",
-    "displayName": "@convergence-rfq/sdk"
   },
   "devDependencies": {
     "@types/big.js": "^6.1.6",

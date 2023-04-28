@@ -1,8 +1,0 @@
-{
-    "name": "validator",
-    "scripts": {
-      "validator": "ts-node run.ts",
-      "logs": "ts-node logs.ts"
-    }
-  }
-  
