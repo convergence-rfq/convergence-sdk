@@ -1,7 +1,7 @@
 import { expect } from 'expect';
 
 import { createCvg } from '../helpers';
-import { protocolCache } from '../../src/plugins/protocolModule/cache';
+import { protocolCache } from '../../src';
 
 describe('protocol', () => {
   const cvg = createCvg();
