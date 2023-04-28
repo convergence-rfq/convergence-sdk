@@ -1,6 +1,8 @@
+import { DEFAULT_STALENESS } from '..';
+
 export const useCache = <T, U extends any[]>(
-  stalenessSeconds: number,
-  valueGetter: (...u: U) => Promise<T>
+  valueGetter: (...u: U) => Promise<T>,
+  stalenessSeconds = DEFAULT_STALENESS
 ) => {
   const stalenessMs = stalenessSeconds * 1_000;
   let cache: { value: T; time: Date } | null = null;

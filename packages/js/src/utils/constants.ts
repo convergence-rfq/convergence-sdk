@@ -1,1 +1,1 @@
-export const DEFAULT_CACHE = 300;
+export const DEFAULT_STALENESS = 300;
