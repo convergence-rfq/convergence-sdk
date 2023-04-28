@@ -7,8 +7,8 @@
     "target": "es2019",
     "esModuleInterop": true,
     "module": "commonjs",
-    "declarationDir": null,
     "declaration": true,
     "emitDeclarationOnly": false,
+    "declarationDir": "dist/types",
   }
 }
