@@ -66,6 +66,7 @@ export class Ctx {
   mintAuthority = getKeypairPk('mint-authority');
   baseMint = getKeypairPk('mint-btc');
   quoteMint = getKeypairPk('mint-usd-quote');
+  collateralMint = getKeypairPk('mint-usd-collateral');
 
   // Wallets
   takerQuoteWallet = getAccountPk('token-account-usd-quote-taker');
@@ -83,8 +84,6 @@ export class Ctx {
   takerCollateralInfo = getAccountPk('rfq-collateral-info-taker');
   makerCollateralToken = getAccountPk('rfq-collateral-token-maker');
   takerCollateralToken = getAccountPk('rfq-collateral-token-taker');
-
-  // TODO: Consider adding additional accounts
 }
 
 export const getAccountPk = (user: string): string => {

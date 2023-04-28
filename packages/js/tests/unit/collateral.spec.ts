@@ -2,10 +2,10 @@ import { expect } from 'expect';
 
 import { createUserCvg } from '../helpers';
 import {
+  COLLATERAL_MINT_DECIMALS,
   TAKER_COLLATERAL_INFO_PK,
   TAKER_COLLATERAL_TOKEN_PK,
   TAKER_PK,
-  TAKER_QUOTE_WALLET_PK,
 } from '../constants';
 
 describe('collateral', () => {
@@ -29,16 +29,22 @@ describe('collateral', () => {
 
   it('fund', async () => {
     const amount = 100;
-    const { lockedTokensAmount } = await cvg
-      .collateral()
-      .findByUser({ user: TAKER_PK });
+    const tokenBefore = await cvg
+      .tokens()
+      .findTokenByAddress({ address: TAKER_COLLATERAL_TOKEN_PK });
+
     await cvg.collateral().fund({
       amount,
-      collateralInfo: TAKER_COLLATERAL_INFO_PK,
-      collateralToken: TAKER_COLLATERAL_TOKEN_PK,
-      userTokens: TAKER_QUOTE_WALLET_PK,
     });
-    const collateral = await cvg.collateral().findByUser({ user: TAKER_PK });
-    expect(collateral.lockedTokensAmount).toEqual(lockedTokensAmount + amount);
+
+    const tokenAfter = await cvg
+      .tokens()
+      .findTokenByAddress({ address: TAKER_COLLATERAL_TOKEN_PK });
+
+    // TODO: For some reason tokenAfter.amount.currency.decimals is not correct
+    expect(tokenAfter.amount.basisPoints.toNumber()).toEqual(
+      tokenBefore.amount.basisPoints.toNumber() +
+        amount * Math.pow(10, COLLATERAL_MINT_DECIMALS)
+    );
   });
 });
