@@ -38,7 +38,7 @@
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && rollup -c",
-    "test": "ts-mocha -p tests/tsconfig.json --parallel --timeout 100000 tests/**/*.spec.ts"
+    "test": "ts-mocha --parallel --timeout 100000 tests/**/*.spec.ts"
   },
   "typedoc": {
     "entryPoint": "./src/index.ts",

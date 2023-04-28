@@ -1,6 +1,7 @@
 import { expect } from 'expect';
 
 import { createUserCvg } from '../helpers';
+import { BASE_MINT_PK, QUOTE_MINT_PK } from '../constants';
 
 describe('spot', () => {
   const takerCvg = createUserCvg('taker');
@@ -9,7 +10,9 @@ describe('spot', () => {
   it('sell 1.0 BTC', async () => {
     const amount = 1.0;
     const side = 'sell';
-    const { rfq } = await takerCvg.human().createRfq(amount, side);
+    const { rfq } = await takerCvg
+      .human()
+      .createRfq(amount, side, BASE_MINT_PK, QUOTE_MINT_PK);
     expect(rfq).toHaveProperty('address');
 
     // TODO: Get taker token amount
