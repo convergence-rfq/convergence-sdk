@@ -51,8 +51,10 @@ export type RegisterMintInput = {
    */
   authority?: Signer;
 
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().get()`
    */
   protocol?: PublicKey;
 
@@ -62,8 +64,8 @@ export type RegisterMintInput = {
   mint: PublicKey;
 
   /**
-   * The Optional base asset index.
-   * Only needs to be passed if the mint is a base asset.
+   * Optional base asset index only needs to be passed if the mint is a base asset.
+   *
    * @defaultValue `-1`
    */
   baseAssetIndex?: number;

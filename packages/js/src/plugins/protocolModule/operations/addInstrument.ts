@@ -11,6 +11,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../cache';
 
 const Key = 'AddInstrumentOperation' as const;
 
@@ -48,8 +49,10 @@ export type AddInstrumentInput = {
    */
   authority: Signer;
 
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -143,6 +146,11 @@ export const addInstrumentBuilder = (
     revertPreparationAccountAmount,
     cleanUpAccountAmount,
   } = params;
+
+  // TODO: Check remainder of code for cases where protocol is changed
+  // and clear cache if necessary. May cause issues if protocol is changed.
+  // In the future we will add this cache clearing via websockets.
+  protocolCache.clear();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

@@ -9,6 +9,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqsByAddressesOperation' as const;
 
@@ -79,12 +80,8 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
 
       let rfqs: Rfq[] = [];
 
-      const protocol = await convergence.protocol().get();
-      const collateralMintDecimals = (
-        await convergence
-          .tokens()
-          .findMintByAddress({ address: protocol.collateralMint })
-      ).decimals;
+      const collateralMint = await collateralMintCache.get(convergence);
+      const collateralMintDecimals = collateralMint.decimals;
 
       const callsToGetMultipleAccounts = Math.ceil(addresses.length / 100);
 

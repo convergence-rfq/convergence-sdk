@@ -3,7 +3,14 @@ import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
-import { Quote, Side, Leg, FixedSize, QuoteAsset, StoredRfqState } from '@convergence-rfq/rfq';
+import {
+  Quote,
+  Side,
+  Leg,
+  FixedSize,
+  QuoteAsset,
+  StoredRfqState,
+} from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
@@ -37,7 +44,7 @@ import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstru
 import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
-// import { CvgWallet } from '@/utils/CvgWallet';
+import { collateralMintCache } from '../collateralModule';
 
 const { mintOptions } = instructions;
 
@@ -77,10 +84,7 @@ export const devnetAirdrops = async (
       ])
     );
 
-  const protocol = await cvg.protocol().get();
-  const collateralMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: protocol.collateralMint });
+  const collateralMint = await collateralMintCache.get(cvg);
 
   let collateralWallet;
   try {
@@ -353,8 +357,6 @@ export const convertResponseOutput = (
   response: Response,
   quoteDecimals: number
 ): Response => {
-  // let convertedResponse = structuredClone(response);
-
   if (response.bid) {
     let convertedPriceQuoteAmountBps =
       response.bid.priceQuote.amountBps instanceof anchor.BN
@@ -413,23 +415,23 @@ export const convertResponseOutput = (
   return response;
 };
 
-const convertQuoteInput = (quote: Quote | undefined, quoteDecimals: number) => {
-  if (!quote) return;
-
+const convertQuoteInput = (quote: Quote, quoteDecimals: number) => {
   const convertedQuote = structuredClone(quote);
   convertedQuote.priceQuote.amountBps = quote.priceQuote.amountBps;
 
-  let convertedPriceQuoteAmountBps =
+  const convertedPriceQuoteAmountBps =
     convertedQuote.priceQuote.amountBps instanceof anchor.BN
       ? convertedQuote.priceQuote.amountBps
       : new anchor.BN(convertedQuote.priceQuote.amountBps);
 
   convertedQuote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(
-    new anchor.BN(Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS))
+    new anchor.BN(10).pow(
+      new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
+    )
   );
 
   if (convertedQuote.__kind == 'Standard') {
-    let convertedLegsMultiplierBps =
+    const convertedLegsMultiplierBps =
       convertedQuote.legsMultiplierBps instanceof anchor.BN
         ? convertedQuote.legsMultiplierBps
         : new anchor.BN(convertedQuote.legsMultiplierBps);
@@ -447,9 +449,8 @@ export const convertResponseInput = (
   bid?: Quote,
   ask?: Quote
 ) => {
-  const convertedBid = convertQuoteInput(bid, quoteDecimals);
-  const convertedAsk = convertQuoteInput(ask, quoteDecimals);
-
+  const convertedBid = bid ? convertQuoteInput(bid, quoteDecimals) : undefined;
+  const convertedAsk = ask ? convertQuoteInput(ask, quoteDecimals) : undefined;
   return { convertedBid, convertedAsk };
 };
 
@@ -1552,16 +1553,16 @@ export const createAccountsAndMintOptions = async (
 
 export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
   return rfqs
-  .sort((a, b) => {
-    return b.state === StoredRfqState.Active ? 1 : -1;
-  })
-  .sort((a, b) => {
-    if (a.state === b.state) {
-      const aTimeToExpiry = Number(a.creationTimestamp) + a.activeWindow;
-      const bTimeToExpiry = Number(b.creationTimestamp) + b.activeWindow;
-      return aTimeToExpiry - bTimeToExpiry;
-    } else {
-      return 0;
-    }
-  });
-}
+    .sort((a, b) => {
+      return b.state === StoredRfqState.Active ? 1 : -1;
+    })
+    .sort((a, b) => {
+      if (a.state === b.state) {
+        const aTimeToExpiry = Number(a.creationTimestamp) + a.activeWindow;
+        const bTimeToExpiry = Number(b.creationTimestamp) + b.activeWindow;
+        return aTimeToExpiry - bTimeToExpiry;
+      } else {
+        return 0;
+      }
+    });
+};

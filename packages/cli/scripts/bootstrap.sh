@@ -3,12 +3,7 @@
 set -e
 set -x
 
-LOCALNET="http://127.0.0.1:8899"
-DEVNET="https://muddy-white-morning.solana-devnet.quiknode.pro/637131a6924513d7c83c65efc75e55a9ba2517e9/"
-TESTNET="https://api.testnet.solana.com"
-MAINNET="https://api.mainnet-beta.solana.com"
-
-RPC_ENDPOINT=$DEVNET
+RPC_ENDPOINT="http://127.0.0.1:8899"
 
 OWNER="HGm8jGLSazATztBSUxXfU62oRyVsmwPKnUsjvviRYbRG"
 DAO_KEYPAIR="$HOME/.config/solana/id.json"
@@ -29,21 +24,21 @@ USDC_MINT=BREWDGvXEQKx9FkZrSCajzjy4cpm9hofzze3b41Z3V4p
 BTC_MINT=A3c9ThQZTUruMm56Eu4fxVwRosg4nBTpJe2B1pxBMYK7
 SOL_MINT=FYQ5MgByxnkfGAUzNcbaD734VK8CdEUX49ioTkokypRc
 
-#$CVG airdrop $OPT
+$CVG airdrop $OPT
 
-#read USDC_MINT <<< $($CVG create-mint $OPT --decimals=6 | awk '/Address:[[:space:]]/ { print $2 }')
-#read BTC_MINT <<< $($CVG create-mint $OPT --decimals=9 | awk '/Address:[[:space:]]/ { print $2 }')
-#read SOL_MINT <<< $($CVG create-mint $OPT --decimals=9 | awk '/Address:[[:space:]]/ { print $2 }')
+read USDC_MINT <<< $($CVG create-mint $OPT --decimals=6 | awk '/Address:[[:space:]]/ { print $2 }')
+read BTC_MINT <<< $($CVG create-mint $OPT --decimals=9 | awk '/Address:[[:space:]]/ { print $2 }')
+read SOL_MINT <<< $($CVG create-mint $OPT --decimals=9 | awk '/Address:[[:space:]]/ { print $2 }')
 
-#read USDC_WALLET <<< $($CVG create-wallet $OPT --mint=$USDC_MINT --owner=$OWNER | awk '/Address:[[:space:]]/ { print $2 }')
-#read BTC_WALLET <<< $($CVG create-wallet $OPT --mint=$BTC_MINT  --owner=$OWNER | awk '/Address:[[:space:]]/ { print $2 }')
-#read SOL_WALLET <<< $($CVG create-wallet $OPT --mint=$SOL_MINT  --owner=$OWNER | awk '/Address:[[:space:]]/ { print $2 }')
+read USDC_WALLET <<< $($CVG create-wallet $OPT --mint=$USDC_MINT --owner=$OWNER | awk '/Address:[[:space:]]/ { print $2 }')
+read BTC_WALLET <<< $($CVG create-wallet $OPT --mint=$BTC_MINT  --owner=$OWNER | awk '/Address:[[:space:]]/ { print $2 }')
+read SOL_WALLET <<< $($CVG create-wallet $OPT --mint=$SOL_MINT  --owner=$OWNER | awk '/Address:[[:space:]]/ { print $2 }')
 
-#$CVG mint-to $OPT --mint=$USDC_MINT --wallet=$USDC_WALLET --amount=1000000000000000
-#$CVG mint-to $OPT --mint=$BTC_MINT  --wallet=$BTC_WALLET  --amount=1000000000000000
-#$CVG mint-to $OPT --mint=$SOL_MINT  --wallet=$SOL_WALLET  --amount=1000000000000000
+$CVG mint-to $OPT --mint=$USDC_MINT --wallet=$USDC_WALLET --amount=1000000000000000
+$CVG mint-to $OPT --mint=$BTC_MINT  --wallet=$BTC_WALLET  --amount=1000000000000000
+$CVG mint-to $OPT --mint=$SOL_MINT  --wallet=$SOL_WALLET  --amount=1000000000000000
 
-#$CVG airdrop $OPT
+$CVG airdrop $OPT
 
 KEYPAIR_FILE=$DAO_KEYPAIR
 OPT="--rpc-endpoint=$RPC_ENDPOINT --keypair-file=$KEYPAIR_FILE"

@@ -1,23 +1,10 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import {
-  ChildProccess,
-  spawnValidator,
-  Ctx,
-  readCtx,
-} from '../../../validator';
-import { runCli, ADDRESS } from '../helpers';
+import { CTX, ADDRESS, runCli } from '../helpers';
 
 describe('rfq', () => {
-  let ctx: Ctx;
   let stub: SinonStub;
-  let validator: ChildProccess;
-
-  before((done) => {
-    ctx = readCtx();
-    validator = spawnValidator(done);
-  });
 
   beforeEach(() => {
     stub = sinon.stub(console, 'log');
@@ -27,24 +14,20 @@ describe('rfq', () => {
     stub.restore();
   });
 
-  after(async () => {
-    validator.kill();
-  });
-
-  it('rfq:create [taker]', async () => {
+  it('create [taker]', async () => {
     await runCli(
       [
         'rfq:create',
         '--quote-mint',
-        ctx.quoteMint,
+        CTX.quoteMint,
         '--base-mint',
-        ctx.baseMint,
+        CTX.baseMint,
         '--side',
         'bid',
         '--collateral-info',
-        ctx.takerCollateralInfo,
+        CTX.takerCollateralInfo,
         '--collateral-token',
-        ctx.takerCollateralToken,
+        CTX.takerCollateralToken,
         '--order-type',
         'two-way',
         '--size',
@@ -59,7 +42,7 @@ describe('rfq', () => {
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
-  it('rfq:get-all [maker]', async () => {
+  it('get-all [maker]', async () => {
     await runCli(['rfq:get-all']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
