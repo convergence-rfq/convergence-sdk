@@ -1,5 +1,5 @@
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
-import { Keypair } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
 
 import { Convergence } from '../../Convergence';
@@ -19,7 +19,6 @@ import {
 } from '../rfqModule';
 
 import { toBigNumber } from '../../../src/types';
-import { BASE_MINT_PK, QUOTE_MINT_PK } from '../../../tests/constants';
 import { HumanOrderType, HumanSide } from './types';
 import { toHumanRfq } from './models/HumanRfq';
 
@@ -45,14 +44,16 @@ const fromHumanOrderType = (orderType: HumanOrderType): OrderType => {
 
 export const createAmericanCoveredCall = async (
   cvg: Convergence,
-  orderType: HumanOrderType
+  orderType: HumanOrderType,
+  baseMintPk: PublicKey,
+  quoteMintPk: PublicKey
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: BASE_MINT_PK });
+    .findMintByAddress({ address: baseMintPk });
   const quoteMint = await cvg
     .tokens()
-    .findMintByAddress({ address: QUOTE_MINT_PK });
+    .findMintByAddress({ address: quoteMintPk });
 
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
@@ -94,14 +95,16 @@ export const createAmericanCoveredCall = async (
 export const createRfq = async (
   cvg: Convergence,
   amount: number,
-  orderType: HumanOrderType
+  orderType: HumanOrderType,
+  baseMintPk: PublicKey,
+  quoteMintPk: PublicKey
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: BASE_MINT_PK });
+    .findMintByAddress({ address: baseMintPk });
   const quoteMint = await cvg
     .tokens()
-    .findMintByAddress({ address: QUOTE_MINT_PK });
+    .findMintByAddress({ address: quoteMintPk });
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       new SpotInstrument(cvg, baseMint, {
