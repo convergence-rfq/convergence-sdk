@@ -11,4 +11,3 @@ export * from './types';
 export * from './Provider';
 export * from './CvgWallet';
 export * from './cache';
-export * from './constants';
