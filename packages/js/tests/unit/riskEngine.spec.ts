@@ -15,13 +15,13 @@ describe('riskEngine', () => {
     expect(config).toHaveProperty('address');
   });
 
-  //it('close config', async () => {
-  //  const { response } = await cvg.riskEngine().closeConfig();
-  //  expect(response).toHaveProperty('signature');
-  //});
+  it('close config', async () => {
+    const { response } = await cvg.riskEngine().closeConfig();
+    expect(response).toHaveProperty('signature');
+  });
 
-  //it('initialize config', async () => {
-  //  const { config } = await cvg.riskEngine().initializeConfig();
-  //  expect(config.address).toEqual(cvg.riskEngine().pdas().config());
-  //});
+  it('initialize config', async () => {
+    const { config } = await cvg.riskEngine().initializeConfig();
+    expect(config.address).toEqual(cvg.riskEngine().pdas().config());
+  });
 });
