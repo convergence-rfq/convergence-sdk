@@ -1,6 +1,6 @@
 # @convergence-rfq/sdk
 
-## 4.0.24-rc.33
+## 4.2.4
 
 ### Patch Changes
 
@@ -240,6 +240,18 @@
 ### Patch Changes
 
 - use a different sha256 client so sdk builds correctly
+
+## 3.2.1
+
+### Patch Changes
+
+- add new rfq / response pdas
+
+## 3.2.0
+
+### Minor Changes
+
+- Rebuilt
 
 ## 3.1.0
 
