@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { createUnlockRfqCollateralInstruction } from '@convergence-rfq/rfq';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -7,9 +8,9 @@ import {
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'UnlockRfqCollateralOperation' as const;
 
@@ -43,13 +44,22 @@ export type UnlockRfqCollateralOperation = Operation<
  * @category Inputs
  */
 export type UnlockRfqCollateralInput = {
-  /** The protocol address. */
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
+   */
   protocol?: PublicKey;
 
-  /** The Rfq address. */
+  /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional address of the Taker's collateral info account. */
+  /**
+   * Optional address of the Taker's collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
+   *
+   */
   collateralInfo?: PublicKey;
 };
 
@@ -126,7 +136,6 @@ export const unlockRfqCollateralBuilder = async (
   let { collateralInfo } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
@@ -142,7 +151,7 @@ export const unlockRfqCollateralBuilder = async (
     .add({
       instruction: createUnlockRfqCollateralInstruction(
         {
-          protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
           collateralInfo,
         },

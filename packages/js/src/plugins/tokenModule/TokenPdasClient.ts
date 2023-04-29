@@ -1,5 +1,5 @@
-import type { Convergence } from '@/Convergence';
-import { Pda, Program, PublicKey } from '@/types';
+import type { Convergence } from '../../Convergence';
+import { Pda, Program, PublicKey } from '../../types';
 
 /**
  * This client allows you to build PDAs related to the Token module.
@@ -27,6 +27,7 @@ export class TokenPdasClient {
     const associatedTokenProgram = this.convergence
       .programs()
       .getAssociatedToken(programs);
+      
     return Pda.find(associatedTokenProgram.address, [
       owner.toBuffer(),
       tokenProgram.address.toBuffer(),

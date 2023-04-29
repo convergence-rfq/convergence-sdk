@@ -1,48 +1,85 @@
-import { createCalculateCollateralForResponseInstruction } from '@convergence-rfq/risk-engine';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
-import { BaseAssetIndex } from '@convergence-rfq/rfq';
-import { bignum } from '@convergence-rfq/beet';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { RiskEnginePdasClient } from '../RiskEnginePdasClient';
-import { Convergence } from '@/Convergence';
-import { ProtocolPdasClient } from '@/plugins/protocolModule';
+import { PublicKey } from '@solana/web3.js';
+import { AuthoritySide, Quote, Side } from '@convergence-rfq/rfq';
 
+import { calculateRisk } from '../clientCollateralCalculator';
+import { extractLegsMultiplierBps } from '../helpers';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
+import { convertResponseInput } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
+/**
+ * Calculates the required collateral for a maker particular response for an RFQ
+ *
+ * ```ts
+ * await cvg.riskEngine().calculateCollateralForResponse({
+      rfqAddress: rfq.address,
+      bid: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 22_000,
+        },
+        legsMultiplierBps: 20,
+      },
+      ask: {
+        __kind: 'Standard',
+        priceQuote: {
+          __kind: 'AbsolutePrice',
+          amountBps: 23_000,
+        },
+        legsMultiplierBps: 5,
+      },
+    });
+ * ```
+ *
+ * @group Operations
+ * @category Constructors
+ */
 export const calculateCollateralForResponseOperation =
   useOperation<CalculateCollateralForResponseOperation>(Key);
 
+/**
+ * @group Operations
+ * @category Types
+ */
 export type CalculateCollateralForResponseOperation = Operation<
   typeof Key,
-  CalculateCollateralForResponseIntput,
+  CalculateCollateralForResponseInput,
   CalculateCollateralForResponseOutput
 >;
 
-export type CalculateCollateralForResponseOutput = {
-  /** The blockchain response from sending and confirming the transaction. */
-  response: SendAndConfirmTransactionResponse;
-  collateralForResponseAmount: bignum;
+/**
+ * @group Operations
+ * @category Inputs
+ */
+export type CalculateCollateralForResponseInput = {
+  /** The address of the Rfq account. */
+  rfqAddress: PublicKey;
+  /** Bid answer to the Rfq. */
+  bid: Quote | null;
+  /** Ask answer to the Rfq. */
+  ask: Quote | null;
 };
 
-export type CalculateCollateralForResponseIntput = {
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
-  /** The address of the response account. */
-  response: PublicKey;
-  /** The base asset index. */
-  baseAssetIndex?: BaseAssetIndex;
+/**
+ * @group Operations
+ * @category Outputs
+ */
+export type CalculateCollateralForResponseOutput = {
+  /** Collateral required as a floating point number */
+  requiredCollateral: number;
 };
 
 export type CalculateCollateralForResponseBuilderParams =
-  CalculateCollateralForResponseIntput;
+  CalculateCollateralForResponseInput;
 
 export const calculateCollateralForResponseOperationHandler: OperationHandler<CalculateCollateralForResponseOperation> =
   {
@@ -53,74 +90,53 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
     ): Promise<CalculateCollateralForResponseOutput> => {
       scope.throwIfCanceled();
 
-      const output = await calculateCollateralForResponsebuilder(
+      const { rfqAddress, bid, ask } = operation.input;
+
+      const [rfq, config] = await Promise.all([
+        convergence
+          .rfqs()
+          .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
+        convergence.riskEngine().fetchConfig(scope),
+      ]);
+
+      const quoteDecimals = rfq.quoteAsset.instrumentDecimals;
+
+      const { convertedBid, convertedAsk } = convertResponseInput(
+        quoteDecimals,
+        bid ?? undefined,
+        ask ?? undefined
+      );
+
+      const getCase = (quote: Quote, side: Side) => {
+        const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
+        const legMultiplier =
+          Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
+
+        return {
+          legMultiplier,
+          authoritySide: AuthoritySide.Maker,
+          quoteSide: side,
+        };
+      };
+
+      const cases = [];
+      if (convertedBid !== undefined) {
+        cases.push(getCase(convertedBid, Side.Bid));
+      }
+      if (convertedAsk !== undefined) {
+        cases.push(getCase(convertedAsk, Side.Ask));
+      }
+
+      const risks = await calculateRisk(
         convergence,
-        operation.input,
-        scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+        config,
+        rfq.legs,
+        cases,
+        rfq.settlingWindow,
+        scope.commitment
+      );
+      const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
 
-      const response = await convergence
-        .rfqs()
-        .findResponseByAddress({ address: operation.input.response });
-      const collateralForResponseAmount = response.makerCollateralLocked;
-
-      return { ...output, collateralForResponseAmount };
+      return { requiredCollateral };
     },
   };
-
-export const calculateCollateralForResponsebuilder = (
-  convergence: Convergence,
-  params: CalculateCollateralForResponseBuilderParams,
-  options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
-  const anchorRemainingAccounts: AccountMeta[] = [];
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-
-  const { rfq, response, baseAssetIndex = { value: 0 } } = params;
-
-  const riskEngineProgram = convergence.programs().getRiskEngine(programs);
-
-  const config = new RiskEnginePdasClient(convergence).config();
-
-  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
-    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
-  );
-
-  const baseAsset = new ProtocolPdasClient(convergence).baseAsset({
-    index: baseAssetIndex,
-  });
-
-  const baseAssetAccounts: AccountMeta[] = [
-    {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
-  const oracleAccounts: AccountMeta[] = [
-    {
-      pubkey: SWITCHBOARD_BTC_ORACLE,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
-
-  anchorRemainingAccounts.push(...baseAssetAccounts, ...oracleAccounts);
-
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
-    .add({
-      instruction: createCalculateCollateralForResponseInstruction(
-        {
-          rfq,
-          response,
-          config,
-          anchorRemainingAccounts,
-        },
-
-        riskEngineProgram.address
-      ),
-      signers: [],
-      key: 'CalculateCollateralForResponseOperation',
-    });
-};

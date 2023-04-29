@@ -1,14 +1,17 @@
 import { PublicKey } from '@solana/web3.js';
-import { toResponseAccount } from '../accounts';
+
 import { Response, toResponse } from '../models/Response';
-import { GpaBuilder } from '@/utils';
+import { Rfq } from '../models';
+import { toResponseAccount } from '../accounts';
+import { getPages, convertResponseOutput } from '../helpers';
+import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindResponsesByOwnerOperation' as const;
 
@@ -49,13 +52,19 @@ export type FindResponsesByOwnerInput = {
 
   /** Optional array of Responses to search from. */
   responses?: Response[];
+
+  /** Optional number of Responses to return per page. */
+  responsesPerPage?: number;
+
+  /** Optional number of pages to return. */
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByOwnerOutput = Response[];
+export type FindResponsesByOwnerOutput = Response[][];
 
 /**
  * @group Operations
@@ -68,45 +77,95 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByOwnerOutput> => {
-      const { owner, responses } = operation.input;
+      const { owner, responses, responsesPerPage, numPages } = operation.input;
+      const { programs, commitment } = scope;
       scope.throwIfCanceled();
 
-      const responsesByowner: Response[] = [];
-
       if (responses) {
+        const responsesByOwner: Response[] = [];
+
         for (const response of responses) {
           if (response.maker.toBase58() === owner.toBase58()) {
-            responsesByowner.push(response);
+            const rfq = await convergence
+              .rfqs()
+              .findRfqByAddress({ address: response.rfq });
+
+            const convertedResponse = convertResponseOutput(
+              response,
+              rfq.quoteAsset.instrumentDecimals
+            );
+
+            responsesByOwner.push(convertedResponse);
           }
         }
         scope.throwIfCanceled();
 
-        return responsesByowner;
+        const pages = getPages(responsesByOwner, responsesPerPage, numPages);
+
+        return pages;
       }
-      const gpaBuilder = new GpaBuilder(
+
+      const rfqProgram = convergence.programs().getRfq(programs);
+      const responseGpaBuilder = new ResponseGpaBuilder(
         convergence,
-        convergence.programs().getRfq().address
+        rfqProgram.address
       );
-      const unparsedAccounts = await gpaBuilder.get();
-      const responseAccounts = unparsedAccounts
-        .map<Response | null>((account) => {
-          if (account == null) {
-            return null;
-          }
-          try {
-            return toResponse(toResponseAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((response): response is Response => response != null);
-      for (const response of responseAccounts) {
-        if (response.maker.toBase58() === owner.toBase58()) {
-          responsesByowner.push(response);
-        }
-      }
+      const unparsedAccounts = await responseGpaBuilder
+        .withoutData()
+        .whereMaker(owner)
+        .get();
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
       scope.throwIfCanceled();
 
-      return responsesByowner;
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
+
+      const parsedResponses: Response[] = [];
+
+      const matchingResponses: Response[] = [];
+      const matchingRfqPromises: Promise<Rfq>[] = [];
+
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
+
+        for (const account of accounts) {
+          const response = toResponse(toResponseAccount(account));
+
+          if (response.maker.toBase58() === owner.toBase58()) {
+            matchingResponses.push(response);
+            matchingRfqPromises.push(
+              convergence.rfqs().findRfqByAddress({ address: response.rfq })
+            );
+          }
+        }
+      }
+
+      const matchingRfqs = await Promise.all(matchingRfqPromises);
+
+      for (const matchingRfq of matchingRfqs) {
+        for (const matchingResponse of matchingResponses)
+          if (
+            matchingResponse.rfq.toBase58() === matchingRfq.address.toBase58()
+          ) {
+            const convertedResponse = convertResponseOutput(
+              matchingResponse,
+              matchingRfq.quoteAsset.instrumentDecimals
+            );
+
+            parsedResponses.push(convertedResponse);
+          }
+      }
+
+      const pages = getPages(parsedResponses, responsesPerPage, numPages);
+
+      return pages;
     },
   };

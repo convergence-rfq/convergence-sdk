@@ -1,7 +1,8 @@
 import { createCancelRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
@@ -9,8 +10,8 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'CancelRfqOperation' as const;
 
@@ -18,9 +19,9 @@ const Key = 'CancelRfqOperation' as const;
  * Cancels an existing Rfq.
  *
  * ```ts
- * 
+ *
  * const { rfq } = await convergence.rfqs.create(...);
- * 
+ *
  * await convergence
  *   .rfqs()
  *   .cancelRfq({ rfq: rfq.address });
@@ -53,7 +54,9 @@ export type CancelRfqInput = {
    */
   taker?: Signer;
 
-  /** The address of the protocol account. */
+  /** The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
@@ -121,7 +124,6 @@ export const cancelRfqBuilder = async (
   const { taker = convergence.identity(), rfq } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocolPda = convergence.protocol().pdas().protocol();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -129,7 +131,7 @@ export const cancelRfqBuilder = async (
       instruction: createCancelRfqInstruction(
         {
           taker: taker.publicKey,
-          protocol: protocolPda,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
         },
         rfqProgram.address

@@ -1,15 +1,16 @@
 import { PublicKey } from '@solana/web3.js';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { settleBuilder } from './settle';
-import { partiallySettleLegsBuilder } from './partiallySettleLegs';
-import { Convergence } from '@/Convergence';
+
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
+} from '../../../types';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { settleBuilder } from './settle';
+import { partiallySettleLegsBuilder } from './partiallySettleLegs';
 
 const Key = 'PartiallySettleLegsAndSettleOperation' as const;
 
@@ -51,7 +52,10 @@ export type PartiallySettleLegsAndSettleOperation = Operation<
  * @category Inputs
  */
 export type PartiallySettleLegsAndSettleInput = {
-  /** The protocol address. */
+  /**
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
+   */
   protocol?: PublicKey;
 
   /** The Rfq address. */
@@ -96,7 +100,6 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       scope: OperationScope
     ): Promise<PartiallySettleLegsAndSettleOutput> => {
       const { rfq } = operation.input;
-
       const MAX_TX_SIZE = 1232;
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
@@ -125,7 +128,8 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
 
       while (settleTxSize == -1 || settleTxSize + 193 > MAX_TX_SIZE) {
         const index = Math.trunc(slicedIndex / 2);
-        const startIndex = rfqModel.legs.length - index;
+        // const startIndex = rfqModel.legs.length - index;
+        const startIndex = rfqModel.legs.length - index + 3;
 
         settleRfqBuilder = await settleBuilder(
           convergence,

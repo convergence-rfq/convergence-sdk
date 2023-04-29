@@ -16,7 +16,6 @@
     "moduleResolution": "node",
     "allowJs": false,
     "skipLibCheck": true,
-
     "noUnusedLocals": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
@@ -24,7 +23,6 @@
     "noImplicitReturns": false,
     "strict": true,
     "isolatedModules": true,
-
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "removeComments": false,
@@ -34,7 +32,7 @@
   "typedocOptions": {
     "entryPoints": ".",
     "entryPointStrategy": "packages",
-    "plugin": ["./infra/typedoc-plugin.js"],
+    "plugin": ["./typedoc-plugin.js"],
     "out": "docs",
     "readme": "README.md",
     "name": "API References",

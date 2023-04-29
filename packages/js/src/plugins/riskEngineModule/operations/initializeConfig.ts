@@ -1,23 +1,25 @@
 import { createInitializeConfigInstruction } from '@convergence-rfq/risk-engine';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { toConfigAccount } from '../accounts';
-import { toConfig, assertConfig, Config } from '../models';
+import { Config } from '../models';
 import {
   DEFAULT_MINT_DECIMALS,
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
   DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
   DEFAULT_OVERALL_SAFETY_FACTOR,
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
+  DEFAULT_ACCEPTED_ORACLE_STALENESS,
+  DEFAULT_ACCEPTED_ORACLE_CONFIDENCE_INTERVAL_PORTION,
 } from '../constants';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'InitalizeConfigOperation' as const;
 
@@ -55,15 +57,26 @@ export type InitializeConfigInput =
       /** The owner of the protocol. */
       authority?: Signer;
 
+      /** The collateral amount required to create a variable size RFQ. */
       collateralForVariableSizeRfqCreation?: number;
 
+      /** The collateral amount required to create a fixed quote amount RFQ. */
       collateralForFixedQuoteAmountRfqCreation?: number;
 
+      /** The number of decimals of the collateral mint. */
       collateralMintDecimals?: number;
 
+      /** The safety price shift factor. */
       safetyPriceShiftFactor?: number;
 
+      /** The overall safety factor. */
       overallSafetyFactor?: number;
+
+      /** The accepted oracle staleness. */
+      acceptedOracleStaleness?: number;
+
+      /** The accepted oracle confidence interval portion. */
+      acceptedOracleConfidenceIntervalPortion: number;
     }
   | undefined;
 
@@ -90,7 +103,6 @@ export const initializeConfigOperationHandler: OperationHandler<InitalizeConfigO
       convergence: Convergence,
       scope: OperationScope
     ): Promise<InitializeConfigOutput> => {
-      const { commitment } = scope;
       scope.throwIfCanceled();
 
       const builder = initializeConfigBuilder(
@@ -103,12 +115,7 @@ export const initializeConfigOperationHandler: OperationHandler<InitalizeConfigO
         scope.confirmOptions
       );
 
-      const account = await convergence
-        .rpc()
-        .getAccount(convergence.riskEngine().pdas().config(), commitment);
-      const config = toConfig(toConfigAccount(account));
-      scope.throwIfCanceled();
-      assertConfig(config);
+      const config = await convergence.riskEngine().fetchConfig(scope);
 
       return { response, config };
     },
@@ -146,6 +153,8 @@ export const initializeConfigBuilder = (
     collateralMintDecimals = DEFAULT_MINT_DECIMALS,
     safetyPriceShiftFactor = DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
     overallSafetyFactor = DEFAULT_OVERALL_SAFETY_FACTOR,
+    acceptedOracleStaleness = DEFAULT_ACCEPTED_ORACLE_STALENESS,
+    acceptedOracleConfidenceIntervalPortion = DEFAULT_ACCEPTED_ORACLE_CONFIDENCE_INTERVAL_PORTION,
   } = params ?? {};
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
@@ -156,7 +165,8 @@ export const initializeConfigBuilder = (
     .add({
       instruction: createInitializeConfigInstruction(
         {
-          signer: authority.publicKey,
+          authority: authority.publicKey,
+          protocol: convergence.protocol().pdas().protocol(),
           config: convergence.riskEngine().pdas().config(),
           systemProgram: systemProgram.address,
         },
@@ -166,6 +176,8 @@ export const initializeConfigBuilder = (
           collateralMintDecimals,
           safetyPriceShiftFactor,
           overallSafetyFactor,
+          acceptedOracleStaleness,
+          acceptedOracleConfidenceIntervalPortion,
         },
         riskEngineProgram.address
       ),

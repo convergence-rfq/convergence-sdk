@@ -1,16 +1,21 @@
 import {
   initializeConfigOperation,
   InitializeConfigInput,
+  updateConfigOperation,
+  UpdateConfigInput,
   SetInstrumentTypeInput,
   setInstrumentTypeOperation,
   calculateCollateralForConfirmationOperation,
   calculateCollateralForResponseOperation,
   calculateCollateralForRfqOperation,
-  CalculateCollateralForConfirmationIntput,
+  CalculateCollateralForConfirmationInput,
   CalculateCollateralForRfqInput,
-  CalculateCollateralForResponseIntput,
+  CalculateCollateralForResponseInput,
   setRiskCategoriesInfoOperation,
   SetRiskCategoriesInfoInput,
+  fetchConfigOperation,
+  CloseConfigInput,
+  closeConfigOperation,
 } from './operations';
 import { RiskEnginePdasClient } from './RiskEnginePdasClient';
 import type { Convergence } from '@/Convergence';
@@ -49,6 +54,20 @@ export class RiskEngineClient {
       .execute(initializeConfigOperation(input), options);
   }
 
+  /** {@inheritDoc updateConfig} */
+  updateConfig(input?: UpdateConfigInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(updateConfigOperation(input), options);
+  }
+
+  /** {@inheritDoc closeConfig} */
+  closeConfig(input?: CloseConfigInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(closeConfigOperation(input), options);
+  }
+
   /** {@inheritDoc setInstrumentTypeOperation} */
   setInstrumentType(input: SetInstrumentTypeInput, options?: OperationOptions) {
     return this.convergence
@@ -78,7 +97,7 @@ export class RiskEngineClient {
 
   /** {@inheritDoc calculateCollateralForResponse} */
   calculateCollateralForResponse(
-    input: CalculateCollateralForResponseIntput,
+    input: CalculateCollateralForResponseInput,
     options?: OperationOptions
   ) {
     return this.convergence
@@ -88,11 +107,18 @@ export class RiskEngineClient {
 
   /** {@inheritDoc calculateCollateralForConfirmation} */
   calculateCollateralForConfirmation(
-    input: CalculateCollateralForConfirmationIntput,
+    input: CalculateCollateralForConfirmationInput,
     options?: OperationOptions
   ) {
     return this.convergence
       .operations()
       .execute(calculateCollateralForConfirmationOperation(input), options);
+  }
+
+  /** {@inheritDoc fetchConfig} */
+  fetchConfig(options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(fetchConfigOperation({}), options);
   }
 }

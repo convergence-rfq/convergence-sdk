@@ -5,6 +5,7 @@ import {
 } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -12,14 +13,14 @@ import {
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Mint } from '@/plugins/tokenModule';
-import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Mint } from '../../tokenModule';
+import { InstrumentPdasClient } from '../../instrumentModule';
+import { SpotInstrument } from '../../spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 
@@ -58,7 +59,10 @@ export type PartlyRevertSettlementPreparationOperation = Operation<
  * @category Inputs
  */
 export type PartlyRevertSettlementPreparationInput = {
-  /** The protocol address. */
+  /**
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
+   */
   protocol?: PublicKey;
 
   /** The Rfq address. */
@@ -71,7 +75,8 @@ export type PartlyRevertSettlementPreparationInput = {
    * Args
    */
 
-  /** The side (Maker or Taker) that is partly reverting
+  /**
+   * The side (Maker or Taker) that is partly reverting
    * settlement preparation.
    */
   side: AuthoritySide;
@@ -147,8 +152,6 @@ export const partlyRevertSettlementPreparationBuilder = async (
 
   const { rfq, response, side, legAmountToRevert } = params;
 
-  const protocol = await convergence.protocol().get();
-
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
@@ -157,9 +160,9 @@ export const partlyRevertSettlementPreparationBuilder = async (
     .findResponseByAddress({ address: response });
 
   const sidePreparedLegs: number =
-  side == AuthoritySide.Taker
-    ? responseModel.takerPreparedLegs
-    : responseModel.makerPreparedLegs;
+    side == AuthoritySide.Taker
+      ? parseInt(responseModel.takerPreparedLegs.toString())
+      : parseInt(responseModel.makerPreparedLegs.toString());
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
   const psyoptionsEuropeanProgram = convergence
@@ -266,7 +269,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
     .add({
       instruction: createPartlyRevertSettlementPreparationInstruction(
         {
-          protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
           response,
           anchorRemainingAccounts,

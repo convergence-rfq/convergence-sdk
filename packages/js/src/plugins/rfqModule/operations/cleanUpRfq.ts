@@ -1,15 +1,16 @@
 import { createCleanUpRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'CleanUpRfqOperation' as const;
 
@@ -55,8 +56,8 @@ export type CleanUpRfqInput = {
    */
   taker?: PublicKey;
 
-  /**
-   * The address of the protocol
+  /** The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -135,7 +136,6 @@ export const cleanUpRfqBuilder = async (
   const { taker = convergence.identity().publicKey, rfq } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -143,7 +143,7 @@ export const cleanUpRfqBuilder = async (
       instruction: createCleanUpRfqInstruction(
         {
           taker,
-          protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
         },
         rfqProgram.address

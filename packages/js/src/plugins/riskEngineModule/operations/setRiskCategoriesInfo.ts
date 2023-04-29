@@ -2,18 +2,19 @@ import {
   createSetRiskCategoriesInfoInstruction,
   RiskCategoryChange,
 } from '@convergence-rfq/risk-engine';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-//import { assertConfig, Config, toConfig } from '../models';
-//import { toConfigAccount } from '../accounts';
-import { Convergence } from '@/Convergence';
+import { assertConfig, Config, toConfig } from '../models';
+import { toConfigAccount } from '../accounts';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'SetRiskCategoriesInfoOperation' as const;
 
@@ -52,6 +53,7 @@ export type SetRiskCategoriesInfoInput = {
    */
   authority?: Signer;
 
+  /** The risk category changes. */
   changes: RiskCategoryChange[];
 };
 
@@ -64,7 +66,7 @@ export type SetRiskCategoriesInfoOutput = {
   response: SendAndConfirmTransactionResponse;
 
   /** Risk engine config. */
-  //config: Config;
+  config: Config;
 };
 
 /**
@@ -78,7 +80,7 @@ export const setRiskCategoriesInfoOperationHandler: OperationHandler<SetRiskCate
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetRiskCategoriesInfoOutput> => {
-      //const { commitment } = scope;
+      const { commitment } = scope;
       scope.throwIfCanceled();
 
       const builder = setRiskCategoriesInfoBuilder(
@@ -91,15 +93,14 @@ export const setRiskCategoriesInfoOperationHandler: OperationHandler<SetRiskCate
         scope.confirmOptions
       );
 
-      //const account = await convergence
-      //  .rpc()
-      //  .getAccount(convergence.riskEngine().pdas().config(), commitment);
-      //const config = toConfig(toConfigAccount(account));
-      //scope.throwIfCanceled();
-      //assertConfig(config);
+      const account = await convergence
+        .rpc()
+        .getAccount(convergence.riskEngine().pdas().config(), commitment);
+      const config = toConfig(toConfigAccount(account));
+      scope.throwIfCanceled();
+      assertConfig(config);
 
-      //return { response, config };
-      return { response };
+      return { response, config };
     },
   };
 

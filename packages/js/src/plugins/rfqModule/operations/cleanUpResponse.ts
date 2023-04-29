@@ -2,21 +2,22 @@ import { createCleanUpResponseInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Mint } from '@/plugins/tokenModule';
-import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Mint } from '../../../plugins/tokenModule';
+import { InstrumentPdasClient } from '../../../plugins/instrumentModule/InstrumentPdasClient';
+import { SpotInstrument } from '../../../plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../../plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../../../plugins/psyoptionsAmericanInstrumentModule';
 
 const Key = 'CleanUpResponseOperation' as const;
 
@@ -62,11 +63,11 @@ export type CleanUpResponseOperation = Operation<
  * @category Inputs
  */
 export type CleanUpResponseInput = {
-  /** The Maker of the Response */
+  /** The Maker's public key address. */
   maker: PublicKey;
-  
-  /**
-   * The address of the protocol
+
+  /** The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -160,7 +161,6 @@ export const cleanUpResponseBuilder = async (
   } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -310,7 +310,7 @@ export const cleanUpResponseBuilder = async (
       instruction: createCleanUpResponseInstruction(
         {
           maker,
-          protocol: protocol.address,
+          protocol: convergence.protocol().pdas().protocol(),
           rfq,
           response,
           anchorRemainingAccounts,

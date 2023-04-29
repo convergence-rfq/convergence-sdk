@@ -1,4 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
+
+import { PartialKeys } from '../../utils';
+import { OperationOptions, token } from '../../types';
+import type { Convergence } from '../../Convergence';
 import { SendTokensInput } from '../tokenModule';
 import { Rfq } from './models';
 import { RfqPdasClient } from './RfqPdasClient';
@@ -28,6 +32,8 @@ import {
   FinalizeRfqConstructionInput,
   findRfqsByAddressesOperation,
   FindRfqsByAddressesInput,
+  FindRfqsInput,
+  findRfqsOperation,
   FindRfqByAddressInput,
   findRfqByAddressOperation,
   FindResponseByAddressInput,
@@ -75,9 +81,6 @@ import {
   createAndFinalizeRfqConstructionOperation,
 } from './operations';
 import { Response } from './models/Response';
-import { PartialKeys } from '@/utils';
-import { OperationOptions, token } from '@/types';
-import type { Convergence } from '@/Convergence';
 
 /**
  * This is a client for the Rfq module.
@@ -211,19 +214,10 @@ export class RfqClient {
   }
 
   /** {@inheritDoc createAndFinalizeRfqConstructionOperation} */
-  async createAndFinalize(
+  createAndFinalize(
     input: CreateAndFinalizeRfqConstructionInput,
     options?: OperationOptions
   ) {
-    // const { taker } = input;
-
-    // const { rfq } = await this.convergence.rfqs().createAndFinalize(
-    //   {
-    //     ...input,
-    //   },
-    //   options
-    // );
-
     return this.convergence
       .operations()
       .execute(createAndFinalizeRfqConstructionOperation(input), options);
@@ -256,6 +250,13 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(findResponsesByOwnerOperation(input), options);
+  }
+
+  /** {@inheritDoc findRfqsOperation} */
+  findRfqs(input: FindRfqsInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(findRfqsOperation(input), options);
   }
 
   /** {@inheritDoc findResponsesByRfqOperation} */
@@ -302,7 +303,7 @@ export class RfqClient {
   }
 
   /** {@inheritDoc findRfqsByInstrumentOperation} */
-  findByInstrument(
+  findRfqsByInstrument(
     input: FindRfqsByInstrumentInput,
     options?: OperationOptions
   ) {
@@ -312,14 +313,14 @@ export class RfqClient {
   }
 
   /** {@inheritDoc findRfqsByOwnerOperation} */
-  findAllByOwner(input: FindRfqsByOwnerInput, options?: OperationOptions) {
+  findRfqsByOwner(input: FindRfqsByOwnerInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findRfqsByOwnerOperation(input), options);
   }
 
   /** {@inheritDoc findRfqsByTokenOperation} */
-  findByToken(input: FindRfqsByTokenInput, options?: OperationOptions) {
+  findRfqsByToken(input: FindRfqsByTokenInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(findRfqsByTokenOperation(input), options);

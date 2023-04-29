@@ -1,4 +1,5 @@
 import type { PublicKey } from '@solana/web3.js';
+
 import { toMintAccount, toTokenAccount } from '../accounts';
 import { TokenAndMintDoNotMatchError } from '../errors';
 import { toMint } from '../models/Mint';
@@ -8,12 +9,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindTokenWithMintByMintOperation' as const;
 

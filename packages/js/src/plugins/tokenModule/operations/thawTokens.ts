@@ -1,7 +1,8 @@
 import { createThawAccountInstruction } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import type { Convergence } from '@/Convergence';
+import type { Convergence } from '../../../Convergence';
 import {
   isSigner,
   KeypairSigner,
@@ -10,12 +11,8 @@ import {
   OperationScope,
   Signer,
   useOperation,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'ThawTokensOperation' as const;
 
@@ -23,7 +20,7 @@ const Key = 'ThawTokensOperation' as const;
  * Thaws a token account.
  *
  * ```ts
- * await convergence.tokens().thaw({ mintAddress, freezeAuthority });
+ * await convergence.tokens().thaw({ mintAddress: mint.address, freezeAuthority: user });
  * ```
  *
  * @group Operations

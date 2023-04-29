@@ -1,8 +1,12 @@
-import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
+import {
+  Leg,
+  createFinalizeRfqConstructionInstruction,
+} from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
@@ -10,8 +14,8 @@ import {
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
@@ -59,14 +63,29 @@ export type FinalizeRfqConstructionInput = {
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional address of the Taker's collateral info account. */
+  /** Optional address of the Taker's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral token account. */
+  /** Optional address of the Taker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: convergence.identity().publicKey
+   *   })`
+   */
   collateralToken?: PublicKey;
 
   /** Optional address of the risk engine program. */
   riskEngine?: PublicKey;
+
+  /** Optional legs of the rfq, should not be passed manually.
+   * Is passed automatically when `createAndFinalize`
+   * is called. Else the legs are extracted from the rfq account.
+   */
+  legs?: Leg[];
 };
 
 /**
@@ -159,7 +178,7 @@ export const finalizeRfqConstructionBuilder = async (
     riskEngine = riskEngineProgram.address,
     rfq,
   } = params;
-  let { collateralInfo, collateralToken } = params;
+  let { legs, collateralInfo, collateralToken } = params;
 
   const collateralInfoPda = convergence.collateral().pdas().collateralInfo({
     user: taker.publicKey,
@@ -169,6 +188,9 @@ export const finalizeRfqConstructionBuilder = async (
     user: taker.publicKey,
     programs,
   });
+
+  legs =
+    legs ?? (await convergence.rfqs().findRfqByAddress({ address: rfq })).legs;
 
   collateralInfo = collateralInfo ?? collateralInfoPda;
   collateralToken = collateralToken ?? collateralTokenPda;
@@ -188,14 +210,12 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const oracleAccounts: AccountMeta[] = [];
 
   const baseAssetAccounts: AccountMeta[] = [];
   const baseAssetIndexValuesSet: Set<number> = new Set();
 
-  const oracleAccounts: AccountMeta[] = [];
-
-  for (const leg of rfqModel.legs) {
+  for (const leg of legs) {
     baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);
   }
 

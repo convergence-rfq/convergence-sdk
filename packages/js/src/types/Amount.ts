@@ -1,7 +1,8 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import BN from 'bn.js';
+
+import { CurrencyMismatchError, UnexpectedCurrencyError } from '../errors';
 import { BigNumber, BigNumberValues, toBigNumber } from './BigNumber';
-import { CurrencyMismatchError, UnexpectedCurrencyError } from '@/errors';
 
 export type Amount<T extends Currency = Currency> = {
   basisPoints: BigNumber;
@@ -64,12 +65,9 @@ export const token = (
   decimals = 0,
   symbol = 'Token'
 ): SplTokenAmount => {
-  if (typeof amount !== 'number') {
-    amount = toBigNumber(amount).toNumber();
-  }
-
-  // @ts-ignore
-  const basisPoints = toBigNumber(amount * Math.pow(10, decimals));
+  const basisPoints = toBigNumber(
+    toBigNumber(amount).mul(toBigNumber(Math.pow(10, decimals)))
+  );
 
   return {
     basisPoints,

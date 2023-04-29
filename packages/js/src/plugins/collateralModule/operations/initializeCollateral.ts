@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertCollateral, Collateral, toCollateral } from '../models';
 import { toCollateralAccount } from '../accounts';
@@ -10,9 +11,10 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'InitializeCollateralOperation' as const;
 
@@ -21,8 +23,8 @@ const Key = 'InitializeCollateralOperation' as const;
  *
  * ```ts
  * const rfq = await convergence
- *   .rfqs()
- *   .initializeCollateral({ user });
+ *   .collateral()
+ *   .initializeCollateral({});
  * ```
  *
  * @group Operations
@@ -56,34 +58,29 @@ export type InitializeCollateralInput = {
   /**
    * The address of the protocol.
    *
-   * @defaultValue `(await convergence.protocol().get()).address`
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
   /**
    * The address of the collateral mint.
    *
-   * @defaultValue `(await convergence.protocol().get()).collateralMint`
+   * @defaultValue `protocol.collateralMint`
    */
   collateralMint?: PublicKey;
 
-  /**
-   *  The collateral token account address.
+  /** Optional address of the User's collateral tokens account.
    *
-   * @defaultValue `PublicKey.findProgramAddressSync(
-   *     [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
-   * .   rfqProgram.address
-   * );
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: user.publicKey,
+   *   })`
    */
   collateralToken?: PublicKey;
 
-  /**
-   *  The collateral token info account address.
+  /** Optional address of the User's collateral info account.
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: user.publicKey })`
    *
-   * @defaultValue `PublicKey.findProgramAddressSync(
-   *     [Buffer.from('collateral_token'), user.publicKey.toBuffer()],
-   * .   rfqProgram.address
-   * );
    */
   collateralInfo?: PublicKey;
 };
@@ -178,7 +175,7 @@ export const initializeCollateralBuilder = async (
   params: InitializeCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<InitializeCollateralBuilderContext>> => {
-  const protocolModel = await convergence.protocol().get();
+  const protocolModel = await protocolCache.get(convergence);
   const { programs } = options;
   const {
     user = convergence.identity(),
@@ -187,11 +184,11 @@ export const initializeCollateralBuilder = async (
     collateralToken = convergence
       .collateral()
       .pdas()
-      .collateralToken({ user: user.publicKey, programs }),
+      .collateralToken({ user: user.publicKey }),
     collateralInfo = convergence
       .collateral()
       .pdas()
-      .collateralInfo({ user: user.publicKey, programs }),
+      .collateralInfo({ user: user.publicKey }),
   } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);

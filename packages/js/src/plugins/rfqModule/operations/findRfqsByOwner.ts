@@ -1,14 +1,17 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { Rfq, toRfq } from '../models';
-import { toRfqAccount } from '../accounts';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
+import { convertRfqOutput, getPages, sortByActiveAndExpiry } from '../helpers';
+import { toRfqAccount } from '../accounts';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqsByOwnerOperation' as const;
 
@@ -42,18 +45,24 @@ export type FindRfqsByOwnerOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByOwnerInput = {
-  /** The address of the owner. */
+  /** The address of the owner of the RFQ. */
   owner: PublicKey;
 
   /** Optional array of Rfqs to search from. */
   rfqs?: Rfq[];
+
+  /** Optional number of RFQs to return per page. */
+  rfqsPerPage?: number;
+
+  /** Optional number of pages to return. */
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByOwnerOutput = Rfq[];
+export type FindRfqsByOwnerOutput = Rfq[][];
 
 /**
  * @group Operations
@@ -66,38 +75,68 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByOwnerOutput> => {
-      const { owner, rfqs } = operation.input;
-      const { programs } = scope;
+      const { owner, rfqs, rfqsPerPage, numPages } = operation.input;
+      const { programs, commitment } = scope;
+
+      const collateralMint = await collateralMintCache.get(convergence);
+      const collateralMintDecimals = collateralMint.decimals;
 
       if (rfqs) {
-        const rfqsByOwner = [];
+        let rfqsByOwner: Rfq[] = [];
 
         for (const rfq of rfqs) {
           if (rfq.taker.toBase58() === owner.toBase58()) {
-            rfqsByOwner.push(rfq);
+            const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+            rfqsByOwner.push(convertedRfq);
           }
         }
         scope.throwIfCanceled();
 
-        return rfqsByOwner;
+        rfqsByOwner = sortByActiveAndExpiry(rfqsByOwner);
+
+        const pages = getPages(rfqsByOwner, rfqsPerPage, numPages);
+
+        return pages;
       }
+
       const rfqProgram = convergence.programs().getRfq(programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const gotRfqs = await rfqGpaBuilder.whereTaker(owner).get();
+      const unparsedAccounts = await rfqGpaBuilder
+        .withoutData()
+        .whereTaker(owner)
+        .get();
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
       scope.throwIfCanceled();
 
-      return gotRfqs
-        .map<Rfq | null>((account) => {
-          if (account === null) {
-            return null;
-          }
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
 
-          try {
-            return toRfq(toRfqAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((rfq): rfq is Rfq => rfq !== null);
+      let parsedRfqs: Rfq[] = [];
+
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
+
+        for (const account of accounts) {
+          const rfq = toRfq(toRfqAccount(account));
+          const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+          parsedRfqs.push(convertedRfq);
+        }
+      }
+      scope.throwIfCanceled();
+
+      parsedRfqs = sortByActiveAndExpiry(parsedRfqs);
+      const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
+
+      return pages;
     },
   };

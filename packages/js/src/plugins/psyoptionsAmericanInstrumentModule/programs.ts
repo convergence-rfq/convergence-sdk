@@ -1,6 +1,7 @@
 import { PROGRAM_ID as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-american-instrument';
-import { assert } from '@/utils';
-import { Program } from '@/types';
+
+import { assert } from '../../utils';
+import { Program } from '../../types';
 
 /** @group Programs */
 export const psyoptionsAmericanInstrumentProgram: Program = {
@@ -13,6 +14,7 @@ export type PsyoptionsAmericanInstrumentProgram = Program & {
   availableGuards: string[];
 };
 
+/** @group Helpers */
 export const isPsyoptionsAmericanInstrumentProgram = (
   value: Program
 ): value is PsyoptionsAmericanInstrumentProgram =>

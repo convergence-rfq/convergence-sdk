@@ -1,9 +1,10 @@
 import { createRegisterMintInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { RegisteredMint, toRegisteredMint } from '../models';
 import { toRegisteredMintAccount } from '../accounts';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
@@ -11,8 +12,8 @@ import {
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'RegisterMintOperation' as const;
 
@@ -51,7 +52,9 @@ export type RegisterMintInput = {
   authority?: Signer;
 
   /**
-   * The protocol to add the instrument to.
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().get()`
    */
   protocol?: PublicKey;
 
@@ -61,7 +64,9 @@ export type RegisterMintInput = {
   mint: PublicKey;
 
   /**
-   * The base asset index.
+   * Optional base asset index only needs to be passed if the mint is a base asset.
+   *
+   * @defaultValue `-1`
    */
   baseAssetIndex?: number;
 };
@@ -109,6 +114,7 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       const mintInfo = convergence.rfqs().pdas().mintInfo({ mint });
       const account = await convergence.rpc().getAccount(mintInfo, commitment);
       const registeredMint = toRegisteredMint(toRegisteredMintAccount(account));
+
       scope.throwIfCanceled();
 
       return { ...output, registeredMint };

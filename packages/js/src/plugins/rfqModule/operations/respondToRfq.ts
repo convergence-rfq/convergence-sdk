@@ -1,13 +1,10 @@
 import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
-import {
-  PublicKey,
-  AccountMeta,
-  ComputeBudgetProgram,
-  // Account,
-} from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
-import { Convergence } from '@/Convergence';
+import { convertResponseInput } from '../helpers';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
@@ -15,9 +12,8 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions, Option } from '@/utils';
-// import * as anchor from '@project-serum/anchor';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'RespondToRfqOperation' as const;
 
@@ -64,30 +60,46 @@ export type RespondToRfqInput = {
    */
   maker?: Signer;
 
-  /** The address of the protocol account. */
+  /**
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol(),`
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** Optional address of the Maker's collateral info account. */
+  /**
+   * Optional address of the Taker's collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral token account. */
+  /**
+   * Optional address of the Maker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: maker.publicKey,
+   *   })`
+   */
   collateralToken?: PublicKey;
 
-  /** Optional address of the risk engine account.
+  /**
+   * Optional address of the risk engine account.
    *
    * @defaultValue `convergence.programs().getRiskEngine(programs)`
    *
    */
   riskEngine?: PublicKey;
 
-  /** The optional Bid side */
-  bid?: Option<Quote>;
+  /** The optional Bid side of the Response. */
+  bid?: Quote;
 
-  /** The optional Ask side */
-  ask?: Option<Quote>;
+  /** The optional Ask side of the Response. */
+  ask?: Quote;
 };
 
 /**
@@ -114,8 +126,17 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       scope: OperationScope
     ): Promise<RespondToRfqOutput> => {
       const { rfq, maker = convergence.identity(), bid, ask } = operation.input;
+      const rfqModel = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: rfq });
 
       let pdaDistinguisher = 0;
+
+      const { convertedBid, convertedAsk } = convertResponseInput(
+        rfqModel.quoteAsset.instrumentDecimals,
+        bid,
+        ask
+      );
 
       let responsePda = convergence
         .rfqs()
@@ -123,8 +144,8 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         .response({
           rfq,
           maker: maker.publicKey,
-          bid: bid ?? null,
-          ask: ask ?? null,
+          bid: convertedBid ?? null,
+          ask: convertedAsk ?? null,
           pdaDistinguisher,
         });
 
@@ -139,8 +160,8 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
           .response({
             rfq,
             maker: maker.publicKey,
-            bid: bid ?? null,
-            ask: ask ?? null,
+            bid: convertedBid ?? null,
+            ask: convertedAsk ?? null,
             pdaDistinguisher,
           });
 
@@ -152,6 +173,8 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         {
           ...operation.input,
           response: responsePda,
+          bid: convertedBid,
+          ask: convertedAsk,
           pdaDistinguisher,
         },
         scope
@@ -216,8 +239,6 @@ export const respondToRfqBuilder = async (
   if (!bid && !ask) {
     throw new Error('Must provide either a bid or an ask');
   }
-
-  const protocol = await convergence.protocol().get();
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -309,7 +330,7 @@ export const respondToRfqBuilder = async (
         instruction: createRespondToRfqInstruction(
           {
             maker: maker.publicKey,
-            protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             collateralInfo,

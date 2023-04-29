@@ -1,15 +1,17 @@
 import { createAddInstrumentInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   Signer,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../cache';
 
 const Key = 'AddInstrumentOperation' as const;
 
@@ -48,7 +50,9 @@ export type AddInstrumentInput = {
   authority: Signer;
 
   /**
-   * The protocol to add the instrument to.
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -57,6 +61,7 @@ export type AddInstrumentInput = {
    */
   instrumentProgram: PublicKey;
 
+  /** Flag to indicate if the instrument can be used as a quote. */
   canBeUsedAsQuote: boolean;
 
   /*
@@ -141,6 +146,9 @@ export const addInstrumentBuilder = (
     revertPreparationAccountAmount,
     cleanUpAccountAmount,
   } = params;
+
+  // Clear the protocol cache so that the protocol is reloaded
+  protocolCache.clear();
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

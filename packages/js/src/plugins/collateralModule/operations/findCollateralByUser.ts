@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { Collateral, toCollateral } from '../models';
 import { toCollateralAccount } from '../accounts';
 import { CollateralGpaBuilder } from '../CollateralGpaBuilder';
@@ -7,8 +8,9 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../cache';
 
 const Key = 'FindCollateralByUserOperation' as const;
 
@@ -18,7 +20,7 @@ const Key = 'FindCollateralByUserOperation' as const;
  * ```ts
  * const rfqs = await convergence
  *   .collateral()
- *   .findByUser({ user };
+ *   .findByUser({ user: user.publicKey });
  * ```
  *
  * @group Operations
@@ -74,7 +76,7 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
       const collateral = await gpaBuilder.whereUser(user).get();
       scope.throwIfCanceled();
 
-      return collateral
+      const collateralModel = collateral
         .map<Collateral | null>((account) => {
           if (account === null) {
             return null;
@@ -89,5 +91,10 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
         .filter(
           (collateral): collateral is Collateral => collateral !== null
         )[0];
+
+      const collateralMint = await collateralMintCache.get(convergence);
+      collateralModel.lockedTokensAmount /= 10 ** collateralMint.decimals;
+
+      return collateralModel;
     },
   };

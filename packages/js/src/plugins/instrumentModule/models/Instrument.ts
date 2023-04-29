@@ -1,8 +1,9 @@
 import { Side } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
-import type { Convergence } from '@/Convergence';
-import { PublicKey, BigNumber } from '@/types';
-import { assert } from '@/utils';
+
+import type { Convergence } from '../../../Convergence';
+import { PublicKey, BigNumber } from '../../../types';
+import { assert } from '../../../utils';
 
 export interface InstrumentData {
   instrument: PublicKey;
@@ -28,14 +29,6 @@ export interface Instrument {
   getProgramId: () => PublicKey;
 
   getValidationAccounts(): AccountMeta[];
-
-  //getPrepareSettlementAccounts(side: Side): Promise<AccountMeta[]>;
-
-  //getSettleAccounts(assetReceiver: PublicKey): Promise<AccountMeta[]>;
-
-  //getRevertSettlementPreparationAccounts(side: Side): Promise<AccountMeta[]>;
-
-  //getCleanUpAccounts(): Promise<AccountMeta[]>;
 }
 
 /** @group Model Helpers */

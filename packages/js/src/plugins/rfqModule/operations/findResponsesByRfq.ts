@@ -1,14 +1,16 @@
 import { PublicKey } from '@solana/web3.js';
+
+import { Response, toResponse } from '../models/Response';
 import { toResponseAccount } from '../accounts';
-import { /*assertResponse,*/ Response, toResponse } from '../models/Response';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
+import { convertResponseOutput, getPages } from '../helpers';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindResponsesByRfqOperation' as const;
 
@@ -46,13 +48,22 @@ export type FindResponsesByRfqOperation = Operation<
 export type FindResponsesByRfqInput = {
   /** The address of the Rfq. */
   address: PublicKey;
+
+  /** Optional array of Responses to search from. */
+  responses?: Response[];
+
+  /** Optional number of Responses to return per page. */
+  responsesPerPage?: number;
+
+  /** Optional number of pages to return. */
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByRfqOutput = Response[];
+export type FindResponsesByRfqOutput = Response[][];
 
 /**
  * @group Operations
@@ -65,38 +76,83 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByRfqOutput> => {
-      const { programs } = scope;
-      const { address } = operation.input;
+      const { programs, commitment } = scope;
+      const { address, responses, responsesPerPage, numPages } =
+        operation.input;
       scope.throwIfCanceled();
+
+      if (responses) {
+        const responsesByRfq: Response[] = [];
+
+        for (const response of responses) {
+          if (response.rfq.toBase58() === address.toBase58()) {
+            const rfq = await convergence
+              .rfqs()
+              .findRfqByAddress({ address: response.rfq });
+
+            const convertedResponse = convertResponseOutput(
+              response,
+              rfq.quoteAsset.instrumentDecimals
+            );
+
+            responsesByRfq.push(convertedResponse);
+          }
+        }
+        scope.throwIfCanceled();
+
+        const pages = getPages(responsesByRfq, responsesPerPage, numPages);
+
+        return pages;
+      }
 
       const rfqProgram = convergence.programs().getRfq(programs);
       const responseGpaBuilder = new ResponseGpaBuilder(
         convergence,
         rfqProgram.address
       );
-      const unparsedAccounts = await responseGpaBuilder.get();
-      const responseAccounts = unparsedAccounts
-        .map<Response | null>((account) => {
-          if (account === null) {
-            return null;
-          }
-
-          try {
-            return toResponse(toResponseAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((response): response is Response => response !== null);
-
-      const responsesByRfq: Response[] = [];
-      for (const response of responseAccounts) {
-        if (response.rfq.toBase58() === address.toBase58()) {
-          responsesByRfq.push(response);
-        }
-      }
+      const unparsedAccounts = await responseGpaBuilder
+        .withoutData()
+        .whereRfq(address)
+        .get();
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
       scope.throwIfCanceled();
 
-      return responsesByRfq;
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
+
+      const parsedResponses: Response[] = [];
+
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
+
+        for (const account of accounts) {
+          const response = toResponse(toResponseAccount(account));
+
+          if (response.rfq.toBase58() === address.toBase58()) {
+            const rfq = await convergence
+              .rfqs()
+              .findRfqByAddress({ address: response.rfq });
+
+            const convertedResponse = convertResponseOutput(
+              response,
+              rfq.quoteAsset.instrumentDecimals
+            );
+
+            parsedResponses.push(convertedResponse);
+          }
+        }
+      }
+
+      const pages = getPages(parsedResponses, responsesPerPage, numPages);
+
+      return pages;
     },
   };

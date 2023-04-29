@@ -1,3 +1,7 @@
+import { PublicKey } from '@solana/web3.js';
+
+import { OperationOptions } from '../../types';
+import type { Convergence } from '../../Convergence';
 import {
   fundCollateralOperation,
   FundCollateralInput,
@@ -11,8 +15,7 @@ import {
   findCollateralByUserOperation,
 } from './operations';
 import { CollateralPdasClient } from './CollateralPdasClient';
-import { OperationOptions } from '@/types';
-import type { Convergence } from '@/Convergence';
+import { Collateral } from './models';
 
 export class CollateralClient {
   constructor(protected readonly convergence: Convergence) {}
@@ -21,25 +24,18 @@ export class CollateralClient {
     return new CollateralPdasClient(this.convergence);
   }
 
-  /** {@inheritDoc fundCollateralOperation} */
-  fund(input: FundCollateralInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(fundCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc findCollateralByUserOperation} */
-  findByUser(input: FindCollateralByUserInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(findCollateralByUserOperation(input), options);
-  }
-
   /** {@inheritDoc initializeCollateralOperation} */
   initialize(input: InitializeCollateralInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(initializeCollateralOperation(input), options);
+  }
+
+  /** {@inheritDoc fundCollateralOperation} */
+  fund(input: FundCollateralInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(fundCollateralOperation(input), options);
   }
 
   /** {@inheritDoc withdrawCollateralOperation} */
@@ -57,5 +53,53 @@ export class CollateralClient {
     return this.convergence
       .operations()
       .execute(findCollateralByAddressOperation(input), options);
+  }
+
+  /** {@inheritDoc findCollateralByUserOperation} */
+  findByUser(input: FindCollateralByUserInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(findCollateralByUserOperation(input), options);
+  }
+
+  // /**
+  //  * Helper method that refetches a given model
+  //  * and returns an instance of the same type.
+  //  *
+  //  * If the model we pass is an `Response`, we extract the pubkey and
+  //  * pass to `findResponseByAddress`. Else, it's a pubkey and we pass
+  //  * it directly.
+  //  *
+  //  * ```ts
+  //  * collateral = await convergence.collateral().refresh(collateral);
+  //  * ```
+  //  */
+  refresh<T extends Collateral | PublicKey>(
+    model: T,
+    options?: OperationOptions
+  ): Promise<T extends PublicKey ? Collateral : T> {
+    return this.findByAddress(
+      {
+        address: 'model' in model ? model.address : model,
+      },
+      options
+    ) as Promise<T extends PublicKey ? Collateral : T>;
+  }
+
+  /** Helper method returning a flag to determine whether a collateral
+   * account needs to be initialized.
+   */
+  async initializationNecessary(user: PublicKey): Promise<boolean> {
+    const collateralInfoPda = this.pdas().collateralInfo({ user });
+
+    const collateralInfo = await this.convergence
+      .rpc()
+      .getAccount(collateralInfoPda);
+
+    if (collateralInfo.exists) {
+      return false;
+    }
+
+    return true;
   }
 }

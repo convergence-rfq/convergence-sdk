@@ -7,15 +7,12 @@ import {
   AccountMeta,
   ComputeBudgetProgram,
   SYSVAR_RENT_PUBKEY,
-  Keypair,
 } from '@solana/web3.js';
-import {
-  TOKEN_PROGRAM_ID,
-  getOrCreateAssociatedTokenAccount,
-} from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
@@ -23,13 +20,14 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Mint } from '@/plugins/tokenModule';
-import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Mint } from '../../tokenModule';
+import { InstrumentPdasClient } from '../../instrumentModule';
+import { SpotInstrument } from '../../spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
+import { getOrCreateATA } from '../helpers';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -74,7 +72,10 @@ export type PrepareSettlementInput = {
    */
   caller?: Signer;
 
-  /** The address of the protocol. */
+  /**
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
@@ -163,7 +164,6 @@ export const prepareSettlementBuilder = async (
     legAmountToPrepare,
   } = params;
 
-  const protocol = await convergence.protocol().get();
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
@@ -294,16 +294,14 @@ export const prepareSettlementBuilder = async (
         isSigner: true,
         isWritable: true,
       },
-      // `caller_tokens`
+      // `caller_token_account`
       {
-        pubkey: await getOrCreateAssociatedTokenAccount(
-          convergence.connection,
-          caller as Keypair,
+        pubkey: await getOrCreateATA(
+          convergence,
           baseAssetMints[legIndex].address,
-          caller.publicKey
-        ).then((account) => {
-          return account.address;
-        }),
+          caller.publicKey,
+          programs
+        ),
         isSigner: false,
         isWritable: true,
       },
@@ -313,6 +311,7 @@ export const prepareSettlementBuilder = async (
         isSigner: false,
         isWritable: false,
       },
+      // `escrow`
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,
@@ -338,7 +337,7 @@ export const prepareSettlementBuilder = async (
         instruction: createPrepareSettlementInstruction(
           {
             caller: caller.publicKey,
-            protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             anchorRemainingAccounts,

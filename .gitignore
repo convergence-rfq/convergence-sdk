@@ -4,6 +4,7 @@ packages/js/dist
 packages/js/.turbo
 packages/cli/node_modules
 packages/cli/dist
+packages/cli/tests/ctx.json
 packages/cli/.turbo
 examples/node_modules
 node_modules

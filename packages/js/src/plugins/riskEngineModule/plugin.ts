@@ -1,9 +1,14 @@
 import { PROGRAM_ID } from '@convergence-rfq/risk-engine';
+
+import { ConvergencePlugin, Program } from '../../types';
+import type { Convergence } from '../../Convergence';
 import { ProgramClient } from '../programModule';
 import { RiskEngineClient } from './RiskEngineClient';
 import {
   initializeConfigOperation,
   initializeConfigOperationHandler,
+  updateConfigOperation,
+  updateConfigOperationHandler,
   setInstrumentTypeOperation,
   setInstrumentTypeOperationHandler,
   setRiskCategoriesInfoOperation,
@@ -14,9 +19,11 @@ import {
   calculateCollateralForResponseOperationHandler,
   calculateCollateralForRfqOperation,
   calculateCollateralForRfqOperationHandler,
+  fetchConfigOperation,
+  fetchConfigOperationHandler,
+  closeConfigOperation,
+  closeConfigOperationHandler,
 } from './operations';
-import { ConvergencePlugin, Program } from '@/types';
-import type { Convergence } from '@/Convergence';
 
 /** @group Plugins */
 export const riskEngineModule = (): ConvergencePlugin => ({
@@ -36,6 +43,7 @@ export const riskEngineModule = (): ConvergencePlugin => ({
 
     const op = convergence.operations();
     op.register(initializeConfigOperation, initializeConfigOperationHandler);
+    op.register(updateConfigOperation, updateConfigOperationHandler);
     op.register(setInstrumentTypeOperation, setInstrumentTypeOperationHandler);
     op.register(
       setRiskCategoriesInfoOperation,
@@ -53,6 +61,8 @@ export const riskEngineModule = (): ConvergencePlugin => ({
       calculateCollateralForConfirmationOperation,
       calculateCollateralForConfirmationOperationHandler
     );
+    op.register(fetchConfigOperation, fetchConfigOperationHandler);
+    op.register(closeConfigOperation, closeConfigOperationHandler);
 
     convergence.riskEngine = function () {
       return new RiskEngineClient(this);

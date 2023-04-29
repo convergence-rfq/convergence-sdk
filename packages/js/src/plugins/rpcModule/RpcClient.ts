@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer';
 import {
   AccountInfo,
   Blockhash,
@@ -13,6 +14,7 @@ import {
   Transaction,
   TransactionSignature,
 } from '@solana/web3.js';
+
 import {
   FailedToConfirmTransactionError,
   FailedToConfirmTransactionWithResponseError,
@@ -20,8 +22,8 @@ import {
   ConvergenceError,
   ParsedProgramError,
   UnknownProgramError,
-} from '@/errors';
-import type { Convergence } from '@/Convergence';
+} from '../../errors';
+import type { Convergence } from '../../Convergence';
 import {
   assertSol,
   getSignerHistogram,
@@ -32,8 +34,8 @@ import {
   SolAmount,
   UnparsedAccount,
   UnparsedMaybeAccount,
-} from '@/types';
-import { TransactionBuilder, zipMap } from '@/utils';
+} from '../../types';
+import { TransactionBuilder, zipMap } from '../../utils';
 
 export type ConfirmTransactionResponse = RpcResponseAndContext<SignatureResult>;
 export type SendAndConfirmTransactionResponse = {
@@ -50,6 +52,25 @@ export class RpcClient {
   protected defaultFeePayer?: Signer;
 
   constructor(protected readonly convergence: Convergence) {}
+
+  async getTransactionSize(
+    transaction: Transaction | TransactionBuilder,
+    signers?: any
+  ) {
+    const prepared = await this.prepareTransaction(transaction, signers);
+    const tx = prepared.transaction;
+    const message = tx.compileMessage();
+
+    try {
+      // This method errors if tx too large
+      message.serialize();
+    } catch (err) {
+      return -1;
+    }
+    const wireTransaction = tx.serializeMessage();
+
+    return wireTransaction.length;
+  }
 
   protected async prepareTransaction(
     transaction: Transaction | TransactionBuilder,
@@ -81,35 +102,15 @@ export class RpcClient {
     return { transaction, signers, blockhashWithExpiryBlockHeight };
   }
 
-  async getTransactionSize(
-    transaction: Transaction | TransactionBuilder,
-    signers?: any
-  ) {
-    const prepared = await this.prepareTransaction(transaction, signers);
-
-    const tx = prepared.transaction;
-
-    const message = tx.compileMessage();
-
-    let signData: Buffer;
-
-    try {
-      //@ts-ignore
-      signData = message.serialize(); //this method errors if tx too large
-    } catch (err) {
-      return -1;
-    }
-    // @ts-expect-error
-    const wireTransaction = tx.serializeMessage(signData);
-
-    return wireTransaction.length;
-  }
-
   async signTransaction(
     transaction: Transaction,
     signers: Signer[]
   ): Promise<Transaction> {
     const { keypairs, identities } = getSignerHistogram(signers);
+
+    const { blockhash } =
+      await this.convergence.connection.getRecentBlockhash();
+    transaction.recentBlockhash = blockhash;
 
     // Keypair signers.
     if (keypairs.length > 0) {
@@ -118,7 +119,7 @@ export class RpcClient {
 
     // Identity signers.
     for (let i = 0; i < identities.length; i++) {
-      await identities[i].signTransaction(transaction);
+      transaction = await identities[i].signTransaction(transaction);
     }
 
     return transaction;
@@ -143,9 +144,6 @@ export class RpcClient {
     const rawTransaction = transaction.serialize();
     sendOptions.skipPreflight = this.convergence.skipPreflight;
 
-    // TODO: Make this configurable.
-    sendOptions.skipPreflight = true;
-
     try {
       return await this.convergence.connection.sendRawTransaction(
         rawTransaction,
@@ -168,10 +166,12 @@ export class RpcClient {
         commitment
       );
     } catch (error) {
+      // TODO: Improve error handling details
       throw new FailedToConfirmTransactionError(error as Error);
     }
 
     if (rpcResponse.value.err) {
+      // TODO: Improve error handling details
       throw new FailedToConfirmTransactionWithResponseError(rpcResponse);
     }
 
@@ -210,21 +210,6 @@ export class RpcClient {
     );
 
     return this.getUnparsedMaybeAccount(publicKey, accountInfo);
-  }
-
-  async getAccounts(publicKeys: PublicKey[], commitment?: Commitment) {
-    const accountInfos: UnparsedMaybeAccount[] = [];
-
-    for (const publicKey of publicKeys) {
-      const accountInfo = await this.convergence.connection.getAccountInfo(
-        publicKey,
-        commitment
-      );
-
-      accountInfos.push(this.getUnparsedMaybeAccount(publicKey, accountInfo));
-    }
-
-    return accountInfos;
   }
 
   async accountExists(publicKey: PublicKey, commitment?: Commitment) {
@@ -359,6 +344,40 @@ export class RpcClient {
       exists: true,
       lamports: lamports(accountInfo.lamports),
     };
+  }
+
+  async signAllTransactions(
+    transactions: Transaction[],
+    signers: Signer[]
+  ): Promise<Transaction[]> {
+    const { keypairs, identities } = getSignerHistogram(signers);
+
+    for (let transaction of transactions) {
+      if (keypairs.length > 0) {
+        transaction.partialSign(...keypairs);
+      }
+
+      for (let i = 0; i < identities.length; i++) {
+        transaction = await identities[i].signTransaction(transaction);
+      }
+    }
+
+    return transactions;
+  }
+
+  async getAccounts(publicKeys: PublicKey[], commitment?: Commitment) {
+    const accountInfos: UnparsedMaybeAccount[] = [];
+
+    for (const publicKey of publicKeys) {
+      const accountInfo = await this.convergence.connection.getAccountInfo(
+        publicKey,
+        commitment
+      );
+
+      accountInfos.push(this.getUnparsedMaybeAccount(publicKey, accountInfo));
+    }
+
+    return accountInfos;
   }
 
   protected parseProgramError(

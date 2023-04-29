@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
-import type { Convergence } from '@/Convergence';
-import { Pda, Program } from '@/types';
+
+import type { Convergence } from '../../Convergence';
+import { Pda, Program } from '../../types';
 
 /**
  * This client allows you to build PDAs related to the protocol module.
@@ -11,7 +12,7 @@ import { Pda, Program } from '@/types';
 export class RiskEnginePdasClient {
   constructor(protected readonly convergence: Convergence) {}
 
-  /** Finds the Protocol PDA. */
+  /** Finds the Config PDA. */
   config(): Pda {
     const programId = this.programId();
     return Pda.find(programId, [Buffer.from('config', 'utf8')]);

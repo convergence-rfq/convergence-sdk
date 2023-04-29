@@ -7,8 +7,9 @@ import {
   Quote,
   StoredResponseState,
 } from '@convergence-rfq/rfq';
+
 import { ResponseAccount } from '../accounts';
-import { assert } from '@/utils';
+import { assert } from '../../../utils';
 
 /**
  * This model captures all the relevant information about an Response
@@ -29,7 +30,7 @@ export type Response = {
   /** The address of the Rfq this Response corresponds to. */
   readonly rfq: PublicKey;
 
-  /** The time at which this Response was created. */
+  /** The timestamp at which this Response was created. */
   readonly creationTimestamp: bignum;
 
   /** The amount of the Maker's collateral locked. */
@@ -60,11 +61,11 @@ export type Response = {
    *  initialized leg preparation for each prepared leg */
   readonly legPreparationsInitializedBy: AuthoritySide[];
 
-  /** The bid, if any. If the `orderType` of the RFQ is 
+  /** The bid, if any. If the `orderType` of the RFQ is
    * OrderType.Sell then this field is required. */
   readonly bid: COption<Quote>;
 
-  /** The ask, if any. If the `orderType` of the RFQ is 
+  /** The ask, if any. If the `orderType` of the RFQ is
    * OrderType.Buy then this field is required. */
   readonly ask: COption<Quote>;
 };

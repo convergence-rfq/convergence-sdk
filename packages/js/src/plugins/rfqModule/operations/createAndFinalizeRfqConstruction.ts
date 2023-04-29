@@ -1,12 +1,18 @@
 import { PublicKey } from '@solana/web3.js';
+import { Leg } from '@convergence-rfq/rfq';
+import * as anchor from '@project-serum/anchor';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { SpotInstrument } from '../../spotInstrumentModule';
 import { OrderType, QuoteAsset, FixedSize } from '../types';
-import { Rfq } from '../models';
-import { createRfqBuilder } from './createRfq';
-import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { assertRfq, Rfq } from '../models';
+import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+
+import {
+  instrumentsToLegsAndExpectedLegsHash,
+  convertFixedSizeInput,
+} from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -14,10 +20,11 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-import { sha256 } from '@noble/hashes/sha256';
-import * as anchor from '@project-serum/anchor';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { createRfqBuilder } from './createRfq';
+import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -84,22 +91,46 @@ export type CreateAndFinalizeRfqConstructionInput = {
   /** The type of order. */
   orderType: OrderType;
 
-  /** The type of Rfq. */
+  /**
+   * The type of the Rfq, specifying whether we fix the number of
+   * base assets to be exchanged, the number of quote assets,
+   * or neither.
+   */
   fixedSize: FixedSize;
 
-  /** the active window. */
+  /**
+   * Optional active window (in seconds).
+   *
+   * @defaultValue `5_000`
+   */
   activeWindow?: number;
 
-  /** The settling window. */
+  /**
+   * Optional settling window (in seconds).
+   *
+   * @defaultValue `1_000`
+   */
   settlingWindow?: number;
 
-  /** Optional address of the Taker's collateral info account. */
+  /**
+   * Optional address of the Taker's collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: taker.publicKey })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral token account. */
+  /**
+   * Optional address of the Taker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: taker.publicKey,
+   *   })`
+   */
   collateralToken?: PublicKey;
 
-  /** Optional address of the risk engine account. */
+  /** Optional address of the risk engine program account. */
   riskEngine?: PublicKey;
 };
 
@@ -111,6 +142,7 @@ export type CreateAndFinalizeRfqConstructionOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
+  /** The newly created Rfq. */
   rfq: Rfq;
 };
 
@@ -127,55 +159,48 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
     ): Promise<CreateAndFinalizeRfqConstructionOutput> => {
       const {
         taker = convergence.identity(),
+        instruments,
         orderType,
         fixedSize,
         quoteAsset,
-        instruments,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
 
-      const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
+      const recentTimestamp = new anchor.BN(
+        Math.floor(Date.now() / 1_000) - 10
+      );
 
-      const serializedLegsData: Buffer[] = [];
+      const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
+      const [legs, expectedLegsHash] =
+        await instrumentsToLegsAndExpectedLegsHash(convergence, instruments);
 
-      let expectedLegsHash: Uint8Array;
+      const rfqPda = convergence
+        .rfqs()
+        .pdas()
+        .rfq({
+          taker: taker.publicKey,
+          legsHash: Buffer.from(expectedLegsHash),
+          orderType,
+          quoteAsset,
+          fixedSize: convertedFixedSize,
+          activeWindow,
+          settlingWindow,
+          recentTimestamp,
+        });
 
-      for (const instrument of instruments) {
-        const instrumentClient = convergence.instrument(
-          instrument,
-          instrument.legInfo
-        );
-
-        const leg = await instrumentClient.toLegData();
-
-        serializedLegsData.push(instrumentClient.serializeLegData(leg));
-      }
-
-      const lengthBuffer = Buffer.alloc(4);
-      lengthBuffer.writeInt32LE(instruments.length);
-      const fullLegDataBuffer = Buffer.concat([
-        lengthBuffer,
-        ...serializedLegsData,
-      ]);
-
-      expectedLegsHash = sha256(fullLegDataBuffer);
-
-      const rfqPda = convergence.rfqs().pdas().rfq({
-        taker: taker.publicKey,
-        //@ts-ignore
-        legsHash: expectedLegsHash,
-        orderType,
-        quoteAsset,
-        fixedSize,
-        activeWindow,
-        settlingWindow,
-        recentTimestamp,
-      });
-
-      const rfqBuilder = await createRfqBuilder(
+      const builder = await createAndFinalizeRfqConstructionBuilder(
         convergence,
-        { ...operation.input, rfq: rfqPda, expectedLegsHash, recentTimestamp },
+        {
+          ...operation.input,
+          taker,
+          rfq: rfqPda,
+          fixedSize: convertedFixedSize,
+          instruments,
+          expectedLegsHash,
+          recentTimestamp,
+          legs,
+        },
         scope
       );
       scope.throwIfCanceled();
@@ -184,24 +209,56 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         convergence,
         scope.confirmOptions
       );
-      const output = await rfqBuilder.sendAndConfirm(
-        convergence,
-        confirmOptions
-      );
+      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
-
-      const finalizeBuilder = await finalizeRfqConstructionBuilder(
-        convergence,
-        { ...operation.input, rfq: rfqPda },
-        scope
-      );
-
-      await finalizeBuilder.sendAndConfirm(convergence, confirmOptions);
 
       const rfq = await convergence
         .rfqs()
         .findRfqByAddress({ address: rfqPda });
+      assertRfq(rfq);
 
       return { ...output, rfq };
     },
   };
+
+/**
+ * @group Transaction Builders
+ * @category Inputs
+ */
+export type CreateAndFinalizeRfqConstructionBuilderParams =
+  CreateAndFinalizeRfqConstructionInput & {
+    expectedLegsHash: Uint8Array;
+    recentTimestamp: anchor.BN;
+    rfq: PublicKey;
+    legs: Leg[];
+  };
+
+export const createAndFinalizeRfqConstructionBuilder = async (
+  convergence: Convergence,
+  params: CreateAndFinalizeRfqConstructionBuilderParams,
+  options: TransactionBuilderOptions = {}
+): Promise<TransactionBuilder> => {
+  const { payer = convergence.rpc().getDefaultFeePayer() } = options;
+  const { rfq } = params;
+
+  const rfqBuilder = await createRfqBuilder(
+    convergence,
+    { ...params },
+    options
+  );
+  const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(
+    convergence,
+    { ...params },
+    options
+  );
+
+  return TransactionBuilder.make()
+    .setContext({
+      rfq,
+    })
+    .setFeePayer(payer)
+    .add(
+      ...rfqBuilder.getInstructionsWithSigners(),
+      ...finalizeConstructionBuilder.getInstructionsWithSigners()
+    );
+};

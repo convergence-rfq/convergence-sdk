@@ -1,13 +1,15 @@
 import { PublicKey } from '@solana/web3.js';
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
+import { convertRfqOutput, getPages, sortByActiveAndExpiry } from '../helpers';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqsByAddressesOperation' as const;
 
@@ -17,8 +19,8 @@ const Key = 'FindRfqsByAddressesOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByAddress({ 
- *     addresses: [rfq1.address, rfq2.address] 
+ *   .findByAddress({
+ *     addresses: [rfq1.address, rfq2.address]
  *   });
  * ```
  *
@@ -45,13 +47,21 @@ export type FindRfqsByAddressesOperation = Operation<
 export type FindRfqsByAddressesInput = {
   /** The addresses of the Rfqs. */
   addresses: PublicKey[];
+
+  /** Optional number of RFQs to return per page.
+   * @defaultValue `10`
+   */
+  rfqsPerPage?: number;
+
+  /** Optional number of pages to return. */
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByAddressesOutput = Rfq[];
+export type FindRfqsByAddressesOutput = Rfq[][];
 
 /**
  * @group Operations
@@ -64,24 +74,39 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByAddressesOutput> => {
-      const { addresses } = operation.input;
+      const { addresses, rfqsPerPage, numPages } = operation.input;
       const { commitment } = scope;
       scope.throwIfCanceled();
 
-      const rfqs: Rfq[] = [];
+      let rfqs: Rfq[] = [];
 
-      const accounts = await convergence
-        .rpc()
-        .getMultipleAccounts(addresses, commitment);
+      const collateralMint = await collateralMintCache.get(convergence);
+      const collateralMintDecimals = collateralMint.decimals;
 
-      for (const account of accounts) {
-        const rfqAccount = toRfqAccount(account);
-        const rfq = toRfq(rfqAccount);
+      const callsToGetMultipleAccounts = Math.ceil(addresses.length / 100);
 
-        rfqs.push(rfq);
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            addresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
+
+        for (const account of accounts) {
+          const rfq = toRfq(toRfqAccount(account));
+
+          const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
+
+          rfqs.push(convertedRfq);
+        }
       }
       scope.throwIfCanceled();
 
-      return rfqs;
+      rfqs = sortByActiveAndExpiry(rfqs);
+
+      const pages = getPages(rfqs, rfqsPerPage, numPages);
+
+      return pages;
     },
   };

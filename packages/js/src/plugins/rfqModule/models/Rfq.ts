@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { bignum } from '@convergence-rfq/beet';
+
 import {
   OrderType,
   StoredRfqState,
@@ -8,8 +9,8 @@ import {
   Leg,
 } from '../types';
 import { RfqAccount } from '../accounts';
-import { assert } from '@/utils';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
+import { assert } from '../../../utils';
+import { SpotInstrument } from '../../../plugins/spotInstrumentModule';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -59,11 +60,11 @@ export type Rfq = {
 
   /** The amount of Taker collateral locked at the time
    *  of finalized construction of the Rfq. */
-  readonly nonResponseTakerCollateralLocked: bignum;
+  nonResponseTakerCollateralLocked: bignum;
 
   /** The total amount of Taker collateral locked.
    * This includes collateral added when confirming a Response. */
-  readonly totalTakerCollateralLocked: bignum;
+  totalTakerCollateralLocked: bignum;
 
   /** The total number of Responses to this Rfq. */
   readonly totalResponses: number;
@@ -94,13 +95,11 @@ export const toRfq = (account: RfqAccount): Rfq => ({
   address: account.publicKey,
   taker: account.data.taker,
   orderType: account.data.orderType,
-  // lastLookEnabled: account.data.lastLookEnabled,
   fixedSize: account.data.fixedSize,
   quoteAsset: account.data.quoteAsset,
   quoteMint: SpotInstrument.deserializeInstrumentData(
     Buffer.from(account.data.quoteAsset.instrumentData)
   ).mint,
-  // accessManager: account.data.accessManager,
   creationTimestamp: account.data.creationTimestamp,
   activeWindow: account.data.activeWindow,
   settlingWindow: account.data.settlingWindow,

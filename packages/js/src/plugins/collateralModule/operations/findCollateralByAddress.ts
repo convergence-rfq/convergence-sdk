@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { Collateral, toCollateral } from '../models';
 import { toCollateralAccount } from '../accounts';
 import {
@@ -6,8 +7,9 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../cache';
 
 const Key = 'FindCollateralByAddressOperation' as const;
 
@@ -17,7 +19,7 @@ const Key = 'FindCollateralByAddressOperation' as const;
  * ```ts
  * const collateral = await convergence
  *   .collateral()
- *   .findByAddress({ address };
+ *   .findByAddress({ address: user.publicKey });
  * ```
  *
  * @group Operations
@@ -67,9 +69,16 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      const collateral = toCollateral(toCollateralAccount(account));
+      const collateralModel = toCollateral(toCollateralAccount(account));
       scope.throwIfCanceled();
 
-      return collateral;
+      const collateralMint = await collateralMintCache.get(convergence);
+
+      collateralModel.lockedTokensAmount /= Math.pow(
+        10,
+        collateralMint.decimals
+      );
+
+      return collateralModel;
     },
   };

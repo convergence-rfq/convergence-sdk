@@ -10,12 +10,13 @@ import * as beet from '@convergence-rfq/beet';
 import * as beetSolana from '@convergence-rfq/beet-solana';
 import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
+
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
-import { assert } from '@/utils';
-import { Convergence } from '@/Convergence';
-import { createSerializerFromFixableBeetArgsStruct } from '@/types';
+import { assert } from '../../../utils';
+import { Convergence } from '../../../Convergence';
+import { createSerializerFromFixableBeetArgsStruct } from '../../../types';
 
 type InstrumentData = {
   mint: PublicKey;
@@ -50,8 +51,13 @@ export class SpotInstrument implements Instrument {
     this.mint = mint;
     this.decimals = mint.decimals;
     this.legInfo = legInfo;
+
+    if (legInfo && this.legInfo) {
+      this.legInfo.amount = legInfo.amount * Math.pow(10, mint.decimals);
+    }
   }
 
+  /** Helper method to get an InstrumentClient instance for a SpotInstrument. */
   static createForLeg(
     convergence: Convergence,
     mint: Mint,
@@ -62,12 +68,14 @@ export class SpotInstrument implements Instrument {
       amount,
       side,
     });
+
     return new InstrumentClient(convergence, instrument, {
-      amount,
+      amount: amount * Math.pow(10, mint.decimals),
       side,
     });
   }
 
+  /** Helper method to get validation accounts for a spot instrument. */
   getValidationAccounts() {
     const mintInfo = this.convergence
       .rfqs()
@@ -76,6 +84,7 @@ export class SpotInstrument implements Instrument {
     return [{ pubkey: mintInfo, isSigner: false, isWritable: false }];
   }
 
+  /** Helper method to get the `QuoteAsset` for this instrument. */
   toQuoteAsset(): QuoteAsset {
     return {
       instrumentProgram: this.getProgramId(),
@@ -84,23 +93,28 @@ export class SpotInstrument implements Instrument {
     };
   }
 
+  /** Helper method to serialize the instrument data for this instrument. */
   serializeInstrumentData(): Buffer {
     return Buffer.from(this.mint.address.toBytes());
   }
 
+  /** Helper method to deserialize the instrument data for this instrument. */
   static deserializeInstrumentData(buffer: Buffer): any {
     const [instrumentData] = SpotInstrumentDataSerializer.deserialize(buffer);
     return instrumentData;
   }
 
+  /** Helper method to create a spot instrument from a `Leg`. */
   static async createFromLeg(
     convergence: Convergence,
     leg: Leg
   ): Promise<SpotInstrument> {
     const { side, instrumentAmount, instrumentData } = leg;
+
     const mint = await convergence
       .tokens()
       .findMintByAddress({ address: new PublicKey(instrumentData) });
+
     return new SpotInstrument(convergence, mint, {
       amount:
         typeof instrumentAmount === 'number'
@@ -110,6 +124,7 @@ export class SpotInstrument implements Instrument {
     });
   }
 
+  /** Helper method to serialize a `Leg` for this instrument. */
   serializeLegData(leg: Leg): Buffer {
     const legBeet = new beet.FixableBeetArgsStruct<Leg>(
       [

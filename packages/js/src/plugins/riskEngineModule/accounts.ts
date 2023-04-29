@@ -1,9 +1,10 @@
 import { Config } from '@convergence-rfq/risk-engine';
+
 import {
   Account,
   getAccountParsingAndAssertingFunction,
   getAccountParsingFunction,
-} from '@/types';
+} from '../../types';
 
 /** @group Accounts */
 export type ConfigAccount = Account<Config>;

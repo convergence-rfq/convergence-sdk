@@ -4,10 +4,11 @@ import {
   createInitializeAccountInstruction,
 } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Token } from '../models/Token';
-import { ExpectedSignerError } from '@/errors';
-import type { Convergence } from '@/Convergence';
+import { ExpectedSignerError } from '../../../errors';
+import type { Convergence } from '../../../Convergence';
 import {
   isSigner,
   makeConfirmOptionsFinalizedOnMainnet,
@@ -17,12 +18,8 @@ import {
   Signer,
   toPublicKey,
   useOperation,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'CreateTokenOperation' as const;
 

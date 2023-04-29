@@ -1,4 +1,7 @@
-# @convergence-rfq/sdk
+# Convergence RFQ SDK
+
+[![Tests](https://github.com/convergence-rfq/convergence-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/convergence-rfq/convergence-sdk/actions/workflows/tests.yml)
+[![Docs](https://github.com/convergence-rfq/convergence-sdk/actions/workflows/release-docs.yml/badge.svg)](https://github.com/convergence-rfq/convergence-sdk/actions/workflows/release-docs.yml)
 
 ## Overview
 
@@ -50,8 +53,9 @@ console.log('Tx:', response.signature);
 
 - [Node (18.12.1)](https://nodejs.org/en/download/)
 - [Solana (1.14.11)](https://docs.solana.com/cli/install-solana-cli-tools#use-solanas-install-tool)
+- [PNPM (6.23.6)](https://pnpm.io/installation)
 - [Yarn (1.22.15)](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
-- [NX (14.8.6)](https://nx.dev/recipes/adopting-nx/adding-to-monorepo)
+- [Turbo (1.7.0)](https://turbo.build/)
 
 **Setup**
 
@@ -62,17 +66,25 @@ yarn build
 
 **TDD**
 
-Run the Solana test validator, Solana logs, and the tests.
+First run the Solana test validator.
 
 ```bash
-yarn test:all
+yarn validator
 ```
 
-Run the validator and tests separately.
+Run the validator logs separately.
 
 ```bash
 yarn validator:logs
-yarn test # In a separate terminal
+```
+
+Finally run the test in a new terminal.
+  
+```bash
+yarn test
+# It is possible to run individual module tests
+cd packages/js
+yarn test -g spot
 ```
 
 **NPM**

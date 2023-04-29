@@ -1,4 +1,6 @@
 import { ProgramClient } from '../programModule';
+import { ConvergencePlugin, Program } from '../../types';
+import type { Convergence } from '../../Convergence';
 import { RfqClient } from './RfqClient';
 import {
   createRfqOperation,
@@ -43,6 +45,8 @@ import {
   findRfqsByAddressesOperationHandler,
   findRfqsByActiveOperation,
   findRfqsByActiveOperationHandler,
+  findRfqsOperation,
+  findRfqsOperationHandler,
   partiallySettleLegsOperation,
   partiallySettleLegsOperationHandler,
   prepareMoreLegsSettlementOperation,
@@ -71,8 +75,6 @@ import {
   createAndAddLegsToRfqOperationHandler,
 } from './operations';
 import { rfqProgram } from './program';
-import { ConvergencePlugin, Program } from '@/types';
-import type { Convergence } from '@/Convergence';
 
 /** @group Plugins */
 export const rfqModule = (): ConvergencePlugin => ({
@@ -127,6 +129,7 @@ export const rfqModule = (): ConvergencePlugin => ({
       findResponsesByOwnerOperationHandler
     );
     op.register(findRfqByAddressOperation, findRfqByAddressOperationHandler);
+    op.register(findRfqsOperation, findRfqsOperationHandler);
     op.register(
       findRfqsByAddressesOperation,
       findRfqsByAddressesOperationHandler

@@ -1,51 +1,76 @@
-import { createCalculateCollateralForConfirmationInstruction } from '@convergence-rfq/risk-engine';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
-import { BaseAssetIndex } from '@convergence-rfq/rfq';
-import { bignum } from '@convergence-rfq/beet';
-import { RiskEnginePdasClient } from '../RiskEnginePdasClient';
+import { PublicKey } from '@solana/web3.js';
+import { AuthoritySide, Confirmation, Side } from '@convergence-rfq/rfq';
 
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { ProtocolPdasClient } from '@/plugins/protocolModule';
-
-import { Convergence } from '@/Convergence';
+import { calculateRisk } from '../clientCollateralCalculator';
+import { extractLegsMultiplierBps } from '../helpers';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
+import { convertOverrideLegMultiplierBps } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 
+/**
+ * Calculates the required collateral for a taker for a particular confirmation of the response
+ *
+ * ```ts
+ * await cvg
+      .riskEngine()
+      .calculateCollateralForConfirmation({
+        rfqAddress: rfq.address,
+        responseAddress: rfqResponse.address,
+        confirmation: {
+          side: Side.Bid,
+          overrideLegMultiplierBps: 3,
+        },
+      });
+ * ```
+ *
+ * @group Operations
+ * @category Constructors
+ */
 export const calculateCollateralForConfirmationOperation =
   useOperation<CalculateCollateralForConfirmationOperation>(Key);
 
+/**
+ * @group Operations
+ * @category Types
+ */
 export type CalculateCollateralForConfirmationOperation = Operation<
   typeof Key,
-  CalculateCollateralForConfirmationIntput,
+  CalculateCollateralForConfirmationInput,
   CalculateCollateralForConfirmationOutput
 >;
 
-export type CalculateCollateralForConfirmationOutput = {
-  /** The blockchain response from sending and confirming the transaction. */
-  response: SendAndConfirmTransactionResponse;
-
-  collateralForConfirmResponseAmount: bignum;
+/**
+ * @group Operations
+ * @category Inputs
+ */
+export type CalculateCollateralForConfirmationInput = {
+  /** The address of the Rfq account. */
+  rfqAddress: PublicKey;
+  /** The address of the response account. */
+  responseAddress: PublicKey;
+  /** Confirmation which collateral requirements are estimated */
+  confirmation: Confirmation;
 };
 
-export type CalculateCollateralForConfirmationIntput = {
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
-  /** The address of the response account. */
-  response: PublicKey;
-  /** the base asset index */
-  baseAssetIndex?: BaseAssetIndex;
+/**
+ * @group Operations
+ * @category Outputs
+ */
+export type CalculateCollateralForConfirmationOutput = {
+  /** Collateral required as a floating point number */
+  requiredCollateral: number;
 };
 
 export type CalculateCollateralForConfirmationBuilderParams =
-  CalculateCollateralForConfirmationIntput;
+  CalculateCollateralForConfirmationInput;
 
 export const calculateCollateralForConfirmationOperationHandler: OperationHandler<CalculateCollateralForConfirmationOperation> =
   {
@@ -53,76 +78,62 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
       operation: CalculateCollateralForConfirmationOperation,
       convergence: Convergence,
       scope: OperationScope
-    ): Promise<CalculateCollateralForConfirmationOutput> => {
+    ) => {
       scope.throwIfCanceled();
 
-      const output = await calculateCollateralForConfirmationbuilder(
+      const { rfqAddress, responseAddress, confirmation } = operation.input;
+
+      if (confirmation.overrideLegMultiplierBps) {
+        confirmation.overrideLegMultiplierBps = convertOverrideLegMultiplierBps(
+          Number(confirmation.overrideLegMultiplierBps)
+        );
+      }
+
+      // fetching in parallel
+      const [rfq, response, config] = await Promise.all([
+        convergence
+          .rfqs()
+          .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
+        convergence
+          .rfqs()
+          .findResponseByAddress(
+            { address: responseAddress, convert: false },
+            scope
+          ),
+        convergence.riskEngine().fetchConfig(scope),
+      ]);
+
+      let legMultiplierBps;
+      if (confirmation.overrideLegMultiplierBps === null) {
+        const confirmedQuote =
+          confirmation.side == Side.Bid ? response.bid : response.ask;
+
+        if (confirmedQuote === null) {
+          throw Error('Cannot confirm a missing quote!');
+        }
+
+        legMultiplierBps = extractLegsMultiplierBps(rfq, confirmedQuote);
+      } else {
+        legMultiplierBps = confirmation.overrideLegMultiplierBps;
+      }
+      const legMultiplier =
+        Number(legMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
+
+      const calculationCase = {
+        legMultiplier,
+        authoritySide: AuthoritySide.Taker,
+        quoteSide: confirmation.side,
+      };
+
+      const [requiredCollateral] = await calculateRisk(
         convergence,
-        operation.input,
-        scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+        config,
+        rfq.legs,
+        [calculationCase],
+        rfq.settlingWindow,
+        scope.commitment
+      );
 
-      const response = await convergence
-        .rfqs()
-        .findResponseByAddress({ address: operation.input.response });
-
-      const collateralForConfirmResponseAmount = response.takerCollateralLocked;
-
-      return { ...output, collateralForConfirmResponseAmount };
+      return { requiredCollateral };
     },
   };
-
-export const calculateCollateralForConfirmationbuilder = (
-  convergence: Convergence,
-  params: CalculateCollateralForConfirmationBuilderParams,
-  options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
-  const anchorRemainingAccounts: AccountMeta[] = [];
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-
-  const { rfq, response, baseAssetIndex = { value: 0 } } = params;
-  const riskEngineProgram = convergence.programs().getRiskEngine(programs);
-
-  const config = new RiskEnginePdasClient(convergence).config();
-
-  const SWITCHBOARD_BTC_ORACLE = new PublicKey(
-    '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'
-  );
-
-  const baseAsset = new ProtocolPdasClient(convergence).baseAsset({
-    index: baseAssetIndex,
-  });
-  const baseAssetAccounts: AccountMeta[] = [
-    {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
-  const oracleAccounts: AccountMeta[] = [
-    {
-      pubkey: SWITCHBOARD_BTC_ORACLE,
-      isSigner: false,
-      isWritable: false,
-    },
-  ];
-
-  anchorRemainingAccounts.push(...baseAssetAccounts, ...oracleAccounts);
-
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
-    .add({
-      instruction: createCalculateCollateralForConfirmationInstruction(
-        {
-          rfq,
-          response,
-          config,
-          anchorRemainingAccounts,
-        },
-
-        riskEngineProgram.address
-      ),
-      signers: [],
-      key: 'CalculateCollateralForConfirmationOperation',
-    });
-};

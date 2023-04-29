@@ -1,4 +1,4 @@
-import type { Convergence } from '@/Convergence';
+import type { Convergence } from '../../Convergence';
 import {
   OperationConstructor,
   Operation,
@@ -8,9 +8,9 @@ import {
   OperationHandler,
   OperationOptions,
   OperationScope,
-} from '@/types';
-import { Disposable, DisposableScope } from '@/utils';
-import { OperationHandlerMissingError } from '@/errors';
+} from '../../types';
+import { Disposable, DisposableScope } from '../../utils';
+import { OperationHandlerMissingError } from '../../errors';
 
 /**
  * @group Modules

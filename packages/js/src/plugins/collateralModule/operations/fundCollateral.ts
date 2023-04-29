@@ -1,5 +1,6 @@
 import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -8,9 +9,11 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Convergence } from '../../../Convergence';
+import { protocolCache } from '../../protocolModule/cache';
+import { collateralMintCache } from '../cache';
 
 const Key = 'FundCollateralOperation' as const;
 
@@ -18,9 +21,7 @@ const Key = 'FundCollateralOperation' as const;
  * Funds a collateral account.
  *
  * ```ts
- * const rfq = await convergence
- *   .rfqs()
- *   .fundCollateral({ address };
+ * const rfq = await convergence.collateral().fundCollateral({ amount: 100 };
  * ```
  *
  * @group Operations
@@ -51,21 +52,17 @@ export type FundCollateralInput = {
    */
   user?: Signer;
 
+  /**
+   * The address of the protocol.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
+   */
   protocol?: PublicKey;
 
-  /** Token account of user's token */
-  userTokens: PublicKey;
+  /** User token account. */
+  userTokens?: PublicKey;
 
-  /** The address of the user's collateral info account. */
-  collateralInfo?: PublicKey;
-
-  /** The Token account of the user's collateral */
-  collateralToken?: PublicKey;
-
-  /*
-   * Args
-   */
-
+  /** The amount to fund. */
   amount: number;
 };
 
@@ -133,19 +130,32 @@ export const fundCollateralBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { user = convergence.identity() } = params;
+
+  const protocolModel = await protocolCache.get(convergence);
+
   const {
     protocol = convergence.protocol().pdas().protocol(),
-    collateralToken = convergence
-      .collateral()
-      .pdas()
-      .collateralToken({ user: user.publicKey }),
-    collateralInfo = convergence
-      .collateral()
-      .pdas()
-      .collateralInfo({ user: user.publicKey }),
-    userTokens,
-    amount,
+    userTokens = convergence.tokens().pdas().associatedTokenAccount({
+      mint: protocolModel.collateralMint,
+      owner: user.publicKey,
+      programs,
+    }),
   } = params;
+  let { amount } = params;
+
+  const collateralToken = convergence
+    .collateral()
+    .pdas()
+    .collateralToken({ user: user.publicKey });
+  const collateralInfo = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({ user: user.publicKey });
+
+  const collateralMint = await collateralMintCache.get(convergence);
+  const collateralDecimals = collateralMint.decimals;
+
+  amount *= Math.pow(10, collateralDecimals);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

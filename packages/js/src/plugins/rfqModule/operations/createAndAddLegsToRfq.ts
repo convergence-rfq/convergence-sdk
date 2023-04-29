@@ -1,13 +1,8 @@
+import * as anchor from '@project-serum/anchor';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { OrderType, FixedSize, QuoteAsset } from '../types';
 import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
-import { assertRfq, Rfq } from '../models';
-import { createRfqBuilder } from './createRfq';
-import { addLegsToRfqBuilder } from './addLegsToRfq';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { sha256 } from '@noble/hashes/sha256';
-import * as anchor from '@project-serum/anchor';
 import {
   Operation,
   OperationHandler,
@@ -15,8 +10,18 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
+import { assertRfq, Rfq } from '../models';
+import {
+  calculateExpectedLegsHash,
+  calculateExpectedLegsSize,
+  convertFixedSizeInput,
+} from '../helpers';
+import { createRfqBuilder } from './createRfq';
+import { addLegsToRfqBuilder } from './addLegsToRfq';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -66,7 +71,7 @@ export type CreateAndAddLegsToRfqInput = {
   /**
    * The taker of the Rfq to create.
    *
-   * @defaultValue `convergence.identity().publicKey`
+   * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
 
@@ -87,13 +92,33 @@ export type CreateAndAddLegsToRfqInput = {
    */
   orderType: OrderType;
 
+  /**
+   * The type of the Rfq, specifying whether we fix the number of
+   * base assets to be exchanged, the number of quote assets,
+   * or neither.
+   */
   fixedSize: FixedSize;
 
+  /** The active window (in seconds). */
   activeWindow?: number;
 
+  /** The settling window (in seconds). */
   settlingWindow?: number;
 
-  legSize?: number;
+  /**
+   * The sum of the sizes of all legs of the Rfq,
+   * including legs added in the future (if any).
+   * This can be calculated automatically if
+   * additional legs will not be added in
+   * the future. */
+  expectedLegsSize?: number;
+
+  /**
+   * Optional expected legs hash (of all legs).
+   * This can be calculated automatically if
+   * additional legs will not be added in the future.
+   */
+  expectedLegsHash?: Uint8Array;
 };
 
 /**
@@ -104,6 +129,7 @@ export type CreateAndAddLegsToRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
+  /** The newly created Rfq. */
   rfq: Rfq;
 };
 
@@ -121,71 +147,49 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
     ): Promise<CreateAndAddLegsToRfqOutput> => {
       const {
         taker = convergence.identity(),
+        quoteAsset,
         instruments,
         orderType,
-        fixedSize,
-        quoteAsset,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
+      let { fixedSize, expectedLegsSize, expectedLegsHash } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
-      let serializedLegsData: Buffer[] = [];
+      fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
+      expectedLegsSize =
+        expectedLegsSize ??
+        (await calculateExpectedLegsSize(convergence, instruments));
+      expectedLegsHash =
+        expectedLegsHash ??
+        (await calculateExpectedLegsHash(convergence, instruments));
 
-      let expectedLegsHash: Uint8Array;
-
-      for (const instrument of instruments) {
-        const instrumentClient = convergence.instrument(
-          instrument,
-          instrument.legInfo
-        );
-
-        const leg = await instrumentClient.toLegData();
-
-        serializedLegsData.push(instrumentClient.serializeLegData(leg));
-      }
-
-      let lengthBuffer = Buffer.alloc(4);
-      lengthBuffer.writeInt32LE(instruments.length);
-      let fullLegDataBuffer = Buffer.concat([
-        lengthBuffer,
-        ...serializedLegsData,
-      ]);
-
-      expectedLegsHash = sha256(fullLegDataBuffer);
-
-      let rfqPda = convergence.rfqs().pdas().rfq({
-        taker: taker.publicKey,
-        //@ts-ignore
-        legsHash: expectedLegsHash,
-        orderType,
-        quoteAsset,
-        fixedSize,
-        activeWindow,
-        settlingWindow,
-        recentTimestamp,
-      });
+      const rfqPda = convergence
+        .rfqs()
+        .pdas()
+        .rfq({
+          taker: taker.publicKey,
+          legsHash: Buffer.from(expectedLegsHash),
+          orderType,
+          quoteAsset,
+          fixedSize,
+          activeWindow,
+          settlingWindow,
+          recentTimestamp,
+        });
 
       const MAX_TX_SIZE = 1232;
-
-      let expectedLegSize = 4;
-
-      for (const instrument of instruments) {
-        const instrumentClient = convergence.instrument(
-          instrument,
-          instrument.legInfo
-        );
-        expectedLegSize += await instrumentClient.getLegDataSize();
-      }
 
       let rfqBuilder = await createRfqBuilder(
         convergence,
         {
           ...operation.input,
           rfq: rfqPda,
-          legSize: expectedLegSize,
+          fixedSize,
+          instruments,
           recentTimestamp,
+          expectedLegsSize,
           expectedLegsHash,
         },
         scope
@@ -204,51 +208,16 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
           Math.trunc(slicedInstruments.length / 2)
         );
 
-        let serializedLegsData: Buffer[] = [];
-
-        let expectedLegsHash: Uint8Array;
-
-        for (const instrument of instruments) {
-          const instrumentClient = convergence.instrument(
-            instrument,
-            instrument.legInfo
-          );
-
-          const leg = await instrumentClient.toLegData();
-
-          serializedLegsData.push(instrumentClient.serializeLegData(leg));
-        }
-
-        lengthBuffer = Buffer.alloc(4);
-        lengthBuffer.writeInt32LE(instruments.length);
-        fullLegDataBuffer = Buffer.concat([
-          lengthBuffer,
-          ...serializedLegsData,
-        ]);
-
-        expectedLegsHash = sha256(fullLegDataBuffer);
-
-        rfqPda = convergence.rfqs().pdas().rfq({
-          taker: taker.publicKey,
-          //@ts-ignore
-          legsHash: expectedLegsHash,
-          orderType,
-          quoteAsset,
-          fixedSize,
-          activeWindow,
-          settlingWindow,
-          recentTimestamp,
-        });
-
         rfqBuilder = await createRfqBuilder(
           convergence,
           {
             ...operation.input,
-            instruments: halvedInstruments,
-            legSize: expectedLegSize,
-            recentTimestamp,
-            expectedLegsHash,
             rfq: rfqPda,
+            fixedSize,
+            instruments: halvedInstruments,
+            recentTimestamp,
+            expectedLegsSize,
+            expectedLegsHash,
           },
           scope
         );

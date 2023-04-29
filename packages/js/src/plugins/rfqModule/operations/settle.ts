@@ -2,21 +2,22 @@ import { createSettleInstruction, Side } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Mint } from '@/plugins/tokenModule';
-import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Mint } from '../../tokenModule';
+import { InstrumentPdasClient } from '../../instrumentModule';
+import { SpotInstrument } from '../../spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
 
 const Key = 'SettleOperation' as const;
 
@@ -45,23 +46,31 @@ export type SettleOperation = Operation<typeof Key, SettleInput, SettleOutput>;
  * @category Inputs
  */
 export type SettleInput = {
-  /** The address of the protocol. */
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
+   */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account. */
+  /** The address of the RFQ account. */
   rfq: PublicKey;
 
-  /** The address of the Response account. */
+  /** The address of the response account. */
   response: PublicKey;
 
-  /** The Maker public key address. */
+  /** The maker public key address. */
   maker: PublicKey;
 
-  /** The Taker public key address. */
+  /** The taker public key address. */
   taker: PublicKey;
 
-  /** Optional start index to corresponding to
-   * the first leg to settle. */
+  /**
+   * Optional start index to corresponding to the first leg to settle. Used internally by
+   * Convergence SDK and does not need to be passed manually.
+   *
+   * @defaultValue `0`
+   * */
   startIndex?: number;
 };
 
@@ -137,10 +146,10 @@ export const settleBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const { startIndex = responseModel.settledLegs } = params;
+  const { startIndex = parseInt(responseModel.settledLegs.toString()) } =
+    params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -262,6 +271,20 @@ export const settleBuilder = async (
     program: spotInstrumentProgram.address,
   });
 
+  let quoteReceiverTokens = 1;
+  if (confirmationSide == Side.Bid) {
+    quoteReceiverTokens *= -1;
+    //@ts-ignore
+    if (responseModel.bid?.priceQuote.amountBps < 0) {
+      quoteReceiverTokens *= -1;
+    }
+  } else if (confirmationSide == Side.Ask) {
+    //@ts-ignore
+    if (responseModel.ask?.priceQuote.amountBps < 0) {
+      quoteReceiverTokens *= -1;
+    }
+  }
+
   const quoteAccounts: AccountMeta[] = [
     //`escrow`
     {
@@ -276,11 +299,7 @@ export const settleBuilder = async (
         .pdas()
         .associatedTokenAccount({
           mint: rfqModel.quoteMint,
-          owner:
-            rfqModel.fixedSize.__kind == 'QuoteAsset' &&
-            confirmationSide == Side.Ask
-              ? maker
-              : taker,
+          owner: quoteReceiverTokens > 0 ? maker : taker,
           programs,
         }),
       isSigner: false,
@@ -296,14 +315,14 @@ export const settleBuilder = async (
     .add(
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1400000,
+          units: 1_400_000,
         }),
         signers: [],
       },
       {
         instruction: createSettleInstruction(
           {
-            protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             anchorRemainingAccounts,

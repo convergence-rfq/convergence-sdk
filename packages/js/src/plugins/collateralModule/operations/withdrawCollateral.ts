@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { createWithdrawCollateralInstruction } from '@convergence-rfq/rfq';
-import { bignum } from '@convergence-rfq/beet';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -9,9 +9,11 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { Convergence } from '@/Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../../protocolModule/cache';
+import { collateralMintCache } from '../cache';
 
 const Key = 'WithdrawCollateralOperation' as const;
 
@@ -20,8 +22,8 @@ const Key = 'WithdrawCollateralOperation' as const;
  *
  * ```ts
  * const rfq = await convergence
- *   .rfqs()
- *   .withdrawCollateral({ address };
+ *   .collateral()
+ *   .withdrawCollateral({ amount: 100 };
  * ```
  *
  * @group Operations
@@ -54,12 +56,19 @@ export type WithdrawCollateralInput = {
 
   /** The address of the user's token account where withdrawn
    * tokens will be transferred to. */
-  userTokens: PublicKey;
+  userTokens?: PublicKey;
 
+  /**
+   * The address of the protocol.
+   *
+   * @defaultValue `convergence.protocol().pdas().protcol()`
+   */
   protocol?: PublicKey;
 
+  /** The address of the user's collateral info account. */
   collateralInfo?: PublicKey;
 
+  /** The address of the user's collateral token account. */
   collateralToken?: PublicKey;
 
   /*
@@ -67,7 +76,7 @@ export type WithdrawCollateralInput = {
    */
 
   /** The amount to withdraw */
-  amount: bignum;
+  amount: number;
 };
 
 /**
@@ -144,6 +153,8 @@ export const withdrawCollateralBuilder = async (
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
+  const protocolModel = await protocolCache.get(convergence);
+
   const {
     user = convergence.identity(),
     protocol = convergence.protocol().pdas().protocol(),
@@ -155,9 +166,19 @@ export const withdrawCollateralBuilder = async (
       .collateral()
       .pdas()
       .collateralToken({ user: user.publicKey }),
-    userTokens,
-    amount,
+    userTokens = convergence.tokens().pdas().associatedTokenAccount({
+      mint: protocolModel.collateralMint,
+      owner: user.publicKey,
+      programs,
+    }),
   } = params;
+
+  let { amount } = params;
+
+  const collateralMint = await collateralMintCache.get(convergence);
+  const collateralDecimals = collateralMint.decimals;
+
+  amount *= Math.pow(10, collateralDecimals);
 
   return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)

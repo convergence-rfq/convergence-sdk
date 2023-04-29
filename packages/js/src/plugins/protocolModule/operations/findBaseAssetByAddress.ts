@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { toBaseAssetAccount } from '../accounts';
 import { BaseAsset, toBaseAsset } from '../models/BaseAsset';
 import {
@@ -6,8 +7,8 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindBaseAssetByAddressOperation' as const;
 
@@ -41,7 +42,7 @@ export type FindBaseAssetByAddressOperation = Operation<
  * @category Inputs
  */
 export type FindBaseAssetByAddressInput = {
-  /** The address of the BaseAsset. */
+  /** The pubkey address of the BaseAssetInfo account. */
   address: PublicKey;
 };
 

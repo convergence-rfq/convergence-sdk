@@ -1,9 +1,10 @@
 import { CollateralInfo } from '@convergence-rfq/rfq';
+
 import {
   Account,
   getAccountParsingAndAssertingFunction,
   getAccountParsingFunction,
-} from '@/types';
+} from '../../types';
 
 /** @group Accounts */
 export type CollateralAccount = Account<CollateralInfo>;

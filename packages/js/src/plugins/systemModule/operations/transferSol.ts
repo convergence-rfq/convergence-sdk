@@ -1,6 +1,7 @@
 import { PublicKey, SystemProgram } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import type { Convergence } from '@/Convergence';
+import type { Convergence } from '../../../Convergence';
 import {
   assertSol,
   Operation,
@@ -9,12 +10,8 @@ import {
   Signer,
   SolAmount,
   useOperation,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-
-// -----------------
-// Operation
-// -----------------
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'TransferSolOperation' as const;
 
@@ -51,16 +48,16 @@ export type TransferSolOperation = Operation<
  */
 export type TransferSolInput = {
   /**
-   * The account that sends the SOLs as a Signer.
+   * Optional account that sends the SOLs as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
   from?: Signer;
 
-  /** The address of the account that receives the SOLs. */
+  /** The pubkey address of the account that receives the SOL. */
   to: PublicKey;
 
-  /** The amount of SOLs to send. */
+  /** The amount of SOL to send. */
   amount: SolAmount;
 
   /**

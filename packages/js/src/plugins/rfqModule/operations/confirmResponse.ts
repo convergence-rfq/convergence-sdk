@@ -1,8 +1,9 @@
 import { createConfirmResponseInstruction, Side } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { bignum, COption } from '@convergence-rfq/beet';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
@@ -10,8 +11,9 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { convertOverrideLegMultiplierBps } from '../helpers';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -63,19 +65,33 @@ export type ConfirmResponseInput = {
    */
   taker?: Signer;
 
-  /** The address of the protocol. */
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */
   rfq: PublicKey;
 
-  /** The address of the Response. */
+  /** The address of the Response account. */
   response: PublicKey;
 
-  /** The address of the Taker's collateral info account. */
+  /**
+   * Optional address of the Taker's collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: taker.publicKey })`
+   *
+   */
   collateralInfo?: PublicKey;
 
-  /** The address of the Maker's collateral info account. */
+  /**
+   * Optional address of the Maker's collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
+   *
+   */
   makerCollateralInfo?: PublicKey;
 
   /** The address of the collateral token. */
@@ -84,10 +100,13 @@ export type ConfirmResponseInput = {
   /** The address of the risk engine program. */
   riskEngine?: PublicKey;
 
-  /** The Side to confirm from the Response. */
+  /** The Side of the Response to confirm. */
   side: Side;
 
-  /** ??? */
+  /**
+   * Optional basis points multiplier to override the legMultiplierBps of the
+   * Rfq's fixedSize property.
+   */
   overrideLegMultiplierBps?: COption<bignum>;
 };
 
@@ -157,19 +176,18 @@ export const confirmResponseBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const {
-    taker = convergence.identity(),
-    rfq,
-    response,
-    side,
-    overrideLegMultiplierBps = null,
-  } = params;
+  const { taker = convergence.identity(), rfq, response, side } = params;
+  let { overrideLegMultiplierBps = null } = params;
+
+  if (overrideLegMultiplierBps) {
+    overrideLegMultiplierBps = convertOverrideLegMultiplierBps(
+      Number(overrideLegMultiplierBps)
+    );
+  }
 
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
-
-  const protocol = await convergence.protocol().get();
 
   const rfqProgram = convergence.programs().getRfq(programs);
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
@@ -263,7 +281,7 @@ export const confirmResponseBuilder = async (
         instruction: createConfirmResponseInstruction(
           {
             taker: taker.publicKey,
-            protocol: protocol.address,
+            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
             collateralInfo: takerCollateralInfoPda,

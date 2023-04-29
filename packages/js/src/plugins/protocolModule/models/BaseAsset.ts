@@ -4,8 +4,9 @@ import {
   RiskCategory,
   PriceOracle,
 } from '@convergence-rfq/rfq';
+
 import { BaseAssetAccount } from '../accounts';
-import { assert } from '@/utils';
+import { assert } from '../../../utils';
 
 /**
  * This model captures all the relevant information about a base asset
@@ -20,7 +21,7 @@ export type BaseAsset = {
   /** The address of the base asset. */
   readonly address: PublicKey;
 
-  /** The bump of the base asset. */
+  /** The PDA bump of the base asset. */
   readonly bump: number;
 
   /** The base asset index. */
@@ -28,6 +29,9 @@ export type BaseAsset = {
 
   /** The risk category for the base asset */
   readonly riskCategory: RiskCategory;
+
+  /** Is base asset enabled or disabled. */
+  readonly enabled: boolean;
 
   /** The price oracle for the base asset. */
   readonly priceOracle: PriceOracle;
@@ -51,6 +55,7 @@ export const toBaseAsset = (account: BaseAssetAccount): BaseAsset => ({
   address: account.publicKey,
   bump: account.data.bump,
   index: account.data.index,
+  enabled: account.data.enabled,
   riskCategory: account.data.riskCategory,
   priceOracle: account.data.priceOracle,
   ticker: account.data.ticker,

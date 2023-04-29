@@ -1,7 +1,8 @@
 import { createMintToInstruction } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import type { Convergence } from '@/Convergence';
+import type { Convergence } from '../../../Convergence';
 import {
   isSigner,
   KeypairSigner,
@@ -12,8 +13,8 @@ import {
   SplTokenAmount,
   toPublicKey,
   useOperation,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 // -----------------
 // Operation

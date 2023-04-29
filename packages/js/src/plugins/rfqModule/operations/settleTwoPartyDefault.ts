@@ -1,15 +1,17 @@
 import { createSettleTwoPartyDefaultInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'SettleTwoPartyDefaultOperation' as const;
 
@@ -43,28 +45,63 @@ export type SettleTwoPartyDefaultOperation = Operation<
  * @category Inputs
  */
 export type SettleTwoPartyDefaultInput = {
-  /** The address of the protocol. */
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
+   */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account. */
+  /** The address of the RFQ account. */
   rfq: PublicKey;
 
-  /** The address of the Response account. */
+  /** The address of the response account. */
   response: PublicKey;
 
-  /** Optional address of the Taker's collateral info account. */
+  /**
+   * Optional address of the taker collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
+   *
+   */
   takerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Maker's collateral info account. */
+  /**
+   * Optional address of the Maker's collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
+   *
+   */
   makerCollateralInfo?: PublicKey;
 
-  /** Optional address of the Taker's collateral tokens account. */
+  /**
+   * Optional address of the Taker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: rfq.taker,
+   *   })`
+   */
   takerCollateralTokens?: PublicKey;
 
-  /** Optional address of the Maker's collateral tokens account. */
+  /**
+   * Optional address of the Maker's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: response.maker,
+   *   })`
+   */
   makerCollateralTokens?: PublicKey;
 
-  /** Optional address of the protocol's collateral tokens account. */
+  /**
+   * Optional address of the DAO's collateral tokens account.
+   *
+   * @defaultValue `convergence.collateral().pdas().
+   *   collateralTokens({
+   *     user: dao
+   *   })`
+   */
   protocolCollateralTokens?: PublicKey;
 };
 
@@ -139,7 +176,7 @@ export const settleTwoPartyDefaultBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
   const tokenProgram = convergence.programs().getToken(programs);
 
-  const protocol = await convergence.protocol().get();
+  const protocol = await protocolCache.get(convergence);
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence

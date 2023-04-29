@@ -10,20 +10,23 @@ import {
   bignum,
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
+
 import { Mint } from '../../tokenModule';
 import { Instrument } from '../../instrumentModule/models/Instrument';
 import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
-import { assert } from '@/utils';
-import { Convergence } from '@/Convergence';
+import { assert } from '../../../utils';
+import { Convergence } from '../../../Convergence';
 import {
   createSerializerFromFixableBeetArgsStruct,
   toBigNumber,
-} from '@/types';
+} from '../../../types';
 
 type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;
   underlyingAmountPerContract: bignum;
+  underlyingAmountPerContractDecimals: number;
   strikePrice: bignum;
+  strikePriceDecimals: number;
   expiration: bignum;
   optionMint: PublicKey;
   metaKey: PublicKey;
@@ -35,7 +38,9 @@ export const psyoptionsEuropeanInstrumentDataSerializer =
       [
         ['optionType', u8],
         ['underlyingAmountPerContract', u64],
+        ['underlyingAmountPerContractDecimals', u8],
         ['strikePrice', u64],
+        ['strikePriceDecimals', u8],
         ['expiration', u64],
         ['optionMint', publicKey],
         ['metaKey', publicKey],
@@ -90,7 +95,11 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
       amount: number;
       side: Side;
     }
-  ) {}
+  ) {
+    if (legInfo && this.legInfo) {
+      this.legInfo.amount = legInfo.amount * Math.pow(10, this.decimals);
+    }
+  }
 
   static createForLeg(
     convergence: Convergence,
@@ -112,12 +121,14 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
         side,
       }
     );
+
     return new InstrumentClient(convergence, instrument, {
-      amount,
+      amount: amount * Math.pow(10, instrument.decimals),
       side,
     });
   }
 
+  /** Helper method to get validation accounts for a Psyoptions European instrument. */
   getValidationAccounts() {
     return [
       { pubkey: this.metaKey, isSigner: false, isWritable: false },
@@ -186,9 +197,15 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     return Buffer.from(
       new Uint8Array([
         this.optionType == OptionType.CALL ? 0 : 1,
-        ...toBigNumber(this.meta.underlyingAmountPerContract).toBuffer('le', 8),
-        ...toBigNumber(this.meta.strikePrice).toBuffer('le', 8),
-        ...toBigNumber(this.meta.expiration).toBuffer('le', 8),
+        ...toBigNumber(this.meta.underlyingAmountPerContract).toArrayLike(
+          Buffer,
+          'le',
+          8
+        ),
+        this.meta.underlyingDecimals,
+        ...toBigNumber(this.meta.strikePrice).toArrayLike(Buffer, 'le', 8),
+        this.meta.priceDecimals,
+        ...toBigNumber(this.meta.expiration).toArrayLike(Buffer, 'le', 8),
         ...(this.optionType == OptionType.CALL
           ? this.meta.callOptionMint.toBytes()
           : this.meta.putOptionMint.toBytes()),

@@ -2,21 +2,24 @@ import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Convergence } from '@/Convergence';
+import { getOrCreateATA } from '../helpers';
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
-import { Mint } from '@/plugins/tokenModule';
-import { InstrumentPdasClient } from '@/plugins/instrumentModule/InstrumentPdasClient';
-import { SpotInstrument } from '@/plugins/spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '@/plugins/psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '@/plugins/psyoptionsAmericanInstrumentModule';
+} from '../../../types';
+import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Mint } from '../../../plugins/tokenModule';
+import { InstrumentPdasClient } from '../../../plugins/instrumentModule/InstrumentPdasClient';
+import { SpotInstrument } from '../../../plugins/spotInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../../plugins/psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../../../plugins/psyoptionsAmericanInstrumentModule';
+import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
@@ -62,8 +65,8 @@ export type CleanUpResponseLegsOperation = Operation<
  * @category Inputs
  */
 export type CleanUpResponseLegsInput = {
-  /**
-   * The address of the protocol.
+  /** The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
@@ -83,6 +86,7 @@ export type CleanUpResponseLegsInput = {
    * Args
    */
 
+  /** The number of legs to clear. */
   legAmountToClear: number;
 };
 
@@ -157,7 +161,7 @@ export const cleanUpResponseLegsBuilder = async (
   const { dao, rfq, response, firstToPrepare, legAmountToClear } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-  const protocol = await convergence.protocol().get();
+  const protocol = await protocolCache.get(convergence);
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -238,22 +242,21 @@ export const cleanUpResponseLegsBuilder = async (
     }
 
     const legAccounts: AccountMeta[] = [
+      // `first_to_prepare`
       {
         pubkey: firstToPrepare,
         isSigner: false,
         isWritable: true,
       },
+      // `escrow`
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,
         isWritable: true,
       },
+      // `backup_receiver`
       {
-        pubkey: convergence.tokens().pdas().associatedTokenAccount({
-          mint: baseAssetMint!.address,
-          owner: dao,
-          programs,
-        }),
+        pubkey: await getOrCreateATA(convergence, baseAssetMint!.address, dao),
         isSigner: false,
         isWritable: true,
       },
@@ -262,8 +265,6 @@ export const cleanUpResponseLegsBuilder = async (
 
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
-
-  console.log('legAmountToClear', legAmountToClear);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

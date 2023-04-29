@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
 import { PublicKey } from '@solana/web3.js';
-import { Pda } from '@/types';
+
+import { Pda } from '../../types';
 
 /**
  * @group Pdas

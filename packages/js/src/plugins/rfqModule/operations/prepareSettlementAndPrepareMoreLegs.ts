@@ -1,8 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { prepareSettlementBuilder } from './prepareSettlement';
-import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
-import { Convergence } from '@/Convergence';
+
+import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
@@ -10,8 +8,10 @@ import {
   useOperation,
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '@/types';
-// import { TransactionBuilder } from '@/utils';
+} from '../../../types';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+import { prepareSettlementBuilder } from './prepareSettlement';
+import { prepareMoreLegsSettlementBuilder } from './prepareMoreLegsSettlement';
 
 const Key = 'PrepareSettlementAndPrepareMoreLegsOperation' as const;
 
@@ -56,7 +56,10 @@ export type PrepareSettlementAndPrepareMoreLegsInput = {
    */
   caller?: Signer;
 
-  /** The address of the protocol. */
+  /**
+   * The protocol address.
+   * @defaultValue `convergence.protocol().pdas().protocol(),`
+   */
   protocol?: PublicKey;
 
   /** The address of the Rfq account. */

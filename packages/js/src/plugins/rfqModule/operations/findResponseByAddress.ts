@@ -1,13 +1,15 @@
 import { PublicKey } from '@solana/web3.js';
+
 import { toResponseAccount } from '../accounts';
 import { assertResponse, Response, toResponse } from '../models/Response';
+import { convertResponseOutput } from '../helpers';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
 
 const Key = 'FindResponseByAddressOperation' as const;
 
@@ -15,16 +17,16 @@ const Key = 'FindResponseByAddressOperation' as const;
  * Finds Response by a given address.
  *
  * ```ts
- * 
- * const { rfqResponse } = 
+ *
+ * const { rfqResponse } =
  *   await convergence
  *     .rfqs()
  *     .respond(...)
- * 
+ *
  * const rfq = await convergence
  *   .rfqs()
- *   .findResponseByAddress({ 
- *     address: rfqResponse.address 
+ *   .findResponseByAddress({
+ *     address: rfqResponse.address
  *   });
  * ```
  *
@@ -49,8 +51,11 @@ export type FindResponseByAddressOperation = Operation<
  * @category Inputs
  */
 export type FindResponseByAddressInput = {
-  /** The address of the Response. */
+  /** The address of the Response account. */
   address: PublicKey;
+
+  /** Optional flag for whether to convert the output to a human-readable format. */
+  convert?: boolean;
 };
 
 /**
@@ -71,13 +76,26 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       scope: OperationScope
     ): Promise<FindResponseByAddressOutput> => {
       const { commitment } = scope;
-      const { address } = operation.input;
+      const { address, convert = true } = operation.input;
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
       const response = toResponse(toResponseAccount(account));
       assertResponse(response);
       scope.throwIfCanceled();
+
+      if (convert) {
+        const rfq = await convergence
+          .rfqs()
+          .findRfqByAddress({ address: response.rfq });
+
+        const convertedResponse = convertResponseOutput(
+          response,
+          rfq.quoteAsset.instrumentDecimals
+        );
+
+        return convertedResponse;
+      }
 
       return response;
     },

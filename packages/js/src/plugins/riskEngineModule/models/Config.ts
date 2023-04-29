@@ -1,8 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
 import { bignum } from '@convergence-rfq/beet';
+
 import { ConfigAccount } from '../accounts';
 import { RiskCategoryInfo, InstrumentInfo } from '../types';
-import { assert } from '@/utils';
+import { assert } from '../../../utils';
 
 /**
  * This model captures all the relevant information about a Risk Engine Config
@@ -17,18 +18,25 @@ export type Config = {
   /** The address of the config. */
   readonly address: PublicKey;
 
+  /** The amount of collateral required to create an RFQ with a variable size. */
   readonly collateralForVariableSizeRfqCreation: bignum;
 
+  /** The amount of collateral required to create an RFQ with a fixed size. */
   readonly collateralForFixedQuoteAmountRfqCreation: bignum;
 
+  /** The number of decimals of the collateral mint. */
   readonly collateralMintDecimals: bignum;
 
+  /** The safety price shift factor. */
   readonly safetyPriceShiftFactor: number;
 
+  /** The overall safety factor. */
   readonly overallSafetyFactor: number;
 
+  /** The risk categories info. */
   readonly riskCategoriesInfo: RiskCategoryInfo[];
 
+  /** The instrument types info. */
   readonly instrumentTypes: InstrumentInfo[];
 };
 

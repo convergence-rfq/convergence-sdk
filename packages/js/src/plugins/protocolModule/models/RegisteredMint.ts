@@ -1,7 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 import { MintType } from '@convergence-rfq/rfq';
+
 import { RegisteredMintAccount } from '../accounts';
-import { assert } from '@/utils';
+import { assert } from '../../../utils';
 
 /**
  * This model captures all the relevant information about a registered mint
@@ -16,7 +17,7 @@ export type RegisteredMint = {
   /** The address of the base asset. */
   readonly address: PublicKey;
 
-  /** The pda bump */
+  /** The PDA bump of the registered mint. */
   readonly bump: number;
 
   /** The mint address. */

@@ -1,16 +1,31 @@
 import { PublicKey } from '@solana/web3.js';
-import { PROGRAM_ID, rfqDiscriminator } from '@convergence-rfq/rfq';
-import { Convergence } from '@/Convergence';
-import { GpaBuilder } from '@/utils';
+import {
+  OrderType,
+  PROGRAM_ID,
+  rfqDiscriminator,
+  StoredRfqState,
+} from '@convergence-rfq/rfq';
+
+import { Convergence } from '../../Convergence';
+import { GpaBuilder } from '../../utils';
 
 const TAKER = 8;
-const ORDER_TYPE = TAKER + 2;
-const LAST_LOOK_ENABLED = ORDER_TYPE + 1;
-const FIXED_SIZE = LAST_LOOK_ENABLED + 16;
-const QUOTE_ASSET = FIXED_SIZE + 62;
-const ACCESS_MANAGER = QUOTE_ASSET + 32;
-const CREATION_TIMESTAMP = ACCESS_MANAGER + 8;
-const INSTRUMENT = CREATION_TIMESTAMP + 32;
+const ORDER_TYPE = TAKER + 32;
+const FIXED_SIZE = ORDER_TYPE + 1;
+const QUOTE_ASSET = FIXED_SIZE + 16;
+const CREATION_TIMESTAMP = QUOTE_ASSET + 64;
+const ACTIVE_WINDOW = CREATION_TIMESTAMP + 8;
+const SETTLING_WINDOW = ACTIVE_WINDOW + 4;
+const EXPECTED_LEGS_SIZE = SETTLING_WINDOW + 4;
+const EXPECTED_LEGS_HASH = EXPECTED_LEGS_SIZE + 2;
+const STATE = EXPECTED_LEGS_HASH + 32;
+const NON_RESPONSE_TAKER_COLLATERAL_LOCKED = STATE + 1;
+const TOTAL_TAKER_COLLATERAL_LOCKED = NON_RESPONSE_TAKER_COLLATERAL_LOCKED + 8;
+const TOTAL_RESPONSES = TOTAL_TAKER_COLLATERAL_LOCKED + 8;
+const CLEARED_RESPONSES = TOTAL_RESPONSES + 4;
+const CONFIRMED_RESPONSES = CLEARED_RESPONSES + 4;
+//@ts-ignore
+const LEGS = CONFIRMED_RESPONSES + 4;
 
 export class RfqGpaBuilder extends GpaBuilder {
   constructor(convergence: Convergence, programId?: PublicKey) {
@@ -22,8 +37,16 @@ export class RfqGpaBuilder extends GpaBuilder {
     return this.where(TAKER, taker);
   }
 
-  whereInstrument(address: PublicKey) {
-    // TODO: Finish
-    return this.where(INSTRUMENT, address);
+  whereOrderType(orderType: OrderType) {
+    return this.where(ORDER_TYPE, orderType);
   }
+
+  whereState(state: StoredRfqState) {
+    return this.where(STATE, Number(state));
+  }
+
+  // whereInstrument(address: PublicKey) {
+  //   // TODO: Finish
+  //   return this.where(INSTRUMENT, address);
+  // }
 }

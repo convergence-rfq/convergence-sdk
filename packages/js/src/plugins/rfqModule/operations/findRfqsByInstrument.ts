@@ -1,5 +1,6 @@
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
+import { convertRfqOutput, getPages, sortByActiveAndExpiry } from '../helpers';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import {
   Operation,
@@ -7,8 +8,9 @@ import {
   OperationScope,
   useOperation,
   Program,
-} from '@/types';
-import { Convergence } from '@/Convergence';
+} from '../../../types';
+import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
@@ -18,7 +20,7 @@ const Key = 'FindRfqsByInstrumentOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .rfqs()
- *   .findByInstrument({ instrument: SpotInstrument };
+ *   .findByInstrument({ instrumentProgram: SpotInstrumentProgram };
  * ```
  *
  * @group Operations
@@ -42,15 +44,24 @@ export type FindRfqsByInstrumentOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsByInstrumentInput = {
+  /** Optional array of RFQs to search through. */
+  rfqs?: Rfq[];
+
   /** The instrument program to search for. */
   instrumentProgram: Program;
+
+  /** Optional number of RFQs to return per page. */
+  rfqsPerPage?: number;
+
+  /** Optional number of pages to return. */
+  numPages?: number;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type FindRfqsByInstrumentOutput = Rfq[];
+export type FindRfqsByInstrumentOutput = Rfq[][];
 
 /**
  * @group Operations
@@ -63,37 +74,90 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRfqsByInstrumentOutput> => {
-      const { instrumentProgram } = operation.input;
+      const { rfqs, instrumentProgram, rfqsPerPage, numPages } =
+        operation.input;
+      const { commitment } = scope;
+
+      const collateralMint = await collateralMintCache.get(convergence);
+      const collateralMintDecimals = collateralMint.decimals;
+
+      if (rfqs) {
+        let rfqsByInstrument: Rfq[] = [];
+
+        for (const rfq of rfqs) {
+          for (const leg of rfq.legs) {
+            if (
+              leg.instrumentProgram.toBase58() ===
+              instrumentProgram.address.toBase58()
+            ) {
+              const convertedRfq = convertRfqOutput(
+                rfq,
+                collateralMintDecimals
+              );
+
+              rfqsByInstrument.push(convertedRfq);
+
+              break;
+            }
+          }
+        }
+        scope.throwIfCanceled();
+
+        rfqsByInstrument = sortByActiveAndExpiry(rfqsByInstrument);
+
+        const pages = getPages(rfqsByInstrument, rfqsPerPage, numPages);
+
+        return pages;
+      }
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      const unparsedAccounts = await rfqGpaBuilder.get();
+      const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
+      scope.throwIfCanceled();
 
-      const rfqs = unparsedAccounts
-        .map<Rfq | null>((account) => {
-          if (account === null) {
-            return null;
-          }
+      const unparsedAddresses = unparsedAccounts.map(
+        (account) => account.publicKey
+      );
 
-          try {
-            return toRfq(toRfqAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((rfq): rfq is Rfq => rfq !== null);
-      const rfq: Rfq[] = [];
-      for (const r of rfqs) {
-        for (const l of r.legs) {
-          if (
-            l.instrumentProgram.toBase58() ===
-            instrumentProgram.address.toBase58()
-          ) {
-            rfq.push(r);
+      const callsToGetMultipleAccounts = Math.ceil(
+        unparsedAddresses.length / 100
+      );
+
+      let parsedRfqs: Rfq[] = [];
+
+      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+        const accounts = await convergence
+          .rpc()
+          .getMultipleAccounts(
+            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            commitment
+          );
+
+        for (const account of accounts) {
+          const rfq = toRfq(toRfqAccount(account));
+
+          for (const leg of rfq.legs) {
+            if (
+              leg.instrumentProgram.toBase58() ===
+              instrumentProgram.address.toBase58()
+            ) {
+              const convertedRfq = convertRfqOutput(
+                rfq,
+                collateralMintDecimals
+              );
+
+              parsedRfqs.push(convertedRfq);
+
+              break;
+            }
           }
         }
       }
-      const rfqSet = [...new Set(rfq)];
-      return rfqSet;
+
+      parsedRfqs = sortByActiveAndExpiry(parsedRfqs);
+
+      const pages = getPages(parsedRfqs, rfqsPerPage, numPages);
+
+      return pages;
     },
   };
