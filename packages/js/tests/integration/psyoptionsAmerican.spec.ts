@@ -10,7 +10,7 @@ import {
 } from '../human';
 import { createUserCvg } from '../helpers';
 
-describe('american', () => {
+describe('psyoptions american', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
