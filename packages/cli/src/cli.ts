@@ -28,6 +28,7 @@ import {
   getRfqCmd,
   getWalletCmd,
   getMintCmd,
+  closeRiskEngineCmd,
 } from './commands';
 
 const VERSION = '4.0.24-rc.5';
@@ -62,6 +63,7 @@ export const makeCli = (): Command => {
     initializeRiskEngineCmd,
     getRiskEngineConfigCmd,
     updateRiskEngineCmd,
+    closeRiskEngineCmd,
     setRiskEngineInstrumentTypeCmd,
     setRiskEngineCategoriesInfoCmd,
     initializeCollateralAccountCmd,

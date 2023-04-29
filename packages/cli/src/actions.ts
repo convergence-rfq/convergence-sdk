@@ -367,6 +367,15 @@ export const updateRiskEngine = async (opts: Opts) => {
     logError(e);
   }
 };
+export const closeRiskEngine = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const { response } = await cvg.riskEngine().closeConfig();
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
 
 export const getRiskEngineConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);

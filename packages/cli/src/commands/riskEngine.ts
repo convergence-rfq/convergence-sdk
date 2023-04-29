@@ -5,6 +5,7 @@ import {
   updateRiskEngine,
   setRiskEngineInstrumentType,
   setRiskEngineCategoriesInfo,
+  closeRiskEngine,
 } from '../actions';
 
 import { addCmd } from './helpers';
@@ -56,6 +57,9 @@ export const initializeRiskEngineCmd = (c: Command) =>
     riskEngineOptions
   );
 
+export const closeRiskEngineCmd = (c: Command) =>
+  addCmd(c, 'risk-engine:close', 'closes risk engine', closeRiskEngine);
+
 export const updateRiskEngineCmd = (c: Command) =>
   addCmd(
     c,
@@ -102,9 +106,4 @@ export const setRiskEngineCategoriesInfoCmd = (c: Command) =>
   );
 
 export const getRiskEngineConfigCmd = (c: Command) =>
-  addCmd(
-    c,
-    'risk-engine:get-config',
-    'gets risk engine config',
-    getRiskEngineConfig
-  );
+  addCmd(c, 'risk-engine:get', 'gets risk engine config', getRiskEngineConfig);
