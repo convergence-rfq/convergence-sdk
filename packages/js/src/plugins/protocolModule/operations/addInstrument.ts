@@ -147,9 +147,7 @@ export const addInstrumentBuilder = (
     cleanUpAccountAmount,
   } = params;
 
-  // TODO: Check remainder of code for cases where protocol is changed
-  // and clear cache if necessary. May cause issues if protocol is changed.
-  // In the future we will add this cache clearing via websockets.
+  // Clear the protocol cache so that the protocol is reloaded
   protocolCache.clear();
 
   return TransactionBuilder.make()

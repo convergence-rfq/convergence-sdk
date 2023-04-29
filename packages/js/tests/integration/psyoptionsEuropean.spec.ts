@@ -17,7 +17,7 @@ import {
 } from '../../src';
 import { createPythPriceFeed } from '../human';
 
-describe('european', () => {
+describe('psyoptions european', () => {
   const takerCvg = createUserCvg('taker');
 
   let baseMint: Mint;

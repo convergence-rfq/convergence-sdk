@@ -221,7 +221,7 @@ export const getActiveRfqs = async (opts: Opts) => {
   try {
     // NOTE: Paging is not implemented yet
     const rfqs = await cvg.rfqs().findRfqsByActive({});
-    rfqs.map((r) => r.map(logRfq));
+    rfqs.map((r: any) => r.map(logRfq));
   } catch (e) {
     logError(e);
   }
@@ -323,6 +323,9 @@ export const initializeRiskEngine = async (opts: Opts) => {
         opts.collateralForFixedQuoteAmountRfqCreation,
       safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
       overallSafetyFactor: opts.overallSafetyFace,
+      acceptedOracleStaleness: opts.acceptedOracleStaleness,
+      acceptedOracleConfidenceIntervalPortion:
+        opts.acceptedOracleConfidenceIntervalPortion,
     });
     logPk(config.address);
     logResponse(response);
@@ -355,7 +358,19 @@ export const updateRiskEngine = async (opts: Opts) => {
         opts.collateralForFixedQuoteAmountRfqCreation,
       safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
       overallSafetyFactor: opts.overallSafetyFace,
+      acceptedOracleStaleness: opts.acceptedOracleStaleness,
+      acceptedOracleConfidenceIntervalPortion:
+        opts.acceptedOracleConfidenceIntervalPortion,
     });
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+export const closeRiskEngine = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const { response } = await cvg.riskEngine().closeConfig();
     logResponse(response);
   } catch (e) {
     logError(e);

@@ -5,6 +5,7 @@ import {
   updateRiskEngine,
   setRiskEngineInstrumentType,
   setRiskEngineCategoriesInfo,
+  closeRiskEngine,
 } from '../actions';
 
 import { addCmd } from './helpers';
@@ -35,6 +36,16 @@ const riskEngineOptions = [
     description: 'overall safety factor',
     defaultValue: '0.1',
   },
+  {
+    flags: '--accepted-oracle-staleness <number>',
+    description: 'accepted oracle staleness',
+    defaultValue: '300',
+  },
+  {
+    flags: '--accepted-oracle-confidence-interval-portion <number>',
+    description: 'accepted oracle confidence interval portion',
+    defaultValue: '0.1',
+  },
 ];
 
 export const initializeRiskEngineCmd = (c: Command) =>
@@ -45,6 +56,9 @@ export const initializeRiskEngineCmd = (c: Command) =>
     initializeRiskEngine,
     riskEngineOptions
   );
+
+export const closeRiskEngineCmd = (c: Command) =>
+  addCmd(c, 'risk-engine:close', 'closes risk engine', closeRiskEngine);
 
 export const updateRiskEngineCmd = (c: Command) =>
   addCmd(
@@ -92,9 +106,4 @@ export const setRiskEngineCategoriesInfoCmd = (c: Command) =>
   );
 
 export const getRiskEngineConfigCmd = (c: Command) =>
-  addCmd(
-    c,
-    'risk-engine:get-config',
-    'gets risk engine config',
-    getRiskEngineConfig
-  );
+  addCmd(c, 'risk-engine:get', 'gets risk engine config', getRiskEngineConfig);

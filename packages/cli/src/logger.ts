@@ -82,7 +82,7 @@ export const logTokenAccount = (p: PublicKey): void => {
   l('Token account address:', p.toString());
 };
 
-export const logError = (e: any) => l(`Error: ${e}`);
+export const logError = (e: any) => l(`Error: ${JSON.stringify(e)}`);
 
 export const logProtocol = (p: Protocol): void => {
   l('Address:', p.address.toString());
