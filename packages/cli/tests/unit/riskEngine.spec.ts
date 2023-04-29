@@ -29,6 +29,11 @@ describe('riskEngine', () => {
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
+  it('update config', async () => {
+    await runCli(['risk-engine:update']);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
   it('set-instrument-type [spot]', async () => {
     await runCli([
       'risk-engine:set-instrument-type',
