@@ -11,7 +11,9 @@ import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { makeCli } from '../src/cli';
 import { Ctx, getKpFile, getUserKp } from '../../validator';
 
-export const ENDPOINT = 'https://api.devnet.solana.com';
+//export const ENDPOINT = 'https://api.devnet.solana.com';
+export const ENDPOINT = 'http://127.0.0.1:8899';
+
 export const BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee'; // Switchboard
 
 export const TX = 'Tx:';
