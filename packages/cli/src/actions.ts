@@ -355,6 +355,9 @@ export const updateRiskEngine = async (opts: Opts) => {
         opts.collateralForFixedQuoteAmountRfqCreation,
       safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
       overallSafetyFactor: opts.overallSafetyFace,
+      acceptedOracleStaleness: opts.acceptedOracleStaleness,
+      acceptedOracleConfidenceIntervalPortion:
+        opts.acceptedOracleConfidenceIntervalPortion,
     });
     logResponse(response);
   } catch (e) {

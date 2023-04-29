@@ -41,10 +41,9 @@ describe('collateral', () => {
       .tokens()
       .findTokenByAddress({ address: TAKER_COLLATERAL_TOKEN_PK });
 
-    // TODO: For some reason tokenAfter.amount.currency.decimals is not correct
-    expect(tokenAfter.amount.basisPoints.toNumber()).toEqual(
-      tokenBefore.amount.basisPoints.toNumber() +
-        amount * Math.pow(10, COLLATERAL_MINT_DECIMALS)
+    const amountBps = amount * Math.pow(10, COLLATERAL_MINT_DECIMALS);
+    expect(tokenBefore.amount.basisPoints.toNumber()).toEqual(
+      tokenAfter.amount.basisPoints.toNumber() - amountBps
     );
   });
 });
