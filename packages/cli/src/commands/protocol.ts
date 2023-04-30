@@ -42,8 +42,8 @@ const commonOptions = [
   },
 ];
 
-export const initializeProtocolCmd = (c: Command) =>
-  addCmd(c, 'protocol:initialize', 'initializes protocol', initializeProtocol, [
+const initializeProtocolCmd = (c: Command) =>
+  addCmd(c, 'initialize', 'initializes protocol', initializeProtocol, [
     {
       flags: '--collateral-mint <string>',
       description: 'collateral mint address',
@@ -60,45 +60,39 @@ export const initializeProtocolCmd = (c: Command) =>
     },
   ]);
 
-export const addInstrumentCmd = (c: Command) =>
+const addInstrumentCmd = (c: Command) =>
   addCmd(
     c,
-    'protocol:add-instrument',
+    'add-instrument',
     'adds protocol instrument',
     addInstrument,
     commonOptions
   );
 
-export const addBaseAssetCmd = (c: Command) =>
-  addCmd(
-    c,
-    'protocol:add-base-asset',
-    'adds protocol base asset',
-    addBaseAsset,
-    [
-      {
-        flags: '--ticker <string>',
-        description: 'ticker',
-      },
-      {
-        flags: '--oracle-address <string>',
-        description: 'oracle address',
-      },
-      {
-        flags: '--oracle-kind <string>',
-        description: 'oracle kind',
-        defaultValue: 'switchboard',
-      },
-      {
-        flags: '--risk-category <string>',
-        description: 'risk category',
-        defaultValue: 'medium',
-      },
-    ]
-  );
+const addBaseAssetCmd = (c: Command) =>
+  addCmd(c, 'add-base-asset', 'adds protocol base asset', addBaseAsset, [
+    {
+      flags: '--ticker <string>',
+      description: 'ticker',
+    },
+    {
+      flags: '--oracle-address <string>',
+      description: 'oracle address',
+    },
+    {
+      flags: '--oracle-kind <string>',
+      description: 'oracle kind',
+      defaultValue: 'switchboard',
+    },
+    {
+      flags: '--risk-category <string>',
+      description: 'risk category',
+      defaultValue: 'medium',
+    },
+  ]);
 
-export const registerMintCmd = (c: Command) =>
-  addCmd(c, 'protocol:register-mint', 'registers protocol mint', registerMint, [
+const registerMintCmd = (c: Command) =>
+  addCmd(c, 'register-mint', 'registers protocol mint', registerMint, [
     { flags: '--mint <string>', description: 'mint address' },
     {
       flags: '--base-asset-index <number>',
@@ -108,21 +102,27 @@ export const registerMintCmd = (c: Command) =>
     },
   ]);
 
-export const getRegisteredMintsCmd = (c: Command) =>
+const getRegisteredMintsCmd = (c: Command) =>
   addCmd(
     c,
-    'protocol:get-registered-mints',
+    'get-registered-mints',
     'gets protocol registered mints',
     getRegisteredMints
   );
 
-export const getProtocolConfigCmd = (c: Command) =>
-  addCmd(c, 'protocol:get-config', 'gets protocol config', getProtocol);
+const getProtocolConfigCmd = (c: Command) =>
+  addCmd(c, 'get', 'gets protocol config', getProtocol);
 
-export const getBaseAssetsCmd = (c: Command) =>
-  addCmd(
-    c,
-    'protocol:get-base-assets',
-    'gets protocol base assets',
-    getBaseAssets
-  );
+const getBaseAssetsCmd = (c: Command) =>
+  addCmd(c, 'get-base-assets', 'gets protocol base assets', getBaseAssets);
+
+export const protocolGroup = (c: Command) => {
+  const group = c.command('protocol');
+  initializeProtocolCmd(group);
+  addInstrumentCmd(group);
+  addBaseAssetCmd(group);
+  registerMintCmd(group);
+  getRegisteredMintsCmd(group);
+  getProtocolConfigCmd(group);
+  getBaseAssetsCmd(group);
+};

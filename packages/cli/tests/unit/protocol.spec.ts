@@ -15,18 +15,18 @@ describe('protocol', () => {
     stub.restore();
   });
 
-  it('get-config', async () => {
-    await runCli(['protocol:get-config']);
+  it('get', async () => {
+    await runCli(['protocol', 'get']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
   it('get-base-assets', async () => {
-    await runCli(['protocol:get-base-assets']);
+    await runCli(['protocol', 'get-base-assets']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
   it('get-registered-mints', async () => {
-    await runCli(['protocol:get-registered-mints']);
+    await runCli(['protocol', 'get-registered-mints']);
     expect(stub.args[1][0]).toEqual(ADDRESS);
   });
 
@@ -34,7 +34,7 @@ describe('protocol', () => {
     await runCli(['token:create-mint', '--decimals', '9'], 'mint-authority');
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
-    await runCli(['protocol:register-mint', '--mint', stub.args[0][1]]);
+    await runCli(['protocol', 'register-mint', '--mint', stub.args[0][1]]);
     expect(stub.args[2][0]).toEqual(ADDRESS);
     expect(stub.args[3][0]).toEqual(TX);
   });

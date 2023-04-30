@@ -3,7 +3,7 @@ import { Command } from 'commander';
 import { airdrop, airdropDevnetTokens } from '../actions';
 import { addCmd } from './helpers';
 
-export const airdropSolCmd = (c: Command) =>
+const airdropSolCmd = (c: Command) =>
   addCmd(c, 'sol', 'airdrops SOL to the current user', airdrop, [
     {
       flags: '--amount <number>',
@@ -12,7 +12,7 @@ export const airdropSolCmd = (c: Command) =>
     },
   ]);
 
-export const airdropDevnetTokensCmd = (c: Command) =>
+const airdropDevnetTokensCmd = (c: Command) =>
   addCmd(c, 'devnet-tokens', 'airdrops Devnet tokens', airdropDevnetTokens, [
     {
       flags: '--owner <string>',
