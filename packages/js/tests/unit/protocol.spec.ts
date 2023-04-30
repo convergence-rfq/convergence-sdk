@@ -2,7 +2,11 @@ import { expect } from 'expect';
 
 import { protocolCache, RiskCategory } from '../../src';
 import { createUserCvg } from '../helpers';
-import { COLLATERAL_MINT_PK, SWITCHBOARD_SOL_ORACLE_PK } from '../constants';
+import {
+  BASE_MINT_PK,
+  COLLATERAL_MINT_PK,
+  SWITCHBOARD_SOL_ORACLE_PK,
+} from '../constants';
 
 describe('protocol', () => {
   const cvg = createUserCvg('dao');
@@ -49,7 +53,7 @@ describe('protocol', () => {
     expect(protocol.address).toEqual(cvg.protocol().pdas().protocol());
   });
 
-  it('add-instrument [spot]', async () => {
+  it('add instrument [spot]', async () => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.identity(),
       instrumentProgram: cvg.programs().getSpotInstrument().address,
@@ -63,7 +67,7 @@ describe('protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
-  it('add-instrument [psyoptions european]', async () => {
+  it('add instrument [psyoptions european]', async () => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.identity(),
       instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
@@ -78,7 +82,7 @@ describe('protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
-  it('add-instrument [psyoptions american]', async () => {
+  it('add instrument [psyoptions american]', async () => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.identity(),
       instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument()
@@ -93,7 +97,7 @@ describe('protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
-  it('add-base-asset', async () => {
+  it('add base asset', async () => {
     const baseAssets = await cvg.protocol().getBaseAssets();
     const { response } = await cvg.protocol().addBaseAsset({
       authority: cvg.identity(),
@@ -106,5 +110,19 @@ describe('protocol', () => {
       },
     });
     expect(response).toHaveProperty('signature');
+  });
+
+  it('register mint', async () => {
+    const { mint } = await cvg.tokens().createMint({ decimals: 3 });
+    const { response } = await cvg.protocol().registerMint({
+      baseAssetIndex: 0,
+      mint: mint.address,
+    });
+    expect(response).toHaveProperty('signature');
+  });
+
+  it('get registered mints', async () => {
+    const registeredMints = await cvg.protocol().getRegisteredMints();
+    expect(registeredMints.length).toBeGreaterThan(0);
   });
 });
