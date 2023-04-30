@@ -58,7 +58,7 @@ export class ProtocolClient {
       .execute(initializeProtocolOperation(input), options);
   }
 
-  /** {@inheritDoc initializeProtocolOperation} */
+  /** {@inheritDoc closeProtocolOperation} */
   close(input?: CloseProtocolInput, options?: OperationOptions) {
     return this.convergence
       .operations()

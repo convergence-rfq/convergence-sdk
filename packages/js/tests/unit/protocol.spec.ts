@@ -1,7 +1,8 @@
 import { expect } from 'expect';
 
+import { protocolCache, RiskCategory } from '../../src';
 import { createUserCvg } from '../helpers';
-import { protocolCache } from '../../src';
+import { COLLATERAL_MINT_PK, SWITCHBOARD_SOL_ORACLE_PK } from '../constants';
 
 describe('protocol', () => {
   const cvg = createUserCvg('dao');
@@ -33,11 +34,77 @@ describe('protocol', () => {
 
   it('get base assets', async () => {
     const baseAssets = await cvg.protocol().getBaseAssets();
-    expect(baseAssets).toHaveLength(2);
+    expect(baseAssets.length).toBeGreaterThan(0);
   });
 
   it('close', async () => {
     const { response } = await cvg.protocol().close();
+    expect(response).toHaveProperty('signature');
+  });
+
+  it('initialize', async () => {
+    const { protocol } = await cvg.protocol().initialize({
+      collateralMint: COLLATERAL_MINT_PK,
+    });
+    expect(protocol.address).toEqual(cvg.protocol().pdas().protocol());
+  });
+
+  it('add-instrument [spot]', async () => {
+    const { response } = await cvg.protocol().addInstrument({
+      authority: cvg.identity(),
+      instrumentProgram: cvg.programs().getSpotInstrument().address,
+      canBeUsedAsQuote: true,
+      validateDataAccountAmount: 1,
+      prepareToSettleAccountAmount: 7,
+      settleAccountAmount: 3,
+      revertPreparationAccountAmount: 3,
+      cleanUpAccountAmount: 4,
+    });
+    expect(response).toHaveProperty('signature');
+  });
+
+  it('add-instrument [psyoptions european]', async () => {
+    const { response } = await cvg.protocol().addInstrument({
+      authority: cvg.identity(),
+      instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
+        .address,
+      canBeUsedAsQuote: true,
+      validateDataAccountAmount: 2,
+      prepareToSettleAccountAmount: 7,
+      settleAccountAmount: 3,
+      revertPreparationAccountAmount: 3,
+      cleanUpAccountAmount: 4,
+    });
+    expect(response).toHaveProperty('signature');
+  });
+
+  it('add-instrument [psyoptions american]', async () => {
+    const { response } = await cvg.protocol().addInstrument({
+      authority: cvg.identity(),
+      instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument()
+        .address,
+      canBeUsedAsQuote: true,
+      validateDataAccountAmount: 3,
+      prepareToSettleAccountAmount: 7,
+      settleAccountAmount: 3,
+      revertPreparationAccountAmount: 3,
+      cleanUpAccountAmount: 4,
+    });
+    expect(response).toHaveProperty('signature');
+  });
+
+  it('add-base-asset', async () => {
+    const baseAssets = await cvg.protocol().getBaseAssets();
+    const { response } = await cvg.protocol().addBaseAsset({
+      authority: cvg.identity(),
+      index: { value: baseAssets.length },
+      ticker: 'GOD',
+      riskCategory: RiskCategory.VeryLow,
+      priceOracle: {
+        __kind: 'Switchboard',
+        address: SWITCHBOARD_SOL_ORACLE_PK,
+      },
+    });
     expect(response).toHaveProperty('signature');
   });
 });
