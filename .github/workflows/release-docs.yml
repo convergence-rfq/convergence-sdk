@@ -1,4 +1,4 @@
-name: Deploy typedocs to gh-pages on main
+name: Deploy Docs
 
 on:
   push:
