@@ -64,7 +64,7 @@ yarn
 yarn build
 ```
 
-**TDD**
+**Tests**
 
 First run the Solana test validator.
 
