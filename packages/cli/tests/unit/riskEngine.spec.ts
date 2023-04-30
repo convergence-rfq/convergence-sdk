@@ -1,10 +1,8 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
-import {
-  spotInstrumentProgram,
-  psyoptionsAmericanInstrumentProgram,
-  psyoptionsEuropeanInstrumentProgram,
-} from '@convergence-rfq/sdk';
+import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/rfq';
+import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
+import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
 
 import { ADDRESS, TX, runCli } from '../helpers';
 
@@ -39,21 +37,9 @@ describe('riskEngine', () => {
       'risk-engine',
       'set-instrument-type',
       '--program',
-      spotInstrumentProgram.address.toString(),
+      SPOT_INSTRUMENT_PROGRAM_ADDRESS,
       '--type',
       'spot',
-    ]);
-    expect(stub.args[0][0]).toEqual(TX);
-  });
-
-  it('set-instrument-type [american]', async () => {
-    await runCli([
-      'risk-engine',
-      'set-instrument-type',
-      '--program',
-      psyoptionsAmericanInstrumentProgram.address.toString(),
-      '--type',
-      'option',
     ]);
     expect(stub.args[0][0]).toEqual(TX);
   });
@@ -63,7 +49,19 @@ describe('riskEngine', () => {
       'risk-engine',
       'set-instrument-type',
       '--program',
-      psyoptionsEuropeanInstrumentProgram.address.toString(),
+      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
+      '--type',
+      'option',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
+  it('set-instrument-type [american]', async () => {
+    await runCli([
+      'risk-engine',
+      'set-instrument-type',
+      '--program',
+      PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS,
       '--type',
       'option',
     ]);

@@ -1,8 +1,10 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
-//import { PublicKey } from '@solana/web3.js';
+import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/rfq';
+import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
+import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
 
-import { ADDRESS, TX, runCli } from '../helpers';
+import { ADDRESS, COLLATERAL_MINT, TX, runCli } from '../helpers';
 
 describe('protocol', () => {
   let stub: SinonStub;
@@ -39,42 +41,94 @@ describe('protocol', () => {
     expect(stub.args[3][0]).toEqual(TX);
   });
 
-  //it('add-instrument', async () => {
-  //  // TODO: Prevent duplicate instruments as this only works the first time
-  //  await runCli([
-  //    'protocol:add-instrument',
-  //    '--instrument-program',
-  //    PublicKey.default.toString(),
-  //    '--can-be-used-as-quote',
-  //    'false',
-  //    '--validate-data-account-amount',
-  //    '2',
-  //    '--prepare-to-settle-account-amount',
-  //    '7',
-  //    '--settle-account-amount',
-  //    '3',
-  //    '--revert-preparation-account-amount',
-  //    '3',
-  //    '--clean-up-account-amount',
-  //    '4',
-  //  ]);
+  it('close', async () => {
+    await runCli(['protocol', 'close']);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
+  it('initialize', async () => {
+    await runCli([
+      'protocol',
+      'initialize',
+      '--collateral-mint',
+      COLLATERAL_MINT,
+    ]);
+    expect(stub.args[0][0]).toEqual(ADDRESS);
+  });
+
+  it('add-instrument [spot]', async () => {
+    await runCli([
+      'protocol',
+      'add-instrument',
+      '--instrument-program',
+      SPOT_INSTRUMENT_PROGRAM_ADDRESS,
+      '--can-be-used-as-quote',
+      'true',
+      '--validate-data-account-amount',
+      '1',
+      '--prepare-to-settle-account-amount',
+      '7',
+      '--settle-account-amount',
+      '3',
+      '--revert-preparation-account-amount',
+      '3',
+      '--clean-up-account-amount',
+      '4',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
+  it('add-instrument [psyoptions american]', async () => {
+    await runCli([
+      'protocol',
+      'add-instrument',
+      '--instrument-program',
+      PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS,
+      '--can-be-used-as-quote',
+      'true',
+      '--validate-data-account-amount',
+      '3',
+      '--prepare-to-settle-account-amount',
+      '7',
+      '--settle-account-amount',
+      '3',
+      '--revert-preparation-account-amount',
+      '3',
+      '--clean-up-account-amount',
+      '4',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
+  it('add-instrument [psyoptions european]', async () => {
+    await runCli([
+      'protocol',
+      'add-instrument',
+      '--instrument-program',
+      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
+      '--can-be-used-as-quote',
+      'true',
+      '--validate-data-account-amount',
+      '2',
+      '--prepare-to-settle-account-amount',
+      '7',
+      '--settle-account-amount',
+      '3',
+      '--revert-preparation-account-amount',
+      '3',
+      '--clean-up-account-amount',
+      '4',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX);
+  });
+
+  it('get-registered-mints', async () => {
+    await runCli(['protocol', 'get-registered-mints']);
+    expect(stub.args[1][0]).toEqual(ADDRESS);
+  });
+
+  //it('get [?]', async () => {
+  //  await runCli(['protocol', 'add-base-asset']);
   //  expect(stub.args[0][0]).toEqual(TX);
-  //});
-
-  //it('close', async () => {
-  //  await runCli(['protocol', 'close']);
-  //  expect(stub.args[0][0]).toEqual(ADDRESS);
-  //  expect(stub.args[1][0]).toEqual(TX);
-  //});
-
-  //it('protocol initialize', async () => {
-  //  await runCli([
-  //    'protocol',
-  //    'initialize',
-  //    '--collateral-mint',
-  //    CTX.quoteMint,
-  //  ]);
-  //  expect(stub.args[0][0]).toEqual(ADDRESS);
-  //  expect(stub.args[1][0]).toEqual(TX);
   //});
 });
