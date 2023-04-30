@@ -1,10 +1,10 @@
 import { expect } from 'expect';
 
-import { createCvg } from '../helpers';
+import { createUserCvg } from '../helpers';
 import { protocolCache } from '../../src';
 
 describe('protocol', () => {
-  const cvg = createCvg();
+  const cvg = createUserCvg('dao');
 
   it('get', async () => {
     const protocol = await cvg.protocol().get();
@@ -34,5 +34,10 @@ describe('protocol', () => {
   it('get base assets', async () => {
     const baseAssets = await cvg.protocol().getBaseAssets();
     expect(baseAssets).toHaveLength(2);
+  });
+
+  it('close', async () => {
+    const { response } = await cvg.protocol().close();
+    expect(response).toHaveProperty('signature');
   });
 });

@@ -60,4 +60,21 @@ describe('protocol', () => {
   //  ]);
   //  expect(stub.args[0][0]).toEqual(TX);
   //});
+
+  //it('close', async () => {
+  //  await runCli(['protocol', 'close']);
+  //  expect(stub.args[0][0]).toEqual(ADDRESS);
+  //  expect(stub.args[1][0]).toEqual(TX);
+  //});
+
+  //it('protocol initialize', async () => {
+  //  await runCli([
+  //    'protocol',
+  //    'initialize',
+  //    '--collateral-mint',
+  //    CTX.quoteMint,
+  //  ]);
+  //  expect(stub.args[0][0]).toEqual(ADDRESS);
+  //  expect(stub.args[1][0]).toEqual(TX);
+  //});
 });

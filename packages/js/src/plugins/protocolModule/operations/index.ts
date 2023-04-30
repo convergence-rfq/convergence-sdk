@@ -7,3 +7,4 @@ export * from './getBaseAssets';
 export * from './getRegisteredMints';
 export * from './findRegisteredMintByAddress';
 export * from './findBaseAssetByAddress';
+export * from './closeProtocol';
