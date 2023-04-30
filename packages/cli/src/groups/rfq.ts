@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 
 import { getRfq, getActiveRfqs, getAllRfqs, createRfq } from '../actions';
-import { addCmd } from './helpers';
+import { addCmd } from '../helpers';
 
 const getAllRfqsCmd = (c: Command) =>
   addCmd(c, 'get-all', 'gets all RFQs', getAllRfqs);

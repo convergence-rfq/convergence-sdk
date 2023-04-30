@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+
 import {
   initializeRiskEngine,
   getRiskEngineConfig,
@@ -7,8 +8,7 @@ import {
   setRiskEngineCategoriesInfo,
   closeRiskEngine,
 } from '../actions';
-
-import { addCmd } from './helpers';
+import { addCmd } from '../helpers';
 
 const riskEngineOptions = [
   {
@@ -48,31 +48,31 @@ const riskEngineOptions = [
   },
 ];
 
-export const initializeRiskEngineCmd = (c: Command) =>
+const initializeRiskEngineCmd = (c: Command) =>
   addCmd(
     c,
-    'risk-engine:initialize',
+    'initialize',
     'initializes risk engine',
     initializeRiskEngine,
     riskEngineOptions
   );
 
-export const closeRiskEngineCmd = (c: Command) =>
-  addCmd(c, 'risk-engine:close', 'closes risk engine', closeRiskEngine);
+const closeRiskEngineCmd = (c: Command) =>
+  addCmd(c, 'close', 'closes risk engine', closeRiskEngine);
 
-export const updateRiskEngineCmd = (c: Command) =>
+const updateRiskEngineCmd = (c: Command) =>
   addCmd(
     c,
-    'risk-engine:update',
+    'update',
     'updates risk engine',
     updateRiskEngine,
     riskEngineOptions
   );
 
-export const setRiskEngineInstrumentTypeCmd = (c: Command) =>
+const setRiskEngineInstrumentTypeCmd = (c: Command) =>
   addCmd(
     c,
-    'risk-engine:set-instrument-type',
+    'set-instrument-type',
     'sets risk engine instrument type',
     setRiskEngineInstrumentType,
     [
@@ -87,10 +87,10 @@ export const setRiskEngineInstrumentTypeCmd = (c: Command) =>
     ]
   );
 
-export const setRiskEngineCategoriesInfoCmd = (c: Command) =>
+const setRiskEngineCategoriesInfoCmd = (c: Command) =>
   addCmd(
     c,
-    'risk-engine:set-risk-categories-info',
+    'set-risk-categories-info',
     'sets risk engine risk categories info',
     setRiskEngineCategoriesInfo,
     [
@@ -105,5 +105,15 @@ export const setRiskEngineCategoriesInfoCmd = (c: Command) =>
     ]
   );
 
-export const getRiskEngineConfigCmd = (c: Command) =>
-  addCmd(c, 'risk-engine:get', 'gets risk engine config', getRiskEngineConfig);
+const getRiskEngineConfigCmd = (c: Command) =>
+  addCmd(c, 'get', 'gets risk engine config', getRiskEngineConfig);
+
+export const riskEngineGroup = (c: Command) => {
+  const group = c.command('risk-engine');
+  initializeRiskEngineCmd(group);
+  closeRiskEngineCmd(group);
+  updateRiskEngineCmd(group);
+  setRiskEngineInstrumentTypeCmd(group);
+  setRiskEngineCategoriesInfoCmd(group);
+  getRiskEngineConfigCmd(group);
+};

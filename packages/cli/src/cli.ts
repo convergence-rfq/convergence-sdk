@@ -1,18 +1,13 @@
 import { Command } from 'commander';
 
 import {
-  initializeRiskEngineCmd,
-  updateRiskEngineCmd,
-  setRiskEngineInstrumentTypeCmd,
-  setRiskEngineCategoriesInfoCmd,
-  getRiskEngineConfigCmd,
+  riskEngineGroup,
   protocolGroup,
   collateralGroup,
-  closeRiskEngineCmd,
   airdropGroup,
   rfqGroup,
   tokenGroup,
-} from './commands';
+} from './groups';
 import { VERSION } from './constants';
 
 export const makeCli = (): Command => {
@@ -20,12 +15,7 @@ export const makeCli = (): Command => {
     airdropGroup,
     tokenGroup,
     protocolGroup,
-    initializeRiskEngineCmd,
-    getRiskEngineConfigCmd,
-    updateRiskEngineCmd,
-    closeRiskEngineCmd,
-    setRiskEngineInstrumentTypeCmd,
-    setRiskEngineCategoriesInfoCmd,
+    riskEngineGroup,
     collateralGroup,
     rfqGroup,
   ];

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 
 import { airdrop, airdropDevnetTokens } from '../actions';
-import { addCmd } from './helpers';
+import { addCmd } from '../helpers';
 
 const airdropSolCmd = (c: Command) =>
   addCmd(c, 'sol', 'airdrops SOL to the current user', airdrop, [

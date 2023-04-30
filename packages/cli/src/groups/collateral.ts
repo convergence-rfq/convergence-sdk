@@ -5,7 +5,7 @@ import {
   fundCollateral,
   getCollateral,
 } from '../actions';
-import { addCmd } from './helpers';
+import { addCmd } from '../helpers';
 
 const initializeCmd = (c: Command) =>
   addCmd(

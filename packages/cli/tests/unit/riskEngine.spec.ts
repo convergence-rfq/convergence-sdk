@@ -20,23 +20,24 @@ describe('riskEngine', () => {
   });
 
   it('close config', async () => {
-    await runCli(['risk-engine:close']);
+    await runCli(['risk-engine', 'close']);
     expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('initialize config', async () => {
-    await runCli(['risk-engine:initialize']);
+    await runCli(['risk-engine', 'initialize']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 
   it('update config', async () => {
-    await runCli(['risk-engine:update']);
+    await runCli(['risk-engine', 'update']);
     expect(stub.args[0][0]).toEqual(TX);
   });
 
   it('set-instrument-type [spot]', async () => {
     await runCli([
-      'risk-engine:set-instrument-type',
+      'risk-engine',
+      'set-instrument-type',
       '--program',
       spotInstrumentProgram.address.toString(),
       '--type',
@@ -47,7 +48,8 @@ describe('riskEngine', () => {
 
   it('set-instrument-type [american]', async () => {
     await runCli([
-      'risk-engine:set-instrument-type',
+      'risk-engine',
+      'set-instrument-type',
       '--program',
       psyoptionsAmericanInstrumentProgram.address.toString(),
       '--type',
@@ -58,7 +60,8 @@ describe('riskEngine', () => {
 
   it('set-instrument-type [european]', async () => {
     await runCli([
-      'risk-engine:set-instrument-type',
+      'risk-engine',
+      'set-instrument-type',
       '--program',
       psyoptionsEuropeanInstrumentProgram.address.toString(),
       '--type',

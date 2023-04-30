@@ -31,7 +31,7 @@ describe('protocol', () => {
   });
 
   it('register-mint [quote]', async () => {
-    await runCli(['token:create-mint', '--decimals', '9'], 'mint-authority');
+    await runCli(['token', 'create-mint', '--decimals', '9'], 'mint-authority');
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual(TX);
     await runCli(['protocol', 'register-mint', '--mint', stub.args[0][1]]);

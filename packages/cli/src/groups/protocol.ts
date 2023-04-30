@@ -9,7 +9,7 @@ import {
   getBaseAssets,
 } from '../actions';
 
-import { addCmd } from './helpers';
+import { addCmd } from '../helpers';
 
 const commonOptions = [
   {

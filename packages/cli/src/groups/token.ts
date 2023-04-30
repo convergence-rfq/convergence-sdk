@@ -7,7 +7,7 @@ import {
   getWallet,
   mintTo,
 } from '../actions';
-import { addCmd } from './helpers';
+import { addCmd } from '../helpers';
 
 const createMintCmd = (c: Command) =>
   addCmd(c, 'create-mint', 'creates token mint', createMint, [
