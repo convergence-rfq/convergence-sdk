@@ -48,7 +48,7 @@ const riskEngineOptions = [
   },
 ];
 
-const initializeRiskEngineCmd = (c: Command) =>
+const initializeCmd = (c: Command) =>
   addCmd(
     c,
     'initialize',
@@ -57,10 +57,10 @@ const initializeRiskEngineCmd = (c: Command) =>
     riskEngineOptions
   );
 
-const closeRiskEngineCmd = (c: Command) =>
+const closeCmd = (c: Command) =>
   addCmd(c, 'close', 'closes risk engine', closeRiskEngine);
 
-const updateRiskEngineCmd = (c: Command) =>
+const updateCmd = (c: Command) =>
   addCmd(
     c,
     'update',
@@ -69,7 +69,7 @@ const updateRiskEngineCmd = (c: Command) =>
     riskEngineOptions
   );
 
-const setRiskEngineInstrumentTypeCmd = (c: Command) =>
+const setInstrumentTypeCmd = (c: Command) =>
   addCmd(
     c,
     'set-instrument-type',
@@ -87,7 +87,7 @@ const setRiskEngineInstrumentTypeCmd = (c: Command) =>
     ]
   );
 
-const setRiskEngineCategoriesInfoCmd = (c: Command) =>
+const setCategoriesInfoCmd = (c: Command) =>
   addCmd(
     c,
     'set-risk-categories-info',
@@ -105,15 +105,15 @@ const setRiskEngineCategoriesInfoCmd = (c: Command) =>
     ]
   );
 
-const getRiskEngineConfigCmd = (c: Command) =>
+const getCmd = (c: Command) =>
   addCmd(c, 'get', 'gets risk engine config', getRiskEngineConfig);
 
 export const riskEngineGroup = (c: Command) => {
   const group = c.command('risk-engine');
-  initializeRiskEngineCmd(group);
-  closeRiskEngineCmd(group);
-  updateRiskEngineCmd(group);
-  setRiskEngineInstrumentTypeCmd(group);
-  setRiskEngineCategoriesInfoCmd(group);
-  getRiskEngineConfigCmd(group);
+  initializeCmd(group);
+  closeCmd(group);
+  updateCmd(group);
+  setInstrumentTypeCmd(group);
+  setCategoriesInfoCmd(group);
+  getCmd(group);
 };

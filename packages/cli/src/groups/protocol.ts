@@ -110,7 +110,7 @@ const getRegisteredMintsCmd = (c: Command) =>
     getRegisteredMints
   );
 
-const getProtocolConfigCmd = (c: Command) =>
+const getCmd = (c: Command) =>
   addCmd(c, 'get', 'gets protocol config', getProtocol);
 
 const getBaseAssetsCmd = (c: Command) =>
@@ -123,6 +123,6 @@ export const protocolGroup = (c: Command) => {
   addBaseAssetCmd(group);
   registerMintCmd(group);
   getRegisteredMintsCmd(group);
-  getProtocolConfigCmd(group);
+  getCmd(group);
   getBaseAssetsCmd(group);
 };
