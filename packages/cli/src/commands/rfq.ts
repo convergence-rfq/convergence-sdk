@@ -1,25 +1,24 @@
 import { Command } from 'commander';
 
 import { getRfq, getActiveRfqs, getAllRfqs, createRfq } from '../actions';
-
 import { addCmd } from './helpers';
 
-export const getAllRfqsCmd = (c: Command) =>
-  addCmd(c, 'rfq:get-all', 'gets all RFQs', getAllRfqs);
+const getAllRfqsCmd = (c: Command) =>
+  addCmd(c, 'get-all', 'gets all RFQs', getAllRfqs);
 
-export const getActiveRfqsCmd = (c: Command) =>
-  addCmd(c, 'rfq:get-active', 'get active RFQs', getActiveRfqs);
+const getActiveRfqsCmd = (c: Command) =>
+  addCmd(c, 'get-active', 'get active RFQs', getActiveRfqs);
 
-export const getRfqCmd = (c: Command) =>
-  addCmd(c, 'rfq:get', 'gets RFQ details', getRfq, [
+const getRfqCmd = (c: Command) =>
+  addCmd(c, 'get', 'gets RFQ details', getRfq, [
     {
       flags: '--address <string>',
       description: 'RFQ address',
     },
   ]);
 
-export const createRfqCmd = (c: Command) =>
-  addCmd(c, 'rfq:create', 'creates RFQ', createRfq, [
+const createRfqCmd = (c: Command) =>
+  addCmd(c, 'create', 'creates RFQ', createRfq, [
     {
       flags: '--quote-mint <string>',
       description: 'quote mint',
@@ -67,3 +66,11 @@ export const createRfqCmd = (c: Command) =>
       defaultValue: '60',
     },
   ]);
+
+export const rfqGroup = (c: Command) => {
+  const group = c.command('rfq');
+  getActiveRfqsCmd(group);
+  getAllRfqsCmd(group);
+  getRfqCmd(group);
+  createRfqCmd(group);
+};

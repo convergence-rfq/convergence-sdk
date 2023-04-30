@@ -17,7 +17,7 @@ describe('token', () => {
   });
 
   it('create-mint', async () => {
-    await runCli(['token:create-mint', '--decimals', '9'], 'mint-authority');
+    await runCli(['token', 'create-mint', '--decimals', '9'], 'mint-authority');
     expect(new PublicKey(stub.args[0][1])).toBeTruthy();
     expect(stub.args[1][0]).toEqual(TX);
   });
@@ -37,7 +37,8 @@ describe('token', () => {
   it('mint-to', async () => {
     await runCli(
       [
-        'token:mint-to',
+        'token',
+        'mint-to',
         '--wallet',
         CTX.makerBaseWallet,
         '--mint',
@@ -51,7 +52,7 @@ describe('token', () => {
   });
 
   it('get-mint [quote]', async () => {
-    await runCli(['token:get-mint', '--address', CTX.quoteMint]);
+    await runCli(['token', 'get-mint', '--address', CTX.quoteMint]);
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual('Owner:');
     expect(stub.args[1][1]).toEqual(CTX.dao);
@@ -61,7 +62,7 @@ describe('token', () => {
   });
 
   it('get-mint [base]', async () => {
-    await runCli(['token:get-mint', '--address', CTX.baseMint]);
+    await runCli(['token', 'get-mint', '--address', CTX.baseMint]);
     expect(stub.args[0][0]).toEqual(ADDRESS);
     expect(stub.args[1][0]).toEqual('Owner:');
     expect(stub.args[1][1]).toEqual(CTX.dao);
@@ -72,7 +73,7 @@ describe('token', () => {
 
   it('get-wallet', async () => {
     await runCli(
-      ['token:get-wallet', '--address', CTX.takerQuoteWallet],
+      ['token', 'get-wallet', '--address', CTX.takerQuoteWallet],
       'taker'
     );
     expect(stub.args[0][0]).toEqual(ADDRESS);

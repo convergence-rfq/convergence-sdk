@@ -17,7 +17,8 @@ describe('rfq', () => {
   it('create [taker]', async () => {
     await runCli(
       [
-        'rfq:create',
+        'rfq',
+        'create',
         '--quote-mint',
         CTX.quoteMint,
         '--base-mint',
@@ -43,7 +44,7 @@ describe('rfq', () => {
   });
 
   it('get-all [maker]', async () => {
-    await runCli(['rfq:get-all']);
+    await runCli(['rfq', 'get-all']);
     expect(stub.args[0][0]).toEqual(ADDRESS);
   });
 });
