@@ -2,11 +2,7 @@ import { expect } from 'expect';
 
 import { protocolCache, RiskCategory } from '../../src';
 import { createUserCvg } from '../helpers';
-import {
-  BASE_MINT_PK,
-  COLLATERAL_MINT_PK,
-  SWITCHBOARD_SOL_ORACLE_PK,
-} from '../constants';
+import { COLLATERAL_MINT_PK, SWITCHBOARD_SOL_ORACLE_PK } from '../constants';
 
 describe('protocol', () => {
   const cvg = createUserCvg('dao');
@@ -124,5 +120,15 @@ describe('protocol', () => {
   it('get registered mints', async () => {
     const registeredMints = await cvg.protocol().getRegisteredMints();
     expect(registeredMints.length).toBeGreaterThan(0);
+  });
+
+  it('find base asset by address', async () => {
+    const baseAsset = await cvg.protocol().findBaseAssetByAddress({
+      address: cvg
+        .protocol()
+        .pdas()
+        .baseAsset({ index: { value: 0 } }),
+    });
+    expect(baseAsset).toHaveProperty('address');
   });
 });
