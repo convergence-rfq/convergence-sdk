@@ -3,7 +3,7 @@ import sinon, { SinonStub } from 'sinon';
 
 import { TX, runCli } from '../helpers';
 
-describe('utils', () => {
+describe('airdrop', () => {
   let stub: SinonStub;
 
   beforeEach(() => {
@@ -14,8 +14,8 @@ describe('utils', () => {
     stub.restore();
   });
 
-  it('airdrop sol', async () => {
-    await runCli(['airdrop:sol', '--amount', '1']);
+  it('sol', async () => {
+    await runCli(['airdrop', 'sol', '--amount', '1']);
     expect(stub.args[0][0]).toEqual(TX);
   });
 });

@@ -16,11 +16,6 @@ describe('token', () => {
     stub.restore();
   });
 
-  it('airdrop sol', async () => {
-    await runCli(['airdrop:sol', '--amount', '1']);
-    expect(stub.args[0][0]).toEqual(TX);
-  });
-
   it('create-mint', async () => {
     await runCli(['token:create-mint', '--decimals', '9'], 'mint-authority');
     expect(new PublicKey(stub.args[0][1])).toBeTruthy();

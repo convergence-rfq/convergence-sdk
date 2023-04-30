@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 
 import {
-  airdropSolCmd,
   createMintCmd,
   createWalletCmd,
   mintToCmd,
@@ -19,20 +18,19 @@ import {
   getBaseAssetsCmd,
   getAllRfqsCmd,
   getActiveRfqsCmd,
-  airdropDevnetTokensCmd,
   collateralGroup,
   createRfqCmd,
   getRfqCmd,
   getWalletCmd,
   getMintCmd,
   closeRiskEngineCmd,
+  airdropGroup,
 } from './commands';
 import { VERSION } from './constants';
 
 export const makeCli = (): Command => {
   const cmds = [
-    airdropSolCmd,
-    airdropDevnetTokensCmd,
+    airdropGroup,
     createMintCmd,
     getMintCmd,
     createWalletCmd,
