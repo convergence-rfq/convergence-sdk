@@ -19,10 +19,10 @@ import {
 } from './helpers';
 import { Instrument } from './types';
 
-// NOTE: Improves readability of code by preserving terseness
+// Improves readability of code by preserving terseness
 const l = (...args: any[]) => console.log(...args);
 
-// NOTE: Same
+// See above
 const N = Number;
 
 export const logPk = (p: PublicKey): void => l('Address:', p.toString());
