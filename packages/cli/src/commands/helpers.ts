@@ -1,5 +1,7 @@
 import { Command } from 'commander';
 
+import { addDefaultArgs } from '../helpers';
+
 export const addCmd = (
   c: Command,
   name: string,
@@ -27,6 +29,8 @@ export const addCmd = (
       }
     }
   }
+
+  addDefaultArgs(cmd);
 
   return cmd;
 };

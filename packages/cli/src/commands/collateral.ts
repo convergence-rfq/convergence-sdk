@@ -1,45 +1,39 @@
 import { Command } from 'commander';
 
 import {
-  initializeCollateralAccount,
-  fundCollateralAccount,
-  getCollateralAccount,
+  initializeCollateral,
+  fundCollateral,
+  getCollateral,
 } from '../actions';
-
 import { addCmd } from './helpers';
 
-export const initializeCollateralAccountCmd = (c: Command) =>
+const initializeCmd = (c: Command) =>
   addCmd(
     c,
-    'collateral:initialize-account',
+    'initialize',
     'initializes collateral account',
-    initializeCollateralAccount
+    initializeCollateral
   );
 
-export const fundCollateralAccountCmd = (c: Command) =>
-  addCmd(
-    c,
-    'collateral:fund-account',
-    'funds collateral account',
-    fundCollateralAccount,
-    [
-      {
-        flags: '--amount <number>',
-        description: 'amount',
-      },
-    ]
-  );
+const fundCmd = (c: Command) =>
+  addCmd(c, 'fund', 'funds collateral account', fundCollateral, [
+    {
+      flags: '--amount <number>',
+      description: 'amount',
+    },
+  ]);
 
-export const getCollateralAccountCmd = (c: Command) =>
-  addCmd(
-    c,
-    'collateral:get-account',
-    'gets collateral account',
-    getCollateralAccount,
-    [
-      {
-        flags: '--user <string>',
-        description: 'user address',
-      },
-    ]
-  );
+const getCmd = (c: Command) =>
+  addCmd(c, 'get', 'gets collateral account', getCollateral, [
+    {
+      flags: '--user <string>',
+      description: 'user address',
+    },
+  ]);
+
+export const collateralGroup = (c: Command) => {
+  const group = c.command('collateral');
+  initializeCmd(group);
+  fundCmd(group);
+  getCmd(group);
+};

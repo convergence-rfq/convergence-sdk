@@ -8,6 +8,7 @@ import {
 } from '@convergence-rfq/sdk';
 
 import { Instrument } from './types';
+import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
 
 export const getSide = (side: string): Side => {
   switch (side) {
@@ -123,4 +124,11 @@ export const formatSide = (side: Side): string => {
     default:
       throw new Error('Invalid side');
   }
+};
+
+export const addDefaultArgs = (cmd: any) => {
+  cmd.option('--rpc-endpoint <string>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
+  cmd.option('--keypair-file <string>', 'keypair file', DEFAULT_KEYPAIR_FILE);
+  cmd.option('--verbose <boolean>', 'verbose', false);
+  return cmd;
 };

@@ -272,7 +272,7 @@ export const createRfq = async (opts: Opts) => {
   }
 };
 
-export const initializeCollateralAccount = async (opts: Opts) => {
+export const initializeCollateral = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     const { collateral, response } = await cvg.collateral().initialize({});
@@ -288,7 +288,7 @@ export const initializeCollateralAccount = async (opts: Opts) => {
   }
 };
 
-export const fundCollateralAccount = async (opts: Opts) => {
+export const fundCollateral = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     const { response } = await cvg.collateral().fund({ amount: opts.amount });
@@ -298,7 +298,7 @@ export const fundCollateralAccount = async (opts: Opts) => {
   }
 };
 
-export const getCollateralAccount = async (opts: Opts) => {
+export const getCollateral = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     const collateral = await cvg
