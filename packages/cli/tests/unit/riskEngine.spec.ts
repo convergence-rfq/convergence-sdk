@@ -1,6 +1,6 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
-import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/rfq';
+import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
 import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
 
