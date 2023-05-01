@@ -31,7 +31,16 @@
     "no-restricted-globals": "off",
     "no-else-return": "error",
     "prefer-const": "warn",
-    "no-console": ["warn", { "allow": ["warn", "error", "debug"] }],
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error",
+          "debug"
+        ]
+      }
+    ],
     // COMPLEX RULES:
     "prefer-destructuring": [
       "warn",
@@ -73,11 +82,17 @@
         ],
         "patterns": [
           {
-            "group": ["@material-ui/*/*/*", "!@material-ui/core/test-utils/*"],
+            "group": [
+              "@material-ui/*/*/*",
+              "!@material-ui/core/test-utils/*"
+            ],
             "message": "usage of material-ui private modules not allowed."
           },
           {
-            "group": ["@mui/*/*/*", "!@mui/material/test-utils/*"],
+            "group": [
+              "@mui/*/*/*",
+              "!@mui/material/test-utils/*"
+            ],
             "message": "usage of mui private modules not allowed."
           }
         ]
@@ -87,19 +102,29 @@
       "warn",
       {
         "selector": "variable",
-        "format": ["camelCase", "PascalCase", "UPPER_CASE"]
+        "format": [
+          "camelCase",
+          "PascalCase",
+          "UPPER_CASE"
+        ]
       },
       {
         "selector": "typeLike",
-        "format": ["PascalCase"]
+        "format": [
+          "PascalCase"
+        ]
       },
       {
         "selector": "function",
-        "format": ["camelCase"]
+        "format": [
+          "camelCase"
+        ]
       },
       {
         "selector": "interface",
-        "format": ["PascalCase"],
+        "format": [
+          "PascalCase"
+        ],
         "custom": {
           "regex": "^I[A-Z]",
           "match": false
@@ -107,12 +132,18 @@
       },
       {
         "selector": "enumMember",
-        "format": ["UPPER_CASE"]
+        "format": [
+          "UPPER_CASE"
+        ]
       },
       {
         "selector": "classProperty",
-        "format": ["camelCase"],
-        "modifiers": ["private"],
+        "format": [
+          "camelCase"
+        ],
+        "modifiers": [
+          "private"
+        ],
         "leadingUnderscore": "require"
       }
     ],
@@ -130,35 +161,54 @@
         ],
         "accessorPairPositioning": "getThenSet"
       }
+    ],
+    "quotes": [
+      "warn",
+      "single"
     ]
   },
   "overrides": [
     {
       // 2. Enable the Markdown processor for all .md files.
-      "files": ["**/*.md"],
+      "files": [
+        "**/*.md"
+      ],
       "processor": "markdown/markdown"
     },
     {
-      "files": ["**/*.tsx"],
+      "files": [
+        "**/*.tsx"
+      ],
       // "extends": ["react-app", "plugin:react/recommended"],
       "rules": {
         "@typescript-eslint/naming-convention": [
           "error",
           {
             "selector": "variable",
-            "format": ["camelCase", "PascalCase", "UPPER_CASE"]
+            "format": [
+              "camelCase",
+              "PascalCase",
+              "UPPER_CASE"
+            ]
           },
           {
             "selector": "typeLike",
-            "format": ["PascalCase"]
+            "format": [
+              "PascalCase"
+            ]
           },
           {
             "selector": "function",
-            "format": ["camelCase", "PascalCase"]
+            "format": [
+              "camelCase",
+              "PascalCase"
+            ]
           },
           {
             "selector": "interface",
-            "format": ["PascalCase"],
+            "format": [
+              "PascalCase"
+            ],
             "custom": {
               "regex": "^I[A-Z]",
               "match": false
@@ -166,12 +216,18 @@
           },
           {
             "selector": "enumMember",
-            "format": ["UPPER_CASE"]
+            "format": [
+              "UPPER_CASE"
+            ]
           },
           {
             "selector": "classProperty",
-            "format": ["camelCase"],
-            "modifiers": ["private"],
+            "format": [
+              "camelCase"
+            ],
+            "modifiers": [
+              "private"
+            ],
             "leadingUnderscore": "require"
           }
         ]

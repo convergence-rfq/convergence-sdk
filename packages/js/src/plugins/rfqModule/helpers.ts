@@ -1,5 +1,5 @@
 /* eslint-disable no-else-return */
-import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
+import { PublicKey, AccountMeta, Keypair, Signer } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
@@ -32,7 +32,11 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
   Program,
 } from '../../types';
-import { CvgWallet, TransactionBuilder } from '../../utils';
+import {
+  CvgWallet,
+  InstructionWithSigners,
+  TransactionBuilder,
+} from '../../utils';
 import { Convergence } from '../../Convergence';
 import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
@@ -45,6 +49,7 @@ import { Mint } from '../tokenModule';
 import type { Rfq, Response } from './models';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
 import { collateralMintCache } from '../collateralModule';
+import { SendAndConfirmTransactionResponse } from '..';
 
 const { mintOptions } = instructions;
 
@@ -1124,7 +1129,7 @@ export const createAmericanAccountsAndMintOptions = async (
         PsyoptionsAmericanInstrument.deserializeInstrumentData(
           Buffer.from(leg.instrumentData)
         );
-      const metaKey = instrumentData.metaKey;
+      const { metaKey } = instrumentData;
       // const meta = await PsyoptionsAmericanInstrument.fetchMeta(
       //   convergence,
       //   metaKey
@@ -1255,7 +1260,7 @@ export const getCreateAccountsAndMintOptionsTransaction = async (
           PsyoptionsAmericanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)
           );
-        const metaKey = instrumentData.metaKey;
+        const { metaKey } = instrumentData;
         const optionMarket = await psyoptionsAmerican.getOptionByKey(
           americanProgram,
           metaKey
@@ -1306,9 +1311,9 @@ export const getCreateAccountsAndMintOptionsTransaction = async (
         // euroMeta.underlyingAmountPerContract = new BN(
         //   euroMeta.underlyingAmountPerContract
         // );
-        const optionType = instrumentData.optionType;
-        const stableMint = euroMeta.stableMint;
-        const underlyingMint = euroMeta.underlyingMint;
+        const { optionType } = instrumentData;
+        const { stableMint } = euroMeta;
+        const { underlyingMint } = euroMeta;
         const stableMintToken = convergence
           .tokens()
           .pdas()
@@ -1381,6 +1386,322 @@ export const getCreateAccountsAndMintOptionsTransaction = async (
   return tx;
 };
 
+export const mintAmericanOptions = async (
+  convergence: Convergence,
+  responseAddress: PublicKey,
+  caller: PublicKey,
+  optionToken: PublicKey,
+  writerToken: PublicKey,
+  underlyingToken: PublicKey,
+  americanProgram: any
+) => {
+  const response = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: responseAddress });
+  const rfq = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: response.rfq });
+  const confirmedSide = response.confirmed?.side;
+
+  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
+  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
+  const instructionWithSigners: InstructionWithSigners[] = [];
+
+  for (const leg of rfq.legs) {
+    const instrument = await legToInstrument(convergence, leg);
+    if (
+      leg.instrumentProgram.equals(
+        psyoptionsAmericanInstrumentProgram.address
+      ) &&
+      americanProgram
+    ) {
+      if (
+        (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
+        (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+      ) {
+        const amount = instrument.legInfo?.amount;
+        const instrumentData =
+          PsyoptionsAmericanInstrument.deserializeInstrumentData(
+            Buffer.from(leg.instrumentData)
+          );
+        const { metaKey } = instrumentData;
+        const optionMarket = await psyoptionsAmerican.getOptionByKey(
+          americanProgram,
+          metaKey
+        );
+
+        const ixWithSigners =
+          await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+            americanProgram,
+            optionToken,
+            writerToken,
+            underlyingToken,
+            new anchor.BN(amount!),
+            optionMarket as OptionMarketWithKey
+          );
+        ixWithSigners.ix.keys[0] = {
+          pubkey: caller,
+          isSigner: true,
+          isWritable: false,
+        };
+        instructionWithSigners.push({
+          instruction: ixWithSigners.ix,
+          signers: ixWithSigners.signers,
+        });
+      }
+    }
+  }
+  const payer = convergence.rpc().getDefaultFeePayer();
+  const txBuilder = TransactionBuilder.make().setFeePayer(payer);
+
+  txBuilder.add(...instructionWithSigners);
+  const sig = await txBuilder.sendAndConfirm(convergence);
+  return sig;
+};
+
+export const mintEuropeanOptions = async (
+  convergence: Convergence,
+  responseAddress: PublicKey,
+  caller: PublicKey,
+  optionDestination: PublicKey,
+  writerDestination: PublicKey,
+  backupReceiver: PublicKey,
+  europeanProgram: any
+) => {
+  const response = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: responseAddress });
+  const rfq = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: response.rfq });
+  const confirmedSide = response.confirmed?.side;
+
+  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
+  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
+  const instructions: anchor.web3.TransactionInstruction[] = [];
+
+  for (const leg of rfq.legs) {
+    const instrument = await legToInstrument(convergence, leg);
+    if (
+      leg.instrumentProgram.equals(psyoptionsEuropeanInstrumentProgram.address)
+    ) {
+      if (
+        (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
+        (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+      ) {
+        const amount = instrument.legInfo?.amount;
+        const instrumentData =
+          PsyoptionsEuropeanInstrument.deserializeInstrumentData(
+            Buffer.from(leg.instrumentData)
+          );
+        const euroMetaKey = instrumentData.metaKey;
+        const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
+          convergence,
+          euroMetaKey
+        );
+        const { optionType } = instrumentData;
+        const { stableMint } = euroMeta;
+        const { underlyingMint } = euroMeta;
+        const stableMintToken = convergence
+          .tokens()
+          .pdas()
+          .associatedTokenAccount({
+            mint: stableMint,
+            owner: caller,
+          });
+        const underlyingMintToken = convergence
+          .tokens()
+          .pdas()
+          .associatedTokenAccount({
+            mint: underlyingMint,
+            owner: caller,
+          });
+        const minterCollateralKey =
+          optionType == OptionType.PUT ? stableMintToken : underlyingMintToken;
+
+        const { instruction: ix } = mintOptions(
+          europeanProgram,
+          euroMetaKey,
+          euroMeta as EuroMeta,
+          minterCollateralKey,
+          optionDestination,
+          writerDestination,
+          new anchor.BN(amount!),
+          optionType
+        );
+
+        ix.keys[0] = {
+          pubkey: caller,
+          isSigner: true,
+          isWritable: false,
+        };
+
+        instructions.push(ix);
+      }
+    }
+  }
+
+  const txBuilder = TransactionBuilder.make().setFeePayer(
+    convergence.rpc().getDefaultFeePayer()
+  );
+
+  instructions.forEach((ins) => {
+    txBuilder.add({
+      instruction: ins,
+      signers: [convergence.rpc().getDefaultFeePayer()],
+    });
+  });
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  const sig = await txBuilder.sendAndConfirm(convergence, confirmOptions);
+  return sig;
+};
+
+export interface AmericanTokenAtaForMinting {
+  optionToken: PublicKey;
+  writerToken: PublicKey;
+  underlyingToken: PublicKey;
+}
+
+export interface EuropeanAtaForMinting {
+  optionDestination: PublicKey;
+  writerDestination: PublicKey;
+  backupReceiver: PublicKey;
+}
+
+export const getOrCreateEuropeanOptionATAs = async (
+  convergence: Convergence,
+  responseAddress: PublicKey,
+  caller: PublicKey
+): Promise<EuropeanAtaForMinting> => {
+  let optionDestination: any;
+  let writerDestination: any;
+  let backupReceiver: any;
+  const response = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: responseAddress });
+  const rfq = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: response.rfq });
+  const confirmedSide = response.confirmed?.side;
+
+  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
+  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
+
+  for (const leg of rfq.legs) {
+    const instrument = await legToInstrument(convergence, leg);
+    if (
+      leg.instrumentProgram.equals(psyoptionsEuropeanInstrumentProgram.address)
+    ) {
+      if (
+        (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
+        (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+      ) {
+        const instrumentData =
+          PsyoptionsEuropeanInstrument.deserializeInstrumentData(
+            Buffer.from(leg.instrumentData)
+          );
+        const euroMetaKey = instrumentData.metaKey;
+        const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
+          convergence,
+          euroMetaKey
+        );
+        const { optionType } = instrumentData;
+        optionDestination = await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putOptionMint
+            : euroMeta.callOptionMint,
+          caller
+        );
+        writerDestination = await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putWriterMint
+            : euroMeta.callWriterMint,
+          caller
+        );
+        backupReceiver = await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putOptionMint
+            : euroMeta.callOptionMint,
+          caller
+        );
+      }
+    }
+  }
+  return { optionDestination, writerDestination, backupReceiver };
+};
+
+export const getOrCreateAmericanOptionATAs = async (
+  convergence: Convergence,
+  responseAddress: PublicKey,
+  caller: PublicKey,
+  americanProgram: any
+): Promise<AmericanTokenAtaForMinting> => {
+  const response = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: responseAddress });
+  const rfq = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: response.rfq });
+  const confirmedSide = response.confirmed?.side;
+
+  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
+  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
+  let optionToken: any;
+  let writerToken: any;
+  let underlyingToken: any;
+  for (const leg of rfq.legs) {
+    const instrument = await legToInstrument(convergence, leg);
+    if (
+      leg.instrumentProgram.equals(
+        psyoptionsAmericanInstrumentProgram.address
+      ) &&
+      americanProgram
+    ) {
+      if (
+        (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
+        (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+      ) {
+        const instrumentData =
+          PsyoptionsAmericanInstrument.deserializeInstrumentData(
+            Buffer.from(leg.instrumentData)
+          );
+        const { metaKey } = instrumentData;
+
+        const optionMarket = await psyoptionsAmerican.getOptionByKey(
+          americanProgram,
+          metaKey
+        );
+
+        optionToken = await getOrCreateATA(
+          convergence,
+          (optionMarket as OptionMarketWithKey).optionMint,
+          caller
+        );
+        writerToken = await getOrCreateATA(
+          convergence,
+          optionMarket!.writerTokenMint,
+          caller
+        );
+        underlyingToken = await getOrCreateATA(
+          convergence,
+          optionMarket!.underlyingAssetMint,
+          caller
+        );
+      }
+    }
+  }
+  return {
+    optionToken,
+    writerToken,
+    underlyingToken,
+  };
+};
+
 export const createAccountsAndMintOptions = async (
   convergence: Convergence,
   responseAddress: PublicKey,
@@ -1421,7 +1742,7 @@ export const createAccountsAndMintOptions = async (
           PsyoptionsAmericanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)
           );
-        const metaKey = instrumentData.metaKey;
+        const { metaKey } = instrumentData;
         const optionMarket = await psyoptionsAmerican.getOptionByKey(
           americanProgram,
           metaKey
@@ -1479,9 +1800,9 @@ export const createAccountsAndMintOptions = async (
         // euroMeta.underlyingAmountPerContract = new BN(
         //   euroMeta.underlyingAmountPerContract
         // );
-        const optionType = instrumentData.optionType;
-        const stableMint = euroMeta.stableMint;
-        const underlyingMint = euroMeta.underlyingMint;
+        const { optionType } = instrumentData;
+        const { stableMint } = euroMeta;
+        const { underlyingMint } = euroMeta;
         const stableMintToken = convergence
           .tokens()
           .pdas()
