@@ -1,5 +1,5 @@
 import { expect } from 'expect';
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { PublicKey, Keypair, sendAndConfirmTransaction } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { createUserCvg } from '../helpers';
@@ -14,11 +14,20 @@ import {
   Mint,
   initializeNewOptionMeta,
   createEuropeanProgram,
+  getOrCreateEuropeanOptionATAs,
+  mintEuropeanOptions,
 } from '../../src';
-import { createPythPriceFeed } from '../human';
+import {
+  confirmResponse,
+  createPythPriceFeed,
+  prepareSettlement,
+  respond,
+  settle,
+} from '../human';
 
 describe('psyoptions european', () => {
   const takerCvg = createUserCvg('taker');
+  const makerCvg = createUserCvg('maker');
 
   let baseMint: Mint;
   let quoteMint: Mint;
@@ -84,5 +93,82 @@ describe('psyoptions european', () => {
     });
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
+  });
+
+  it('mint european options', async () => {
+    const europeanProgram = await createEuropeanProgram(takerCvg);
+    const provider = new anchor.AnchorProvider(
+      takerCvg.connection,
+      new anchor.Wallet(takerCvg.rpc().getDefaultFeePayer() as Keypair),
+      {}
+    );
+    const pseudoPythProgram = new anchor.Program(
+      PseudoPythIdl,
+      new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
+      provider
+    );
+    const oracle = await createPythPriceFeed(
+      pseudoPythProgram,
+      17_000,
+      quoteMint.decimals * -1
+    );
+    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+      takerCvg,
+      oracle,
+      europeanProgram,
+      baseMint,
+      quoteMint,
+      23_354,
+      1,
+      3_600,
+      0
+    );
+    const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
+      instruments: [
+        new SpotInstrument(takerCvg, baseMint, {
+          amount: 1.0,
+          side: Side.Bid,
+        }),
+        new PsyoptionsEuropeanInstrument(
+          takerCvg,
+          baseMint,
+          OptionType.CALL,
+          euroMeta,
+          euroMetaKey,
+          {
+            amount: 1,
+            side: Side.Bid,
+          }
+        ),
+      ],
+      orderType: OrderType.Sell,
+      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+    });
+    expect(rfq).toHaveProperty('address');
+    expect(response.signature).toBeDefined();
+    const { rfqResponse } = await respond(makerCvg, rfq, 'bid');
+    await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
+    const { optionDestination, writerDestination, backupReceiver } =
+      await getOrCreateEuropeanOptionATAs(
+        takerCvg,
+        rfqResponse.address,
+        takerCvg.rpc().getDefaultFeePayer().publicKey
+      );
+    const tnx = await mintEuropeanOptions(
+      takerCvg,
+      rfqResponse.address,
+      takerCvg.rpc().getDefaultFeePayer().publicKey,
+      optionDestination,
+      writerDestination,
+      backupReceiver,
+      europeanProgram
+    );
+
+    expect(tnx).toHaveProperty('response');
+    await prepareSettlement(makerCvg, rfq, rfqResponse);
+    await prepareSettlement(takerCvg, rfq, rfqResponse);
+
+    await settle(takerCvg, rfq, rfqResponse);
   });
 });

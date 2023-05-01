@@ -4,17 +4,15 @@ import {
   createAmericanCoveredCall,
   confirmResponse,
   respond,
-  //prepareSettlement,
-  //settle,
-  //createAmericanAccountsAndMint,
+  prepareSettlement,
+  settle,
 } from '../human';
 import { createUserCvg } from '../helpers';
 import {
   createAmericanProgram,
   getOrCreateAmericanOptionATAs,
-  mintAmericanOptionsTransaction,
+  mintAmericanOptions,
 } from '../../src';
-import { sendAndConfirmTransaction } from '@solana/web3.js';
 
 describe('psyoptions american', () => {
   const takerCvg = createUserCvg('taker');
@@ -32,8 +30,8 @@ describe('psyoptions american', () => {
     const res2 = await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
     expect(res2.response).toHaveProperty('signature');
 
-    //await createAmericanAccountsAndMint(takerCvg, rfq, optionMarket, 100);
-    //await createAmericanAccountsAndMint(makerCvg, rfq, optionMarket, 100);
+    // await createAmericanAccountsAndMint(takerCvg, rfq, optionMarket, 100);
+    // await createAmericanAccountsAndMint(makerCvg, rfq, optionMarket, 100);
 
     //const res3 = await prepareSettlement(takerCvg, rfq, rfqResponse);
     //expect(res3.response).toHaveProperty('signature');
@@ -45,7 +43,7 @@ describe('psyoptions american', () => {
     //expect(res5.response).toHaveProperty('signature');
   });
 
-  it('mint American options and return a tnx', async () => {
+  it('mint American options', async () => {
     const res0 = await createAmericanCoveredCall(takerCvg, 'sell');
     const { rfq } = res0;
     expect(rfq).toHaveProperty('address');
@@ -63,7 +61,7 @@ describe('psyoptions american', () => {
         americanProgram
       );
 
-    const tnx = await mintAmericanOptionsTransaction(
+    const tnx = await mintAmericanOptions(
       takerCvg,
       rfqResponse.address,
       takerCvg.rpc().getDefaultFeePayer().publicKey,
@@ -73,9 +71,10 @@ describe('psyoptions american', () => {
       americanProgram
     );
 
-    console.log('transaction:', tnx);
-    const signedTnx = takerCvg.identity().signTransaction(tnx);
+    expect(tnx).toHaveProperty('response');
 
-    sendAndConfirmTransaction(takerCvg.connection, tnx, []);
+    await prepareSettlement(takerCvg, rfq, rfqResponse);
+    await prepareSettlement(makerCvg, rfq, rfqResponse);
+    await settle(takerCvg, rfq, rfqResponse);
   });
 });
