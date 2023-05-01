@@ -42,7 +42,7 @@
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
     "test:init": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/integration/init.ts",
-    "test": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/**/*.spec.ts",
+    "test": "nyc ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/**/*.spec.ts",
     "cli": "ts-node src/index.ts"
   },
   "dependencies": {
