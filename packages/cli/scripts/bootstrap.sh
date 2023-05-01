@@ -1,68 +1,44 @@
 #!env bash
 
 set -e
-set -x
 
-RPC_ENDPOINT="http://127.0.0.1:8899"
-
-OWNER="HGm8jGLSazATztBSUxXfU62oRyVsmwPKnUsjvviRYbRG"
-DAO_KEYPAIR="$HOME/.config/solana/id.json"
-MINT_KEYPAIR="$HOME/.config/solana/mint-authority.json"
-
-CVG="node /Users/pindaroso/code/convergence-sdk/packages/cli/dist/cjs/index.cjs"
-
-SPOT_INSTRUMENT_PROGRAM_ID="HNHBtGzS58xJarSbz5XbEjTTEFbAQUHdP8TjQmwjx1gW"
-PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID="HmJ8K5xb6kXbVbvRriq1Z7oPdEaPmKXpEM4Un9nr5b1"
-PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID="7GcKLyM73RRJshRLQqX8yw9K3hTHkx1Ei14mKoKxi3ZR"
+SPOT_INSTRUMENT="HNHBtGzS58xJarSbz5XbEjTTEFbAQUHdP8TjQmwjx1gW"
+PSYOPTIONS_EUROPEAN_INSTRUMENT="HmJ8K5xb6kXbVbvRriq1Z7oPdEaPmKXpEM4Un9nr5b1"
+PSYOPTIONS_AMERICAN_INSTRUMENT="7GcKLyM73RRJshRLQqX8yw9K3hTHkx1Ei14mKoKxi3ZR"
 
 BTC_ORACLE_ADDRESS="8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee"
 SOL_ORACLE_ADDRESS="GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR"
 
-OPT="--rpc-endpoint=$RPC_ENDPOINT --keypair-file=$MINT_KEYPAIR"
-
+# TODO: Verify
 USDC_MINT=BREWDGvXEQKx9FkZrSCajzjy4cpm9hofzze3b41Z3V4p
 BTC_MINT=A3c9ThQZTUruMm56Eu4fxVwRosg4nBTpJe2B1pxBMYK7
 SOL_MINT=FYQ5MgByxnkfGAUzNcbaD734VK8CdEUX49ioTkokypRc
 
-$CVG airdrop $OPT
+RPC_ENDPOINT="https://api.mainnet-beta.solana.com"
+KEYPAIR_FILE="$HOME/.config/solana/id.json"
 
-read USDC_MINT <<< $($CVG create-mint $OPT --decimals=6 | awk '/Address:[[:space:]]/ { print $2 }')
-read BTC_MINT <<< $($CVG create-mint $OPT --decimals=9 | awk '/Address:[[:space:]]/ { print $2 }')
-read SOL_MINT <<< $($CVG create-mint $OPT --decimals=9 | awk '/Address:[[:space:]]/ { print $2 }')
+OPTS="--rpc-endpoint=$RPC_ENDPOINT --keypair-file=$KEYPAIR_FILE"
 
-read USDC_WALLET <<< $($CVG create-wallet $OPT --mint=$USDC_MINT --owner=$OWNER | awk '/Address:[[:space:]]/ { print $2 }')
-read BTC_WALLET <<< $($CVG create-wallet $OPT --mint=$BTC_MINT  --owner=$OWNER | awk '/Address:[[:space:]]/ { print $2 }')
-read SOL_WALLET <<< $($CVG create-wallet $OPT --mint=$SOL_MINT  --owner=$OWNER | awk '/Address:[[:space:]]/ { print $2 }')
+convergence protocol initialize $OPTS --taker-fee=1 --maker-fee=0 --collateral-mint=$USDC_MINT
+convergence risk-engine initialize $OPTS
 
-$CVG mint-to $OPT --mint=$USDC_MINT --wallet=$USDC_WALLET --amount=1000000000000000
-$CVG mint-to $OPT --mint=$BTC_MINT  --wallet=$BTC_WALLET  --amount=1000000000000000
-$CVG mint-to $OPT --mint=$SOL_MINT  --wallet=$SOL_WALLET  --amount=1000000000000000
+convergence protocol add-instrument $OPTS --instrument-program=$SPOT_INSTRUMENT                --can-be-used-as-quote=true --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
+convergence protocol add-instrument $OPTS --instrument-program=$PSYOPTIONS_EUROPEAN_INSTRUMENT --can-be-used-as-quote=true --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
+convergence protocol add-instrument $OPTS --instrument-program=$PSYOPTIONS_AMERICAN_INSTRUMENT --can-be-used-as-quote=true --validate-data-account-amount=3 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
 
-$CVG airdrop $OPT
+convergence risk-engine set-instrument-type $OPTS --program=$SPOT_INSTRUMENT                --type=spot     
+convergence risk-engine set-instrument-type $OPTS --program=$PSYOPTIONS_AMERICAN_INSTRUMENT --type=option 
+convergence risk-engine set-instrument-type $OPTS --program=$PSYOPTIONS_EUROPEAN_INSTRUMENT --type=option 
 
-KEYPAIR_FILE=$DAO_KEYPAIR
-OPT="--rpc-endpoint=$RPC_ENDPOINT --keypair-file=$KEYPAIR_FILE"
+convergence risk-engine set-risk-categories-info $OPTS --new-value=0.05,0.5,0.02,0.2,0.04,0.3,0.08,0.4,0.12,0.5,0.0 --category=very-low   
+convergence risk-engine set-risk-categories-info $OPTS --new-value=0.05,0.8,0.04,0.4,0.08,0.6,0.16,0.8,0.24,1.0,0.4 --category=low       
+convergence risk-engine set-risk-categories-info $OPTS --new-value=0.05,1.2,0.06,0.6,0.12,0.9,0.24,1.2,0.36,1.5,0.0 --category=medium    
+convergence risk-engine set-risk-categories-info $OPTS --new-value=0.05,2.4,0.08,0.8,0.16,1.2,0.32,1.6,0.48,2.0,0.8 --category=high      
+convergence risk-engine set-risk-categories-info $OPTS --new-value=0.05,5.0,0.10,1.0,0.20,1.5,0.40,2.0,0.60,2.5,1,3,1.5,3.5 --category=very-high 
 
-$CVG initialize-protocol $OPT --taker-fee=1 --maker-fee=0 --collateral-mint=$USDC_MINT
-$CVG initialize-risk-engine $OPT
+convergence protocol add-base-asset $OPTS --ticker=BTC --oracle-address=$BTC_ORACLE_ADDRESS
+convergence protocol add-base-asset $OPTS --ticker=SOL --oracle-address=$SOL_ORACLE_ADDRESS
 
-$CVG add-instrument $OPT --instrument-program=$SPOT_INSTRUMENT_PROGRAM_ID --can-be-used-as-quote=true --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
-$CVG add-instrument $OPT --instrument-program=$PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID --can-be-used-as-quote=true --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
-$CVG add-instrument $OPT --instrument-program=$PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID --can-be-used-as-quote=true --validate-data-account-amount=3 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
-
-$CVG set-risk-engine-instrument-type $OPT --type=spot --program=$SPOT_INSTRUMENT_PROGRAM_ID
-$CVG set-risk-engine-instrument-type $OPT --type=option --program=$PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID
-$CVG set-risk-engine-instrument-type $OPT --type=option --program=$PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID
-
-$CVG set-risk-engine-risk-categories-info $OPT --category=very-low --new-value=0.05,0.5,0.02,0.2,0.04,0.3,0.08,0.4,0.12,0.5,0.2,0.6,0.3,0.7
-$CVG set-risk-engine-risk-categories-info $OPT --category=low --new-value=0.05,0.8,0.04,0.4,0.08,0.6,0.16,0.8,0.24,1,0.4,1.2,0.6,1.4
-$CVG set-risk-engine-risk-categories-info $OPT --category=medium --new-value=0.05,1.2,0.06,0.6,0.12,0.9,0.24,1.2,0.36,1.5,0.6,1.8,0.9,2.1
-$CVG set-risk-engine-risk-categories-info $OPT --category=high --new-value=0.05,2.4,0.08,0.8,0.16,1.2,0.32,1.6,0.48,2,0.8,2.4,1.2,2.8,
-$CVG set-risk-engine-risk-categories-info $OPT --category=very-high --new-value=0.05,5,0.1,1,0.2,1.5,0.4,2,0.6,2.5,1,3,1.5,3.5
-
-$CVG add-base-asset $OPT --ticker=BTC --oracle-address=$BTC_ORACLE_ADDRESS
-$CVG add-base-asset $OPT --ticker=SOL --oracle-address=$SOL_ORACLE_ADDRESS
-
-$CVG register-mint $OPT --mint=$BTC_MINT --base-asset-index=0
-$CVG register-mint $OPT --mint=$SOL_MINT --base-asset-index=1
-$CVG register-mint $OPT --mint=$USDC_MINT
+convergence protocol register-mint $OPTS --mint=$BTC_MINT --base-asset-index=0
+convergence protocol register-mint $OPTS --mint=$SOL_MINT --base-asset-index=1
+convergence protocol register-mint $OPTS --mint=$USDC_MINT
