@@ -1,8 +1,8 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
-import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
-import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
-import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
+import { PROGRAM_ADDRESS as SPOT_INSTRUMENT } from '@convergence-rfq/spot-instrument';
+import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT } from '@convergence-rfq/psyoptions-american-instrument';
+import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT } from '@convergence-rfq/psyoptions-european-instrument';
 
 import { ADDRESS_LABEL, TX_LABEL, runCli } from '../helpers';
 
@@ -42,7 +42,7 @@ describe('riskEngine', () => {
       'risk-engine',
       'set-instrument-type',
       '--program',
-      SPOT_INSTRUMENT_PROGRAM_ADDRESS,
+      SPOT_INSTRUMENT,
       '--type',
       'spot',
     ]);
@@ -54,7 +54,7 @@ describe('riskEngine', () => {
       'risk-engine',
       'set-instrument-type',
       '--program',
-      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
+      PSYOPTIONS_EUROPEAN_INSTRUMENT,
       '--type',
       'option',
     ]);
@@ -66,7 +66,7 @@ describe('riskEngine', () => {
       'risk-engine',
       'set-instrument-type',
       '--program',
-      PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS,
+      PSYOPTIONS_AMERICAN_INSTRUMENT,
       '--type',
       'option',
     ]);
