@@ -4,7 +4,7 @@ import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence
 import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
 import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
 
-import { ADDRESS, TX, runCli } from '../helpers';
+import { ADDRESS_LABEL, TX_LABEL, runCli } from '../helpers';
 
 describe('riskEngine', () => {
   let stub: SinonStub;
@@ -17,19 +17,24 @@ describe('riskEngine', () => {
     stub.restore();
   });
 
-  it('close config', async () => {
-    await runCli(['risk-engine', 'close']);
-    expect(stub.args[0][0]).toEqual(TX);
+  it('get', async () => {
+    await runCli(['risk-engine', 'get']);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 
-  it('initialize config', async () => {
-    await runCli(['risk-engine', 'initialize']);
-    expect(stub.args[0][0]).toEqual(ADDRESS);
-  });
-
-  it('update config', async () => {
+  it('update', async () => {
     await runCli(['risk-engine', 'update']);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('close', async () => {
+    await runCli(['risk-engine', 'close']);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('initialize', async () => {
+    await runCli(['risk-engine', 'initialize']);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 
   it('set-instrument-type [spot]', async () => {
@@ -41,10 +46,10 @@ describe('riskEngine', () => {
       '--type',
       'spot',
     ]);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
-  it('set-instrument-type [european]', async () => {
+  it('set-instrument-type [psyoptions european]', async () => {
     await runCli([
       'risk-engine',
       'set-instrument-type',
@@ -53,10 +58,10 @@ describe('riskEngine', () => {
       '--type',
       'option',
     ]);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
-  it('set-instrument-type [american]', async () => {
+  it('set-instrument-type [psyoptions american]', async () => {
     await runCli([
       'risk-engine',
       'set-instrument-type',
@@ -65,6 +70,6 @@ describe('riskEngine', () => {
       '--type',
       'option',
     ]);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 });
