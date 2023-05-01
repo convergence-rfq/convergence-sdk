@@ -1,13 +1,14 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
-//import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/rfq';
-//import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
-//import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
+
+import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
+import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
+import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
 
 import {
   ADDRESS_LABEL,
   SWITCHBOARD_BTC_ORACLE,
-  //COLLATERAL_MINT,
+  COLLATERAL_MINT,
   TX_LABEL,
   runCli,
 } from '../helpers';
@@ -38,7 +39,7 @@ describe('protocol', () => {
     expect(stub.args[1][0]).toEqual(ADDRESS_LABEL);
   });
 
-  /*it('close', async () => {
+  it('close', async () => {
     await runCli(['protocol', 'close']);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
@@ -117,7 +118,7 @@ describe('protocol', () => {
       '4',
     ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
-  });*/
+  });
 
   it('add-base-asset', async () => {
     await runCli([
@@ -144,7 +145,6 @@ describe('protocol', () => {
 
   it('get', async () => {
     await runCli(['protocol', 'get']);
-    //process.stdout.write(JSON.stringify(stub.args));
     expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 });
