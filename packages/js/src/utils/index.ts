@@ -10,3 +10,4 @@ export * from './TransactionBuilder';
 export * from './types';
 export * from './Provider';
 export * from './CvgWallet';
+export * from './cache';

@@ -10,6 +10,7 @@ import {
   Program,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
@@ -77,12 +78,8 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         operation.input;
       const { commitment } = scope;
 
-      const protocol = await convergence.protocol().get();
-      const collateralMintDecimals = (
-        await convergence
-          .tokens()
-          .findMintByAddress({ address: protocol.collateralMint })
-      ).decimals;
+      const collateralMint = await collateralMintCache.get(convergence);
+      const collateralMintDecimals = collateralMint.decimals;
 
       if (rfqs) {
         let rfqsByInstrument: Rfq[] = [];
@@ -115,7 +112,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
       const rfqProgram = convergence.programs().getRfq(scope.programs);
       const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-      let unparsedAccounts = await rfqGpaBuilder.withoutData().get();
+      const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
       scope.throwIfCanceled();
 
       const unparsedAddresses = unparsedAccounts.map(

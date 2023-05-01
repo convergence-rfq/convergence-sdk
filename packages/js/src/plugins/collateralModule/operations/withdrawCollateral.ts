@@ -12,6 +12,8 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../../protocolModule/cache';
+import { collateralMintCache } from '../cache';
 
 const Key = 'WithdrawCollateralOperation' as const;
 
@@ -59,7 +61,7 @@ export type WithdrawCollateralInput = {
   /**
    * The address of the protocol.
    *
-   * @defaultValue `(await convergence.protocol().get()).address`
+   * @defaultValue `convergence.protocol().pdas().protcol()`
    */
   protocol?: PublicKey;
 
@@ -151,7 +153,7 @@ export const withdrawCollateralBuilder = async (
   const { programs } = options;
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const protocolModel = await convergence.protocol().get();
+  const protocolModel = await protocolCache.get(convergence);
 
   const {
     user = convergence.identity(),
@@ -173,11 +175,8 @@ export const withdrawCollateralBuilder = async (
 
   let { amount } = params;
 
-  const collateralDecimals = (
-    await convergence
-      .tokens()
-      .findMintByAddress({ address: protocolModel.collateralMint })
-  ).decimals;
+  const collateralMint = await collateralMintCache.get(convergence);
+  const collateralDecimals = collateralMint.decimals;
 
   amount *= Math.pow(10, collateralDecimals);
 

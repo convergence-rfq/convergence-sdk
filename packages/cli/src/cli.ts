@@ -1,81 +1,28 @@
-import { homedir } from 'os';
 import { Command } from 'commander';
 
 import {
-  airdropSolCmd,
-  createMintCmd,
-  createWalletCmd,
-  mintToCmd,
-  initializeRiskEngineCmd,
-  updateRiskEngineCmd,
-  setRiskEngineInstrumentTypeCmd,
-  setRiskEngineCategoriesInfoCmd,
-  getRiskEngineConfigCmd,
-  initializeProtocolCmd,
-  addInstrumentCmd,
-  addBaseAssetCmd,
-  registerMintCmd,
-  getRegisteredMintsCmd,
-  getProtocolConfigCmd,
-  getBaseAssetsCmd,
-  getAllRfqsCmd,
-  getActiveRfqsCmd,
-  airdropDevnetTokensCmd,
-  fundCollateralAccountCmd,
-  initializeCollateralAccountCmd,
-  getCollateralAccountCmd,
-  createRfqCmd,
-  getRfqCmd,
-  getWalletCmd,
-  getMintCmd,
-} from './commands';
-
-const VERSION = '4.0.24-rc.5';
-
-const DEFAULT_KEYPAIR_FILE = `${homedir()}/.config/solana/id.json`;
-const DEFAULT_RPC_ENDPOINT =
-  'https://muddy-white-morning.solana-devnet.quiknode.pro/637131a6924513d7c83c65efc75e55a9ba2517e9/';
-
-const addDefaultArgs = (cmd: any) => {
-  cmd.option('--rpc-endpoint <string>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
-  cmd.option('--keypair-file <string>', 'keypair file', DEFAULT_KEYPAIR_FILE);
-  cmd.option('--verbose <boolean>', 'verbose', false);
-  return cmd;
-};
+  riskEngineGroup,
+  protocolGroup,
+  collateralGroup,
+  airdropGroup,
+  rfqGroup,
+  tokenGroup,
+} from './groups';
+import { VERSION } from './constants';
 
 export const makeCli = (): Command => {
   const cmds = [
-    airdropSolCmd,
-    airdropDevnetTokensCmd,
-    createMintCmd,
-    getMintCmd,
-    createWalletCmd,
-    getWalletCmd,
-    mintToCmd,
-    initializeProtocolCmd,
-    getProtocolConfigCmd,
-    addInstrumentCmd,
-    addBaseAssetCmd,
-    getBaseAssetsCmd,
-    registerMintCmd,
-    getRegisteredMintsCmd,
-    initializeRiskEngineCmd,
-    getRiskEngineConfigCmd,
-    updateRiskEngineCmd,
-    setRiskEngineInstrumentTypeCmd,
-    setRiskEngineCategoriesInfoCmd,
-    initializeCollateralAccountCmd,
-    fundCollateralAccountCmd,
-    getCollateralAccountCmd,
-    createRfqCmd,
-    getRfqCmd,
-    getAllRfqsCmd,
-    getActiveRfqsCmd,
+    airdropGroup,
+    tokenGroup,
+    protocolGroup,
+    riskEngineGroup,
+    collateralGroup,
+    rfqGroup,
   ];
 
   const cli = new Command();
   cli.name('convergence').version(VERSION).description('Convergence RFQ CLI');
-  cmds.map((c) => addDefaultArgs(c(cli)));
+  cmds.map((cmd) => cmd(cli));
 
   return cli;
 };

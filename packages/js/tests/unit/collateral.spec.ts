@@ -1,43 +1,49 @@
 import { expect } from 'expect';
-import { PublicKey } from '@solana/web3.js';
 
+import { createUserCvg } from '../helpers';
 import {
-  ChildProccess,
-  Ctx,
-  readCtx,
-  spawnValidator,
-} from '../../../validator';
-import { createCvg } from '../helpers';
-import { Convergence } from '../../src';
+  COLLATERAL_MINT_DECIMALS,
+  TAKER_COLLATERAL_INFO_PK,
+  TAKER_COLLATERAL_TOKEN_PK,
+  TAKER_PK,
+} from '../constants';
 
 describe('collateral', () => {
-  let validator: ChildProccess;
-  let cvg: Convergence;
-  let ctx: Ctx;
+  const cvg = createUserCvg('taker');
 
-  before((done) => {
-    ctx = readCtx();
-    // console.log("ctx:",ctx)
-    cvg = createCvg();
-    // console.log("cvg:",cvg)
-    validator = spawnValidator(done);
-    // console.log(validator)
+  it('find by user', async () => {
+    const collateral = await cvg.collateral().findByUser({ user: TAKER_PK });
+    expect(collateral.user).toEqual(TAKER_PK);
   });
 
-  after(() => {
-    validator.kill();
-  });
-  
-  it('fund',async () =>{
-    cvg.collateral().fund({amount:1000})
-  })
-  it('get', async () => {
+  it('find by address', async () => {
+    const collateralUser = await cvg
+      .collateral()
+      .findByUser({ user: TAKER_PK });
     const collateral = await cvg
       .collateral()
-      .findByUser({ user: new PublicKey(ctx.taker) });
-    expect(collateral).toHaveProperty('address');
-
+      .findByAddress({ address: TAKER_COLLATERAL_INFO_PK });
+    expect(collateral.user).toEqual(TAKER_PK);
+    expect(collateralUser.user).toEqual(collateral.user);
   });
 
- 
+  it('fund', async () => {
+    const amount = 100;
+    const tokenBefore = await cvg
+      .tokens()
+      .findTokenByAddress({ address: TAKER_COLLATERAL_TOKEN_PK });
+
+    await cvg.collateral().fund({
+      amount,
+    });
+
+    const tokenAfter = await cvg
+      .tokens()
+      .findTokenByAddress({ address: TAKER_COLLATERAL_TOKEN_PK });
+
+    const amountBps = amount * Math.pow(10, COLLATERAL_MINT_DECIMALS);
+    expect(tokenBefore.amount.basisPoints.toNumber()).toEqual(
+      tokenAfter.amount.basisPoints.toNumber() - amountBps
+    );
+  });
 });

@@ -1,4 +1,4 @@
-name: Deploy typedocs to gh-pages on main
+name: Deploy Docs
 
 on:
   push:
@@ -11,8 +11,12 @@ jobs:
       NODE_VERSION: 12.x
     steps:
       - uses: actions/checkout@v2
-      - name: Build typedocs
-        run: ./infra/docs.sh
+      - name: Install Yarn
+        run: npm install --global yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Build docs
+        run: yarn docs
       - name: Deploy to gh-pages
         uses: crazy-max/ghaction-github-pages@v1
         with:

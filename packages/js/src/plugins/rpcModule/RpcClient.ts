@@ -166,10 +166,12 @@ export class RpcClient {
         commitment
       );
     } catch (error) {
+      // TODO: Improve error handling details
       throw new FailedToConfirmTransactionError(error as Error);
     }
 
     if (rpcResponse.value.err) {
+      // TODO: Improve error handling details
       throw new FailedToConfirmTransactionWithResponseError(rpcResponse);
     }
 

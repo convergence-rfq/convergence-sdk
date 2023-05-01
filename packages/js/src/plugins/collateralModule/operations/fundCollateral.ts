@@ -12,6 +12,8 @@ import {
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { Convergence } from '../../../Convergence';
+import { protocolCache } from '../../protocolModule/cache';
+import { collateralMintCache } from '../cache';
 
 const Key = 'FundCollateralOperation' as const;
 
@@ -19,9 +21,7 @@ const Key = 'FundCollateralOperation' as const;
  * Funds a collateral account.
  *
  * ```ts
- * const rfq = await convergence
- *   .collateral()
- *   .fundCollateral({ amount: 100 };
+ * const rfq = await convergence.collateral().fundCollateral({ amount: 100 };
  * ```
  *
  * @group Operations
@@ -55,31 +55,12 @@ export type FundCollateralInput = {
   /**
    * The address of the protocol.
    *
-   * @defaultValue `(await convergence.protocol().get()).address`
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
-  /** Token account of user's token */
+  /** User token account. */
   userTokens?: PublicKey;
-
-  /** Optional address of the User's collateral info account.
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: user.publicKey })`
-   *
-   */
-  collateralInfo?: PublicKey;
-
-  /** Optional address of the User's collateral tokens account.
-   *
-   * @defaultValue `convergence.collateral().pdas().
-   *   collateralTokens({
-   *     user: user.publicKey,
-   *   })`
-   */
-  collateralToken?: PublicKey;
-
-  /*
-   * Args
-   */
 
   /** The amount to fund. */
   amount: number;
@@ -150,18 +131,10 @@ export const fundCollateralBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { user = convergence.identity() } = params;
 
-  const protocolModel = await convergence.protocol().get();
+  const protocolModel = await protocolCache.get(convergence);
 
   const {
     protocol = convergence.protocol().pdas().protocol(),
-    collateralToken = convergence
-      .collateral()
-      .pdas()
-      .collateralToken({ user: user.publicKey }),
-    collateralInfo = convergence
-      .collateral()
-      .pdas()
-      .collateralInfo({ user: user.publicKey }),
     userTokens = convergence.tokens().pdas().associatedTokenAccount({
       mint: protocolModel.collateralMint,
       owner: user.publicKey,
@@ -170,11 +143,17 @@ export const fundCollateralBuilder = async (
   } = params;
   let { amount } = params;
 
-  const collateralDecimals = (
-    await convergence
-      .tokens()
-      .findMintByAddress({ address: protocolModel.collateralMint })
-  ).decimals;
+  const collateralToken = convergence
+    .collateral()
+    .pdas()
+    .collateralToken({ user: user.publicKey });
+  const collateralInfo = convergence
+    .collateral()
+    .pdas()
+    .collateralInfo({ user: user.publicKey });
+
+  const collateralMint = await collateralMintCache.get(convergence);
+  const collateralDecimals = collateralMint.decimals;
 
   amount *= Math.pow(10, collateralDecimals);
 

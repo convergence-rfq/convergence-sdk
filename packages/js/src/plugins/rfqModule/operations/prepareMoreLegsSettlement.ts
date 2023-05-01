@@ -170,8 +170,6 @@ export const prepareMoreLegsSettlementBuilder = async (
 
   let { sidePreparedLegs } = params;
 
-  // const protocol = await convergence.protocol().get();
-
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });

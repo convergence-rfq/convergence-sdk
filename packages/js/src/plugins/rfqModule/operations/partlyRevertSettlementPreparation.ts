@@ -152,8 +152,6 @@ export const partlyRevertSettlementPreparationBuilder = async (
 
   const { rfq, response, side, legAmountToRevert } = params;
 
-  // const protocol = await convergence.protocol().get();
-
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });

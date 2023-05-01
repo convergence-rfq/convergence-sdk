@@ -10,6 +10,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqByAddressOperation' as const;
 
@@ -81,13 +82,8 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
 
       if (convert) {
         if (!collateralMintDecimals) {
-          const protocol = await convergence.protocol().get();
-          
-          collateralMintDecimals = (
-            await convergence
-              .tokens()
-              .findMintByAddress({ address: protocol.collateralMint })
-          ).decimals;
+          const collateralMint = await collateralMintCache.get(convergence);
+          collateralMintDecimals = collateralMint.decimals;
         }
 
         const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);

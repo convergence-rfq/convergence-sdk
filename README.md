@@ -64,27 +64,35 @@ yarn
 yarn build
 ```
 
-**TDD**
+**Tests**
 
-Run the Solana test validator, Solana logs, and the tests.
+First run the Solana test validator.
 
 ```bash
-yarn test:all
+yarn validator
 ```
 
-Run the validator and tests separately.
+Run the validator logs separately.
 
 ```bash
-yarn validator:run
 yarn validator:logs
+```
+
+Finally run the test in a new terminal.
+  
+```bash
+yarn test
+# It is possible to run individual module tests
+cd packages/js
+yarn test -g spot
 ```
 
 **NPM**
 
 ```bash
-yarn changeset:change
-yarn changeset:version
-yarn changeset:publish
+yarn packages:change
+yarn packages:version
+yarn packages:publish
 ```
 
 **TypeDocs**

@@ -6,3 +6,4 @@ export * from './calculateCollateralForResponse';
 export * from './calculateCollateralForRfq';
 export * from './setRiskCategoriesInfo';
 export * from './fetchConfig';
+export * from './closeConfig';

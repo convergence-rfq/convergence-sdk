@@ -11,6 +11,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'SettleTwoPartyDefaultOperation' as const;
 
@@ -44,19 +45,21 @@ export type SettleTwoPartyDefaultOperation = Operation<
  * @category Inputs
  */
 export type SettleTwoPartyDefaultInput = {
-  /** The protocol address.
-   * @defaultValue `(await convergence.protocol().get()).address
+  /**
+   * The protocol address.
+   *
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account. */
+  /** The address of the RFQ account. */
   rfq: PublicKey;
 
-  /** The address of the Response account. */
+  /** The address of the response account. */
   response: PublicKey;
 
   /**
-   * Optional address of the Taker's collateral info account.
+   * Optional address of the taker collateral info account.
    *
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: rfq.taker })`
    *
@@ -173,7 +176,7 @@ export const settleTwoPartyDefaultBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
   const tokenProgram = convergence.programs().getToken(programs);
 
-  const protocol = await convergence.protocol().get();
+  const protocol = await protocolCache.get(convergence);
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence

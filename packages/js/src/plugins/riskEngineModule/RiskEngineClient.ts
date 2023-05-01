@@ -14,6 +14,8 @@ import {
   setRiskCategoriesInfoOperation,
   SetRiskCategoriesInfoInput,
   fetchConfigOperation,
+  CloseConfigInput,
+  closeConfigOperation,
 } from './operations';
 import { RiskEnginePdasClient } from './RiskEnginePdasClient';
 import type { Convergence } from '@/Convergence';
@@ -57,6 +59,13 @@ export class RiskEngineClient {
     return this.convergence
       .operations()
       .execute(updateConfigOperation(input), options);
+  }
+
+  /** {@inheritDoc closeConfig} */
+  closeConfig(input?: CloseConfigInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(closeConfigOperation(input), options);
   }
 
   /** {@inheritDoc setInstrumentTypeOperation} */

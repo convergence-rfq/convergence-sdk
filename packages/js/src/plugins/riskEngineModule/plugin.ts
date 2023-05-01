@@ -1,4 +1,7 @@
 import { PROGRAM_ID } from '@convergence-rfq/risk-engine';
+
+import { ConvergencePlugin, Program } from '../../types';
+import type { Convergence } from '../../Convergence';
 import { ProgramClient } from '../programModule';
 import { RiskEngineClient } from './RiskEngineClient';
 import {
@@ -18,9 +21,9 @@ import {
   calculateCollateralForRfqOperationHandler,
   fetchConfigOperation,
   fetchConfigOperationHandler,
+  closeConfigOperation,
+  closeConfigOperationHandler,
 } from './operations';
-import { ConvergencePlugin, Program } from '@/types';
-import type { Convergence } from '@/Convergence';
 
 /** @group Plugins */
 export const riskEngineModule = (): ConvergencePlugin => ({
@@ -59,6 +62,7 @@ export const riskEngineModule = (): ConvergencePlugin => ({
       calculateCollateralForConfirmationOperationHandler
     );
     op.register(fetchConfigOperation, fetchConfigOperationHandler);
+    op.register(closeConfigOperation, closeConfigOperationHandler);
 
     convergence.riskEngine = function () {
       return new RiskEngineClient(this);

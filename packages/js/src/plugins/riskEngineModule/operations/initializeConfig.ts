@@ -8,6 +8,8 @@ import {
   DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
   DEFAULT_OVERALL_SAFETY_FACTOR,
   DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
+  DEFAULT_ACCEPTED_ORACLE_STALENESS,
+  DEFAULT_ACCEPTED_ORACLE_CONFIDENCE_INTERVAL_PORTION,
 } from '../constants';
 import { Convergence } from '../../../Convergence';
 import {
@@ -69,6 +71,12 @@ export type InitializeConfigInput =
 
       /** The overall safety factor. */
       overallSafetyFactor?: number;
+
+      /** The accepted oracle staleness. */
+      acceptedOracleStaleness?: number;
+
+      /** The accepted oracle confidence interval portion. */
+      acceptedOracleConfidenceIntervalPortion: number;
     }
   | undefined;
 
@@ -145,20 +153,20 @@ export const initializeConfigBuilder = (
     collateralMintDecimals = DEFAULT_MINT_DECIMALS,
     safetyPriceShiftFactor = DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
     overallSafetyFactor = DEFAULT_OVERALL_SAFETY_FACTOR,
+    acceptedOracleStaleness = DEFAULT_ACCEPTED_ORACLE_STALENESS,
+    acceptedOracleConfidenceIntervalPortion = DEFAULT_ACCEPTED_ORACLE_CONFIDENCE_INTERVAL_PORTION,
   } = params ?? {};
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
   const systemProgram = convergence.programs().getSystem(programs);
-
-  const acceptedOracleStaleness = 300;
-  const acceptedOracleConfidenceIntervalPortion = 0.01;
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createInitializeConfigInstruction(
         {
-          signer: authority.publicKey,
+          authority: authority.publicKey,
+          protocol: convergence.protocol().pdas().protocol(),
           config: convergence.riskEngine().pdas().config(),
           systemProgram: systemProgram.address,
         },

@@ -7,8 +7,8 @@ import {
   Quote,
 } from '@convergence-rfq/rfq';
 import BN from 'bn.js';
+
 import {
-  //@ts-ignore
   ABSOLUTE_PRICE_DECIMALS,
   LEG_MULTIPLIER_DECIMALS,
 } from '../rfqModule/constants';
@@ -16,6 +16,7 @@ import { Rfq } from '../rfqModule/models';
 
 export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
   const { fixedSize } = rfq;
+
   if (isFixedSizeNone(fixedSize)) {
     if (isQuoteFixedSize(quote)) {
       throw Error('Fixed size quote cannot be provided to non-fixed size rfq');
@@ -38,10 +39,12 @@ export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
       throw Error('Negative prices are not allowed for fixed quote amount rfq');
     }
 
+    // Note that the leg multiplier and absolute price decimals are hardcoded in the
+    // protocol. The number is currently 9 which is somewhat arbitrary.
     return new BN(fixedSize.quoteAmount)
       .mul(new BN(10).pow(new BN(LEG_MULTIPLIER_DECIMALS)))
       .mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)))
-      .div(priceBps); //15 decimals (we multiply by ABSOLUTE_PRICE_DECIMALS)
+      .div(priceBps);
   }
 
   throw new Error('Invalid fixed size');

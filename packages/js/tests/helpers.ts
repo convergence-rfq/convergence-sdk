@@ -1,23 +1,12 @@
-import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
-import { Commitment, Connection, Keypair } from '@solana/web3.js';
+import { Commitment, Connection } from '@solana/web3.js';
+import { PROGRAM_ID } from '@convergence-rfq/rfq';
+import { v4 as uuidv4 } from 'uuid';
 
-import { getKeypair, RPC_ENDPOINT, Ctx } from '../../validator';
-import {
-  Convergence,
-  keypairIdentity,
-  OrderType,
-  OptionType,
-  PsyoptionsAmericanInstrument,
-  initializeNewAmericanOption,
-  toBigNumber,
-  SpotInstrument,
-  createAmericanProgram,
-  Side,
-  PublicKey,
-  Rfq,
-  Response,
-  createAmericanAccountsAndMintOptions,
-} from '../src';
+import { getUserKp, RPC_ENDPOINT } from '../../validator';
+import { Convergence, keypairIdentity, PublicKey } from '../src';
+
+const DEFAULT_COMMITMENT = 'confirmed';
+const DEFAULT_SKIP_PREFLIGHT = true;
 
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
@@ -28,142 +17,17 @@ export type ConvergenceTestOptions = {
 
 export const createCvg = (options: ConvergenceTestOptions = {}) => {
   const connection = new Connection(options.rpcEndpoint ?? RPC_ENDPOINT, {
-    commitment: options.commitment ?? 'confirmed',
+    commitment: options.commitment ?? DEFAULT_COMMITMENT,
   });
   return Convergence.make(connection, { skipPreflight: options.skipPreflight });
 };
 
-// Default user is dao but could be maker, taker or mint_authority
-export const createSdk = async (user = 'dao'): Promise<Convergence> => {
-  const cvg = createCvg({ skipPreflight: false });
-  return cvg.use(keypairIdentity(getKeypair(user)));
+// Default user is dao but could be maker or taker
+export const createUserCvg = (user = 'dao'): Convergence => {
+  const cvg = createCvg({ skipPreflight: DEFAULT_SKIP_PREFLIGHT });
+  return cvg.use(keypairIdentity(getUserKp(user)));
 };
 
-export const sellCoveredCall = async (cvg: Convergence, ctx: Ctx) => {
-  const baseMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: new PublicKey(ctx.baseMint) });
-  const quoteMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: new PublicKey(ctx.quoteMint) });
-
-  const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
-    cvg,
-    createAmericanProgram(cvg),
-    baseMint,
-    quoteMint,
-    toBigNumber(27_000),
-    toBigNumber(1),
-    3_600
-  );
-
-  const { rfq, response } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, baseMint, {
-        amount: 1.0,
-        side: Side.Bid,
-      }),
-      new PsyoptionsAmericanInstrument(
-        cvg,
-        baseMint,
-        quoteMint,
-        OptionType.CALL,
-        optionMarket,
-        optionMarketKey,
-        {
-          amount: 1,
-          side: Side.Bid,
-        }
-      ),
-    ],
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 0.0000001 },
-    quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
-  });
-
-  return { rfq, response, optionMarket };
+export const generatePk = async (): Promise<PublicKey> => {
+  return await PublicKey.createWithSeed(PROGRAM_ID, uuidv4(), PROGRAM_ID);
 };
-
-export const sellSpot = async (cvg: Convergence, ctx: Ctx) => {
-  const baseMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: new PublicKey(ctx.baseMint) });
-  const quoteMint = await cvg
-    .tokens()
-    .findMintByAddress({ address: new PublicKey(ctx.quoteMint) });
-  const { rfq, response } = await cvg.rfqs().createAndFinalize({
-    instruments: [
-      new SpotInstrument(cvg, baseMint, {
-        amount: 1.0,
-        side: Side.Bid,
-      }),
-    ],
-    orderType: OrderType.Sell,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-    quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
-  });
-
-  return { rfq, response };
-};
-
-export const confirmBid = async (cvg: Convergence, rfq: Rfq, response: any) => {
-  return await cvg.rfqs().confirmResponse({
-    taker: cvg.rpc().getDefaultFeePayer(),
-    rfq: rfq.address,
-    response: response.address,
-    side: Side.Bid,
-  });
-};
-
-export const respondWithBid = async (cvg: Convergence, rfq: Rfq) => {
-  return await cvg.rfqs().respond({
-    maker: cvg.rpc().getDefaultFeePayer(),
-    rfq: rfq.address,
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.0000001 },
-    },
-  });
-};
-
-export const prepareSettlement = async (
-  cvg: Convergence,
-  rfq: Rfq,
-  response: Response
-) => {
-  return await cvg.rfqs().prepareSettlement({
-    caller: cvg.rpc().getDefaultFeePayer(),
-    rfq: rfq.address,
-    response: response.address,
-    legAmountToPrepare: rfq.legs.length,
-  });
-};
-
-export const settle = async (
-  cvg: Convergence,
-  rfq: Rfq,
-  response: Response
-) => {
-  return await cvg.rfqs().settle({
-    rfq: rfq.address,
-    response: response.address,
-    maker: response.maker,
-    taker: rfq.taker,
-  });
-};
-
-export const createAmericanAccountsAndMint = async () =>
-  //cvg: Convergence,
-  //rfq: Rfq,
-  //optionMarket: OptionMarketWithKey,
-  //amount: number
-  {
-    //await createAmericanAccountsAndMintOptions(
-    //  cvg,
-    //  cvg.rpc().getDefaultFeePayer() as Keypair,
-    //  rfq.address,
-    //  optionMarket,
-    //  createAmericanProgram(cvg),
-    //  amount
-    //);
-  };

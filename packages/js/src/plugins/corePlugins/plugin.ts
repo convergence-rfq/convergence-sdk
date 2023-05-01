@@ -16,6 +16,7 @@ import { instrumentModule } from '../instrumentModule';
 import { psyoptionsEuropeanInstrumentModule } from '../psyoptionsEuropeanInstrumentModule';
 import { psyoptionsAmericanInstrumentModule } from '../psyoptionsAmericanInstrumentModule';
 import { spotInstrumentModule } from '../spotInstrumentModule';
+import { humanModule } from '../humanModule';
 
 export const corePlugins = () => ({
   install(convergence: Convergence) {
@@ -44,5 +45,8 @@ export const corePlugins = () => ({
     convergence.use(spotInstrumentModule());
     convergence.use(psyoptionsEuropeanInstrumentModule());
     convergence.use(psyoptionsAmericanInstrumentModule());
+
+    // Human
+    convergence.use(humanModule());
   },
 });

@@ -1,4 +1,6 @@
 import { ProgramClient } from '../programModule';
+import { ConvergencePlugin, Program } from '../../types';
+import type { Convergence } from '../../Convergence';
 import { RfqClient } from './RfqClient';
 import {
   createRfqOperation,
@@ -73,8 +75,6 @@ import {
   createAndAddLegsToRfqOperationHandler,
 } from './operations';
 import { rfqProgram } from './program';
-import { ConvergencePlugin, Program } from '@/types';
-import type { Convergence } from '@/Convergence';
 
 /** @group Plugins */
 export const rfqModule = (): ConvergencePlugin => ({
