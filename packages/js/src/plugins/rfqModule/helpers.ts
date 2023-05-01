@@ -259,7 +259,7 @@ export const quoteAssetToInstrument = async (
       metaKey
     );
   }
-  throw new Error('Instrument doesn\'t exist');
+  throw new Error("Instrument doesn't exist");
 };
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(

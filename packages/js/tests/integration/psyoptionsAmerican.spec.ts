@@ -9,6 +9,12 @@ import {
   //createAmericanAccountsAndMint,
 } from '../human';
 import { createUserCvg } from '../helpers';
+import {
+  createAmericanProgram,
+  getOrCreateAmericanOptionATAs,
+  mintAmericanOptionsTransaction,
+} from '../../src';
+import { sendAndConfirmTransaction } from '@solana/web3.js';
 
 describe('psyoptions american', () => {
   const takerCvg = createUserCvg('taker');
@@ -37,5 +43,39 @@ describe('psyoptions american', () => {
 
     //const res5 = await settle(takerCvg, rfq, res1.rfqResponse);
     //expect(res5.response).toHaveProperty('signature');
+  });
+
+  it('mint American options and return a tnx', async () => {
+    const res0 = await createAmericanCoveredCall(takerCvg, 'sell');
+    const { rfq } = res0;
+    expect(rfq).toHaveProperty('address');
+
+    const res1 = await respond(makerCvg, rfq, 'bid');
+    const { rfqResponse } = res1;
+    await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
+    const americanProgram = createAmericanProgram(takerCvg);
+
+    const { optionToken, writerToken, underlyingToken } =
+      await getOrCreateAmericanOptionATAs(
+        takerCvg,
+        rfqResponse.address,
+        takerCvg.rpc().getDefaultFeePayer().publicKey,
+        americanProgram
+      );
+
+    const tnx = await mintAmericanOptionsTransaction(
+      takerCvg,
+      rfqResponse.address,
+      takerCvg.rpc().getDefaultFeePayer().publicKey,
+      optionToken,
+      writerToken,
+      underlyingToken,
+      americanProgram
+    );
+
+    console.log('transaction:', tnx);
+    const signedTnx = takerCvg.identity().signTransaction(tnx);
+
+    sendAndConfirmTransaction(takerCvg.connection, tnx, []);
   });
 });
