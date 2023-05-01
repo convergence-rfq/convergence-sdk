@@ -1,8 +1,17 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
-//import { PublicKey } from '@solana/web3.js';
 
-import { ADDRESS, TX, runCli } from '../helpers';
+import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
+import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
+import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
+
+import {
+  ADDRESS_LABEL,
+  SWITCHBOARD_BTC_ORACLE,
+  COLLATERAL_MINT,
+  TX_LABEL,
+  runCli,
+} from '../helpers';
 
 describe('protocol', () => {
   let stub: SinonStub;
@@ -17,47 +26,125 @@ describe('protocol', () => {
 
   it('get', async () => {
     await runCli(['protocol', 'get']);
-    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 
   it('get-base-assets', async () => {
     await runCli(['protocol', 'get-base-assets']);
-    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 
   it('get-registered-mints', async () => {
     await runCli(['protocol', 'get-registered-mints']);
-    expect(stub.args[1][0]).toEqual(ADDRESS);
+    expect(stub.args[1][0]).toEqual(ADDRESS_LABEL);
   });
 
-  it('register-mint [quote]', async () => {
-    await runCli(['token', 'create-mint', '--decimals', '9'], 'mint-authority');
-    expect(stub.args[0][0]).toEqual(ADDRESS);
-    expect(stub.args[1][0]).toEqual(TX);
+  it('close', async () => {
+    await runCli(['protocol', 'close']);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('initialize', async () => {
+    await runCli([
+      'protocol',
+      'initialize',
+      '--collateral-mint',
+      COLLATERAL_MINT,
+    ]);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
+  });
+
+  it('add-instrument [spot]', async () => {
+    await runCli([
+      'protocol',
+      'add-instrument',
+      '--instrument-program',
+      SPOT_INSTRUMENT_PROGRAM_ADDRESS,
+      '--can-be-used-as-quote',
+      'true',
+      '--validate-data-account-amount',
+      '1',
+      '--prepare-to-settle-account-amount',
+      '7',
+      '--settle-account-amount',
+      '3',
+      '--revert-preparation-account-amount',
+      '3',
+      '--clean-up-account-amount',
+      '4',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('add-instrument [psyoptions european]', async () => {
+    await runCli([
+      'protocol',
+      'add-instrument',
+      '--instrument-program',
+      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS,
+      '--can-be-used-as-quote',
+      'true',
+      '--validate-data-account-amount',
+      '2',
+      '--prepare-to-settle-account-amount',
+      '7',
+      '--settle-account-amount',
+      '3',
+      '--revert-preparation-account-amount',
+      '3',
+      '--clean-up-account-amount',
+      '4',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('add-instrument [psyoptions american]', async () => {
+    await runCli([
+      'protocol',
+      'add-instrument',
+      '--instrument-program',
+      PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS,
+      '--can-be-used-as-quote',
+      'true',
+      '--validate-data-account-amount',
+      '3',
+      '--prepare-to-settle-account-amount',
+      '7',
+      '--settle-account-amount',
+      '3',
+      '--revert-preparation-account-amount',
+      '3',
+      '--clean-up-account-amount',
+      '4',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('add-base-asset', async () => {
+    await runCli([
+      'protocol',
+      'add-base-asset',
+      '--ticker',
+      'GOD',
+      '--oracle-address',
+      SWITCHBOARD_BTC_ORACLE,
+    ]);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
+  });
+
+  it('get-registered-mints', async () => {
+    await runCli(['protocol', 'get-registered-mints']);
+    expect(stub.args[1][0]).toEqual(ADDRESS_LABEL);
+  });
+
+  it('register-mint [collateral]', async () => {
+    await runCli(['token', 'create-mint', '--decimals', '3'], 'mint-authority');
     await runCli(['protocol', 'register-mint', '--mint', stub.args[0][1]]);
-    expect(stub.args[2][0]).toEqual(ADDRESS);
-    expect(stub.args[3][0]).toEqual(TX);
+    expect(stub.args[1][0]).toEqual(TX_LABEL);
   });
 
-  //it('add-instrument', async () => {
-  //  // TODO: Prevent duplicate instruments as this only works the first time
-  //  await runCli([
-  //    'protocol:add-instrument',
-  //    '--instrument-program',
-  //    PublicKey.default.toString(),
-  //    '--can-be-used-as-quote',
-  //    'false',
-  //    '--validate-data-account-amount',
-  //    '2',
-  //    '--prepare-to-settle-account-amount',
-  //    '7',
-  //    '--settle-account-amount',
-  //    '3',
-  //    '--revert-preparation-account-amount',
-  //    '3',
-  //    '--clean-up-account-amount',
-  //    '4',
-  //  ]);
-  //  expect(stub.args[0][0]).toEqual(TX);
-  //});
+  it('get', async () => {
+    await runCli(['protocol', 'get']);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
+  });
 });

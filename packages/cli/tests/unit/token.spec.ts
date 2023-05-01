@@ -3,7 +3,7 @@ import sinon, { SinonStub } from 'sinon';
 import { PublicKey } from '@solana/web3.js';
 
 //import { getKpFile } from '../../../validator';
-import { CTX, ADDRESS, TX, runCli } from '../helpers';
+import { CTX, ADDRESS_LABEL, TX_LABEL, runCli } from '../helpers';
 
 describe('token', () => {
   let stub: SinonStub;
@@ -19,7 +19,7 @@ describe('token', () => {
   it('create-mint', async () => {
     await runCli(['token', 'create-mint', '--decimals', '9'], 'mint-authority');
     expect(new PublicKey(stub.args[0][1])).toBeTruthy();
-    expect(stub.args[1][0]).toEqual(TX);
+    expect(stub.args[1][0]).toEqual(TX_LABEL);
   });
 
   // TODO: Generate random keypair for this test
@@ -29,8 +29,8 @@ describe('token', () => {
   //    'maker'
   //  );
   //  wallet = stub.args[0][1];
-  //  expect(stub.args[0][0]).toEqual(ADDRESS);
-  //  expect(stub.args[1][0]).toEqual(TX);
+  //  expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
+  //  expect(stub.args[1][0]).toEqual(TX_LABEL);
   //  expect(new PublicKey(wallet)).toBeTruthy();
   //});
 
@@ -48,12 +48,12 @@ describe('token', () => {
       ],
       'dao'
     );
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
   it('get-mint [quote]', async () => {
     await runCli(['token', 'get-mint', '--address', CTX.quoteMint]);
-    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
     expect(stub.args[1][0]).toEqual('Owner:');
     expect(stub.args[1][1]).toEqual(CTX.dao);
     expect(stub.args[2][0]).toEqual('Supply:');
@@ -63,7 +63,7 @@ describe('token', () => {
 
   it('get-mint [base]', async () => {
     await runCli(['token', 'get-mint', '--address', CTX.baseMint]);
-    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
     expect(stub.args[1][0]).toEqual('Owner:');
     expect(stub.args[1][1]).toEqual(CTX.dao);
     expect(stub.args[2][0]).toEqual('Supply:');
@@ -76,7 +76,7 @@ describe('token', () => {
       ['token', 'get-wallet', '--address', CTX.takerQuoteWallet],
       'taker'
     );
-    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
     expect(stub.args[0][1]).toEqual(CTX.takerQuoteWallet);
     expect(stub.args[1][0]).toEqual('Owner:');
     expect(stub.args[1][1]).toEqual(CTX.taker);

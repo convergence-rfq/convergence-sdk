@@ -7,6 +7,7 @@ import {
   getRegisteredMints,
   getProtocol,
   getBaseAssets,
+  closeProtocol,
 } from '../actions';
 
 import { addCmd } from '../helpers';
@@ -69,6 +70,9 @@ const addInstrumentCmd = (c: Command) =>
     commonOptions
   );
 
+const closeCmd = (c: Command) =>
+  addCmd(c, 'close', 'closes protocol configuration', closeProtocol);
+
 const addBaseAssetCmd = (c: Command) =>
   addCmd(c, 'add-base-asset', 'adds protocol base asset', addBaseAsset, [
     {
@@ -125,4 +129,5 @@ export const protocolGroup = (c: Command) => {
   getRegisteredMintsCmd(group);
   getCmd(group);
   getBaseAssetsCmd(group);
+  closeCmd(group);
 };

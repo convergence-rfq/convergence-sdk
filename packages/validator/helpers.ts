@@ -84,6 +84,10 @@ export class Ctx {
   takerCollateralInfo = getAccountPk('rfq-collateral-info-taker');
   makerCollateralToken = getAccountPk('rfq-collateral-token-maker');
   takerCollateralToken = getAccountPk('rfq-collateral-token-taker');
+
+  // Switchboard
+  switchboardSOLOracle = getAccountPk('sol_30_oracle_switchboard');
+  switchboardBTCOracle = getAccountPk('btc_20000_oracle_switchboard');
 }
 
 export const getAccountPk = (user: string): string => {
