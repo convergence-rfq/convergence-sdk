@@ -2,13 +2,8 @@
 
 set -e
 
-OWNER="HGm8jGLSazATztBSUxXfU62oRyVsmwPKnUsjvviRYbRG"
+source .env
 
-USDC_MINT=BREWDGvXEQKx9FkZrSCajzjy4cpm9hofzze3b41Z3V4p
-BTC_MINT=A3c9ThQZTUruMm56Eu4fxVwRosg4nBTpJe2B1pxBMYK7
-SOL_MINT=FYQ5MgByxnkfGAUzNcbaD734VK8CdEUX49ioTkokypRc
-
-RPC_ENDPOINT="http://127.0.0.1:8899"
 KEYPAIR_FILE="$HOME/.config/solana/mint-authority.json"
 OPTS="--rpc-endpoint=$RPC_ENDPOINT --keypair-file=$KEYPAIR_FILE"
 

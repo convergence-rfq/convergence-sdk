@@ -1,24 +1,7 @@
 #!env bash
 
 set -e
-
-SPOT_INSTRUMENT="HNHBtGzS58xJarSbz5XbEjTTEFbAQUHdP8TjQmwjx1gW"
-PSYOPTIONS_EUROPEAN_INSTRUMENT="HmJ8K5xb6kXbVbvRriq1Z7oPdEaPmKXpEM4Un9nr5b1"
-PSYOPTIONS_AMERICAN_INSTRUMENT="7GcKLyM73RRJshRLQqX8yw9K3hTHkx1Ei14mKoKxi3ZR"
-
-# TODO: Verify
-BTC_ORACLE_ADDRESS="8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee"
-SOL_ORACLE_ADDRESS="GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR"
-
-# TODO: Verify
-USDC_MINT=BREWDGvXEQKx9FkZrSCajzjy4cpm9hofzze3b41Z3V4p
-BTC_MINT=A3c9ThQZTUruMm56Eu4fxVwRosg4nBTpJe2B1pxBMYK7
-SOL_MINT=FYQ5MgByxnkfGAUzNcbaD734VK8CdEUX49ioTkokypRc
-
-RPC_ENDPOINT="https://api.mainnet-beta.solana.com"
-KEYPAIR_FILE="$HOME/.config/solana/id.json"
-
-OPTS="--rpc-endpoint=$RPC_ENDPOINT --keypair-file=$KEYPAIR_FILE"
+source .env
 
 convergence protocol initialize $OPTS --taker-fee=1 --maker-fee=0 --collateral-mint=$USDC_MINT
 convergence risk-engine initialize $OPTS
