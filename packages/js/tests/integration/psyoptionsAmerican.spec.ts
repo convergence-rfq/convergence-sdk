@@ -61,17 +61,20 @@ describe('psyoptions american', () => {
         americanProgram
       );
 
-    const tnx = await mintAmericanOptions(
-      takerCvg,
-      rfqResponse.address,
-      takerCvg.rpc().getDefaultFeePayer().publicKey,
-      optionToken,
-      writerToken,
-      underlyingToken,
-      americanProgram
-    );
-
-    expect(tnx).toHaveProperty('response');
+    for (let i = 0; i < optionToken.length; i++) {
+      const tnx = await mintAmericanOptions(
+        takerCvg,
+        rfqResponse.address,
+        takerCvg.rpc().getDefaultFeePayer().publicKey,
+        optionToken[i],
+        writerToken[i],
+        underlyingToken[i],
+        americanProgram
+      );
+      if (tnx) {
+        expect(tnx).toHaveProperty('response');
+      }
+    }
 
     await prepareSettlement(takerCvg, rfq, rfqResponse);
     await prepareSettlement(makerCvg, rfq, rfqResponse);

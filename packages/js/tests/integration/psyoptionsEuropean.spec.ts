@@ -155,17 +155,22 @@ describe('psyoptions european', () => {
         rfqResponse.address,
         takerCvg.rpc().getDefaultFeePayer().publicKey
       );
-    const tnx = await mintEuropeanOptions(
-      takerCvg,
-      rfqResponse.address,
-      takerCvg.rpc().getDefaultFeePayer().publicKey,
-      optionDestination,
-      writerDestination,
-      backupReceiver,
-      europeanProgram
-    );
 
-    expect(tnx).toHaveProperty('response');
+    for (let i = 0; i < optionDestination.length; i++) {
+      const tnx = await mintEuropeanOptions(
+        takerCvg,
+        rfqResponse.address,
+        takerCvg.rpc().getDefaultFeePayer().publicKey,
+        optionDestination[i],
+        writerDestination[i],
+        backupReceiver[i],
+        europeanProgram
+      );
+      if (tnx) {
+        expect(tnx).toHaveProperty('response');
+      }
+    }
+
     await prepareSettlement(makerCvg, rfq, rfqResponse);
     await prepareSettlement(takerCvg, rfq, rfqResponse);
 

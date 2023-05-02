@@ -1450,12 +1450,15 @@ export const mintAmericanOptions = async (
       }
     }
   }
-  const payer = convergence.rpc().getDefaultFeePayer();
-  const txBuilder = TransactionBuilder.make().setFeePayer(payer);
+  if (instructionWithSigners.length > 0) {
+    const payer = convergence.rpc().getDefaultFeePayer();
+    const txBuilder = TransactionBuilder.make().setFeePayer(payer);
 
-  txBuilder.add(...instructionWithSigners);
-  const sig = await txBuilder.sendAndConfirm(convergence);
-  return sig;
+    txBuilder.add(...instructionWithSigners);
+    const sig = await txBuilder.sendAndConfirm(convergence);
+    return sig;
+  }
+  return null;
 };
 
 export const mintEuropeanOptions = async (
@@ -1539,34 +1542,36 @@ export const mintEuropeanOptions = async (
       }
     }
   }
+  if (instructions.length > 0) {
+    const txBuilder = TransactionBuilder.make().setFeePayer(
+      convergence.rpc().getDefaultFeePayer()
+    );
 
-  const txBuilder = TransactionBuilder.make().setFeePayer(
-    convergence.rpc().getDefaultFeePayer()
-  );
-
-  instructions.forEach((ins) => {
-    txBuilder.add({
-      instruction: ins,
-      signers: [convergence.rpc().getDefaultFeePayer()],
+    instructions.forEach((ins) => {
+      txBuilder.add({
+        instruction: ins,
+        signers: [convergence.rpc().getDefaultFeePayer()],
+      });
     });
-  });
 
-  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
 
-  const sig = await txBuilder.sendAndConfirm(convergence, confirmOptions);
-  return sig;
+    const sig = await txBuilder.sendAndConfirm(convergence, confirmOptions);
+    return sig;
+  }
+  return null;
 };
 
 export interface AmericanTokenAtaForMinting {
-  optionToken: PublicKey;
-  writerToken: PublicKey;
-  underlyingToken: PublicKey;
+  optionToken: PublicKey[];
+  writerToken: PublicKey[];
+  underlyingToken: PublicKey[];
 }
 
 export interface EuropeanAtaForMinting {
-  optionDestination: PublicKey;
-  writerDestination: PublicKey;
-  backupReceiver: PublicKey;
+  optionDestination: PublicKey[];
+  writerDestination: PublicKey[];
+  backupReceiver: PublicKey[];
 }
 
 export const getOrCreateEuropeanOptionATAs = async (
@@ -1574,9 +1579,9 @@ export const getOrCreateEuropeanOptionATAs = async (
   responseAddress: PublicKey,
   caller: PublicKey
 ): Promise<EuropeanAtaForMinting> => {
-  let optionDestination: any;
-  let writerDestination: any;
-  let backupReceiver: any;
+  const optionDestination: PublicKey[] = [];
+  const writerDestination: PublicKey[] = [];
+  const backupReceiver: PublicKey[] = [];
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -1607,27 +1612,31 @@ export const getOrCreateEuropeanOptionATAs = async (
           euroMetaKey
         );
         const { optionType } = instrumentData;
-        optionDestination = await getOrCreateATA(
+        const optionDestinationAta = await getOrCreateATA(
           convergence,
           optionType == OptionType.PUT
             ? euroMeta.putOptionMint
             : euroMeta.callOptionMint,
           caller
         );
-        writerDestination = await getOrCreateATA(
+        const writerDestinationAta = await getOrCreateATA(
           convergence,
           optionType == OptionType.PUT
             ? euroMeta.putWriterMint
             : euroMeta.callWriterMint,
           caller
         );
-        backupReceiver = await getOrCreateATA(
+        const backupReceiverAta = await getOrCreateATA(
           convergence,
           optionType == OptionType.PUT
             ? euroMeta.putOptionMint
             : euroMeta.callOptionMint,
           caller
         );
+
+        optionDestination.push(optionDestinationAta);
+        writerDestination.push(writerDestinationAta);
+        backupReceiver.push(backupReceiverAta);
       }
     }
   }
@@ -1650,9 +1659,9 @@ export const getOrCreateAmericanOptionATAs = async (
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
-  let optionToken: any;
-  let writerToken: any;
-  let underlyingToken: any;
+  const optionToken: PublicKey[] = [];
+  const writerToken: PublicKey[] = [];
+  const underlyingToken: PublicKey[] = [];
   for (const leg of rfq.legs) {
     const instrument = await legToInstrument(convergence, leg);
     if (
@@ -1676,21 +1685,25 @@ export const getOrCreateAmericanOptionATAs = async (
           metaKey
         );
 
-        optionToken = await getOrCreateATA(
+        const optionTokenAta = await getOrCreateATA(
           convergence,
           (optionMarket as OptionMarketWithKey).optionMint,
           caller
         );
-        writerToken = await getOrCreateATA(
+        const writerTokenAta = await getOrCreateATA(
           convergence,
           optionMarket!.writerTokenMint,
           caller
         );
-        underlyingToken = await getOrCreateATA(
+        const underlyingTokenAta = await getOrCreateATA(
           convergence,
           optionMarket!.underlyingAssetMint,
           caller
         );
+
+        optionToken.push(optionTokenAta);
+        writerToken.push(writerTokenAta);
+        underlyingToken.push(underlyingTokenAta);
       }
     }
   }
