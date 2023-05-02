@@ -18,6 +18,8 @@ import {
   findRegisteredMintByAddressOperationHandler,
   findBaseAssetByAddressOperation,
   findBaseAssetByAddressOperationHandler,
+  closeProtocolOperation,
+  closeProtocolOperationHandler,
 } from './operations';
 import { Protocol } from './models';
 import { ConvergencePlugin } from '@/types';
@@ -48,6 +50,7 @@ export const protocolModule = (): ConvergencePlugin => ({
       findBaseAssetByAddressOperation,
       findBaseAssetByAddressOperationHandler
     );
+    op.register(closeProtocolOperation, closeProtocolOperationHandler);
 
     convergence.protocol = function () {
       return new ProtocolClient(this);

@@ -193,6 +193,16 @@ export const getBaseAssets = async (opts: Opts) => {
   }
 };
 
+export const closeProtocol = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const { response } = await cvg.protocol().close();
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
 export const getProtocol = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
@@ -328,19 +338,6 @@ export const initializeRiskEngine = async (opts: Opts) => {
         opts.acceptedOracleConfidenceIntervalPortion,
     });
     logPk(config.address);
-    logResponse(response);
-  } catch (e) {
-    logError(e);
-  }
-};
-
-export const x = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  try {
-    const { response } = await cvg.riskEngine().setInstrumentType({
-      instrumentProgram: new PublicKey(opts.program),
-      instrumentType: getInstrumentType(opts.type),
-    });
     logResponse(response);
   } catch (e) {
     logError(e);

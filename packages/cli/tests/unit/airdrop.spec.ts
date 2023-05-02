@@ -1,7 +1,7 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { TX, runCli } from '../helpers';
+import { TX_LABEL, runCli } from '../helpers';
 
 describe('airdrop', () => {
   let stub: SinonStub;
@@ -16,6 +16,6 @@ describe('airdrop', () => {
 
   it('sol', async () => {
     await runCli(['airdrop', 'sol', '--amount', '1']);
-    expect(stub.args[0][0]).toEqual(TX);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 });

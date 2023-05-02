@@ -87,9 +87,6 @@ export type InitializeConfigInput =
 export type InitializeConfigOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
-
-  /** Risk engine config model. */
-  config: Config;
 };
 
 /**
@@ -115,9 +112,7 @@ export const initializeConfigOperationHandler: OperationHandler<InitalizeConfigO
         scope.confirmOptions
       );
 
-      const config = await convergence.riskEngine().fetchConfig(scope);
-
-      return { response, config };
+      return { response };
     },
   };
 

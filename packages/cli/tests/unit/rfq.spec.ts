@@ -1,7 +1,7 @@
 import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
-import { CTX, ADDRESS, runCli } from '../helpers';
+import { CTX, ADDRESS_LABEL, runCli } from '../helpers';
 
 describe('rfq', () => {
   let stub: SinonStub;
@@ -40,11 +40,11 @@ describe('rfq', () => {
       ],
       'taker'
     );
-    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 
   it('get-all [maker]', async () => {
     await runCli(['rfq', 'get-all']);
-    expect(stub.args[0][0]).toEqual(ADDRESS);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 });

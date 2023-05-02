@@ -6,8 +6,11 @@ packages/cli/node_modules
 packages/cli/dist
 packages/cli/tests/ctx.json
 packages/cli/.turbo
+packages/js/.nyc_output
+packages/cli/.nyc_output
 examples/node_modules
 node_modules
 test-ledger
 .turbo/
 ./\~
+.vscode
