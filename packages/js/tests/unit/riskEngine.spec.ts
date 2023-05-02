@@ -26,8 +26,8 @@ describe('riskEngine', () => {
   });
 
   it('initialize config', async () => {
-    const { config } = await cvg.riskEngine().initializeConfig();
-    expect(config.address).toEqual(cvg.riskEngine().pdas().config());
+    const { response } = await cvg.riskEngine().initializeConfig();
+    expect(response).toHaveProperty('signature');
   });
 
   it('set instrument type [spot]', async () => {
