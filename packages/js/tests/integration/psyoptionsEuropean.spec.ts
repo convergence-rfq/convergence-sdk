@@ -1,5 +1,5 @@
 import { expect } from 'expect';
-import { PublicKey, Keypair, sendAndConfirmTransaction } from '@solana/web3.js';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { createUserCvg } from '../helpers';
@@ -16,6 +16,7 @@ import {
   createEuropeanProgram,
   getOrCreateEuropeanOptionATAs,
   mintEuropeanOptions,
+  ATAExistence,
 } from '../../src';
 import {
   confirmResponse,
@@ -149,21 +150,17 @@ describe('psyoptions european', () => {
     expect(response.signature).toBeDefined();
     const { rfqResponse } = await respond(makerCvg, rfq, 'bid');
     await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
-    const { optionDestination, writerDestination, backupReceiver } =
-      await getOrCreateEuropeanOptionATAs(
-        takerCvg,
-        rfqResponse.address,
-        takerCvg.rpc().getDefaultFeePayer().publicKey
-      );
+    const exists = await getOrCreateEuropeanOptionATAs(
+      takerCvg,
+      rfqResponse.address,
+      takerCvg.rpc().getDefaultFeePayer().publicKey
+    );
 
-    for (let i = 0; i < optionDestination.length; i++) {
+    if (exists === ATAExistence.EXISTS) {
       const tnx = await mintEuropeanOptions(
         takerCvg,
         rfqResponse.address,
         takerCvg.rpc().getDefaultFeePayer().publicKey,
-        optionDestination[i],
-        writerDestination[i],
-        backupReceiver[i],
         europeanProgram
       );
       if (tnx) {
