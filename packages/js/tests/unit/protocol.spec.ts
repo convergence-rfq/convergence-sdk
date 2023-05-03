@@ -1,6 +1,10 @@
 import { expect } from 'expect';
 
-import { protocolCache, RiskCategory } from '../../src';
+import {
+  protocolCache,
+  PsyoptionsEuropeanInstrument,
+  RiskCategory,
+} from '../../src';
 import { createUserCvg } from '../helpers';
 import { COLLATERAL_MINT_PK, SWITCHBOARD_SOL_ORACLE_PK } from '../constants';
 

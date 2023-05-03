@@ -113,6 +113,8 @@ describe('psyoptions european', () => {
       17_000,
       quoteMint.decimals * -1
     );
+    const min = 3_600;
+    const randomExpiry = min + Math.random();
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
       takerCvg,
       oracle,
@@ -121,7 +123,7 @@ describe('psyoptions european', () => {
       quoteMint,
       23_354,
       1,
-      3_600,
+      randomExpiry,
       0
     );
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
