@@ -1,5 +1,5 @@
 import { expect } from 'expect';
-import { PublicKey, Keypair, sendAndConfirmTransaction } from '@solana/web3.js';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { createUserCvg } from '../helpers';
@@ -16,6 +16,7 @@ import {
   createEuropeanProgram,
   getOrCreateEuropeanOptionATAs,
   mintEuropeanOptions,
+  ATAExistence,
 } from '../../src';
 import {
   confirmResponse,
@@ -112,6 +113,8 @@ describe('psyoptions european', () => {
       17_000,
       quoteMint.decimals * -1
     );
+    const min = 3_600;
+    const randomExpiry = min + Math.random();
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
       takerCvg,
       oracle,
@@ -120,7 +123,7 @@ describe('psyoptions european', () => {
       quoteMint,
       23_354,
       1,
-      3_600,
+      randomExpiry,
       0
     );
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
@@ -149,23 +152,20 @@ describe('psyoptions european', () => {
     expect(response.signature).toBeDefined();
     const { rfqResponse } = await respond(makerCvg, rfq, 'bid');
     await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
-    const { optionDestination, writerDestination, backupReceiver } =
-      await getOrCreateEuropeanOptionATAs(
-        takerCvg,
-        rfqResponse.address,
-        takerCvg.rpc().getDefaultFeePayer().publicKey
-      );
+    await getOrCreateEuropeanOptionATAs(
+      takerCvg,
+      rfqResponse.address,
+      takerCvg.rpc().getDefaultFeePayer().publicKey
+    );
+
     const tnx = await mintEuropeanOptions(
       takerCvg,
       rfqResponse.address,
       takerCvg.rpc().getDefaultFeePayer().publicKey,
-      optionDestination,
-      writerDestination,
-      backupReceiver,
       europeanProgram
     );
-
     expect(tnx).toHaveProperty('response');
+
     await prepareSettlement(makerCvg, rfq, rfqResponse);
     await prepareSettlement(takerCvg, rfq, rfqResponse);
 
