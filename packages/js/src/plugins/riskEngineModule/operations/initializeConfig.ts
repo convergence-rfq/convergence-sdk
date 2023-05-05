@@ -1,7 +1,6 @@
 import { createInitializeConfigInstruction } from '@convergence-rfq/risk-engine';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Config } from '../models';
 import {
   DEFAULT_MINT_DECIMALS,
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,

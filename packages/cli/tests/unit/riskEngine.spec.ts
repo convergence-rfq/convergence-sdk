@@ -34,7 +34,7 @@ describe('riskEngine', () => {
 
   it('initialize', async () => {
     await runCli(['risk-engine', 'initialize']);
-    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
   it('set-instrument-type [spot]', async () => {
