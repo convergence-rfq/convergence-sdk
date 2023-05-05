@@ -1437,7 +1437,6 @@ export const mintAmericanOptions = async (
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
   const instructionWithSigners: InstructionWithSigners[] = [];
-  const tnx: Transaction[] = [];
   for (const leg of rfq.legs) {
     const instrument = await legToInstrument(convergence, leg);
     if (

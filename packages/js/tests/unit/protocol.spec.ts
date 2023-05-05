@@ -67,7 +67,7 @@ describe('protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
-  it('add instrument [psyoptions european]', async () => {
+  it('add instrument [psyoptionsEuropean]', async () => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.identity(),
       instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
@@ -82,7 +82,7 @@ describe('protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
-  it('add instrument [psyoptions american]', async () => {
+  it('add instrument [psyoptionsAmerican]', async () => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.identity(),
       instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument()
