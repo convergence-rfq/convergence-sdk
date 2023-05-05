@@ -17,10 +17,8 @@ import {
   Rfq,
   Response,
 } from '../rfqModule';
-
 import { toBigNumber } from '../../../src/types';
 import { HumanOrderType, HumanSide } from './types';
-import { toHumanRfq } from './models/HumanRfq';
 
 const fromHumanSide = (side: HumanSide): Side => {
   switch (side) {
@@ -116,7 +114,8 @@ export const createRfq = async (
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
     quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
   });
-  return { rfq: toHumanRfq(rfq), response };
+  // TODO: Return human RFQ
+  return { rfq, response };
 };
 
 export const confirmResponse = async (

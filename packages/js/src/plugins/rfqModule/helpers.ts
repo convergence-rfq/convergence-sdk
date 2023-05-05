@@ -1,5 +1,12 @@
 /* eslint-disable no-else-return */
-import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
+import {
+  PublicKey,
+  AccountMeta,
+  Keypair,
+  TransactionInstruction,
+  Transaction,
+} from '@solana/web3.js';
+import * as Spl from '@solana/spl-token';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
@@ -834,6 +841,34 @@ export const getOrCreateATA = async (
   return ata;
 };
 
+export const getOrCreateATAInx = async (
+  convergence: Convergence,
+  mint: PublicKey,
+  owner: PublicKey,
+  programs?: Program[]
+): Promise<TransactionInstruction | PublicKey> => {
+  const pda = convergence.tokens().pdas().associatedTokenAccount({
+    mint,
+    owner,
+    programs,
+  });
+  const account = await convergence.rpc().getAccount(pda);
+  let ix: anchor.web3.TransactionInstruction;
+  if (account.exists) {
+    return pda;
+  } else {
+    ix = Spl.createAssociatedTokenAccountInstruction(
+      owner,
+      pda,
+      owner,
+      mint,
+      Spl.TOKEN_PROGRAM_ID,
+      Spl.ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    return ix;
+  }
+};
+
 export const createEuroAccountsAndMintOptions = async (
   convergence: Convergence,
   caller: Keypair, // TODO: not needed when we return the tx
@@ -1389,9 +1424,6 @@ export const mintAmericanOptions = async (
   convergence: Convergence,
   responseAddress: PublicKey,
   caller: PublicKey,
-  optionToken: PublicKey,
-  writerToken: PublicKey,
-  underlyingToken: PublicKey,
   americanProgram: any
 ) => {
   const response = await convergence
@@ -1405,7 +1437,6 @@ export const mintAmericanOptions = async (
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
   const instructionWithSigners: InstructionWithSigners[] = [];
-
   for (const leg of rfq.legs) {
     const instrument = await legToInstrument(convergence, leg);
     if (
@@ -1428,7 +1459,21 @@ export const mintAmericanOptions = async (
           americanProgram,
           metaKey
         );
-
+        const optionToken = await getOrCreateATA(
+          convergence,
+          optionMarket!.optionMint,
+          caller
+        );
+        const writerToken = await getOrCreateATA(
+          convergence,
+          optionMarket!.writerTokenMint,
+          caller
+        );
+        const underlyingToken = await getOrCreateATA(
+          convergence,
+          optionMarket!.underlyingAssetMint,
+          caller
+        );
         const ixWithSigners =
           await psyoptionsAmerican.instructions.mintOptionV2Instruction(
             americanProgram,
@@ -1450,21 +1495,21 @@ export const mintAmericanOptions = async (
       }
     }
   }
-  const payer = convergence.rpc().getDefaultFeePayer();
-  const txBuilder = TransactionBuilder.make().setFeePayer(payer);
+  if (instructionWithSigners.length > 0) {
+    const payer = convergence.rpc().getDefaultFeePayer();
+    const txBuilder = TransactionBuilder.make().setFeePayer(payer);
 
-  txBuilder.add(...instructionWithSigners);
-  const sig = await txBuilder.sendAndConfirm(convergence);
-  return sig;
+    txBuilder.add(...instructionWithSigners);
+    const sig = await txBuilder.sendAndConfirm(convergence);
+    return sig;
+  }
+  return null;
 };
 
 export const mintEuropeanOptions = async (
   convergence: Convergence,
   responseAddress: PublicKey,
   caller: PublicKey,
-  optionDestination: PublicKey,
-  writerDestination: PublicKey,
-  backupReceiver: PublicKey,
   europeanProgram: any
 ) => {
   const response = await convergence
@@ -1518,6 +1563,20 @@ export const mintEuropeanOptions = async (
         const minterCollateralKey =
           optionType == OptionType.PUT ? stableMintToken : underlyingMintToken;
 
+        const optionDestination = await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putOptionMint
+            : euroMeta.callOptionMint,
+          caller
+        );
+        const writerDestination = await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putWriterMint
+            : euroMeta.callWriterMint,
+          caller
+        );
         const { instruction: ix } = mintOptions(
           europeanProgram,
           euroMetaKey,
@@ -1539,44 +1598,49 @@ export const mintEuropeanOptions = async (
       }
     }
   }
+  if (instructions.length > 0) {
+    const txBuilder = TransactionBuilder.make().setFeePayer(
+      convergence.rpc().getDefaultFeePayer()
+    );
 
-  const txBuilder = TransactionBuilder.make().setFeePayer(
-    convergence.rpc().getDefaultFeePayer()
-  );
-
-  instructions.forEach((ins) => {
-    txBuilder.add({
-      instruction: ins,
-      signers: [convergence.rpc().getDefaultFeePayer()],
+    instructions.forEach((ins) => {
+      txBuilder.add({
+        instruction: ins,
+        signers: [convergence.rpc().getDefaultFeePayer()],
+      });
     });
-  });
 
-  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
 
-  const sig = await txBuilder.sendAndConfirm(convergence, confirmOptions);
-  return sig;
+    const sig = await txBuilder.sendAndConfirm(convergence, confirmOptions);
+    return sig;
+  }
+  return null;
 };
 
 export interface AmericanTokenAtaForMinting {
-  optionToken: PublicKey;
-  writerToken: PublicKey;
-  underlyingToken: PublicKey;
+  optionToken: PublicKey[];
+  writerToken: PublicKey[];
+  underlyingToken: PublicKey[];
 }
 
 export interface EuropeanAtaForMinting {
-  optionDestination: PublicKey;
-  writerDestination: PublicKey;
-  backupReceiver: PublicKey;
+  optionDestination: PublicKey[];
+  writerDestination: PublicKey[];
+  backupReceiver: PublicKey[];
+}
+
+export enum ATAExistence {
+  EXISTS,
+  NOTEXISTS,
 }
 
 export const getOrCreateEuropeanOptionATAs = async (
   convergence: Convergence,
   responseAddress: PublicKey,
   caller: PublicKey
-): Promise<EuropeanAtaForMinting> => {
-  let optionDestination: any;
-  let writerDestination: any;
-  let backupReceiver: any;
+): Promise<ATAExistence> => {
+  const tnx: Transaction[] = [];
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -1607,31 +1671,50 @@ export const getOrCreateEuropeanOptionATAs = async (
           euroMetaKey
         );
         const { optionType } = instrumentData;
-        optionDestination = await getOrCreateATA(
+        const optionDestinationAta = await getOrCreateATAInx(
           convergence,
           optionType == OptionType.PUT
             ? euroMeta.putOptionMint
             : euroMeta.callOptionMint,
           caller
         );
-        writerDestination = await getOrCreateATA(
+        if (optionDestinationAta instanceof TransactionInstruction) {
+          const tx = new Transaction().add(optionDestinationAta);
+          tx.recentBlockhash = (
+            await convergence.rpc().getLatestBlockhash()
+          ).blockhash;
+          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
+          tnx.push(tx);
+        }
+
+        const writerDestinationAta = await getOrCreateATAInx(
           convergence,
           optionType == OptionType.PUT
             ? euroMeta.putWriterMint
             : euroMeta.callWriterMint,
           caller
         );
-        backupReceiver = await getOrCreateATA(
-          convergence,
-          optionType == OptionType.PUT
-            ? euroMeta.putOptionMint
-            : euroMeta.callOptionMint,
-          caller
-        );
+        if (writerDestinationAta instanceof TransactionInstruction) {
+          const tx = new Transaction().add(writerDestinationAta);
+          tx.recentBlockhash = (
+            await convergence.rpc().getLatestBlockhash()
+          ).blockhash;
+          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
+          tnx.push(tx);
+        }
       }
     }
   }
-  return { optionDestination, writerDestination, backupReceiver };
+  if (tnx.length > 0) {
+    const signedTnxs = await convergence
+      .rpc()
+      .signAllTransactions(tnx, [convergence.rpc().getDefaultFeePayer()]);
+    for (const tx of signedTnxs) {
+      convergence.rpc().sendTransaction(tx);
+    }
+    return ATAExistence.EXISTS;
+  }
+  return ATAExistence.NOTEXISTS;
 };
 
 export const getOrCreateAmericanOptionATAs = async (
@@ -1639,7 +1722,8 @@ export const getOrCreateAmericanOptionATAs = async (
   responseAddress: PublicKey,
   caller: PublicKey,
   americanProgram: any
-): Promise<AmericanTokenAtaForMinting> => {
+): Promise<ATAExistence> => {
+  const tnx: Transaction[] = [];
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -1650,9 +1734,6 @@ export const getOrCreateAmericanOptionATAs = async (
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
-  let optionToken: any;
-  let writerToken: any;
-  let underlyingToken: any;
   for (const leg of rfq.legs) {
     const instrument = await legToInstrument(convergence, leg);
     if (
@@ -1676,29 +1757,58 @@ export const getOrCreateAmericanOptionATAs = async (
           metaKey
         );
 
-        optionToken = await getOrCreateATA(
+        const optionTokenAta = await getOrCreateATAInx(
           convergence,
           (optionMarket as OptionMarketWithKey).optionMint,
           caller
         );
-        writerToken = await getOrCreateATA(
+        if (optionTokenAta instanceof TransactionInstruction) {
+          const tx = new Transaction().add(optionTokenAta);
+          tx.recentBlockhash = (
+            await convergence.rpc().getLatestBlockhash()
+          ).blockhash;
+          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
+          tnx.push(tx);
+        }
+        const writerTokenAta = await getOrCreateATAInx(
           convergence,
           optionMarket!.writerTokenMint,
           caller
         );
-        underlyingToken = await getOrCreateATA(
+        if (writerTokenAta instanceof TransactionInstruction) {
+          const tx = new Transaction().add(writerTokenAta);
+          tx.recentBlockhash = (
+            await convergence.rpc().getLatestBlockhash()
+          ).blockhash;
+          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
+          tnx.push(tx);
+        }
+        const underlyingTokenAta = await getOrCreateATAInx(
           convergence,
           optionMarket!.underlyingAssetMint,
           caller
         );
+        if (underlyingTokenAta instanceof TransactionInstruction) {
+          const tx = new Transaction().add(underlyingTokenAta);
+          tx.recentBlockhash = (
+            await convergence.rpc().getLatestBlockhash()
+          ).blockhash;
+          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
+          tnx.push(tx);
+        }
       }
     }
   }
-  return {
-    optionToken,
-    writerToken,
-    underlyingToken,
-  };
+  if (tnx.length > 0) {
+    const signedTnxs = await convergence
+      .rpc()
+      .signAllTransactions(tnx, [convergence.rpc().getDefaultFeePayer()]);
+    for (const tx of signedTnxs) {
+      convergence.rpc().sendTransaction(tx);
+    }
+    return ATAExistence.EXISTS;
+  }
+  return ATAExistence.NOTEXISTS;
 };
 
 export const createAccountsAndMintOptions = async (

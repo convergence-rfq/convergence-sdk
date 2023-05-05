@@ -13,7 +13,7 @@ import {
   runCli,
 } from '../helpers';
 
-describe('protocol', () => {
+describe('unit.protocol', () => {
   let stub: SinonStub;
 
   beforeEach(() => {

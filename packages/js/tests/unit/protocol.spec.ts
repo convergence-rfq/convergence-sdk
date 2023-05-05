@@ -1,10 +1,13 @@
 import { expect } from 'expect';
 
-import { protocolCache, RiskCategory } from '../../src';
+import {
+  protocolCache,
+  RiskCategory,
+} from '../../src';
 import { createUserCvg } from '../helpers';
 import { COLLATERAL_MINT_PK, SWITCHBOARD_SOL_ORACLE_PK } from '../constants';
 
-describe('protocol', () => {
+describe('unit.protocol', () => {
   const cvg = createUserCvg('dao');
 
   it('get', async () => {
@@ -63,7 +66,7 @@ describe('protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
-  it('add instrument [psyoptions european]', async () => {
+  it('add instrument [psyoptionsEuropean]', async () => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.identity(),
       instrumentProgram: cvg.programs().getPsyoptionsEuropeanInstrument()
@@ -78,7 +81,7 @@ describe('protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
-  it('add instrument [psyoptions american]', async () => {
+  it('add instrument [psyoptionsAmerican]', async () => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.identity(),
       instrumentProgram: cvg.programs().getPsyoptionsAmericanInstrument()

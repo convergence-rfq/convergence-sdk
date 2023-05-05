@@ -8,7 +8,7 @@ import {
   TAKER_PK,
 } from '../constants';
 
-describe('collateral', () => {
+describe('unit.collateral', () => {
   const cvg = createUserCvg('taker');
 
   it('find by user', async () => {

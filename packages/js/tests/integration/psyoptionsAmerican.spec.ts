@@ -14,7 +14,7 @@ import {
   mintAmericanOptions,
 } from '../../src';
 
-describe('psyoptions american', () => {
+describe('integration.psyoptionsAmerican', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
@@ -53,21 +53,17 @@ describe('psyoptions american', () => {
     await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
     const americanProgram = createAmericanProgram(takerCvg);
 
-    const { optionToken, writerToken, underlyingToken } =
-      await getOrCreateAmericanOptionATAs(
-        takerCvg,
-        rfqResponse.address,
-        takerCvg.rpc().getDefaultFeePayer().publicKey,
-        americanProgram
-      );
+    await getOrCreateAmericanOptionATAs(
+      takerCvg,
+      rfqResponse.address,
+      takerCvg.rpc().getDefaultFeePayer().publicKey,
+      americanProgram
+    );
 
     const tnx = await mintAmericanOptions(
       takerCvg,
       rfqResponse.address,
       takerCvg.rpc().getDefaultFeePayer().publicKey,
-      optionToken,
-      writerToken,
-      underlyingToken,
       americanProgram
     );
 

@@ -6,7 +6,7 @@ import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT } from '@convergence-
 
 import { ADDRESS_LABEL, TX_LABEL, runCli } from '../helpers';
 
-describe('riskEngine', () => {
+describe('unit.riskEngine', () => {
   let stub: SinonStub;
 
   beforeEach(() => {
@@ -34,7 +34,7 @@ describe('riskEngine', () => {
 
   it('initialize', async () => {
     await runCli(['risk-engine', 'initialize']);
-    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
   it('set-instrument-type [spot]', async () => {

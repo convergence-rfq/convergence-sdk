@@ -325,7 +325,7 @@ export const getCollateral = async (opts: Opts) => {
 export const initializeRiskEngine = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response, config } = await cvg.riskEngine().initializeConfig({
+    const { response } = await cvg.riskEngine().initializeConfig({
       collateralMintDecimals: opts.collateralMintDecimals,
       collateralForVariableSizeRfqCreation:
         opts.collateralForVariableSizeRfqCreation,
@@ -337,7 +337,6 @@ export const initializeRiskEngine = async (opts: Opts) => {
       acceptedOracleConfidenceIntervalPortion:
         opts.acceptedOracleConfidenceIntervalPortion,
     });
-    logPk(config.address);
     logResponse(response);
   } catch (e) {
     logError(e);
