@@ -11,7 +11,7 @@ export const createCvg = async (opts: Opts): Promise<Convergence> => {
     new Connection(opts.rpcEndpoint, {
       commitment: 'confirmed',
     }),
-    { skipPreflight: true }
+    { skipPreflight: false }
   );
   cvg.use(keypairIdentity(user));
   return cvg;
