@@ -9,13 +9,12 @@ import {
 } from '../human';
 import { createUserCvg } from '../helpers';
 import {
-  ATAExistence,
   createAmericanProgram,
   getOrCreateAmericanOptionATAs,
   mintAmericanOptions,
 } from '../../src';
 
-describe('psyoptions american', () => {
+describe('integration.psyoptionsAmerican', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 

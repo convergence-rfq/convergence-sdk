@@ -2,13 +2,12 @@ import { expect } from 'expect';
 
 import {
   protocolCache,
-  PsyoptionsEuropeanInstrument,
   RiskCategory,
 } from '../../src';
 import { createUserCvg } from '../helpers';
 import { COLLATERAL_MINT_PK, SWITCHBOARD_SOL_ORACLE_PK } from '../constants';
 
-describe('protocol', () => {
+describe('unit.protocol', () => {
   const cvg = createUserCvg('dao');
 
   it('get', async () => {

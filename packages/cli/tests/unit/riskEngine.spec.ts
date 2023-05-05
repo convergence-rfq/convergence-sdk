@@ -6,7 +6,7 @@ import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT } from '@convergence-
 
 import { ADDRESS_LABEL, TX_LABEL, runCli } from '../helpers';
 
-describe('riskEngine', () => {
+describe('unit.riskEngine', () => {
   let stub: SinonStub;
 
   beforeEach(() => {

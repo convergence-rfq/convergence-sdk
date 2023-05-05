@@ -5,7 +5,7 @@ import { createUserCvg, generatePk } from '../helpers';
 import { CTX, BASE_MINT_DECIMALS, BASE_MINT_PK } from '../constants';
 import { token } from '../../src';
 
-describe('token', () => {
+describe('unit.token', () => {
   const cvg = createUserCvg('dao');
 
   it('create mint', async () => {

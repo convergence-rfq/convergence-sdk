@@ -3,7 +3,7 @@ import sinon, { SinonStub } from 'sinon';
 
 import { TX_LABEL, runCli } from '../helpers';
 
-describe('airdrop', () => {
+describe('unit.airdrop', () => {
   let stub: SinonStub;
 
   beforeEach(() => {

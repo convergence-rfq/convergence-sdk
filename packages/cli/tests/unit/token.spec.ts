@@ -5,7 +5,7 @@ import { PublicKey } from '@solana/web3.js';
 //import { getKpFile } from '../../../validator';
 import { CTX, ADDRESS_LABEL, TX_LABEL, runCli } from '../helpers';
 
-describe('token', () => {
+describe('unit.token', () => {
   let stub: SinonStub;
 
   beforeEach(() => {

@@ -3,7 +3,7 @@ import sinon, { SinonStub } from 'sinon';
 
 import { CTX, ADDRESS_LABEL, runCli } from '../helpers';
 
-describe('rfq', () => {
+describe('unit.rfq', () => {
   let stub: SinonStub;
 
   beforeEach(() => {

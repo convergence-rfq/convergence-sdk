@@ -3,7 +3,7 @@ import sinon, { SinonStub } from 'sinon';
 
 import { CTX, ADDRESS_LABEL, TX_LABEL, runCli } from '../helpers';
 
-describe('collateral', () => {
+describe('unit.collateral', () => {
   let stub: SinonStub;
 
   beforeEach(() => {

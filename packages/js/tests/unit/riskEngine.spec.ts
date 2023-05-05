@@ -7,7 +7,7 @@ import {
 } from '../../src';
 import { createUserCvg } from '../helpers';
 
-describe('riskEngine', () => {
+describe('unit.riskEngine', () => {
   const cvg = createUserCvg('dao');
 
   it('fetch config', async () => {

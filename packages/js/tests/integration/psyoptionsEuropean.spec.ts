@@ -26,7 +26,7 @@ import {
   settle,
 } from '../human';
 
-describe('psyoptions european', () => {
+describe('integration.psyoptionsEuropean', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
