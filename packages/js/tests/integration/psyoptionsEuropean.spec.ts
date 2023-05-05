@@ -152,23 +152,19 @@ describe('psyoptions european', () => {
     expect(response.signature).toBeDefined();
     const { rfqResponse } = await respond(makerCvg, rfq, 'bid');
     await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
-    const exists = await getOrCreateEuropeanOptionATAs(
+    await getOrCreateEuropeanOptionATAs(
       takerCvg,
       rfqResponse.address,
       takerCvg.rpc().getDefaultFeePayer().publicKey
     );
 
-    if (exists === ATAExistence.EXISTS) {
-      const tnx = await mintEuropeanOptions(
-        takerCvg,
-        rfqResponse.address,
-        takerCvg.rpc().getDefaultFeePayer().publicKey,
-        europeanProgram
-      );
-      if (tnx) {
-        expect(tnx).toHaveProperty('response');
-      }
-    }
+    const tnx = await mintEuropeanOptions(
+      takerCvg,
+      rfqResponse.address,
+      takerCvg.rpc().getDefaultFeePayer().publicKey,
+      europeanProgram
+    );
+    expect(tnx).toHaveProperty('response');
 
     await prepareSettlement(makerCvg, rfq, rfqResponse);
     await prepareSettlement(takerCvg, rfq, rfqResponse);

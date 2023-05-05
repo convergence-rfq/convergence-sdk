@@ -54,24 +54,21 @@ describe('psyoptions american', () => {
     await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
     const americanProgram = createAmericanProgram(takerCvg);
 
-    const exists = await getOrCreateAmericanOptionATAs(
+    await getOrCreateAmericanOptionATAs(
       takerCvg,
       rfqResponse.address,
       takerCvg.rpc().getDefaultFeePayer().publicKey,
       americanProgram
     );
 
-    if (exists === ATAExistence.EXISTS) {
-      const tnx = await mintAmericanOptions(
-        takerCvg,
-        rfqResponse.address,
-        takerCvg.rpc().getDefaultFeePayer().publicKey,
-        americanProgram
-      );
-      if (tnx) {
-        expect(tnx).toHaveProperty('response');
-      }
-    }
+    const tnx = await mintAmericanOptions(
+      takerCvg,
+      rfqResponse.address,
+      takerCvg.rpc().getDefaultFeePayer().publicKey,
+      americanProgram
+    );
+
+    expect(tnx).toHaveProperty('response');
 
     await prepareSettlement(takerCvg, rfq, rfqResponse);
     await prepareSettlement(makerCvg, rfq, rfqResponse);
