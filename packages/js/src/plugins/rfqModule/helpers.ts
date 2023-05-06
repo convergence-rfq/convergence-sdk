@@ -846,27 +846,25 @@ export const getOrCreateATAInx = async (
   mint: PublicKey,
   owner: PublicKey,
   programs?: Program[]
-): Promise<InstructionWithSigners | PublicKey> => {
+): Promise<TransactionInstruction | PublicKey> => {
   const pda = convergence.tokens().pdas().associatedTokenAccount({
     mint,
     owner,
     programs,
   });
   const account = await convergence.rpc().getAccount(pda);
-  const ix: any = {};
+  let ix: TransactionInstruction;
   if (account.exists) {
     return pda;
   } else {
-    (ix as InstructionWithSigners).instruction =
-      Spl.createAssociatedTokenAccountInstruction(
-        owner,
-        pda,
-        owner,
-        mint,
-        Spl.TOKEN_PROGRAM_ID,
-        Spl.ASSOCIATED_TOKEN_PROGRAM_ID
-      );
-    (ix as InstructionWithSigners).signers = [convergence.identity()];
+    ix = Spl.createAssociatedTokenAccountInstruction(
+      owner,
+      pda,
+      owner,
+      mint,
+      Spl.TOKEN_PROGRAM_ID,
+      Spl.ASSOCIATED_TOKEN_PROGRAM_ID
+    );
     return ix;
   }
 };

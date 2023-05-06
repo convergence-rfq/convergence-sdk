@@ -77,7 +77,6 @@ describe('spot', () => {
       rfq: rfq.address,
     });
     await confirmResponse(takerCvg, rfq, rfqResponse, 'ask');
-    console.log('log', Number(rfqResponse.ask?.priceQuote.amountBps));
     await prepareSettlement(makerCvg, rfq, rfqResponse);
     await prepareSettlement(takerCvg, rfq, rfqResponse);
 
