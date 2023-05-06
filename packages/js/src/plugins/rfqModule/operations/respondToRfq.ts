@@ -137,6 +137,13 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         bid,
         ask
       );
+      if (convertedAsk?.__kind === 'Standard') {
+        console.log(
+          'converted:',
+          Number(convertedAsk?.priceQuote.amountBps),
+          Number(convertedAsk.legsMultiplierBps)
+        );
+      }
 
       let responsePda = convergence
         .rfqs()

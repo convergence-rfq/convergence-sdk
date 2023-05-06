@@ -846,25 +846,27 @@ export const getOrCreateATAInx = async (
   mint: PublicKey,
   owner: PublicKey,
   programs?: Program[]
-): Promise<TransactionInstruction | PublicKey> => {
+): Promise<InstructionWithSigners | PublicKey> => {
   const pda = convergence.tokens().pdas().associatedTokenAccount({
     mint,
     owner,
     programs,
   });
   const account = await convergence.rpc().getAccount(pda);
-  let ix: anchor.web3.TransactionInstruction;
+  const ix: any = {};
   if (account.exists) {
     return pda;
   } else {
-    ix = Spl.createAssociatedTokenAccountInstruction(
-      owner,
-      pda,
-      owner,
-      mint,
-      Spl.TOKEN_PROGRAM_ID,
-      Spl.ASSOCIATED_TOKEN_PROGRAM_ID
-    );
+    (ix as InstructionWithSigners).instruction =
+      Spl.createAssociatedTokenAccountInstruction(
+        owner,
+        pda,
+        owner,
+        mint,
+        Spl.TOKEN_PROGRAM_ID,
+        Spl.ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+    (ix as InstructionWithSigners).signers = [convergence.identity()];
     return ix;
   }
 };
@@ -1606,7 +1608,7 @@ export const mintEuropeanOptions = async (
     instructions.forEach((ins) => {
       txBuilder.add({
         instruction: ins,
-        signers: [convergence.rpc().getDefaultFeePayer()],
+        signers: [convergence.identity()],
       });
     });
 
@@ -1708,7 +1710,7 @@ export const getOrCreateEuropeanOptionATAs = async (
   if (tnx.length > 0) {
     const signedTnxs = await convergence
       .rpc()
-      .signAllTransactions(tnx, [convergence.rpc().getDefaultFeePayer()]);
+      .signAllTransactions(tnx, [convergence.identity()]);
     for (const tx of signedTnxs) {
       convergence.rpc().sendTransaction(tx);
     }
@@ -1802,7 +1804,7 @@ export const getOrCreateAmericanOptionATAs = async (
   if (tnx.length > 0) {
     const signedTnxs = await convergence
       .rpc()
-      .signAllTransactions(tnx, [convergence.rpc().getDefaultFeePayer()]);
+      .signAllTransactions(tnx, [convergence.identity()]);
     for (const tx of signedTnxs) {
       convergence.rpc().sendTransaction(tx);
     }

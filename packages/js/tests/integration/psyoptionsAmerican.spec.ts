@@ -9,7 +9,6 @@ import {
 } from '../human';
 import { createUserCvg } from '../helpers';
 import {
-  ATAExistence,
   createAmericanProgram,
   getOrCreateAmericanOptionATAs,
   mintAmericanOptions,
