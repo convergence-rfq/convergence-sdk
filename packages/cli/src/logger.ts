@@ -119,8 +119,8 @@ export const logRiskCategoryInfo = (c: any): void => {
   };
   const s = c.scenarioPerSettlementPeriod.map(formatRatio).join(', ');
   l('Interest rate:', c.interestRate);
-  l('Annualized 30 day volatility:', c.annualized30DayVolatility);
-  l('Scenario per settlement period (base asset price/volatility):', s);
+  l('Annualized 30 day vol:', c.annualized30DayVolatility);
+  l('Settlement period scenarios (price Δ/vol Δ):', s);
 };
 
 export const logProtocolInstrument = (i: any): void => {
