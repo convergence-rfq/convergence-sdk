@@ -10,3 +10,13 @@ export const protocolCache = useCache(
     return toProtocol(toProtocolAccount(account));
   }
 );
+
+export const baseAssetsCache = useCache(async (cvg: Convergence) => {
+  const baseAssets = await cvg.protocol().getBaseAssets();
+  return baseAssets;
+});
+
+export const registeredMintsCache = useCache(async (cvg: Convergence) => {
+  const registeredMints = await cvg.protocol().getRegisteredMints();
+  return registeredMints;
+});
