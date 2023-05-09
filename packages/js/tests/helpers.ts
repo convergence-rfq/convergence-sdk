@@ -1,4 +1,4 @@
-import { Commitment, Connection, Keypair } from '@solana/web3.js';
+import { Commitment, Connection } from '@solana/web3.js';
 import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 
