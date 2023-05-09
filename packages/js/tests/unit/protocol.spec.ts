@@ -2,6 +2,8 @@ import { expect } from 'expect';
 
 import {
   protocolCache,
+  baseAssetsCache,
+  registeredMintsCache,
   RiskCategory,
 } from '../../src';
 import { createUserCvg } from '../helpers';
@@ -38,6 +40,18 @@ describe('unit.protocol', () => {
   it('get base assets', async () => {
     const baseAssets = await cvg.protocol().getBaseAssets();
     expect(baseAssets.length).toBeGreaterThan(0);
+  });
+
+  it('get base assets cache', async () => {
+    baseAssetsCache.clear();
+    const baseAssets = await baseAssetsCache.get(cvg);
+    expect(baseAssets.length).toBeGreaterThan(0);
+  });
+
+  it('get registered mints cache', async () => {
+    registeredMintsCache.clear();
+    const registeredMints = await registeredMintsCache.get(cvg);
+    expect(registeredMints.length).toBeGreaterThan(0);
   });
 
   it('close', async () => {
