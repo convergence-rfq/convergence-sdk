@@ -6,18 +6,27 @@ export type HumanOracle = {
   readonly name: 'Switchboard';
 };
 
-export type HumanRiskCategory = 'low' | 'medium' | 'high';
+export type HumanRiskCategory =
+  | 'very-low'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'very-high';
 
 export const toHumanRiskCategory = (
   riskCategory: RiskCategory
 ): HumanRiskCategory => {
   switch (riskCategory) {
+    case RiskCategory.VeryLow:
+      return 'very-low';
     case RiskCategory.Low:
       return 'low';
     case RiskCategory.Medium:
       return 'medium';
     case RiskCategory.High:
       return 'high';
+    case RiskCategory.VeryHigh:
+      return 'very-high';
     default:
       throw new Error('Unknown risk category');
   }
