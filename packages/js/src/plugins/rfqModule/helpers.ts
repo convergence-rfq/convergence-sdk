@@ -853,7 +853,7 @@ export const getOrCreateATAInx = async (
     programs,
   });
   const account = await convergence.rpc().getAccount(pda);
-  let ix: anchor.web3.TransactionInstruction;
+  let ix: TransactionInstruction;
   if (account.exists) {
     return pda;
   } else {
@@ -1606,7 +1606,7 @@ export const mintEuropeanOptions = async (
     instructions.forEach((ins) => {
       txBuilder.add({
         instruction: ins,
-        signers: [convergence.rpc().getDefaultFeePayer()],
+        signers: [convergence.identity()],
       });
     });
 
@@ -1708,7 +1708,7 @@ export const getOrCreateEuropeanOptionATAs = async (
   if (tnx.length > 0) {
     const signedTnxs = await convergence
       .rpc()
-      .signAllTransactions(tnx, [convergence.rpc().getDefaultFeePayer()]);
+      .signAllTransactions(tnx, [convergence.identity()]);
     for (const tx of signedTnxs) {
       convergence.rpc().sendTransaction(tx);
     }
@@ -1802,7 +1802,7 @@ export const getOrCreateAmericanOptionATAs = async (
   if (tnx.length > 0) {
     const signedTnxs = await convergence
       .rpc()
-      .signAllTransactions(tnx, [convergence.rpc().getDefaultFeePayer()]);
+      .signAllTransactions(tnx, [convergence.identity()]);
     for (const tx of signedTnxs) {
       convergence.rpc().sendTransaction(tx);
     }

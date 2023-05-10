@@ -1,12 +1,25 @@
 import { expect } from 'expect';
 
+import { OrderType, Quote, Side } from '@convergence-rfq/rfq';
 import { createUserCvg } from '../helpers';
 import { BASE_MINT_PK, QUOTE_MINT_PK } from '../constants';
 import { respond, confirmResponse, prepareSettlement, settle } from '../human';
+import { Mint, SpotInstrument } from '../../src';
 
 describe('integration.spot', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
+  let baseMint: Mint;
+  let quoteMint: Mint;
+
+  before(async () => {
+    baseMint = await takerCvg
+      .tokens()
+      .findMintByAddress({ address: BASE_MINT_PK });
+    quoteMint = await takerCvg
+      .tokens()
+      .findMintByAddress({ address: QUOTE_MINT_PK });
+  });
 
   it('sell 1.0 BTC', async () => {
     const amount = 1.0;
@@ -39,5 +52,34 @@ describe('integration.spot', () => {
      expect(settleResult.response).toHaveProperty('signature');
 
     // TODO: Verify token amounts via conversions are correct
+  });
+
+  it('buy 1.0 BTC', async () => {
+    const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
+      instruments: [
+        new SpotInstrument(takerCvg, baseMint, {
+          amount: 0,
+          side: Side.Bid,
+        }),
+      ],
+      orderType: OrderType.Buy,
+      fixedSize: { __kind: 'None', padding: 0 },
+      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+    });
+    expect(response).toHaveProperty('signature');
+    const respond: Quote = {
+      __kind: 'Standard',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 100 },
+      legsMultiplierBps: 0,
+    };
+    const { rfqResponse } = await makerCvg.rfqs().respond({
+      ask: respond,
+      rfq: rfq.address,
+    });
+    await confirmResponse(takerCvg, rfq, rfqResponse, 'ask');
+    await prepareSettlement(makerCvg, rfq, rfqResponse);
+    await prepareSettlement(takerCvg, rfq, rfqResponse);
+
+    await settle(takerCvg, rfq, rfqResponse);
   });
 });
