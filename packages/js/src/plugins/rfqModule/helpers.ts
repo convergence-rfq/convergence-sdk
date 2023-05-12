@@ -4,7 +4,6 @@ import {
   AccountMeta,
   Keypair,
   TransactionInstruction,
-  Transaction,
 } from '@solana/web3.js';
 import * as Spl from '@solana/spl-token';
 import { Sha256 } from '@aws-crypto/sha256-js';
@@ -1640,7 +1639,7 @@ export const getOrCreateEuropeanOptionATAs = async (
   responseAddress: PublicKey,
   caller: PublicKey
 ): Promise<ATAExistence> => {
-  const tnx: Transaction[] = [];
+  let flag = false;
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -1661,6 +1660,7 @@ export const getOrCreateEuropeanOptionATAs = async (
         (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
         (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
       ) {
+        flag = true;
         const instrumentData =
           PsyoptionsEuropeanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)
@@ -1671,47 +1671,25 @@ export const getOrCreateEuropeanOptionATAs = async (
           euroMetaKey
         );
         const { optionType } = instrumentData;
-        const optionDestinationAta = await getOrCreateATAInx(
+        await getOrCreateATA(
           convergence,
           optionType == OptionType.PUT
             ? euroMeta.putOptionMint
             : euroMeta.callOptionMint,
           caller
         );
-        if (optionDestinationAta instanceof TransactionInstruction) {
-          const tx = new Transaction().add(optionDestinationAta);
-          tx.recentBlockhash = (
-            await convergence.rpc().getLatestBlockhash()
-          ).blockhash;
-          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
-          tnx.push(tx);
-        }
 
-        const writerDestinationAta = await getOrCreateATAInx(
+        await getOrCreateATA(
           convergence,
           optionType == OptionType.PUT
             ? euroMeta.putWriterMint
             : euroMeta.callWriterMint,
           caller
         );
-        if (writerDestinationAta instanceof TransactionInstruction) {
-          const tx = new Transaction().add(writerDestinationAta);
-          tx.recentBlockhash = (
-            await convergence.rpc().getLatestBlockhash()
-          ).blockhash;
-          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
-          tnx.push(tx);
-        }
       }
     }
   }
-  if (tnx.length > 0) {
-    const signedTnxs = await convergence
-      .rpc()
-      .signAllTransactions(tnx, [convergence.identity()]);
-    for (const tx of signedTnxs) {
-      convergence.rpc().sendTransaction(tx);
-    }
+  if (flag === true) {
     return ATAExistence.EXISTS;
   }
   return ATAExistence.NOTEXISTS;
@@ -1723,7 +1701,6 @@ export const getOrCreateAmericanOptionATAs = async (
   caller: PublicKey,
   americanProgram: any
 ): Promise<ATAExistence> => {
-  const tnx: Transaction[] = [];
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -1731,7 +1708,7 @@ export const getOrCreateAmericanOptionATAs = async (
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
   const confirmedSide = response.confirmed?.side;
-
+  let flag = false;
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
   for (const leg of rfq.legs) {
@@ -1746,6 +1723,7 @@ export const getOrCreateAmericanOptionATAs = async (
         (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
         (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
       ) {
+        flag = true;
         const instrumentData =
           PsyoptionsAmericanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)
@@ -1757,55 +1735,28 @@ export const getOrCreateAmericanOptionATAs = async (
           metaKey
         );
 
-        const optionTokenAta = await getOrCreateATAInx(
+        // const optionTokenAta =
+        await getOrCreateATA(
           convergence,
           (optionMarket as OptionMarketWithKey).optionMint,
           caller
         );
-        if (optionTokenAta instanceof TransactionInstruction) {
-          const tx = new Transaction().add(optionTokenAta);
-          tx.recentBlockhash = (
-            await convergence.rpc().getLatestBlockhash()
-          ).blockhash;
-          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
-          tnx.push(tx);
-        }
-        const writerTokenAta = await getOrCreateATAInx(
+
+        await getOrCreateATA(
           convergence,
           optionMarket!.writerTokenMint,
           caller
         );
-        if (writerTokenAta instanceof TransactionInstruction) {
-          const tx = new Transaction().add(writerTokenAta);
-          tx.recentBlockhash = (
-            await convergence.rpc().getLatestBlockhash()
-          ).blockhash;
-          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
-          tnx.push(tx);
-        }
-        const underlyingTokenAta = await getOrCreateATAInx(
+
+        await getOrCreateATA(
           convergence,
           optionMarket!.underlyingAssetMint,
           caller
         );
-        if (underlyingTokenAta instanceof TransactionInstruction) {
-          const tx = new Transaction().add(underlyingTokenAta);
-          tx.recentBlockhash = (
-            await convergence.rpc().getLatestBlockhash()
-          ).blockhash;
-          tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
-          tnx.push(tx);
-        }
       }
     }
   }
-  if (tnx.length > 0) {
-    const signedTnxs = await convergence
-      .rpc()
-      .signAllTransactions(tnx, [convergence.identity()]);
-    for (const tx of signedTnxs) {
-      convergence.rpc().sendTransaction(tx);
-    }
+  if (flag === true) {
     return ATAExistence.EXISTS;
   }
   return ATAExistence.NOTEXISTS;
@@ -1941,14 +1892,6 @@ export const createAccountsAndMintOptions = async (
           optionType == OptionType.PUT
             ? euroMeta.putWriterMint
             : euroMeta.callWriterMint,
-          caller.publicKey
-        );
-        //@ts-ignore
-        const backupReceiver = await getOrCreateATA(
-          convergence,
-          optionType == OptionType.PUT
-            ? euroMeta.putOptionMint
-            : euroMeta.callOptionMint,
           caller.publicKey
         );
 
