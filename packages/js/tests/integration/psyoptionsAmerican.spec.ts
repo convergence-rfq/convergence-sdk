@@ -52,14 +52,12 @@ describe('integration.psyoptionsAmerican', () => {
     const { rfqResponse } = res1;
     await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
     const americanProgram = createAmericanProgram(takerCvg);
-
     await getOrCreateAmericanOptionATAs(
       takerCvg,
       rfqResponse.address,
       takerCvg.rpc().getDefaultFeePayer().publicKey,
       americanProgram
     );
-
     const tnx = await mintAmericanOptions(
       takerCvg,
       rfqResponse.address,
