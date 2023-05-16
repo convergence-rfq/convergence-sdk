@@ -1,22 +1,22 @@
 import { PublicKey } from '@solana/web3.js';
 import {
-  BaseAssetIndex,
-  RiskCategory,
-  PriceOracle,
+  BaseAssetIndex as SolitaBaseAssetIndex,
+  RiskCategory as SolitaRiskCategory,
+  PriceOracle as SolitaPriceOracle,
 } from '@convergence-rfq/rfq';
 
 import { BaseAssetAccount } from '../accounts';
 import { assert } from '../../../utils';
 
 /**
- * This model captures all the relevant information about a base asset
+ * This model captures all the relevant information about a Solita base asset
  * on the Solana blockchain.
  *
  * @group Models
  */
-export type BaseAsset = {
+export type SolitaBaseAsset = {
   /** A model identifier to distinguish models in the SDK. */
-  readonly model: 'baseAsset';
+  readonly model: 'solitaBaseAsset';
 
   /** The address of the base asset. */
   readonly address: PublicKey;
@@ -25,33 +25,37 @@ export type BaseAsset = {
   readonly bump: number;
 
   /** The base asset index. */
-  readonly index: BaseAssetIndex;
+  readonly index: SolitaBaseAssetIndex;
 
   /** The risk category for the base asset */
-  readonly riskCategory: RiskCategory;
+  readonly riskCategory: SolitaRiskCategory;
 
   /** Is base asset enabled or disabled. */
   readonly enabled: boolean;
 
   /** The price oracle for the base asset. */
-  readonly priceOracle: PriceOracle;
+  readonly priceOracle: SolitaPriceOracle;
 
   /** The ticker for the base asset. */
   readonly ticker: string;
 };
 
 /** @group Model Helpers */
-export const isBaseAsset = (value: any): value is BaseAsset =>
-  typeof value === 'object' && value.model === 'baseAsset';
+export const isSolitaBaseAsset = (value: any): value is SolitaBaseAsset =>
+  typeof value === 'object' && value.model === 'solitaBaseAsset';
 
 /** @group Model Helpers */
-export function assertBaseAsset(value: any): asserts value is BaseAsset {
-  assert(isBaseAsset(value), `Expected BaseAsset model`);
+export function assertSolitaBaseAsset(
+  value: any
+): asserts value is SolitaBaseAsset {
+  assert(isSolitaBaseAsset(value), 'Expected SolitaBaseAsset model');
 }
 
 /** @group Model Helpers */
-export const toBaseAsset = (account: BaseAssetAccount): BaseAsset => ({
-  model: 'baseAsset',
+export const toSolitaBaseAsset = (
+  account: BaseAssetAccount
+): SolitaBaseAsset => ({
+  model: 'solitaBaseAsset',
   address: account.publicKey,
   bump: account.data.bump,
   index: account.data.index,
@@ -60,3 +64,25 @@ export const toBaseAsset = (account: BaseAssetAccount): BaseAsset => ({
   priceOracle: account.data.priceOracle,
   ticker: account.data.ticker,
 });
+
+export type RiskCategory =
+  | 'very-low'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'very-high'
+  | 'custom-1'
+  | 'custom-2'
+  | 'custom-3';
+
+export type PriceOracle = 'pyth' | null;
+
+export type BaseAsset = {
+  readonly model: 'baseAsset';
+  readonly address: string;
+  readonly index: number;
+  readonly riskCategory: RiskCategory;
+  readonly enabled: boolean;
+  readonly priceOracle: PriceOracle;
+  readonly ticker: string;
+};

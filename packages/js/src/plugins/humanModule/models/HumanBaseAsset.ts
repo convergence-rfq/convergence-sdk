@@ -1,5 +1,5 @@
 import { RiskCategory } from '@convergence-rfq/rfq';
-import { BaseAsset } from '../../protocolModule/models/BaseAsset';
+import { BaseBaseAsset } from '../../protocolModule/models/BaseAsset';
 
 export type HumanOracle = {
   readonly address: string;
@@ -42,7 +42,7 @@ export type HumanBaseAsset = {
   readonly ticker: string;
 };
 
-export const toHumanBaseAsset = (baseAsset: BaseAsset): HumanBaseAsset => {
+export const toHumanBaseAsset = (baseAsset: BaseBaseAsset): HumanBaseAsset => {
   return {
     model: 'humanBaseAsset',
     address: baseAsset.address.toBase58(),

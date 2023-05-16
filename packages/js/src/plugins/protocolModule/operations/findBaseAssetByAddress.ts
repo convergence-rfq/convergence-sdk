@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 
 import { toBaseAssetAccount } from '../accounts';
-import { BaseAsset, toBaseAsset } from '../models/BaseAsset';
+import { BaseBaseAsset, toBaseAsset } from '../models/BaseAsset';
 import {
   Operation,
   OperationHandler,
@@ -50,7 +50,7 @@ export type FindBaseAssetByAddressInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindBaseAssetByAddressOutput = BaseAsset;
+export type FindBaseAssetByAddressOutput = BaseBaseAsset;
 
 /**
  * @group Operations

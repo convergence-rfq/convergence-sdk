@@ -7,7 +7,7 @@ import {
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertBaseAsset, BaseAsset } from '../models/BaseAsset';
+import { assertBaseAsset, BaseBaseAsset } from '../models/BaseAsset';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -80,7 +80,7 @@ export type AddBaseAssetOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
-  baseAsset: BaseAsset;
+  baseAsset: BaseBaseAsset;
 };
 
 /**

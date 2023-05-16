@@ -1,4 +1,4 @@
-import { BaseAsset, toBaseAsset } from '../models';
+import { BaseBaseAsset, toBaseAsset } from '../models';
 import { toBaseAssetAccount } from '../accounts';
 import { ProtocolGpaBuilder } from '../ProtocolGpaBuilder';
 import {
@@ -45,7 +45,7 @@ export type GetBaseAssetsInput = {} | undefined;
  * @group Operations
  * @category Outputs
  */
-export type GetBaseAssetsOutput = BaseAsset[];
+export type GetBaseAssetsOutput = BaseBaseAsset[];
 
 /**
  * @group Operations
@@ -69,7 +69,7 @@ export const getBaseAssetsOperationHandler: OperationHandler<GetBaseAssetsOperat
       scope.throwIfCanceled();
 
       return baseAssets
-        .map<BaseAsset | null>((account) => {
+        .map<BaseBaseAsset | null>((account) => {
           if (account === null) {
             return null;
           }
@@ -80,8 +80,8 @@ export const getBaseAssetsOperationHandler: OperationHandler<GetBaseAssetsOperat
             return null;
           }
         })
-        .filter((baseAsset): baseAsset is BaseAsset => baseAsset !== null)
-        .sort((a: BaseAsset, b: BaseAsset) => {
+        .filter((baseAsset): baseAsset is BaseBaseAsset => baseAsset !== null)
+        .sort((a: BaseBaseAsset, b: BaseBaseAsset) => {
           return a.index.value - b.index.value;
         });
     },
