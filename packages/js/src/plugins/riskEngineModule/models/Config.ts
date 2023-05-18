@@ -5,7 +5,10 @@ import { bignum } from '@convergence-rfq/beet';
 import { ConfigAccount } from '../accounts';
 import { RiskCategoryInfo, InstrumentInfo } from '../types';
 import { assert } from '../../../utils';
-import { RiskCategory, toSolitaRiskCategory } from '../../protocolModule';
+import {
+  RiskCategory,
+  toSolitaRiskCategory,
+} from '../../protocolModule/models';
 
 /**
  * This model captures all the relevant information about a Risk Engine Config

@@ -61,10 +61,9 @@ export type AddBaseAssetInput = {
    */
   protocol?: PublicKey;
 
-  /*
-   * ARGS
+  /**
+   * The index of the BaseAsset.
    */
-
   index: number;
 
   ticker: string;
