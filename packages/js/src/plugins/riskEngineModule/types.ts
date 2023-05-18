@@ -1,4 +1,4 @@
-export { Side, RiskCategory } from '@convergence-rfq/rfq';
+export { Side, RiskCategory as SolitaRiskCatgory } from '@convergence-rfq/rfq';
 export type {
   Scenario,
   RiskCategoryInfo,

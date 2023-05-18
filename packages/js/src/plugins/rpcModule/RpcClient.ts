@@ -38,6 +38,7 @@ import {
 import { TransactionBuilder, zipMap } from '../../utils';
 
 export type ConfirmTransactionResponse = RpcResponseAndContext<SignatureResult>;
+
 export type SendAndConfirmTransactionResponse = {
   signature: TransactionSignature;
   confirmResponse: ConfirmTransactionResponse;

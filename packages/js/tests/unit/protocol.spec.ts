@@ -4,7 +4,6 @@ import {
   protocolCache,
   baseAssetsCache,
   registeredMintsCache,
-  RiskCategory,
 } from '../../src';
 import { createUserCvg } from '../helpers';
 import { COLLATERAL_MINT_PK, SWITCHBOARD_SOL_ORACLE_PK } from '../constants';
@@ -29,10 +28,7 @@ describe('unit.protocol', () => {
   });
 
   it('get pda [base asset]', async () => {
-    const baseAssetPda = cvg
-      .protocol()
-      .pdas()
-      .baseAsset({ index: { value: 0 } });
+    const baseAssetPda = cvg.protocol().pdas().baseAsset({ index: 0 });
     const baseAssets = await cvg.protocol().getBaseAssets();
     expect(baseAssetPda.toBase58()).toEqual(baseAssets[0].address.toBase58());
   });
@@ -114,11 +110,11 @@ describe('unit.protocol', () => {
     const baseAssets = await cvg.protocol().getBaseAssets();
     const { response } = await cvg.protocol().addBaseAsset({
       authority: cvg.identity(),
-      index: { value: baseAssets.length },
+      index: baseAssets.length,
       ticker: 'GOD',
-      riskCategory: RiskCategory.VeryLow,
+      riskCategory: 'very-low',
       priceOracle: {
-        __kind: 'Switchboard',
+        name: 'switchboard',
         address: SWITCHBOARD_SOL_ORACLE_PK,
       },
     });
@@ -141,10 +137,7 @@ describe('unit.protocol', () => {
 
   it('find base asset by address', async () => {
     const baseAsset = await cvg.protocol().findBaseAssetByAddress({
-      address: cvg
-        .protocol()
-        .pdas()
-        .baseAsset({ index: { value: 0 } }),
+      address: cvg.protocol().pdas().baseAsset({ index: 0 }),
     });
     expect(baseAsset).toHaveProperty('address');
   });

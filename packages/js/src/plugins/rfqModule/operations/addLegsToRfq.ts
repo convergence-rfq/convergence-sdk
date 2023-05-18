@@ -164,10 +164,7 @@ export const addLegsToRfqBuilder = async (
   }
 
   for (const value of baseAssetIndexValues) {
-    const baseAsset = convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: { value } });
+    const baseAsset = convergence.protocol().pdas().baseAsset({ index: value });
 
     const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,

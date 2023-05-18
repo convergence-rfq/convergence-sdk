@@ -617,7 +617,7 @@ export const legsToBaseAssetAccounts = (
     const baseAsset = convergence
       .protocol()
       .pdas()
-      .baseAsset({ index: { value: leg.baseAssetIndex.value } });
+      .baseAsset({ index: leg.baseAssetIndex.value });
 
     const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,
