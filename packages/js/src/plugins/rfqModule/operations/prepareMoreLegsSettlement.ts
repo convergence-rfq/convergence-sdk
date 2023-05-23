@@ -4,13 +4,13 @@ import {
   SYSVAR_RENT_PUBKEY,
   ComputeBudgetProgram,
 } from '@solana/web3.js';
-import { getOrCreateATA } from '../helpers';
 import {
   createPrepareMoreLegsSettlementInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
+import { getOrCreateATA } from '../helpers';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {

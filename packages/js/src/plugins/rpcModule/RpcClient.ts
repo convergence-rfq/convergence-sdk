@@ -154,6 +154,21 @@ export class RpcClient {
     }
   }
 
+  async serializeAndSendTransaction(
+    transaction: Transaction,
+    sendOptions: SendOptions = {}
+  ): Promise<TransactionSignature> {
+    const rawTransaction = transaction.serialize();
+    try {
+      return await this.convergence.connection.sendRawTransaction(
+        rawTransaction,
+        sendOptions
+      );
+    } catch (error) {
+      throw this.parseProgramError(error, transaction);
+    }
+  }
+
   async confirmTransaction(
     signature: TransactionSignature,
     blockhashWithExpiryBlockHeight: BlockhashWithExpiryBlockHeight,
