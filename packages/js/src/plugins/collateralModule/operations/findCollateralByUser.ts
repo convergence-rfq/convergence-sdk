@@ -93,8 +93,9 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
         )[0];
 
       const collateralMint = await collateralMintCache.get(convergence);
-      collateralModel.lockedTokensAmount /= 10 ** collateralMint.decimals;
-
+      if (collateralModel) {
+        collateralModel.lockedTokensAmount /= 10 ** collateralMint.decimals;
+      }
       return collateralModel;
     },
   };
