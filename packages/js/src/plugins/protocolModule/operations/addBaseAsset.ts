@@ -1,13 +1,15 @@
-import {
-  createAddBaseAssetInstruction,
-  BaseAssetIndex,
-  RiskCategory,
-  PriceOracle,
-} from '@convergence-rfq/rfq';
+import { createAddBaseAssetInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertBaseAsset, BaseAsset } from '../models/BaseAsset';
+import {
+  assertBaseAsset,
+  BaseAsset,
+  RiskCategory,
+  PriceOracle,
+  toSolitaRiskCategory,
+  toSolitaPriceOracle,
+} from '../models/BaseAsset';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -59,11 +61,10 @@ export type AddBaseAssetInput = {
    */
   protocol?: PublicKey;
 
-  /*
-   * ARGS
+  /**
+   * The index of the BaseAsset.
    */
-
-  index: BaseAssetIndex;
+  index: number;
 
   ticker: string;
 
@@ -103,7 +104,7 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
         scope.confirmOptions
       );
       const baseAssets = await convergence.protocol().getBaseAssets();
-      const baseAsset = baseAssets.find((ba) => ba.index.value === index.value);
+      const baseAsset = baseAssets.find((ba) => ba.index === index);
       assertBaseAsset(baseAsset);
 
       return { response, baseAsset };
@@ -158,10 +159,10 @@ export const addBaseAssetBuilder = (
           baseAsset,
         },
         {
-          index,
+          index: { value: index },
           ticker,
-          riskCategory,
-          priceOracle,
+          riskCategory: toSolitaRiskCategory(riskCategory),
+          priceOracle: toSolitaPriceOracle(priceOracle),
         },
         rfqProgram.address
       ),

@@ -1,9 +1,14 @@
 import { PublicKey } from '@solana/web3.js';
+import { RiskCategoryChange as SolitaRiskCategoryChange } from '@convergence-rfq/risk-engine';
 import { bignum } from '@convergence-rfq/beet';
 
 import { ConfigAccount } from '../accounts';
 import { RiskCategoryInfo, InstrumentInfo } from '../types';
 import { assert } from '../../../utils';
+import {
+  RiskCategory,
+  toSolitaRiskCategory,
+} from '../../protocolModule/models';
 
 /**
  * This model captures all the relevant information about a Risk Engine Config
@@ -40,13 +45,31 @@ export type Config = {
   readonly instrumentTypes: InstrumentInfo[];
 };
 
+export type RiskCategoryChange = {
+  /** The risk category index. */
+  category: RiskCategory;
+
+  /** The risk category info. */
+  value: any;
+};
+
+/** @group Model helpers */
+export const toSolitaRiskCategoryChange = (
+  change: RiskCategoryChange
+): SolitaRiskCategoryChange => {
+  return {
+    riskCategoryIndex: toSolitaRiskCategory(change.category),
+    newValue: change.value,
+  };
+};
+
 /** @group Model helpers */
 export const isConfig = (value: any): value is Response =>
   typeof value === 'object' && value.model === 'config';
 
 /** @group Model helpers */
 export function assertConfig(value: any): asserts value is Response {
-  assert(isConfig(value), `Expected Config model`);
+  assert(isConfig(value), 'Expected Config model');
 }
 
 /** @group Model helpers */

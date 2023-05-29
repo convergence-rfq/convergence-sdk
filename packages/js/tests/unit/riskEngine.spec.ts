@@ -60,8 +60,8 @@ describe('unit.riskEngine', () => {
     const { config } = await cvg.riskEngine().setRiskCategoriesInfo({
       changes: [
         {
-          newValue: DEFAULT_RISK_CATEGORIES_INFO.veryLow,
-          riskCategoryIndex: RiskCategory.VeryLow,
+          value: DEFAULT_RISK_CATEGORIES_INFO.veryLow,
+          category: 'very-low',
         },
       ],
     });
@@ -72,8 +72,8 @@ describe('unit.riskEngine', () => {
     const { config } = await cvg.riskEngine().setRiskCategoriesInfo({
       changes: [
         {
-          newValue: DEFAULT_RISK_CATEGORIES_INFO.low,
-          riskCategoryIndex: RiskCategory.Low,
+          value: DEFAULT_RISK_CATEGORIES_INFO.low,
+          category: 'low',
         },
       ],
     });
@@ -84,8 +84,8 @@ describe('unit.riskEngine', () => {
     const { config } = await cvg.riskEngine().setRiskCategoriesInfo({
       changes: [
         {
-          newValue: DEFAULT_RISK_CATEGORIES_INFO.medium,
-          riskCategoryIndex: RiskCategory.Medium,
+          value: DEFAULT_RISK_CATEGORIES_INFO.medium,
+          category: 'medium',
         },
       ],
     });
@@ -96,8 +96,8 @@ describe('unit.riskEngine', () => {
     const { config } = await cvg.riskEngine().setRiskCategoriesInfo({
       changes: [
         {
-          newValue: DEFAULT_RISK_CATEGORIES_INFO.high,
-          riskCategoryIndex: RiskCategory.High,
+          value: DEFAULT_RISK_CATEGORIES_INFO.high,
+          category: 'high',
         },
       ],
     });
@@ -108,8 +108,8 @@ describe('unit.riskEngine', () => {
     const { config } = await cvg.riskEngine().setRiskCategoriesInfo({
       changes: [
         {
-          newValue: DEFAULT_RISK_CATEGORIES_INFO.veryHigh,
-          riskCategoryIndex: RiskCategory.VeryHigh,
+          value: DEFAULT_RISK_CATEGORIES_INFO.veryHigh,
+          category: 'very-high',
         },
       ],
     });

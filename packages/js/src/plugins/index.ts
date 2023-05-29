@@ -20,4 +20,3 @@ export * from './protocolModule';
 export * from './storageModule';
 export * from './systemModule';
 export * from './tokenModule';
-export * from './humanModule';

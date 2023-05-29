@@ -281,12 +281,8 @@ export const respondToRfqBuilder = async (
 
   const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
 
-  for (const value of baseAssetIndexValues) {
-    const baseAsset = convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: { value } });
-
+  for (const index of baseAssetIndexValues) {
+    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
     const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,
       isSigner: false,

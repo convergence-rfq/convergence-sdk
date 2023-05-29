@@ -1,10 +1,4 @@
-import {
-  AuthoritySide,
-  BaseAssetIndex,
-  Leg,
-  RiskCategory,
-  Side,
-} from '@convergence-rfq/rfq';
+import { AuthoritySide, Leg, RiskCategory, Side } from '@convergence-rfq/rfq';
 import {
   futureCommonDataBeet,
   InstrumentType,
@@ -18,7 +12,7 @@ import { Commitment, PublicKey } from '@solana/web3.js';
 import { blackScholes } from 'black-scholes';
 
 import { Convergence } from '../../Convergence';
-import { toBaseAsset } from '../protocolModule';
+import { toBaseAsset, toSolitaRiskCategory } from '../protocolModule';
 import { toBaseAssetAccount } from '../protocolModule/accounts';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
 import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
@@ -70,7 +64,7 @@ export async function calculateRisk(
   const baseAssetIds = new Set(legs.map((leg) => leg.baseAssetIndex.value)); // select unique base asset ids
   const baseAssetInfos = await Promise.all(
     Array.from(baseAssetIds).map((id) =>
-      fetchBaseAssetInfo(convergence, { value: id }, commitment)
+      fetchBaseAssetInfo(convergence, id, commitment)
     )
   );
   const instrumentTypesMapping = config.instrumentTypes;
@@ -137,7 +131,7 @@ function calculateRiskInner(
 
 async function fetchBaseAssetInfo(
   convergence: Convergence,
-  baseAssetIndex: BaseAssetIndex,
+  baseAssetIndex: number,
   commitment?: Commitment
 ): Promise<BaseAssetInfo> {
   const address = convergence
@@ -154,8 +148,8 @@ async function fetchBaseAssetInfo(
   );
 
   return {
-    index: baseAssetIndex.value,
-    riskCategory: baseAsset.riskCategory,
+    index: baseAssetIndex,
+    riskCategory: toSolitaRiskCategory(baseAsset.riskCategory),
     price,
   };
 }

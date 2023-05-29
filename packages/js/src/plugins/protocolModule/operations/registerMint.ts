@@ -169,7 +169,7 @@ export const registerMintBuilder = async (
     baseAsset = convergence
       .protocol()
       .pdas()
-      .baseAsset({ index: { value: baseAssetIndex } });
+      .baseAsset({ index: baseAssetIndex });
   } else {
     baseAsset = PublicKey.default;
   }

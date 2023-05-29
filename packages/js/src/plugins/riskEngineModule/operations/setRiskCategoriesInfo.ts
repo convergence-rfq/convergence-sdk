@@ -1,10 +1,13 @@
-import {
-  createSetRiskCategoriesInfoInstruction,
-  RiskCategoryChange,
-} from '@convergence-rfq/risk-engine';
+import { createSetRiskCategoriesInfoInstruction } from '@convergence-rfq/risk-engine';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertConfig, Config, toConfig } from '../models';
+import {
+  assertConfig,
+  Config,
+  toConfig,
+  RiskCategoryChange,
+  toSolitaRiskCategoryChange,
+} from '../models';
 import { toConfigAccount } from '../accounts';
 import { Convergence } from '../../../Convergence';
 import {
@@ -145,7 +148,7 @@ export const setRiskCategoriesInfoBuilder = (
           protocol,
           config,
         },
-        { changes },
+        { changes: changes.map(toSolitaRiskCategoryChange) },
         riskEngineProgram.address
       ),
       signers: [authority],

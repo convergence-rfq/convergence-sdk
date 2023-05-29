@@ -1,4 +1,4 @@
-import { BaseAsset, toBaseAsset } from '../models';
+import { toBaseAsset, BaseAsset } from '../models';
 import { toBaseAssetAccount } from '../accounts';
 import { ProtocolGpaBuilder } from '../ProtocolGpaBuilder';
 import {
@@ -82,7 +82,7 @@ export const getBaseAssetsOperationHandler: OperationHandler<GetBaseAssetsOperat
         })
         .filter((baseAsset): baseAsset is BaseAsset => baseAsset !== null)
         .sort((a: BaseAsset, b: BaseAsset) => {
-          return a.index.value - b.index.value;
+          return a.index - b.index;
         });
     },
   };
