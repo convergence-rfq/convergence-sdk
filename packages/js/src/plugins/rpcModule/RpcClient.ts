@@ -155,6 +155,37 @@ export class RpcClient {
     }
   }
 
+  async serializeAndSendTransaction(
+    transaction: Transaction,
+    confirmOptions?: ConfirmOptions
+  ): Promise<SendAndConfirmTransactionResponse> {
+    const blockhashWithExpiryBlockHeight = {
+      blockhash: transaction.recentBlockhash as string,
+      lastValidBlockHeight: transaction.lastValidBlockHeight as number,
+    };
+    const rawTransaction = transaction.serialize();
+    const sendOptions: SendOptions = {
+      skipPreflight: confirmOptions?.skipPreflight,
+      preflightCommitment: confirmOptions?.preflightCommitment,
+      maxRetries: confirmOptions?.maxRetries,
+      minContextSlot: confirmOptions?.minContextSlot,
+    };
+    try {
+      const signature = await this.convergence.connection.sendRawTransaction(
+        rawTransaction,
+        sendOptions
+      );
+      const confirmResponse = await this.confirmTransaction(
+        signature,
+        blockhashWithExpiryBlockHeight,
+        confirmOptions?.commitment
+      );
+      return { signature, confirmResponse, ...blockhashWithExpiryBlockHeight };
+    } catch (error) {
+      throw this.parseProgramError(error, transaction);
+    }
+  }
+
   async confirmTransaction(
     signature: TransactionSignature,
     blockhashWithExpiryBlockHeight: BlockhashWithExpiryBlockHeight,

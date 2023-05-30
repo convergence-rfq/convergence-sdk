@@ -81,6 +81,30 @@ import {
   createAndFinalizeRfqConstructionOperation,
 } from './operations';
 import { Response } from './models/Response';
+import {
+  UnlockMultipleResponseCollateralInput,
+  unlockMultipleResponseCollateralOperation,
+} from './operations/unlockMultipleResponseCollateral';
+import {
+  UnlockMultipleRfqCollateralInput,
+  unlockMultipleRfqCollateralOperation,
+} from './operations/unlockMultipleRfqCollateral';
+import {
+  CancelMultipleResponseInput,
+  cancelMultipleResponseOperation,
+} from './operations/cancelMultipleResponse';
+import {
+  CancelMultipleRfqInput,
+  cancelMultipleRfqOperation,
+} from './operations/cancelMultipleRfq';
+import {
+  CleanUpMultipleRfqInput,
+  cleanUpMultipleRfqOperation,
+} from './operations/cleanUpMultipleRfq';
+import {
+  CleanUpMultipleResponsesInput,
+  cleanUpMultipleResponsesOperation,
+} from './operations/cleanUpMultipleResponse';
 
 /**
  * This is a client for the Rfq module.
@@ -158,11 +182,28 @@ export class RfqClient {
       .execute(cancelResponseOperation(input), options);
   }
 
+  /** {@inheritDoc cancelMultipleResponseOperation} */
+  cancelMultipleResponse(
+    input: CancelMultipleResponseInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(cancelMultipleResponseOperation(input), options);
+  }
+
   /** {@inheritDoc cancelRfqOperation} */
   cancelRfq(input: CancelRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(cancelRfqOperation(input), options);
+  }
+
+  /** {@inheritDoc cancelMultipleRfqOperation} */
+  cancelMultipleRfq(input: CancelMultipleRfqInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(cancelMultipleRfqOperation(input), options);
   }
 
   /** {@inheritDoc cleanUpResponseOperation} */
@@ -181,12 +222,31 @@ export class RfqClient {
       .operations()
       .execute(cleanUpResponseLegsOperation(input), options);
   }
+  /** {@inheritDoc cleanUpMultipleResponsesOperation} */
+  cleanUpMultipleResponses(
+    input: CleanUpMultipleResponsesInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(cleanUpMultipleResponsesOperation(input), options);
+  }
 
   /** {@inheritDoc cleanUpRfqOperation} */
   cleanUpRfq(input: CleanUpRfqInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(cleanUpRfqOperation(input), options);
+  }
+
+  /** {@inheritDoc cleanUpMultipleRfqOperation} */
+  cleanUpMultipleRfq(
+    input: CleanUpMultipleRfqInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(cleanUpMultipleRfqOperation(input), options);
   }
 
   /** {@inheritDoc cleanUpRfqOperation} */
@@ -485,6 +545,16 @@ export class RfqClient {
       .execute(unlockResponseCollateralOperation(input), options);
   }
 
+  /** {@inheritDoc unlockMultipleResponseCollateralOperation} */
+  unlockMultipleResponseCollateral(
+    input: UnlockMultipleResponseCollateralInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(unlockMultipleResponseCollateralOperation(input), options);
+  }
+
   /** {@inheritDoc unlockRfqCollateralOperation} */
   unlockRfqCollateral(
     input: UnlockRfqCollateralInput,
@@ -493,6 +563,16 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(unlockRfqCollateralOperation(input), options);
+  }
+
+  /** {@inheritDoc unlockMultipleRfqCollateralOperation} */
+  unlockMultipleRfqCollateral(
+    input: UnlockMultipleRfqCollateralInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(unlockMultipleRfqCollateralOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */
