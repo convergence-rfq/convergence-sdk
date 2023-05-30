@@ -2,13 +2,10 @@ import { createSetRiskCategoriesInfoInstruction } from '@convergence-rfq/risk-en
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
-  assertConfig,
   Config,
-  toConfig,
   RiskCategoryChange,
   toSolitaRiskCategoryChange,
 } from '../models';
-import { toConfigAccount } from '../accounts';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -18,6 +15,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { riskEngineConfigCache } from '../cache';
 
 const Key = 'SetRiskCategoriesInfoOperation' as const;
 
@@ -96,12 +94,8 @@ export const setRiskCategoriesInfoOperationHandler: OperationHandler<SetRiskCate
         scope.confirmOptions
       );
 
-      const account = await convergence
-        .rpc()
-        .getAccount(convergence.riskEngine().pdas().config(), commitment);
-      const config = toConfig(toConfigAccount(account));
-      scope.throwIfCanceled();
-      assertConfig(config);
+      riskEngineConfigCache.clear();
+      const config = await convergence.riskEngine().fetchConfig(scope);
 
       return { response, config };
     },
