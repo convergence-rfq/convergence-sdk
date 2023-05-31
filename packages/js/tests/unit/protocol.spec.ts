@@ -5,8 +5,8 @@ import {
   baseAssetsCache,
   registeredMintsCache,
 } from '../../src';
-import { createUserCvg } from '../helpers';
-import { COLLATERAL_MINT_PK, SWITCHBOARD_SOL_ORACLE_PK } from '../constants';
+import { createUserCvg, generateTicker } from '../helpers';
+import { COLLATERAL_MINT_PK, SWITCHBOARD_BTC_ORACLE_PK } from '../constants';
 
 describe('unit.protocol', () => {
   const cvg = createUserCvg('dao');
@@ -30,6 +30,7 @@ describe('unit.protocol', () => {
   it('get pda [base asset]', async () => {
     const baseAssetPda = cvg.protocol().pdas().baseAsset({ index: 0 });
     const baseAssets = await cvg.protocol().getBaseAssets();
+    expect(baseAssets[0].index).toEqual(0);
     expect(baseAssetPda.toBase58()).toEqual(baseAssets[0].address.toBase58());
   });
 
@@ -110,12 +111,12 @@ describe('unit.protocol', () => {
     const baseAssets = await cvg.protocol().getBaseAssets();
     const { response } = await cvg.protocol().addBaseAsset({
       authority: cvg.identity(),
-      index: baseAssets.length,
-      ticker: 'GOD',
+      index: baseAssets.length + 1,
+      ticker: generateTicker(),
       riskCategory: 'very-low',
       priceOracle: {
-        name: 'switchboard',
-        address: SWITCHBOARD_SOL_ORACLE_PK,
+        source: 'switchboard',
+        address: SWITCHBOARD_BTC_ORACLE_PK,
       },
     });
     expect(response).toHaveProperty('signature');
@@ -124,7 +125,7 @@ describe('unit.protocol', () => {
   it('register mint', async () => {
     const { mint } = await cvg.tokens().createMint({ decimals: 3 });
     const { response } = await cvg.protocol().registerMint({
-      baseAssetIndex: 0,
+      baseAssetIndex: 1,
       mint: mint.address,
     });
     expect(response).toHaveProperty('signature');
@@ -137,7 +138,7 @@ describe('unit.protocol', () => {
 
   it('find base asset by address', async () => {
     const baseAsset = await cvg.protocol().findBaseAssetByAddress({
-      address: cvg.protocol().pdas().baseAsset({ index: 0 }),
+      address: cvg.protocol().pdas().baseAsset({ index: 1 }),
     });
     expect(baseAsset).toHaveProperty('address');
   });

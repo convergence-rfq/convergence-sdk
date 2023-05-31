@@ -3,7 +3,6 @@ import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
-  BaseAsset,
   RiskCategory,
   PriceOracle,
   toSolitaRiskCategory,
@@ -80,8 +79,6 @@ export type AddBaseAssetInput = {
 export type AddBaseAssetOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
-
-  baseAsset: BaseAsset;
 };
 
 /**
@@ -95,7 +92,6 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<AddBaseAssetOutput> => {
-      const { index } = operation.input;
       scope.throwIfCanceled();
 
       const builder = addBaseAssetBuilder(convergence, operation.input, scope);
@@ -103,17 +99,9 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
         convergence,
         scope.confirmOptions
       );
-
       baseAssetsCache.clear();
-      const baseAssetAddress = convergence
-        .protocol()
-        .pdas()
-        .baseAsset({ index });
-      const baseAsset = await convergence
-        .protocol()
-        .findBaseAssetByAddress({ address: baseAssetAddress });
 
-      return { response, baseAsset };
+      return { response };
     },
   };
 
@@ -154,6 +142,8 @@ export const addBaseAssetBuilder = (
   } = params;
 
   const baseAsset = convergence.protocol().pdas().baseAsset({ index });
+  const { oracleSource, inPlacePrice, pythOracle, switchboardOracle } =
+    toSolitaPriceOracle(priceOracle);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -168,7 +158,10 @@ export const addBaseAssetBuilder = (
           index: { value: index },
           ticker,
           riskCategory: toSolitaRiskCategory(riskCategory),
-          priceOracle: toSolitaPriceOracle(priceOracle),
+          oracleSource,
+          inPlacePrice,
+          pythOracle,
+          switchboardOracle,
         },
         rfqProgram.address
       ),

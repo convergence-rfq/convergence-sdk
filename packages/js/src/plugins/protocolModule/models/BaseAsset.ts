@@ -2,8 +2,9 @@ import { PublicKey } from '@solana/web3.js';
 import {
   BaseAssetIndex as SolitaBaseAssetIndex,
   RiskCategory as SolitaRiskCategory,
-  PriceOracle as SolitaPriceOracle,
+  OracleSource as SolitaOracleSource,
 } from '@convergence-rfq/rfq';
+import { COption } from '@convergence-rfq/beet';
 
 import { BaseAssetAccount } from '../accounts';
 import { assert } from '../../../utils';
@@ -19,8 +20,9 @@ export type RiskCategory =
   | 'custom-3';
 
 export type PriceOracle = {
-  name: 'switchboard';
-  address: PublicKey;
+  source: 'switchboard' | 'pyth' | 'in-place';
+  address?: PublicKey;
+  price?: number;
 };
 
 /**
@@ -72,7 +74,7 @@ export const toBaseAssetIndex = (
 };
 
 /** @group Model Helpers */
-export const toBaseAssetRiskCategory = (
+export const toRiskCategory = (
   solitaRiskCategory: SolitaRiskCategory
 ): RiskCategory => {
   switch (solitaRiskCategory) {
@@ -96,31 +98,68 @@ export const toBaseAssetRiskCategory = (
 };
 
 /** @group Model Helpers */
-export const toBaseAssetPriceOracle = (
-  solitaPriceOracle: SolitaPriceOracle
+export const toPriceOracle = (
+  solitaOracleSource: SolitaOracleSource,
+  switchboardOracle: PublicKey,
+  pythOracle: PublicKey
 ): PriceOracle => {
-  switch (solitaPriceOracle.__kind) {
-    case 'Switchboard':
+  switch (solitaOracleSource) {
+    case SolitaOracleSource.Switchboard:
       return {
-        name: 'switchboard',
-        address: solitaPriceOracle.address,
+        source: 'switchboard',
+        address: switchboardOracle,
+      };
+    case SolitaOracleSource.Pyth:
+      return {
+        source: 'pyth',
+        address: pythOracle,
+      };
+    case SolitaOracleSource.InPlace:
+      return {
+        source: 'in-place',
+        price: 0,
       };
     default:
-      throw new Error(`Unsupported price oracle: ${solitaPriceOracle}`);
+      throw new Error(`Unsupported price oracle: ${solitaOracleSource}`);
   }
 };
 
 /** @group Model Helpers */
 export const toSolitaPriceOracle = (
-  priceOracle: PriceOracle
-): SolitaPriceOracle => {
-  switch (priceOracle.name) {
+  priceOracle: PriceOracle,
+  price?: number
+): {
+  oracleSource: SolitaOracleSource;
+  pythOracle: COption<PublicKey>;
+  switchboardOracle: COption<PublicKey>;
+  inPlacePrice: COption<number>;
+} => {
+  switch (priceOracle.source) {
     case 'switchboard':
+      if (!priceOracle.address) throw new Error('Missing oracle address');
       return {
-        __kind: 'Switchboard',
-        address: priceOracle.address,
+        oracleSource: SolitaOracleSource.Switchboard,
+        switchboardOracle: priceOracle.address,
+        pythOracle: null,
+        inPlacePrice: null,
+      };
+    case 'pyth':
+      if (!priceOracle.address) throw new Error('Missing oracle address');
+      return {
+        oracleSource: SolitaOracleSource.Pyth,
+        switchboardOracle: null,
+        pythOracle: priceOracle.address,
+        inPlacePrice: null,
+      };
+    case 'in-place':
+      return {
+        oracleSource: SolitaOracleSource.InPlace,
+        switchboardOracle: null,
+        pythOracle: null,
+        inPlacePrice: price ?? 0,
       };
     default:
+      console.log('crap');
       throw new Error(`Unsupported price oracle: ${priceOracle}`);
   }
 };
@@ -155,7 +194,11 @@ export const toBaseAsset = (account: BaseAssetAccount): BaseAsset => ({
   bump: account.data.bump,
   index: toBaseAssetIndex(account.data.index),
   enabled: account.data.enabled,
-  riskCategory: toBaseAssetRiskCategory(account.data.riskCategory),
-  priceOracle: toBaseAssetPriceOracle(account.data.priceOracle),
+  riskCategory: toRiskCategory(account.data.riskCategory),
+  priceOracle: toPriceOracle(
+    account.data.oracleSource,
+    account.data.switchboardOracle,
+    account.data.pythOracle
+  ),
   ticker: account.data.ticker,
 });

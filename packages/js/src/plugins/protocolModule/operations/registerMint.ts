@@ -93,7 +93,6 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       convergence: Convergence,
       scope: OperationScope
     ) => {
-      const { mint } = operation.input;
       const builder = await registerMintBuilder(
         convergence,
         {
@@ -111,14 +110,8 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       scope.throwIfCanceled();
 
       registeredMintsCache.clear();
-      const mintInfo = convergence.rfqs().pdas().mintInfo({ mint });
-      const registeredMint = await convergence
-        .protocol()
-        .findRegisteredMintByAddress({ address: mintInfo });
 
-      scope.throwIfCanceled();
-
-      return { ...output, registeredMint };
+      return { ...output };
     },
   };
 
