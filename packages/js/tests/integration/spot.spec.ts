@@ -24,11 +24,17 @@ describe('integration.spot', () => {
   });
 
   it('sell 1.0 BTC', async () => {
-    const amount = 1.0;
-    const side = 'sell';
-    const { rfq } = await takerCvg
-      .human()
-      .createRfq(amount, side, BASE_MINT_PK, QUOTE_MINT_PK);
+    const { rfq } = await takerCvg.rfqs().createAndFinalize({
+      instruments: [
+        new SpotInstrument(takerCvg, baseMint, {
+          amount: 1,
+          side: Side.Ask,
+        }),
+      ],
+      orderType: OrderType.Sell,
+      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+    });
     expect(rfq).toHaveProperty('address');
 
     // TODO: Get taker token amount
