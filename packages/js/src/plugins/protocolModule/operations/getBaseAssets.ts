@@ -1,13 +1,7 @@
-import { toBaseAsset, BaseAsset } from '../models';
-import { toBaseAssetAccount } from '../accounts';
-import { ProtocolGpaBuilder } from '../ProtocolGpaBuilder';
-import {
-  Operation,
-  OperationHandler,
-  OperationScope,
-  useOperation,
-} from '../../../types';
+import { BaseAsset } from '../models';
+import { Operation, OperationHandler, useOperation } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { baseAssetsCache } from '../cache';
 
 const Key = 'GetBaseAssetsOperation' as const;
 
@@ -54,35 +48,9 @@ export type GetBaseAssetsOutput = BaseAsset[];
 export const getBaseAssetsOperationHandler: OperationHandler<GetBaseAssetsOperation> =
   {
     handle: async (
-      operation: GetBaseAssetsOperation,
-      convergence: Convergence,
-      scope: OperationScope
+      _operation: GetBaseAssetsOperation,
+      convergence: Convergence
     ): Promise<GetBaseAssetsOutput> => {
-      const { programs } = scope;
-
-      const rfqProgram = convergence.programs().getRfq(programs);
-      const protocolGpaBuilder = new ProtocolGpaBuilder(
-        convergence,
-        rfqProgram.address
-      );
-      const baseAssets = await protocolGpaBuilder.whereBaseAssets().get();
-      scope.throwIfCanceled();
-
-      return baseAssets
-        .map<BaseAsset | null>((account) => {
-          if (account === null) {
-            return null;
-          }
-
-          try {
-            return toBaseAsset(toBaseAssetAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter((baseAsset): baseAsset is BaseAsset => baseAsset !== null)
-        .sort((a: BaseAsset, b: BaseAsset) => {
-          return a.index - b.index;
-        });
+      return await baseAssetsCache.get(convergence);
     },
   };

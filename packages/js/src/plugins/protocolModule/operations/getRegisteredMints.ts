@@ -1,13 +1,7 @@
-import { RegisteredMint, toRegisteredMint } from '../models';
-import { toRegisteredMintAccount } from '../accounts';
-import { ProtocolGpaBuilder } from '../ProtocolGpaBuilder';
-import {
-  Operation,
-  OperationHandler,
-  OperationScope,
-  useOperation,
-} from '../../../types';
+import { RegisteredMint } from '../models';
+import { Operation, OperationHandler, useOperation } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { registeredMintsCache } from '../cache';
 
 const Key = 'GetRegisteredMintsOperation' as const;
 
@@ -55,37 +49,9 @@ export type GetRegisteredMintsOutput = RegisteredMint[];
 export const getRegisteredMintsOperationHandler: OperationHandler<GetRegisteredMintsOperation> =
   {
     handle: async (
-      operation: GetRegisteredMintsOperation,
-      convergence: Convergence,
-      scope: OperationScope
+      _operation: GetRegisteredMintsOperation,
+      convergence: Convergence
     ): Promise<GetRegisteredMintsOutput> => {
-      const { programs } = scope;
-
-      const rfqProgram = convergence.programs().getRfq(programs);
-      const protocolGpaBuilder = new ProtocolGpaBuilder(
-        convergence,
-        rfqProgram.address
-      );
-      const registeredMints = await protocolGpaBuilder
-        .whereRegisteredMints()
-        .get();
-      scope.throwIfCanceled();
-
-      return registeredMints
-        .map<RegisteredMint | null>((account) => {
-          if (account === null) {
-            return null;
-          }
-
-          try {
-            return toRegisteredMint(toRegisteredMintAccount(account));
-          } catch (e) {
-            return null;
-          }
-        })
-        .filter(
-          (registeredMint): registeredMint is RegisteredMint =>
-            registeredMint !== null
-        );
+      return registeredMintsCache.get(convergence);
     },
   };

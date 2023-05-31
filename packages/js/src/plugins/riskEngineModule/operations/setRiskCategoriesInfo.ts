@@ -81,9 +81,6 @@ export const setRiskCategoriesInfoOperationHandler: OperationHandler<SetRiskCate
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetRiskCategoriesInfoOutput> => {
-      const { commitment } = scope;
-      scope.throwIfCanceled();
-
       const builder = setRiskCategoriesInfoBuilder(
         convergence,
         operation.input,

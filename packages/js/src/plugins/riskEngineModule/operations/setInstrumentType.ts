@@ -86,10 +86,6 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetInstrumentTypeOutput> => {
-      const { commitment } = scope;
-
-      scope.throwIfCanceled();
-
       const builder = setInstrumentTypeBuilder(
         convergence,
         operation.input,
