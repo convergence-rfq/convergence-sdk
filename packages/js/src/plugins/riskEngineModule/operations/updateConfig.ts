@@ -20,6 +20,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { riskEngineConfigCache } from '../cache';
 
 const Key = 'UpdateConfigOperation' as const;
 
@@ -110,6 +111,7 @@ export const updateConfigOperationHandler: OperationHandler<UpdateConfigOperatio
         scope.confirmOptions
       );
 
+      riskEngineConfigCache.clear();
       const config = await convergence.riskEngine().fetchConfig(scope);
 
       return { response, config };

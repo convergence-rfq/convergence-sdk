@@ -3,7 +3,6 @@ import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
-  assertBaseAsset,
   BaseAsset,
   RiskCategory,
   PriceOracle,
@@ -19,6 +18,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { baseAssetsCache } from '../cache';
 
 const Key = 'AddBaseAssetOperation' as const;
 
@@ -103,9 +103,15 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
         convergence,
         scope.confirmOptions
       );
-      const baseAssets = await convergence.protocol().getBaseAssets();
-      const baseAsset = baseAssets.find((ba) => ba.index === index);
-      assertBaseAsset(baseAsset);
+
+      baseAssetsCache.clear();
+      const baseAssetAddress = convergence
+        .protocol()
+        .pdas()
+        .baseAsset({ index });
+      const baseAsset = await convergence
+        .protocol()
+        .findBaseAssetByAddress({ address: baseAssetAddress });
 
       return { response, baseAsset };
     },

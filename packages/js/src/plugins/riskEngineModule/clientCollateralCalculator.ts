@@ -12,8 +12,7 @@ import { Commitment, PublicKey } from '@solana/web3.js';
 import { blackScholes } from 'black-scholes';
 
 import { Convergence } from '../../Convergence';
-import { toBaseAsset, toSolitaRiskCategory } from '../protocolModule';
-import { toBaseAssetAccount } from '../protocolModule/accounts';
+import { toSolitaRiskCategory } from '../protocolModule';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
 import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
 import { Config } from './models';
@@ -138,8 +137,9 @@ async function fetchBaseAssetInfo(
     .protocol()
     .pdas()
     .baseAsset({ index: baseAssetIndex });
-  const account = await convergence.rpc().getAccount(address, commitment);
-  const baseAsset = toBaseAsset(toBaseAssetAccount(account));
+  const baseAsset = await convergence
+    .protocol()
+    .findBaseAssetByAddress({ address });
 
   const price = await fetchLatestOraclePrice(
     convergence,

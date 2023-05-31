@@ -2,8 +2,7 @@ import { createSetInstrumentTypeInstruction } from '@convergence-rfq/risk-engine
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Config, toConfig, assertConfig } from '../models';
-import { toConfigAccount } from '../accounts';
+import { Config } from '../models';
 import { InstrumentType } from '../types';
 import { Convergence } from '../../../Convergence';
 import {
@@ -14,6 +13,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { riskEngineConfigCache } from '../cache';
 
 const Key = 'SetInstrumentTypeOperation' as const;
 
@@ -86,10 +86,6 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetInstrumentTypeOutput> => {
-      const { commitment } = scope;
-
-      scope.throwIfCanceled();
-
       const builder = setInstrumentTypeBuilder(
         convergence,
         operation.input,
@@ -101,11 +97,8 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
         scope.confirmOptions
       );
 
-      const account = await convergence
-        .rpc()
-        .getAccount(convergence.riskEngine().pdas().config(), commitment);
-      const config = toConfig(toConfigAccount(account));
-      assertConfig(config);
+      riskEngineConfigCache.clear();
+      const config = await convergence.riskEngine().fetchConfig(scope);
 
       return { response, config };
     },

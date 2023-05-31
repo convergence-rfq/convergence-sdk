@@ -2,8 +2,7 @@ import { createRegisterMintInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { RegisteredMint, toRegisteredMint } from '../models';
-import { toRegisteredMintAccount } from '../accounts';
+import { RegisteredMint } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -14,6 +13,7 @@ import {
   Signer,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { registeredMintsCache } from '../cache';
 
 const Key = 'RegisterMintOperation' as const;
 
@@ -94,7 +94,6 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       scope: OperationScope
     ) => {
       const { mint } = operation.input;
-      const { commitment } = scope;
       const builder = await registerMintBuilder(
         convergence,
         {
@@ -111,9 +110,11 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
+      registeredMintsCache.clear();
       const mintInfo = convergence.rfqs().pdas().mintInfo({ mint });
-      const account = await convergence.rpc().getAccount(mintInfo, commitment);
-      const registeredMint = toRegisteredMint(toRegisteredMintAccount(account));
+      const registeredMint = await convergence
+        .protocol()
+        .findRegisteredMintByAddress({ address: mintInfo });
 
       scope.throwIfCanceled();
 

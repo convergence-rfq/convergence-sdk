@@ -31,3 +31,7 @@ export const createUserCvg = (user = 'dao'): Convergence => {
 export const generatePk = async (): Promise<PublicKey> => {
   return await PublicKey.createWithSeed(PROGRAM_ID, uuidv4(), PROGRAM_ID);
 };
+
+export const sleep = (seconds: number) => {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+};

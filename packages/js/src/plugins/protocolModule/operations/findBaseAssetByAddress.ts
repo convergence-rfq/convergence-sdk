@@ -1,7 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { toBaseAssetAccount } from '../accounts';
-import { BaseAsset, toBaseAsset } from '../models/BaseAsset';
+import { BaseAsset } from '../models/BaseAsset';
 import {
   Operation,
   OperationHandler,
@@ -9,6 +8,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { baseAssetsCache } from '../cache';
 
 const Key = 'FindBaseAssetByAddressOperation' as const;
 
@@ -63,12 +63,16 @@ export const findBaseAssetByAddressOperationHandler: OperationHandler<FindBaseAs
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindBaseAssetByAddressOutput> => {
-      const { commitment } = scope;
       const { address } = operation.input;
       scope.throwIfCanceled();
 
-      const account = await convergence.rpc().getAccount(address, commitment);
-      const baseAsset = toBaseAsset(toBaseAssetAccount(account));
+      const baseAssets = await baseAssetsCache.get(convergence);
+      const baseAsset = baseAssets.find((ba) => ba.address.equals(address));
+      if (baseAsset === undefined) {
+        throw Error(
+          `Couldn't find Base Asset account at address ${address.toString()}`
+        );
+      }
       scope.throwIfCanceled();
 
       return baseAsset;
