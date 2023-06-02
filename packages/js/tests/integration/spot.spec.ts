@@ -5,7 +5,7 @@ import { sleep } from '@bundlr-network/client/build/common/utils';
 import { createUserCvg } from '../helpers';
 import { BASE_MINT_PK, QUOTE_MINT_PK } from '../constants';
 import { respond, confirmResponse, prepareSettlement, settle } from '../human';
-import { CvgWallet, Mint, SpotInstrument } from '../../src';
+import { Mint, SpotInstrument } from '../../src';
 
 describe('integration.spot', () => {
   const takerCvg = createUserCvg('taker');

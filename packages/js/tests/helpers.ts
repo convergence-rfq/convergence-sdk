@@ -8,6 +8,19 @@ import { Convergence, keypairIdentity, PublicKey } from '../src';
 const DEFAULT_COMMITMENT = 'confirmed';
 const DEFAULT_SKIP_PREFLIGHT = true;
 
+export function generateTicker(): string {
+  const length = 3;
+  let ticker = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    ticker += characters.charAt(randomIndex);
+  }
+
+  return ticker;
+}
+
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
   skipPreflight?: boolean;
