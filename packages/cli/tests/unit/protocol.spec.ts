@@ -8,6 +8,7 @@ import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } fro
 import {
   ADDRESS_LABEL,
   SWITCHBOARD_BTC_ORACLE,
+  PYTH_SOL_ORACLE,
   COLLATERAL_MINT,
   TX_LABEL,
   runCli,
@@ -120,16 +121,47 @@ describe('unit.protocol', () => {
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
-  it('add-base-asset', async () => {
+  it('add-base-asset [switchboard]', async () => {
+    // TODO: Add Pyth and In Place Price Oracle
     await runCli([
       'protocol',
       'add-base-asset',
       '--ticker',
       'GOD',
+      '--oracle-source',
+      'switchboard',
       '--oracle-address',
       SWITCHBOARD_BTC_ORACLE,
     ]);
-    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('add-base-asset [in-place]', async () => {
+    await runCli([
+      'protocol',
+      'add-base-asset',
+      '--ticker',
+      'DOG',
+      '--oracle-source',
+      'in-place',
+      '--oracle-price',
+      '1',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('add-base-asset [pyth]', async () => {
+    await runCli([
+      'protocol',
+      'add-base-asset',
+      '--ticker',
+      'ODG',
+      '--oracle-source',
+      'pyth',
+      '--oracle-address',
+      PYTH_SOL_ORACLE,
+    ]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
   it('get-registered-mints', async () => {

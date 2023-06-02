@@ -6,16 +6,11 @@ import {
   devnetAirdrops,
   legsToInstruments,
   SpotInstrument,
+  PriceOracle,
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import {
-  getInstrumentType,
-  getRiskCategory,
-  getSide,
-  getOrderType,
-  getSize,
-} from './helpers';
+import { getInstrumentType, getSide, getOrderType, getSize } from './helpers';
 import {
   logPk,
   logResponse,
@@ -136,18 +131,28 @@ export const addBaseAsset = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     const baseAssets = await cvg.protocol().getBaseAssets();
-    const { response, baseAsset } = await cvg.protocol().addBaseAsset({
-      authority: cvg.rpc().getDefaultFeePayer(),
-      index: { value: baseAssets.length },
-      ticker: opts.ticker,
-      riskCategory: getRiskCategory(opts.riskCategory),
-      priceOracle: {
-        __kind:
-          opts.oracleKind.charAt(0).toUpperCase() + opts.oracleKind.slice(1),
+    const { oracleSource } = opts;
+
+    let priceOracle: PriceOracle;
+    if (oracleSource === 'in-place') {
+      priceOracle = {
+        source: 'in-place',
+        price: opts.price,
+      };
+    } else {
+      priceOracle = {
+        source: oracleSource,
         address: new PublicKey(opts.oracleAddress),
-      },
+      };
+    }
+
+    const { response } = await cvg.protocol().addBaseAsset({
+      authority: cvg.rpc().getDefaultFeePayer(),
+      index: baseAssets.length,
+      ticker: opts.ticker,
+      riskCategory: opts.riskCategory,
+      priceOracle,
     });
-    logPk(baseAsset.address);
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -403,7 +408,7 @@ export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
     const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
       changes: [
         {
-          newValue: toRiskCategoryInfo(newValue[0], newValue[1], [
+          value: toRiskCategoryInfo(newValue[0], newValue[1], [
             toScenario(newValue[2], newValue[3]),
             toScenario(newValue[4], newValue[5]),
             toScenario(newValue[6], newValue[7]),
@@ -411,7 +416,7 @@ export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
             toScenario(newValue[10], newValue[11]),
             toScenario(newValue[12], newValue[13]),
           ]),
-          riskCategoryIndex: getRiskCategory(opts.category),
+          category: opts.category,
         },
       ],
     });
