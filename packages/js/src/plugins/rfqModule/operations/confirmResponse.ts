@@ -249,7 +249,6 @@ export const confirmResponseBuilder = async (
       .protocol()
       .findBaseAssetByAddress({ address: baseAsset });
 
-    // TODO: What happens if in-place price?
     if (baseAssetModel.priceOracle.address) {
       oracleAccounts.push({
         pubkey: baseAssetModel.priceOracle.address,

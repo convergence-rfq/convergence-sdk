@@ -101,7 +101,8 @@ export const toRiskCategory = (
 export const toPriceOracle = (
   solitaOracleSource: SolitaOracleSource,
   switchboardOracle: PublicKey,
-  pythOracle: PublicKey
+  pythOracle: PublicKey,
+  inPlacePrice: number
 ): PriceOracle => {
   switch (solitaOracleSource) {
     case SolitaOracleSource.Switchboard:
@@ -117,7 +118,7 @@ export const toPriceOracle = (
     case SolitaOracleSource.InPlace:
       return {
         source: 'in-place',
-        price: 0,
+        price: inPlacePrice,
       };
     default:
       throw new Error(`Unsupported price oracle: ${solitaOracleSource}`);
@@ -126,8 +127,7 @@ export const toPriceOracle = (
 
 /** @group Model Helpers */
 export const toSolitaPriceOracle = (
-  priceOracle: PriceOracle,
-  price?: number
+  priceOracle: PriceOracle
 ): {
   oracleSource: SolitaOracleSource;
   pythOracle: COption<PublicKey>;
@@ -152,14 +152,14 @@ export const toSolitaPriceOracle = (
         inPlacePrice: null,
       };
     case 'in-place':
+      if (!priceOracle.price) throw new Error('Missing oracle price');
       return {
         oracleSource: SolitaOracleSource.InPlace,
         switchboardOracle: null,
         pythOracle: null,
-        inPlacePrice: price ?? 0,
+        inPlacePrice: priceOracle.price,
       };
     default:
-      console.log('crap');
       throw new Error(`Unsupported price oracle: ${priceOracle}`);
   }
 };
@@ -198,7 +198,8 @@ export const toBaseAsset = (account: BaseAssetAccount): BaseAsset => ({
   priceOracle: toPriceOracle(
     account.data.oracleSource,
     account.data.switchboardOracle,
-    account.data.pythOracle
+    account.data.pythOracle,
+    account.data.inPlacePrice
   ),
   ticker: account.data.ticker,
 });
