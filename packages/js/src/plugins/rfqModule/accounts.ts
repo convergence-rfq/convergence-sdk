@@ -1,6 +1,6 @@
 import {
-  CollateralInfo,
-  ProtocolState,
+  CollateralInfo as SolitaCollateralInfo,
+  ProtocolState as SolitaProtocolState,
   Response,
   Rfq,
 } from '@convergence-rfq/rfq';

@@ -68,16 +68,19 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
       const { address } = operation.input;
       scope.throwIfCanceled();
 
-      const account = await convergence.rpc().getAccount(address, commitment);
-      const collateralModel = toCollateral(toCollateralAccount(account));
-      scope.throwIfCanceled();
-
       const collateralMint = await collateralMintCache.get(convergence);
 
-      collateralModel.lockedTokensAmount /= Math.pow(
-        10,
-        collateralMint.decimals
+      const account = await convergence.rpc().getAccount(address, commitment);
+      const collateralModel = toCollateral(
+        toCollateralAccount(account),
+        collateralMint
       );
+      scope.throwIfCanceled();
+
+      //collateralModel.lockedTokensAmount /= Math.pow(
+      //  10,
+      //  collateralMint.decimals
+      //);
 
       return collateralModel;
     },
