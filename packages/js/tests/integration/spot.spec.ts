@@ -90,7 +90,7 @@ describe('integration.spot', () => {
     await settle(takerCvg, rfq, rfqResponse);
   });
 
-  it('cancel Multiple Rfqs , reclaim Multiple Rfqs and Cleanup Multiple Rfqs', async () => {
+  it('cancel, reclaim and cleanup multiple RFQs', async () => {
     const { rfq: rfq1, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(takerCvg, baseMint, {
@@ -161,7 +161,7 @@ describe('integration.spot', () => {
     });
   });
 
-  it('cancel Multiple Responses , Reclaim Multiple Responses and Cleanup Multiple Responses', async () => {
+  it('cancel, reclaim and cleanup multiple responses', async () => {
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         new SpotInstrument(takerCvg, baseMint, {
