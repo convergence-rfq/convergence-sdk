@@ -145,7 +145,7 @@ describe('unit.protocol', () => {
       '--oracle-source',
       'in-place',
       '--oracle-price',
-      '1',
+      '101',
     ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
@@ -170,7 +170,7 @@ describe('unit.protocol', () => {
   });
 
   it('register-mint [collateral]', async () => {
-    await runCli(['token', 'create-mint', '--decimals', '3'], 'mint-authority');
+    await runCli(['token', 'create-mint', '--decimals', '3']);
     await runCli(['protocol', 'register-mint', '--mint', stub.args[0][1]]);
     expect(stub.args[1][0]).toEqual(TX_LABEL);
   });

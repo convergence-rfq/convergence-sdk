@@ -17,7 +17,7 @@ describe('unit.token', () => {
   });
 
   it('create-mint', async () => {
-    await runCli(['token', 'create-mint', '--decimals', '9'], 'mint-authority');
+    await runCli(['token', 'create-mint', '--decimals', '9'], 'dao');
     expect(new PublicKey(stub.args[0][1])).toBeTruthy();
     expect(stub.args[1][0]).toEqual(TX_LABEL);
   });

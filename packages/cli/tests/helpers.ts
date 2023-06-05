@@ -11,8 +11,7 @@ export const SWITCHBOARD_BTC_ORACLE = CTX.switchboardBTCOracle;
 export const PYTH_SOL_ORACLE = CTX.pythSOLOracle;
 
 export const runCli = async (args: string[], user = 'dao') => {
-  const cli = makeCli();
-  return await cli.parseAsync(
+  return await makeCli().parseAsync(
     ['ts-node', './src/cli.ts']
       .concat(args)
       .concat(['--rpc-endpoint', ENDPOINT])

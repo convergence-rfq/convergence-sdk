@@ -137,7 +137,7 @@ export const addBaseAsset = async (opts: Opts) => {
     if (oracleSource === 'in-place') {
       priceOracle = {
         source: 'in-place',
-        price: opts.price,
+        price: opts.oraclePrice,
       };
     } else {
       priceOracle = {
