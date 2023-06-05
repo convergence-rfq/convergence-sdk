@@ -77,11 +77,6 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
       );
       scope.throwIfCanceled();
 
-      //collateralModel.lockedTokensAmount /= Math.pow(
-      //  10,
-      //  collateralMint.decimals
-      //);
-
       return collateralModel;
     },
   };

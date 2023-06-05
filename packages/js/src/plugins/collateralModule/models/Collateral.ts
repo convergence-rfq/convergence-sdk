@@ -1,8 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
 
-// TODO: Find import
-import { Mint } from '../../../models/Mint';
+import { Mint } from '../../tokenModule/models/Mint';
 import { CollateralAccount } from '../accounts';
 import { assert } from '../../../utils';
 
@@ -25,12 +24,6 @@ export type Collateral = {
   // NOTE: Removed bump and token account bump
 
   /** The amount of locked tokens. */
-  // TODO: Make sure this a number with built-in support for mint decimal
-  // 9_000_000_000 bps
-  // 6 decimals for USDC
-  // 9_000.000_000 actual number accounting for decimals
-  //
-  // TODO: How do we make sure this uses the actual mint decimals?
   readonly lockedTokensAmount: number;
 };
 
@@ -43,19 +36,26 @@ export function assertCollateral(value: any): asserts value is Collateral {
   assert(isCollateral(value), 'Expected collateral model');
 }
 
-// const collateralMint = await collateralMintCache.get(convergence);
-// lockedTokensAmount = account.data.lockedTokensAmount * (10 ** collateralMint.decimals);
+function getLockedTokensAmount(value: unknown, mint: Mint | undefined): number {
+  if (typeof mint === 'undefined') {
+    return 0;
+  }
+  if (typeof value === 'number') {
+    return value / Math.pow(10, mint.decimals);
+  }
+  if (value instanceof BN) {
+    return value.toNumber() / Math.pow(10, mint.decimals);
+  }
+  return 0;
+}
 
 /** @group Model Helpers */
 export const toCollateral = (
   account: CollateralAccount,
-  mint: Mint
+  mint?: Mint
 ): Collateral => ({
   model: 'collateral',
   address: account.publicKey,
   user: account.data.user,
-  lockedTokensAmount:
-    account.data.lockedTokensAmount instanceof BN
-      ? account.data.lockedTokensAmount.toNumber()
-      : account.data.lockedTokensAmount,
+  lockedTokensAmount: getLockedTokensAmount(account.data.lockedTokensAmount, mint),
 });
