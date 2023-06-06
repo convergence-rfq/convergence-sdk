@@ -133,7 +133,7 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       let pdaDistinguisher = 0;
 
       const { convertedBid, convertedAsk } = convertResponseInput(
-        rfqModel.quoteAsset.instrumentDecimals,
+        rfqModel.quoteAsset.getDecimals(),
         bid,
         ask
       );
@@ -276,7 +276,7 @@ export const respondToRfqBuilder = async (
   const oracleAccounts: AccountMeta[] = [];
 
   for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);
+    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
   }
 
   const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);

@@ -17,13 +17,13 @@ import {
   calculateExpectedLegsSize,
   convertFixedSizeInput,
 } from '../helpers';
-import { createRfqBuilder } from './createRfq';
-import { addLegsToRfqBuilder } from './addLegsToRfq';
 import {
   LegInstrument,
   QuoteInstrument,
   toQuote,
 } from '../../../plugins/instrumentModule';
+import { createRfqBuilder } from './createRfq';
+import { addLegsToRfqBuilder } from './addLegsToRfq';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 

@@ -10,13 +10,13 @@ import { ConvergencePlugin, Program } from '@/types';
 /** @group Plugins */
 export const instrumentModule = (): ConvergencePlugin => ({
   install(convergence: Convergence) {
-    const legInstrumentFactories: [PublicKey, LegInstrumentParser][] = [];
+    const legInstrumentParsers: [PublicKey, LegInstrumentParser][] = [];
 
     convergence.addLegInstrument = function (
       programAddress: PublicKey,
       factory: LegInstrumentParser
     ) {
-      const entry = legInstrumentFactories.find(([key]) =>
+      const entry = legInstrumentParsers.find(([key]) =>
         programAddress.equals(key)
       );
 
@@ -26,11 +26,11 @@ export const instrumentModule = (): ConvergencePlugin => ({
         );
       }
 
-      legInstrumentFactories.push([programAddress, factory]);
+      legInstrumentParsers.push([programAddress, factory]);
     };
 
     convergence.parseLegInstrument = function (leg: Leg) {
-      const factory = legInstrumentFactories.find(([key]) =>
+      const factory = legInstrumentParsers.find(([key]) =>
         leg.instrumentProgram.equals(key)
       )?.[1];
 

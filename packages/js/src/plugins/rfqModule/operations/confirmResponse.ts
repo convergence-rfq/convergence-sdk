@@ -230,7 +230,7 @@ export const confirmResponseBuilder = async (
   const oracleAccounts: AccountMeta[] = [];
 
   for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);
+    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
   }
 
   const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);

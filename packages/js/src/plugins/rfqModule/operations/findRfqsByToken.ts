@@ -2,18 +2,12 @@ import { PublicKey } from '@solana/web3.js';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
-import {
-  psyoptionsAmericanInstrumentProgram,
-  psyoptionsAmericanInstrumentDataSerializer,
-} from '../../psyoptionsAmericanInstrumentModule';
-import {
-  psyoptionsEuropeanInstrumentParser,
-  psyoptionsEuropeanInstrumentProgram,
-} from '../../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { getPages, convertRfqOutput, sortByActiveAndExpiry } from '../helpers';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import { Convergence } from '../../../Convergence';
-import { SpotInstrumentDataSerializer } from '../../spotInstrumentModule';
+import { SpotLegInstrument } from '../../spotInstrumentModule';
 import {
   Operation,
   OperationHandler,
@@ -88,8 +82,6 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
       const { rfqs, mintAddress, rfqsPerPage, numPages } = operation.input;
       scope.throwIfCanceled();
 
-      const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-
       const collateralMint = await collateralMintCache.get(convergence);
       const collateralMintDecimals = collateralMint.decimals;
 
@@ -106,16 +98,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
           }
 
           for (const leg of rfq.legs) {
-            if (
-              leg.instrumentProgram.toBase58() ===
-              psyoptionsAmericanInstrumentProgram.address.toBase58()
-            ) {
-              const data =
-                psyoptionsAmericanInstrumentDataSerializer.deserialize(
-                  Buffer.from(leg.instrumentData)
-                )[0];
-
-              if (data.optionMint.toBase58() === mintAddress.toBase58()) {
+            if (leg instanceof PsyoptionsAmericanInstrument) {
+              if (leg.mint.address.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals
@@ -125,22 +109,14 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
                 break;
               }
-            } else if (
-              leg.instrumentProgram.toBase58() ===
-              psyoptionsEuropeanInstrumentProgram.address.toBase58()
-            ) {
-              const instrument =
-                await psyoptionsEuropeanInstrumentParser.parseFromLeg(
-                  convergence,
-                  leg
-                );
+            } else if (leg instanceof PsyoptionsEuropeanInstrument) {
               const euroMetaOptionMint = await convergence
                 .tokens()
                 .findMintByAddress({
                   address:
-                    instrument.optionType == OptionType.CALL
-                      ? instrument.meta.callOptionMint
-                      : instrument.meta.putOptionMint,
+                    leg.optionType == OptionType.CALL
+                      ? leg.meta.callOptionMint
+                      : leg.meta.putOptionMint,
                 });
               if (
                 euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
@@ -154,15 +130,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
                 break;
               }
-            } else if (
-              leg.instrumentProgram.toBase58() ===
-              spotInstrumentProgram.address.toBase58()
-            ) {
-              const data = SpotInstrumentDataSerializer.deserialize(
-                Buffer.from(leg.instrumentData)
-              )[0];
-
-              if (data.mintAddress.toBase58() === mintAddress.toBase58()) {
+            } else if (leg instanceof SpotLegInstrument) {
+              if (leg.mint.address.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals
@@ -207,9 +176,9 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
           );
 
         for (const account of accounts) {
-          const rfq = toRfq(toRfqAccount(account));
+          const rfq = await toRfq(convergence, toRfqAccount(account));
 
-          if (rfq.quoteMint.toBase58() === mintAddress.toBase58()) {
+          if (rfq.quoteMint.equals(mintAddress)) {
             const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
             parsedRfqs.push(convertedRfq);
@@ -218,16 +187,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
           }
 
           for (const leg of rfq.legs) {
-            if (
-              leg.instrumentProgram.toBase58() ===
-              psyoptionsAmericanInstrumentProgram.address.toBase58()
-            ) {
-              const data =
-                psyoptionsAmericanInstrumentDataSerializer.deserialize(
-                  Buffer.from(leg.instrumentData)
-                )[0];
-
-              if (data.optionMint.toBase58() === mintAddress.toBase58()) {
+            if (leg instanceof PsyoptionsAmericanInstrument) {
+              if (leg.mint.address.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals
@@ -237,22 +198,14 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
                 break;
               }
-            } else if (
-              leg.instrumentProgram.toBase58() ===
-              psyoptionsEuropeanInstrumentProgram.address.toBase58()
-            ) {
-              const instrument =
-                await psyoptionsEuropeanInstrumentParser.parseFromLeg(
-                  convergence,
-                  leg
-                );
+            } else if (leg instanceof PsyoptionsEuropeanInstrument) {
               const euroMetaOptionMint = await convergence
                 .tokens()
                 .findMintByAddress({
                   address:
-                    instrument.optionType === OptionType.CALL
-                      ? instrument.meta.callOptionMint
-                      : instrument.meta.putOptionMint,
+                    leg.optionType == OptionType.CALL
+                      ? leg.meta.callOptionMint
+                      : leg.meta.putOptionMint,
                 });
               if (
                 euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
@@ -266,15 +219,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
                 break;
               }
-            } else if (
-              leg.instrumentProgram.toBase58() ===
-              spotInstrumentProgram.address.toBase58()
-            ) {
-              const data = SpotInstrumentDataSerializer.deserialize(
-                Buffer.from(leg.instrumentData)
-              )[0];
-
-              if (data.mintAddress.toBase58() === mintAddress.toBase58()) {
+            } else if (leg instanceof SpotLegInstrument) {
+              if (leg.mint.address.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals

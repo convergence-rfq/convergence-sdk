@@ -4,7 +4,6 @@ import {
   Side,
 } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
@@ -16,11 +15,8 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { spotLegInstrumentParser } from '../../spotInstrumentModule';
-import { psyoptionsEuropeanInstrumentParser } from '../../psyoptionsEuropeanInstrumentModule';
-import { psyoptionsAmericanInstrumentParser } from '../../psyoptionsAmericanInstrumentModule';
+import { legToBaseAssetMint } from '../helpers';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 
@@ -158,14 +154,6 @@ export const partiallySettleLegsBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-  const psyoptionsEuropeanProgram = convergence
-    .programs()
-    .getPsyoptionsEuropeanInstrument();
-  const psyoptionsAmericanProgram = convergence
-    .programs()
-    .getPsyoptionsAmericanInstrument();
-
   const startIndex = parseInt(responseModel.settledLegs.toString());
 
   for (let i = startIndex; i < startIndex + legAmountToSettle; i++) {
@@ -175,7 +163,7 @@ export const partiallySettleLegsBuilder = async (
 
     let legTakerAmount = -1;
 
-    if (leg.side == Side.Ask) {
+    if (leg.getSide() == Side.Ask) {
       legTakerAmount *= -1;
     }
     if (confirmationSide == Side.Bid) {
@@ -183,7 +171,7 @@ export const partiallySettleLegsBuilder = async (
     }
 
     const instrumentProgramAccount: AccountMeta = {
-      pubkey: rfqModel.legs[i].instrumentProgram,
+      pubkey: rfqModel.legs[i].getProgramId(),
       isSigner: false,
       isWritable: false,
     };
@@ -196,52 +184,7 @@ export const partiallySettleLegsBuilder = async (
       rfqModel,
     });
 
-    let baseAssetMint: Mint;
-
-    if (
-      leg.instrumentProgram.toBase58() ===
-      psyoptionsEuropeanProgram.address.toBase58()
-    ) {
-      const instrument = await psyoptionsEuropeanInstrumentParser.parseFromLeg(
-        convergence,
-        leg
-      );
-
-      const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
-        address:
-          instrument.optionType == OptionType.CALL
-            ? instrument.meta.callOptionMint
-            : instrument.meta.putOptionMint,
-      });
-
-      baseAssetMint = euroMetaOptionMint;
-    } else if (
-      leg.instrumentProgram.toBase58() ===
-      psyoptionsAmericanProgram.address.toBase58()
-    ) {
-      const instrument = await psyoptionsAmericanInstrumentParser.parseFromLeg(
-        convergence,
-        leg
-      );
-      const americanOptionMint = await convergence.tokens().findMintByAddress({
-        address: instrument.mint.address,
-      });
-
-      baseAssetMint = americanOptionMint;
-    } else if (
-      leg.instrumentProgram.toBase58() ===
-      spotInstrumentProgram.address.toBase58()
-    ) {
-      const instrument = await spotLegInstrumentParser.parseFromLeg(
-        convergence,
-        leg
-      );
-      const mint = await convergence.tokens().findMintByAddress({
-        address: instrument.mint.address,
-      });
-
-      baseAssetMint = mint;
-    }
+    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
 
     const legAccounts: AccountMeta[] = [
       //`escrow`

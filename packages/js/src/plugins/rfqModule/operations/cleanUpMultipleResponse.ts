@@ -4,7 +4,6 @@ import {
 } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, Transaction } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 import { Convergence } from '../../../Convergence';
 import {
@@ -15,11 +14,8 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { Mint } from '../../../plugins/tokenModule';
 import { InstrumentPdasClient } from '../../../plugins/instrumentModule/InstrumentPdasClient';
-import { spotLegInstrumentParser } from '../../../plugins/spotInstrumentModule';
-import { psyoptionsEuropeanInstrumentParser } from '../../../plugins/psyoptionsEuropeanInstrumentModule';
-import { psyoptionsAmericanInstrumentParser } from '../../../plugins/psyoptionsAmericanInstrumentModule';
+import { legToBaseAssetMint } from '../helpers';
 
 const Key = 'cleanUpMultipleResponsesOperation' as const;
 
@@ -165,12 +161,6 @@ export const cleanUpMultipleResponsesBuilder = async (
       .findRfqByAddress({ address: responseModel.rfq });
 
     const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-    const psyoptionsEuropeanProgram = convergence
-      .programs()
-      .getPsyoptionsEuropeanInstrument();
-    const psyoptionsAmericanProgram = convergence
-      .programs()
-      .getPsyoptionsAmericanInstrument();
 
     const initializedLegs = responseModel.legPreparationsInitializedBy.length;
 
@@ -181,7 +171,7 @@ export const cleanUpMultipleResponsesBuilder = async (
           ? responseModel.maker
           : rfqModel.taker;
       const instrumentProgramAccount: AccountMeta = {
-        pubkey: rfqModel.legs[i].instrumentProgram,
+        pubkey: rfqModel.legs[i].getProgramId(),
         isSigner: false,
         isWritable: false,
       };
@@ -194,58 +184,7 @@ export const cleanUpMultipleResponsesBuilder = async (
         rfqModel,
       });
 
-      let baseAssetMint: Mint;
-
-      if (
-        leg.instrumentProgram.toBase58() ===
-        psyoptionsEuropeanProgram.address.toBase58()
-      ) {
-        const instrument =
-          await psyoptionsEuropeanInstrumentParser.parseFromLeg(
-            convergence,
-            leg
-          );
-
-        const euroMetaOptionMint = await convergence
-          .tokens()
-          .findMintByAddress({
-            address:
-              instrument.optionType == OptionType.CALL
-                ? instrument.meta.callOptionMint
-                : instrument.meta.putOptionMint,
-          });
-
-        baseAssetMint = euroMetaOptionMint;
-      } else if (
-        leg.instrumentProgram.toBase58() ===
-        psyoptionsAmericanProgram.address.toBase58()
-      ) {
-        const instrument =
-          await psyoptionsAmericanInstrumentParser.parseFromLeg(
-            convergence,
-            leg
-          );
-        const americanOptionMint = await convergence
-          .tokens()
-          .findMintByAddress({
-            address: instrument.mint.address,
-          });
-
-        baseAssetMint = americanOptionMint;
-      } else if (
-        leg.instrumentProgram.toBase58() ===
-        spotInstrumentProgram.address.toBase58()
-      ) {
-        const instrument = await spotLegInstrumentParser.parseFromLeg(
-          convergence,
-          leg
-        );
-        const mint = await convergence.tokens().findMintByAddress({
-          address: instrument.mint.address,
-        });
-
-        baseAssetMint = mint;
-      }
+      const baseAssetMint = await legToBaseAssetMint(convergence, leg);
 
       const legAccounts: AccountMeta[] = [
         {

@@ -91,7 +91,7 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
 
         const convertedResponse = convertResponseOutput(
           response,
-          rfq.quoteAsset.instrumentDecimals
+          rfq.quoteAsset.getDecimals()
         );
 
         return convertedResponse;

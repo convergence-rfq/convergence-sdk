@@ -1,15 +1,11 @@
 import { PublicKey } from '@solana/web3.js';
-import { Leg } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { OrderType, FixedSize } from '../types';
 import { assertRfq, Rfq } from '../models';
 
-import {
-  instrumentsToLegsAndExpectedLegsHash,
-  convertFixedSizeInput,
-} from '../helpers';
+import { convertFixedSizeInput, calculateExpectedLegsHash } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -170,8 +166,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       );
 
       const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
-      const [legs, expectedLegsHash] =
-        await instrumentsToLegsAndExpectedLegsHash(instruments);
+      const expectedLegsHash = calculateExpectedLegsHash(instruments);
 
       const rfqPda = convergence
         .rfqs()
@@ -197,7 +192,6 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           instruments,
           expectedLegsHash,
           recentTimestamp,
-          legs,
         },
         scope
       );
@@ -228,7 +222,6 @@ export type CreateAndFinalizeRfqConstructionBuilderParams =
     expectedLegsHash: Uint8Array;
     recentTimestamp: anchor.BN;
     rfq: PublicKey;
-    legs: Leg[];
   };
 
 export const createAndFinalizeRfqConstructionBuilder = async (
@@ -246,7 +239,7 @@ export const createAndFinalizeRfqConstructionBuilder = async (
   );
   const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(
     convergence,
-    { ...params },
+    { ...params, legs: params.instruments },
     options
   );
 

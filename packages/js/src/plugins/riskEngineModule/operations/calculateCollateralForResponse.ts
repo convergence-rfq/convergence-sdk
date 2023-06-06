@@ -99,7 +99,7 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         convergence.riskEngine().fetchConfig(scope),
       ]);
 
-      const quoteDecimals = rfq.quoteAsset.instrumentDecimals;
+      const quoteDecimals = rfq.quoteAsset.getDecimals();
 
       const { convertedBid, convertedAsk } = convertResponseInput(
         quoteDecimals,

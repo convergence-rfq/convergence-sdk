@@ -1,10 +1,9 @@
 import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { OptionType } from '@mithraic-labs/tokenized-euros';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { getOrCreateATA } from '../helpers';
+import { getOrCreateATA, legToBaseAssetMint } from '../helpers';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -14,11 +13,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { Mint } from '../../../plugins/tokenModule';
 import { InstrumentPdasClient } from '../../../plugins/instrumentModule/InstrumentPdasClient';
-import { spotLegInstrumentParser } from '../../../plugins/spotInstrumentModule';
-import { psyoptionsEuropeanInstrumentParser } from '../../../plugins/psyoptionsEuropeanInstrumentModule';
-import { psyoptionsAmericanInstrumentParser } from '../../../plugins/psyoptionsAmericanInstrumentModule';
 import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
@@ -172,17 +167,9 @@ export const cleanUpResponseLegsBuilder = async (
 
   const initializedLegs = responseModel.legPreparationsInitializedBy.length;
 
-  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-  const psyoptionsEuropeanProgram = convergence
-    .programs()
-    .getPsyoptionsEuropeanInstrument();
-  const psyoptionsAmericanProgram = convergence
-    .programs()
-    .getPsyoptionsAmericanInstrument();
-
   for (let i = initializedLegs - legAmountToClear; i < initializedLegs; i++) {
     const instrumentProgramAccount: AccountMeta = {
-      pubkey: rfqModel.legs[i].instrumentProgram,
+      pubkey: rfqModel.legs[i].getProgramId(),
       isSigner: false,
       isWritable: false,
     };
@@ -195,54 +182,8 @@ export const cleanUpResponseLegsBuilder = async (
       rfqModel,
     });
 
-    let baseAssetMint: Mint;
-
     const leg = rfqModel.legs[i];
-
-    if (
-      leg.instrumentProgram.toBase58() ===
-      psyoptionsEuropeanProgram.address.toBase58()
-    ) {
-      const instrument = await psyoptionsEuropeanInstrumentParser.parseFromLeg(
-        convergence,
-        leg
-      );
-
-      const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
-        address:
-          instrument.optionType == OptionType.CALL
-            ? instrument.meta.callOptionMint
-            : instrument.meta.putOptionMint,
-      });
-
-      baseAssetMint = euroMetaOptionMint;
-    } else if (
-      leg.instrumentProgram.toBase58() ===
-      psyoptionsAmericanProgram.address.toBase58()
-    ) {
-      const instrument = await psyoptionsAmericanInstrumentParser.parseFromLeg(
-        convergence,
-        leg
-      );
-      const americanOptionMint = await convergence.tokens().findMintByAddress({
-        address: instrument.mint.address,
-      });
-
-      baseAssetMint = americanOptionMint;
-    } else if (
-      leg.instrumentProgram.toBase58() ===
-      spotInstrumentProgram.address.toBase58()
-    ) {
-      const instrument = await spotLegInstrumentParser.parseFromLeg(
-        convergence,
-        leg
-      );
-      const mint = await convergence.tokens().findMintByAddress({
-        address: instrument.mint.address,
-      });
-
-      baseAssetMint = mint;
-    }
+    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
 
     const legAccounts: AccountMeta[] = [
       // `first_to_prepare`

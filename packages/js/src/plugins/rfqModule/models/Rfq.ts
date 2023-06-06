@@ -1,16 +1,15 @@
 import { PublicKey } from '@solana/web3.js';
 import { bignum } from '@convergence-rfq/beet';
 
-import {
-  OrderType,
-  StoredRfqState,
-  FixedSize,
-  QuoteAsset,
-  Leg,
-} from '../types';
+import { OrderType, StoredRfqState, FixedSize } from '../types';
 import { RfqAccount } from '../accounts';
 import { assert } from '../../../utils';
-import { SpotLegInstrument } from '../../../plugins/spotInstrumentModule';
+import {
+  SpotLegInstrument,
+  SpotQuoteInstrument,
+} from '../../../plugins/spotInstrumentModule';
+import { LegInstrument, QuoteInstrument } from '@/plugins/instrumentModule';
+import { Convergence } from '@/Convergence';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -36,7 +35,7 @@ export type Rfq = {
   readonly fixedSize: FixedSize;
 
   /** The quote asset of the Rfq. */
-  readonly quoteAsset: QuoteAsset;
+  readonly quoteAsset: QuoteInstrument;
 
   /** The quote asset mint. */
   readonly quoteMint: PublicKey;
@@ -77,7 +76,7 @@ export type Rfq = {
   readonly confirmedResponses: number;
 
   /** The legs of the Rfq. */
-  readonly legs: Leg[];
+  readonly legs: LegInstrument[];
 };
 
 /** @group Model Helpers */
@@ -90,13 +89,19 @@ export function assertRfq(value: any): asserts value is Rfq {
 }
 
 /** @group Model Helpers */
-export const toRfq = (account: RfqAccount): Rfq => ({
+export const toRfq = async (
+  convergence: Convergence,
+  account: RfqAccount
+): Promise<Rfq> => ({
   model: 'rfq',
   address: account.publicKey,
   taker: account.data.taker,
   orderType: account.data.orderType,
   fixedSize: account.data.fixedSize,
-  quoteAsset: account.data.quoteAsset,
+  quoteAsset: await SpotQuoteInstrument.parseFromQuote(
+    convergence,
+    account.data.quoteAsset
+  ),
   quoteMint: SpotLegInstrument.deserializeInstrumentData(
     Buffer.from(account.data.quoteAsset.instrumentData)
   ).mintAddress,
@@ -111,5 +116,7 @@ export const toRfq = (account: RfqAccount): Rfq => ({
   totalResponses: account.data.totalResponses,
   clearedResponses: account.data.clearedResponses,
   confirmedResponses: account.data.confirmedResponses,
-  legs: account.data.legs,
+  legs: await Promise.all(
+    account.data.legs.map((leg) => convergence.parseLegInstrument(leg))
+  ),
 });
