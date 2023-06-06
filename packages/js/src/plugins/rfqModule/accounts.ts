@@ -1,6 +1,6 @@
 import {
-  CollateralInfo,
-  ProtocolState,
+  CollateralInfo as SolitaCollateralInfo,
+  ProtocolState as SolitaProtocolState,
   Response,
   Rfq,
 } from '@convergence-rfq/rfq';
@@ -12,26 +12,26 @@ import {
 } from '../../types';
 
 /** @group Accounts */
-export type CollateralInfoAccount = Account<CollateralInfo>;
+export type CollateralInfoAccount = Account<SolitaCollateralInfo>;
 
 /** @group Account Helpers */
 export const parseCollateralInfoAccount =
-  getAccountParsingFunction(CollateralInfo);
+  getAccountParsingFunction(SolitaCollateralInfo);
 
 /** @group Account Helpers */
 export const toCollateralInfoAccount =
-  getAccountParsingAndAssertingFunction(CollateralInfo);
+  getAccountParsingAndAssertingFunction(SolitaCollateralInfo);
 
 /** @group Accounts */
-export type ProtocolStateAccount = Account<ProtocolState>;
+export type ProtocolStateAccount = Account<SolitaProtocolState>;
 
 /** @group Account Helpers */
 export const parseProtocolStateAccount =
-  getAccountParsingFunction(ProtocolState);
+  getAccountParsingFunction(SolitaProtocolState);
 
 /** @group Account Helpers */
 export const toProtocolStateAccount =
-  getAccountParsingAndAssertingFunction(ProtocolState);
+  getAccountParsingAndAssertingFunction(SolitaProtocolState);
 
 /** @group Accounts */
 export type ResponseAccount = Account<Response>;

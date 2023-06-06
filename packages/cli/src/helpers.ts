@@ -1,5 +1,4 @@
 import {
-  RiskCategory,
   InstrumentType,
   OrderType,
   Side,
@@ -57,23 +56,6 @@ export const getInstrumentType = (type: string): InstrumentType => {
       return InstrumentType.Option;
     default:
       throw new Error('Invalid instrument type');
-  }
-};
-
-export const getRiskCategory = (category: string): RiskCategory => {
-  switch (category) {
-    case 'very-low':
-      return RiskCategory.VeryLow;
-    case 'low':
-      return RiskCategory.Low;
-    case 'medium':
-      return RiskCategory.Medium;
-    case 'high':
-      return RiskCategory.High;
-    case 'very-high':
-      return RiskCategory.VeryHigh;
-    default:
-      throw new Error('Invalid risk category');
   }
 };
 
