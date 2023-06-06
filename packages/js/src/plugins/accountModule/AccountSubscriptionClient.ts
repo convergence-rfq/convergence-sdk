@@ -1,4 +1,4 @@
-import { AccountInfo } from "@solana/web3.js";
+import type { AccountInfo } from "@solana/web3.js";
 import type { Convergence, PublicKey } from '../..';
 
 type AccountChangeListener = (accountInfo: AccountInfo<Buffer>) => void;
