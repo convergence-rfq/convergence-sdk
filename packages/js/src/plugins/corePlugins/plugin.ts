@@ -10,6 +10,7 @@ import { tokenModule } from '../tokenModule';
 import { rfqModule } from '../rfqModule';
 import { protocolModule } from '../protocolModule';
 import { riskEngineModule } from '../riskEngineModule';
+import { accountModule } from "../accountModule";
 import { instrumentModule } from '../instrumentModule';
 import { psyoptionsEuropeanInstrumentModule } from '../psyoptionsEuropeanInstrumentModule';
 import { psyoptionsAmericanInstrumentModule } from '../psyoptionsAmericanInstrumentModule';
@@ -34,6 +35,7 @@ export const corePlugins = () => ({
     convergence.use(rfqModule());
     convergence.use(collateralModule());
     convergence.use(riskEngineModule());
+    convergence.use(accountModule());
 
     // Integrations
     convergence.use(instrumentModule());
