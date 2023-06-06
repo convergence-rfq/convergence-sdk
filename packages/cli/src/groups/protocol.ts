@@ -80,13 +80,19 @@ const addBaseAssetCmd = (c: Command) =>
       description: 'ticker',
     },
     {
-      flags: '--oracle-address <string>',
-      description: 'oracle address',
+      flags: '--oracle-source <string>',
+      description: 'oracle source',
+      defaultValue: null,
     },
     {
-      flags: '--oracle-kind <string>',
-      description: 'oracle kind',
-      defaultValue: 'switchboard',
+      flags: '--oracle-price <number>',
+      description: 'oracle price',
+      defaultValue: null,
+    },
+    {
+      flags: '--oracle-address <string>',
+      description: 'oracle address',
+      defaultValue: null,
     },
     {
       flags: '--risk-category <string>',
