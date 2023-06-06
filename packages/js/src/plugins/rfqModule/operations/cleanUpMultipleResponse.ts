@@ -17,9 +17,9 @@ import {
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { Mint } from '../../../plugins/tokenModule';
 import { InstrumentPdasClient } from '../../../plugins/instrumentModule/InstrumentPdasClient';
-import { SpotInstrument } from '../../../plugins/spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../../plugins/psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '../../../plugins/psyoptionsAmericanInstrumentModule';
+import { spotLegInstrumentParser } from '../../../plugins/spotInstrumentModule';
+import { psyoptionsEuropeanInstrumentParser } from '../../../plugins/psyoptionsEuropeanInstrumentModule';
+import { psyoptionsAmericanInstrumentParser } from '../../../plugins/psyoptionsAmericanInstrumentModule';
 
 const Key = 'cleanUpMultipleResponsesOperation' as const;
 
@@ -200,10 +200,11 @@ export const cleanUpMultipleResponsesBuilder = async (
         leg.instrumentProgram.toBase58() ===
         psyoptionsEuropeanProgram.address.toBase58()
       ) {
-        const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
-          convergence,
-          leg
-        );
+        const instrument =
+          await psyoptionsEuropeanInstrumentParser.parseFromLeg(
+            convergence,
+            leg
+          );
 
         const euroMetaOptionMint = await convergence
           .tokens()
@@ -219,10 +220,11 @@ export const cleanUpMultipleResponsesBuilder = async (
         leg.instrumentProgram.toBase58() ===
         psyoptionsAmericanProgram.address.toBase58()
       ) {
-        const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
-          convergence,
-          leg
-        );
+        const instrument =
+          await psyoptionsAmericanInstrumentParser.parseFromLeg(
+            convergence,
+            leg
+          );
         const americanOptionMint = await convergence
           .tokens()
           .findMintByAddress({
@@ -234,7 +236,10 @@ export const cleanUpMultipleResponsesBuilder = async (
         leg.instrumentProgram.toBase58() ===
         spotInstrumentProgram.address.toBase58()
       ) {
-        const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+        const instrument = await spotLegInstrumentParser.parseFromLeg(
+          convergence,
+          leg
+        );
         const mint = await convergence.tokens().findMintByAddress({
           address: instrument.mint.address,
         });

@@ -25,9 +25,9 @@ import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
+import { spotLegInstrumentParser } from '../../spotInstrumentModule';
+import { psyoptionsEuropeanInstrumentParser } from '../../psyoptionsEuropeanInstrumentModule';
+import { psyoptionsAmericanInstrumentParser } from '../../psyoptionsAmericanInstrumentModule';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 
@@ -224,7 +224,7 @@ export const prepareMoreLegsSettlementBuilder = async (
       leg.instrumentProgram.toBase58() ===
       psyoptionsEuropeanProgram.address.toBase58()
     ) {
-      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+      const instrument = await psyoptionsEuropeanInstrumentParser.parseFromLeg(
         convergence,
         leg
       );
@@ -241,7 +241,7 @@ export const prepareMoreLegsSettlementBuilder = async (
       leg.instrumentProgram.toBase58() ===
       psyoptionsAmericanProgram.address.toBase58()
     ) {
-      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+      const instrument = await psyoptionsAmericanInstrumentParser.parseFromLeg(
         convergence,
         leg
       );
@@ -254,7 +254,10 @@ export const prepareMoreLegsSettlementBuilder = async (
       leg.instrumentProgram.toBase58() ===
       spotInstrumentProgram.address.toBase58()
     ) {
-      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+      const instrument = await spotLegInstrumentParser.parseFromLeg(
+        convergence,
+        leg
+      );
       const mint = await convergence.tokens().findMintByAddress({
         address: instrument.mint.address,
       });

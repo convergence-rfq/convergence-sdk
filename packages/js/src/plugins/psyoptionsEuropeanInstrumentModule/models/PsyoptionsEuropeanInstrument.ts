@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Side, Leg } from '@convergence-rfq/rfq';
+import { Side, Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { EuroMeta } from '@convergence-rfq/psyoptions-european-instrument';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import {
@@ -12,9 +12,8 @@ import {
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../../tokenModule';
-import { Instrument } from '../../instrumentModule/models/Instrument';
-import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
-import { assert } from '../../../utils';
+import { LegInstrument } from '../../instrumentModule/models/Instrument';
+import { assert, removeDecimals } from '../../../utils';
 import { Convergence } from '../../../Convergence';
 import {
   createSerializerFromFixableBeetArgsStruct,
@@ -81,27 +80,26 @@ const euroMetaSerializer = createSerializerFromFixableBeetArgsStruct(
  *
  * @group Models
  */
-export class PsyoptionsEuropeanInstrument implements Instrument {
-  readonly model = 'psyoptionsEuropeanInstrument';
-  readonly decimals = 4;
+export class PsyoptionsEuropeanInstrument implements LegInstrument {
+  static readonly decimals = 4;
 
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
+    readonly baseAssetIndex: BaseAssetIndex,
     readonly optionType: OptionType,
     readonly meta: EuroMeta,
     readonly metaKey: PublicKey,
-    readonly legInfo?: {
-      amount: number;
-      side: Side;
-    }
-  ) {
-    if (legInfo && this.legInfo) {
-      this.legInfo.amount = legInfo.amount * Math.pow(10, this.decimals);
-    }
-  }
+    readonly amount: number,
+    readonly side: Side
+  ) {}
 
-  static createForLeg(
+  getBaseAssetIndex = () => this.baseAssetIndex;
+  getAmount = () => this.amount;
+  getDecimals = () => PsyoptionsEuropeanInstrument.decimals;
+  getSide = () => this.side;
+
+  static async create(
     convergence: Convergence,
     mint: Mint,
     optionType: OptionType,
@@ -109,23 +107,29 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     metaKey: PublicKey,
     amount: number,
     side: Side
-  ): InstrumentClient {
-    const instrument = new PsyoptionsEuropeanInstrument(
+  ) {
+    const mintInfoAddress = convergence
+      .rfqs()
+      .pdas()
+      .mintInfo({ mint: mint.address });
+    const mintInfo = await convergence
+      .protocol()
+      .findRegisteredMintByAddress({ address: mintInfoAddress });
+
+    if (mintInfo.mintType.__kind === 'Stablecoin') {
+      throw Error('Stablecoin mint cannot be used in a leg!');
+    }
+
+    return new PsyoptionsEuropeanInstrument(
       convergence,
       mint,
+      mintInfo.mintType.baseAssetIndex,
       optionType,
       meta,
       metaKey,
-      {
-        amount,
-        side,
-      }
+      amount,
+      side
     );
-
-    return new InstrumentClient(convergence, instrument, {
-      amount: amount * Math.pow(10, instrument.decimals),
-      side,
-    });
   }
 
   /** Helper method to get validation accounts for a Psyoptions European instrument. */
@@ -160,39 +164,6 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
     return meta;
   }
 
-  static async createFromLeg(
-    convergence: Convergence,
-    leg: Leg
-  ): Promise<PsyoptionsEuropeanInstrument> {
-    const { side, instrumentAmount, instrumentData } = leg;
-    const [{ metaKey, optionType }] =
-      psyoptionsEuropeanInstrumentDataSerializer.deserialize(
-        Buffer.from(instrumentData)
-      );
-
-    const euroMeta = await this.fetchMeta(convergence, metaKey);
-
-    const mint = await convergence
-      .tokens()
-      .findMintByAddress({ address: euroMeta.underlyingMint });
-    const amount =
-      typeof instrumentAmount === 'number'
-        ? instrumentAmount
-        : instrumentAmount.toNumber();
-
-    return new PsyoptionsEuropeanInstrument(
-      convergence,
-      mint,
-      optionType,
-      euroMeta,
-      metaKey,
-      {
-        amount,
-        side,
-      }
-    );
-  }
-
   serializeInstrumentData(): Buffer {
     return Buffer.from(
       new Uint8Array([
@@ -220,18 +191,35 @@ export class PsyoptionsEuropeanInstrument implements Instrument {
   }
 }
 
-/** @group Model Helpers */
-export const isPsyoptionsEuropeanInstrument = (
-  value: any
-): value is PsyoptionsEuropeanInstrument =>
-  typeof value === 'object' && value.model === 'psyoptionsEuropeanInstrument';
+export const psyoptionsEuropeanInstrumentParser = {
+  async parseFromLeg(
+    convergence: Convergence,
+    leg: Leg
+  ): Promise<PsyoptionsEuropeanInstrument> {
+    const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
+    const [{ metaKey, optionType }] =
+      psyoptionsEuropeanInstrumentDataSerializer.deserialize(
+        Buffer.from(instrumentData)
+      );
 
-/** @group Model Helpers */
-export function assertPsyoptionsEuropeanInstrument(
-  value: any
-): asserts value is PsyoptionsEuropeanInstrument {
-  assert(
-    isPsyoptionsEuropeanInstrument(value),
-    `Expected PsyoptionsEuropeanInstrument model`
-  );
-}
+    const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
+      convergence,
+      metaKey
+    );
+
+    const mint = await convergence
+      .tokens()
+      .findMintByAddress({ address: euroMeta.underlyingMint });
+
+    return new PsyoptionsEuropeanInstrument(
+      convergence,
+      mint,
+      baseAssetIndex,
+      optionType,
+      euroMeta,
+      metaKey,
+      removeDecimals(instrumentAmount, 0), // TODO: replace 0 with this.decimals after double conversion is removed
+      side
+    );
+  },
+};

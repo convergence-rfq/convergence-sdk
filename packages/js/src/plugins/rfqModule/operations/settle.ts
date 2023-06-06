@@ -15,9 +15,9 @@ import {
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
+import { spotLegInstrumentParser } from '../../spotInstrumentModule';
+import { psyoptionsEuropeanInstrumentParser } from '../../psyoptionsEuropeanInstrumentModule';
+import { psyoptionsAmericanInstrumentParser } from '../../psyoptionsAmericanInstrumentModule';
 
 const Key = 'SettleOperation' as const;
 
@@ -180,7 +180,7 @@ export const settleBuilder = async (
       leg.instrumentProgram.toString() ===
       psyoptionsEuropeanProgram.address.toString()
     ) {
-      const instrument = await PsyoptionsEuropeanInstrument.createFromLeg(
+      const instrument = await psyoptionsEuropeanInstrumentParser.parseFromLeg(
         convergence,
         leg
       );
@@ -197,7 +197,7 @@ export const settleBuilder = async (
       leg.instrumentProgram.toString() ===
       psyoptionsAmericanProgram.address.toString()
     ) {
-      const instrument = await PsyoptionsAmericanInstrument.createFromLeg(
+      const instrument = await psyoptionsAmericanInstrumentParser.parseFromLeg(
         convergence,
         leg
       );
@@ -210,7 +210,10 @@ export const settleBuilder = async (
       leg.instrumentProgram.toString() ===
       spotInstrumentProgram.address.toString()
     ) {
-      const instrument = await SpotInstrument.createFromLeg(convergence, leg);
+      const instrument = await spotLegInstrumentParser.parseFromLeg(
+        convergence,
+        leg
+      );
       const mint = await convergence.tokens().findMintByAddress({
         address: instrument.mint.address,
       });

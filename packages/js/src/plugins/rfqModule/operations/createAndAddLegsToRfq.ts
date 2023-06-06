@@ -1,8 +1,7 @@
 import * as anchor from '@project-serum/anchor';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { OrderType, FixedSize, QuoteAsset } from '../types';
-import { SpotInstrument } from '../../spotInstrumentModule';
+import { OrderType, FixedSize } from '../types';
 import {
   Operation,
   OperationHandler,
@@ -12,8 +11,6 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
 import {
   calculateExpectedLegsHash,
@@ -22,6 +19,11 @@ import {
 } from '../helpers';
 import { createRfqBuilder } from './createRfq';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
+import {
+  LegInstrument,
+  QuoteInstrument,
+  toQuote,
+} from '../../../plugins/instrumentModule';
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -76,14 +78,10 @@ export type CreateAndAddLegsToRfqInput = {
   taker?: Signer;
 
   /** The quote asset account. */
-  quoteAsset: QuoteAsset;
+  quoteAsset: QuoteInstrument;
 
   /** The instruments of the order, used to construct legs. */
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[];
+  instruments: LegInstrument[];
 
   /**
    * The type of order.
@@ -159,11 +157,9 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
       fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
       expectedLegsSize =
-        expectedLegsSize ??
-        (await calculateExpectedLegsSize(convergence, instruments));
+        expectedLegsSize ?? (await calculateExpectedLegsSize(instruments));
       expectedLegsHash =
-        expectedLegsHash ??
-        (await calculateExpectedLegsHash(convergence, instruments));
+        expectedLegsHash ?? (await calculateExpectedLegsHash(instruments));
 
       const rfqPda = convergence
         .rfqs()
@@ -172,7 +168,7 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
           taker: taker.publicKey,
           legsHash: Buffer.from(expectedLegsHash),
           orderType,
-          quoteAsset,
+          quoteAsset: toQuote(quoteAsset),
           fixedSize,
           activeWindow,
           settlingWindow,

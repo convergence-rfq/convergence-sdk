@@ -3,10 +3,8 @@ import { PublicKey, AccountMeta } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { assertRfq, Rfq } from '../models';
-import { OrderType, FixedSize, QuoteAsset } from '../types';
+import { OrderType, FixedSize } from '../types';
 import {
   calculateExpectedLegsHash,
   instrumentsToLegsAndLegsSize,
@@ -14,7 +12,6 @@ import {
   instrumentsToLegAccounts,
   legsToBaseAssetAccounts,
 } from '../helpers';
-import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -25,6 +22,11 @@ import {
   Signer,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import {
+  LegInstrument,
+  QuoteInstrument,
+  toQuote,
+} from '../../../plugins/instrumentModule';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -76,14 +78,10 @@ export type CreateRfqInput = {
   taker?: Signer;
 
   /** The quote asset account. */
-  quoteAsset: QuoteAsset;
+  quoteAsset: QuoteInstrument;
 
   /** The instruments of the order, used to construct legs. */
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[];
+  instruments: LegInstrument[];
 
   /** The type of order. */
   orderType: OrderType;
@@ -161,8 +159,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
     expectedLegsHash =
-      expectedLegsHash ??
-      (await calculateExpectedLegsHash(convergence, instruments));
+      expectedLegsHash ?? calculateExpectedLegsHash(instruments);
 
     const rfqPda = convergence
       .rfqs()
@@ -171,7 +168,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         taker: taker.publicKey,
         legsHash: Buffer.from(expectedLegsHash),
         orderType,
-        quoteAsset,
+        quoteAsset: toQuote(quoteAsset),
         fixedSize: convertedFixedSize,
         activeWindow,
         settlingWindow,
@@ -256,7 +253,6 @@ export const createRfqBuilder = async (
   let { expectedLegsSize } = params;
 
   const [legs, expectedLegsSizeValue] = await instrumentsToLegsAndLegsSize(
-    convergence,
     instruments
   );
   expectedLegsSize = expectedLegsSize ?? expectedLegsSizeValue;
@@ -274,14 +270,17 @@ export const createRfqBuilder = async (
       isWritable: false,
     },
     {
-      pubkey: convergence.rfqs().pdas().quote({ quoteAsset }),
+      pubkey: convergence
+        .rfqs()
+        .pdas()
+        .quote({ quoteAsset: toQuote(quoteAsset) }),
       isSigner: false,
       isWritable: false,
     },
   ];
 
   const baseAssetAccounts = legsToBaseAssetAccounts(convergence, legs);
-  const legAccounts = instrumentsToLegAccounts(convergence, instruments);
+  const legAccounts = instrumentsToLegAccounts(instruments);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -306,7 +305,7 @@ export const createRfqBuilder = async (
           expectedLegsHash: Array.from(expectedLegsHash),
           legs,
           orderType,
-          quoteAsset,
+          quoteAsset: toQuote(quoteAsset),
           fixedSize,
           activeWindow,
           settlingWindow,

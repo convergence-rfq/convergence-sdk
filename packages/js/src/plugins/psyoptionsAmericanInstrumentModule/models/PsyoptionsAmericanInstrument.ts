@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Side, Leg } from '@convergence-rfq/rfq';
+import { Side, Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import {
@@ -13,9 +13,8 @@ import {
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../../tokenModule';
-import { Instrument } from '../../instrumentModule/models/Instrument';
-import { InstrumentClient } from '../../instrumentModule/InstrumentClient';
-import { assert } from '../../../utils';
+import { LegInstrument } from '../../instrumentModule/models/Instrument';
+import { assert, removeDecimals } from '../../../utils';
 import { Convergence } from '../../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../../types';
 
@@ -69,28 +68,27 @@ const optionMarketWithKeySerializer = createSerializerFromFixableBeetArgsStruct(
   )
 );
 
-export class PsyoptionsAmericanInstrument implements Instrument {
-  readonly model = 'psyoptionsAmericanInstrument';
-  readonly decimals = 0;
+export class PsyoptionsAmericanInstrument implements LegInstrument {
+  static readonly decimals = 0;
 
   constructor(
     readonly convergence: Convergence,
     readonly mint: Mint,
+    readonly baseAssetIndex: BaseAssetIndex,
     readonly quoteMint: Mint,
     readonly optionType: OptionType,
     readonly optionMeta: OptionMarketWithKey,
     readonly optionMetaPubKey: PublicKey,
-    readonly legInfo?: {
-      amount: number;
-      side: Side;
-    }
-  ) {
-    if (legInfo && this.legInfo) {
-      this.legInfo.amount = legInfo.amount * Math.pow(10, this.decimals);
-    }
-  }
+    readonly amount: number,
+    readonly side: Side
+  ) {}
 
-  static createForLeg(
+  getBaseAssetIndex = () => this.baseAssetIndex;
+  getAmount = () => this.amount;
+  getDecimals = () => PsyoptionsAmericanInstrument.decimals;
+  getSide = () => this.side;
+
+  static async create(
     convergence: Convergence,
     mint: Mint,
     quoteMint: Mint,
@@ -99,24 +97,30 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     optionMetaPubkey: PublicKey,
     amount: number,
     side: Side
-  ): InstrumentClient {
-    const instrument = new PsyoptionsAmericanInstrument(
+  ) {
+    const mintInfoAddress = convergence
+      .rfqs()
+      .pdas()
+      .mintInfo({ mint: mint.address });
+    const mintInfo = await convergence
+      .protocol()
+      .findRegisteredMintByAddress({ address: mintInfoAddress });
+
+    if (mintInfo.mintType.__kind === 'Stablecoin') {
+      throw Error('Stablecoin mint cannot be used in a leg!');
+    }
+
+    return new PsyoptionsAmericanInstrument(
       convergence,
       mint,
+      mintInfo.mintType.baseAssetIndex,
       quoteMint,
       optionType,
       optionMeta,
       optionMetaPubkey,
-      {
-        amount,
-        side,
-      }
+      amount,
+      side
     );
-
-    return new InstrumentClient(convergence, instrument, {
-      amount: amount * Math.pow(10, mint.decimals),
-      side,
-    });
   }
 
   static async fetchMeta(
@@ -131,50 +135,6 @@ export class PsyoptionsAmericanInstrument implements Instrument {
       8
     );
     return meta;
-  }
-
-  static async createFromLeg(
-    convergence: Convergence,
-    leg: Leg
-  ): Promise<PsyoptionsAmericanInstrument> {
-    const { side, instrumentAmount, instrumentData } = leg;
-    const [{ metaKey, optionType }] =
-      psyoptionsAmericanInstrumentDataSerializer.deserialize(
-        Buffer.from(instrumentData)
-      );
-
-    const account = await convergence.rpc().getAccount(metaKey);
-    if (!account.exists) {
-      throw new Error('Account not found');
-    }
-    const [optionMarketWithKey] = optionMarketWithKeySerializer.deserialize(
-      Buffer.from(account.data),
-      8
-    );
-
-    const mint = await convergence
-      .tokens()
-      .findMintByAddress({ address: optionMarketWithKey.underlyingAssetMint });
-    const quoteMint = await convergence
-      .tokens()
-      .findMintByAddress({ address: optionMarketWithKey.quoteAssetMint });
-    const amount =
-      typeof instrumentAmount === 'number'
-        ? instrumentAmount
-        : instrumentAmount.toNumber();
-
-    return new PsyoptionsAmericanInstrument(
-      convergence,
-      mint,
-      quoteMint,
-      optionType,
-      optionMarketWithKey,
-      metaKey,
-      {
-        amount,
-        side,
-      }
-    );
   }
 
   getValidationAccounts() {
@@ -242,24 +202,49 @@ export class PsyoptionsAmericanInstrument implements Instrument {
     );
   }
 
-  getProgramId(): PublicKey {
+  getProgramId() {
     return this.convergence.programs().getPsyoptionsAmericanInstrument()
       .address;
   }
 }
 
-/** @group Model Helpers */
-export const isPsyoptionsAmericanInstrument = (
-  value: any
-): value is PsyoptionsAmericanInstrument =>
-  typeof value === 'object' && value.model === 'psyoptionsAmericanInstrument';
+export const psyoptionsAmericanInstrumentParser = {
+  async parseFromLeg(
+    convergence: Convergence,
+    leg: Leg
+  ): Promise<PsyoptionsAmericanInstrument> {
+    const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
+    const [{ metaKey, optionType }] =
+      psyoptionsAmericanInstrumentDataSerializer.deserialize(
+        Buffer.from(instrumentData)
+      );
 
-/** @group Model Helpers */
-export function assertPsyoptionsAmericanInstrument(
-  value: any
-): asserts value is PsyoptionsAmericanInstrument {
-  assert(
-    isPsyoptionsAmericanInstrument(value),
-    'Expected PsyoptionsAmericanInstrument model'
-  );
-}
+    const account = await convergence.rpc().getAccount(metaKey);
+    if (!account.exists) {
+      throw new Error('Account not found');
+    }
+    const [optionMarketWithKey] = optionMarketWithKeySerializer.deserialize(
+      Buffer.from(account.data),
+      8
+    );
+
+    const mint = await convergence
+      .tokens()
+      .findMintByAddress({ address: optionMarketWithKey.underlyingAssetMint });
+    const quoteMint = await convergence
+      .tokens()
+      .findMintByAddress({ address: optionMarketWithKey.quoteAssetMint });
+
+    return new PsyoptionsAmericanInstrument(
+      convergence,
+      mint,
+      baseAssetIndex,
+      quoteMint,
+      optionType,
+      optionMarketWithKey,
+      metaKey,
+      removeDecimals(instrumentAmount, 0), // TODO: replace 0 with this.decimals after double conversion is removed
+      side
+    );
+  },
+};

@@ -1,18 +1,11 @@
-import { Side } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
 
-import type { Convergence } from '../../../Convergence';
-import { PublicKey, BigNumber } from '../../../types';
-import { assert } from '../../../utils';
+import { BaseAssetIndex, Leg, QuoteAsset, Side } from '@convergence-rfq/rfq';
+import { PublicKey } from '../../../types';
+import { Convergence } from '../../../Convergence';
 
-export interface InstrumentData {
-  instrument: PublicKey;
-
-  instrumentData: Buffer | Uint8Array;
-
-  instrumentAmount: BigNumber;
-
-  side: Side;
+export interface LegInstrumentParser {
+  parseFromLeg(convergence: Convergence, leg: Leg): Promise<LegInstrument>;
 }
 
 /**
@@ -21,21 +14,26 @@ export interface InstrumentData {
  *
  * @group Models
  */
-export interface Instrument {
-  readonly convergence: Convergence;
-
-  serializeInstrumentData: () => Buffer;
-
+export interface LegInstrument {
   getProgramId: () => PublicKey;
-
+  getBaseAssetIndex: () => BaseAssetIndex;
+  getAmount: () => number;
+  getDecimals: () => number;
+  getSide: () => Side;
+  serializeInstrumentData: () => Buffer;
   getValidationAccounts(): AccountMeta[];
 }
 
-/** @group Model Helpers */
-export const isInstrument = (value: any): value is Instrument =>
-  typeof value === 'object' && value.model === 'instrument';
+export interface QuoteInstrumentFactory {
+  parseFromQuote(
+    convergence: Convergence,
+    quote: QuoteAsset
+  ): Promise<QuoteInstrument>;
+}
 
-/** @group Model Helpers */
-export function assertInstrument(value: any): asserts value is Instrument {
-  assert(isInstrument(value), `Expected Instrument model`);
+export interface QuoteInstrument {
+  getProgramId: () => PublicKey;
+  getDecimals: () => number;
+  serializeInstrumentData: () => Buffer;
+  getValidationAccounts(): AccountMeta[];
 }

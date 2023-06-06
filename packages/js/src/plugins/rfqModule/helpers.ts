@@ -7,14 +7,11 @@ import {
 } from '@solana/web3.js';
 import * as Spl from '@solana/spl-token';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { PROGRAM_ID as SPOT_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/spot-instrument';
-import { PROGRAM_ID as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import {
   Quote,
   Side,
   Leg,
   FixedSize,
-  QuoteAsset,
   StoredRfqState,
 } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
@@ -28,6 +25,7 @@ import {
   OptionType,
   programId as psyoptionsEuropeanProgramId,
 } from '@mithraic-labs/tokenized-euros';
+import { BN } from 'bn.js';
 import {
   UnparsedAccount,
   PublicKeyValues,
@@ -42,9 +40,9 @@ import {
   CvgWallet,
   InstructionWithSigners,
   TransactionBuilder,
+  addDecimals,
 } from '../../utils';
 import { Convergence } from '../../Convergence';
-import { spotInstrumentProgram, SpotInstrument } from '../spotInstrumentModule';
 import {
   PsyoptionsEuropeanInstrument,
   psyoptionsEuropeanInstrumentProgram,
@@ -53,6 +51,14 @@ import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentMod
 import { psyoptionsAmericanInstrumentProgram } from '../psyoptionsAmericanInstrumentModule/programs';
 import { collateralMintCache } from '../collateralModule';
 import { Mint } from '../tokenModule';
+import {
+  LegInstrument,
+  QuoteInstrument,
+  getSerializedLegLength,
+  getValidationAccounts,
+  serializeAsLeg,
+  toLeg,
+} from '../instrumentModule';
 import type { Rfq, Response } from './models';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
 
@@ -191,86 +197,24 @@ export const faucetAirdropWithMint = async (
   });
 };
 
-export async function legToInstrument<
-  T extends
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
->(convergence: Convergence, leg: Leg): Promise<T> {
-  if (leg.instrumentProgram.equals(spotInstrumentProgram.address)) {
-    return (await SpotInstrument.createFromLeg(convergence, leg)) as T;
-  } else if (
-    leg.instrumentProgram.equals(psyoptionsEuropeanInstrumentProgram.address)
-  ) {
-    return (await PsyoptionsEuropeanInstrument.createFromLeg(
-      convergence,
-      leg
-    )) as T;
-  } else if (
-    leg.instrumentProgram.equals(psyoptionsAmericanInstrumentProgram.address)
-  ) {
-    return (await PsyoptionsAmericanInstrument.createFromLeg(
-      convergence,
-      leg
-    )) as T;
-  }
+// TODO rework to plugin logic
+// export async function convergence.parseLegInstrument( convergence: Convergence,
+//   leg: Leg
+// ): Promise<LegInstrument> {
+//   if (leg.instrumentProgram.equals(spotInstrumentProgram.address)) {
+//     return SpotLegInstrument.parseFromLeg(convergence, leg);
+//   } else if (
+//     leg.instrumentProgram.equals(psyoptionsEuropeanInstrumentProgram.address)
+//   ) {
+//     return PsyoptionsEuropeanInstrument.parseFromLeg(convergence, leg);
+//   } else if (
+//     leg.instrumentProgram.equals(psyoptionsAmericanInstrumentProgram.address)
+//   ) {
+//     return PsyoptionsAmericanInstrument.parseFromLeg(convergence, leg);
+//   }
 
-  throw new Error('Unsupported instrument program');
-}
-
-export async function legsToInstruments<
-  T extends
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
->(convergence: Convergence, legs: Leg[]): Promise<T[]> {
-  return await Promise.all(
-    legs.map(async (leg: Leg) => {
-      return await legToInstrument<T>(convergence, leg);
-    })
-  );
-}
-
-export const quoteAssetToInstrument = async (
-  convergence: Convergence,
-  quoteAsset: QuoteAsset
-): Promise<SpotInstrument | PsyoptionsEuropeanInstrument> => {
-  if (quoteAsset.instrumentProgram.equals(SPOT_INSTRUMENT_PROGRAM_ID)) {
-    const { mint: mintPublicKey } = SpotInstrument.deserializeInstrumentData(
-      Buffer.from(quoteAsset.instrumentData)
-    );
-
-    const mint = await convergence
-      .tokens()
-      .findMintByAddress({ address: mintPublicKey });
-
-    return new SpotInstrument(convergence, mint);
-  } else if (
-    quoteAsset.instrumentProgram.equals(
-      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID
-    )
-  ) {
-    const { optionType, metaKey } =
-      PsyoptionsEuropeanInstrument.deserializeInstrumentData(
-        Buffer.from(quoteAsset.instrumentData)
-      );
-    const meta = await PsyoptionsEuropeanInstrument.fetchMeta(
-      convergence,
-      metaKey
-    );
-    const mint = await convergence
-      .tokens()
-      .findMintByAddress({ address: meta.underlyingMint });
-    return new PsyoptionsEuropeanInstrument(
-      convergence,
-      mint,
-      optionType,
-      meta,
-      metaKey
-    );
-  }
-  throw new Error("Instrument doesn't exist");
-};
+//   throw new Error('Unsupported instrument program');
+// }
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
@@ -311,7 +255,7 @@ export const convertOverrideLegMultiplierBps = (
 
 export const convertFixedSizeInput = (
   fixedSize: FixedSize,
-  quoteAsset: QuoteAsset
+  quoteAsset: QuoteInstrument
 ): FixedSize => {
   if (fixedSize.__kind == 'BaseAsset') {
     const convertedLegsMultiplierBps =
@@ -321,8 +265,7 @@ export const convertFixedSizeInput = (
     fixedSize.legsMultiplierBps = convertedLegsMultiplierBps;
   } else if (fixedSize.__kind == 'QuoteAsset') {
     const convertedQuoteAmount =
-      Number(fixedSize.quoteAmount) *
-      Math.pow(10, quoteAsset.instrumentDecimals);
+      Number(fixedSize.quoteAmount) * Math.pow(10, quoteAsset.getDecimals());
 
     fixedSize.quoteAmount = convertedQuoteAmount;
   }
@@ -464,26 +407,12 @@ export const convertResponseInput = (
   return { convertedBid, convertedAsk };
 };
 
-export const calculateExpectedLegsHash = async (
-  convergence: Convergence,
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[]
-): Promise<Uint8Array> => {
-  const serializedLegsData: Buffer[] = [];
-
-  for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
-    );
-
-    const leg = await instrumentClient.toLegData();
-
-    serializedLegsData.push(instrumentClient.serializeLegData(leg));
-  }
+export const calculateExpectedLegsHash = (
+  instruments: LegInstrument[]
+): Uint8Array => {
+  const serializedLegsData: Buffer[] = instruments.map((i) =>
+    serializeAsLeg(i)
+  );
 
   const lengthBuffer = Buffer.alloc(4);
   lengthBuffer.writeInt32LE(instruments.length);
@@ -499,112 +428,37 @@ export const calculateExpectedLegsHash = async (
   return expectedLegsHash;
 };
 
-export const calculateExpectedLegsSize = async (
-  convergence: Convergence,
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[]
-): Promise<number> => {
-  let expectedLegsSize = 4;
-
-  for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
-    );
-    expectedLegsSize += await instrumentClient.getLegDataSize();
-  }
-
-  return expectedLegsSize;
+export const calculateExpectedLegsSize = (
+  instruments: LegInstrument[]
+): number => {
+  return (
+    4 +
+    instruments.map((i) => getSerializedLegLength(i)).reduce((x, y) => x + y)
+  );
 };
 
-export const instrumentsToLegsAndLegsSize = async (
-  convergence: Convergence,
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[]
-): Promise<[Leg[], number]> => {
-  const legs: Leg[] = [];
-  let legsSize = 4;
-
-  for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
-    );
-
-    const leg = await instrumentClient.toLegData();
-    legs.push(leg);
-
-    legsSize += instrumentClient.serializeLegData(leg).length;
-  }
-
-  return [legs, legsSize];
+// TODO remove
+export const instrumentsToLegsAndLegsSize = (
+  instruments: LegInstrument[]
+): [Leg[], number] => {
+  return [
+    instrumentsToLegs(instruments),
+    calculateExpectedLegsSize(instruments),
+  ];
 };
 
-export const instrumentsToLegs = async (
-  convergence: Convergence,
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[]
-): Promise<Leg[]> => {
-  const legs: Leg[] = [];
-
-  for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
-    );
-
-    const leg = await instrumentClient.toLegData();
-
-    legs.push(leg);
-  }
-
-  return legs;
+export const instrumentsToLegs = (instruments: LegInstrument[]): Leg[] => {
+  return instruments.map((i) => toLeg(i));
 };
 
-export const instrumentsToLegsAndExpectedLegsHash = async (
-  convergence: Convergence,
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[]
-): Promise<[Leg[], Uint8Array]> => {
-  const legs: Leg[] = [];
-  const serializedLegsData: Buffer[] = [];
-
-  for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
-    );
-
-    const leg = await instrumentClient.toLegData();
-
-    legs.push(leg);
-    serializedLegsData.push(instrumentClient.serializeLegData(leg));
-  }
-
-  const lengthBuffer = Buffer.alloc(4);
-  lengthBuffer.writeInt32LE(instruments.length);
-  const fullLegDataBuffer = Buffer.concat([
-    lengthBuffer,
-    ...serializedLegsData,
-  ]);
-
-  const hash = new Sha256();
-  hash.update(fullLegDataBuffer);
-  const expectedLegsHash = hash.digestSync();
-
-  return [legs, expectedLegsHash];
+// TODO remove
+export const instrumentsToLegsAndExpectedLegsHash = (
+  instruments: LegInstrument[]
+): [Leg[], Uint8Array] => {
+  return [
+    instrumentsToLegs(instruments),
+    calculateExpectedLegsHash(instruments),
+  ];
 };
 
 export const legsToBaseAssetAccounts = (
@@ -632,25 +486,9 @@ export const legsToBaseAssetAccounts = (
 };
 
 export const instrumentsToLegAccounts = (
-  convergence: Convergence,
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[]
+  instruments: LegInstrument[]
 ): AccountMeta[] => {
-  const legAccounts: AccountMeta[] = [];
-
-  for (const instrument of instruments) {
-    const instrumentClient = convergence.instrument(
-      instrument,
-      instrument.legInfo
-    );
-
-    legAccounts.push(...instrumentClient.getValidationAccounts());
-  }
-
-  return legAccounts;
+  return instruments.map((i) => getValidationAccounts(i)).flat();
 };
 
 export const initializeNewOptionMeta = async (
@@ -1075,11 +913,11 @@ export const getCreateAmericanAccountsAndMintOptionsTransaction = async (
   const instructions: anchor.web3.TransactionInstruction[] = [];
 
   for (const leg of rfq.legs) {
-    const instrument = await legToInstrument(convergence, leg);
+    const instrument = await convergence.parseLegInstrument(leg);
 
     if (
-      (instrument.legInfo?.side == Side.Bid && callerIsTaker) ||
-      (instrument.legInfo?.side == Side.Ask && !callerIsTaker)
+      (instrument.getSide() == Side.Bid && callerIsTaker) ||
+      (instrument.getSide() == Side.Ask && !callerIsTaker)
     ) {
       if (
         leg.instrumentProgram.equals(
@@ -1151,12 +989,12 @@ export const createAmericanAccountsAndMintOptions = async (
     .findRfqByAddress({ address: rfqAddress });
 
   for (const leg of rfq.legs) {
-    const instrument = await legToInstrument(convergence, leg);
+    const instrument = await convergence.parseLegInstrument(leg);
 
     if (
       leg.instrumentProgram.equals(psyoptionsAmericanInstrumentProgram.address)
     ) {
-      const amount = instrument.legInfo?.amount;
+      const amount = instrument.getAmount();
 
       const instrumentData =
         PsyoptionsAmericanInstrument.deserializeInstrumentData(
@@ -1278,17 +1116,17 @@ export const getCreateAccountsAndMintOptionsTransaction = async (
   const instructions: anchor.web3.TransactionInstruction[] = [];
 
   for (const leg of rfq.legs) {
-    const instrument = await legToInstrument(convergence, leg);
+    const instrument = await convergence.parseLegInstrument(leg);
     if (
-      (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
-      (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+      (instrument.getSide() === confirmedSide && callerIsTaker) ||
+      (instrument.getSide() !== confirmedSide && callerIsMaker)
     ) {
       if (
         leg.instrumentProgram.equals(
           psyoptionsAmericanInstrumentProgram.address
         )
       ) {
-        const amount = instrument.legInfo?.amount;
+        const amount = instrument.getAmount();
         const instrumentData =
           PsyoptionsAmericanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)
@@ -1331,7 +1169,7 @@ export const getCreateAccountsAndMintOptionsTransaction = async (
           psyoptionsEuropeanInstrumentProgram.address
         )
       ) {
-        const amount = instrument.legInfo?.amount;
+        const amount = instrument.getAmount();
         const instrumentData =
           PsyoptionsEuropeanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)
@@ -1378,8 +1216,7 @@ export const getCreateAccountsAndMintOptionsTransaction = async (
             : euroMeta.callWriterMint,
           caller
         );
-        //@ts-ignore
-        const backupReceiver = await getOrCreateATA(
+        await getOrCreateATA(
           convergence,
           optionType == OptionType.PUT
             ? euroMeta.putOptionMint
@@ -1437,7 +1274,7 @@ export const mintAmericanOptions = async (
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
   const instructionWithSigners: InstructionWithSigners[] = [];
   for (const leg of rfq.legs) {
-    const instrument = await legToInstrument(convergence, leg);
+    const instrument = await convergence.parseLegInstrument(leg);
     if (
       leg.instrumentProgram.equals(
         psyoptionsAmericanInstrumentProgram.address
@@ -1445,10 +1282,10 @@ export const mintAmericanOptions = async (
       americanProgram
     ) {
       if (
-        (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
-        (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+        (instrument.getSide() === confirmedSide && callerIsTaker) ||
+        (instrument.getSide() !== confirmedSide && callerIsMaker)
       ) {
-        const amount = instrument.legInfo?.amount;
+        const amount = instrument.getAmount();
         const instrumentData =
           PsyoptionsAmericanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)
@@ -1524,15 +1361,15 @@ export const mintEuropeanOptions = async (
   const instructions: anchor.web3.TransactionInstruction[] = [];
 
   for (const leg of rfq.legs) {
-    const instrument = await legToInstrument(convergence, leg);
+    const instrument = await convergence.parseLegInstrument(leg);
     if (
       leg.instrumentProgram.equals(psyoptionsEuropeanInstrumentProgram.address)
     ) {
       if (
-        (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
-        (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+        (instrument.getSide() === confirmedSide && callerIsTaker) ||
+        (instrument.getSide() !== confirmedSide && callerIsMaker)
       ) {
-        const amount = instrument.legInfo?.amount;
+        const amount = instrument.getAmount();
         const instrumentData =
           PsyoptionsEuropeanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)
@@ -1583,7 +1420,7 @@ export const mintEuropeanOptions = async (
           minterCollateralKey,
           optionDestination,
           writerDestination,
-          new anchor.BN(amount!),
+          new BN(addDecimals(amount, PsyoptionsEuropeanInstrument.decimals)),
           optionType
         );
 
@@ -1609,7 +1446,9 @@ export const mintEuropeanOptions = async (
       });
     });
 
-    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence, {
+      skipPreflight: true,
+    });
 
     const sig = await txBuilder.sendAndConfirm(convergence, confirmOptions);
     return sig;
@@ -1652,13 +1491,13 @@ export const getOrCreateEuropeanOptionATAs = async (
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
 
   for (const leg of rfq.legs) {
-    const instrument = await legToInstrument(convergence, leg);
+    const instrument = await convergence.parseLegInstrument(leg);
     if (
       leg.instrumentProgram.equals(psyoptionsEuropeanInstrumentProgram.address)
     ) {
       if (
-        (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
-        (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+        (instrument.getSide() === confirmedSide && callerIsTaker) ||
+        (instrument.getSide() !== confirmedSide && callerIsMaker)
       ) {
         flag = true;
         const instrumentData =
@@ -1712,7 +1551,7 @@ export const getOrCreateAmericanOptionATAs = async (
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
   for (const leg of rfq.legs) {
-    const instrument = await legToInstrument(convergence, leg);
+    const instrument = await convergence.parseLegInstrument(leg);
     if (
       leg.instrumentProgram.equals(
         psyoptionsAmericanInstrumentProgram.address
@@ -1720,8 +1559,8 @@ export const getOrCreateAmericanOptionATAs = async (
       americanProgram
     ) {
       if (
-        (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
-        (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+        (instrument.getSide() === confirmedSide && callerIsTaker) ||
+        (instrument.getSide() !== confirmedSide && callerIsMaker)
       ) {
         flag = true;
         const instrumentData =
@@ -1786,10 +1625,10 @@ export const createAccountsAndMintOptions = async (
   );
 
   for (const leg of rfq.legs) {
-    const instrument = await legToInstrument(convergence, leg);
+    const instrument = await convergence.parseLegInstrument(leg);
     if (
-      (instrument.legInfo?.side === confirmedSide && callerIsTaker) ||
-      (instrument.legInfo?.side !== confirmedSide && callerIsMaker)
+      (instrument.getSide() === confirmedSide && callerIsTaker) ||
+      (instrument.getSide() !== confirmedSide && callerIsMaker)
     ) {
       if (
         leg.instrumentProgram.equals(
@@ -1797,7 +1636,7 @@ export const createAccountsAndMintOptions = async (
         ) &&
         americanProgram
       ) {
-        const amount = instrument.legInfo?.amount;
+        const amount = instrument.getAmount();
         const instrumentData =
           PsyoptionsAmericanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)
@@ -1847,7 +1686,7 @@ export const createAccountsAndMintOptions = async (
         ) &&
         europeanProgram
       ) {
-        const amount = instrument.legInfo?.amount;
+        const amount = instrument.getAmount();
         const instrumentData =
           PsyoptionsEuropeanInstrument.deserializeInstrumentData(
             Buffer.from(leg.instrumentData)

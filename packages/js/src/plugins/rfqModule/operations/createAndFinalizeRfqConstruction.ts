@@ -3,11 +3,8 @@ import { Leg } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { SpotInstrument } from '../../spotInstrumentModule';
-import { OrderType, QuoteAsset, FixedSize } from '../types';
+import { OrderType, FixedSize } from '../types';
 import { assertRfq, Rfq } from '../models';
-import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 
 import {
   instrumentsToLegsAndExpectedLegsHash,
@@ -23,6 +20,11 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  LegInstrument,
+  QuoteInstrument,
+  toQuote,
+} from '../../../plugins/instrumentModule';
 import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
 
@@ -79,14 +81,10 @@ export type CreateAndFinalizeRfqConstructionInput = {
   taker?: Signer;
 
   /** Quote asset account. */
-  quoteAsset: QuoteAsset;
+  quoteAsset: QuoteInstrument;
 
   /** The legs of the order. */
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[];
+  instruments: LegInstrument[];
 
   /** The type of order. */
   orderType: OrderType;
@@ -173,7 +171,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
       const [legs, expectedLegsHash] =
-        await instrumentsToLegsAndExpectedLegsHash(convergence, instruments);
+        await instrumentsToLegsAndExpectedLegsHash(instruments);
 
       const rfqPda = convergence
         .rfqs()
@@ -182,7 +180,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           taker: taker.publicKey,
           legsHash: Buffer.from(expectedLegsHash),
           orderType,
-          quoteAsset,
+          quoteAsset: toQuote(quoteAsset),
           fixedSize: convertedFixedSize,
           activeWindow,
           settlingWindow,

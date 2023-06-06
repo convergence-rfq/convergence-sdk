@@ -10,7 +10,7 @@ import {
 } from '../types';
 import { RfqAccount } from '../accounts';
 import { assert } from '../../../utils';
-import { SpotInstrument } from '../../../plugins/spotInstrumentModule';
+import { SpotLegInstrument } from '../../../plugins/spotInstrumentModule';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -86,7 +86,7 @@ export const isRfq = (value: any): value is Rfq =>
 
 /** @group Model Helpers */
 export function assertRfq(value: any): asserts value is Rfq {
-  assert(isRfq(value), `Expected Rfq model`);
+  assert(isRfq(value), 'Expected Rfq model');
 }
 
 /** @group Model Helpers */
@@ -97,9 +97,9 @@ export const toRfq = (account: RfqAccount): Rfq => ({
   orderType: account.data.orderType,
   fixedSize: account.data.fixedSize,
   quoteAsset: account.data.quoteAsset,
-  quoteMint: SpotInstrument.deserializeInstrumentData(
+  quoteMint: SpotLegInstrument.deserializeInstrumentData(
     Buffer.from(account.data.quoteAsset.instrumentData)
-  ).mint,
+  ).mintAddress,
   creationTimestamp: account.data.creationTimestamp,
   activeWindow: account.data.activeWindow,
   settlingWindow: account.data.settlingWindow,

@@ -7,7 +7,7 @@ import {
   psyoptionsAmericanInstrumentDataSerializer,
 } from '../../psyoptionsAmericanInstrumentModule';
 import {
-  PsyoptionsEuropeanInstrument,
+  psyoptionsEuropeanInstrumentParser,
   psyoptionsEuropeanInstrumentProgram,
 } from '../../psyoptionsEuropeanInstrumentModule';
 import { getPages, convertRfqOutput, sortByActiveAndExpiry } from '../helpers';
@@ -130,7 +130,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               psyoptionsEuropeanInstrumentProgram.address.toBase58()
             ) {
               const instrument =
-                await PsyoptionsEuropeanInstrument.createFromLeg(
+                await psyoptionsEuropeanInstrumentParser.parseFromLeg(
                   convergence,
                   leg
                 );
@@ -162,7 +162,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                 Buffer.from(leg.instrumentData)
               )[0];
 
-              if (data.mint.toBase58() === mintAddress.toBase58()) {
+              if (data.mintAddress.toBase58() === mintAddress.toBase58()) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals
@@ -242,7 +242,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               psyoptionsEuropeanInstrumentProgram.address.toBase58()
             ) {
               const instrument =
-                await PsyoptionsEuropeanInstrument.createFromLeg(
+                await psyoptionsEuropeanInstrumentParser.parseFromLeg(
                   convergence,
                   leg
                 );
@@ -274,7 +274,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                 Buffer.from(leg.instrumentData)
               )[0];
 
-              if (data.mint.toBase58() === mintAddress.toBase58()) {
+              if (data.mintAddress.toBase58() === mintAddress.toBase58()) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals

@@ -9,12 +9,13 @@ import {
   PsyoptionsAmericanInstrument,
   initializeNewAmericanOption,
   toBigNumber,
-  SpotInstrument,
   createAmericanProgram,
   Side,
   Rfq,
   Response,
   createAmericanAccountsAndMintOptions,
+  SpotQuoteInstrument,
+  SpotLegInstrument,
 } from '../src';
 import { BASE_MINT_PK, QUOTE_MINT_PK } from './constants';
 
@@ -59,26 +60,21 @@ export const createAmericanCoveredCall = async (
 
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      new SpotInstrument(cvg, baseMint, {
-        amount: 1.0,
-        side: Side.Bid,
-      }),
-      new PsyoptionsAmericanInstrument(
+      await SpotLegInstrument.create(cvg, baseMint, 1.0, Side.Bid),
+      await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
         quoteMint,
         OptionType.CALL,
         optionMarket,
         optionMarketKey,
-        {
-          amount: 1,
-          side: Side.Bid,
-        }
+        1,
+        Side.Bid
       ),
     ],
     orderType: fromHumanOrderType(orderType),
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 0.0000001 },
-    quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
+    quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
 
   return { rfq, response, optionMarket };
@@ -97,14 +93,11 @@ export const createRfq = async (
     .findMintByAddress({ address: QUOTE_MINT_PK });
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      new SpotInstrument(cvg, baseMint, {
-        amount,
-        side: Side.Bid,
-      }),
+      await SpotLegInstrument.create(cvg, baseMint, amount, Side.Bid),
     ],
     orderType: fromHumanOrderType(orderType),
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-    quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
+    quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
   return { rfq, response };
 };

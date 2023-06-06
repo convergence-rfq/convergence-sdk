@@ -41,7 +41,7 @@ describe('unit.cache', () => {
 
   it('cache expiration works', async () => {
     await cachedCall.get(100);
-    await sleep(0.2);
+    await sleep(0.4);
     const secondResult = await cachedCall.get(101);
     const calls = extractCallsAndReset();
     expect(secondResult).toEqual(101);

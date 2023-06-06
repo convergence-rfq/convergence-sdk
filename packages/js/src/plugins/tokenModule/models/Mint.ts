@@ -70,7 +70,7 @@ export const isMint = (value: any): value is Mint =>
 
 /** @group Model Helpers */
 export function assertMint(value: any): asserts value is Mint {
-  assert(isMint(value), `Expected Mint model`);
+  assert(isMint(value), 'Expected Mint model');
 }
 
 /** @group Model Helpers */

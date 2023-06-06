@@ -1,16 +1,9 @@
-import { Leg, Side, sideBeet, baseAssetIndexBeet } from '@convergence-rfq/rfq';
-import { AccountMeta } from '@solana/web3.js';
-import * as beet from '@convergence-rfq/beet';
-import * as beetSolana from '@convergence-rfq/beet-solana';
+import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 
-import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
-import { SpotInstrument } from '../spotInstrumentModule';
-import type { Convergence } from '../../Convergence';
-import {
-  toBigNumber,
-  createSerializerFromFixableBeetArgsStruct,
-} from '../../types';
+import { AccountMeta } from '@solana/web3.js';
+import { createSerializerFromFixableBeetArgsStruct } from '../../types';
+import { addDecimals } from '../../utils/conversions';
+import { LegInstrument, QuoteInstrument } from './models';
 
 /**
  * This is a client for the Instrument Module.
@@ -31,99 +24,108 @@ import {
  *
  * @group Modules
  */
-export class InstrumentClient {
-  constructor(
-    protected convergence: Convergence,
-    protected instrument:
-      | SpotInstrument
-      | PsyoptionsEuropeanInstrument
-      | PsyoptionsAmericanInstrument,
-    protected legInfo?: {
-      amount: number;
-      side: Side;
-    }
-  ) {}
+// export class InstrumentClient {
+//   constructor(
+//     protected convergence: Convergence,
+//     protected instrument: LegInstrumentInterface,
+//     protected legInfo?: {
+//       amount: number;
+//       side: Side;
+//     }
+//   ) {}
 
-  async getBaseAssetIndex(): Promise<number> {
-    if (this.legInfo) {
-      const mintInfoPda = this.convergence
-        .rfqs()
-        .pdas()
-        .mintInfo({ mint: this.instrument.mint.address });
+//   async toLegData(): Promise<Leg> {
+//     if (this.legInfo) {
+//       return {
+//         instrumentProgram: this.instrument.getProgramId(),
+//         baseAssetIndex: await this.instrument.getBaseAssetIndex(),
+//         instrumentData: this.instrument.serializeInstrumentData(),
+//         instrumentAmount: toBigNumber(this.legInfo.amount),
+//         instrumentDecimals: this.instrument.decimals,
+//         side: this.legInfo.side,
+//       };
+//     }
+//     throw Error('Instrument is used for leg');
+//   }
 
-      const registeredMint = await this.convergence
-        .protocol()
-        .findRegisteredMintByAddress({
-          address: mintInfoPda,
-        });
-        
-      if (registeredMint.mintType.__kind === 'AssetWithRisk')
-        return registeredMint.mintType.baseAssetIndex.value;
-    }
-    throw Error('Instrument is used for base asset index');
-  }
+//   toQuoteAsset() {
+//     if (this.legInfo) {
+//       throw Error('Instrument is used for quote');
+//     }
+//     return {
+//       instrumentProgram: this.instrument.getProgramId(),
+//       instrumentData: this.instrument.serializeInstrumentData(),
+//       instrumentDecimals: this.instrument.mint.decimals,
+//     };
+//   }
 
-  async toLegData(): Promise<Leg> {
-    if (this.legInfo) {
-      return {
-        instrumentProgram: this.instrument.getProgramId(),
-        baseAssetIndex: { value: await this.getBaseAssetIndex() },
-        instrumentData: this.instrument.serializeInstrumentData(),
-        instrumentAmount: toBigNumber(this.legInfo.amount),
-        instrumentDecimals: this.instrument.decimals,
-        side: this.legInfo.side,
-      };
-    }
-    throw Error('Instrument is used for leg');
-  }
+//   async getLegDataSize(): Promise<number> {
+//     return this.serializeLegData(await this.toLegData()).length;
+//   }
 
-  toQuoteAsset() {
-    if (this.legInfo) {
-      throw Error('Instrument is used for quote');
-    }
-    return {
-      instrumentProgram: this.instrument.getProgramId(),
-      instrumentData: this.instrument.serializeInstrumentData(),
-      instrumentDecimals: this.instrument.mint.decimals,
-    };
-  }
+//   serializeLegData(leg: Leg): Buffer {
+//     const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
+//     return legSerializer.serialize(leg);
+//   }
 
-  getInstrumentDataSize(): number {
-    return this.instrument.serializeInstrumentData().length;
-  }
+//   getProgramAccount(): AccountMeta {
+//     return {
+//       pubkey: this.instrument.getProgramId(),
+//       isSigner: false,
+//       isWritable: false,
+//     };
+//   }
 
-  async getLegDataSize(): Promise<number> {
-    return this.serializeLegData(await this.toLegData()).length;
-  }
+//   getValidationAccounts() {
+//     return [this.getProgramAccount()].concat(
+//       this.instrument.getValidationAccounts()
+//     );
+//   }
+// }
 
-  serializeLegData(leg: Leg): Buffer {
-    const legBeet = new beet.FixableBeetArgsStruct<Leg>(
-      [
-        ['instrumentProgram', beetSolana.publicKey],
-        ['baseAssetIndex', baseAssetIndexBeet],
-        ['instrumentData', beet.bytes],
-        ['instrumentAmount', beet.u64],
-        ['instrumentDecimals', beet.u8],
-        ['side', sideBeet],
-      ],
-      'Leg'
-    );
+export function toLeg(legInstrument: LegInstrument): Leg {
+  return {
+    instrumentProgram: legInstrument.getProgramId(),
+    baseAssetIndex: legInstrument.getBaseAssetIndex(),
+    instrumentData: legInstrument.serializeInstrumentData(),
+    instrumentAmount: addDecimals(
+      legInstrument.getAmount(),
+      legInstrument.getDecimals()
+    ),
+    instrumentDecimals: legInstrument.getDecimals(),
+    side: legInstrument.getSide(),
+  };
+}
 
-    const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
-    return legSerializer.serialize(leg);
-  }
+export function serializeAsLeg(legInstrument: LegInstrument) {
+  const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
+  return legSerializer.serialize(toLeg(legInstrument));
+}
 
-  getProgramAccount(): AccountMeta {
-    return {
-      pubkey: this.instrument.getProgramId(),
-      isSigner: false,
-      isWritable: false,
-    };
-  }
+export function getSerializedLegLength(legInstrument: LegInstrument) {
+  return serializeAsLeg(legInstrument).length;
+}
 
-  getValidationAccounts() {
-    return [this.getProgramAccount()].concat(
-      this.instrument.getValidationAccounts()
-    );
-  }
+export function getProgramAccount(legInstrument: LegInstrument): AccountMeta {
+  return {
+    pubkey: legInstrument.getProgramId(),
+    isSigner: false,
+    isWritable: false,
+  };
+}
+
+export function getValidationAccounts(
+  legInstrument: LegInstrument
+): AccountMeta[] {
+  return [getProgramAccount(legInstrument)].concat(
+    legInstrument.getValidationAccounts()
+  );
+}
+
+export function toQuote(legInstrument: QuoteInstrument): QuoteAsset {
+  return {
+    instrumentProgram: legInstrument.getProgramId(),
+    instrumentData: legInstrument.serializeInstrumentData(),
+    instrumentDecimals: legInstrument.getDecimals(),
+  };
 }

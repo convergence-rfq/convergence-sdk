@@ -6,7 +6,6 @@ import {
   isFixedSizeQuoteAsset,
   Leg,
   OrderType,
-  QuoteAsset,
   Side,
 } from '@convergence-rfq/rfq';
 import { bignum } from '@convergence-rfq/beet';
@@ -22,7 +21,7 @@ import {
 import { Convergence } from '../../../Convergence';
 import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
 import { convertFixedSizeInput } from '../../rfqModule';
-
+import { QuoteInstrument } from '../../../plugins/instrumentModule';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -84,7 +83,7 @@ export type CalculateCollateralForRfqInput = {
    */
   legs: Leg[];
 
-  quoteAsset: QuoteAsset;
+  quoteAsset: QuoteInstrument;
   /**
    * Settlement period of the RFQ being created in seconds
    */
