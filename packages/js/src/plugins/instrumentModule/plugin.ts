@@ -1,11 +1,7 @@
-import {
-  Convergence,
-  Leg,
-  LegInstrument,
-  LegInstrumentParser,
-  PublicKey,
-} from '@/index';
-import { ConvergencePlugin, Program } from '@/types';
+import { Leg } from '../rfqModule';
+import { LegInstrument, LegInstrumentParser } from './models';
+import type { Convergence } from '@/Convergence';
+import { ConvergencePlugin, Program, PublicKey } from '@/types';
 
 /** @group Plugins */
 export const instrumentModule = (): ConvergencePlugin => ({
