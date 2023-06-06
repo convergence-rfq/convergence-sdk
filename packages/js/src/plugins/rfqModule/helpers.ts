@@ -44,7 +44,7 @@ import {
 } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/models/PsyoptionsAmericanInstrument';
+import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/instrument';
 import { collateralMintCache } from '../collateralModule';
 import { Mint } from '../tokenModule';
 import {

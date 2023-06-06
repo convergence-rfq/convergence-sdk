@@ -3,14 +3,11 @@ import { Side, Leg, BaseAssetIndex, QuoteAsset } from '@convergence-rfq/rfq';
 import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
-import { Mint } from '../../tokenModule';
-import {
-  LegInstrument,
-  QuoteInstrument,
-} from '../../instrumentModule/models/Instrument';
-import { Convergence } from '../../../Convergence';
-import { createSerializerFromFixableBeetArgsStruct } from '../../../types';
-import { removeDecimals } from '../../../utils/conversions';
+import { Mint } from '../tokenModule';
+import { LegInstrument, QuoteInstrument } from '../instrumentModule';
+import { Convergence } from '../../Convergence';
+import { createSerializerFromFixableBeetArgsStruct } from '../../types';
+import { removeDecimals } from '../../utils/conversions';
 
 type InstrumentData = {
   mintAddress: PublicKey;
@@ -109,7 +106,7 @@ export const spotLegInstrumentParser = {
       convergence,
       mint,
       baseAssetIndex,
-      removeDecimals(instrumentAmount, 0), // TODO: replace 0 with mint.decimals after double conversion is removed
+      removeDecimals(instrumentAmount, mint.decimals),
       side
     );
   },

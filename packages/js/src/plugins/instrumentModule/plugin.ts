@@ -1,5 +1,5 @@
 import { Leg } from '../rfqModule';
-import { LegInstrument, LegInstrumentParser } from './models';
+import { LegInstrument, LegInstrumentParser } from '.';
 import type { Convergence } from '@/Convergence';
 import { ConvergencePlugin, Program, PublicKey } from '@/types';
 

@@ -12,11 +12,11 @@ import {
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
-import { Mint } from '../../tokenModule';
-import { LegInstrument } from '../../instrumentModule/models/Instrument';
-import { assert, removeDecimals } from '../../../utils';
-import { Convergence } from '../../../Convergence';
-import { createSerializerFromFixableBeetArgsStruct } from '../../../types';
+import { Mint } from '../tokenModule';
+import { LegInstrument } from '../instrumentModule';
+import { assert, removeDecimals } from '../../utils';
+import { Convergence } from '../../Convergence';
+import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 
 type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;
@@ -243,7 +243,7 @@ export const psyoptionsAmericanInstrumentParser = {
       optionType,
       optionMarketWithKey,
       metaKey,
-      removeDecimals(instrumentAmount, 0), // TODO: replace 0 with this.decimals after double conversion is removed
+      removeDecimals(instrumentAmount, PsyoptionsAmericanInstrument.decimals),
       side
     );
   },

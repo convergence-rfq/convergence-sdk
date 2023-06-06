@@ -1,6 +1,6 @@
 import { PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { ProgramClient } from '../programModule';
-import { spotLegInstrumentParser } from './models';
+import { spotLegInstrumentParser } from '.';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
 
