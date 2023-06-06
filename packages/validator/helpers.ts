@@ -14,20 +14,33 @@ export type ChildProccess = ChildProcessWithoutNullStreams;
 export const RPC_ENDPOINT = 'http://127.0.0.1:8899';
 
 export const FIXTURES = path.join(__dirname, 'fixtures');
+export const DEPS = path.join(__dirname, 'dependencies');
 
 const PSYOPTIONS_AMERICAN = 'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs';
 const PSYOPTIONS_EURO = 'FASQhaZQT53W9eT9wWnPoBFw8xzZDey9TbMmJj6jCQTs';
 const SWITCHBOARD_BTC_ORACLE = '8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee';
-const SWITCHBOARD_SOL_ORACLE = 'GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR';
+const PYTH_SOL_ORACLE = 'H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG';
 const PYTH_ORACLE = 'FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH';
 
 const getBaseArgs = () => [
   '--account',
   SWITCHBOARD_BTC_ORACLE,
-  path.join(FIXTURES, 'accounts/btc_20000_oracle_switchboard.json'),
+  path.join(DEPS, 'btc_20000_oracle_switchboard.json'),
   '--account',
-  SWITCHBOARD_SOL_ORACLE,
-  path.join(FIXTURES, 'accounts/sol_30_oracle_switchboard.json'),
+  PYTH_SOL_ORACLE,
+  path.join(DEPS, 'sol_30_oracle_pyth.json'),
+
+  '--bpf-program',
+  PSYOPTIONS_AMERICAN,
+  path.join(DEPS, 'psy_american.so'),
+  '--bpf-program',
+  PSYOPTIONS_EURO,
+  path.join(DEPS, 'euro_primitive.so'),
+
+  '--bpf-program',
+  PYTH_ORACLE,
+  path.join(DEPS, 'pseudo_pyth.so'),
+
   '--bpf-program',
   rfq.PROGRAM_ADDRESS,
   path.join(FIXTURES, 'programs/rfq.so'),
@@ -38,20 +51,12 @@ const getBaseArgs = () => [
   psyoptionsEuropeanInstrument.PROGRAM_ADDRESS,
   path.join(FIXTURES, 'programs/psyoptions_european_instrument.so'),
   '--bpf-program',
-  PSYOPTIONS_AMERICAN,
-  path.join(FIXTURES, 'programs/psy_american.so'),
-  '--bpf-program',
   psyoptionsAmericanInstrument.PROGRAM_ADDRESS,
   path.join(FIXTURES, 'programs/psyoptions_american_instrument.so'),
   '--bpf-program',
   riskEngine.PROGRAM_ADDRESS,
   path.join(FIXTURES, 'programs/risk_engine.so'),
-  '--bpf-program',
-  PSYOPTIONS_EURO,
-  path.join(FIXTURES, 'programs/euro_primitive.so'),
-  '--bpf-program',
-  PYTH_ORACLE,
-  path.join(FIXTURES, 'programs/pseudo_pyth.so'),
+
   '--ledger',
   './test-ledger',
   '--reset',
@@ -63,7 +68,7 @@ export class Ctx {
   dao = getKeypairPk('dao');
   maker = getKeypairPk('maker');
   taker = getKeypairPk('taker');
-  mintAuthority = getKeypairPk('mint-authority');
+  //mintAuthority = getKeypairPk('mint-authority');
   baseMint = getKeypairPk('mint-btc');
   quoteMint = getKeypairPk('mint-usd-quote');
   collateralMint = getKeypairPk('mint-usd-collateral');
@@ -86,12 +91,21 @@ export class Ctx {
   takerCollateralToken = getAccountPk('rfq-collateral-token-taker');
 
   // Switchboard
-  switchboardSOLOracle = getAccountPk('sol_30_oracle_switchboard');
-  switchboardBTCOracle = getAccountPk('btc_20000_oracle_switchboard');
+  switchboardBTCOracle = getDepAccountPk('btc_20000_oracle_switchboard');
+
+  // Pyth
+  pythSOLOracle = getDepAccountPk('sol_30_oracle_pyth');
 }
 
 export const getAccountPk = (user: string): string => {
   const f = path.join(FIXTURES, 'accounts', user + '.json');
+  const fileContent = fs.readFileSync(f, 'utf-8');
+  const json = JSON.parse(fileContent);
+  return json.pubkey;
+};
+
+export const getDepAccountPk = (user: string): string => {
+  const f = path.join(DEPS, user + '.json');
   const fileContent = fs.readFileSync(f, 'utf-8');
   const json = JSON.parse(fileContent);
   return json.pubkey;

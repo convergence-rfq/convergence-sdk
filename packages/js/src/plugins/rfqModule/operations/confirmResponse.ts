@@ -249,13 +249,13 @@ export const confirmResponseBuilder = async (
       .protocol()
       .findBaseAssetByAddress({ address: baseAsset });
 
-    const oracleAccount: AccountMeta = {
-      pubkey: baseAssetModel.priceOracle.address,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    oracleAccounts.push(oracleAccount);
+    if (baseAssetModel.priceOracle.address) {
+      oracleAccounts.push({
+        pubkey: baseAssetModel.priceOracle.address,
+        isSigner: false,
+        isWritable: false,
+      });
+    }
   }
 
   anchorRemainingAccounts.push(

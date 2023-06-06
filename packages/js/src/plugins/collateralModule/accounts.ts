@@ -1,4 +1,4 @@
-import { CollateralInfo } from '@convergence-rfq/rfq';
+import { CollateralInfo as SolitaCollateralInfo } from '@convergence-rfq/rfq';
 
 import {
   Account,
@@ -7,11 +7,14 @@ import {
 } from '../../types';
 
 /** @group Accounts */
-export type CollateralAccount = Account<CollateralInfo>;
+export type CollateralAccount = Account<SolitaCollateralInfo>;
+
+// TODO: Categorize bugs and what caused them, how to mitigate in future? Paywrite
 
 /** @group Account Helpers */
-export const parseCollateralAccount = getAccountParsingFunction(CollateralInfo);
+export const parseCollateralAccount =
+  getAccountParsingFunction(SolitaCollateralInfo);
 
 /** @group Account Helpers */
 export const toCollateralAccount =
-  getAccountParsingAndAssertingFunction(CollateralInfo);
+  getAccountParsingAndAssertingFunction(SolitaCollateralInfo);

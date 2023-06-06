@@ -146,6 +146,10 @@ async function fetchBaseAssetInfo(
     .protocol()
     .findBaseAssetByAddress({ address });
 
+  if (!baseAsset.priceOracle.address) {
+    throw new Error('Price oracle address is missing');
+  }
+
   const price = await fetchLatestOraclePrice(
     convergence,
     baseAsset.priceOracle.address,

@@ -46,11 +46,15 @@ export const logResponse = (r: SendAndConfirmTransactionResponse): void =>
 export const logBaseAsset = (b: BaseAsset): void => {
   l('Address:', b.address.toString());
   l('Ticker:', b.ticker.toString());
-  // TODO: Update SDK model
-  //l('Active:', b.enabled);
-  l('Index:', b.index.value);
-  l('Oracle:', b.priceOracle.address.toString());
+  l('Enabled:', b.enabled);
+  l('Index:', b.index);
   l('Risk category:', parseInt(b.riskCategory.toString()));
+  l('Oracle source:', b.priceOracle.source);
+  if (b.priceOracle.address) {
+    l('Oracle address:', b.priceOracle.address.toString());
+  } else if (b.priceOracle.price) {
+    l('Oracle price:', b.priceOracle.price.toString());
+  }
 };
 
 export const logRegisteredMint = (r: RegisteredMint): void => {
@@ -82,7 +86,7 @@ export const logTokenAccount = (p: PublicKey): void => {
   l('Token account address:', p.toString());
 };
 
-export const logError = (e: any) => l(`Error: ${JSON.stringify(e)}`);
+export const logError = (e: any) => l(`Error: ${JSON.stringify(e.message)}`);
 
 export const logProtocol = (p: Protocol): void => {
   l('Address:', p.address.toString());

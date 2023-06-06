@@ -76,6 +76,8 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
       const collateral = await gpaBuilder.whereUser(user).get();
       scope.throwIfCanceled();
 
+      const collateralMint = await collateralMintCache.get(convergence);
+
       const collateralModel = collateral
         .map<Collateral | null>((account) => {
           if (account === null) {
@@ -83,7 +85,7 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
           }
 
           try {
-            return toCollateral(toCollateralAccount(account));
+            return toCollateral(toCollateralAccount(account), collateralMint);
           } catch (e) {
             return null;
           }
@@ -92,10 +94,6 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
           (collateral): collateral is Collateral => collateral !== null
         )[0];
 
-      const collateralMint = await collateralMintCache.get(convergence);
-      if (collateralModel) {
-        collateralModel.lockedTokensAmount /= 10 ** collateralMint.decimals;
-      }
       return collateralModel;
     },
   };

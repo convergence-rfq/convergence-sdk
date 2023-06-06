@@ -18,4 +18,4 @@ export const TAKER_COLLATERAL_TOKEN_PK = new P(CTX.takerCollateralToken);
 export const TAKER_COLLATERAL_INFO_PK = new P(CTX.takerCollateralInfo);
 export const TAKER_QUOTE_WALLET_PK = new P(CTX.takerQuoteWallet);
 export const SWITCHBOARD_BTC_ORACLE_PK = new P(CTX.switchboardBTCOracle);
-export const SWITCHBOARD_SOL_ORACLE_PK = new P(CTX.switchboardSOLOracle);
+export const PYTH_SOL_ORACLE_PK = new P(CTX.pythSOLOracle);
