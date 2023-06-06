@@ -1,6 +1,6 @@
 import { PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { ProgramClient } from '../programModule';
-import { psyoptionsEuropeanInstrumentParser } from '.';
+import { psyoptionsEuropeanInstrumentParser } from './instrument';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
 

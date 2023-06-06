@@ -4,6 +4,10 @@ import {
   Side,
   StoredRfqState,
   FixedSize,
+  SpotLegInstrument,
+  PsyoptionsAmericanInstrument,
+  PsyoptionsEuropeanInstrument,
+  LegInstrument,
 } from '@convergence-rfq/sdk';
 import { Command } from 'commander';
 
@@ -85,17 +89,28 @@ export const formatOrderType = (orderType: OrderType): string => {
   }
 };
 
-export const formatInstrument = (instrument: Instrument): string => {
-  switch (instrument.model) {
-    case 'spotInstrument':
-      return 'spot';
-    case 'psyoptionsAmericanInstrument':
-      return 'psyoptions american option';
-    case 'psyoptionsEuropeanInstrument':
-      return 'psyoptions european option';
-    default:
-      throw new Error('Invalid instrument');
+export function assertInstrument(
+  instrument: LegInstrument
+): asserts instrument is Instrument {
+  if (
+    !(instrument instanceof SpotLegInstrument) ||
+    !(instrument instanceof PsyoptionsAmericanInstrument) ||
+    !(instrument instanceof PsyoptionsEuropeanInstrument)
+  ) {
+    throw new Error('Invalid instrument');
   }
+}
+
+export const formatInstrument = (instrument: Instrument): string => {
+  if (instrument instanceof SpotLegInstrument) {
+    return 'spot';
+  } else if (instrument instanceof PsyoptionsAmericanInstrument) {
+    return 'psyoptions american option';
+  } else if (instrument instanceof PsyoptionsEuropeanInstrument) {
+    return 'psyoptions european option';
+  }
+
+  throw new Error('Invalid instrument');
 };
 
 export const formatSide = (side: Side): string => {

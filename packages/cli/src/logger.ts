@@ -9,6 +9,7 @@ import {
   Collateral,
   Token,
   Mint,
+  LegInstrument,
 } from '@convergence-rfq/sdk';
 
 import {
@@ -16,8 +17,8 @@ import {
   formatState,
   formatSide,
   formatInstrument,
+  assertInstrument,
 } from './helpers';
-import { Instrument } from './types';
 
 // Improves readability of code by preserving terseness
 const l = (...args: any[]) => console.log(...args);
@@ -29,13 +30,11 @@ export const logPk = (p: PublicKey): void => l('Address:', p.toString());
 
 export const logTx = (t: string): void => l('Tx:', t);
 
-export const logInstrument = (i: Instrument): void => {
-  if (!i.legInfo) {
-    throw new Error('Invalid instrument');
-  }
+export const logInstrument = (i: LegInstrument): void => {
+  assertInstrument(i);
   l('Instrument:', formatInstrument(i));
-  l('Amount:', N(i?.legInfo?.amount.toString()));
-  l('Side:', formatSide(i.legInfo.side));
+  l('Amount:', N(i?.amount.toString()));
+  l('Side:', formatSide(i.side));
   l('Decimals:', N(i.mint.decimals.toString()));
   l('Mint:', i.mint.address.toString());
 };

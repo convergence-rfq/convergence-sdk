@@ -4,9 +4,9 @@ import {
   toRiskCategoryInfo,
   toScenario,
   devnetAirdrops,
-  legsToInstruments,
-  SpotInstrument,
   PriceOracle,
+  SpotLegInstrument,
+  SpotQuoteInstrument,
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
@@ -249,8 +249,7 @@ export const getRfq = async (opts: Opts) => {
       .rfqs()
       .findRfqByAddress({ address: new PublicKey(opts.address) });
     logRfq(rfq);
-    const legs = await legsToInstruments(cvg, rfq.legs);
-    legs.map(logInstrument);
+    rfq.legs.map(logInstrument);
   } catch (e) {
     logError(e);
   }
@@ -266,15 +265,17 @@ export const createRfq = async (opts: Opts) => {
   try {
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
-        new SpotInstrument(cvg, baseMint, {
-          amount: opts.amount,
-          side: getSide(opts.side),
-        }),
+        await SpotLegInstrument.create(
+          cvg,
+          baseMint,
+          opts.amount,
+          getSide(opts.side)
+        ),
       ],
       taker: cvg.rpc().getDefaultFeePayer(),
       orderType: getOrderType(opts.orderType),
       fixedSize: getSize(opts.size),
-      quoteAsset: new SpotInstrument(cvg, quoteMint).toQuoteAsset(),
+      quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
       activeWindow: parseInt(opts.activeWindow),
       settlingWindow: parseInt(opts.settlingWindow),
       collateralInfo: new PublicKey(opts.collateralInfo),
