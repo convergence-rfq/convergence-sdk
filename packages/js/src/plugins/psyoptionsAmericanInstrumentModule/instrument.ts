@@ -73,7 +73,8 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 
   constructor(
     readonly convergence: Convergence,
-    readonly mint: Mint,
+    readonly underlyingMintAddress: PublicKey,
+    readonly underlyingMintDecimals: number,
     readonly baseAssetIndex: BaseAssetIndex,
     readonly quoteMint: Mint,
     readonly optionType: OptionType,
@@ -90,7 +91,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 
   static async create(
     convergence: Convergence,
-    mint: Mint,
+    underlyingMint: Mint,
     quoteMint: Mint,
     optionType: OptionType,
     optionMeta: OptionMarketWithKey,
@@ -101,7 +102,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     const mintInfoAddress = convergence
       .rfqs()
       .pdas()
-      .mintInfo({ mint: mint.address });
+      .mintInfo({ mint: underlyingMint.address });
     const mintInfo = await convergence
       .protocol()
       .findRegisteredMintByAddress({ address: mintInfoAddress });
@@ -112,7 +113,8 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 
     return new PsyoptionsAmericanInstrument(
       convergence,
-      mint,
+      underlyingMint.address,
+      underlyingMint.decimals,
       mintInfo.mintType.baseAssetIndex,
       quoteMint,
       optionType,
@@ -141,7 +143,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     const mintInfoPda = this.convergence
       .rfqs()
       .pdas()
-      .mintInfo({ mint: this.mint.address });
+      .mintInfo({ mint: this.underlyingMintAddress });
     const quoteAssetMintPda = this.convergence
       .rfqs()
       .pdas()
@@ -175,7 +177,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     const optionMarket = this.optionMeta.key.toBytes();
     const underlyingamountPerContract =
       optionMeta.underlyingAmountPerContract.toArrayLike(Buffer, 'le', 8);
-    const underlyingAmountPerContractDecimals = this.mint.decimals;
+    const underlyingAmountPerContractDecimals = this.underlyingMintDecimals;
     const expirationtime = optionMeta.expirationUnixTimestamp.toArrayLike(
       Buffer,
       'le',
@@ -214,7 +216,7 @@ export const psyoptionsAmericanInstrumentParser = {
     leg: Leg
   ): Promise<PsyoptionsAmericanInstrument> {
     const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
-    const [{ metaKey, optionType }] =
+    const [{ metaKey, optionType, underlyingAmountPerContractDecimals }] =
       psyoptionsAmericanInstrumentDataSerializer.deserialize(
         Buffer.from(instrumentData)
       );
@@ -228,16 +230,14 @@ export const psyoptionsAmericanInstrumentParser = {
       8
     );
 
-    const mint = await convergence
-      .tokens()
-      .findMintByAddress({ address: optionMarketWithKey.underlyingAssetMint });
     const quoteMint = await convergence
       .tokens()
       .findMintByAddress({ address: optionMarketWithKey.quoteAssetMint });
 
     return new PsyoptionsAmericanInstrument(
       convergence,
-      mint,
+      optionMarketWithKey.underlyingAssetMint,
+      underlyingAmountPerContractDecimals,
       baseAssetIndex,
       quoteMint,
       optionType,

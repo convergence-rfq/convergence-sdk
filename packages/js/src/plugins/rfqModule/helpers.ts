@@ -1695,7 +1695,7 @@ export const legToBaseAssetMint = async (
     return americanOptionMint;
   } else if (leg instanceof SpotLegInstrument) {
     const mint = await convergence.tokens().findMintByAddress({
-      address: leg.mint.address,
+      address: leg.mintAddress,
     });
 
     return mint;

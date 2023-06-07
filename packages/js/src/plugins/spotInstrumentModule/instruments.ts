@@ -29,15 +29,16 @@ export const SpotInstrumentDataSerializer =
 export class SpotLegInstrument implements LegInstrument {
   constructor(
     readonly convergence: Convergence,
-    readonly mint: Mint,
+    readonly mintAddress: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
+    readonly decimals: number,
     readonly side: Side
   ) {}
 
   getProgramId = () => this.convergence.programs().getSpotInstrument().address;
   getSide = () => this.side;
-  getDecimals = () => this.mint.decimals;
+  getDecimals = () => this.decimals;
   getAmount = () => this.amount;
   getBaseAssetIndex = () => this.baseAssetIndex;
 
@@ -61,9 +62,10 @@ export class SpotLegInstrument implements LegInstrument {
 
     return new SpotLegInstrument(
       convergence,
-      mint,
+      mint.address,
       mintInfo.mintType.baseAssetIndex,
       amount,
+      mint.decimals,
       side
     );
   }
@@ -78,13 +80,13 @@ export class SpotLegInstrument implements LegInstrument {
     const mintInfo = this.convergence
       .rfqs()
       .pdas()
-      .mintInfo({ mint: this.mint.address });
+      .mintInfo({ mint: this.mintAddress });
     return [{ pubkey: mintInfo, isSigner: false, isWritable: false }];
   }
 
   /** Helper method to serialize the instrument data for this instrument. */
   serializeInstrumentData(): Buffer {
-    return Buffer.from(this.mint.address.toBytes());
+    return Buffer.from(this.mintAddress.toBytes());
   }
 }
 
@@ -93,20 +95,23 @@ export const spotLegInstrumentParser = {
     convergence: Convergence,
     leg: Leg
   ): Promise<SpotLegInstrument> {
-    const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
+    const {
+      side,
+      instrumentAmount,
+      instrumentData,
+      baseAssetIndex,
+      instrumentDecimals,
+    } = leg;
     const { mintAddress } = SpotLegInstrument.deserializeInstrumentData(
       Buffer.from(instrumentData)
     );
 
-    const mint = await convergence
-      .tokens()
-      .findMintByAddress({ address: mintAddress });
-
     return new SpotLegInstrument(
       convergence,
-      mint,
+      mintAddress,
       baseAssetIndex,
-      removeDecimals(instrumentAmount, mint.decimals),
+      removeDecimals(instrumentAmount, instrumentDecimals),
+      instrumentDecimals,
       side
     );
   },
@@ -115,26 +120,27 @@ export const spotLegInstrumentParser = {
 export class SpotQuoteInstrument implements QuoteInstrument {
   protected constructor(
     readonly convergence: Convergence,
-    readonly mint: Mint
+    readonly mintAddress: PublicKey,
+    readonly decimals: number
   ) {}
 
   getProgramId = () => this.convergence.programs().getSpotInstrument().address;
-  getDecimals = () => this.mint.decimals;
+  getDecimals = () => this.decimals;
 
   static async parseFromQuote(
     convergence: Convergence,
     quote: QuoteAsset
   ): Promise<QuoteInstrument> {
-    const { instrumentData } = quote;
+    const { instrumentData, instrumentDecimals } = quote;
     const { mintAddress } = SpotLegInstrument.deserializeInstrumentData(
       Buffer.from(instrumentData)
     );
 
-    const mint = await convergence
-      .tokens()
-      .findMintByAddress({ address: mintAddress });
-
-    return new SpotQuoteInstrument(convergence, mint);
+    return new SpotQuoteInstrument(
+      convergence,
+      mintAddress,
+      instrumentDecimals
+    );
   }
 
   static async create(
@@ -153,7 +159,7 @@ export class SpotQuoteInstrument implements QuoteInstrument {
       throw Error('Quote only supports stablecoin mints!');
     }
 
-    return new SpotQuoteInstrument(convergence, mint);
+    return new SpotQuoteInstrument(convergence, mint.address, mint.decimals);
   }
 
   static deserializeInstrumentData(buffer: Buffer): InstrumentData {
@@ -166,12 +172,12 @@ export class SpotQuoteInstrument implements QuoteInstrument {
     const mintInfo = this.convergence
       .rfqs()
       .pdas()
-      .mintInfo({ mint: this.mint.address });
+      .mintInfo({ mint: this.mintAddress });
     return [{ pubkey: mintInfo, isSigner: false, isWritable: false }];
   }
 
   /** Helper method to serialize the instrument data for this instrument. */
   serializeInstrumentData(): Buffer {
-    return Buffer.from(this.mint.address.toBytes());
+    return Buffer.from(this.mintAddress.toBytes());
   }
 }

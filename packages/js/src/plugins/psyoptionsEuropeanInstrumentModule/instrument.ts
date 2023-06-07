@@ -85,7 +85,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
   constructor(
     readonly convergence: Convergence,
-    readonly mint: Mint,
+    readonly underlyingMintAddress: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
     readonly optionType: OptionType,
     readonly meta: EuroMeta,
@@ -101,7 +101,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
   static async create(
     convergence: Convergence,
-    mint: Mint,
+    underlyingMint: Mint,
     optionType: OptionType,
     meta: EuroMeta,
     metaKey: PublicKey,
@@ -111,7 +111,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     const mintInfoAddress = convergence
       .rfqs()
       .pdas()
-      .mintInfo({ mint: mint.address });
+      .mintInfo({ mint: underlyingMint.address });
     const mintInfo = await convergence
       .protocol()
       .findRegisteredMintByAddress({ address: mintInfoAddress });
@@ -122,7 +122,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
     return new PsyoptionsEuropeanInstrument(
       convergence,
-      mint,
+      underlyingMint.address,
       mintInfo.mintType.baseAssetIndex,
       optionType,
       meta,
@@ -140,7 +140,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
         pubkey: this.convergence
           .rfqs()
           .pdas()
-          .mintInfo({ mint: this.mint.address }),
+          .mintInfo({ mint: this.underlyingMintAddress }),
         isSigner: false,
         isWritable: false,
       },
@@ -207,13 +207,9 @@ export const psyoptionsEuropeanInstrumentParser = {
       metaKey
     );
 
-    const mint = await convergence
-      .tokens()
-      .findMintByAddress({ address: euroMeta.underlyingMint });
-
     return new PsyoptionsEuropeanInstrument(
       convergence,
-      mint,
+      euroMeta.underlyingMint,
       baseAssetIndex,
       optionType,
       euroMeta,

@@ -99,7 +99,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
           for (const leg of rfq.legs) {
             if (leg instanceof PsyoptionsAmericanInstrument) {
-              if (leg.mint.address.equals(mintAddress)) {
+              if (leg.underlyingMintAddress.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals
@@ -131,7 +131,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                 break;
               }
             } else if (leg instanceof SpotLegInstrument) {
-              if (leg.mint.address.equals(mintAddress)) {
+              if (leg.mintAddress.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals
@@ -188,7 +188,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
           for (const leg of rfq.legs) {
             if (leg instanceof PsyoptionsAmericanInstrument) {
-              if (leg.mint.address.equals(mintAddress)) {
+              if (leg.underlyingMintAddress.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals
@@ -220,7 +220,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
                 break;
               }
             } else if (leg instanceof SpotLegInstrument) {
-              if (leg.mint.address.equals(mintAddress)) {
+              if (leg.mintAddress.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals

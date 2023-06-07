@@ -10,6 +10,9 @@ import {
   Token,
   Mint,
   LegInstrument,
+  SpotLegInstrument,
+  PsyoptionsAmericanInstrument,
+  PsyoptionsEuropeanInstrument,
 } from '@convergence-rfq/sdk';
 
 import {
@@ -33,10 +36,18 @@ export const logTx = (t: string): void => l('Tx:', t);
 export const logInstrument = (i: LegInstrument): void => {
   assertInstrument(i);
   l('Instrument:', formatInstrument(i));
-  l('Amount:', N(i?.amount.toString()));
-  l('Side:', formatSide(i.side));
-  l('Decimals:', N(i.mint.decimals.toString()));
-  l('Mint:', i.mint.address.toString());
+  l('Amount:', N(i?.getAmount().toString()));
+  l('Side:', formatSide(i.getSide()));
+  if (i instanceof SpotLegInstrument) {
+    l('Decimals:', N(i?.decimals.toString()));
+    l('Mint:', i.mintAddress.toString());
+  } else if (i instanceof PsyoptionsAmericanInstrument) {
+    l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
+    l('Underlying mint:', i.underlyingMintAddress.toString());
+  } else if (i instanceof PsyoptionsEuropeanInstrument) {
+    l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
+    l('Underlying mint:', i.underlyingMintAddress.toString());
+  }
 };
 
 export const logResponse = (r: SendAndConfirmTransactionResponse): void =>
