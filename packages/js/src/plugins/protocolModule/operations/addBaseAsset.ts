@@ -1,13 +1,13 @@
-import {
-  createAddBaseAssetInstruction,
-  BaseAssetIndex,
-  RiskCategory,
-  PriceOracle,
-} from '@convergence-rfq/rfq';
+import { createAddBaseAssetInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertBaseAsset, BaseAsset } from '../models/BaseAsset';
+import {
+  RiskCategory,
+  PriceOracle,
+  toSolitaRiskCategory,
+  toSolitaPriceOracle,
+} from '../models/BaseAsset';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -17,6 +17,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { baseAssetsCache } from '../cache';
 
 const Key = 'AddBaseAssetOperation' as const;
 
@@ -59,11 +60,10 @@ export type AddBaseAssetInput = {
    */
   protocol?: PublicKey;
 
-  /*
-   * ARGS
+  /**
+   * The index of the BaseAsset.
    */
-
-  index: BaseAssetIndex;
+  index: number;
 
   ticker: string;
 
@@ -79,8 +79,6 @@ export type AddBaseAssetInput = {
 export type AddBaseAssetOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
-
-  baseAsset: BaseAsset;
 };
 
 /**
@@ -94,7 +92,6 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<AddBaseAssetOutput> => {
-      const { index } = operation.input;
       scope.throwIfCanceled();
 
       const builder = addBaseAssetBuilder(convergence, operation.input, scope);
@@ -102,11 +99,9 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
         convergence,
         scope.confirmOptions
       );
-      const baseAssets = await convergence.protocol().getBaseAssets();
-      const baseAsset = baseAssets.find((ba) => ba.index.value === index.value);
-      assertBaseAsset(baseAsset);
+      baseAssetsCache.clear();
 
-      return { response, baseAsset };
+      return { response };
     },
   };
 
@@ -147,6 +142,8 @@ export const addBaseAssetBuilder = (
   } = params;
 
   const baseAsset = convergence.protocol().pdas().baseAsset({ index });
+  const { oracleSource, inPlacePrice, pythOracle, switchboardOracle } =
+    toSolitaPriceOracle(priceOracle);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -158,10 +155,13 @@ export const addBaseAssetBuilder = (
           baseAsset,
         },
         {
-          index,
+          index: { value: index },
           ticker,
-          riskCategory,
-          priceOracle,
+          riskCategory: toSolitaRiskCategory(riskCategory),
+          oracleSource,
+          inPlacePrice,
+          pythOracle,
+          switchboardOracle,
         },
         rfqProgram.address
       ),

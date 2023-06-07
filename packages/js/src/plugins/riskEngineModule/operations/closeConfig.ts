@@ -10,6 +10,7 @@ import {
   useOperation,
 } from '../../../types';
 import { SendAndConfirmTransactionResponse } from '../../../plugins';
+import { riskEngineConfigCache } from '../cache';
 
 const Key = 'CloseConfigOperation' as const;
 
@@ -78,6 +79,8 @@ export const closeConfigOperationHandler: OperationHandler<CloseConfigOperation>
         convergence,
         scope.confirmOptions
       );
+
+      riskEngineConfigCache.clear();
 
       return { response };
     },

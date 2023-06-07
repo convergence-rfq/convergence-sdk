@@ -15,7 +15,7 @@ export class InstrumentPdasClient {
 
   /** Finds the PDA of a given instrument escrow. */
   instrumentEscrow({ response, index, rfqModel }: InstrumentEscrowInput): Pda {
-    return Pda.find(rfqModel.legs[index].instrumentProgram, [
+    return Pda.find(rfqModel.legs[index].getProgramId(), [
       Buffer.from('escrow', 'utf8'),
       response.toBuffer(),
       Buffer.from([0, index]),

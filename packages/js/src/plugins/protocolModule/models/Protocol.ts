@@ -45,7 +45,7 @@ export const isProtocol = (value: any): value is Protocol =>
 
 /** @group Model Helpers */
 export function assertProtocol(value: any): asserts value is Protocol {
-  assert(isProtocol(value), `Expected Protocol model`);
+  assert(isProtocol(value), 'Expected Protocol model');
 }
 
 /** @group Model Helpers */

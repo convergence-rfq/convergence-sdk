@@ -1,7 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { toRegisteredMintAccount } from '../accounts';
-import { RegisteredMint, toRegisteredMint } from '../models/RegisteredMint';
+import { RegisteredMint } from '../models/RegisteredMint';
 import {
   Operation,
   OperationHandler,
@@ -9,6 +8,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { registeredMintsCache } from '../cache';
 
 const Key = 'FindRegisteredMintByAddressOperation' as const;
 
@@ -43,7 +43,7 @@ export type FindRegisteredMintByAddressOperation = Operation<
  */
 export type FindRegisteredMintByAddressInput = {
   /** The address of the RegisteredMint. */
-  address: PublicKey;
+  address: PublicKey; // TODO rework to accept mint address instead of RegisteredMint
 };
 
 /**
@@ -63,14 +63,19 @@ export const findRegisteredMintByAddressOperationHandler: OperationHandler<FindR
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindRegisteredMintByAddressOutput> => {
-      const { commitment } = scope;
       const { address } = operation.input;
+
+      const mintInfos = await registeredMintsCache.get(convergence);
       scope.throwIfCanceled();
 
-      const account = await convergence.rpc().getAccount(address, commitment);
-      const registeredMint = toRegisteredMint(toRegisteredMintAccount(account));
-      scope.throwIfCanceled();
-
-      return registeredMint;
+      const mintInfo = mintInfos.find((mintInfo) =>
+        mintInfo.address.equals(address)
+      );
+      if (mintInfo === undefined) {
+        throw Error(
+          `Missing registered mint by the address ${address.toString()}`
+        );
+      }
+      return mintInfo;
     },
   };

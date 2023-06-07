@@ -1,11 +1,11 @@
-import {
-  createSetRiskCategoriesInfoInstruction,
-  RiskCategoryChange,
-} from '@convergence-rfq/risk-engine';
+import { createSetRiskCategoriesInfoInstruction } from '@convergence-rfq/risk-engine';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertConfig, Config, toConfig } from '../models';
-import { toConfigAccount } from '../accounts';
+import {
+  Config,
+  RiskCategoryChange,
+  toSolitaRiskCategoryChange,
+} from '../models';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -15,6 +15,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { riskEngineConfigCache } from '../cache';
 
 const Key = 'SetRiskCategoriesInfoOperation' as const;
 
@@ -80,9 +81,6 @@ export const setRiskCategoriesInfoOperationHandler: OperationHandler<SetRiskCate
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetRiskCategoriesInfoOutput> => {
-      const { commitment } = scope;
-      scope.throwIfCanceled();
-
       const builder = setRiskCategoriesInfoBuilder(
         convergence,
         operation.input,
@@ -93,12 +91,8 @@ export const setRiskCategoriesInfoOperationHandler: OperationHandler<SetRiskCate
         scope.confirmOptions
       );
 
-      const account = await convergence
-        .rpc()
-        .getAccount(convergence.riskEngine().pdas().config(), commitment);
-      const config = toConfig(toConfigAccount(account));
-      scope.throwIfCanceled();
-      assertConfig(config);
+      riskEngineConfigCache.clear();
+      const config = await convergence.riskEngine().fetchConfig(scope);
 
       return { response, config };
     },
@@ -145,7 +139,7 @@ export const setRiskCategoriesInfoBuilder = (
           protocol,
           config,
         },
-        { changes },
+        { changes: changes.map(toSolitaRiskCategoryChange) },
         riskEngineProgram.address
       ),
       signers: [authority],

@@ -11,6 +11,7 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { protocolCache } from '../cache';
 
 const Key = 'CloseProtocolOperation' as const;
 
@@ -77,6 +78,8 @@ export const closeProtocolOperationHandler: OperationHandler<CloseProtocolOperat
       scope: OperationScope
     ): Promise<CloseProtocolOutput> => {
       scope.throwIfCanceled();
+
+      protocolCache.clear();
 
       const builder = closeProtocolBuilder(convergence, operation.input, scope);
       const { response } = await builder.sendAndConfirm(

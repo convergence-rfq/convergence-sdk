@@ -100,6 +100,8 @@ export const addInstrumentOperationHandler: OperationHandler<AddInstrumentOperat
     ): Promise<AddInstrumentOutput> => {
       scope.throwIfCanceled();
 
+      protocolCache.clear();
+
       return addInstrumentBuilder(
         convergence,
         operation.input,

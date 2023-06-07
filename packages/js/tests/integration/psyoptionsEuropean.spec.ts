@@ -9,14 +9,14 @@ import {
   OrderType,
   OptionType,
   PsyoptionsEuropeanInstrument,
-  SpotInstrument,
   Side,
   Mint,
   initializeNewOptionMeta,
   createEuropeanProgram,
   getOrCreateEuropeanOptionATAs,
   mintEuropeanOptions,
-  ATAExistence,
+  SpotQuoteInstrument,
+  SpotLegInstrument,
 } from '../../src';
 import {
   confirmResponse,
@@ -72,25 +72,20 @@ describe('integration.psyoptionsEuropean', () => {
     );
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        new SpotInstrument(takerCvg, baseMint, {
-          amount: 1.0,
-          side: Side.Bid,
-        }),
-        new PsyoptionsEuropeanInstrument(
+        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, Side.Bid),
+        await PsyoptionsEuropeanInstrument.create(
           takerCvg,
           baseMint,
           OptionType.CALL,
           euroMeta,
           euroMetaKey,
-          {
-            amount: 5,
-            side: Side.Bid,
-          }
+          5,
+          Side.Bid
         ),
       ],
       orderType: OrderType.Sell,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
@@ -128,25 +123,20 @@ describe('integration.psyoptionsEuropean', () => {
     );
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        new SpotInstrument(takerCvg, baseMint, {
-          amount: 1.0,
-          side: Side.Bid,
-        }),
-        new PsyoptionsEuropeanInstrument(
+        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, Side.Bid),
+        await PsyoptionsEuropeanInstrument.create(
           takerCvg,
           baseMint,
           OptionType.CALL,
           euroMeta,
           euroMetaKey,
-          {
-            amount: 1,
-            side: Side.Bid,
-          }
+          1,
+          Side.Bid
         ),
       ],
       orderType: OrderType.Sell,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();

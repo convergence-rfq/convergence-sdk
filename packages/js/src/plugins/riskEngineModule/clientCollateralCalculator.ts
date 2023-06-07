@@ -1,10 +1,4 @@
-import {
-  AuthoritySide,
-  BaseAssetIndex,
-  Leg,
-  RiskCategory,
-  Side,
-} from '@convergence-rfq/rfq';
+import { AuthoritySide, RiskCategory, Side } from '@convergence-rfq/rfq';
 import {
   futureCommonDataBeet,
   InstrumentType,
@@ -18,8 +12,8 @@ import { Commitment, PublicKey } from '@solana/web3.js';
 import { blackScholes } from 'black-scholes';
 
 import { Convergence } from '../../Convergence';
-import { toBaseAsset } from '../protocolModule';
-import { toBaseAssetAccount } from '../protocolModule/accounts';
+import { toSolitaRiskCategory } from '../protocolModule';
+import { LegInstrument } from '../instrumentModule';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
 import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
 import { Config } from './models';
@@ -62,40 +56,44 @@ type LegInfo = {
 export async function calculateRisk(
   convergence: Convergence,
   config: Config,
-  legs: Leg[],
+  legs: LegInstrument[],
   cases: CalculationCase[],
   settlementPeriod: number,
   commitment?: Commitment
 ) {
-  const baseAssetIds = new Set(legs.map((leg) => leg.baseAssetIndex.value)); // select unique base asset ids
+  const baseAssetIds = new Set(
+    legs.map((leg) => leg.getBaseAssetIndex().value)
+  ); // select unique base asset ids
   const baseAssetInfos = await Promise.all(
     Array.from(baseAssetIds).map((id) =>
-      fetchBaseAssetInfo(convergence, { value: id }, commitment)
+      fetchBaseAssetInfo(convergence, id, commitment)
     )
   );
   const instrumentTypesMapping = config.instrumentTypes;
 
   const legInfos = legs.map((leg) => {
-    let amount = Number(leg.instrumentAmount) / 10 ** leg.instrumentDecimals;
-    if (leg.side == Side.Bid) {
+    let amount = leg.getAmount();
+    if (leg.getSide() == Side.Bid) {
       amount = -amount;
     }
 
     const assetType = instrumentTypesMapping.find((entry) =>
-      entry.program.equals(leg.instrumentProgram)
+      entry.program.equals(leg.getProgramId())
     )?.rType;
 
     if (assetType === undefined) {
       throw Error(
-        `Instrument ${leg.instrumentProgram.toString()} is missing from risk engine config!`
+        `Instrument ${leg
+          .getProgramId()
+          .toString()} is missing from risk engine config!`
       );
     }
 
     return {
-      baseAssetIndex: leg.baseAssetIndex.value,
+      baseAssetIndex: leg.getBaseAssetIndex().value,
       amount,
       instrumentType: assetType,
-      data: Buffer.from(leg.instrumentData),
+      data: Buffer.from(leg.serializeInstrumentData()),
     };
   });
 
@@ -137,15 +135,20 @@ function calculateRiskInner(
 
 async function fetchBaseAssetInfo(
   convergence: Convergence,
-  baseAssetIndex: BaseAssetIndex,
+  baseAssetIndex: number,
   commitment?: Commitment
 ): Promise<BaseAssetInfo> {
   const address = convergence
     .protocol()
     .pdas()
     .baseAsset({ index: baseAssetIndex });
-  const account = await convergence.rpc().getAccount(address, commitment);
-  const baseAsset = toBaseAsset(toBaseAssetAccount(account));
+  const baseAsset = await convergence
+    .protocol()
+    .findBaseAssetByAddress({ address });
+
+  if (!baseAsset.priceOracle.address) {
+    throw new Error('Price oracle address is missing');
+  }
 
   const price = await fetchLatestOraclePrice(
     convergence,
@@ -154,8 +157,8 @@ async function fetchBaseAssetInfo(
   );
 
   return {
-    index: baseAssetIndex.value,
-    riskCategory: baseAsset.riskCategory,
+    index: baseAssetIndex,
+    riskCategory: toSolitaRiskCategory(baseAsset.riskCategory),
     price,
   };
 }

@@ -86,10 +86,7 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
 
         for (const rfq of rfqs) {
           for (const leg of rfq.legs) {
-            if (
-              leg.instrumentProgram.toBase58() ===
-              instrumentProgram.address.toBase58()
-            ) {
+            if (leg.getProgramId().equals(instrumentProgram.address)) {
               const convertedRfq = convertRfqOutput(
                 rfq,
                 collateralMintDecimals
@@ -134,15 +131,15 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
           );
 
         for (const account of accounts) {
-          const rfq = toRfq(toRfqAccount(account));
+          const rfq = toRfqAccount(account);
 
-          for (const leg of rfq.legs) {
+          for (const leg of rfq.data.legs) {
             if (
               leg.instrumentProgram.toBase58() ===
               instrumentProgram.address.toBase58()
             ) {
               const convertedRfq = convertRfqOutput(
-                rfq,
+                await toRfq(convergence, rfq),
                 collateralMintDecimals
               );
 

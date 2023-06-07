@@ -2,8 +2,6 @@ import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { SpotInstrument } from '../../spotInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../../psyoptionsEuropeanInstrumentModule';
 import { instrumentsToLegAccounts, instrumentsToLegs } from '../helpers';
 import { Convergence } from '../../../Convergence';
 import {
@@ -15,7 +13,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { PsyoptionsAmericanInstrument } from '../../../plugins/psyoptionsAmericanInstrumentModule';
+import { LegInstrument } from '../../../plugins/instrumentModule';
 
 const Key = 'AddLegsToRfqOperation' as const;
 
@@ -74,11 +72,7 @@ export type AddLegsToRfqInput = {
    */
 
   /** The instruments of the order, used to construct legs. */
-  instruments: (
-    | SpotInstrument
-    | PsyoptionsEuropeanInstrument
-    | PsyoptionsAmericanInstrument
-  )[];
+  instruments: LegInstrument[];
 };
 
 /**
@@ -152,8 +146,8 @@ export const addLegsToRfqBuilder = async (
   const { taker = convergence.identity(), instruments, rfq } = params;
   // let { instruments } = params;
 
-  const legs = await instrumentsToLegs(convergence, instruments);
-  const legAccounts = instrumentsToLegAccounts(convergence, instruments);
+  const legs = await instrumentsToLegs(instruments);
+  const legAccounts = instrumentsToLegAccounts(instruments);
 
   const baseAssetAccounts: AccountMeta[] = [];
 
@@ -164,10 +158,7 @@ export const addLegsToRfqBuilder = async (
   }
 
   for (const value of baseAssetIndexValues) {
-    const baseAsset = convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: { value } });
+    const baseAsset = convergence.protocol().pdas().baseAsset({ index: value });
 
     const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,

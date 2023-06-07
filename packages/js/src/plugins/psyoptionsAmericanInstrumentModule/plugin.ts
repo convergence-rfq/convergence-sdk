@@ -1,5 +1,6 @@
 import { ProgramClient } from '../programModule';
 import { PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID } from './types';
+import { psyoptionsAmericanInstrumentParser } from './models';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
 
@@ -18,6 +19,11 @@ export const psyoptionsAmericanInstrumentModule = (): ConvergencePlugin => ({
     ) {
       return this.get(psyoptionsAmericanInstrumentProgram.name, programs);
     };
+
+    convergence.addLegInstrument(
+      PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID,
+      psyoptionsAmericanInstrumentParser
+    );
   },
 });
 

@@ -11,28 +11,45 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["16.x", "18.x"]
+        node: ["18.x"]
         solana: ["1.14.11"]
     steps:
     - name: Git checkout
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    - name: Set nx SHA's
-      uses: nrwl/nx-set-shas@v2
+
+    - name: Cache build artefacts
+      uses: Swatinem/rust-cache@v2.2.1
+      with:
+        cache-on-failure: 'true'
+
     - name: Install Solana
       uses: ./.github/actions/install-solana
       with:
         solana_version: ${{ matrix.solana }}
+
     - name: Setup Node.js ${{ matrix.node }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node }}
         cache: 'yarn'
+
     - name: Install dependencies
       run: yarn install --frozen-lockfile
+
     - name: Build
       run: yarn build
-    # TODO: Add these back in
-    #- name: Run tests
-    #  run: yarn test
+
+    - name: Lint
+      continue-on-error: false
+      shell: bash
+      run: yarn lint
+
+    - name: Validator
+      continue-on-error: false
+      shell: bash
+      run: yarn validator & sleep 3
+
+    - name: Test
+      run: yarn test

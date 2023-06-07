@@ -1,1 +1,1 @@
-export * from './PsyoptionsAmericanInstrument';
+export * from '../instrument';

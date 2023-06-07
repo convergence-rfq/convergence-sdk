@@ -1,7 +1,7 @@
 {
   "name": "@convergence-rfq/cli",
   "description": "Official Convergence CLI",
-  "version": "4.2.11",
+  "version": "4.3.2",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -42,11 +42,12 @@
     "clean": "rimraf dist",
     "build": "pnpm clean && tsc && tsc-alias && rollup -c",
     "test:init": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/integration/init.ts",
-    "test": "nyc ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/**/*.spec.ts",
+    "test:coverage": "nyc ts-mocha --timeout 100000 tests/**/*.spec.ts",
+    "test": "ts-mocha --timeout 100000 tests/**/*.spec.ts",
     "cli": "ts-node src/index.ts"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "=4.2.9",
+    "@convergence-rfq/sdk": "4.3.2",
     "@solana/web3.js": "^1.73.0",
     "@types/cookie": "^0.5.1",
     "commander": "^10.0.0"

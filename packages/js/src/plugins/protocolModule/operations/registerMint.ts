@@ -2,8 +2,7 @@ import { createRegisterMintInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { RegisteredMint, toRegisteredMint } from '../models';
-import { toRegisteredMintAccount } from '../accounts';
+import { RegisteredMint } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -14,6 +13,7 @@ import {
   Signer,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { registeredMintsCache } from '../cache';
 
 const Key = 'RegisterMintOperation' as const;
 
@@ -93,8 +93,6 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       convergence: Convergence,
       scope: OperationScope
     ) => {
-      const { mint } = operation.input;
-      const { commitment } = scope;
       const builder = await registerMintBuilder(
         convergence,
         {
@@ -111,13 +109,9 @@ export const registerMintOperationHandler: OperationHandler<RegisterMintOperatio
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
-      const mintInfo = convergence.rfqs().pdas().mintInfo({ mint });
-      const account = await convergence.rpc().getAccount(mintInfo, commitment);
-      const registeredMint = toRegisteredMint(toRegisteredMintAccount(account));
+      registeredMintsCache.clear();
 
-      scope.throwIfCanceled();
-
-      return { ...output, registeredMint };
+      return { ...output };
     },
   };
 
@@ -169,7 +163,7 @@ export const registerMintBuilder = async (
     baseAsset = convergence
       .protocol()
       .pdas()
-      .baseAsset({ index: { value: baseAssetIndex } });
+      .baseAsset({ index: baseAssetIndex });
   } else {
     baseAsset = PublicKey.default;
   }

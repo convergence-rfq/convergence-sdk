@@ -1,5 +1,4 @@
-import { toConfigAccount } from '../accounts';
-import { toConfig, assertConfig, Config } from '../models';
+import { Config } from '../models';
 
 import { Convergence } from '../../../Convergence';
 import {
@@ -8,6 +7,7 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
+import { riskEngineConfigCache } from '../cache';
 
 const Key = 'FetchConfigOperation' as const;
 
@@ -61,12 +61,7 @@ export const fetchConfigOperationHandler: OperationHandler<FetchConfigOperation>
       const { commitment } = scope;
       scope.throwIfCanceled();
 
-      const account = await convergence
-        .rpc()
-        .getAccount(convergence.riskEngine().pdas().config(), commitment);
-
-      const config = toConfig(toConfigAccount(account));
-      assertConfig(config);
+      const config = await riskEngineConfigCache.get(convergence, commitment);
 
       return config;
     },

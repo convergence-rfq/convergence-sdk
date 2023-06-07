@@ -9,6 +9,10 @@ import {
   Collateral,
   Token,
   Mint,
+  LegInstrument,
+  SpotLegInstrument,
+  PsyoptionsAmericanInstrument,
+  PsyoptionsEuropeanInstrument,
 } from '@convergence-rfq/sdk';
 
 import {
@@ -16,8 +20,8 @@ import {
   formatState,
   formatSide,
   formatInstrument,
+  assertInstrument,
 } from './helpers';
-import { Instrument } from './types';
 
 // Improves readability of code by preserving terseness
 const l = (...args: any[]) => console.log(...args);
@@ -29,15 +33,21 @@ export const logPk = (p: PublicKey): void => l('Address:', p.toString());
 
 export const logTx = (t: string): void => l('Tx:', t);
 
-export const logInstrument = (i: Instrument): void => {
-  if (!i.legInfo) {
-    throw new Error('Invalid instrument');
-  }
+export const logInstrument = (i: LegInstrument): void => {
+  assertInstrument(i);
   l('Instrument:', formatInstrument(i));
-  l('Amount:', N(i?.legInfo?.amount.toString()));
-  l('Side:', formatSide(i.legInfo.side));
-  l('Decimals:', N(i.mint.decimals.toString()));
-  l('Mint:', i.mint.address.toString());
+  l('Amount:', N(i?.getAmount().toString()));
+  l('Side:', formatSide(i.getSide()));
+  if (i instanceof SpotLegInstrument) {
+    l('Decimals:', N(i?.decimals.toString()));
+    l('Mint:', i.mintAddress.toString());
+  } else if (i instanceof PsyoptionsAmericanInstrument) {
+    l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
+    l('Underlying mint:', i.underlyingMintAddress.toString());
+  } else if (i instanceof PsyoptionsEuropeanInstrument) {
+    l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
+    l('Underlying mint:', i.underlyingMintAddress.toString());
+  }
 };
 
 export const logResponse = (r: SendAndConfirmTransactionResponse): void =>
@@ -46,11 +56,15 @@ export const logResponse = (r: SendAndConfirmTransactionResponse): void =>
 export const logBaseAsset = (b: BaseAsset): void => {
   l('Address:', b.address.toString());
   l('Ticker:', b.ticker.toString());
-  // TODO: Update SDK model
-  //l('Active:', b.enabled);
-  l('Index:', b.index.value);
-  l('Oracle:', b.priceOracle.address.toString());
+  l('Enabled:', b.enabled);
+  l('Index:', b.index);
   l('Risk category:', parseInt(b.riskCategory.toString()));
+  l('Oracle source:', b.priceOracle.source);
+  if (b.priceOracle.address) {
+    l('Oracle address:', b.priceOracle.address.toString());
+  } else if (b.priceOracle.price) {
+    l('Oracle price:', b.priceOracle.price.toString());
+  }
 };
 
 export const logRegisteredMint = (r: RegisteredMint): void => {
@@ -82,7 +96,7 @@ export const logTokenAccount = (p: PublicKey): void => {
   l('Token account address:', p.toString());
 };
 
-export const logError = (e: any) => l(`Error: ${JSON.stringify(e)}`);
+export const logError = (e: any) => l(`Error: ${JSON.stringify(e.message)}`);
 
 export const logProtocol = (p: Protocol): void => {
   l('Address:', p.address.toString());

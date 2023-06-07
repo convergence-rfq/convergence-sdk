@@ -4,10 +4,13 @@ import {
   protocolCache,
   baseAssetsCache,
   registeredMintsCache,
-  RiskCategory,
 } from '../../src';
-import { createUserCvg } from '../helpers';
-import { COLLATERAL_MINT_PK, SWITCHBOARD_SOL_ORACLE_PK } from '../constants';
+import { createUserCvg, generateTicker } from '../helpers';
+import {
+  COLLATERAL_MINT_PK,
+  PYTH_SOL_ORACLE_PK,
+  SWITCHBOARD_BTC_ORACLE_PK,
+} from '../constants';
 
 describe('unit.protocol', () => {
   const cvg = createUserCvg('dao');
@@ -29,11 +32,9 @@ describe('unit.protocol', () => {
   });
 
   it('get pda [base asset]', async () => {
-    const baseAssetPda = cvg
-      .protocol()
-      .pdas()
-      .baseAsset({ index: { value: 0 } });
+    const baseAssetPda = cvg.protocol().pdas().baseAsset({ index: 0 });
     const baseAssets = await cvg.protocol().getBaseAssets();
+    expect(baseAssets[0].index).toEqual(0);
     expect(baseAssetPda.toBase58()).toEqual(baseAssets[0].address.toBase58());
   });
 
@@ -66,7 +67,7 @@ describe('unit.protocol', () => {
     expect(protocol.address).toEqual(cvg.protocol().pdas().protocol());
   });
 
-  it('add instrument [spot]', async () => {
+  it('add instrument [SpotInstrument]', async () => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.identity(),
       instrumentProgram: cvg.programs().getSpotInstrument().address,
@@ -110,25 +111,68 @@ describe('unit.protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
-  it('add base asset', async () => {
+  it('add base asset [switchboard oracle]', async () => {
     const baseAssets = await cvg.protocol().getBaseAssets();
     const { response } = await cvg.protocol().addBaseAsset({
       authority: cvg.identity(),
-      index: { value: baseAssets.length },
-      ticker: 'GOD',
-      riskCategory: RiskCategory.VeryLow,
+      index: baseAssets.length + 1,
+      ticker: generateTicker(),
+      riskCategory: 'very-low',
       priceOracle: {
-        __kind: 'Switchboard',
-        address: SWITCHBOARD_SOL_ORACLE_PK,
+        source: 'switchboard',
+        address: SWITCHBOARD_BTC_ORACLE_PK,
       },
     });
     expect(response).toHaveProperty('signature');
   });
 
+  it('add base asset [pyth oracle]', async () => {
+    const baseAssets = await cvg.protocol().getBaseAssets();
+    const { response } = await cvg.protocol().addBaseAsset({
+      authority: cvg.identity(),
+      index: baseAssets.length + 1,
+      ticker: generateTicker(),
+      riskCategory: 'very-low',
+      priceOracle: {
+        source: 'pyth',
+        address: PYTH_SOL_ORACLE_PK,
+      },
+    });
+    expect(response).toHaveProperty('signature');
+  });
+
+  it('add base asset [in-place price]', async () => {
+    let baseAssets = await cvg.protocol().getBaseAssets();
+    const index = baseAssets.length + 1;
+    const price = 101;
+    const { response } = await cvg.protocol().addBaseAsset({
+      authority: cvg.identity(),
+      index,
+      ticker: generateTicker(),
+      riskCategory: 'very-low',
+      priceOracle: {
+        source: 'in-place',
+        price,
+      },
+    });
+    expect(response).toHaveProperty('signature');
+
+    const baseAssetPda = cvg.protocol().pdas().baseAsset({ index });
+    baseAssets = await cvg.protocol().getBaseAssets();
+    expect(baseAssets[baseAssets.length - 1].address.toBase58()).toBe(
+      baseAssetPda.toBase58()
+    );
+
+    const baseAsset = await cvg
+      .protocol()
+      .findBaseAssetByAddress({ address: baseAssetPda });
+    expect(baseAsset.priceOracle.price).toEqual(price);
+  });
+
   it('register mint', async () => {
     const { mint } = await cvg.tokens().createMint({ decimals: 3 });
     const { response } = await cvg.protocol().registerMint({
-      baseAssetIndex: 0,
+      baseAssetIndex: 1,
       mint: mint.address,
     });
     expect(response).toHaveProperty('signature');
@@ -141,10 +185,7 @@ describe('unit.protocol', () => {
 
   it('find base asset by address', async () => {
     const baseAsset = await cvg.protocol().findBaseAssetByAddress({
-      address: cvg
-        .protocol()
-        .pdas()
-        .baseAsset({ index: { value: 0 } }),
+      address: cvg.protocol().pdas().baseAsset({ index: 1 }),
     });
     expect(baseAsset).toHaveProperty('address');
   });

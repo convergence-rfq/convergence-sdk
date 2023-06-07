@@ -3,21 +3,41 @@ import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
-import { Convergence, keypairIdentity, PublicKey } from '../src';
+import {
+  Convergence,
+  keypairIdentity,
+  PublicKey,
+  removeDecimals,
+} from '../src';
 
 const DEFAULT_COMMITMENT = 'confirmed';
 const DEFAULT_SKIP_PREFLIGHT = true;
+
+export function generateTicker(): string {
+  const length = 3;
+  let ticker = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    ticker += characters.charAt(randomIndex);
+  }
+
+  return ticker;
+}
 
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
   skipPreflight?: boolean;
   rpcEndpoint?: string;
+  wsEndpoint?: string;
   solsToAirdrop?: number;
 };
 
 export const createCvg = (options: ConvergenceTestOptions = {}) => {
   const connection = new Connection(options.rpcEndpoint ?? RPC_ENDPOINT, {
     commitment: options.commitment ?? DEFAULT_COMMITMENT,
+    wsEndpoint: options.wsEndpoint,
   });
   return Convergence.make(connection, { skipPreflight: options.skipPreflight });
 };
@@ -30,4 +50,24 @@ export const createUserCvg = (user = 'dao'): Convergence => {
 
 export const generatePk = async (): Promise<PublicKey> => {
   return await PublicKey.createWithSeed(PROGRAM_ID, uuidv4(), PROGRAM_ID);
+};
+
+export const sleep = (seconds: number) => {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+};
+
+export const fetchTokenAmount = async (
+  cvg: Convergence,
+  mintAddress: PublicKey,
+  owner: PublicKey
+) => {
+  const takerBtcBefore = await cvg.tokens().findTokenWithMintByMint({
+    mint: mintAddress,
+    address: owner,
+    addressType: 'owner',
+  });
+  return removeDecimals(
+    takerBtcBefore.amount.basisPoints,
+    takerBtcBefore.amount.currency.decimals
+  );
 };

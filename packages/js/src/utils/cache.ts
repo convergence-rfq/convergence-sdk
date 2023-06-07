@@ -7,7 +7,7 @@ export const useCache = <T, U extends any[]>(
 
   return {
     get: async (...u: U) => {
-      if (cache === null || Date.now() - cache.time.getDate() > stalenessMs) {
+      if (cache === null || Date.now() - cache.time.getTime() > stalenessMs) {
         const value = await valueGetter(...u);
         cache = {
           value,

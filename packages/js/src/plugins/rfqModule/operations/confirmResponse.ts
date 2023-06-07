@@ -230,17 +230,13 @@ export const confirmResponseBuilder = async (
   const oracleAccounts: AccountMeta[] = [];
 
   for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);
+    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
   }
 
   const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
 
-  for (const value of baseAssetIndexValues) {
-    const baseAsset = convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: { value } });
-
+  for (const index of baseAssetIndexValues) {
+    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
     const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,
       isSigner: false,
@@ -253,13 +249,13 @@ export const confirmResponseBuilder = async (
       .protocol()
       .findBaseAssetByAddress({ address: baseAsset });
 
-    const oracleAccount: AccountMeta = {
-      pubkey: baseAssetModel.priceOracle.address,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    oracleAccounts.push(oracleAccount);
+    if (baseAssetModel.priceOracle.address) {
+      oracleAccounts.push({
+        pubkey: baseAssetModel.priceOracle.address,
+        isSigner: false,
+        isWritable: false,
+      });
+    }
   }
 
   anchorRemainingAccounts.push(

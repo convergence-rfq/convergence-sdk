@@ -1,7 +1,4 @@
-import {
-  Leg,
-  createFinalizeRfqConstructionInstruction,
-} from '@convergence-rfq/rfq';
+import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -16,6 +13,7 @@ import {
   Signer,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { LegInstrument } from '@/plugins/instrumentModule';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
@@ -85,7 +83,7 @@ export type FinalizeRfqConstructionInput = {
    * Is passed automatically when `createAndFinalize`
    * is called. Else the legs are extracted from the rfq account.
    */
-  legs?: Leg[];
+  legs?: LegInstrument[];
 };
 
 /**
@@ -216,17 +214,13 @@ export const finalizeRfqConstructionBuilder = async (
   const baseAssetIndexValuesSet: Set<number> = new Set();
 
   for (const leg of legs) {
-    baseAssetIndexValuesSet.add(leg.baseAssetIndex.value);
+    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
   }
 
   const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
 
-  for (const value of baseAssetIndexValues) {
-    const baseAsset = convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: { value } });
-
+  for (const index of baseAssetIndexValues) {
+    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
     const baseAssetAccount: AccountMeta = {
       pubkey: baseAsset,
       isSigner: false,
@@ -239,13 +233,13 @@ export const finalizeRfqConstructionBuilder = async (
       .protocol()
       .findBaseAssetByAddress({ address: baseAsset });
 
-    const oracleAccount: AccountMeta = {
-      pubkey: baseAssetModel.priceOracle.address,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    oracleAccounts.push(oracleAccount);
+    if (baseAssetModel.priceOracle.address) {
+      oracleAccounts.push({
+        pubkey: baseAssetModel.priceOracle.address,
+        isSigner: false,
+        isWritable: false,
+      });
+    }
   }
 
   anchorRemainingAccounts.push(

@@ -75,6 +75,30 @@ import {
   createAndAddLegsToRfqOperationHandler,
 } from './operations';
 import { rfqProgram } from './program';
+import {
+  cancelMultipleRfqOperation,
+  cancelMultipleRfqOperationHandler,
+} from './operations/cancelMultipleRfq';
+import {
+  cancelMultipleResponseOperation,
+  cancelMultipleResponseOperationHandler,
+} from './operations/cancelMultipleResponse';
+import {
+  cleanUpMultipleResponsesOperation,
+  cleanUpMultipleResponsesOperationHandler,
+} from './operations/cleanUpMultipleResponse';
+import {
+  unlockMultipleResponseCollateralOperation,
+  unlockMultipleResponseCollateralOperationHandler,
+} from './operations/unlockMultipleResponseCollateral';
+import {
+  unlockMultipleRfqCollateralOperation,
+  unlockMultipleRfqCollateralOperationHandler,
+} from './operations/unlockMultipleRfqCollateral';
+import {
+  cleanUpMultipleRfqOperation,
+  cleanUpMultipleRfqOperationHandler,
+} from './operations/cleanUpMultipleRfq';
 
 /** @group Plugins */
 export const rfqModule = (): ConvergencePlugin => ({
@@ -184,6 +208,29 @@ export const rfqModule = (): ConvergencePlugin => ({
     op.register(
       partiallySettleLegsAndSettleOperation,
       partiallySettleLegsAndSettleOperationHandler
+    );
+
+    op.register(cancelMultipleRfqOperation, cancelMultipleRfqOperationHandler);
+
+    op.register(
+      cancelMultipleResponseOperation,
+      cancelMultipleResponseOperationHandler
+    );
+    op.register(
+      cleanUpMultipleResponsesOperation,
+      cleanUpMultipleResponsesOperationHandler
+    );
+    op.register(
+      cleanUpMultipleRfqOperation,
+      cleanUpMultipleRfqOperationHandler
+    );
+    op.register(
+      unlockMultipleResponseCollateralOperation,
+      unlockMultipleResponseCollateralOperationHandler
+    );
+    op.register(
+      unlockMultipleRfqCollateralOperation,
+      unlockMultipleRfqCollateralOperationHandler
     );
 
     convergence.rfqs = function () {
