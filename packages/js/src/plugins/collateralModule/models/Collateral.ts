@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
 
+import { Mint } from '../../tokenModule/models/Mint';
 import { CollateralAccount } from '../accounts';
 import { assert } from '../../../utils';
 
@@ -17,17 +18,13 @@ export type Collateral = {
   /** The address of the collateral account. */
   readonly address: PublicKey;
 
-  /** The bump of the collateral account. */
-  readonly bump: number;
-
   /** The owner of the Collateral account. */
   readonly user: PublicKey;
 
-  /** The bump of the token account. */
-  readonly tokenAccountBump: number;
+  // NOTE: Removed bump and token account bump
 
   /** The amount of locked tokens. */
-  lockedTokensAmount: number;
+  readonly lockedTokensAmount: number;
 };
 
 /** @group Model Helpers */
@@ -36,18 +33,29 @@ export const isCollateral = (value: any): value is Collateral =>
 
 /** @group Model Helpers */
 export function assertCollateral(value: any): asserts value is Collateral {
-  assert(isCollateral(value), `Expected collateral model`);
+  assert(isCollateral(value), 'Expected collateral model');
+}
+
+function getLockedTokensAmount(value: unknown, mint: Mint | undefined): number {
+  if (typeof mint === 'undefined') {
+    return 0;
+  }
+  if (typeof value === 'number') {
+    return value / Math.pow(10, mint.decimals);
+  }
+  if (value instanceof BN) {
+    return value.toNumber() / Math.pow(10, mint.decimals);
+  }
+  return 0;
 }
 
 /** @group Model Helpers */
-export const toCollateral = (account: CollateralAccount): Collateral => ({
+export const toCollateral = (
+  account: CollateralAccount,
+  mint?: Mint
+): Collateral => ({
   model: 'collateral',
   address: account.publicKey,
-  bump: account.data.bump,
   user: account.data.user,
-  tokenAccountBump: account.data.tokenAccountBump,
-  lockedTokensAmount:
-    account.data.lockedTokensAmount instanceof BN
-      ? account.data.lockedTokensAmount.toNumber()
-      : account.data.lockedTokensAmount,
+  lockedTokensAmount: getLockedTokensAmount(account.data.lockedTokensAmount, mint),
 });
