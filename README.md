@@ -15,38 +15,6 @@ npm install @convergence-rfq/sdk @solana/web3.js
 
 The entry point to the JavaScript SDK is a Convergence instance that will give you access to its API. It accepts a Connection instance from @solana/web3.js that will be used to communicate with the cluster.
 
-```ts
-import { Connection, clusterApiUrl } from '@solana/web3.js';
-import { useWallet } from '@solana/wallet-adapter-react';
-
-import { Convergence, walletAdapterIdentity } from '@convergence-rfq/sdk';
-
-const wallet = useWallet();
-const cvg = new Convergence(new Connection(clusterApiUrl('devnet')));
-cvg.use(walletAdapterIdentity(wallet));
-```
-
-**Example**
-
-To create a basic RFQ for BTC spot quoted in USDC spot.
-
-```ts
-import { SpotInstrument, Side, OrderType } from '@convergence-rfq/sdk';
-
-const { rfq, response } = await cvg.rfqs().createAndFinalize({
-  instruments: [
-    new SpotInstrument(cvg, btcMint, {
-      amount: 1.3,
-      side: Side.Bid,
-    }),
-  ],
-  orderType: OrderType.Buy,
-  quoteAsset: new SpotInstrument(cvg, usdcMint).toQuoteAsset(),
-});
-
-console.log('Tx:', response.signature);
-```
-
 ## Development
 
 **Requirements**
