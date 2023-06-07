@@ -25,12 +25,14 @@ export type ConvergenceTestOptions = {
   commitment?: Commitment;
   skipPreflight?: boolean;
   rpcEndpoint?: string;
+  wsEndpoint?: string;
   solsToAirdrop?: number;
 };
 
 export const createCvg = (options: ConvergenceTestOptions = {}) => {
   const connection = new Connection(options.rpcEndpoint ?? RPC_ENDPOINT, {
     commitment: options.commitment ?? DEFAULT_COMMITMENT,
+    wsEndpoint: options.wsEndpoint,
   });
   return Convergence.make(connection, { skipPreflight: options.skipPreflight });
 };
