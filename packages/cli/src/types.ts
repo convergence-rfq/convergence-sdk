@@ -1,10 +1,10 @@
 import {
-  SpotInstrument,
+  SpotLegInstrument,
   PsyoptionsAmericanInstrument,
   PsyoptionsEuropeanInstrument,
 } from '@convergence-rfq/sdk';
 
 export type Instrument =
-  | SpotInstrument
+  | SpotLegInstrument
   | PsyoptionsAmericanInstrument
   | PsyoptionsEuropeanInstrument;

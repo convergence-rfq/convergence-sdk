@@ -43,7 +43,7 @@ export type FindRegisteredMintByAddressOperation = Operation<
  */
 export type FindRegisteredMintByAddressInput = {
   /** The address of the RegisteredMint. */
-  address: PublicKey;
+  address: PublicKey; // TODO rework to accept mint address instead of RegisteredMint
 };
 
 /**

@@ -126,7 +126,7 @@ export const findRfqsByOwnerOperationHandler: OperationHandler<FindRfqsByOwnerOp
           );
 
         for (const account of accounts) {
-          const rfq = toRfq(toRfqAccount(account));
+          const rfq = await toRfq(convergence, toRfqAccount(account));
           const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
           parsedRfqs.push(convertedRfq);

@@ -1,4 +1,4 @@
 export * from './programs';
-export * from './models';
+export * from './instruments';
 export * from './plugin';
 export * from './types';

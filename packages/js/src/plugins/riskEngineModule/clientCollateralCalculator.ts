@@ -1,4 +1,4 @@
-import { AuthoritySide, Leg, RiskCategory, Side } from '@convergence-rfq/rfq';
+import { AuthoritySide, RiskCategory, Side } from '@convergence-rfq/rfq';
 import {
   futureCommonDataBeet,
   InstrumentType,
@@ -13,6 +13,7 @@ import { blackScholes } from 'black-scholes';
 
 import { Convergence } from '../../Convergence';
 import { toSolitaRiskCategory } from '../protocolModule';
+import { LegInstrument } from '../instrumentModule';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
 import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
 import { Config } from './models';
@@ -55,12 +56,14 @@ type LegInfo = {
 export async function calculateRisk(
   convergence: Convergence,
   config: Config,
-  legs: Leg[],
+  legs: LegInstrument[],
   cases: CalculationCase[],
   settlementPeriod: number,
   commitment?: Commitment
 ) {
-  const baseAssetIds = new Set(legs.map((leg) => leg.baseAssetIndex.value)); // select unique base asset ids
+  const baseAssetIds = new Set(
+    legs.map((leg) => leg.getBaseAssetIndex().value)
+  ); // select unique base asset ids
   const baseAssetInfos = await Promise.all(
     Array.from(baseAssetIds).map((id) =>
       fetchBaseAssetInfo(convergence, id, commitment)
@@ -69,26 +72,28 @@ export async function calculateRisk(
   const instrumentTypesMapping = config.instrumentTypes;
 
   const legInfos = legs.map((leg) => {
-    let amount = Number(leg.instrumentAmount) / 10 ** leg.instrumentDecimals;
-    if (leg.side == Side.Bid) {
+    let amount = leg.getAmount();
+    if (leg.getSide() == Side.Bid) {
       amount = -amount;
     }
 
     const assetType = instrumentTypesMapping.find((entry) =>
-      entry.program.equals(leg.instrumentProgram)
+      entry.program.equals(leg.getProgramId())
     )?.rType;
 
     if (assetType === undefined) {
       throw Error(
-        `Instrument ${leg.instrumentProgram.toString()} is missing from risk engine config!`
+        `Instrument ${leg
+          .getProgramId()
+          .toString()} is missing from risk engine config!`
       );
     }
 
     return {
-      baseAssetIndex: leg.baseAssetIndex.value,
+      baseAssetIndex: leg.getBaseAssetIndex().value,
       amount,
       instrumentType: assetType,
-      data: Buffer.from(leg.instrumentData),
+      data: Buffer.from(leg.serializeInstrumentData()),
     };
   });
 

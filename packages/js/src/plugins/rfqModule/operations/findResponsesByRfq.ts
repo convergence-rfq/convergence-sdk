@@ -92,7 +92,7 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
 
             const convertedResponse = convertResponseOutput(
               response,
-              rfq.quoteAsset.instrumentDecimals
+              rfq.quoteAsset.getDecimals()
             );
 
             responsesByRfq.push(convertedResponse);
@@ -143,7 +143,7 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
 
             const convertedResponse = convertResponseOutput(
               response,
-              rfq.quoteAsset.instrumentDecimals
+              rfq.quoteAsset.getDecimals()
             );
 
             parsedResponses.push(convertedResponse);

@@ -77,7 +77,7 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      const rfq = toRfq(toRfqAccount(account));
+      const rfq = await toRfq(convergence, toRfqAccount(account));
       scope.throwIfCanceled();
 
       if (convert) {

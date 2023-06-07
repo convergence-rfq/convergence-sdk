@@ -126,9 +126,10 @@ export const findRfqsByActiveOperationHandler: OperationHandler<FindRfqsByActive
           );
 
         for (const account of accounts) {
-          const rfq = toRfq(toRfqAccount(account));
+          const rawRfq = toRfqAccount(account);
 
-          if (rfq.state === StoredRfqState.Active) {
+          if (rawRfq.data.state === StoredRfqState.Active) {
+            const rfq = await toRfq(convergence, rawRfq);
             const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 
             parsedRfqs.push(convertedRfq);

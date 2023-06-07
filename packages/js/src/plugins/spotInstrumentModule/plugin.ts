@@ -1,5 +1,6 @@
 import { PROGRAM_ID } from '@convergence-rfq/spot-instrument';
 import { ProgramClient } from '../programModule';
+import { spotLegInstrumentParser } from './instruments';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
 
@@ -18,6 +19,11 @@ export const spotInstrumentModule = (): ConvergencePlugin => ({
     ) {
       return this.get(spotInstrumentProgram.name, programs);
     };
+
+    convergence.addLegInstrument(
+      spotInstrumentProgram.address,
+      spotLegInstrumentParser
+    );
   },
 });
 

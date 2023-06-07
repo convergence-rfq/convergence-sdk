@@ -2,10 +2,10 @@ import { expect } from 'expect';
 
 import { OrderType, Quote, Side } from '@convergence-rfq/rfq';
 import { sleep } from '@bundlr-network/client/build/common/utils';
-import { createUserCvg } from '../helpers';
-import { BASE_MINT_PK, QUOTE_MINT_PK } from '../constants';
-import { respond, confirmResponse, prepareSettlement, settle } from '../human';
-import { Mint, SpotInstrument } from '../../src';
+import { createUserCvg, fetchTokenAmount } from '../helpers';
+import { BASE_MINT_PK, QUOTE_MINT_PK, TAKER_PK } from '../constants';
+import { confirmResponse, prepareSettlement, settle } from '../human';
+import { Mint, SpotLegInstrument, SpotQuoteInstrument } from '../../src';
 
 describe('integration.spot', () => {
   const takerCvg = createUserCvg('taker');
@@ -26,21 +26,22 @@ describe('integration.spot', () => {
   it('sell 1.0 BTC', async () => {
     const { rfq } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        new SpotInstrument(takerCvg, baseMint, {
-          amount: 1,
-          side: Side.Ask,
-        }),
+        await SpotLegInstrument.create(takerCvg, baseMint, 1, Side.Bid),
       ],
       orderType: OrderType.Sell,
       fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(rfq).toHaveProperty('address');
 
-    // TODO: Get taker token amount
-
-    const { rfqResponse } = await respond(makerCvg, rfq, 'bid');
-    expect(rfqResponse).toHaveProperty('address');
+    const respond: Quote = {
+      __kind: 'FixedSize',
+      priceQuote: { __kind: 'AbsolutePrice', amountBps: 22_000 },
+    };
+    const { rfqResponse } = await makerCvg.rfqs().respond({
+      bid: respond,
+      rfq: rfq.address,
+    });
 
     const { response } = await confirmResponse(
       takerCvg,
@@ -49,6 +50,17 @@ describe('integration.spot', () => {
       'bid'
     );
     expect(response).toHaveProperty('signature');
+
+    const takerBtcBefore = await fetchTokenAmount(
+      takerCvg,
+      baseMint.address,
+      TAKER_PK
+    );
+    const takerQuoteBefore = await fetchTokenAmount(
+      takerCvg,
+      quoteMint.address,
+      TAKER_PK
+    );
 
     const takerResult = await prepareSettlement(takerCvg, rfq, rfqResponse);
     expect(takerResult.response).toHaveProperty('signature');
@@ -59,20 +71,29 @@ describe('integration.spot', () => {
     const settleResult = await settle(takerCvg, rfq, rfqResponse);
     expect(settleResult.response).toHaveProperty('signature');
 
-    // TODO: Verify token amounts via conversions are correct
+    const takerBtcAfter = await fetchTokenAmount(
+      takerCvg,
+      baseMint.address,
+      TAKER_PK
+    );
+    const takerQuoteAfter = await fetchTokenAmount(
+      takerCvg,
+      quoteMint.address,
+      TAKER_PK
+    );
+
+    expect(takerBtcAfter).toBe(takerBtcBefore - 1);
+    expect(takerQuoteAfter).toBe(takerQuoteBefore + 22_000);
   });
 
   it('buy 1.0 BTC', async () => {
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        new SpotInstrument(takerCvg, baseMint, {
-          amount: 5,
-          side: Side.Bid,
-        }),
+        await SpotLegInstrument.create(takerCvg, baseMint, 5, Side.Bid),
       ],
       orderType: OrderType.Buy,
       fixedSize: { __kind: 'None', padding: 0 },
-      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(response).toHaveProperty('signature');
     const respond: Quote = {
@@ -93,14 +114,11 @@ describe('integration.spot', () => {
   it('cancel, reclaim and cleanup multiple RFQs', async () => {
     const { rfq: rfq1, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        new SpotInstrument(takerCvg, baseMint, {
-          amount: 5,
-          side: Side.Bid,
-        }),
+        await SpotLegInstrument.create(takerCvg, baseMint, 5, Side.Bid),
       ],
       orderType: OrderType.Buy,
       fixedSize: { __kind: 'None', padding: 0 },
-      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(response).toHaveProperty('signature');
 
@@ -108,14 +126,11 @@ describe('integration.spot', () => {
       .rfqs()
       .createAndFinalize({
         instruments: [
-          new SpotInstrument(takerCvg, baseMint, {
-            amount: 10,
-            side: Side.Bid,
-          }),
+          await SpotLegInstrument.create(takerCvg, baseMint, 10, Side.Bid),
         ],
         orderType: OrderType.Buy,
         fixedSize: { __kind: 'None', padding: 0 },
-        quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+        quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
       });
     expect(response2).toHaveProperty('signature');
 
@@ -123,14 +138,11 @@ describe('integration.spot', () => {
       .rfqs()
       .createAndFinalize({
         instruments: [
-          new SpotInstrument(takerCvg, baseMint, {
-            amount: 15,
-            side: Side.Bid,
-          }),
+          await SpotLegInstrument.create(takerCvg, baseMint, 15, Side.Bid),
         ],
         orderType: OrderType.Buy,
         fixedSize: { __kind: 'None', padding: 0 },
-        quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+        quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
       });
     expect(response3).toHaveProperty('signature');
 
@@ -164,14 +176,11 @@ describe('integration.spot', () => {
   it('cancel, reclaim and cleanup multiple responses', async () => {
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        new SpotInstrument(takerCvg, baseMint, {
-          amount: 8,
-          side: Side.Bid,
-        }),
+        await SpotLegInstrument.create(takerCvg, baseMint, 8, Side.Bid),
       ],
       orderType: OrderType.Buy,
       fixedSize: { __kind: 'None', padding: 0 },
-      quoteAsset: new SpotInstrument(takerCvg, quoteMint).toQuoteAsset(),
+      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(response).toHaveProperty('signature');
     const respond1: Quote = {

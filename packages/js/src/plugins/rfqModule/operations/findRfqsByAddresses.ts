@@ -94,7 +94,7 @@ export const findRfqsByAddressesOperationHandler: OperationHandler<FindRfqsByAdd
           );
 
         for (const account of accounts) {
-          const rfq = toRfq(toRfqAccount(account));
+          const rfq = await toRfq(convergence, toRfqAccount(account));
 
           const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
 

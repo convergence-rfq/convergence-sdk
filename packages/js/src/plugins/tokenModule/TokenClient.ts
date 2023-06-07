@@ -28,7 +28,7 @@ import {
 } from './operations';
 import { TokenBuildersClient } from './TokenBuildersClient';
 import { TokenPdasClient } from './TokenPdasClient';
-import { Mint, Token } from './models';
+import { Mint, Token, TokenWithMint } from './models';
 import type { Convergence } from '@/Convergence';
 import { OperationOptions, PublicKey } from '@/types';
 
@@ -116,7 +116,7 @@ export class TokenClient {
   findTokenWithMintByMint(
     input: FindTokenWithMintByMintInput,
     options?: OperationOptions
-  ) {
+  ): Promise<TokenWithMint> {
     return this.convergence
       .operations()
       .execute(findTokenWithMintByMintOperation(input), options);
