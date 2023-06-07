@@ -8,7 +8,6 @@ import {
   rfqGroup,
   tokenGroup,
 } from './groups';
-import { VERSION } from './constants';
 
 export const makeCli = (): Command => {
   const cmds = [
@@ -21,7 +20,10 @@ export const makeCli = (): Command => {
   ];
 
   const cli = new Command();
-  cli.name('convergence').version(VERSION).description('Convergence RFQ CLI');
+  cli
+    .name('convergence')
+    .version(process.env.npm_package_version || 'local')
+    .description('Convergence RFQ CLI');
   cmds.map((cmd) => cmd(cli));
 
   return cli;
