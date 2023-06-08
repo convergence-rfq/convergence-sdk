@@ -168,10 +168,7 @@ export const registerMint = async (opts: Opts) => {
   };
   const cvg = await createCvg(opts);
   try {
-    const { response, registeredMint } = await cvg
-      .protocol()
-      .registerMint(getMintArgs());
-    logPk(registeredMint.address);
+    const { response } = await cvg.protocol().registerMint(getMintArgs());
     logResponse(response);
   } catch (e) {
     logError(e);
