@@ -42,7 +42,6 @@ describe('integration.spot', () => {
       bid: respond,
       rfq: rfq.address,
     });
-
     const { response } = await confirmResponse(
       takerCvg,
       rfq,
@@ -81,7 +80,6 @@ describe('integration.spot', () => {
       quoteMint.address,
       TAKER_PK
     );
-
     expect(takerBtcAfter).toBe(takerBtcBefore - 1);
     expect(takerQuoteAfter).toBe(takerQuoteBefore + 22_000);
   });

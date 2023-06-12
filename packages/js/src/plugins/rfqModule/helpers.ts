@@ -41,6 +41,7 @@ import {
   InstructionWithSigners,
   TransactionBuilder,
   addDecimals,
+  removeDecimals,
 } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
@@ -303,89 +304,76 @@ export const convertResponseOutput = (
   quoteDecimals: number
 ): Response => {
   if (response.bid) {
-    let convertedPriceQuoteAmountBps =
-      response.bid.priceQuote.amountBps instanceof anchor.BN
-        ? response.bid.priceQuote.amountBps
-        : new anchor.BN(response.bid.priceQuote.amountBps);
-
-    convertedPriceQuoteAmountBps = convertedPriceQuoteAmountBps.div(
-      new anchor.BN(10).pow(
-        new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
-      )
+    const convertedPriceQuoteAmountBps = removeDecimals(
+      response.bid.priceQuote.amountBps,
+      quoteDecimals
+    );
+    const removedQuoteDecimals = new anchor.BN(convertedPriceQuoteAmountBps);
+    const removedAbsoluteDecimals = removeDecimals(
+      removedQuoteDecimals,
+      ABSOLUTE_PRICE_DECIMALS
     );
 
-    response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
+    response.bid.priceQuote.amountBps = removedAbsoluteDecimals;
 
     if (response.bid.__kind == 'Standard') {
-      let convertedLegsMultiplierBps =
-        response.bid.legsMultiplierBps instanceof anchor.BN
-          ? response.bid.legsMultiplierBps
-          : new anchor.BN(response.bid.legsMultiplierBps);
-
-      convertedLegsMultiplierBps = convertedLegsMultiplierBps.div(
-        new anchor.BN(10).pow(new anchor.BN(LEG_MULTIPLIER_DECIMALS))
+      const convertedLegsMultiplierBps = removeDecimals(
+        response.bid.legsMultiplierBps
       );
 
-      response.bid.legsMultiplierBps = convertedLegsMultiplierBps;
+      response.bid.legsMultiplierBps = new anchor.BN(
+        convertedLegsMultiplierBps
+      );
     }
   }
   if (response.ask) {
-    let convertedPriceQuoteAmountBps =
-      response.ask.priceQuote.amountBps instanceof anchor.BN
-        ? response.ask.priceQuote.amountBps
-        : new anchor.BN(response.ask.priceQuote.amountBps);
-
-    convertedPriceQuoteAmountBps = convertedPriceQuoteAmountBps.div(
-      new anchor.BN(10).pow(
-        new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
-      )
+    const convertedPriceQuoteAmountBps = removeDecimals(
+      response.ask.priceQuote.amountBps,
+      quoteDecimals
+    );
+    const removedQuoteDeciamls = new anchor.BN(convertedPriceQuoteAmountBps);
+    const removedAbsoluteDecimals = removeDecimals(
+      removedQuoteDeciamls,
+      ABSOLUTE_PRICE_DECIMALS
     );
 
-    response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
+    response.ask.priceQuote.amountBps = removedAbsoluteDecimals;
 
     if (response.ask.__kind == 'Standard') {
-      let convertedLegsMultiplierBps =
-        response.ask.legsMultiplierBps instanceof anchor.BN
-          ? response.ask.legsMultiplierBps
-          : new anchor.BN(response.ask.legsMultiplierBps);
-
-      convertedLegsMultiplierBps = convertedLegsMultiplierBps.div(
-        new anchor.BN(10).pow(new anchor.BN(LEG_MULTIPLIER_DECIMALS))
+      const convertedLegsMultiplierBps = removeDecimals(
+        response.ask.legsMultiplierBps
       );
-
-      response.ask.legsMultiplierBps = convertedLegsMultiplierBps;
+      response.ask.legsMultiplierBps = new anchor.BN(
+        convertedLegsMultiplierBps
+      );
     }
   }
-
   return response;
 };
 
 const convertQuoteInput = (quote: Quote, quoteDecimals: number) => {
   const convertedQuote = structuredClone(quote);
   convertedQuote.priceQuote.amountBps = quote.priceQuote.amountBps;
-
-  const convertedPriceQuoteAmountBps =
-    convertedQuote.priceQuote.amountBps instanceof anchor.BN
-      ? convertedQuote.priceQuote.amountBps
-      : new anchor.BN(convertedQuote.priceQuote.amountBps);
+  // multiply before and then convert to anchor.BN
+  const priceQuoteWithDecimals = addDecimals(
+    Number(convertedQuote.priceQuote.amountBps),
+    quoteDecimals
+  );
+  const convertedPriceQuoteAmountBps = new anchor.BN(priceQuoteWithDecimals);
 
   convertedQuote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(
-    new anchor.BN(10).pow(
-      new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
-    )
+    new anchor.BN(10).pow(new anchor.BN(ABSOLUTE_PRICE_DECIMALS))
   );
 
   if (convertedQuote.__kind == 'Standard') {
-    const convertedLegsMultiplierBps =
-      convertedQuote.legsMultiplierBps instanceof anchor.BN
-        ? convertedQuote.legsMultiplierBps
-        : new anchor.BN(convertedQuote.legsMultiplierBps);
-
-    convertedQuote.legsMultiplierBps = convertedLegsMultiplierBps.mul(
-      new anchor.BN(Math.pow(10, LEG_MULTIPLIER_DECIMALS))
+    // multiply before and then convert to anchor.BN
+    const priceQuoteWithDecimals = addDecimals(
+      Number(convertedQuote.legsMultiplierBps),
+      LEG_MULTIPLIER_DECIMALS
     );
+    const convertedLegsMultiplierBps = new anchor.BN(priceQuoteWithDecimals);
+    convertedQuote.legsMultiplierBps = convertedLegsMultiplierBps;
   }
-
   return convertedQuote;
 };
 

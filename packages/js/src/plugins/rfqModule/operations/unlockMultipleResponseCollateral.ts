@@ -82,9 +82,12 @@ export const unlockMultipleResponseCollateralOperationHandler: OperationHandler<
         scope
       );
       scope.throwIfCanceled();
+      // const signedTnxs = await convergence
+      //   .rpc()
+      //   .signAllTransactions(txArray, [convergence.rpc().getDefaultFeePayer()]);
       const signedTnxs = await convergence
-        .rpc()
-        .signAllTransactions(txArray, [convergence.rpc().getDefaultFeePayer()]);
+        .identity()
+        .signAllTransactions(txArray);
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
         scope.confirmOptions
