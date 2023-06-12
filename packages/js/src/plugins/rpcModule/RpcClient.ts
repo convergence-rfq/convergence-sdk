@@ -5,7 +5,6 @@ import {
   BlockhashWithExpiryBlockHeight,
   Commitment,
   ConfirmOptions,
-  GetAccountInfoConfig,
   GetLatestBlockhashConfig,
   GetProgramAccountsConfig,
   PublicKey,
@@ -51,7 +50,7 @@ export type SendAndConfirmTransactionResponse = {
  */
 export class RpcClient {
   protected defaultFeePayer?: Signer;
-  protected lastContextSlot?: number;
+  protected lastContextSlot?: number; // max slot between all confirmed transactions
   protected static maxContextRetries = 10;
 
   constructor(protected readonly convergence: Convergence) {}
@@ -210,7 +209,10 @@ export class RpcClient {
     }
 
     if (rpcResponse.context.slot) {
-      this.lastContextSlot = rpcResponse.context.slot;
+      this.lastContextSlot = Math.max(
+        rpcResponse.context.slot,
+        this.lastContextSlot ?? -1
+      );
     }
 
     return rpcResponse;
@@ -241,75 +243,72 @@ export class RpcClient {
     return { signature, confirmResponse, ...blockhashWithExpiryBlockHeight };
   }
 
-  async getAccount(
-    publicKey: PublicKey,
-    commitment?: Commitment | GetAccountInfoConfig
-  ) {
-    const retryAction = async <T>(
-      action: () => Promise<T>,
-      maxRetries: number
-    ) => {
-      for (let retry = 0; retry < maxRetries; retry++) {
-        try {
-          const result = await action();
-          return result;
-        } catch (e) {
-          // for some reason connection doesn't throw a valid SolanaJSONRPCError with correct error code
-          // it just a plain Error and encodes error as a part of the message
-          if (
-            e instanceof Error &&
-            e.message.includes('SolanaJSONRPCError') &&
-            e.message.includes('Minimum context slot has not been reached')
-          ) {
-            continue;
-          }
-
-          throw e;
-        }
-      }
-
-      throw Error('Max retries exceeded!');
-    };
-
-    // set minContextSlot if it's not passed explicidly
-    commitment =
-      commitment === undefined || typeof commitment === 'string'
-        ? { commitment }
-        : commitment;
-    if (
-      this.lastContextSlot !== undefined &&
-      commitment.minContextSlot === undefined
-    ) {
-      commitment.minContextSlot = this.lastContextSlot;
-    }
-
-    const accountInfo = await retryAction(
-      () => this.convergence.connection.getAccountInfo(publicKey, commitment),
-      RpcClient.maxContextRetries
+  async getAccount(publicKey: PublicKey, commitment?: Commitment) {
+    const accountInfo = await this.retryGetAccountAction(() =>
+      this.convergence.connection.getAccountInfo(
+        publicKey,
+        this.expandGetAccountCommitment(commitment)
+      )
     );
 
     return this.getUnparsedMaybeAccount(publicKey, accountInfo);
   }
 
   async accountExists(publicKey: PublicKey, commitment?: Commitment) {
-    const balance = await this.convergence.connection.getBalance(
-      publicKey,
-      commitment
+    const balance = await this.retryGetAccountAction(() =>
+      this.convergence.connection.getBalance(
+        publicKey,
+        this.expandGetAccountCommitment(commitment)
+      )
     );
 
     return balance > 0;
   }
 
   async getMultipleAccounts(publicKeys: PublicKey[], commitment?: Commitment) {
-    const accountInfos =
-      await this.convergence.connection.getMultipleAccountsInfo(
+    const accountInfos = await this.retryGetAccountAction(() =>
+      this.convergence.connection.getMultipleAccountsInfo(
         publicKeys,
-        commitment
-      );
+        this.expandGetAccountCommitment(commitment)
+      )
+    );
 
     return zipMap(publicKeys, accountInfos, (publicKey, accountInfo) => {
       return this.getUnparsedMaybeAccount(publicKey, accountInfo);
     });
+  }
+
+  // sometimes fetching account data immediately after confirming a transaction would hit a different node
+  // that is slightly behind in the block history. In that case fetch would fail or return stale data
+  // To solve this issue we pass minContextSlot as fetch parameter and retry if node slot is behind
+  protected async retryGetAccountAction<T>(action: () => Promise<T>) {
+    for (let retry = 0; retry < RpcClient.maxContextRetries; retry++) {
+      try {
+        const result = await action();
+        return result;
+      } catch (e) {
+        // for some reason connection doesn't throw a valid SolanaJSONRPCError with correct error code
+        // it just a plain Error and encodes error as a part of the message
+        if (
+          e instanceof Error &&
+          e.message.includes('SolanaJSONRPCError') &&
+          e.message.includes('Minimum context slot has not been reached')
+        ) {
+          continue;
+        }
+
+        throw e;
+      }
+    }
+
+    throw Error('Max retries exceeded!');
+  }
+
+  protected expandGetAccountCommitment(commitment?: Commitment) {
+    return {
+      commitment,
+      minContextSlot: this.lastContextSlot,
+    };
   }
 
   async getProgramAccounts(
