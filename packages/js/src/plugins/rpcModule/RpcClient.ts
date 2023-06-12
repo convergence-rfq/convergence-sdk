@@ -5,6 +5,7 @@ import {
   BlockhashWithExpiryBlockHeight,
   Commitment,
   ConfirmOptions,
+  GetAccountInfoConfig,
   GetLatestBlockhashConfig,
   GetProgramAccountsConfig,
   PublicKey,
@@ -25,7 +26,6 @@ import {
 } from '../../errors';
 import type { Convergence } from '../../Convergence';
 import {
-  assertSol,
   getSignerHistogram,
   isErrorWithLogs,
   lamports,
@@ -51,6 +51,8 @@ export type SendAndConfirmTransactionResponse = {
  */
 export class RpcClient {
   protected defaultFeePayer?: Signer;
+  protected lastContextSlot?: number;
+  protected static maxContextRetries = 10;
 
   constructor(protected readonly convergence: Convergence) {}
 
@@ -207,6 +209,10 @@ export class RpcClient {
       throw new FailedToConfirmTransactionWithResponseError(rpcResponse);
     }
 
+    if (rpcResponse.context.slot) {
+      this.lastContextSlot = rpcResponse.context.slot;
+    }
+
     return rpcResponse;
   }
 
@@ -235,10 +241,51 @@ export class RpcClient {
     return { signature, confirmResponse, ...blockhashWithExpiryBlockHeight };
   }
 
-  async getAccount(publicKey: PublicKey, commitment?: Commitment) {
-    const accountInfo = await this.convergence.connection.getAccountInfo(
-      publicKey,
-      commitment
+  async getAccount(
+    publicKey: PublicKey,
+    commitment?: Commitment | GetAccountInfoConfig
+  ) {
+    const retryAction = async <T>(
+      action: () => Promise<T>,
+      maxRetries: number
+    ) => {
+      for (let retry = 0; retry < maxRetries; retry++) {
+        try {
+          const result = await action();
+          return result;
+        } catch (e) {
+          // for some reason connection doesn't throw a valid SolanaJSONRPCError with correct error code
+          // it just a plain Error and encodes error as a part of the message
+          if (
+            e instanceof Error &&
+            e.message.includes('SolanaJSONRPCError') &&
+            e.message.includes('Minimum context slot has not been reached')
+          ) {
+            continue;
+          }
+
+          throw e;
+        }
+      }
+
+      throw Error('Max retries exceeded!');
+    };
+
+    // set minContextSlot if it's not passed explicidly
+    commitment =
+      commitment === undefined || typeof commitment === 'string'
+        ? { commitment }
+        : commitment;
+    if (
+      this.lastContextSlot !== undefined &&
+      commitment.minContextSlot === undefined
+    ) {
+      commitment.minContextSlot = this.lastContextSlot;
+    }
+
+    const accountInfo = await retryAction(
+      () => this.convergence.connection.getAccountInfo(publicKey, commitment),
+      RpcClient.maxContextRetries
     );
 
     return this.getUnparsedMaybeAccount(publicKey, accountInfo);
@@ -281,40 +328,6 @@ export class RpcClient {
     }));
   }
 
-  async airdrop(
-    publicKey: PublicKey,
-    amount: SolAmount,
-    commitment?: Commitment
-  ): Promise<SendAndConfirmTransactionResponse> {
-    assertSol(amount);
-
-    const signature = await this.convergence.connection.requestAirdrop(
-      publicKey,
-      amount.basisPoints.toNumber()
-    );
-
-    const blockhashWithExpiryBlockHeight = await this.getLatestBlockhash();
-    const confirmResponse = await this.confirmTransaction(
-      signature,
-      blockhashWithExpiryBlockHeight,
-      commitment
-    );
-
-    return { signature, confirmResponse, ...blockhashWithExpiryBlockHeight };
-  }
-
-  async getBalance(
-    publicKey: PublicKey,
-    commitment?: Commitment
-  ): Promise<SolAmount> {
-    const balance = await this.convergence.connection.getBalance(
-      publicKey,
-      commitment
-    );
-
-    return lamports(balance);
-  }
-
   async getRent(bytes: number, commitment?: Commitment): Promise<SolAmount> {
     const rent =
       await this.convergence.connection.getMinimumBalanceForRentExemption(
@@ -329,25 +342,6 @@ export class RpcClient {
     commitmentOrConfig: Commitment | GetLatestBlockhashConfig = 'finalized'
   ): Promise<BlockhashWithExpiryBlockHeight> {
     return this.convergence.connection.getLatestBlockhash(commitmentOrConfig);
-  }
-
-  getSolanaExporerUrl(signature: string): string {
-    let clusterParam = '';
-    switch (this.convergence.cluster) {
-      case 'devnet':
-        clusterParam = '?cluster=devnet';
-        break;
-      case 'testnet':
-        clusterParam = '?cluster=testnet';
-        break;
-      case 'localnet':
-      case 'custom':
-        const url = encodeURIComponent(this.convergence.connection.rpcEndpoint);
-        clusterParam = `?cluster=custom&customUrl=${url}`;
-        break;
-    }
-
-    return `https://explorer.solana.com/tx/${signature}${clusterParam}`;
   }
 
   setDefaultFeePayer(payer: Signer) {
@@ -395,21 +389,6 @@ export class RpcClient {
     }
 
     return transactions;
-  }
-
-  async getAccounts(publicKeys: PublicKey[], commitment?: Commitment) {
-    const accountInfos: UnparsedMaybeAccount[] = [];
-
-    for (const publicKey of publicKeys) {
-      const accountInfo = await this.convergence.connection.getAccountInfo(
-        publicKey,
-        commitment
-      );
-
-      accountInfos.push(this.getUnparsedMaybeAccount(publicKey, accountInfo));
-    }
-
-    return accountInfos;
   }
 
   protected parseProgramError(
