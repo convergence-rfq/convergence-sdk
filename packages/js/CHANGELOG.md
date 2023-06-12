@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.3.4
+
+### Patch Changes
+
+- Added method to retry account fetching when confirmed transaction hit unsynced RPC nodes based on slot updates
+
 ## 4.3.3
 
 ### Patch Changes
