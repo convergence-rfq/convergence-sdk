@@ -22,7 +22,7 @@ describe('unit.rfq', () => {
         '--quote-mint',
         CTX.quoteMint,
         '--base-mint',
-        CTX.baseMint,
+        CTX.baseMintBTC,
         '--side',
         'bid',
         '--collateral-info',
