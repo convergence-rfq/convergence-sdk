@@ -88,9 +88,6 @@ export const cleanUpMultipleRfqOperationHandler: OperationHandler<CleanUpMultipl
         convergence,
         scope.confirmOptions
       );
-      // const signedTnxs = await convergence
-      //   .rpc()
-      //   .signAllTransactions(txArray, [convergence.rpc().getDefaultFeePayer()]);
       const signedTnxs = await convergence
         .identity()
         .signAllTransactions(txArray);

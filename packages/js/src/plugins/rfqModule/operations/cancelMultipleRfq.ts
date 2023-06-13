@@ -85,10 +85,6 @@ export const cancelMultipleRfqOperationHandler: OperationHandler<CancelMultipleR
         scope
       );
       scope.throwIfCanceled();
-
-      // const signedTnxs = await convergence
-      //   .rpc()
-      //   .signAllTransactions(txArray, [convergence.rpc().getDefaultFeePayer()]);
       const signedTnxs = await convergence
         .identity()
         .signAllTransactions(txArray);

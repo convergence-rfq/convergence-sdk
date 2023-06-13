@@ -2,9 +2,13 @@ import { expect } from 'expect';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
+import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import { createUserCvg } from '../helpers';
 import { QUOTE_MINT_PK, BASE_MINT_PK } from '../constants';
-import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
+import {
+  IDL as PseudoPythIdl,
+  Pyth,
+} from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import {
   OrderType,
   OptionType,
@@ -26,9 +30,13 @@ import {
   settle,
 } from '../human';
 
-describe('integration.psyoptionsEuropean', () => {
+describe('integration.psyoptionsEuropean', async () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
+  let europeanProgram: anchor.Program<EuroPrimitive>;
+  let provider: anchor.AnchorProvider;
+  let pseudoPythProgram: anchor.Program<Pyth>;
+  let oracle: PublicKey;
 
   let baseMint: Mint;
   let quoteMint: Mint;
@@ -40,25 +48,26 @@ describe('integration.psyoptionsEuropean', () => {
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
-  });
 
-  it('covered call', async () => {
-    const europeanProgram = await createEuropeanProgram(takerCvg);
-    const provider = new anchor.AnchorProvider(
+    europeanProgram = await createEuropeanProgram(takerCvg);
+    provider = new anchor.AnchorProvider(
       takerCvg.connection,
       new anchor.Wallet(takerCvg.rpc().getDefaultFeePayer() as Keypair),
       {}
     );
-    const pseudoPythProgram = new anchor.Program(
+    pseudoPythProgram = new anchor.Program(
       PseudoPythIdl,
       new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
       provider
     );
-    const oracle = await createPythPriceFeed(
+    oracle = await createPythPriceFeed(
       pseudoPythProgram,
       17_000,
       quoteMint.decimals * -1
     );
+  });
+
+  it('covered call', async () => {
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
       takerCvg,
       oracle,
@@ -92,22 +101,6 @@ describe('integration.psyoptionsEuropean', () => {
   });
 
   it('mint european options', async () => {
-    const europeanProgram = await createEuropeanProgram(takerCvg);
-    const provider = new anchor.AnchorProvider(
-      takerCvg.connection,
-      new anchor.Wallet(takerCvg.rpc().getDefaultFeePayer() as Keypair),
-      {}
-    );
-    const pseudoPythProgram = new anchor.Program(
-      PseudoPythIdl,
-      new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-      provider
-    );
-    const oracle = await createPythPriceFeed(
-      pseudoPythProgram,
-      17_000,
-      quoteMint.decimals * -1
-    );
     const min = 3_600;
     const randomExpiry = min + Math.random();
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
