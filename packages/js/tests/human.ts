@@ -1,7 +1,7 @@
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { Keypair } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
-
+import * as anchor from '@project-serum/anchor';
 import {
   Convergence,
   OrderType,
@@ -53,14 +53,14 @@ export const createAmericanCoveredCall = async (
     createAmericanProgram(cvg),
     baseMint,
     quoteMint,
-    toBigNumber(27_000),
-    toBigNumber(1),
+    27_000,
+    1,
     randomExpiry
   );
 
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      await SpotLegInstrument.create(cvg, baseMint, 1.0, Side.Bid),
+      // await SpotLegInstrument.create(cvg, baseMint, 1.0, Side.Bid),
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
@@ -73,7 +73,7 @@ export const createAmericanCoveredCall = async (
       ),
     ],
     orderType: fromHumanOrderType(orderType),
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 0.0000001 },
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
 
