@@ -4,7 +4,7 @@ import * as anchor from '@project-serum/anchor';
 
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import { createUserCvg } from '../helpers';
-import { QUOTE_MINT_PK, BASE_MINT_PK } from '../constants';
+import { QUOTE_MINT_PK, BASE_MINT_BTC_PK } from '../constants';
 import {
   IDL as PseudoPythIdl,
   Pyth,
@@ -44,7 +44,7 @@ describe('integration.psyoptionsEuropean', async () => {
   before(async () => {
     baseMint = await takerCvg
       .tokens()
-      .findMintByAddress({ address: BASE_MINT_PK });
+      .findMintByAddress({ address: BASE_MINT_BTC_PK });
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
