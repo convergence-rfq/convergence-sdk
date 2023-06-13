@@ -9,7 +9,6 @@ import {
 } from '../human';
 import { createUserCvg } from '../helpers';
 import {
-  PsyoptionsAmericanInstrument,
   createAmericanProgram,
   getOrCreateAmericanOptionATAs,
   mintAmericanOptions,
@@ -46,25 +45,6 @@ describe('integration.psyoptionsAmerican', () => {
 
   it('mint American options', async () => {
     const res0 = await createAmericanCoveredCall(takerCvg, 'sell');
-    // console.log(
-    //   'rfq',
-    //   Number(res0.rfq.legs[0].optionMeta.quoteAmountPerContract)
-    // );
-    const serializedData: Buffer = res0.rfq.legs[0].serializeInstrumentData();
-    const deserializeInstrumentData =
-      PsyoptionsAmericanInstrument.deserializeInstrumentData(serializedData);
-    console.log(
-      'deserializeInstrumentData expiration',
-      Number(deserializeInstrumentData.expiration)
-    );
-    console.log(
-      'deserializeInstrumentData strike',
-      Number(deserializeInstrumentData.strikePrice)
-    );
-    console.log(
-      'deserializeInstrumentData underlying',
-      Number(deserializeInstrumentData.underlyingAmountPerContract)
-    );
     const { rfq } = res0;
     expect(rfq).toHaveProperty('address');
 

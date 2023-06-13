@@ -1,7 +1,6 @@
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { Keypair } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
-import * as anchor from '@project-serum/anchor';
 import {
   Convergence,
   OrderType,
