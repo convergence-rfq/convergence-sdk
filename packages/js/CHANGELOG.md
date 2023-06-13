@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.3.5
+
+### Patch Changes
+
+- Fix psyoptions American deserialization error
+
 ## 4.3.4
 
 ### Patch Changes
