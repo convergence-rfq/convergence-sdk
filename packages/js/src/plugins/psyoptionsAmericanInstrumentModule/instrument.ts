@@ -2,21 +2,16 @@ import { PublicKey } from '@solana/web3.js';
 import { Side, Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
-import {
-  FixableBeetArgsStruct,
-  u8,
-  u64,
-  bool,
-  i64,
-  bignum,
-} from '@convergence-rfq/beet';
+import { FixableBeetArgsStruct, u8, u64, bignum } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
+import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { Mint } from '../tokenModule';
 import { LegInstrument } from '../instrumentModule';
-import { assert, removeDecimals } from '../../utils';
+import { removeDecimals } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
+import { createAmericanProgram } from '../rfqModule';
 
 type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;
@@ -45,28 +40,6 @@ export const psyoptionsAmericanInstrumentDataSerializer =
       'InstrumentData'
     )
   );
-
-const optionMarketWithKeySerializer = createSerializerFromFixableBeetArgsStruct(
-  new FixableBeetArgsStruct<OptionMarketWithKey>(
-    [
-      ['optionMint', publicKey],
-      ['writerTokenMint', publicKey],
-      ['underlyingAssetMint', publicKey],
-      ['quoteAssetMint', publicKey],
-      ['underlyingAssetPool', publicKey],
-      ['quoteAssetPool', publicKey],
-      ['mintFeeAccount', publicKey],
-      ['exerciseFeeAccount', publicKey],
-      ['underlyingAmountPerContract', u64],
-      ['quoteAmountPerContract', u64],
-      ['expirationUnixTimestamp', i64],
-      ['expired', bool],
-      ['bumpSeed', u8],
-      ['key', publicKey],
-    ],
-    'OptionMarketWithKey'
-  )
-);
 
 export class PsyoptionsAmericanInstrument implements LegInstrument {
   static readonly decimals = 0;
@@ -129,14 +102,13 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     convergence: Convergence,
     metaKey: PublicKey
   ): Promise<OptionMarketWithKey> {
-    const account = await convergence.rpc().getAccount(metaKey);
-    assert(account.exists, 'Account not found');
+    const americanProgram = createAmericanProgram(convergence);
+    const optionMarket = (await psyoptionsAmerican.getOptionByKey(
+      americanProgram,
+      metaKey
+    )) as OptionMarketWithKey;
 
-    const [meta] = optionMarketWithKeySerializer.deserialize(
-      Buffer.from(account.data),
-      8
-    );
-    return meta;
+    return optionMarket;
   }
 
   getValidationAccounts() {
@@ -221,13 +193,9 @@ export const psyoptionsAmericanInstrumentParser = {
         Buffer.from(instrumentData)
       );
 
-    const account = await convergence.rpc().getAccount(metaKey);
-    if (!account.exists) {
-      throw new Error('Account not found');
-    }
-    const [optionMarketWithKey] = optionMarketWithKeySerializer.deserialize(
-      Buffer.from(account.data),
-      8
+    const optionMarketWithKey = await PsyoptionsAmericanInstrument.fetchMeta(
+      convergence,
+      metaKey
     );
 
     const quoteMint = await convergence
