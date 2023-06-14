@@ -11,6 +11,8 @@ import {
   RpcResponseAndContext,
   SendOptions,
   SignatureResult,
+  SolanaJSONRPCError,
+  SolanaJSONRPCErrorCode,
   Transaction,
   TransactionSignature,
 } from '@solana/web3.js';
@@ -34,7 +36,7 @@ import {
   UnparsedAccount,
   UnparsedMaybeAccount,
 } from '../../types';
-import { TransactionBuilder, zipMap } from '../../utils';
+import { TransactionBuilder, sleep, zipMap } from '../../utils';
 
 export type ConfirmTransactionResponse = RpcResponseAndContext<SignatureResult>;
 
@@ -51,7 +53,18 @@ export type SendAndConfirmTransactionResponse = {
 export class RpcClient {
   protected defaultFeePayer?: Signer;
   protected lastContextSlot?: number; // max slot between all confirmed transactions
-  protected static maxContextRetries = 10;
+  protected static contextRetryDelays = [
+    null,
+    null,
+    0.1,
+    0.1,
+    0.5,
+    0.5,
+    1,
+    1,
+    2,
+    2,
+  ]; // values in seconds
 
   constructor(protected readonly convergence: Convergence) {}
 
@@ -282,18 +295,27 @@ export class RpcClient {
   // that is slightly behind in the block history. In that case fetch would fail or return stale data
   // To solve this issue we pass minContextSlot as fetch parameter and retry if node slot is behind
   protected async retryGetAccountAction<T>(action: () => Promise<T>) {
-    for (let retry = 0; retry < RpcClient.maxContextRetries; retry++) {
+    for (const retryDelay of RpcClient.contextRetryDelays) {
       try {
         const result = await action();
         return result;
       } catch (e) {
-        // for some reason connection doesn't throw a valid SolanaJSONRPCError with correct error code
+        // for some reason in some methods connection doesn't throw a valid SolanaJSONRPCError with correct error code
         // it just a plain Error and encodes error as a part of the message
-        if (
+        const isStringError =
           e instanceof Error &&
           e.message.includes('SolanaJSONRPCError') &&
-          e.message.includes('Minimum context slot has not been reached')
-        ) {
+          e.message.includes('Minimum context slot has not been reached');
+        const isClassError =
+          e instanceof SolanaJSONRPCError &&
+          e.code ==
+            SolanaJSONRPCErrorCode.JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED;
+
+        if (isStringError || isClassError) {
+          if (retryDelay !== null) {
+            sleep(retryDelay);
+          }
+
           continue;
         }
 
