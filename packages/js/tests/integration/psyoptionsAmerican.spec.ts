@@ -3,11 +3,11 @@ import { expect } from 'expect';
 import { OrderType, Side } from '../../src';
 
 import {
-  createAmericanCoveredCall,
+  createAmericanCoveredCallRfq,
   confirmRfqResponse,
-  respondWithBid,
+  respondToRfq,
   prepareSettlement,
-  settle,
+  settleRfq,
   createUserCvg,
   setupAmerican,
 } from '../helpers';
@@ -17,10 +17,13 @@ describe('integration.psyoptionsAmerican', () => {
   const makerCvg = createUserCvg('maker');
 
   it('covered call [sell]', async () => {
-    const { rfq } = await createAmericanCoveredCall(takerCvg, OrderType.Sell);
+    const { rfq } = await createAmericanCoveredCallRfq(
+      takerCvg,
+      OrderType.Sell
+    );
     expect(rfq).toHaveProperty('address');
 
-    const { rfqResponse } = await respondWithBid(makerCvg, rfq);
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq);
     expect(rfqResponse).toHaveProperty('address');
 
     const { response: confirmResponse } = await confirmRfqResponse(
@@ -41,7 +44,7 @@ describe('integration.psyoptionsAmerican', () => {
       await prepareSettlement(makerCvg, rfq, rfqResponse);
     expect(prepareMakerSettlementResponse).toHaveProperty('signature');
 
-    const { response: settlementResponse } = await settle(
+    const { response: settlementResponse } = await settleRfq(
       takerCvg,
       rfq,
       rfqResponse

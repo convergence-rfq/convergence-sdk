@@ -21,8 +21,8 @@ import {
   confirmRfqResponse,
   createPythPriceFeed,
   prepareSettlement,
-  respondWithBid,
-  settle,
+  respondToRfq,
+  settleRfq,
   createUserCvg,
 } from '../helpers';
 
@@ -42,7 +42,7 @@ describe('integration.psyoptionsEuropean', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it('covered call', async () => {
+  it('covered call [sell]', async () => {
     const europeanProgram = await createEuropeanProgram(takerCvg);
     const provider = new anchor.AnchorProvider(
       takerCvg.connection,
@@ -59,55 +59,7 @@ describe('integration.psyoptionsEuropean', () => {
       17_000,
       quoteMint.decimals * -1
     );
-    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
-      takerCvg,
-      oracle,
-      europeanProgram,
-      baseMint,
-      quoteMint,
-      23_354,
-      1,
-      3_600,
-      0
-    );
-    const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
-      instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, Side.Bid),
-        await PsyoptionsEuropeanInstrument.create(
-          takerCvg,
-          baseMint,
-          OptionType.CALL,
-          euroMeta,
-          euroMetaKey,
-          5,
-          Side.Bid
-        ),
-      ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-    });
-    expect(rfq).toHaveProperty('address');
-    expect(response.signature).toBeDefined();
-  });
 
-  it('mint european options', async () => {
-    const europeanProgram = await createEuropeanProgram(takerCvg);
-    const provider = new anchor.AnchorProvider(
-      takerCvg.connection,
-      new anchor.Wallet(takerCvg.rpc().getDefaultFeePayer() as Keypair),
-      {}
-    );
-    const pseudoPythProgram = new anchor.Program(
-      PseudoPythIdl,
-      new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-      provider
-    );
-    const oracle = await createPythPriceFeed(
-      pseudoPythProgram,
-      17_000,
-      quoteMint.decimals * -1
-    );
     const min = 3_600;
     const randomExpiry = min + Math.random();
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
@@ -121,6 +73,7 @@ describe('integration.psyoptionsEuropean', () => {
       randomExpiry,
       0
     );
+
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMint, 1.0, Side.Bid),
@@ -140,14 +93,15 @@ describe('integration.psyoptionsEuropean', () => {
     });
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
-    const { rfqResponse } = await respondWithBid(makerCvg, rfq);
+
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq);
     await confirmRfqResponse(takerCvg, rfq, rfqResponse, Side.Bid);
+
     await getOrCreateEuropeanOptionATAs(
       takerCvg,
       rfqResponse.address,
       takerCvg.rpc().getDefaultFeePayer().publicKey
     );
-
     const tnx = await mintEuropeanOptions(
       takerCvg,
       rfqResponse.address,
@@ -159,6 +113,6 @@ describe('integration.psyoptionsEuropean', () => {
     await prepareSettlement(makerCvg, rfq, rfqResponse);
     await prepareSettlement(takerCvg, rfq, rfqResponse);
 
-    await settle(takerCvg, rfq, rfqResponse);
+    await settleRfq(takerCvg, rfq, rfqResponse);
   });
 });

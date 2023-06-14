@@ -7,7 +7,7 @@ import {
   fetchTokenAmount,
   confirmRfqResponse,
   prepareSettlement,
-  settle,
+  settleRfq,
 } from '../helpers';
 import { BASE_MINT_PK, QUOTE_MINT_PK, TAKER_PK } from '../constants';
 import { Mint, SpotLegInstrument, SpotQuoteInstrument } from '../../src';
@@ -74,7 +74,7 @@ describe('integration.spot', () => {
     const makerResult = await prepareSettlement(makerCvg, rfq, rfqResponse);
     expect(makerResult.response).toHaveProperty('signature');
 
-    const settleResult = await settle(takerCvg, rfq, rfqResponse);
+    const settleResult = await settleRfq(takerCvg, rfq, rfqResponse);
     expect(settleResult.response).toHaveProperty('signature');
 
     const takerBtcAfter = await fetchTokenAmount(
@@ -114,7 +114,7 @@ describe('integration.spot', () => {
     await confirmRfqResponse(takerCvg, rfq, rfqResponse, Side.Ask);
     await prepareSettlement(makerCvg, rfq, rfqResponse);
     await prepareSettlement(takerCvg, rfq, rfqResponse);
-    await settle(takerCvg, rfq, rfqResponse);
+    await settleRfq(takerCvg, rfq, rfqResponse);
   });
 
   it('cancel, reclaim and cleanup multiple RFQs', async () => {

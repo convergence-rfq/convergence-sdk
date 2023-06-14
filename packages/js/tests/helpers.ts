@@ -93,7 +93,7 @@ export function generateTicker(): string {
 
 /// Wrappers
 
-export const createAmericanCoveredCall = async (
+export const createAmericanCoveredCallRfq = async (
   cvg: Convergence,
   orderType: OrderType
 ) => {
@@ -173,7 +173,7 @@ export const confirmRfqResponse = async (
   });
 };
 
-export const respondWithBid = async (cvg: Convergence, rfq: Rfq) => {
+export const respondToRfq = async (cvg: Convergence, rfq: Rfq) => {
   return await cvg.rfqs().respond({
     maker: cvg.rpc().getDefaultFeePayer(),
     rfq: rfq.address,
@@ -198,7 +198,7 @@ export const prepareSettlement = async (
   });
 };
 
-export const settle = async (
+export const settleRfq = async (
   cvg: Convergence,
   rfq: Rfq,
   response: Response
