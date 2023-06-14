@@ -53,7 +53,7 @@ describe('integration.spot', () => {
       takerCvg,
       rfq,
       rfqResponse,
-      'bid'
+      Side.Bid
     );
     expect(response).toHaveProperty('signature');
 
@@ -111,7 +111,7 @@ describe('integration.spot', () => {
       ask: respond,
       rfq: rfq.address,
     });
-    await confirmResponse(takerCvg, rfq, rfqResponse, 'ask');
+    await confirmResponse(takerCvg, rfq, rfqResponse, Side.Ask);
     await prepareSettlement(makerCvg, rfq, rfqResponse);
     await prepareSettlement(takerCvg, rfq, rfqResponse);
     await settle(takerCvg, rfq, rfqResponse);

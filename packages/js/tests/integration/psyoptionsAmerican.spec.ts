@@ -1,33 +1,36 @@
 import { expect } from 'expect';
 
 import {
-  createAmericanCoveredCall,
-  confirmResponse,
-  respond,
-  prepareSettlement,
-  settle,
-  createUserCvg,
-} from '../helpers';
-import {
+  OrderType,
+  Side,
   createAmericanProgram,
   getOrCreateAmericanOptionATAs,
   mintAmericanOptions,
 } from '../../src';
+
+import {
+  createAmericanCoveredCall,
+  confirmResponse,
+  respondWithBid,
+  prepareSettlement,
+  settle,
+  createUserCvg,
+} from '../helpers';
 
 describe('integration.psyoptionsAmerican', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
   it('covered call', async () => {
-    const res0 = await createAmericanCoveredCall(takerCvg, 'sell');
+    const res0 = await createAmericanCoveredCall(takerCvg, OrderType.Sell);
     const { rfq } = res0;
     expect(rfq).toHaveProperty('address');
 
-    const res1 = await respond(makerCvg, rfq, 'bid');
+    const res1 = await respondWithBid(makerCvg, rfq);
     const { rfqResponse } = res1;
     expect(rfqResponse).toHaveProperty('address');
 
-    const res2 = await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
+    const res2 = await confirmResponse(takerCvg, rfq, rfqResponse, Side.Bid);
     expect(res2.response).toHaveProperty('signature');
 
     const americanProgram = createAmericanProgram(takerCvg);

@@ -28,18 +28,7 @@ import { BASE_MINT_PK, QUOTE_MINT_PK } from './constants';
 const DEFAULT_COMMITMENT = 'confirmed';
 const DEFAULT_SKIP_PREFLIGHT = true;
 
-export function generateTicker(): string {
-  const length = 3;
-  let ticker = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    ticker += characters.charAt(randomIndex);
-  }
-
-  return ticker;
-}
+/// Convergence
 
 export type ConvergenceTestOptions = {
   commitment?: Commitment;
@@ -62,6 +51,8 @@ export const createUserCvg = (user = 'dao'): Convergence => {
   const cvg = createCvg({ skipPreflight: DEFAULT_SKIP_PREFLIGHT });
   return cvg.use(keypairIdentity(getUserKp(user)));
 };
+
+/// Utils
 
 export const generatePk = async (): Promise<PublicKey> => {
   return await PublicKey.createWithSeed(PROGRAM_ID, uuidv4(), PROGRAM_ID);
@@ -87,26 +78,24 @@ export const fetchTokenAmount = async (
   );
 };
 
-export type HumanOrderType = 'sell' | 'buy' | 'two-way';
-export type HumanSide = 'bid' | 'ask';
+export function generateTicker(): string {
+  const length = 3;
+  let ticker = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const fromHumanSide = (side: HumanSide) =>
-  side === 'bid' ? Side.Bid : Side.Ask;
-
-const fromHumanOrderType = (orderType: HumanOrderType): OrderType => {
-  switch (orderType) {
-    case 'sell':
-      return OrderType.Sell;
-    case 'buy':
-      return OrderType.Buy;
-    case 'two-way':
-      return OrderType.TwoWay;
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    ticker += characters.charAt(randomIndex);
   }
-};
+
+  return ticker;
+}
+
+/// Wrappers
 
 export const createAmericanCoveredCall = async (
   cvg: Convergence,
-  orderType: HumanOrderType
+  orderType: OrderType
 ) => {
   const baseMint = await cvg
     .tokens()
@@ -128,7 +117,7 @@ export const createAmericanCoveredCall = async (
 
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      // await SpotLegInstrument.create(cvg, baseMint, 1.0, Side.Bid),
+      await SpotLegInstrument.create(cvg, baseMint, 1.0, Side.Bid),
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
@@ -140,7 +129,7 @@ export const createAmericanCoveredCall = async (
         Side.Bid
       ),
     ],
-    orderType: fromHumanOrderType(orderType),
+    orderType,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
@@ -151,7 +140,7 @@ export const createAmericanCoveredCall = async (
 export const createRfq = async (
   cvg: Convergence,
   amount: 1.0,
-  orderType: HumanOrderType
+  orderType: OrderType
 ) => {
   const baseMint = await cvg
     .tokens()
@@ -163,7 +152,7 @@ export const createRfq = async (
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, amount, Side.Bid),
     ],
-    orderType: fromHumanOrderType(orderType),
+    orderType,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
@@ -174,28 +163,17 @@ export const confirmResponse = async (
   cvg: Convergence,
   rfq: Rfq,
   response: Response,
-  side: HumanSide
+  side: Side
 ) => {
   return await cvg.rfqs().confirmResponse({
     taker: cvg.rpc().getDefaultFeePayer(),
     rfq: rfq.address,
     response: response.address,
-    side: fromHumanSide(side),
+    side,
   });
 };
 
-export const respond = async (
-  cvg: Convergence,
-  rfq: Rfq,
-  orderType: HumanSide
-) => {
-  switch (orderType) {
-    case 'bid':
-    // TODO: Handle
-    case 'ask':
-    // TODO: Handle
-  }
-
+export const respondWithBid = async (cvg: Convergence, rfq: Rfq) => {
   return await cvg.rfqs().respond({
     maker: cvg.rpc().getDefaultFeePayer(),
     rfq: rfq.address,
@@ -231,19 +209,6 @@ export const settle = async (
     maker: response.maker,
     taker: rfq.taker,
   });
-};
-
-export const createAmericanAccountsAndMint = async (
-  cvg: Convergence,
-  rfq: Rfq,
-  optionMarket: OptionMarketWithKey
-) => {
-  await createAmericanAccountsAndMintOptions(
-    cvg,
-    cvg.rpc().getDefaultFeePayer() as Keypair,
-    rfq.address,
-    optionMarket
-  );
 };
 
 export const createPythPriceFeed = async (

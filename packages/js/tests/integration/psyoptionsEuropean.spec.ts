@@ -21,7 +21,7 @@ import {
   confirmResponse,
   createPythPriceFeed,
   prepareSettlement,
-  respond,
+  respondWithBid,
   settle,
   createUserCvg,
 } from '../helpers';
@@ -140,8 +140,8 @@ describe('integration.psyoptionsEuropean', () => {
     });
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
-    const { rfqResponse } = await respond(makerCvg, rfq, 'bid');
-    await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
+    const { rfqResponse } = await respondWithBid(makerCvg, rfq);
+    await confirmResponse(takerCvg, rfq, rfqResponse, Side.Bid);
     await getOrCreateEuropeanOptionATAs(
       takerCvg,
       rfqResponse.address,
