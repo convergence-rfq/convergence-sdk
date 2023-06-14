@@ -313,7 +313,7 @@ export class RpcClient {
 
         if (isStringError || isClassError) {
           if (retryDelay !== null) {
-            sleep(retryDelay);
+            await sleep(retryDelay);
           }
 
           continue;
