@@ -41,6 +41,7 @@ import {
   InstructionWithSigners,
   TransactionBuilder,
   addDecimals,
+  removeDecimals,
 } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
@@ -255,16 +256,15 @@ export const convertFixedSizeInput = (
   quoteAsset: QuoteInstrument
 ): FixedSize => {
   if (fixedSize.__kind == 'BaseAsset') {
-    const convertedLegsMultiplierBps =
-      Number(fixedSize.legsMultiplierBps) *
-      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-    fixedSize.legsMultiplierBps = convertedLegsMultiplierBps;
+    fixedSize.legsMultiplierBps = addDecimals(
+      Number(fixedSize.legsMultiplierBps),
+      LEG_MULTIPLIER_DECIMALS
+    );
   } else if (fixedSize.__kind == 'QuoteAsset') {
-    const convertedQuoteAmount =
-      Number(fixedSize.quoteAmount) * Math.pow(10, quoteAsset.getDecimals());
-
-    fixedSize.quoteAmount = convertedQuoteAmount;
+    fixedSize.quoteAmount = addDecimals(
+      Number(fixedSize.quoteAmount),
+      quoteAsset.getDecimals()
+    );
   }
 
   return fixedSize;
@@ -274,25 +274,25 @@ export const convertRfqOutput = (
   rfq: Rfq,
   collateralMintDecimals: number
 ): Rfq => {
-  rfq.nonResponseTakerCollateralLocked =
-    Number(rfq.nonResponseTakerCollateralLocked) /
-    Math.pow(10, collateralMintDecimals);
-  rfq.totalTakerCollateralLocked =
-    Number(rfq.totalTakerCollateralLocked) /
-    Math.pow(10, collateralMintDecimals);
+  rfq.nonResponseTakerCollateralLocked = removeDecimals(
+    rfq.nonResponseTakerCollateralLocked,
+    collateralMintDecimals
+  );
+  rfq.totalTakerCollateralLocked = removeDecimals(
+    rfq.totalTakerCollateralLocked,
+    collateralMintDecimals
+  );
 
   if (rfq.fixedSize.__kind == 'BaseAsset') {
-    const parsedLegsMultiplierBps =
-      Number(rfq.fixedSize.legsMultiplierBps) /
-      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-    rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+    rfq.fixedSize.legsMultiplierBps = removeDecimals(
+      rfq.fixedSize.legsMultiplierBps,
+      LEG_MULTIPLIER_DECIMALS
+    );
   } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-    const parsedQuoteAmount =
-      Number(rfq.fixedSize.quoteAmount) /
-      Math.pow(10, rfq.quoteAsset.getDecimals());
-
-    rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+    rfq.fixedSize.quoteAmount = removeDecimals(
+      rfq.fixedSize.quoteAmount,
+      rfq.quoteAsset.getDecimals()
+    );
   }
 
   return rfq;
@@ -541,8 +541,11 @@ export const initializeNewOptionMeta = async (
     await tx.sendAndConfirm(convergence, confirmOptions);
   }
 
-  strikePrice *= Math.pow(10, stableMint.decimals);
-  underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
+  const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
+  const underlyingAmountPerContractSize = addDecimals(
+    underlyingAmountPerContract,
+    underlyingMint.decimals
+  );
 
   const {
     instruction: createIx,
@@ -556,8 +559,8 @@ export const initializeNewOptionMeta = async (
     stableMint.address,
     stableMint.decimals,
     expiration,
-    toBigNumber(underlyingAmountPerContract),
-    toBigNumber(strikePrice),
+    toBigNumber(underlyingAmountPerContractSize),
+    toBigNumber(strikePriceSize),
     stableMint.decimals,
     oracle,
     oracleProviderId
@@ -585,19 +588,21 @@ export const initializeNewAmericanOption = async (
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
-  quoteAmountPerContract = new anchor.BN(
-    Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
+  const quoteAmountPerContractSize = addDecimals(
+    Number(quoteAmountPerContract),
+    quoteMint.decimals
   );
-  underlyingAmountPerContract = new anchor.BN(
-    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
+  const underlyingAmountPerContractSize = addDecimals(
+    Number(underlyingAmountPerContract),
+    underlyingMint.decimals
   );
 
   const { optionMarketKey, optionMintKey, writerMintKey } =
     await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
       expirationUnixTimestamp: expiration,
-      quoteAmountPerContract,
+      quoteAmountPerContract: toBigNumber(quoteAmountPerContractSize),
       quoteMint: quoteMint.address,
-      underlyingAmountPerContract,
+      underlyingAmountPerContract: toBigNumber(underlyingAmountPerContractSize),
       underlyingMint: underlyingMint.address,
     });
 
@@ -797,7 +802,6 @@ export const getCreateEuroAccountsAndMintOptionsTransaction = async (
     .findRfqByAddress({ address: rfqAddress });
 
   const EURO_DECIMALS = 4;
-  amount *= Math.pow(10, EURO_DECIMALS);
 
   const instructions: anchor.web3.TransactionInstruction[] = [];
 
@@ -845,12 +849,11 @@ export const getCreateEuroAccountsAndMintOptionsTransaction = async (
       const { instruction: ix } = mintOptions(
         europeanProgram,
         leg.metaKey,
-        //@ts-ignore
-        euroMeta,
+        euroMeta as EuroMeta,
         minterCollateralKey,
         optionDestination,
         writerDestination,
-        new anchor.BN(amount),
+        new BN(addDecimals(amount, EURO_DECIMALS).toString()),
         leg.optionType
       );
 
@@ -887,7 +890,6 @@ export const getCreateAmericanAccountsAndMintOptionsTransaction = async (
   const callerIsTaker = caller == rfq.taker;
 
   const AMERICAN_DECIMALS = 0;
-  amount *= Math.pow(10, AMERICAN_DECIMALS);
 
   const instructions: anchor.web3.TransactionInstruction[] = [];
 
@@ -921,13 +923,15 @@ export const getCreateAmericanAccountsAndMintOptionsTransaction = async (
           caller
         );
 
+        const size = new BN(addDecimals(amount, AMERICAN_DECIMALS).toString());
+
         const ixWithSigners =
           await psyoptionsAmerican.instructions.mintOptionV2Instruction(
             americanProgram,
             optionToken,
             writerToken,
             underlyingToken,
-            new anchor.BN(amount),
+            size,
             optionMarket
           );
         const { ix } = ixWithSigners;

@@ -7,6 +7,7 @@ import {
   TAKER_COLLATERAL_TOKEN_PK,
   TAKER_PK,
 } from '../constants';
+import { Token, addDecimals } from '../../src';
 
 describe('unit.collateral', () => {
   const cvg = createUserCvg('taker');
@@ -37,13 +38,13 @@ describe('unit.collateral', () => {
       amount,
     });
 
-    const tokenAfter = await cvg
+    const tokenAfter: Token = await cvg
       .tokens()
       .findTokenByAddress({ address: TAKER_COLLATERAL_TOKEN_PK });
 
-    const amountBps = amount * Math.pow(10, COLLATERAL_MINT_DECIMALS);
-    expect(tokenBefore.amount.basisPoints.toNumber()).toEqual(
-      tokenAfter.amount.basisPoints.toNumber() - amountBps
-    );
+    const amountBps = addDecimals(amount, COLLATERAL_MINT_DECIMALS);
+    const after =
+      tokenAfter.amount.basisPoints.toNumber() - Number(amountBps.toString());
+    expect(tokenBefore.amount.basisPoints.toNumber()).toEqual(after);
   });
 });

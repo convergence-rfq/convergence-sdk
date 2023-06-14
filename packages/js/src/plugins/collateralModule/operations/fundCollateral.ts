@@ -10,7 +10,11 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+  addDecimals,
+} from '../../../utils';
 import { Convergence } from '../../../Convergence';
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
@@ -141,7 +145,7 @@ export const fundCollateralBuilder = async (
       programs,
     }),
   } = params;
-  let { amount } = params;
+  const { amount } = params;
 
   const collateralToken = convergence
     .collateral()
@@ -155,8 +159,6 @@ export const fundCollateralBuilder = async (
   const collateralMint = await collateralMintCache.get(convergence);
   const collateralDecimals = collateralMint.decimals;
 
-  amount *= Math.pow(10, collateralDecimals);
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -169,7 +171,7 @@ export const fundCollateralBuilder = async (
           collateralToken,
         },
         {
-          amount,
+          amount: addDecimals(amount, collateralDecimals),
         },
         convergence.programs().getRfq(programs).address
       ),

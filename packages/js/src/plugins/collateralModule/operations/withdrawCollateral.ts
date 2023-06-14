@@ -11,7 +11,11 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+  addDecimals,
+} from '../../../utils';
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
 
@@ -171,14 +175,11 @@ export const withdrawCollateralBuilder = async (
       owner: user.publicKey,
       programs,
     }),
+    amount,
   } = params;
-
-  let { amount } = params;
 
   const collateralMint = await collateralMintCache.get(convergence);
   const collateralDecimals = collateralMint.decimals;
-
-  amount *= Math.pow(10, collateralDecimals);
 
   return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)
@@ -192,7 +193,7 @@ export const withdrawCollateralBuilder = async (
           collateralToken,
         },
         {
-          amount,
+          amount: addDecimals(amount, collateralDecimals),
         },
         rfqProgram.address
       ),
