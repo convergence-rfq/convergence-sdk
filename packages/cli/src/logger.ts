@@ -58,7 +58,7 @@ export const logBaseAsset = (b: BaseAsset): void => {
   l('Ticker:', b.ticker.toString());
   l('Enabled:', b.enabled);
   l('Index:', b.index);
-  l('Risk category:', parseInt(b.riskCategory.toString()));
+  l('Risk category:', b.riskCategory);
   l('Oracle source:', b.priceOracle.source);
   if (b.priceOracle.address) {
     l('Oracle address:', b.priceOracle.address.toString());

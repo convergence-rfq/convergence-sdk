@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.3.6
+
+### Patch Changes
+
+- Added throttling and bumped Solita packages
+
 ## 4.3.5
 
 ### Patch Changes
