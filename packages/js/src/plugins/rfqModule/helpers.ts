@@ -582,27 +582,25 @@ export const initializeNewAmericanOption = async (
   americanProgram: any,
   underlyingMint: Mint,
   quoteMint: Mint,
-  quoteAmountPerContract: anchor.BN,
-  underlyingAmountPerContract: anchor.BN,
+  quoteAmountPerContract: number,
+  underlyingAmountPerContract: number,
   expiresIn: number
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
-  const quoteAmountPerContractSize = addDecimals(
-    Number(quoteAmountPerContract),
-    quoteMint.decimals
+  const quoteAmountPerContractBN = new anchor.BN(
+    Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
   );
-  const underlyingAmountPerContractSize = addDecimals(
-    Number(underlyingAmountPerContract),
-    underlyingMint.decimals
+  const underlyingAmountPerContractBN = new anchor.BN(
+    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
   );
 
   const { optionMarketKey, optionMintKey, writerMintKey } =
     await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
       expirationUnixTimestamp: expiration,
-      quoteAmountPerContract: toBigNumber(quoteAmountPerContractSize),
+      quoteAmountPerContract: quoteAmountPerContractBN,
       quoteMint: quoteMint.address,
-      underlyingAmountPerContract: toBigNumber(underlyingAmountPerContractSize),
+      underlyingAmountPerContract: underlyingAmountPerContractBN,
       underlyingMint: underlyingMint.address,
     });
 

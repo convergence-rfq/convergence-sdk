@@ -1,5 +1,43 @@
 # @convergence-rfq/cli
 
+## 4.3.5
+
+### Patch Changes
+
+- Fix psyoptions American deserialization error
+- Updated dependencies
+  - @convergence-rfq/sdk@4.3.5
+
+## 4.3.4
+
+### Patch Changes
+
+- Added method to retry account fetching when confirmed transaction hit unsynced RPC nodes based on slot updates
+- Updated dependencies
+  - @convergence-rfq/sdk@4.3.5
+
+## 4.3.3
+
+### Patch Changes
+
+- 408456c0: Added scripts for CLI
+
+### Minor Changes
+
+- 61e0c937: Updated CLI to consume new version of SDK 4.3.1 which includes new CPL programs
+- 0bdfcba0: Minor update for 4.3.2 adding normalized collateral, protocol, base asset and registered mint normalized modules, as well as new instrument interface.
+
+### Patch Changes
+
+- Cleanup old ids and minor housekeeping with removing registered mint output
+- Updated dependencies [408456c0]
+- Updated dependencies [933919c1]
+- Updated dependencies [21540900]
+- Updated dependencies [5fca902e]
+- Updated dependencies [0bdfcba0]
+- Updated dependencies
+  - @convergence-rfq/sdk@5.0.0
+
 ## 4.2.4
 
 ### Patch Changes

@@ -2,7 +2,6 @@ import { createRegisterMintInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { RegisteredMint } from '../models';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
@@ -78,8 +77,6 @@ export type RegisterMintInput = {
 export type RegisterMintOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
-
-  registeredMint: RegisteredMint;
 };
 
 /**

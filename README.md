@@ -21,7 +21,6 @@ The entry point to the JavaScript SDK is a Convergence instance that will give y
 
 - [Node (18.12.1)](https://nodejs.org/en/download/)
 - [Solana (1.14.11)](https://docs.solana.com/cli/install-solana-cli-tools#use-solanas-install-tool)
-- [PNPM (6.23.6)](https://pnpm.io/installation)
 - [Yarn (1.22.15)](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
 - [Turbo (1.7.0)](https://turbo.build/)
 
@@ -51,8 +50,7 @@ Finally run the test in a new terminal.
 ```bash
 yarn test
 # It is possible to run individual module tests
-cd packages/js
-yarn test -g spot
+yarn test -g "integration.spot"
 ```
 
 **NPM**

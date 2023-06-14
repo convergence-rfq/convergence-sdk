@@ -1,11 +1,39 @@
 # @convergence-rfq/sdk
 
+## 4.3.5
+
+### Patch Changes
+
+- Fix psyoptions American deserialization error
+
+## 4.3.4
+
+### Patch Changes
+
+- Added method to retry account fetching when confirmed transaction hit unsynced RPC nodes based on slot updates
+
+## 4.3.3
+
+### Patch Changes
+
+- 408456c0: Added scripts for CLI
+
+### Minor Changes
+
+- 933919c1: Updated Collateral APIs and added Account subscription client
+- 21540900: Updated fixtures, models and instructions for CPL update v2.2.6
+- 0bdfcba0: Minor update for 4.3.2 adding normalized collateral, protocol, base asset and registered mint normalized modules, as well as new instrument interface.
+
+### Patch Changes
+
+- 5fca902e: Added tests for adding base assets with in-place price and Pyth oracle
+- Cleanup old ids and minor housekeeping with removing registered mint output
+
 ## 4.2.4
 
 ### Patch Changes
 
 - Added back skipPreFlight in RpcClient
-
 
 ## 4.0.24-rc.32
 
