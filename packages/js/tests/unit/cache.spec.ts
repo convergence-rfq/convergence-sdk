@@ -8,6 +8,7 @@ describe('unit.cache', () => {
     innerCalls.push(num);
     return num;
   }, 0.2); // 200 ms cache validity
+
   const extractCallsAndReset = () => {
     const calls = [...innerCalls];
     innerCalls.length = 0;

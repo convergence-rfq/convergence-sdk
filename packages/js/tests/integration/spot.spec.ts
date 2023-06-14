@@ -2,15 +2,21 @@ import { expect } from 'expect';
 
 import { OrderType, Quote, Side } from '@convergence-rfq/rfq';
 import { sleep } from '@bundlr-network/client/build/common/utils';
-import { createUserCvg, fetchTokenAmount } from '../helpers';
+import {
+  createUserCvg,
+  fetchTokenAmount,
+  confirmResponse,
+  prepareSettlement,
+  settle,
+} from '../helpers';
 import { BASE_MINT_PK, QUOTE_MINT_PK, TAKER_PK } from '../constants';
-import { confirmResponse, prepareSettlement, settle } from '../human';
 import { Mint, SpotLegInstrument, SpotQuoteInstrument } from '../../src';
 
 describe('integration.spot', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
   const dao = createUserCvg('dao');
+
   let baseMint: Mint;
   let quoteMint: Mint;
 
