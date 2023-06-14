@@ -104,3 +104,7 @@ export const removeUndefinedAttributes = <
     }
     return acc;
   }, {} as { [key in keyof T]-?: T[key] });
+
+export const sleep = (seconds: number) => {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+};
