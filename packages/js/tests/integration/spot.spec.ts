@@ -5,7 +5,7 @@ import { sleep } from '@bundlr-network/client/build/common/utils';
 import {
   createUserCvg,
   fetchTokenAmount,
-  confirmResponse,
+  confirmRfqResponse,
   prepareSettlement,
   settle,
 } from '../helpers';
@@ -49,7 +49,7 @@ describe('integration.spot', () => {
       rfq: rfq.address,
     });
 
-    const { response } = await confirmResponse(
+    const { response } = await confirmRfqResponse(
       takerCvg,
       rfq,
       rfqResponse,
@@ -111,7 +111,7 @@ describe('integration.spot', () => {
       ask: respond,
       rfq: rfq.address,
     });
-    await confirmResponse(takerCvg, rfq, rfqResponse, Side.Ask);
+    await confirmRfqResponse(takerCvg, rfq, rfqResponse, Side.Ask);
     await prepareSettlement(makerCvg, rfq, rfqResponse);
     await prepareSettlement(takerCvg, rfq, rfqResponse);
     await settle(takerCvg, rfq, rfqResponse);

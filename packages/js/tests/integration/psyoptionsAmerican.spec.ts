@@ -1,60 +1,53 @@
 import { expect } from 'expect';
 
-import {
-  OrderType,
-  Side,
-  createAmericanProgram,
-  getOrCreateAmericanOptionATAs,
-  mintAmericanOptions,
-} from '../../src';
+import { OrderType, Side } from '../../src';
 
 import {
   createAmericanCoveredCall,
-  confirmResponse,
+  confirmRfqResponse,
   respondWithBid,
   prepareSettlement,
   settle,
   createUserCvg,
+  setupAmerican,
 } from '../helpers';
 
 describe('integration.psyoptionsAmerican', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
-  it('covered call', async () => {
-    const res0 = await createAmericanCoveredCall(takerCvg, OrderType.Sell);
-    const { rfq } = res0;
+  it('covered call [sell]', async () => {
+    const { rfq } = await createAmericanCoveredCall(takerCvg, OrderType.Sell);
     expect(rfq).toHaveProperty('address');
 
-    const res1 = await respondWithBid(makerCvg, rfq);
-    const { rfqResponse } = res1;
+    const { rfqResponse } = await respondWithBid(makerCvg, rfq);
     expect(rfqResponse).toHaveProperty('address');
 
-    const res2 = await confirmResponse(takerCvg, rfq, rfqResponse, Side.Bid);
-    expect(res2.response).toHaveProperty('signature');
-
-    const americanProgram = createAmericanProgram(takerCvg);
-    await getOrCreateAmericanOptionATAs(
+    const { response: confirmResponse } = await confirmRfqResponse(
       takerCvg,
-      rfqResponse.address,
-      takerCvg.rpc().getDefaultFeePayer().publicKey,
-      americanProgram
+      rfq,
+      rfqResponse,
+      Side.Bid
     );
-    const res6 = await mintAmericanOptions(
+    expect(confirmResponse).toHaveProperty('signature');
+
+    await setupAmerican(takerCvg, rfqResponse);
+
+    const { response: prepareTakerSettlementResponse } =
+      await prepareSettlement(takerCvg, rfq, rfqResponse);
+    expect(prepareTakerSettlementResponse).toHaveProperty('signature');
+
+    const { response: prepareMakerSettlementResponse } =
+      await prepareSettlement(makerCvg, rfq, rfqResponse);
+    expect(prepareMakerSettlementResponse).toHaveProperty('signature');
+
+    const { response: settlementResponse } = await settle(
       takerCvg,
-      rfqResponse.address,
-      takerCvg.rpc().getDefaultFeePayer().publicKey,
-      americanProgram
+      rfq,
+      rfqResponse
     );
-    expect(res6?.response).toHaveProperty('signature');
+    expect(settlementResponse).toHaveProperty('signature');
 
-    const res3 = await prepareSettlement(takerCvg, rfq, rfqResponse);
-    expect(res3.response).toHaveProperty('signature');
-
-    const res4 = await prepareSettlement(makerCvg, rfq, rfqResponse);
-    expect(res4.response).toHaveProperty('signature');
-
-    const res5 = await settle(takerCvg, rfq, res1.rfqResponse);
-    expect(res5.response).toHaveProperty('signature');
+    // TODO: Check balances
   });
 });

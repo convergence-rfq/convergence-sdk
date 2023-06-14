@@ -1,7 +1,6 @@
-import { Commitment, Connection, Keypair } from '@solana/web3.js';
+import { Commitment, Connection } from '@solana/web3.js';
 import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
-import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { Program, web3 } from '@project-serum/anchor';
 
 import {
@@ -15,7 +14,8 @@ import {
   Side,
   Rfq,
   Response,
-  createAmericanAccountsAndMintOptions,
+  getOrCreateAmericanOptionATAs,
+  mintAmericanOptions,
   SpotQuoteInstrument,
   SpotLegInstrument,
   keypairIdentity,
@@ -159,7 +159,7 @@ export const createRfq = async (
   return { rfq, response };
 };
 
-export const confirmResponse = async (
+export const confirmRfqResponse = async (
   cvg: Convergence,
   rfq: Rfq,
   response: Response,
@@ -245,4 +245,20 @@ export const createPythPriceFeed = async (
     }
   );
   return collateralTokenFeed.publicKey;
+};
+
+export const setupAmerican = async (cvg: Convergence, response: Response) => {
+  const americanProgram = createAmericanProgram(cvg);
+  await getOrCreateAmericanOptionATAs(
+    cvg,
+    response.address,
+    cvg.identity().publicKey,
+    americanProgram
+  );
+  await mintAmericanOptions(
+    cvg,
+    response.address,
+    cvg.identity().publicKey,
+    americanProgram
+  );
 };

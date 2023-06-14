@@ -18,7 +18,7 @@ import {
   SpotLegInstrument,
 } from '../../src';
 import {
-  confirmResponse,
+  confirmRfqResponse,
   createPythPriceFeed,
   prepareSettlement,
   respondWithBid,
@@ -141,7 +141,7 @@ describe('integration.psyoptionsEuropean', () => {
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
     const { rfqResponse } = await respondWithBid(makerCvg, rfq);
-    await confirmResponse(takerCvg, rfq, rfqResponse, Side.Bid);
+    await confirmRfqResponse(takerCvg, rfq, rfqResponse, Side.Bid);
     await getOrCreateEuropeanOptionATAs(
       takerCvg,
       rfqResponse.address,
