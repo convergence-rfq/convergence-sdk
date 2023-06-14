@@ -59,7 +59,7 @@ export const createAmericanCoveredCall = async (
 
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      // await SpotLegInstrument.create(cvg, baseMint, 1.0, Side.Bid),
+      await SpotLegInstrument.create(cvg, baseMint, 1.0, Side.Bid),
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
