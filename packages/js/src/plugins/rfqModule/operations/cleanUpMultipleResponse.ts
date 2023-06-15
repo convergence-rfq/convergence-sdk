@@ -109,8 +109,8 @@ export const cleanUpMultipleResponsesOperationHandler: OperationHandler<CleanUpM
         scope.confirmOptions
       );
       const signedTnxs = await convergence
-        .rpc()
-        .signAllTransactions(txArray, [convergence.rpc().getDefaultFeePayer()]);
+        .identity()
+        .signAllTransactions(txArray);
 
       for (const tx of signedTnxs) {
         await convergence.rpc().serializeAndSendTransaction(tx, confirmOptions);

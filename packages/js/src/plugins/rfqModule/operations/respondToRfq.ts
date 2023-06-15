@@ -137,7 +137,6 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         bid,
         ask
       );
-
       let responsePda = convergence
         .rfqs()
         .pdas()
@@ -193,7 +192,6 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         .rfqs()
         .findResponseByAddress({ address: responsePda });
       assertResponse(rfqResponse);
-
       return { ...output, rfqResponse };
     },
   };
