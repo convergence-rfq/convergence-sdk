@@ -137,9 +137,9 @@ export const createAmericanCoveredCallRfq = async (
   return { rfq, response, optionMarket };
 };
 
-export const createRfq = async (
+export const createBTCRfq = async (
   cvg: Convergence,
-  amount: 1.0,
+  amount: number,
   orderType: OrderType
 ) => {
   const baseMint = await cvg
@@ -150,7 +150,12 @@ export const createRfq = async (
     .findMintByAddress({ address: QUOTE_MINT_PK });
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      await SpotLegInstrument.create(cvg, baseMint, amount, Side.Bid),
+      await SpotLegInstrument.create(
+        cvg,
+        baseMint,
+        amount,
+        orderType === OrderType.Sell ? Side.Bid : Side.Ask
+      ),
     ],
     orderType,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },

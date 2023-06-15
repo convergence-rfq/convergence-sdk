@@ -1,21 +1,17 @@
 import { expect } from 'expect';
-
 import { OrderType, Quote, Side } from '@convergence-rfq/rfq';
 import { sleep } from '@bundlr-network/client/build/common/utils';
+
+import { Mint, SpotLegInstrument, SpotQuoteInstrument } from '../../src';
 import {
   createUserCvg,
   fetchTokenAmount,
   confirmRfqResponse,
   prepareSettlement,
   settleRfq,
+  createBTCRfq,
 } from '../helpers';
-import {
-  BASE_MINT_BTC_PK,
-  QUOTE_MINT_PK,
-  TAKER_PK,
-  BASE_MINT_SOL_PK,
-} from '../constants';
-import { Mint, SpotLegInstrument, SpotQuoteInstrument } from '../../src';
+import { BASE_MINT_BTC_PK, QUOTE_MINT_PK, TAKER_PK } from '../constants';
 
 describe('integration.spot', () => {
   const takerCvg = createUserCvg('taker');
@@ -24,37 +20,28 @@ describe('integration.spot', () => {
 
   let baseMintBTC: Mint;
   let quoteMint: Mint;
-  let baseMintSOL: Mint;
 
   before(async () => {
     baseMintBTC = await takerCvg
       .tokens()
       .findMintByAddress({ address: BASE_MINT_BTC_PK });
-    baseMintSOL = await takerCvg
-      .tokens()
-      .findMintByAddress({ address: BASE_MINT_SOL_PK });
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
   it('sell 1.0 BTC', async () => {
-    const { rfq } = await takerCvg.rfqs().createAndFinalize({
-      instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMintBTC, 1, Side.Bid),
-      ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-    });
+    const amountA = 22_000.86;
+    const amountB = 1.2;
+
+    const { rfq } = await createBTCRfq(takerCvg, amountA, OrderType.Sell);
     expect(rfq).toHaveProperty('address');
 
-    const respond: Quote = {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 22_000 },
-    };
     const { rfqResponse } = await makerCvg.rfqs().respond({
-      bid: respond,
+      bid: {
+        __kind: 'FixedSize',
+        priceQuote: { __kind: 'AbsolutePrice', amountBps: amountB },
+      },
       rfq: rfq.address,
     });
 
@@ -96,8 +83,12 @@ describe('integration.spot', () => {
       quoteMint.address,
       TAKER_PK
     );
-    expect(takerBtcAfter).toBe(takerBtcBefore - 1);
-    expect(takerQuoteAfter).toBe(takerQuoteBefore + 22_000);
+    expect(takerQuoteAfter.toFixed(2)).toBe(
+      (takerQuoteBefore + amountB).toFixed(2)
+    );
+    expect(takerBtcAfter.toFixed(2)).toBe(
+      (takerBtcBefore - amountA).toFixed(2)
+    );
   });
 
   it('buy 1.0 BTC', async () => {
@@ -197,6 +188,7 @@ describe('integration.spot', () => {
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(response).toHaveProperty('signature');
+
     const respond1: Quote = {
       __kind: 'Standard',
       priceQuote: { __kind: 'AbsolutePrice', amountBps: 100 },
@@ -229,7 +221,7 @@ describe('integration.spot', () => {
     await makerCvg.rfqs().cancelMultipleResponse({
       responses: [response1.address, response2.address, response3.address],
     });
-    await sleep(3000);
+    //await sleep(3000);
 
     const refreshedResponse1 = await makerCvg
       .rfqs()
@@ -247,7 +239,7 @@ describe('integration.spot', () => {
         refreshedResponse3.address,
       ],
     });
-    await sleep(3000);
+    //await sleep(3000);
     await makerCvg.rfqs().cleanUpMultipleResponses({
       responses: [
         refreshedResponse1.address,
@@ -257,62 +249,6 @@ describe('integration.spot', () => {
       maker: makerCvg.rpc().getDefaultFeePayer().publicKey,
       dao: dao.rpc().getDefaultFeePayer().publicKey,
     });
-  });
-
-  it('send rfq and respond with floating point number with one leg', async () => {
-    const { rfq } = await takerCvg.rfqs().createAndFinalize({
-      instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMintBTC, 6.78, Side.Bid),
-      ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-    });
-
-    const respond: Quote = {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.0034 },
-    };
-    const { rfqResponse } = await makerCvg.rfqs().respond({
-      bid: respond,
-      rfq: rfq.address,
-    });
-    await confirmRfqResponse(takerCvg, rfq, rfqResponse, Side.Bid);
-
-    const takerBtcBefore = await fetchTokenAmount(
-      takerCvg,
-      baseMintBTC.address,
-      TAKER_PK
-    );
-    const takerQuoteBefore = await fetchTokenAmount(
-      takerCvg,
-      quoteMint.address,
-      TAKER_PK
-    );
-
-    const takerResult = await prepareSettlement(takerCvg, rfq, rfqResponse);
-    expect(takerResult.response).toHaveProperty('signature');
-
-    const makerResult = await prepareSettlement(makerCvg, rfq, rfqResponse);
-    expect(makerResult.response).toHaveProperty('signature');
-
-    const settleResult = await settleRfq(takerCvg, rfq, rfqResponse);
-    expect(settleResult.response).toHaveProperty('signature');
-
-    const takerBtcAfter = await fetchTokenAmount(
-      takerCvg,
-      baseMintBTC.address,
-      TAKER_PK
-    );
-    const takerQuoteAfter = await fetchTokenAmount(
-      takerCvg,
-      quoteMint.address,
-      TAKER_PK
-    );
-    expect(takerBtcAfter.toFixed(2)).toBe((takerBtcBefore - 6.78).toFixed(2));
-    expect(takerQuoteAfter.toFixed(2)).toBe(
-      (takerQuoteBefore + 0.0034).toFixed(2)
-    );
   });
 
   it('send rfq and respond with floating point number with two leg', async () => {
