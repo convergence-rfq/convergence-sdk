@@ -374,6 +374,8 @@ describe('integration.spot', () => {
     expect(takerBtcAfter.toFixed(2)).toBe(
       (takerBtcBefore - amountA - amountB).toFixed(2)
     );
-    expect(takerQuoteAfter).toBe(takerQuoteBefore + amountC);
+    expect(takerQuoteAfter.toFixed(2)).toBe(
+      (takerQuoteBefore + amountC).toFixed(2)
+    );
   });
 });
