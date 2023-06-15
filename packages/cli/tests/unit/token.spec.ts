@@ -42,7 +42,7 @@ describe('unit.token', () => {
         '--wallet',
         CTX.makerBaseWallet,
         '--mint',
-        CTX.baseMint,
+        CTX.baseMintBTC,
         '--amount',
         '1000000',
       ],
@@ -62,7 +62,7 @@ describe('unit.token', () => {
   });
 
   it('get-mint [base]', async () => {
-    await runCli(['token', 'get-mint', '--address', CTX.baseMint]);
+    await runCli(['token', 'get-mint', '--address', CTX.baseMintBTC]);
     expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
     expect(stub.args[1][0]).toEqual('Owner:');
     expect(stub.args[1][1]).toEqual(CTX.dao);

@@ -23,7 +23,7 @@ import {
   removeDecimals,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
-import { BASE_MINT_PK, QUOTE_MINT_PK } from './constants';
+import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
 
 const DEFAULT_COMMITMENT = 'confirmed';
 const DEFAULT_SKIP_PREFLIGHT = true;
@@ -99,7 +99,7 @@ export const createAmericanCoveredCallRfq = async (
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: BASE_MINT_PK });
+    .findMintByAddress({ address: BASE_MINT_BTC_PK });
   const quoteMint = await cvg
     .tokens()
     .findMintByAddress({ address: QUOTE_MINT_PK });
@@ -144,7 +144,7 @@ export const createRfq = async (
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: BASE_MINT_PK });
+    .findMintByAddress({ address: BASE_MINT_BTC_PK });
   const quoteMint = await cvg
     .tokens()
     .findMintByAddress({ address: QUOTE_MINT_PK });

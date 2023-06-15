@@ -2,8 +2,13 @@ import { expect } from 'expect';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
-import { QUOTE_MINT_PK, BASE_MINT_PK } from '../constants';
-import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
+import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
+
+import { QUOTE_MINT_PK, BASE_MINT_BTC_PK } from '../constants';
+import {
+  IDL as PseudoPythIdl,
+  Pyth,
+} from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import {
   OrderType,
   OptionType,
@@ -26,9 +31,12 @@ import {
   createUserCvg,
 } from '../helpers';
 
-describe('integration.psyoptionsEuropean', () => {
+describe('integration.psyoptionsEuropean', async () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
+
+  let pseudoPythProgram: anchor.Program<Pyth>;
+  let oracle: PublicKey;
 
   let baseMint: Mint;
   let quoteMint: Mint;
@@ -36,7 +44,7 @@ describe('integration.psyoptionsEuropean', () => {
   before(async () => {
     baseMint = await takerCvg
       .tokens()
-      .findMintByAddress({ address: BASE_MINT_PK });
+      .findMintByAddress({ address: BASE_MINT_BTC_PK });
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
@@ -49,17 +57,16 @@ describe('integration.psyoptionsEuropean', () => {
       new anchor.Wallet(takerCvg.rpc().getDefaultFeePayer() as Keypair),
       {}
     );
-    const pseudoPythProgram = new anchor.Program(
+    pseudoPythProgram = new anchor.Program(
       PseudoPythIdl,
       new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
       provider
     );
-    const oracle = await createPythPriceFeed(
+    oracle = await createPythPriceFeed(
       pseudoPythProgram,
       17_000,
       quoteMint.decimals * -1
     );
-
     const min = 3_600;
     const randomExpiry = min + Math.random();
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(

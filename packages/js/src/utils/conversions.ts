@@ -13,6 +13,5 @@ export const removeDecimals = (value: bignum, decimals = 0): number => {
 
 export const addDecimals = (value: number, decimals = 0): bignum => {
   const number = value * Math.pow(10, decimals);
-
   return new BN(number.toString());
 };
