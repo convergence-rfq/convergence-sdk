@@ -3,7 +3,7 @@ import { BN } from 'bn.js';
 
 import { Mint } from '../../tokenModule/models/Mint';
 import { CollateralAccount } from '../accounts';
-import { assert } from '../../../utils';
+import { assert, removeDecimals } from '../../../utils';
 
 /**
  * This model captures all the relevant information about a collateral account
@@ -41,10 +41,10 @@ function getLockedTokensAmount(value: unknown, mint: Mint | undefined): number {
     return 0;
   }
   if (typeof value === 'number') {
-    return value / Math.pow(10, mint.decimals);
+    return removeDecimals(value, mint.decimals);
   }
   if (value instanceof BN) {
-    return value.toNumber() / Math.pow(10, mint.decimals);
+    return removeDecimals(value.toNumber(), mint.decimals);
   }
   return 0;
 }
@@ -57,5 +57,8 @@ export const toCollateral = (
   model: 'collateral',
   address: account.publicKey,
   user: account.data.user,
-  lockedTokensAmount: getLockedTokensAmount(account.data.lockedTokensAmount, mint),
+  lockedTokensAmount: getLockedTokensAmount(
+    account.data.lockedTokensAmount,
+    mint
+  ),
 });
