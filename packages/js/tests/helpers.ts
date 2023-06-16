@@ -1,5 +1,5 @@
 import { Commitment, Connection } from '@solana/web3.js';
-import { PROGRAM_ID } from '@convergence-rfq/rfq';
+import { PROGRAM_ID, Quote } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 import { Program, web3 } from '@project-serum/anchor';
 
@@ -64,12 +64,11 @@ export const sleep = (seconds: number) => {
 
 export const fetchTokenAmount = async (
   cvg: Convergence,
-  mintAddress: PublicKey,
-  owner: PublicKey
+  mintAddress: PublicKey
 ) => {
   const takerBtcBefore = await cvg.tokens().findTokenWithMintByMint({
     mint: mintAddress,
-    address: owner,
+    address: cvg.identity().publicKey,
     addressType: 'owner',
   });
   return removeDecimals(
@@ -178,15 +177,31 @@ export const confirmRfqResponse = async (
   });
 };
 
-export const respondToRfq = async (cvg: Convergence, rfq: Rfq) => {
+export const respondToRfq = async (
+  cvg: Convergence,
+  rfq: Rfq,
+  amount: number,
+  side: Side
+) => {
+  const quote: Quote = {
+    __kind: 'FixedSize',
+    priceQuote: {
+      __kind: 'AbsolutePrice',
+      amountBps: amount,
+    },
+  };
+
+  let args: { bid?: Quote; ask?: Quote };
+  if (side === Side.Bid) {
+    args = { bid: quote };
+  } else {
+    args = { ask: quote };
+  }
+
   return await cvg.rfqs().respond({
     maker: cvg.rpc().getDefaultFeePayer(),
     rfq: rfq.address,
-    // Assumes bid
-    bid: {
-      __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.0000001 },
-    },
+    ...args,
   });
 };
 
