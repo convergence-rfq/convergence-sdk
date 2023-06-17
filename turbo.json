@@ -14,10 +14,6 @@
     "lint:fix": {
       "outputs": []
     },
-    "sdk#test": {
-      "dependsOn": ["cli#test"],
-      "outputs": []
-    },
     "test": {
       "dependsOn": ["build"],
       "outputs": []
