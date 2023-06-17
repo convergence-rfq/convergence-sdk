@@ -36,20 +36,22 @@ describe('integration.psyoptionsAmerican', () => {
 
     await setupAmerican(takerCvg, rfqResponse);
 
-    const { response: prepareTakerSettlementResponse } =
-      await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
-    expect(prepareTakerSettlementResponse).toHaveProperty('signature');
-
-    const { response: prepareMakerSettlementResponse } =
-      await prepareRfqSettlement(makerCvg, rfq, rfqResponse);
-    expect(prepareMakerSettlementResponse).toHaveProperty('signature');
-
-    const { response: settlementResponse } = await settleRfq(
+    const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
       rfqResponse
     );
-    expect(settlementResponse).toHaveProperty('signature');
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
 
     // TODO: Check balances
   });
