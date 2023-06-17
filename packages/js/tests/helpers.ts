@@ -136,17 +136,19 @@ export const createAmericanCoveredCallRfq = async (
   return { rfq, response, optionMarket };
 };
 
-export const createBTCRfq = async (
+export const createRfq = async (
   cvg: Convergence,
   amount: number,
-  orderType: OrderType
+  orderType: OrderType,
+  quoteMintPk = QUOTE_MINT_PK,
+  baseMintPk = BASE_MINT_BTC_PK
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: BASE_MINT_BTC_PK });
+    .findMintByAddress({ address: baseMintPk });
   const quoteMint = await cvg
     .tokens()
-    .findMintByAddress({ address: QUOTE_MINT_PK });
+    .findMintByAddress({ address: quoteMintPk });
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await SpotLegInstrument.create(
@@ -205,7 +207,7 @@ export const respondToRfq = async (
   });
 };
 
-export const prepareSettlement = async (
+export const prepareRfqSettlement = async (
   cvg: Convergence,
   rfq: Rfq,
   response: Response
@@ -230,6 +232,8 @@ export const settleRfq = async (
     taker: rfq.taker,
   });
 };
+
+/// Options
 
 export const createPythPriceFeed = async (
   oracleProgram: Program<any>,
