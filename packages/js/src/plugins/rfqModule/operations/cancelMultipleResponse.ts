@@ -95,8 +95,8 @@ export const cancelMultipleResponseOperationHandler: OperationHandler<CancelMult
       );
       scope.throwIfCanceled();
       const signedTnxs = await convergence
-        .rpc()
-        .signAllTransactions(txArray, [convergence.identity()]);
+        .identity()
+        .signAllTransactions(txArray);
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
         scope.confirmOptions

@@ -23,7 +23,7 @@
     "clean:all": "turbo run clean",
     "build": "turbo run build --filter=[origin/main]",
     "build:all": "turbo run build",
-    "test": "turbo run test",
+    "test": "turbo run test --filter=cli && turbo run test --filter=sdk",
     "validator": "pkill solana-test-validator | echo '' && cd packages/validator && ts-node run.ts",
     "validator:logs": "cd packages/validator && ts-node logs.ts",
     "lint": "turbo run lint",

@@ -41,6 +41,7 @@ import {
   InstructionWithSigners,
   TransactionBuilder,
   addDecimals,
+  removeDecimals,
 } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
@@ -255,16 +256,15 @@ export const convertFixedSizeInput = (
   quoteAsset: QuoteInstrument
 ): FixedSize => {
   if (fixedSize.__kind == 'BaseAsset') {
-    const convertedLegsMultiplierBps =
-      Number(fixedSize.legsMultiplierBps) *
-      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-    fixedSize.legsMultiplierBps = convertedLegsMultiplierBps;
+    fixedSize.legsMultiplierBps = addDecimals(
+      Number(fixedSize.legsMultiplierBps),
+      LEG_MULTIPLIER_DECIMALS
+    );
   } else if (fixedSize.__kind == 'QuoteAsset') {
-    const convertedQuoteAmount =
-      Number(fixedSize.quoteAmount) * Math.pow(10, quoteAsset.getDecimals());
-
-    fixedSize.quoteAmount = convertedQuoteAmount;
+    fixedSize.quoteAmount = addDecimals(
+      Number(fixedSize.quoteAmount),
+      quoteAsset.getDecimals()
+    );
   }
 
   return fixedSize;
@@ -274,25 +274,25 @@ export const convertRfqOutput = (
   rfq: Rfq,
   collateralMintDecimals: number
 ): Rfq => {
-  rfq.nonResponseTakerCollateralLocked =
-    Number(rfq.nonResponseTakerCollateralLocked) /
-    Math.pow(10, collateralMintDecimals);
-  rfq.totalTakerCollateralLocked =
-    Number(rfq.totalTakerCollateralLocked) /
-    Math.pow(10, collateralMintDecimals);
+  rfq.nonResponseTakerCollateralLocked = removeDecimals(
+    rfq.nonResponseTakerCollateralLocked,
+    collateralMintDecimals
+  );
+  rfq.totalTakerCollateralLocked = removeDecimals(
+    rfq.totalTakerCollateralLocked,
+    collateralMintDecimals
+  );
 
   if (rfq.fixedSize.__kind == 'BaseAsset') {
-    const parsedLegsMultiplierBps =
-      Number(rfq.fixedSize.legsMultiplierBps) /
-      Math.pow(10, LEG_MULTIPLIER_DECIMALS);
-
-    rfq.fixedSize.legsMultiplierBps = parsedLegsMultiplierBps;
+    rfq.fixedSize.legsMultiplierBps = removeDecimals(
+      rfq.fixedSize.legsMultiplierBps,
+      LEG_MULTIPLIER_DECIMALS
+    );
   } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-    const parsedQuoteAmount =
-      Number(rfq.fixedSize.quoteAmount) /
-      Math.pow(10, rfq.quoteAsset.getDecimals());
-
-    rfq.fixedSize.quoteAmount = parsedQuoteAmount;
+    rfq.fixedSize.quoteAmount = removeDecimals(
+      rfq.fixedSize.quoteAmount,
+      rfq.quoteAsset.getDecimals()
+    );
   }
 
   return rfq;
@@ -303,89 +303,76 @@ export const convertResponseOutput = (
   quoteDecimals: number
 ): Response => {
   if (response.bid) {
-    let convertedPriceQuoteAmountBps =
-      response.bid.priceQuote.amountBps instanceof anchor.BN
-        ? response.bid.priceQuote.amountBps
-        : new anchor.BN(response.bid.priceQuote.amountBps);
-
-    convertedPriceQuoteAmountBps = convertedPriceQuoteAmountBps.div(
-      new anchor.BN(10).pow(
-        new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
-      )
+    const convertedPriceQuoteAmountBps = removeDecimals(
+      response.bid.priceQuote.amountBps,
+      quoteDecimals
+    );
+    const removedQuoteDecimals = new anchor.BN(convertedPriceQuoteAmountBps);
+    const removedAbsoluteDecimals = removeDecimals(
+      removedQuoteDecimals,
+      ABSOLUTE_PRICE_DECIMALS
     );
 
-    response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
+    response.bid.priceQuote.amountBps = removedAbsoluteDecimals;
 
     if (response.bid.__kind == 'Standard') {
-      let convertedLegsMultiplierBps =
-        response.bid.legsMultiplierBps instanceof anchor.BN
-          ? response.bid.legsMultiplierBps
-          : new anchor.BN(response.bid.legsMultiplierBps);
-
-      convertedLegsMultiplierBps = convertedLegsMultiplierBps.div(
-        new anchor.BN(10).pow(new anchor.BN(LEG_MULTIPLIER_DECIMALS))
+      const convertedLegsMultiplierBps = removeDecimals(
+        response.bid.legsMultiplierBps
       );
 
-      response.bid.legsMultiplierBps = convertedLegsMultiplierBps;
+      response.bid.legsMultiplierBps = new anchor.BN(
+        convertedLegsMultiplierBps
+      );
     }
   }
   if (response.ask) {
-    let convertedPriceQuoteAmountBps =
-      response.ask.priceQuote.amountBps instanceof anchor.BN
-        ? response.ask.priceQuote.amountBps
-        : new anchor.BN(response.ask.priceQuote.amountBps);
-
-    convertedPriceQuoteAmountBps = convertedPriceQuoteAmountBps.div(
-      new anchor.BN(10).pow(
-        new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
-      )
+    const convertedPriceQuoteAmountBps = removeDecimals(
+      response.ask.priceQuote.amountBps,
+      quoteDecimals
+    );
+    const removedQuoteDeciamls = new anchor.BN(convertedPriceQuoteAmountBps);
+    const removedAbsoluteDecimals = removeDecimals(
+      removedQuoteDeciamls,
+      ABSOLUTE_PRICE_DECIMALS
     );
 
-    response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
+    response.ask.priceQuote.amountBps = removedAbsoluteDecimals;
 
     if (response.ask.__kind == 'Standard') {
-      let convertedLegsMultiplierBps =
-        response.ask.legsMultiplierBps instanceof anchor.BN
-          ? response.ask.legsMultiplierBps
-          : new anchor.BN(response.ask.legsMultiplierBps);
-
-      convertedLegsMultiplierBps = convertedLegsMultiplierBps.div(
-        new anchor.BN(10).pow(new anchor.BN(LEG_MULTIPLIER_DECIMALS))
+      const convertedLegsMultiplierBps = removeDecimals(
+        response.ask.legsMultiplierBps
       );
-
-      response.ask.legsMultiplierBps = convertedLegsMultiplierBps;
+      response.ask.legsMultiplierBps = new anchor.BN(
+        convertedLegsMultiplierBps
+      );
     }
   }
-
   return response;
 };
 
 const convertQuoteInput = (quote: Quote, quoteDecimals: number) => {
   const convertedQuote = structuredClone(quote);
   convertedQuote.priceQuote.amountBps = quote.priceQuote.amountBps;
-
-  const convertedPriceQuoteAmountBps =
-    convertedQuote.priceQuote.amountBps instanceof anchor.BN
-      ? convertedQuote.priceQuote.amountBps
-      : new anchor.BN(convertedQuote.priceQuote.amountBps);
+  // multiply before and then convert to anchor.BN
+  const priceQuoteWithDecimals = addDecimals(
+    Number(convertedQuote.priceQuote.amountBps),
+    quoteDecimals
+  );
+  const convertedPriceQuoteAmountBps = new anchor.BN(priceQuoteWithDecimals);
 
   convertedQuote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(
-    new anchor.BN(10).pow(
-      new anchor.BN(quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
-    )
+    new anchor.BN(10).pow(new anchor.BN(ABSOLUTE_PRICE_DECIMALS))
   );
 
   if (convertedQuote.__kind == 'Standard') {
-    const convertedLegsMultiplierBps =
-      convertedQuote.legsMultiplierBps instanceof anchor.BN
-        ? convertedQuote.legsMultiplierBps
-        : new anchor.BN(convertedQuote.legsMultiplierBps);
-
-    convertedQuote.legsMultiplierBps = convertedLegsMultiplierBps.mul(
-      new anchor.BN(Math.pow(10, LEG_MULTIPLIER_DECIMALS))
+    // multiply before and then convert to anchor.BN
+    const priceQuoteWithDecimals = addDecimals(
+      Number(convertedQuote.legsMultiplierBps),
+      LEG_MULTIPLIER_DECIMALS
     );
+    const convertedLegsMultiplierBps = new anchor.BN(priceQuoteWithDecimals);
+    convertedQuote.legsMultiplierBps = convertedLegsMultiplierBps;
   }
-
   return convertedQuote;
 };
 
@@ -541,8 +528,11 @@ export const initializeNewOptionMeta = async (
     await tx.sendAndConfirm(convergence, confirmOptions);
   }
 
-  strikePrice *= Math.pow(10, stableMint.decimals);
-  underlyingAmountPerContract *= Math.pow(10, underlyingMint.decimals);
+  const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
+  const underlyingAmountPerContractSize = addDecimals(
+    underlyingAmountPerContract,
+    underlyingMint.decimals
+  );
 
   const {
     instruction: createIx,
@@ -556,8 +546,8 @@ export const initializeNewOptionMeta = async (
     stableMint.address,
     stableMint.decimals,
     expiration,
-    toBigNumber(underlyingAmountPerContract),
-    toBigNumber(strikePrice),
+    toBigNumber(underlyingAmountPerContractSize),
+    toBigNumber(strikePriceSize),
     stableMint.decimals,
     oracle,
     oracleProviderId
@@ -579,25 +569,25 @@ export const initializeNewAmericanOption = async (
   americanProgram: any,
   underlyingMint: Mint,
   quoteMint: Mint,
-  quoteAmountPerContract: anchor.BN,
-  underlyingAmountPerContract: anchor.BN,
+  quoteAmountPerContract: number,
+  underlyingAmountPerContract: number,
   expiresIn: number
 ) => {
   const expiration = new anchor.BN(Date.now() / 1_000 + expiresIn);
 
-  quoteAmountPerContract = new anchor.BN(
+  const quoteAmountPerContractBN = new anchor.BN(
     Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
   );
-  underlyingAmountPerContract = new anchor.BN(
+  const underlyingAmountPerContractBN = new anchor.BN(
     Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
   );
 
   const { optionMarketKey, optionMintKey, writerMintKey } =
     await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
       expirationUnixTimestamp: expiration,
-      quoteAmountPerContract,
+      quoteAmountPerContract: quoteAmountPerContractBN,
       quoteMint: quoteMint.address,
-      underlyingAmountPerContract,
+      underlyingAmountPerContract: underlyingAmountPerContractBN,
       underlyingMint: underlyingMint.address,
     });
 
@@ -797,7 +787,6 @@ export const getCreateEuroAccountsAndMintOptionsTransaction = async (
     .findRfqByAddress({ address: rfqAddress });
 
   const EURO_DECIMALS = 4;
-  amount *= Math.pow(10, EURO_DECIMALS);
 
   const instructions: anchor.web3.TransactionInstruction[] = [];
 
@@ -845,12 +834,11 @@ export const getCreateEuroAccountsAndMintOptionsTransaction = async (
       const { instruction: ix } = mintOptions(
         europeanProgram,
         leg.metaKey,
-        //@ts-ignore
-        euroMeta,
+        euroMeta as EuroMeta,
         minterCollateralKey,
         optionDestination,
         writerDestination,
-        new anchor.BN(amount),
+        new BN(addDecimals(amount, EURO_DECIMALS).toString()),
         leg.optionType
       );
 
@@ -887,7 +875,6 @@ export const getCreateAmericanAccountsAndMintOptionsTransaction = async (
   const callerIsTaker = caller == rfq.taker;
 
   const AMERICAN_DECIMALS = 0;
-  amount *= Math.pow(10, AMERICAN_DECIMALS);
 
   const instructions: anchor.web3.TransactionInstruction[] = [];
 
@@ -921,13 +908,15 @@ export const getCreateAmericanAccountsAndMintOptionsTransaction = async (
           caller
         );
 
+        const size = new BN(addDecimals(amount, AMERICAN_DECIMALS).toString());
+
         const ixWithSigners =
           await psyoptionsAmerican.instructions.mintOptionV2Instruction(
             americanProgram,
             optionToken,
             writerToken,
             underlyingToken,
-            new anchor.BN(amount),
+            size,
             optionMarket
           );
         const { ix } = ixWithSigners;

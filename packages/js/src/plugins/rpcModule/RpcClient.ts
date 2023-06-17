@@ -11,6 +11,8 @@ import {
   RpcResponseAndContext,
   SendOptions,
   SignatureResult,
+  SolanaJSONRPCError,
+  SolanaJSONRPCErrorCode,
   Transaction,
   TransactionSignature,
 } from '@solana/web3.js';
@@ -25,7 +27,6 @@ import {
 } from '../../errors';
 import type { Convergence } from '../../Convergence';
 import {
-  assertSol,
   getSignerHistogram,
   isErrorWithLogs,
   lamports,
@@ -35,7 +36,7 @@ import {
   UnparsedAccount,
   UnparsedMaybeAccount,
 } from '../../types';
-import { TransactionBuilder, zipMap } from '../../utils';
+import { TransactionBuilder, sleep, zipMap } from '../../utils';
 
 export type ConfirmTransactionResponse = RpcResponseAndContext<SignatureResult>;
 
@@ -51,6 +52,19 @@ export type SendAndConfirmTransactionResponse = {
  */
 export class RpcClient {
   protected defaultFeePayer?: Signer;
+  protected lastContextSlot?: number; // max slot between all confirmed transactions
+  protected static contextRetryDelays = [
+    null,
+    null,
+    0.1,
+    0.1,
+    0.5,
+    0.5,
+    1,
+    1,
+    2,
+    2,
+  ]; // values in seconds
 
   constructor(protected readonly convergence: Convergence) {}
 
@@ -207,6 +221,13 @@ export class RpcClient {
       throw new FailedToConfirmTransactionWithResponseError(rpcResponse);
     }
 
+    if (rpcResponse.context.slot) {
+      this.lastContextSlot = Math.max(
+        rpcResponse.context.slot,
+        this.lastContextSlot ?? -1
+      );
+    }
+
     return rpcResponse;
   }
 
@@ -236,33 +257,80 @@ export class RpcClient {
   }
 
   async getAccount(publicKey: PublicKey, commitment?: Commitment) {
-    const accountInfo = await this.convergence.connection.getAccountInfo(
-      publicKey,
-      commitment
+    const accountInfo = await this.retryGetAccountAction(() =>
+      this.convergence.connection.getAccountInfo(
+        publicKey,
+        this.expandGetAccountCommitment(commitment)
+      )
     );
 
     return this.getUnparsedMaybeAccount(publicKey, accountInfo);
   }
 
   async accountExists(publicKey: PublicKey, commitment?: Commitment) {
-    const balance = await this.convergence.connection.getBalance(
-      publicKey,
-      commitment
+    const balance = await this.retryGetAccountAction(() =>
+      this.convergence.connection.getBalance(
+        publicKey,
+        this.expandGetAccountCommitment(commitment)
+      )
     );
 
     return balance > 0;
   }
 
   async getMultipleAccounts(publicKeys: PublicKey[], commitment?: Commitment) {
-    const accountInfos =
-      await this.convergence.connection.getMultipleAccountsInfo(
+    const accountInfos = await this.retryGetAccountAction(() =>
+      this.convergence.connection.getMultipleAccountsInfo(
         publicKeys,
-        commitment
-      );
+        this.expandGetAccountCommitment(commitment)
+      )
+    );
 
     return zipMap(publicKeys, accountInfos, (publicKey, accountInfo) => {
       return this.getUnparsedMaybeAccount(publicKey, accountInfo);
     });
+  }
+
+  // sometimes fetching account data immediately after confirming a transaction would hit a different node
+  // that is slightly behind in the block history. In that case fetch would fail or return stale data
+  // To solve this issue we pass minContextSlot as fetch parameter and retry if node slot is behind
+  protected async retryGetAccountAction<T>(action: () => Promise<T>) {
+    for (const retryDelay of RpcClient.contextRetryDelays) {
+      try {
+        const result = await action();
+        return result;
+      } catch (e) {
+        // for some reason in some methods connection doesn't throw a valid SolanaJSONRPCError with correct error code
+        // it just a plain Error and encodes error as a part of the message
+        const isStringError =
+          e instanceof Error &&
+          e.message.includes('SolanaJSONRPCError') &&
+          e.message.includes('Minimum context slot has not been reached');
+        const isClassError =
+          e instanceof SolanaJSONRPCError &&
+          e.code ==
+            SolanaJSONRPCErrorCode.JSON_RPC_SERVER_ERROR_MIN_CONTEXT_SLOT_NOT_REACHED;
+
+        if (isStringError || isClassError) {
+          if (retryDelay !== null) {
+            await sleep(retryDelay);
+          }
+
+          continue;
+        }
+
+        throw e;
+      }
+    }
+
+    throw Error('Max retries exceeded!');
+  }
+
+  protected expandGetAccountCommitment(commitment?: Commitment) {
+    return {
+      commitment,
+      minContextSlot: this.lastContextSlot,
+    };
   }
 
   async getProgramAccounts(
@@ -281,40 +349,6 @@ export class RpcClient {
     }));
   }
 
-  async airdrop(
-    publicKey: PublicKey,
-    amount: SolAmount,
-    commitment?: Commitment
-  ): Promise<SendAndConfirmTransactionResponse> {
-    assertSol(amount);
-
-    const signature = await this.convergence.connection.requestAirdrop(
-      publicKey,
-      amount.basisPoints.toNumber()
-    );
-
-    const blockhashWithExpiryBlockHeight = await this.getLatestBlockhash();
-    const confirmResponse = await this.confirmTransaction(
-      signature,
-      blockhashWithExpiryBlockHeight,
-      commitment
-    );
-
-    return { signature, confirmResponse, ...blockhashWithExpiryBlockHeight };
-  }
-
-  async getBalance(
-    publicKey: PublicKey,
-    commitment?: Commitment
-  ): Promise<SolAmount> {
-    const balance = await this.convergence.connection.getBalance(
-      publicKey,
-      commitment
-    );
-
-    return lamports(balance);
-  }
-
   async getRent(bytes: number, commitment?: Commitment): Promise<SolAmount> {
     const rent =
       await this.convergence.connection.getMinimumBalanceForRentExemption(
@@ -329,25 +363,6 @@ export class RpcClient {
     commitmentOrConfig: Commitment | GetLatestBlockhashConfig = 'finalized'
   ): Promise<BlockhashWithExpiryBlockHeight> {
     return this.convergence.connection.getLatestBlockhash(commitmentOrConfig);
-  }
-
-  getSolanaExporerUrl(signature: string): string {
-    let clusterParam = '';
-    switch (this.convergence.cluster) {
-      case 'devnet':
-        clusterParam = '?cluster=devnet';
-        break;
-      case 'testnet':
-        clusterParam = '?cluster=testnet';
-        break;
-      case 'localnet':
-      case 'custom':
-        const url = encodeURIComponent(this.convergence.connection.rpcEndpoint);
-        clusterParam = `?cluster=custom&customUrl=${url}`;
-        break;
-    }
-
-    return `https://explorer.solana.com/tx/${signature}${clusterParam}`;
   }
 
   setDefaultFeePayer(payer: Signer) {
@@ -395,21 +410,6 @@ export class RpcClient {
     }
 
     return transactions;
-  }
-
-  async getAccounts(publicKeys: PublicKey[], commitment?: Commitment) {
-    const accountInfos: UnparsedMaybeAccount[] = [];
-
-    for (const publicKey of publicKeys) {
-      const accountInfo = await this.convergence.connection.getAccountInfo(
-        publicKey,
-        commitment
-      );
-
-      accountInfos.push(this.getUnparsedMaybeAccount(publicKey, accountInfo));
-    }
-
-    return accountInfos;
   }
 
   protected parseProgramError(

@@ -1,7 +1,6 @@
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { Keypair } from '@solana/web3.js';
 import { Program, web3 } from '@project-serum/anchor';
-
 import {
   Convergence,
   OrderType,
@@ -17,7 +16,7 @@ import {
   SpotQuoteInstrument,
   SpotLegInstrument,
 } from '../src';
-import { BASE_MINT_PK, QUOTE_MINT_PK } from './constants';
+import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
 
 export type HumanOrderType = 'sell' | 'buy' | 'two-way';
 export type HumanSide = 'bid' | 'ask';
@@ -42,7 +41,7 @@ export const createAmericanCoveredCall = async (
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: BASE_MINT_PK });
+    .findMintByAddress({ address: BASE_MINT_BTC_PK });
   const quoteMint = await cvg
     .tokens()
     .findMintByAddress({ address: QUOTE_MINT_PK });
@@ -53,8 +52,8 @@ export const createAmericanCoveredCall = async (
     createAmericanProgram(cvg),
     baseMint,
     quoteMint,
-    toBigNumber(27_000),
-    toBigNumber(1),
+    27_000,
+    1,
     randomExpiry
   );
 
@@ -73,7 +72,7 @@ export const createAmericanCoveredCall = async (
       ),
     ],
     orderType: fromHumanOrderType(orderType),
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 0.0000001 },
+    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
 
@@ -87,7 +86,7 @@ export const createRfq = async (
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: BASE_MINT_PK });
+    .findMintByAddress({ address: BASE_MINT_BTC_PK });
   const quoteMint = await cvg
     .tokens()
     .findMintByAddress({ address: QUOTE_MINT_PK });

@@ -2,7 +2,7 @@ import { expect } from 'expect';
 import { PublicKey } from '@solana/web3.js';
 
 import { createUserCvg, generatePk } from '../helpers';
-import { CTX, BASE_MINT_DECIMALS, BASE_MINT_PK } from '../constants';
+import { CTX, BASE_MINT_DECIMALS, BASE_MINT_BTC_PK } from '../constants';
 import { token } from '../../src';
 
 describe('unit.token', () => {
@@ -19,14 +19,14 @@ describe('unit.token', () => {
   it('find mint', async () => {
     const mint = await cvg
       .tokens()
-      .findMintByAddress({ address: BASE_MINT_PK });
-    expect(mint.address.toBase58()).toEqual(CTX.baseMint);
+      .findMintByAddress({ address: BASE_MINT_BTC_PK });
+    expect(mint.address.toBase58()).toEqual(CTX.baseMintBTC);
     expect(mint.decimals.toString()).toEqual(BASE_MINT_DECIMALS.toString());
   });
 
   it('mint', async () => {
     const { response } = await cvg.tokens().mint({
-      mintAddress: BASE_MINT_PK,
+      mintAddress: BASE_MINT_BTC_PK,
       amount: token(100),
       toToken: new PublicKey(CTX.takerBaseWallet),
     });
@@ -36,7 +36,7 @@ describe('unit.token', () => {
   it('create token', async () => {
     const mint = await cvg
       .tokens()
-      .findMintByAddress({ address: BASE_MINT_PK });
+      .findMintByAddress({ address: BASE_MINT_BTC_PK });
     const owner = await generatePk();
     const { token } = await cvg
       .tokens()
