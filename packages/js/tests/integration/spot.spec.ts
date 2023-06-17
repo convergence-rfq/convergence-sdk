@@ -74,13 +74,14 @@ describe('integration.spot', () => {
 
     const takerBtcAfter = await fetchTokenAmount(takerCvg, baseMintBTC.address);
     const takerQuoteAfter = await fetchTokenAmount(takerCvg, quoteMint.address);
+
     expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore + amountB);
     expect(takerBtcAfter).toBeCloseTo(takerBtcBefore - amountA);
   });
 
   it('buy', async () => {
     const amountA = 2.5;
-    const amountB = 24_300.75;
+    const amountB = 24_300.75 * amountA;
 
     const { rfq } = await createRfq(takerCvg, amountA, OrderType.Buy);
     expect(rfq).toHaveProperty('address');
@@ -105,9 +106,9 @@ describe('integration.spot', () => {
       takerCvg,
       baseMintBTC.address
     );
-    const takerQuoteBefore = await fetchTokenAmount(
-      takerCvg,
-      quoteMint.address
+    const makerBtcBefore = await fetchTokenAmount(
+      makerCvg,
+      baseMintBTC.address
     );
 
     const takerResult = await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
@@ -122,9 +123,10 @@ describe('integration.spot', () => {
     // TODO: Unlock collateral
 
     const takerBtcAfter = await fetchTokenAmount(takerCvg, baseMintBTC.address);
-    const takerQuoteAfter = await fetchTokenAmount(takerCvg, quoteMint.address);
-    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore - amountB);
-    expect(takerBtcAfter).toBeCloseTo(takerBtcBefore + amountA);
+    const makerBtcAfter = await fetchTokenAmount(makerCvg, baseMintBTC.address);
+
+    expect(makerBtcAfter).toBe(makerBtcBefore - amountA);
+    expect(takerBtcAfter).toBe(takerBtcBefore + amountA);
   });
 
   it('cancel, reclaim and cleanup multiple RFQs', async () => {
@@ -166,11 +168,9 @@ describe('integration.spot', () => {
       .rfqs()
       .cancelMultipleRfq({ rfqs: [rfq1.address, rfq2.address, rfq3.address] });
 
-    await sleep(3000);
     await takerCvg.rfqs().unlockMultipleRfqCollateral({
       rfqs: [rfq1.address, rfq2.address, rfq3.address],
     });
-    await sleep(3000);
     const refreshedRfq1 = await takerCvg
       .rfqs()
       .findRfqByAddress({ address: rfq1.address });

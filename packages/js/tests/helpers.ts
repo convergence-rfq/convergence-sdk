@@ -66,14 +66,14 @@ export const fetchTokenAmount = async (
   cvg: Convergence,
   mintAddress: PublicKey
 ) => {
-  const takerBtcBefore = await cvg.tokens().findTokenWithMintByMint({
+  const token = await cvg.tokens().findTokenWithMintByMint({
     mint: mintAddress,
     address: cvg.identity().publicKey,
     addressType: 'owner',
   });
   return removeDecimals(
-    takerBtcBefore.amount.basisPoints,
-    takerBtcBefore.amount.currency.decimals
+    token.amount.basisPoints,
+    token.amount.currency.decimals
   );
 };
 
@@ -155,7 +155,8 @@ export const createRfq = async (
         cvg,
         baseMint,
         amount,
-        orderType === OrderType.Sell ? Side.Bid : Side.Ask
+        // This is always going to bid
+        Side.Bid
       ),
     ],
     orderType,

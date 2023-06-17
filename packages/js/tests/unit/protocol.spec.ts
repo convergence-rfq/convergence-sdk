@@ -67,7 +67,7 @@ describe('unit.protocol', () => {
     expect(protocol.address).toEqual(cvg.protocol().pdas().protocol());
   });
 
-  it('add instrument [SpotInstrument]', async () => {
+  it('add instrument [spotInstrument]', async () => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.identity(),
       instrumentProgram: cvg.programs().getSpotInstrument().address,

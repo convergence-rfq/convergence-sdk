@@ -6,7 +6,7 @@ import {
   createAmericanCoveredCallRfq,
   confirmRfqResponse,
   respondToRfq,
-  prepareSettlement,
+  prepareRfqSettlement,
   settleRfq,
   createUserCvg,
   setupAmerican,
@@ -23,7 +23,7 @@ describe('integration.psyoptionsAmerican', () => {
     );
     expect(rfq).toHaveProperty('address');
 
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq);
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1, Side.Ask);
     expect(rfqResponse).toHaveProperty('address');
 
     const { response: confirmResponse } = await confirmRfqResponse(
@@ -37,11 +37,11 @@ describe('integration.psyoptionsAmerican', () => {
     await setupAmerican(takerCvg, rfqResponse);
 
     const { response: prepareTakerSettlementResponse } =
-      await prepareSettlement(takerCvg, rfq, rfqResponse);
+      await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
     expect(prepareTakerSettlementResponse).toHaveProperty('signature');
 
     const { response: prepareMakerSettlementResponse } =
-      await prepareSettlement(makerCvg, rfq, rfqResponse);
+      await prepareRfqSettlement(makerCvg, rfq, rfqResponse);
     expect(prepareMakerSettlementResponse).toHaveProperty('signature');
 
     const { response: settlementResponse } = await settleRfq(
