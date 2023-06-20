@@ -1,10 +1,6 @@
 import { expect } from 'expect';
 
-import {
-  InstrumentType,
-  DEFAULT_RISK_CATEGORIES_INFO,
-  RiskCategory,
-} from '../../src';
+import { InstrumentType, DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
 import { createUserCvg } from '../helpers';
 
 describe('unit.riskEngine', () => {

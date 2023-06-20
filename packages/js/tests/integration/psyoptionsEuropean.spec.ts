@@ -3,7 +3,7 @@ import { PublicKey, Keypair } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
-import { createUserCvg } from '../helpers';
+
 import { QUOTE_MINT_PK, BASE_MINT_BTC_PK } from '../constants';
 import {
   IDL as PseudoPythIdl,
@@ -23,18 +23,18 @@ import {
   SpotLegInstrument,
 } from '../../src';
 import {
-  confirmResponse,
+  confirmRfqResponse,
   createPythPriceFeed,
-  prepareSettlement,
-  respond,
-  settle,
-} from '../human';
+  prepareRfqSettlement,
+  respondToRfq,
+  settleRfq,
+  createUserCvg,
+} from '../helpers';
 
 describe('integration.psyoptionsEuropean', async () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
-  let europeanProgram: anchor.Program<EuroPrimitive>;
-  let provider: anchor.AnchorProvider;
+
   let pseudoPythProgram: anchor.Program<Pyth>;
   let oracle: PublicKey;
 
@@ -48,9 +48,11 @@ describe('integration.psyoptionsEuropean', async () => {
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
+  });
 
-    europeanProgram = await createEuropeanProgram(takerCvg);
-    provider = new anchor.AnchorProvider(
+  it('covered call [sell]', async () => {
+    const europeanProgram = await createEuropeanProgram(takerCvg);
+    const provider = new anchor.AnchorProvider(
       takerCvg.connection,
       new anchor.Wallet(takerCvg.rpc().getDefaultFeePayer() as Keypair),
       {}
@@ -65,42 +67,6 @@ describe('integration.psyoptionsEuropean', async () => {
       17_000,
       quoteMint.decimals * -1
     );
-  });
-
-  it('covered call', async () => {
-    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
-      takerCvg,
-      oracle,
-      europeanProgram,
-      baseMint,
-      quoteMint,
-      23_354,
-      1,
-      3_600,
-      0
-    );
-    const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
-      instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, Side.Bid),
-        await PsyoptionsEuropeanInstrument.create(
-          takerCvg,
-          baseMint,
-          OptionType.CALL,
-          euroMeta,
-          euroMetaKey,
-          5,
-          Side.Bid
-        ),
-      ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
-      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-    });
-    expect(rfq).toHaveProperty('address');
-    expect(response.signature).toBeDefined();
-  });
-
-  it('mint european options', async () => {
     const min = 3_600;
     const randomExpiry = min + Math.random();
     const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
@@ -114,6 +80,7 @@ describe('integration.psyoptionsEuropean', async () => {
       randomExpiry,
       0
     );
+
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMint, 1.0, Side.Bid),
@@ -133,14 +100,15 @@ describe('integration.psyoptionsEuropean', async () => {
     });
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
-    const { rfqResponse } = await respond(makerCvg, rfq, 'bid');
-    await confirmResponse(takerCvg, rfq, rfqResponse, 'bid');
+
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0, Side.Bid);
+    await confirmRfqResponse(takerCvg, rfq, rfqResponse, Side.Bid);
+
     await getOrCreateEuropeanOptionATAs(
       takerCvg,
       rfqResponse.address,
       takerCvg.rpc().getDefaultFeePayer().publicKey
     );
-
     const tnx = await mintEuropeanOptions(
       takerCvg,
       rfqResponse.address,
@@ -149,9 +117,9 @@ describe('integration.psyoptionsEuropean', async () => {
     );
     expect(tnx).toHaveProperty('response');
 
-    await prepareSettlement(makerCvg, rfq, rfqResponse);
-    await prepareSettlement(takerCvg, rfq, rfqResponse);
+    await prepareRfqSettlement(makerCvg, rfq, rfqResponse);
+    await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
 
-    await settle(takerCvg, rfq, rfqResponse);
+    await settleRfq(takerCvg, rfq, rfqResponse);
   });
 });
