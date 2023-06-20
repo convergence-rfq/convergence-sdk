@@ -11,6 +11,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindResponsesByRfqOperation' as const;
 
@@ -124,6 +125,7 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       );
 
       const parsedResponses: Response[] = [];
+      const collateralMint = await collateralMintCache.get(convergence);
 
       for (let i = 0; i < callsToGetMultipleAccounts; i++) {
         const accounts = await convergence
@@ -134,7 +136,10 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
           );
 
         for (const account of accounts) {
-          const response = toResponse(toResponseAccount(account));
+          const response = toResponse(
+            toResponseAccount(account),
+            collateralMint.decimals
+          );
 
           if (response.rfq.toBase58() === address.toBase58()) {
             const rfq = await convergence

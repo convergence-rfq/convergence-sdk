@@ -10,6 +10,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindResponseByAddressOperation' as const;
 
@@ -79,8 +80,12 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       const { address, convert = true } = operation.input;
       scope.throwIfCanceled();
 
+      const collateralMint = await collateralMintCache.get(convergence);
       const account = await convergence.rpc().getAccount(address, commitment);
-      const response = toResponse(toResponseAccount(account));
+      const response = toResponse(
+        toResponseAccount(account),
+        collateralMint.decimals
+      );
       assertResponse(response);
       scope.throwIfCanceled();
 

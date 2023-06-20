@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { bignum, COption } from '@convergence-rfq/beet';
+import { COption, bignum } from '@convergence-rfq/beet';
 import {
   AuthoritySide,
   Confirmation,
@@ -9,7 +9,7 @@ import {
 } from '@convergence-rfq/rfq';
 
 import { ResponseAccount } from '../accounts';
-import { assert } from '../../../utils';
+import { assert, removeDecimals } from '../../../utils';
 
 /**
  * This model captures all the relevant information about an Response
@@ -21,53 +21,50 @@ export type Response = {
   /** A model identifier to distinguish models in the SDK. */
   readonly model: 'response';
 
-  /** The address of the Response. */
+  /** The address of the response. */
   readonly address: PublicKey;
 
-  /** The Maker's pubkey address. */
+  /** The maker pubkey address. */
   readonly maker: PublicKey;
 
-  /** The address of the Rfq this Response corresponds to. */
+  /** The address of the RFQ this response corresponds to. */
   readonly rfq: PublicKey;
 
-  /** The timestamp at which this Response was created. */
+  /** The timestamp at which this response was created. */
   readonly creationTimestamp: bignum;
 
-  /** The amount of the Maker's collateral locked. */
-  readonly makerCollateralLocked: bignum;
+  /** The bid required for sell and optionally two-way order types. */
+  readonly bid: COption<Quote>;
 
-  /** The amount of the Taker's collateral locked. */
-  readonly takerCollateralLocked: bignum;
+  /** The ask required for buy and optionally two-way order types. */
+  readonly ask: COption<Quote>;
 
-  /** The current state of the Response. */
+  /** The amount of the maker collateral locked. */
+  readonly makerCollateralLocked: number;
+
+  /** The amount of the taker collateral locked. */
+  readonly takerCollateralLocked: number;
+
+  /** The current state of the response. */
   readonly state: StoredResponseState;
 
-  /** The number of legs prepared by the Taker. */
+  /** The number of legs prepared by the taker. */
   readonly takerPreparedLegs: number;
 
-  /** The number of legs prepared by the Maker. */
+  /** The number of legs prepared by the maker. */
   readonly makerPreparedLegs: number;
 
   /** The number of legs that have already been settled. */
   readonly settledLegs: number;
 
-  /** The Confirmation of this Response, if any. */
+  /** The optional confirmation of this response. */
   readonly confirmed: COption<Confirmation>;
 
-  /** The defaulting party of this Response, if any. */
+  /** The optional defaulting party of this response. */
   readonly defaultingParty: COption<DefaultingParty>;
 
-  /** An array of `AuthoritySide`s showing whether the Maker or Taker
-   *  initialized leg preparation for each prepared leg */
+  /** Shows whether the maker or taker initialized preparation for each prepared leg. */
   readonly legPreparationsInitializedBy: AuthoritySide[];
-
-  /** The bid, if any. If the `orderType` of the RFQ is
-   * OrderType.Sell then this field is required. */
-  readonly bid: COption<Quote>;
-
-  /** The ask, if any. If the `orderType` of the RFQ is
-   * OrderType.Buy then this field is required. */
-  readonly ask: COption<Quote>;
 };
 
 /** @group Model Helpers */
@@ -76,18 +73,27 @@ export const isResponse = (value: any): value is Response =>
 
 /** @group Model Helpers */
 export function assertResponse(value: any): asserts value is Response {
-  assert(isResponse(value), `Expected Response model`);
+  assert(isResponse(value), 'Expected Response model');
 }
 
 /** @group Model Helpers */
-export const toResponse = (account: ResponseAccount): Response => ({
+export const toResponse = (
+  account: ResponseAccount,
+  collateralDecimals: number
+): Response => ({
   model: 'response',
   address: account.publicKey,
   maker: account.data.maker,
   rfq: account.data.rfq,
   creationTimestamp: account.data.creationTimestamp,
-  makerCollateralLocked: account.data.makerCollateralLocked,
-  takerCollateralLocked: account.data.takerCollateralLocked,
+  makerCollateralLocked: removeDecimals(
+    account.data.makerCollateralLocked,
+    collateralDecimals
+  ),
+  takerCollateralLocked: removeDecimals(
+    account.data.takerCollateralLocked,
+    collateralDecimals
+  ),
   state: account.data.state,
   takerPreparedLegs: account.data.takerPreparedLegs,
   makerPreparedLegs: account.data.makerPreparedLegs,

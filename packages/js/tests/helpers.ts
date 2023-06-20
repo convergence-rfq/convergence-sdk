@@ -1,5 +1,5 @@
 import { Commitment, Connection } from '@solana/web3.js';
-import { PROGRAM_ID } from '@convergence-rfq/rfq';
+import { PROGRAM_ID, Quote } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 import { Program, web3 } from '@project-serum/anchor';
 
@@ -64,17 +64,16 @@ export const sleep = (seconds: number) => {
 
 export const fetchTokenAmount = async (
   cvg: Convergence,
-  mintAddress: PublicKey,
-  owner: PublicKey
+  mintAddress: PublicKey
 ) => {
-  const takerBtcBefore = await cvg.tokens().findTokenWithMintByMint({
+  const token = await cvg.tokens().findTokenWithMintByMint({
     mint: mintAddress,
-    address: owner,
+    address: cvg.identity().publicKey,
     addressType: 'owner',
   });
   return removeDecimals(
-    takerBtcBefore.amount.basisPoints,
-    takerBtcBefore.amount.currency.decimals
+    token.amount.basisPoints,
+    token.amount.currency.decimals
   );
 };
 
@@ -139,18 +138,26 @@ export const createAmericanCoveredCallRfq = async (
 
 export const createRfq = async (
   cvg: Convergence,
-  amount: 1.0,
-  orderType: OrderType
+  amount: number,
+  orderType: OrderType,
+  quoteMintPk = QUOTE_MINT_PK,
+  baseMintPk = BASE_MINT_BTC_PK
 ) => {
   const baseMint = await cvg
     .tokens()
-    .findMintByAddress({ address: BASE_MINT_BTC_PK });
+    .findMintByAddress({ address: baseMintPk });
   const quoteMint = await cvg
     .tokens()
-    .findMintByAddress({ address: QUOTE_MINT_PK });
+    .findMintByAddress({ address: quoteMintPk });
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      await SpotLegInstrument.create(cvg, baseMint, amount, Side.Bid),
+      await SpotLegInstrument.create(
+        cvg,
+        baseMint,
+        amount,
+        // This is always going to bid
+        Side.Bid
+      ),
     ],
     orderType,
     fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
@@ -166,26 +173,57 @@ export const confirmRfqResponse = async (
   side: Side
 ) => {
   return await cvg.rfqs().confirmResponse({
-    taker: cvg.rpc().getDefaultFeePayer(),
+    taker: cvg.identity(),
     rfq: rfq.address,
     response: response.address,
     side,
   });
 };
 
-export const respondToRfq = async (cvg: Convergence, rfq: Rfq) => {
-  return await cvg.rfqs().respond({
-    maker: cvg.rpc().getDefaultFeePayer(),
-    rfq: rfq.address,
-    // Assumes bid
-    bid: {
+export const respondToRfq = async (
+  cvg: Convergence,
+  rfq: Rfq,
+  bid?: number,
+  ask?: number
+) => {
+  if (!bid && !ask) {
+    throw new Error('Must provide bid and/or ask');
+  }
+
+  const amountToQuote = (amountBps: number): Quote => {
+    return {
       __kind: 'FixedSize',
-      priceQuote: { __kind: 'AbsolutePrice', amountBps: 0.0000001 },
-    },
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps,
+      },
+    };
+  };
+
+  let args: { bid?: Quote; ask?: Quote } = {};
+  if (bid && ask) {
+    args = {
+      ask: amountToQuote(ask),
+      bid: amountToQuote(bid),
+    };
+  } else if (bid) {
+    args = {
+      bid: amountToQuote(bid),
+    };
+  } else if (ask) {
+    args = {
+      ask: amountToQuote(ask),
+    };
+  }
+
+  return await cvg.rfqs().respond({
+    maker: cvg.identity(),
+    rfq: rfq.address,
+    ...args,
   });
 };
 
-export const prepareSettlement = async (
+export const prepareRfqSettlement = async (
   cvg: Convergence,
   rfq: Rfq,
   response: Response
@@ -210,6 +248,8 @@ export const settleRfq = async (
     taker: rfq.taker,
   });
 };
+
+/// Options
 
 export const createPythPriceFeed = async (
   oracleProgram: Program<any>,

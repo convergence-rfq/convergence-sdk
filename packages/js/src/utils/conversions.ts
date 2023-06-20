@@ -1,6 +1,20 @@
 import { bignum } from '@convergence-rfq/beet';
 import BN from 'bn.js';
 
+/**
+ *  Take big number and convert it to a UI number while taking into account
+ * token mint decimals.
+ *
+ *  ```
+ *  const value = 9_500_000_000
+ *  const decimals = 9
+ *  const ui = removeDecimals(value, decimals) // 9.5
+ *  ```
+ *
+ * @param value
+ * @param decimals
+ * @returns
+ */
 export const removeDecimals = (value: bignum, decimals = 0): number => {
   const number = Number(value);
 
@@ -11,6 +25,20 @@ export const removeDecimals = (value: bignum, decimals = 0): number => {
   return number;
 };
 
+/**
+ *  Take UI number and turn it into a big number while taking into account
+ *  token mint decimals.
+ *
+ *  ```
+ *  const value = 9.5
+ *  const decimals = 9
+ *  const ui = addDecimals(value, decimals) // 9_500_000_000
+ *  ```
+ *
+ * @param value
+ * @param decimals
+ * @returns
+ */
 export const addDecimals = (value: number, decimals = 0): bignum => {
   const number = value * Math.pow(10, decimals);
   return new BN(number.toString());

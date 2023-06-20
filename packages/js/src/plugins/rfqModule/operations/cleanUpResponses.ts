@@ -14,28 +14,20 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { InstrumentPdasClient } from '../../../plugins/instrumentModule/InstrumentPdasClient';
+import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { legToBaseAssetMint } from '../helpers';
 
-const Key = 'cleanUpMultipleResponsesOperation' as const;
+const Key = 'cleanUpResponsesOperation' as const;
 
 /**
- * Cleans up a Response.
+ * Cleans up RFQ responses.
  *
  * ```ts
- *
- * const { rfq } = await convergence.rfqs.create(...);
- * const { rfqResponse } =
- *   await convergence
- *     .rfqs()
- *     .respond({ rfq: rfq.address, ... });
- *
  * await convergence
  *   .rfqs()
- *   .cleanUpMultipleResponses({
- *     dao,
+ *   .cleanUpResponses({
  *     rfq: rfq.address,
- *     response: rfqResponse.address,
+ *     responses: [<address>],
  *     firstToPrepare: taker.publicKey
  *   });
  * ```
@@ -43,59 +35,67 @@ const Key = 'cleanUpMultipleResponsesOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const cleanUpMultipleResponsesOperation =
-  useOperation<CleanUpMultipleResponsesOperation>(Key);
+export const cleanUpResponsesOperation =
+  useOperation<CleanUpResponsesOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CleanUpMultipleResponsesOperation = Operation<
+export type CleanUpResponsesOperation = Operation<
   typeof Key,
-  CleanUpMultipleResponsesInput,
-  CleanUpMultipleResponsesOutput
+  CleanUpResponsesInput,
+  CleanUpResponsesOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CleanUpMultipleResponsesInput = {
-  /** The Maker's public key address. */
+export type CleanUpResponsesInput = {
+  /**
+   * The maker public key address.
+   */
   maker: PublicKey;
 
-  /** The protocol address.
+  /**
+   * The address of the reponse accounts.
+   */
+  responses: PublicKey[];
+
+  /**
+   * The protocol address.
+   *
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
-  /** The address of the DAO. */
-  dao: PublicKey;
-
-  /** The address of the Reponse account. */
-  responses: PublicKey[];
+  /**
+   * The address of the DAO.
+   */
+  dao?: PublicKey;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type CleanUpMultipleResponsesOutput = {};
+export type CleanUpResponsesOutput = {};
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const cleanUpMultipleResponsesOperationHandler: OperationHandler<CleanUpMultipleResponsesOperation> =
+export const cleanUpResponsesOperationHandler: OperationHandler<CleanUpResponsesOperation> =
   {
     handle: async (
-      operation: CleanUpMultipleResponsesOperation,
+      operation: CleanUpResponsesOperation,
       convergence: Convergence,
       scope: OperationScope
     ) => {
       scope.throwIfCanceled();
 
-      const txArray = await cleanUpMultipleResponsesBuilder(
+      const txArray = await cleanUpResponsesBuilder(
         convergence,
         {
           ...operation.input,
@@ -123,8 +123,7 @@ export const cleanUpMultipleResponsesOperationHandler: OperationHandler<CleanUpM
  * @group Transaction Builders
  * @category Inputs
  */
-export type CleanUpMultipleResponsesBuilderParams =
-  CleanUpMultipleResponsesInput;
+export type CleanUpResponsesBuilderParams = CleanUpResponsesInput;
 
 /**
  * Cleans up an existing Response.
@@ -133,20 +132,24 @@ export type CleanUpMultipleResponsesBuilderParams =
  * const transactionBuilder = convergence
  *   .rfqs()
  *   .builders()
- *   .cleanUpMultipleResponses({ address });
+ *   .cleanUpResponses({ responses: [<address>, <address>], rfq: <address> });
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const cleanUpMultipleResponsesBuilder = async (
+export const cleanUpResponsesBuilder = async (
   convergence: Convergence,
-  params: CleanUpMultipleResponsesBuilderParams,
+  params: CleanUpResponsesBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<Transaction[]> => {
   const txArray: Transaction[] = [];
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { maker = convergence.identity().publicKey, responses, dao } = params;
+  const {
+    maker = convergence.identity().publicKey,
+    responses,
+    dao = convergence.identity().publicKey,
+  } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
@@ -270,7 +273,7 @@ export const cleanUpMultipleResponsesBuilder = async (
           rfqProgram.address
         ),
         signers: [],
-        key: 'cleanUpMultipleResponses',
+        key: 'cleanUpResponses',
       });
     const blockHashWithBlockHeight = await convergence
       .rpc()

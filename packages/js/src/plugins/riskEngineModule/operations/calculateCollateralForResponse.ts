@@ -63,8 +63,10 @@ export type CalculateCollateralForResponseOperation = Operation<
 export type CalculateCollateralForResponseInput = {
   /** The address of the Rfq account. */
   rfqAddress: PublicKey;
+
   /** Bid answer to the Rfq. */
   bid: Quote | null;
+
   /** Ask answer to the Rfq. */
   ask: Quote | null;
 };
@@ -120,10 +122,10 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       };
 
       const cases = [];
-      if (convertedBid !== undefined) {
+      if (convertedBid) {
         cases.push(getCase(convertedBid, Side.Bid));
       }
-      if (convertedAsk !== undefined) {
+      if (convertedAsk) {
         cases.push(getCase(convertedAsk, Side.Ask));
       }
 

@@ -8,102 +8,98 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { protocolCache } from '../../protocolModule/cache';
 
-const Key = 'cancelMultipleResponseOperation' as const;
+const Key = 'cancelResponsesOperation' as const;
 
 /**
- * Cancels an existing Response.
- *
- * const { rfq } = await convergence.rfqs.createAndFinalize(...);
- * const { rfqResponse } = await convergence.rfqs.().respond({ rfq: rfq.address, ... });
+ * Cancels multiple response.
  *
  * ```ts
  * await convergence
  *   .rfqs()
- *   .cancelMultipleResponse({
- *     rfq: rfq.address,
- *     response: rfqResponse.address
+ *   .cancelResponses({
+ *     responses: [response.address]
  *   });
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const cancelMultipleResponseOperation =
-  useOperation<CancelMultipleResponseOperation>(Key);
+export const cancelResponsesOperation =
+  useOperation<CancelResponsesOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CancelMultipleResponseOperation = Operation<
+export type CancelResponsesOperation = Operation<
   typeof Key,
-  CancelMultipleResponseInput,
-  CancelMultipleResponseOutput
+  CancelResponsesInput,
+  CancelResponsesOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CancelMultipleResponseInput = {
+export type CancelResponsesInput = {
   /**
-   * The maker as a signer
+   * The addresses of the reponses.
+   */
+  responses: PublicKey[];
+
+  /**
+   * The maker as a signer.
    *
    * @defaultValue `convergence.identity()`
    */
   maker?: Signer;
+
   /**
    * The protocol address.
    *
    * @defaultValue `convergence.protocol().pdas().get()`
    */
   protocol?: PublicKey;
-  /** The address of the reponse account. */
-  responses: PublicKey[];
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type CancelMultipleResponseOutput = {};
+export type CancelResponsesOutput = {};
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const cancelMultipleResponseOperationHandler: OperationHandler<CancelMultipleResponseOperation> =
+export const cancelResponsesOperationHandler: OperationHandler<CancelResponsesOperation> =
   {
     handle: async (
-      operation: CancelMultipleResponseOperation,
+      operation: CancelResponsesOperation,
       convergence: Convergence,
       scope: OperationScope
     ) => {
-      scope.throwIfCanceled();
-
-      const txArray = await cancelMultipleResponseBuilder(
+      const builder = await cancelResponsesBuilder(
         convergence,
         {
           ...operation.input,
         },
         scope
       );
-      scope.throwIfCanceled();
-      const signedTnxs = await convergence
+
+      const signedTxs = await convergence
         .identity()
-        .signAllTransactions(txArray);
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-        convergence,
-        scope.confirmOptions
-      );
-      for (const tx of signedTnxs) {
-        await convergence.rpc().serializeAndSendTransaction(tx, confirmOptions);
+        .signAllTransactions(builder);
+
+      for (const signedTx of signedTxs) {
+        await convergence
+          .rpc()
+          .serializeAndSendTransaction(signedTx, scope.confirmOptions);
       }
+
       scope.throwIfCanceled();
     },
   };
@@ -112,60 +108,58 @@ export const cancelMultipleResponseOperationHandler: OperationHandler<CancelMult
  * @group Transaction Builders
  * @category Inputs
  */
-export type CancelMultipleResponseBuilderParams = CancelMultipleResponseInput;
+export type CancelResponsesBuilderParams = CancelResponsesInput;
 
 /**
  * Cancels an existing Response.
  *
  * ```ts
  * const transactionBuilder = convergence
- * .rfqs()
- * .builders()
- * .cancel({ address });
+ *   .rfqs()
+ *   .builders()
+ *   .cancel({ responses });
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const cancelMultipleResponseBuilder = async (
+export const cancelResponsesBuilder = async (
   convergence: Convergence,
-  params: CancelMultipleResponseBuilderParams,
+  params: CancelResponsesBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<Transaction[]> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { maker = convergence.identity(), responses } = params;
 
-  const rfqProgram = convergence.programs().getRfq(programs);
-  const txArray: Transaction[] = [];
-  const protocol = await protocolCache.get(convergence);
+  const txs: Transaction[] = [];
   for (const response of responses) {
     const responseModel = await convergence
       .rfqs()
       .findResponseByAddress({ address: response });
-    const refreshedRfq = await convergence
+    const rfqModel = await convergence
       .rfqs()
       .findRfqByAddress({ address: responseModel.rfq });
 
-    const txBuilder = TransactionBuilder.make()
+    const tx = TransactionBuilder.make()
       .setFeePayer(payer)
       .add({
         instruction: createCancelResponseInstruction(
           {
             maker: responseModel.maker,
-            protocol: protocol.address,
-            rfq: refreshedRfq.address,
+            protocol: convergence.protocol().pdas().protocol(),
+            rfq: rfqModel.address,
             response,
           },
-          rfqProgram.address
+          convergence.programs().getRfq(programs).address
         ),
         signers: [maker],
-        key: 'cancelMultipleResponse',
+        key: 'cancelMultipleResponses',
       });
     const blockHashWithBlockHeight = await convergence
       .rpc()
       .getLatestBlockhash();
-    const tx = txBuilder.toTransaction(blockHashWithBlockHeight);
-    txArray.push(tx);
+    txs.push(tx.toTransaction(blockHashWithBlockHeight));
   }
-  return txArray;
+
+  return txs;
 };

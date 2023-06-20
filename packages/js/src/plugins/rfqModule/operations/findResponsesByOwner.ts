@@ -12,6 +12,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindResponsesByOwnerOperation' as const;
 
@@ -128,6 +129,8 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       const matchingResponses: Response[] = [];
       const matchingRfqPromises: Promise<Rfq>[] = [];
 
+      const collateralMint = await collateralMintCache.get(convergence);
+
       for (let i = 0; i < callsToGetMultipleAccounts; i++) {
         const accounts = await convergence
           .rpc()
@@ -137,7 +140,10 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
           );
 
         for (const account of accounts) {
-          const response = toResponse(toResponseAccount(account));
+          const response = toResponse(
+            toResponseAccount(account),
+            collateralMint.decimals
+          );
 
           if (response.maker.toBase58() === owner.toBase58()) {
             matchingResponses.push(response);

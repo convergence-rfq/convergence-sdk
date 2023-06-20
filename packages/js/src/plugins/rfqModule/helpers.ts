@@ -381,8 +381,8 @@ export const convertResponseInput = (
   bid?: Quote,
   ask?: Quote
 ) => {
-  const convertedBid = bid ? convertQuoteInput(bid, quoteDecimals) : undefined;
-  const convertedAsk = ask ? convertQuoteInput(ask, quoteDecimals) : undefined;
+  const convertedBid = bid ? convertQuoteInput(bid, quoteDecimals) : null;
+  const convertedAsk = ask ? convertQuoteInput(ask, quoteDecimals) : null;
   return { convertedBid, convertedAsk };
 };
 
