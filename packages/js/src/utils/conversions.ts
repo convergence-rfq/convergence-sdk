@@ -11,7 +11,7 @@ export const removeDecimals = (value: bignum, decimals = 0): number => {
   return number;
 };
 
-export const addDecimals = (value: number, decimals = 0): bignum => {
+export const addDecimals = (value: number, decimals = 0): BN => {
   const number = value * Math.pow(10, decimals);
   return new BN(number.toString());
 };

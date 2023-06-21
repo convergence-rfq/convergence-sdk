@@ -147,7 +147,7 @@ export const addLegsToRfqBuilder = async (
   // let { instruments } = params;
 
   const legs = await instrumentsToLegs(instruments);
-  const legAccounts = instrumentsToLegAccounts(instruments);
+  const legAccounts = await instrumentsToLegAccounts(instruments);
 
   const baseAssetAccounts: AccountMeta[] = [];
 
