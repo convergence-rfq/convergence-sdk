@@ -43,10 +43,12 @@ export const logInstrument = (i: LegInstrument): void => {
     l('Mint:', i.mintAddress.toString());
   } else if (i instanceof PsyoptionsAmericanInstrument) {
     l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
-    l('Underlying mint:', i.underlyingMintAddress.toString());
+    // TODO: Add back in?
+    //l('Underlying mint:', i.underlyingMintAddress.toString());
   } else if (i instanceof PsyoptionsEuropeanInstrument) {
+    // TODO: Add back in?
     l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
-    l('Underlying mint:', i.underlyingMintAddress.toString());
+    //l('Underlying mint:', i.underlyingMintAddress.toString());
   }
 };
 
