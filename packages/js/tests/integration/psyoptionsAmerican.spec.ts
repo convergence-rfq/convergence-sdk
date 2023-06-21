@@ -4,7 +4,6 @@ import { OrderType, Side } from '../../src';
 
 import {
   createAmericanCoveredCallRfq,
-  confirmRfqResponse,
   respondToRfq,
   prepareRfqSettlement,
   settleRfq,
@@ -26,12 +25,13 @@ describe('integration.psyoptionsAmerican', () => {
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1, Side.Bid);
     expect(rfqResponse).toHaveProperty('address');
 
-    const { response: confirmResponse } = await confirmRfqResponse(
-      takerCvg,
-      rfq,
-      rfqResponse,
-      Side.Bid
-    );
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: Side.Bid,
+      });
     expect(confirmResponse).toHaveProperty('signature');
 
     await setupAmerican(takerCvg, rfqResponse);

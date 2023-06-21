@@ -166,20 +166,6 @@ export const createRfq = async (
   return { rfq, response };
 };
 
-export const confirmRfqResponse = async (
-  cvg: Convergence,
-  rfq: Rfq,
-  response: Response,
-  side: Side
-) => {
-  return await cvg.rfqs().confirmResponse({
-    taker: cvg.identity(),
-    rfq: rfq.address,
-    response: response.address,
-    side,
-  });
-};
-
 export const respondToRfq = async (
   cvg: Convergence,
   rfq: Rfq,

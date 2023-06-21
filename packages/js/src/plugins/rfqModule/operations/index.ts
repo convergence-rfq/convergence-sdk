@@ -38,4 +38,4 @@ export * from './cleanUpMultipleRfq';
 export * from './cancelMultipleRfq';
 export * from './unlockResponseCollateral';
 export * from './unlockMultipleRfqCollateral';
-export * from './unlockMultipleResponseCollateral';
+export * from './unlockResponseCollateral';

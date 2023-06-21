@@ -3,7 +3,7 @@ import { PublicKey } from '@solana/web3.js';
 import { Response, toResponse } from '../models/Response';
 import { toResponseAccount } from '../accounts';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
-import { convertResponseOutput, getPages } from '../helpers';
+import { convertResponseOutput } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -64,7 +64,7 @@ export type FindResponsesByRfqInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByRfqOutput = Response[][];
+export type FindResponsesByRfqOutput = Response[];
 
 /**
  * @group Operations
@@ -78,8 +78,7 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       scope: OperationScope
     ): Promise<FindResponsesByRfqOutput> => {
       const { programs, commitment } = scope;
-      const { address, responses, responsesPerPage, numPages } =
-        operation.input;
+      const { address, responses } = operation.input;
       scope.throwIfCanceled();
 
       if (responses) {
@@ -101,9 +100,7 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
         }
         scope.throwIfCanceled();
 
-        const pages = getPages(responsesByRfq, responsesPerPage, numPages);
-
-        return pages;
+        return responsesByRfq;
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);
@@ -156,8 +153,6 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
         }
       }
 
-      const pages = getPages(parsedResponses, responsesPerPage, numPages);
-
-      return pages;
+      return parsedResponses;
     },
   };

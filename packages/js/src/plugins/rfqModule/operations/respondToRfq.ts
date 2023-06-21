@@ -159,35 +159,10 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<RespondToRfqOutput> => {
-      const { programs } = scope;
-      const {
-        rfq,
-        bid,
-        ask,
-        maker = convergence.identity(),
-        protocol = convergence.protocol().pdas().protocol(),
-        riskEngine = convergence.programs().getRiskEngine(programs).address,
-        collateralInfo = convergence.collateral().pdas().collateralInfo({
-          user: maker.publicKey,
-          programs,
-        }),
-        collateralToken = convergence.collateral().pdas().collateralToken({
-          user: maker.publicKey,
-          programs,
-        }),
-      } = operation.input;
-
       const builder = await respondToRfqBuilder(
         convergence,
         {
-          rfq,
-          bid,
-          ask,
-          maker,
-          protocol,
-          riskEngine,
-          collateralInfo,
-          collateralToken,
+          ...operation.input,
         },
         scope
       );
@@ -278,11 +253,11 @@ export const respondToRfqBuilder = async (
       convertedAsk
     );
 
+  // TODO: DRY
   const baseAssetIndexValuesSet: Set<number> = new Set();
   for (const leg of rfqModel.legs) {
     baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
   }
-
   const baseAssetAccounts: AccountMeta[] = [];
   const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
   const oracleAccounts: AccountMeta[] = [];

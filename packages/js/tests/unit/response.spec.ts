@@ -1,11 +1,13 @@
 import { expect } from 'expect';
+import { ResponseState } from '@convergence-rfq/rfq';
 
 import { OrderType, Rfq, Side } from '../../src';
 import {
   createUserCvg,
   createRfq,
   respondToRfq,
-  confirmRfqResponse,
+  prepareRfqSettlement,
+  settleRfq,
 } from '../helpers';
 
 describe('unit.response', () => {
@@ -38,7 +40,6 @@ describe('unit.response', () => {
   });
 
   it('respond [buy]', async () => {
-    // Note that we test multiple and duplicate responses
     const [res0, res1, res2, res3, res4] = await Promise.all([
       respondToRfq(makerCvg, rfq0, undefined, amount1),
       respondToRfq(makerCvg, rfq0, undefined, amount2),
@@ -61,7 +62,6 @@ describe('unit.response', () => {
   });
 
   it('respond [sell]', async () => {
-    // Note that we test multiple and duplicate responses
     const [res0, res1, res2, res3, res4] = await Promise.all([
       respondToRfq(makerCvg, rfq1, amount1),
       respondToRfq(makerCvg, rfq1, amount2),
@@ -84,7 +84,6 @@ describe('unit.response', () => {
   });
 
   it('respond [two-way]', async () => {
-    // Note that we test multiple and duplicate responses
     const [res0, res1, res2, res3, res4] = await Promise.all([
       respondToRfq(makerCvg, rfq2, amount3, amount1),
       respondToRfq(makerCvg, rfq2, amount1, amount2),
@@ -113,19 +112,17 @@ describe('unit.response', () => {
   });
 
   it('find by owner', async () => {
-    // TODO: Why is this response object nested?
     const responses = await makerCvg.rfqs().findResponsesByOwner({
       owner: makerCvg.identity().publicKey,
     });
-    expect(responses[0].length).toBeGreaterThan(1);
-    expect(responses[0][0].maker).toEqual(makerCvg.identity().publicKey);
+    expect(responses.length).toBeGreaterThan(1);
+    expect(responses[0].maker).toEqual(makerCvg.identity().publicKey);
   });
 
   it('find by address', async () => {
     const res = await respondToRfq(makerCvg, rfq2, amount3, amount1);
     expect(res.rfqResponse).toHaveProperty('address');
 
-    // TODO: Why is this response object nested?
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: res.rfqResponse.address,
     });
@@ -136,69 +133,85 @@ describe('unit.response', () => {
     const responses = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq0.address,
     });
-    expect(responses[0].length).toBeGreaterThan(1);
-    expect(responses[0][0].rfq.toBase58()).toEqual(rfq0.address.toBase58());
+    expect(responses.length).toBeGreaterThan(1);
+    expect(responses[0].rfq.toBase58()).toEqual(rfq0.address.toBase58());
   });
 
   it('confirm', async () => {
     const responses = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq0.address,
     });
-    const res = await confirmRfqResponse(
-      takerCvg,
-      rfq0,
-      responses[0][0],
-      Side.Ask
-    );
+    const res = await takerCvg.rfqs().confirmResponse({
+      rfq: rfq0.address,
+      response: responses[0].address,
+      side: Side.Ask,
+    });
     expect(res.response).toHaveProperty('signature');
   });
 
   it('cancel', async () => {
-    const [res0, res1] = await Promise.all([
-      respondToRfq(makerCvg, rfq2, amount3, amount1),
-      respondToRfq(makerCvg, rfq2, amount3, amount2),
-      // NOTE: Fails due to race condition when PDA distinguisher collides
-      //respondToRfq(makerCvg, rfq2, amount3, amount1),
-    ]);
-    expect(res0.rfqResponse).toHaveProperty('address');
-    expect(res1.rfqResponse).toHaveProperty('address');
-
-    await makerCvg.rfqs().cancelResponses({
-      responses: [res0.rfqResponse.address, res1.rfqResponse.address],
+    const responsesBefore = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq2.address,
     });
 
-    const [res2, res3] = await Promise.all([
-      makerCvg.rfqs().findResponseByAddress({
-        address: res0.rfqResponse.address,
-      }),
-      makerCvg.rfqs().findResponseByAddress({
-        address: res1.rfqResponse.address,
-      }),
-    ]);
+    // TODO: Check signature
+    await makerCvg.rfqs().cancelResponses({
+      responses: responsesBefore.map((r) => r.address),
+    });
 
-    expect(res2).toHaveProperty('address');
-    expect(res3).toHaveProperty('address');
+    const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq2.address,
+    });
+    for (const response of responsesAfter) {
+      expect(response.state).toBe(ResponseState.Canceled);
+    }
+  });
+
+  it('unlock collateral', async () => {
+    const responses = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq2.address,
+    });
+    // TODO: Check signature
+    await makerCvg.rfqs().unlockResponseCollateral({
+      responses,
+    });
   });
 
   it('clean up', async () => {
-    //const responses = await makerCvg.rfqs().findResponsesByRfq({
-    //  address: rfq0.address,
-    //});
-    //await makerCvg.rfqs().cleanUpResponses({
-    //  responses: responses[0].map((r) => r.address),
-    //  maker: makerCvg.identity().publicKey,
-    //});
+    const responses = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq2.address,
+    });
+    // TODO: Check signature
+    await makerCvg.rfqs().cleanUpResponses({
+      responses,
+      maker: makerCvg.identity().publicKey,
+    });
   });
 
   it('clean up legs', async () => {
-    // TODO
-  });
+    const responses = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq0.address,
+    });
 
-  it('unlock collateral [single]', async () => {
-    // TODO
-  });
+    const res0 = await prepareRfqSettlement(takerCvg, rfq0, responses[0]);
+    const res1 = await prepareRfqSettlement(makerCvg, rfq0, responses[0]);
+    const res2 = await settleRfq(takerCvg, rfq0, responses[0]);
 
-  it('unlock collateral [multiple]', async () => {
-    // TODO
+    expect(res0.response).toHaveProperty('signature');
+    expect(res1.response).toHaveProperty('signature');
+    expect(res2.response).toHaveProperty('signature');
+
+    await makerCvg.rfqs().unlockResponseCollateral({
+      responses: [responses[0]],
+    });
+
+    // TODO: Finish
+    // TODO: Check signature
+    //await makerCvg.rfqs().cleanUpResponseLegs({
+    //  rfq: rfq0.address,
+    //  response: response.address,
+    //  legAmountToClear: 1,
+    //  firstToPrepare: takerCvg.identity().publicKey,
+    //});
   });
 });

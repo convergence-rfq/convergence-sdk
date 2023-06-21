@@ -75,8 +75,6 @@ import {
   unlockRfqCollateralOperation,
   UnlockRfqCollateralInput,
   createAndFinalizeRfqConstructionOperation,
-  UnlockMultipleResponseCollateralInput,
-  unlockMultipleResponseCollateralOperation,
   UnlockMultipleRfqCollateralInput,
   unlockMultipleRfqCollateralOperation,
   CancelMultipleRfqInput,
@@ -502,16 +500,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(unlockResponseCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc unlockMultipleResponseCollateralOperation} */
-  unlockMultipleResponseCollateral(
-    input: UnlockMultipleResponseCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(unlockMultipleResponseCollateralOperation(input), options);
   }
 
   /** {@inheritDoc unlockRfqCollateralOperation} */

@@ -26,7 +26,8 @@ export const removeDecimals = (value: bignum, decimals = 0): number => {
 };
 
 /**
- * Take UI number and convert it to a BN while taking into account token mint decimals.
+ * Take UI number and convert it to a BN while taking into account
+ * token mint decimals.
  *
  * ```
  * const value = 9.5

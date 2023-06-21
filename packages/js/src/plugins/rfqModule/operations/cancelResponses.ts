@@ -153,7 +153,7 @@ export const cancelResponsesBuilder = async (
           convergence.programs().getRfq(programs).address
         ),
         signers: [maker],
-        key: 'cancelMultipleResponses',
+        key: 'cancelResponses',
       });
     const blockHashWithBlockHeight = await convergence
       .rpc()

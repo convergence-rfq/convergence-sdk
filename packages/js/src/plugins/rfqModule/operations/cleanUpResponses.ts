@@ -16,6 +16,7 @@ import {
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { legToBaseAssetMint } from '../helpers';
+import { Response, assertResponse } from '../models/Response';
 
 const Key = 'cleanUpResponsesOperation' as const;
 
@@ -61,7 +62,7 @@ export type CleanUpResponsesInput = {
   /**
    * The address of the reponse accounts.
    */
-  responses: PublicKey[];
+  responses: PublicKey[] | Response[];
 
   /**
    * The protocol address.
@@ -146,32 +147,36 @@ export const cleanUpResponsesBuilder = async (
   const txArray: Transaction[] = [];
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
-    maker = convergence.identity().publicKey,
     responses,
+    maker = convergence.identity().publicKey,
     dao = convergence.identity().publicKey,
   } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-
   const anchorRemainingAccounts: AccountMeta[] = [];
 
-  for (const response of responses) {
-    const responseModel = await convergence
-      .rfqs()
-      .findResponseByAddress({ address: response });
+  for (let response of responses) {
+    if (response instanceof PublicKey) {
+      response = await convergence
+        .rfqs()
+        .findResponseByAddress({ address: response });
+    }
+
+    assertResponse(response);
+
     const rfqModel = await convergence
       .rfqs()
-      .findRfqByAddress({ address: responseModel.rfq });
+      .findRfqByAddress({ address: response.rfq });
 
     const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
-    const initializedLegs = responseModel.legPreparationsInitializedBy.length;
+    const initializedLegs = response.legPreparationsInitializedBy.length;
 
     for (let i = 0; i < initializedLegs; i++) {
       const leg = rfqModel.legs[i];
       const firstToPrepare =
-        responseModel.legPreparationsInitializedBy[0] === AuthoritySide.Maker
-          ? responseModel.maker
+        response.legPreparationsInitializedBy[0] === AuthoritySide.Maker
+          ? response.maker
           : rfqModel.taker;
       const instrumentProgramAccount: AccountMeta = {
         pubkey: rfqModel.legs[i].getProgramId(),
@@ -182,9 +187,9 @@ export const cleanUpResponsesBuilder = async (
       const instrumentEscrowPda = new InstrumentPdasClient(
         convergence
       ).instrumentEscrow({
-        response,
-        index: i,
         rfqModel,
+        response: response.address,
+        index: i,
       });
 
       const baseAssetMint = await legToBaseAssetMint(convergence, leg);
@@ -222,26 +227,28 @@ export const cleanUpResponsesBuilder = async (
     };
 
     const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
-      response,
+      response: response.address,
       program: spotInstrumentProgram.address,
     });
     const firstToPrepare =
-      responseModel.legPreparationsInitializedBy[0] === AuthoritySide.Maker
-        ? responseModel.maker
+      response.legPreparationsInitializedBy[0] === AuthoritySide.Maker
+        ? response.maker
         : rfqModel.taker;
-    const quoteAccounts: AccountMeta[] = [
+
+    anchorRemainingAccounts.push(
+      spotInstrumentProgramAccount,
       {
         pubkey: firstToPrepare,
         isSigner: false,
         isWritable: true,
       },
-      //`escrow`
+      // Escrow
       {
         pubkey: quoteEscrowPda,
         isSigner: false,
         isWritable: true,
       },
-      // `receiver_tokens`
+      // Receiver
       {
         pubkey: convergence.tokens().pdas().associatedTokenAccount({
           mint: rfqModel.quoteMint,
@@ -251,12 +258,7 @@ export const cleanUpResponsesBuilder = async (
         isSigner: false,
         isWritable: true,
       },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    ];
-
-    anchorRemainingAccounts.push(
-      spotInstrumentProgramAccount,
-      ...quoteAccounts
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
     );
 
     const txBuilder = TransactionBuilder.make()
@@ -266,8 +268,8 @@ export const cleanUpResponsesBuilder = async (
           {
             maker,
             protocol: convergence.protocol().pdas().protocol(),
-            rfq: responseModel.rfq,
-            response,
+            rfq: response.rfq,
+            response: response.address,
             anchorRemainingAccounts,
           },
           rfqProgram.address

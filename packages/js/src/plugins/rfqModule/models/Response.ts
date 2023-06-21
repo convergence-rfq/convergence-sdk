@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { COption, bignum } from '@convergence-rfq/beet';
+import { COption } from '@convergence-rfq/beet';
 import {
   AuthoritySide,
   Confirmation,
@@ -31,7 +31,7 @@ export type Response = {
   readonly rfq: PublicKey;
 
   /** The timestamp at which this response was created. */
-  readonly creationTimestamp: bignum;
+  readonly creationTimestamp: number;
 
   /** The bid required for sell and optionally two-way order types. */
   readonly bid: COption<Quote>;
@@ -85,7 +85,7 @@ export const toResponse = (
   address: account.publicKey,
   maker: account.data.maker,
   rfq: account.data.rfq,
-  creationTimestamp: account.data.creationTimestamp,
+  creationTimestamp: Number(account.data.creationTimestamp) * 1_000,
   makerCollateralLocked: removeDecimals(
     account.data.makerCollateralLocked,
     collateralDecimals
@@ -94,13 +94,18 @@ export const toResponse = (
     account.data.takerCollateralLocked,
     collateralDecimals
   ),
+  // TODO: Create new state
   state: account.data.state,
+  // TODO: Remove
   takerPreparedLegs: account.data.takerPreparedLegs,
+  // TODO: Remove
   makerPreparedLegs: account.data.makerPreparedLegs,
+  // TODO: Remove
   settledLegs: account.data.settledLegs,
   confirmed: account.data.confirmed,
   defaultingParty: account.data.defaultingParty,
   legPreparationsInitializedBy: account.data.legPreparationsInitializedBy,
+  // TODO: Convert bid and ask to add decimals
   bid: account.data.bid,
   ask: account.data.ask,
 });

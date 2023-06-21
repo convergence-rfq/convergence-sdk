@@ -3,7 +3,7 @@ import { PublicKey } from '@solana/web3.js';
 import { Response, toResponse } from '../models/Response';
 import { Rfq } from '../models';
 import { toResponseAccount } from '../accounts';
-import { getPages, convertResponseOutput } from '../helpers';
+import { convertResponseOutput } from '../helpers';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import {
   Operation,
@@ -65,7 +65,7 @@ export type FindResponsesByOwnerInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByOwnerOutput = Response[][];
+export type FindResponsesByOwnerOutput = Response[];
 
 /**
  * @group Operations
@@ -78,7 +78,7 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByOwnerOutput> => {
-      const { owner, responses, responsesPerPage, numPages } = operation.input;
+      const { owner, responses } = operation.input;
       const { programs, commitment } = scope;
       scope.throwIfCanceled();
 
@@ -101,9 +101,7 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
         }
         scope.throwIfCanceled();
 
-        const pages = getPages(responsesByOwner, responsesPerPage, numPages);
-
-        return pages;
+        return responsesByOwner;
       }
 
       const rfqProgram = convergence.programs().getRfq(programs);
@@ -155,7 +153,6 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       }
 
       const matchingRfqs = await Promise.all(matchingRfqPromises);
-
       for (const matchingRfq of matchingRfqs) {
         for (const matchingResponse of matchingResponses)
           if (
@@ -170,8 +167,6 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
           }
       }
 
-      const pages = getPages(parsedResponses, responsesPerPage, numPages);
-
-      return pages;
+      return parsedResponses;
     },
   };

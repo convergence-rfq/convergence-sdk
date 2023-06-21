@@ -23,7 +23,6 @@ import {
   SpotLegInstrument,
 } from '../../src';
 import {
-  confirmRfqResponse,
   createPythPriceFeed,
   prepareRfqSettlement,
   respondToRfq,
@@ -102,7 +101,11 @@ describe('integration.psyoptionsEuropean', async () => {
     expect(response.signature).toBeDefined();
 
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0, Side.Bid);
-    await confirmRfqResponse(takerCvg, rfq, rfqResponse, Side.Bid);
+    await takerCvg.rfqs().confirmResponse({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      side: Side.Bid,
+    });
 
     await getOrCreateEuropeanOptionATAs(
       takerCvg,
