@@ -14,6 +14,7 @@ import {
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
 describe('integration.spot', () => {
+  const dao = createUserCvg('dao');
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
@@ -36,7 +37,12 @@ describe('integration.spot', () => {
     const { rfq } = await createRfq(takerCvg, amountA, OrderType.Sell);
     expect(rfq).toHaveProperty('address');
 
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, amountB);
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      amountB,
+      Side.Bid
+    );
     expect(rfqResponse).toHaveProperty('address');
 
     const confirmResponse = await confirmRfqResponse(
@@ -113,7 +119,6 @@ describe('integration.spot', () => {
       fetchTokenAmount(takerCvg, baseMintBTC.address),
       fetchTokenAmount(makerCvg, baseMintBTC.address),
     ]);
-
     expect(makerBtcAfter).toBe(makerBtcBefore - amountA);
     expect(takerBtcAfter).toBe(takerBtcBefore + amountA);
   });
@@ -218,7 +223,7 @@ describe('integration.spot', () => {
       rfq: rfq.address,
     });
 
-    await makerCvg.rfqs().cancelMultipleResponse({
+    await makerCvg.rfqs().cancelResponses({
       responses: [response1.address, response2.address, response3.address],
     });
     //await sleep(3000);

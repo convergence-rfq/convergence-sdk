@@ -280,7 +280,7 @@ export const createRfqBuilder = async (
   ];
 
   const baseAssetAccounts = legsToBaseAssetAccounts(convergence, legs);
-  const legAccounts = instrumentsToLegAccounts(instruments);
+  const legAccounts = await instrumentsToLegAccounts(instruments);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

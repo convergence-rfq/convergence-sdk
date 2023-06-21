@@ -23,7 +23,7 @@ describe('integration.psyoptionsAmerican', () => {
     );
     expect(rfq).toHaveProperty('address');
 
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1);
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1, Side.Bid);
     expect(rfqResponse).toHaveProperty('address');
 
     const { response: confirmResponse } = await confirmRfqResponse(

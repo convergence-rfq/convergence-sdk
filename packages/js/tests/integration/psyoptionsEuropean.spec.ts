@@ -101,7 +101,7 @@ describe('integration.psyoptionsEuropean', async () => {
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
 
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0);
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0, Side.Bid);
     await confirmRfqResponse(takerCvg, rfq, rfqResponse, Side.Bid);
 
     await getOrCreateEuropeanOptionATAs(
