@@ -76,7 +76,7 @@ export class SpotLegInstrument implements LegInstrument {
   }
 
   /** Helper method to get validation accounts for a spot instrument. */
-  getValidationAccounts() {
+  async getValidationAccounts() {
     const mintInfo = this.convergence
       .rfqs()
       .pdas()
@@ -91,10 +91,7 @@ export class SpotLegInstrument implements LegInstrument {
 }
 
 export const spotLegInstrumentParser = {
-  async parseFromLeg(
-    convergence: Convergence,
-    leg: Leg
-  ): Promise<SpotLegInstrument> {
+  parseFromLeg(convergence: Convergence, leg: Leg): SpotLegInstrument {
     const {
       side,
       instrumentAmount,

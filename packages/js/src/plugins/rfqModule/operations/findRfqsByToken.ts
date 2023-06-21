@@ -1,5 +1,4 @@
 import { PublicKey } from '@solana/web3.js';
-import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
 import { PsyoptionsAmericanInstrument } from '../../psyoptionsAmericanInstrumentModule';
@@ -99,7 +98,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
           for (const leg of rfq.legs) {
             if (leg instanceof PsyoptionsAmericanInstrument) {
-              if (leg.underlyingMintAddress.equals(mintAddress)) {
+              const optionMeta = await leg.getOptionMeta();
+              if (optionMeta.underlyingAssetMint.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals
@@ -113,10 +113,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               const euroMetaOptionMint = await convergence
                 .tokens()
                 .findMintByAddress({
-                  address:
-                    leg.optionType == OptionType.CALL
-                      ? leg.meta.callOptionMint
-                      : leg.meta.putOptionMint,
+                  address: leg.optionMint,
                 });
               if (
                 euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
@@ -188,7 +185,8 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
 
           for (const leg of rfq.legs) {
             if (leg instanceof PsyoptionsAmericanInstrument) {
-              if (leg.underlyingMintAddress.equals(mintAddress)) {
+              const optionMeta = await leg.getOptionMeta();
+              if (optionMeta.underlyingAssetMint.equals(mintAddress)) {
                 const convertedRfq = convertRfqOutput(
                   rfq,
                   collateralMintDecimals
@@ -202,10 +200,7 @@ export const findRfqsByTokenOperationHandler: OperationHandler<FindRfqsByTokenOp
               const euroMetaOptionMint = await convergence
                 .tokens()
                 .findMintByAddress({
-                  address:
-                    leg.optionType == OptionType.CALL
-                      ? leg.meta.callOptionMint
-                      : leg.meta.putOptionMint,
+                  address: leg.optionMint,
                 });
               if (
                 euroMetaOptionMint.address.toBase58() === mintAddress.toBase58()
