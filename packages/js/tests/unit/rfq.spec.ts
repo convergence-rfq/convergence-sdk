@@ -5,7 +5,7 @@ import { Mint, SpotLegInstrument, SpotQuoteInstrument } from '../../src';
 import { createUserCvg } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('unit.collateral', () => {
+describe('unit.rfq', () => {
   const takerCvg = createUserCvg('taker');
 
   let baseMintBTC: Mint;
@@ -20,7 +20,7 @@ describe('unit.collateral', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it('cancel, reclaim and cleanup multiple RFQs', async () => {
+  it('cancel, reclaim and cleanup multiple', async () => {
     const { rfq: rfq1, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, Side.Bid),

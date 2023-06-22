@@ -15,7 +15,7 @@ import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
 type Quote = SolitaQuote;
 
 /**
- * This model captures all the relevant information about an Response
+ * This model captures all the relevant information about a response
  * on the Solana blockchain.
  *
  * @group Models
@@ -80,7 +80,7 @@ export function assertResponse(value: any): asserts value is Response {
 }
 
 export const toSolitaQuote = (
-  quote: SolitaQuote | null,
+  quote: Quote | null,
   decimals: number
 ): SolitaQuote | null => {
   if (quote) {
@@ -88,20 +88,17 @@ export const toSolitaQuote = (
       Number(quote.priceQuote.amountBps),
       decimals
     );
-    const convertedPriceQuoteAmountBps = new BN(priceQuoteWithDecimals);
 
-    quote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(
+    // TODO: Is this correct?
+    quote.priceQuote.amountBps = priceQuoteWithDecimals.mul(
       new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS))
     );
 
-    if (quote.__kind == 'Standard') {
-      // Multiply before and then convert to BN
-      const priceQuoteWithDecimals = addDecimals(
+    if (quote.__kind === 'Standard') {
+      quote.legsMultiplierBps = addDecimals(
         Number(quote.legsMultiplierBps),
         LEG_MULTIPLIER_DECIMALS
       );
-      const convertedLegsMultiplierBps = new BN(priceQuoteWithDecimals);
-      quote.legsMultiplierBps = convertedLegsMultiplierBps;
     }
 
     return quote;
@@ -115,18 +112,18 @@ const fromSolitaQuote = (
   decimals: number
 ): Quote | null => {
   if (quote) {
-    // TODO: Is this correct?
     const priceQuoteWithoutDecimals = removeDecimals(
       quote.priceQuote.amountBps,
       decimals
     );
 
+    // TODO: Is this correct?
     quote.priceQuote.amountBps = removeDecimals(
       new BN(priceQuoteWithoutDecimals),
       ABSOLUTE_PRICE_DECIMALS
     );
 
-    if (quote.__kind == 'Standard') {
+    if (quote.__kind === 'Standard') {
       const legsMultiplierBps = removeDecimals(
         quote.legsMultiplierBps,
         LEG_MULTIPLIER_DECIMALS

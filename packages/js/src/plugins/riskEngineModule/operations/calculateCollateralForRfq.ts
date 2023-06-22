@@ -32,12 +32,12 @@ const Key = 'CalculateCollateralForRfqOperation' as const;
  *
  * ```ts
  * await cvg.riskEngine().calculateCollateralForRfq({
+      legs,
       fixedSize: {
         __kind: 'BaseAsset',
         legsMultiplierBps: 2,
       },
       orderType: OrderType.TwoWay,
-      legs,
       settlementPeriod: 5 * 60 * 60, // 5 hours
     });
  * ```
@@ -73,21 +73,27 @@ export type CalculateCollateralForRfqOutput = {
  */
 export type CalculateCollateralForRfqInput = {
   /**
-   * Size restriction of the RFQ being created
+   * Size restriction of the RFQ being created.
    */
   fixedSize: FixedSize;
+
   /**
-   * Order type of the RFQ being created
+   * Order type of the RFQ being created.
    */
   orderType: OrderType;
+
   /**
-   * Legs of the RFQ being created
+   * Legs of the RFQ being created.
    */
   legs: LegInstrument[];
 
-  quoteAsset: QuoteInstrument;
   /**
-   * Settlement period of the RFQ being created in seconds
+   * Quote asset of the RFQ being created.
+   */
+  quoteAsset: QuoteInstrument;
+
+  /**
+   * Settlement period of the RFQ being created in seconds.
    */
   settlementPeriod: number;
 };
@@ -104,28 +110,23 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
     ): Promise<CalculateCollateralForRfqOutput> => {
       scope.throwIfCanceled();
 
-      const config = await convergence.riskEngine().fetchConfig(scope);
-
       const { fixedSize, orderType, legs, quoteAsset, settlementPeriod } =
         operation.input;
 
+      const config = await convergence.riskEngine().fetchConfig(scope);
       const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
 
-      // if (isFixedSizeNone(fixedSize)) {
       if (isFixedSizeNone(convertedFixedSize)) {
         return convertCollateralBpsToOutput(
           config.collateralForVariableSizeRfqCreation,
           config
         );
-        // } else if (isFixedSizeQuoteAsset(fixedSize)) {
       } else if (isFixedSizeQuoteAsset(convertedFixedSize)) {
         return convertCollateralBpsToOutput(
           config.collateralForFixedQuoteAmountRfqCreation,
           config
         );
-        // } else if (isFixedSizeBaseAsset(fixedSize)) {
       } else if (isFixedSizeBaseAsset(convertedFixedSize)) {
-        // const { legsMultiplierBps } = fixedSize;
         const { legsMultiplierBps } = convertedFixedSize;
         const legMultiplier =
           Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
