@@ -3,7 +3,6 @@ import { PublicKey } from '@solana/web3.js';
 import { Response, toResponse } from '../models/Response';
 import { toResponseAccount } from '../accounts';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
-import { convertResponseOutput } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -19,11 +18,7 @@ const Key = 'FindResponsesByRfqOperation' as const;
  * Finds Responses for a given RFQ address.
  *
  * ```ts
- * const rfq = await convergence
- *   .rfqs()
- *   .findResponsesByRfq({
- *     address
- *   });
+ * const rfq = await convergence.rfqs().findResponsesByRfq({ address });
  * ```
  *
  * @group Operations
@@ -49,15 +44,6 @@ export type FindResponsesByRfqOperation = Operation<
 export type FindResponsesByRfqInput = {
   /** The address of the Rfq. */
   address: PublicKey;
-
-  /** Optional array of Responses to search from. */
-  responses?: Response[];
-
-  /** Optional number of Responses to return per page. */
-  responsesPerPage?: number;
-
-  /** Optional number of pages to return. */
-  numPages?: number;
 };
 
 /**
@@ -77,82 +63,39 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FindResponsesByRfqOutput> => {
-      const { programs, commitment } = scope;
-      const { address, responses } = operation.input;
-      scope.throwIfCanceled();
+      const { commitment } = scope;
+      const { address } = operation.input;
 
-      if (responses) {
-        const responsesByRfq: Response[] = [];
-
-        for (const response of responses) {
-          if (response.rfq.toBase58() === address.toBase58()) {
-            const rfq = await convergence
-              .rfqs()
-              .findRfqByAddress({ address: response.rfq });
-
-            const convertedResponse = convertResponseOutput(
-              response,
-              rfq.quoteAsset.getDecimals()
-            );
-
-            responsesByRfq.push(convertedResponse);
-          }
-        }
-        scope.throwIfCanceled();
-
-        return responsesByRfq;
-      }
-
-      const rfqProgram = convergence.programs().getRfq(programs);
-      const responseGpaBuilder = new ResponseGpaBuilder(
-        convergence,
-        rfqProgram.address
-      );
+      const responseGpaBuilder = new ResponseGpaBuilder(convergence);
       const unparsedAccounts = await responseGpaBuilder
         .withoutData()
         .whereRfq(address)
         .get();
-      const unparsedAddresses = unparsedAccounts.map(
-        (account) => account.publicKey
-      );
-      scope.throwIfCanceled();
+      const responseAddresses = unparsedAccounts.map((acc) => acc.publicKey);
 
-      const callsToGetMultipleAccounts = Math.ceil(
-        unparsedAddresses.length / 100
-      );
-
-      const parsedResponses: Response[] = [];
+      const rfq = await convergence.rfqs().findRfqByAddress({ address });
       const collateralMint = await collateralMintCache.get(convergence);
 
-      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+      const responses: Response[] = [];
+      for (let i = 0; i < Math.ceil(responseAddresses.length / 100); i++) {
         const accounts = await convergence
           .rpc()
           .getMultipleAccounts(
-            unparsedAddresses.slice(i * 100, (i + 1) * 100),
+            responseAddresses.slice(i * 100, (i + 1) * 100),
             commitment
           );
 
         for (const account of accounts) {
-          const response = toResponse(
-            toResponseAccount(account),
-            collateralMint.decimals
-          );
-
-          if (response.rfq.toBase58() === address.toBase58()) {
-            const rfq = await convergence
-              .rfqs()
-              .findRfqByAddress({ address: response.rfq });
-
-            const convertedResponse = convertResponseOutput(
-              response,
+          responses.push(
+            toResponse(
+              toResponseAccount(account),
+              collateralMint.decimals,
               rfq.quoteAsset.getDecimals()
-            );
-
-            parsedResponses.push(convertedResponse);
-          }
+            )
+          );
         }
       }
 
-      return parsedResponses;
+      return responses;
     },
   };

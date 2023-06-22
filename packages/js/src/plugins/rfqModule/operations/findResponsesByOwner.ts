@@ -3,7 +3,6 @@ import { PublicKey } from '@solana/web3.js';
 import { Response, toResponse } from '../models/Response';
 import { Rfq } from '../models';
 import { toResponseAccount } from '../accounts';
-import { convertResponseOutput } from '../helpers';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import {
   Operation,
@@ -48,11 +47,8 @@ export type FindResponsesByOwnerOperation = Operation<
  * @category Inputs
  */
 export type FindResponsesByOwnerInput = {
-  /** The address of the Maker (owner) of the Response(s). */
+  /** The address of the maker of the responses. */
   owner: PublicKey;
-
-  /** Optional array of Responses to search from. */
-  responses?: Response[];
 
   /** Optional number of Responses to return per page. */
   responsesPerPage?: number;
@@ -76,60 +72,27 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
     handle: async (
       operation: FindResponsesByOwnerOperation,
       convergence: Convergence,
+      // eslint-disable-next-line no-unused-vars
       scope: OperationScope
     ): Promise<FindResponsesByOwnerOutput> => {
-      const { owner, responses } = operation.input;
-      const { programs, commitment } = scope;
-      scope.throwIfCanceled();
+      const { commitment } = scope;
+      const { owner } = operation.input;
 
-      if (responses) {
-        const responsesByOwner: Response[] = [];
-
-        for (const response of responses) {
-          if (response.maker.toBase58() === owner.toBase58()) {
-            const rfq = await convergence
-              .rfqs()
-              .findRfqByAddress({ address: response.rfq });
-
-            const convertedResponse = convertResponseOutput(
-              response,
-              rfq.quoteAsset.getDecimals()
-            );
-
-            responsesByOwner.push(convertedResponse);
-          }
-        }
-        scope.throwIfCanceled();
-
-        return responsesByOwner;
-      }
-
-      const rfqProgram = convergence.programs().getRfq(programs);
-      const responseGpaBuilder = new ResponseGpaBuilder(
-        convergence,
-        rfqProgram.address
-      );
+      const responseGpaBuilder = new ResponseGpaBuilder(convergence);
       const unparsedAccounts = await responseGpaBuilder
         .withoutData()
         .whereMaker(owner)
         .get();
-      const unparsedAddresses = unparsedAccounts.map(
-        (account) => account.publicKey
-      );
-      scope.throwIfCanceled();
-
-      const callsToGetMultipleAccounts = Math.ceil(
-        unparsedAddresses.length / 100
-      );
-
-      const parsedResponses: Response[] = [];
-
-      const matchingResponses: Response[] = [];
-      const matchingRfqPromises: Promise<Rfq>[] = [];
+      const unparsedAddresses = unparsedAccounts.map((acc) => acc.publicKey);
 
       const collateralMint = await collateralMintCache.get(convergence);
 
-      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+      const parsedResponses: Response[] = [];
+      const matchingResponses: Response[] = [];
+      const matchingRfqPromises: Promise<Rfq>[] = [];
+
+      const callCount = Math.ceil(unparsedAddresses.length / 100);
+      for (let i = 0; i < callCount; i++) {
         const accounts = await convergence
           .rpc()
           .getMultipleAccounts(
@@ -138,11 +101,17 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
           );
 
         for (const account of accounts) {
+          const responseAccount = toResponseAccount(account);
+          const rfq = await convergence
+            .rfqs()
+            .findRfqByAddress({ address: responseAccount.data.rfq });
           const response = toResponse(
-            toResponseAccount(account),
-            collateralMint.decimals
+            responseAccount,
+            collateralMint.decimals,
+            rfq.quoteAsset.getDecimals()
           );
 
+          // TODO: Should this not already be matching owner?
           if (response.maker.toBase58() === owner.toBase58()) {
             matchingResponses.push(response);
             matchingRfqPromises.push(
@@ -158,12 +127,7 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
           if (
             matchingResponse.rfq.toBase58() === matchingRfq.address.toBase58()
           ) {
-            const convertedResponse = convertResponseOutput(
-              matchingResponse,
-              matchingRfq.quoteAsset.getDecimals()
-            );
-
-            parsedResponses.push(convertedResponse);
+            parsedResponses.push(matchingResponse);
           }
       }
 

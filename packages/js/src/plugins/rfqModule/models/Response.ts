@@ -4,12 +4,14 @@ import {
   AuthoritySide,
   Confirmation,
   DefaultingParty,
-  Quote,
+  Quote as SolitaQuote,
   StoredResponseState,
 } from '@convergence-rfq/rfq';
+import { BN } from '@project-serum/anchor';
 
 import { ResponseAccount } from '../accounts';
-import { assert, removeDecimals } from '../../../utils';
+import { assert, removeDecimals, addDecimals } from '../../../utils';
+import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
 
 /**
  * This model captures all the relevant information about an Response
@@ -34,10 +36,10 @@ export type Response = {
   readonly creationTimestamp: number;
 
   /** The bid required for sell and optionally two-way order types. */
-  readonly bid: COption<Quote>;
+  readonly bid: COption<SolitaQuote>;
 
   /** The ask required for buy and optionally two-way order types. */
-  readonly ask: COption<Quote>;
+  readonly ask: COption<SolitaQuote>;
 
   /** The amount of the maker collateral locked. */
   readonly makerCollateralLocked: number;
@@ -76,10 +78,69 @@ export function assertResponse(value: any): asserts value is Response {
   assert(isResponse(value), 'Expected Response model');
 }
 
+export const toSolitaQuote = (
+  quote: SolitaQuote | null,
+  decimals: number
+): SolitaQuote | null => {
+  if (quote) {
+    const priceQuoteWithDecimals = addDecimals(
+      Number(quote.priceQuote.amountBps),
+      decimals
+    );
+    const convertedPriceQuoteAmountBps = new BN(priceQuoteWithDecimals);
+
+    quote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(
+      new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS))
+    );
+
+    if (quote.__kind == 'Standard') {
+      // Multiply before and then convert to BN
+      const priceQuoteWithDecimals = addDecimals(
+        Number(quote.legsMultiplierBps),
+        LEG_MULTIPLIER_DECIMALS
+      );
+      const convertedLegsMultiplierBps = new BN(priceQuoteWithDecimals);
+      quote.legsMultiplierBps = convertedLegsMultiplierBps;
+    }
+
+    return quote;
+  }
+
+  return null;
+};
+
+const fromSolitaQuote = (
+  quote: SolitaQuote | null,
+  decimals: number
+): SolitaQuote | null => {
+  if (quote) {
+    // TODO: Is this correct?
+    const convertedPriceQuoteAmountBps = removeDecimals(
+      quote.priceQuote.amountBps,
+      decimals
+    );
+
+    quote.priceQuote.amountBps = removeDecimals(
+      new BN(convertedPriceQuoteAmountBps),
+      ABSOLUTE_PRICE_DECIMALS
+    );
+
+    if (quote.__kind == 'Standard') {
+      const legsMultiplierBps = removeDecimals(quote.legsMultiplierBps);
+      quote.legsMultiplierBps = new BN(legsMultiplierBps);
+    }
+
+    return quote;
+  }
+
+  return null;
+};
+
 /** @group Model Helpers */
 export const toResponse = (
   account: ResponseAccount,
-  collateralDecimals: number
+  collateralDecimals: number,
+  quoteDecimals: number
 ): Response => ({
   model: 'response',
   address: account.publicKey,
@@ -94,18 +155,17 @@ export const toResponse = (
     account.data.takerCollateralLocked,
     collateralDecimals
   ),
-  // TODO: Create new state
+  // TODO: Create new state for UI
   state: account.data.state,
-  // TODO: Remove
+  // TODO: Abstract with response model method
   takerPreparedLegs: account.data.takerPreparedLegs,
-  // TODO: Remove
+  // TODO: Abstract with response model method
   makerPreparedLegs: account.data.makerPreparedLegs,
-  // TODO: Remove
+  // TODO: Abstract with response model method
   settledLegs: account.data.settledLegs,
   confirmed: account.data.confirmed,
   defaultingParty: account.data.defaultingParty,
   legPreparationsInitializedBy: account.data.legPreparationsInitializedBy,
-  // TODO: Convert bid and ask to add decimals
-  bid: account.data.bid,
-  ask: account.data.ask,
+  bid: fromSolitaQuote(account.data.bid, quoteDecimals),
+  ask: fromSolitaQuote(account.data.ask, quoteDecimals),
 });

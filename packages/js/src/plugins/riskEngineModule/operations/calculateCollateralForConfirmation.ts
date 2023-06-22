@@ -91,17 +91,12 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
 
       // fetching in parallel
       const [rfq, response, config] = await Promise.all([
-        convergence
-          .rfqs()
-          .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
-        convergence
-          .rfqs()
-          .findResponseByAddress(
-            { address: responseAddress, convert: false },
-            scope
-          ),
+        convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
+        convergence.rfqs().findResponseByAddress({ address: responseAddress }),
         convergence.riskEngine().fetchConfig(scope),
       ]);
+
+      // TODO: Remove conversion
 
       let legMultiplierBps;
       if (confirmation.overrideLegMultiplierBps === null) {

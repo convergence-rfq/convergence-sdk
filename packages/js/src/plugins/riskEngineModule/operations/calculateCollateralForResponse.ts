@@ -11,7 +11,7 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
-import { convertResponseInput } from '../../rfqModule';
+import { toSolitaQuote } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -61,14 +61,14 @@ export type CalculateCollateralForResponseOperation = Operation<
  * @category Inputs
  */
 export type CalculateCollateralForResponseInput = {
-  /** The address of the Rfq account. */
+  /** The address of the RFQ account. */
   rfqAddress: PublicKey;
 
-  /** Bid answer to the Rfq. */
-  bid: Quote | null;
+  /** Bid answer to the RFQ. */
+  bid: Quote;
 
-  /** Ask answer to the Rfq. */
-  ask: Quote | null;
+  /** Ask answer to the RFQ. */
+  ask: Quote;
 };
 
 /**
@@ -90,24 +90,15 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       convergence: Convergence,
       scope: OperationScope
     ): Promise<CalculateCollateralForResponseOutput> => {
-      scope.throwIfCanceled();
-
-      const { rfqAddress, bid, ask } = operation.input;
+      const { rfqAddress, bid = null, ask = null } = operation.input;
 
       const [rfq, config] = await Promise.all([
-        convergence
-          .rfqs()
-          .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
+        convergence.rfqs().findRfqByAddress({ address: rfqAddress }),
         convergence.riskEngine().fetchConfig(scope),
       ]);
 
-      const quoteDecimals = rfq.quoteAsset.getDecimals();
-
-      const { convertedBid, convertedAsk } = convertResponseInput(
-        quoteDecimals,
-        bid ?? undefined,
-        ask ?? undefined
-      );
+      const solitaBid = toSolitaQuote(bid, rfq.quoteAsset.getDecimals());
+      const solitaAsk = toSolitaQuote(ask, rfq.quoteAsset.getDecimals());
 
       const getCase = (quote: Quote, side: Side) => {
         const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
@@ -122,11 +113,11 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       };
 
       const cases = [];
-      if (convertedBid) {
-        cases.push(getCase(convertedBid, Side.Bid));
+      if (solitaBid) {
+        cases.push(getCase(solitaBid, Side.Bid));
       }
-      if (convertedAsk) {
-        cases.push(getCase(convertedAsk, Side.Ask));
+      if (solitaAsk) {
+        cases.push(getCase(solitaAsk, Side.Ask));
       }
 
       const risks = await calculateRisk(

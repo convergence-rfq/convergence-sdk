@@ -2,8 +2,7 @@ import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertResponse, Response } from '../models/Response';
-import { convertResponseInput } from '../helpers';
+import { assertResponse, Response, toSolitaQuote } from '../models/Response';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -218,8 +217,8 @@ export const respondToRfqBuilder = async (
   const { programs } = options;
   const {
     rfq,
-    bid,
-    ask,
+    bid = null,
+    ask = null,
     maker = convergence.identity(),
     protocol = convergence.protocol().pdas().protocol(),
     riskEngine = convergence.programs().getRiskEngine(programs).address,
@@ -238,11 +237,8 @@ export const respondToRfqBuilder = async (
   }
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  const { convertedBid, convertedAsk } = convertResponseInput(
-    rfqModel.quoteAsset.getDecimals(),
-    bid,
-    ask
-  );
+  const convertedBid = toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals());
+  const convertedAsk = toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals());
 
   const { response, pdaDistinguisher } =
     await getNextResponsePdaAndDistinguisher(

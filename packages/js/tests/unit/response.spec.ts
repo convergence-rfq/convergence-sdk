@@ -48,12 +48,6 @@ describe('unit.response', () => {
       respondToRfq(makerCvg, rfq0, undefined, amount1),
     ]);
 
-    expect(res0.rfqResponse).toHaveProperty('address');
-    expect(res1.rfqResponse).toHaveProperty('address');
-    expect(res2.rfqResponse).toHaveProperty('address');
-    expect(res3.rfqResponse).toHaveProperty('address');
-    expect(res4.rfqResponse).toHaveProperty('address');
-
     expect(res0.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount1);
     expect(res1.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount2);
     expect(res2.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount3);
@@ -70,12 +64,6 @@ describe('unit.response', () => {
       respondToRfq(makerCvg, rfq1, amount1),
     ]);
 
-    expect(res0.rfqResponse).toHaveProperty('address');
-    expect(res1.rfqResponse).toHaveProperty('address');
-    expect(res2.rfqResponse).toHaveProperty('address');
-    expect(res3.rfqResponse).toHaveProperty('address');
-    expect(res4.rfqResponse).toHaveProperty('address');
-
     expect(res0.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount1);
     expect(res1.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount2);
     expect(res2.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount3);
@@ -91,12 +79,6 @@ describe('unit.response', () => {
       respondToRfq(makerCvg, rfq2, amount3, amount1),
       respondToRfq(makerCvg, rfq2, amount3, amount1),
     ]);
-
-    expect(res0.rfqResponse).toHaveProperty('address');
-    expect(res1.rfqResponse).toHaveProperty('address');
-    expect(res2.rfqResponse).toHaveProperty('address');
-    expect(res3.rfqResponse).toHaveProperty('address');
-    expect(res4.rfqResponse).toHaveProperty('address');
 
     expect(res0.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount3);
     expect(res1.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount1);
@@ -116,13 +98,13 @@ describe('unit.response', () => {
       owner: makerCvg.identity().publicKey,
     });
     expect(responses.length).toBeGreaterThan(1);
-    expect(responses[0].maker).toEqual(makerCvg.identity().publicKey);
+    responses.map((r) =>
+      expect(r.maker).toEqual(makerCvg.identity().publicKey)
+    );
   });
 
   it('find by address', async () => {
     const res = await respondToRfq(makerCvg, rfq2, amount3, amount1);
-    expect(res.rfqResponse).toHaveProperty('address');
-
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: res.rfqResponse.address,
     });
@@ -134,10 +116,29 @@ describe('unit.response', () => {
       address: rfq0.address,
     });
     expect(responses.length).toBeGreaterThan(1);
-    expect(responses[0].rfq.toBase58()).toEqual(rfq0.address.toBase58());
+    responses.map((r) =>
+      expect(r.rfq.toBase58()).toEqual(rfq0.address.toBase58())
+    );
   });
 
-  it('confirm', async () => {
+  it('confirm [bid]', async () => {
+    const responses = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq1.address,
+    });
+    const res = await takerCvg.rfqs().confirmResponse({
+      rfq: rfq1.address,
+      response: responses[0].address,
+      side: Side.Bid,
+    });
+    expect(res.response).toHaveProperty('signature');
+
+    const response = await makerCvg.rfqs().findResponseByAddress({
+      address: responses[0].address,
+    });
+    expect(response.confirmed?.side).toBe(Side.Bid);
+  });
+
+  it('confirm [ask]', async () => {
     const responses = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq0.address,
     });
@@ -147,6 +148,11 @@ describe('unit.response', () => {
       side: Side.Ask,
     });
     expect(res.response).toHaveProperty('signature');
+
+    const response = await makerCvg.rfqs().findResponseByAddress({
+      address: responses[0].address,
+    });
+    expect(response.confirmed?.side).toBe(Side.Ask);
   });
 
   it('cancel', async () => {
@@ -156,25 +162,29 @@ describe('unit.response', () => {
 
     // TODO: Check signature
     await makerCvg.rfqs().cancelResponses({
-      responses: responsesBefore.map((r) => r.address),
+      responses: responsesBefore,
     });
 
     const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
-    for (const response of responsesAfter) {
-      expect(response.state).toBe(ResponseState.Canceled);
-    }
+    responsesAfter.map((r) => expect(r.state).toBe(ResponseState.Canceled));
   });
 
   it('unlock collateral', async () => {
-    const responses = await makerCvg.rfqs().findResponsesByRfq({
+    const responsesBefore = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
+
     // TODO: Check signature
     await makerCvg.rfqs().unlockResponseCollateral({
-      responses,
+      responses: responsesBefore,
     });
+
+    const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq2.address,
+    });
+    responsesAfter.map((r) => expect(r.makerCollateralLocked).toBe(0));
   });
 
   it('clean up', async () => {
@@ -193,17 +203,15 @@ describe('unit.response', () => {
       address: rfq0.address,
     });
 
-    const res0 = await prepareRfqSettlement(takerCvg, rfq0, responses[0]);
-    const res1 = await prepareRfqSettlement(makerCvg, rfq0, responses[0]);
+    const [res0, res1] = await Promise.all([
+      prepareRfqSettlement(takerCvg, rfq0, responses[0]),
+      prepareRfqSettlement(makerCvg, rfq0, responses[0]),
+    ]);
     const res2 = await settleRfq(takerCvg, rfq0, responses[0]);
 
     expect(res0.response).toHaveProperty('signature');
     expect(res1.response).toHaveProperty('signature');
     expect(res2.response).toHaveProperty('signature');
-
-    await makerCvg.rfqs().unlockResponseCollateral({
-      responses: [responses[0]],
-    });
 
     // TODO: Finish
     // TODO: Check signature

@@ -87,6 +87,7 @@ export const unlockResponseCollateralOperationHandler: OperationHandler<UnlockRe
       const signedTnxs = await convergence
         .identity()
         .signAllTransactions(builder);
+
       for (const tx of signedTnxs) {
         await convergence
           .rpc()
@@ -122,72 +123,75 @@ export const unlockResponseCollateralBuilder = async (
   const { responses } = params;
 
   const protocol = await protocolCache.get(convergence);
-  const txArray: Transaction[] = [];
-  for (let response of responses) {
-    if (response instanceof PublicKey) {
-      response = await convergence
+
+  const txs = await Promise.all(
+    responses.map(async (response) => {
+      if (response instanceof PublicKey) {
+        response = await convergence
+          .rfqs()
+          .findResponseByAddress({ address: response });
+      }
+
+      const { taker } = await convergence
         .rfqs()
-        .findResponseByAddress({ address: response });
-    }
-    const { taker } = await convergence
-      .rfqs()
-      .findRfqByAddress({ address: response.rfq });
+        .findRfqByAddress({ address: response.rfq });
 
-    const txBuilder = TransactionBuilder.make()
-      .setFeePayer(payer)
-      .add({
-        instruction: createUnlockResponseCollateralInstruction(
-          {
-            rfq: response.rfq,
-            response: response.address,
-            protocol: convergence.protocol().pdas().protocol(),
-            takerCollateralInfo: convergence
-              .collateral()
-              .pdas()
-              .collateralInfo({
-                user: taker,
-                programs,
-              }),
-            makerCollateralInfo: convergence
-              .collateral()
-              .pdas()
-              .collateralInfo({
-                user: response.maker,
-                programs,
-              }),
-            takerCollateralTokens: convergence
-              .collateral()
-              .pdas()
-              .collateralToken({
-                user: taker,
-                programs,
-              }),
-            makerCollateralTokens: convergence
-              .collateral()
-              .pdas()
-              .collateralToken({
-                user: response.maker,
-                programs,
-              }),
-            protocolCollateralTokens: convergence
-              .collateral()
-              .pdas()
-              .collateralToken({
-                user: protocol.authority,
-                programs,
-              }),
-          },
-          convergence.programs().getRfq(programs).address
-        ),
-        signers: [],
-        key: 'unlockMultipleResponseCollateral',
-      });
-    const blockHashWithBlockHeight = await convergence
-      .rpc()
-      .getLatestBlockhash();
-    const tx = txBuilder.toTransaction(blockHashWithBlockHeight);
-    txArray.push(tx);
-  }
+      const builder = TransactionBuilder.make()
+        .setFeePayer(payer)
+        .add({
+          instruction: createUnlockResponseCollateralInstruction(
+            {
+              rfq: response.rfq,
+              response: response.address,
+              protocol: convergence.protocol().pdas().protocol(),
+              takerCollateralInfo: convergence
+                .collateral()
+                .pdas()
+                .collateralInfo({
+                  user: taker,
+                  programs,
+                }),
+              makerCollateralInfo: convergence
+                .collateral()
+                .pdas()
+                .collateralInfo({
+                  user: response.maker,
+                  programs,
+                }),
+              takerCollateralTokens: convergence
+                .collateral()
+                .pdas()
+                .collateralToken({
+                  user: taker,
+                  programs,
+                }),
+              makerCollateralTokens: convergence
+                .collateral()
+                .pdas()
+                .collateralToken({
+                  user: response.maker,
+                  programs,
+                }),
+              protocolCollateralTokens: convergence
+                .collateral()
+                .pdas()
+                .collateralToken({
+                  user: protocol.authority,
+                  programs,
+                }),
+            },
+            convergence.programs().getRfq(programs).address
+          ),
+          signers: [],
+          key: 'unlockeResponseCollateral',
+        });
+      const blockHashWithBlockHeight = await convergence
+        .rpc()
+        .getLatestBlockhash();
 
-  return txArray;
+      return builder.toTransaction(blockHashWithBlockHeight);
+    })
+  );
+
+  return txs;
 };

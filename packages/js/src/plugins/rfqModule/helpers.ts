@@ -7,13 +7,7 @@ import {
 } from '@solana/web3.js';
 import * as Spl from '@solana/spl-token';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import {
-  Quote,
-  Side,
-  Leg,
-  FixedSize,
-  StoredRfqState,
-} from '@convergence-rfq/rfq';
+import { Side, Leg, FixedSize, StoredRfqState } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
@@ -58,7 +52,7 @@ import {
 } from '../instrumentModule';
 import { SpotLegInstrument } from '../spotInstrumentModule';
 import type { Rfq, Response } from './models';
-import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from './constants';
+import { LEG_MULTIPLIER_DECIMALS } from './constants';
 
 const { mintOptions } = instructions;
 
@@ -277,94 +271,6 @@ export const convertRfqOutput = (
   }
 
   return rfq;
-};
-
-export const convertResponseOutput = (
-  response: Response,
-  quoteDecimals: number
-): Response => {
-  if (response.bid) {
-    const convertedPriceQuoteAmountBps = removeDecimals(
-      response.bid.priceQuote.amountBps,
-      quoteDecimals
-    );
-    const removedQuoteDecimals = new anchor.BN(convertedPriceQuoteAmountBps);
-    const removedAbsoluteDecimals = removeDecimals(
-      removedQuoteDecimals,
-      ABSOLUTE_PRICE_DECIMALS
-    );
-
-    response.bid.priceQuote.amountBps = removedAbsoluteDecimals;
-
-    if (response.bid.__kind == 'Standard') {
-      const convertedLegsMultiplierBps = removeDecimals(
-        response.bid.legsMultiplierBps
-      );
-
-      response.bid.legsMultiplierBps = new anchor.BN(
-        convertedLegsMultiplierBps
-      );
-    }
-  }
-  if (response.ask) {
-    const convertedPriceQuoteAmountBps = removeDecimals(
-      response.ask.priceQuote.amountBps,
-      quoteDecimals
-    );
-    const removedQuoteDeciamls = new anchor.BN(convertedPriceQuoteAmountBps);
-    const removedAbsoluteDecimals = removeDecimals(
-      removedQuoteDeciamls,
-      ABSOLUTE_PRICE_DECIMALS
-    );
-
-    response.ask.priceQuote.amountBps = removedAbsoluteDecimals;
-
-    if (response.ask.__kind == 'Standard') {
-      const convertedLegsMultiplierBps = removeDecimals(
-        response.ask.legsMultiplierBps
-      );
-      response.ask.legsMultiplierBps = new anchor.BN(
-        convertedLegsMultiplierBps
-      );
-    }
-  }
-  return response;
-};
-
-const convertQuoteInput = (quote: Quote, quoteDecimals: number) => {
-  const convertedQuote = structuredClone(quote);
-  convertedQuote.priceQuote.amountBps = quote.priceQuote.amountBps;
-  // multiply before and then convert to anchor.BN
-  const priceQuoteWithDecimals = addDecimals(
-    Number(convertedQuote.priceQuote.amountBps),
-    quoteDecimals
-  );
-  const convertedPriceQuoteAmountBps = new anchor.BN(priceQuoteWithDecimals);
-
-  convertedQuote.priceQuote.amountBps = convertedPriceQuoteAmountBps.mul(
-    new anchor.BN(10).pow(new anchor.BN(ABSOLUTE_PRICE_DECIMALS))
-  );
-
-  if (convertedQuote.__kind == 'Standard') {
-    // multiply before and then convert to anchor.BN
-    const priceQuoteWithDecimals = addDecimals(
-      Number(convertedQuote.legsMultiplierBps),
-      LEG_MULTIPLIER_DECIMALS
-    );
-    const convertedLegsMultiplierBps = new anchor.BN(priceQuoteWithDecimals);
-    convertedQuote.legsMultiplierBps = convertedLegsMultiplierBps;
-  }
-  return convertedQuote;
-};
-
-export const convertResponseInput = (
-  quoteDecimals: number,
-  bid?: Quote,
-  ask?: Quote
-) => {
-  const convertedBid = bid ? convertQuoteInput(bid, quoteDecimals) : null;
-  const convertedAsk = ask ? convertQuoteInput(ask, quoteDecimals) : null;
-  return { convertedBid, convertedAsk };
 };
 
 export const calculateExpectedLegsHash = (

@@ -10,18 +10,15 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Response } from '../models/Response';
 
 const Key = 'cancelResponsesOperation' as const;
 
 /**
- * Cancels multiple response.
+ * Cancel multiple response.
  *
  * ```ts
- * await convergence
- *   .rfqs()
- *   .cancelResponses({
- *     responses: [response.address]
- *   });
+ * await convergence.rfqs().cancelResponses({ responses });
  * ```
  *
  * @group Operations
@@ -48,7 +45,7 @@ export type CancelResponsesInput = {
   /**
    * The addresses of the reponses.
    */
-  responses: PublicKey[];
+  responses: PublicKey[] | Response[];
 
   /**
    * The maker as a signer.
@@ -114,10 +111,7 @@ export type CancelResponsesBuilderParams = CancelResponsesInput;
  * Cancels an existing Response.
  *
  * ```ts
- * const transactionBuilder = convergence
- *   .rfqs()
- *   .builders()
- *   .cancel({ responses });
+ * const builder = convergence.rfqs().builders().cancel({ responses });
  * ```
  *
  * @group Transaction Builders
@@ -131,35 +125,39 @@ export const cancelResponsesBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { maker = convergence.identity(), responses } = params;
 
-  const txs: Transaction[] = [];
-  for (const response of responses) {
-    const responseModel = await convergence
-      .rfqs()
-      .findResponseByAddress({ address: response });
-    const rfqModel = await convergence
-      .rfqs()
-      .findRfqByAddress({ address: responseModel.rfq });
+  const txs = Promise.all(
+    responses.map(async (response) => {
+      if (response instanceof PublicKey) {
+        response = await convergence
+          .rfqs()
+          .findResponseByAddress({ address: response });
+      }
 
-    const tx = TransactionBuilder.make()
-      .setFeePayer(payer)
-      .add({
-        instruction: createCancelResponseInstruction(
-          {
-            maker: responseModel.maker,
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq: rfqModel.address,
-            response,
-          },
-          convergence.programs().getRfq(programs).address
-        ),
-        signers: [maker],
-        key: 'cancelResponses',
-      });
-    const blockHashWithBlockHeight = await convergence
-      .rpc()
-      .getLatestBlockhash();
-    txs.push(tx.toTransaction(blockHashWithBlockHeight));
-  }
+      const rfq = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: response.rfq });
+
+      const tx = TransactionBuilder.make()
+        .setFeePayer(payer)
+        .add({
+          instruction: createCancelResponseInstruction(
+            {
+              response: response.address,
+              rfq: rfq.address,
+              maker: response.maker,
+              protocol: convergence.protocol().pdas().protocol(),
+            },
+            convergence.programs().getRfq(programs).address
+          ),
+          signers: [maker],
+          key: 'cancelResponses',
+        });
+      const blockHashWithBlockHeight = await convergence
+        .rpc()
+        .getLatestBlockhash();
+      return tx.toTransaction(blockHashWithBlockHeight);
+    })
+  );
 
   return txs;
 };

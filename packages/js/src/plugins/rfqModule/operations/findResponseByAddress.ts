@@ -2,7 +2,6 @@ import { PublicKey } from '@solana/web3.js';
 
 import { toResponseAccount } from '../accounts';
 import { assertResponse, Response, toResponse } from '../models/Response';
-import { convertResponseOutput } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -21,7 +20,7 @@ const Key = 'FindResponseByAddressOperation' as const;
  * await convergence
  *   .rfqs()
  *   .findResponseByAddress({
- *     address: rfqResponse.address
+ *     address: response.address
  *   });
  * ```
  *
@@ -48,9 +47,6 @@ export type FindResponseByAddressOperation = Operation<
 export type FindResponseByAddressInput = {
   /** The address of the Response account. */
   address: PublicKey;
-
-  /** Optional flag for whether to convert the output to a human-readable format. */
-  convert?: boolean;
 };
 
 /**
@@ -71,30 +67,20 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       scope: OperationScope
     ): Promise<FindResponseByAddressOutput> => {
       const { commitment } = scope;
-      const { address, convert = true } = operation.input;
-      scope.throwIfCanceled();
+      const { address } = operation.input;
 
-      const collateralMint = await collateralMintCache.get(convergence);
       const account = await convergence.rpc().getAccount(address, commitment);
+      const responseAccount = toResponseAccount(account);
+      const rfq = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: responseAccount.data.rfq });
+      const collateralMint = await collateralMintCache.get(convergence);
       const response = toResponse(
-        toResponseAccount(account),
-        collateralMint.decimals
+        responseAccount,
+        collateralMint.decimals,
+        rfq.quoteAsset.getDecimals()
       );
       assertResponse(response);
-      scope.throwIfCanceled();
-
-      if (convert) {
-        const rfq = await convergence
-          .rfqs()
-          .findRfqByAddress({ address: response.rfq });
-
-        const convertedResponse = convertResponseOutput(
-          response,
-          rfq.quoteAsset.getDecimals()
-        );
-
-        return convertedResponse;
-      }
 
       return response;
     },
