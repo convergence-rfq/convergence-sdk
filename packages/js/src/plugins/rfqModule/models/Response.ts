@@ -1,17 +1,18 @@
 import { PublicKey } from '@solana/web3.js';
-import { COption } from '@convergence-rfq/beet';
 import {
-  AuthoritySide,
-  Confirmation,
-  DefaultingParty,
+  AuthoritySide as SolitaAuthoritySide,
+  Confirmation as SolitaConfirmation,
+  DefaultingParty as SolitaDefaultingParty,
   Quote as SolitaQuote,
-  StoredResponseState,
+  StoredResponseState as SolitaStoredResponseState,
 } from '@convergence-rfq/rfq';
 import { BN } from '@project-serum/anchor';
 
 import { ResponseAccount } from '../accounts';
 import { assert, removeDecimals, addDecimals } from '../../../utils';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
+
+type Quote = SolitaQuote;
 
 /**
  * This model captures all the relevant information about an Response
@@ -36,10 +37,10 @@ export type Response = {
   readonly creationTimestamp: number;
 
   /** The bid required for sell and optionally two-way order types. */
-  readonly bid: COption<SolitaQuote>;
+  readonly bid: Quote | null;
 
   /** The ask required for buy and optionally two-way order types. */
-  readonly ask: COption<SolitaQuote>;
+  readonly ask: Quote | null;
 
   /** The amount of the maker collateral locked. */
   readonly makerCollateralLocked: number;
@@ -48,7 +49,7 @@ export type Response = {
   readonly takerCollateralLocked: number;
 
   /** The current state of the response. */
-  readonly state: StoredResponseState;
+  readonly state: SolitaStoredResponseState;
 
   /** The number of legs prepared by the taker. */
   readonly takerPreparedLegs: number;
@@ -60,13 +61,13 @@ export type Response = {
   readonly settledLegs: number;
 
   /** The optional confirmation of this response. */
-  readonly confirmed: COption<Confirmation>;
+  readonly confirmed: SolitaConfirmation | null;
 
   /** The optional defaulting party of this response. */
-  readonly defaultingParty: COption<DefaultingParty>;
+  readonly defaultingParty: SolitaDefaultingParty | null;
 
   /** Shows whether the maker or taker initialized preparation for each prepared leg. */
-  readonly legPreparationsInitializedBy: AuthoritySide[];
+  readonly legPreparationsInitializedBy: SolitaAuthoritySide[];
 };
 
 /** @group Model Helpers */
@@ -112,21 +113,24 @@ export const toSolitaQuote = (
 const fromSolitaQuote = (
   quote: SolitaQuote | null,
   decimals: number
-): SolitaQuote | null => {
+): Quote | null => {
   if (quote) {
     // TODO: Is this correct?
-    const convertedPriceQuoteAmountBps = removeDecimals(
+    const priceQuoteWithoutDecimals = removeDecimals(
       quote.priceQuote.amountBps,
       decimals
     );
 
     quote.priceQuote.amountBps = removeDecimals(
-      new BN(convertedPriceQuoteAmountBps),
+      new BN(priceQuoteWithoutDecimals),
       ABSOLUTE_PRICE_DECIMALS
     );
 
     if (quote.__kind == 'Standard') {
-      const legsMultiplierBps = removeDecimals(quote.legsMultiplierBps);
+      const legsMultiplierBps = removeDecimals(
+        quote.legsMultiplierBps,
+        LEG_MULTIPLIER_DECIMALS
+      );
       quote.legsMultiplierBps = new BN(legsMultiplierBps);
     }
 

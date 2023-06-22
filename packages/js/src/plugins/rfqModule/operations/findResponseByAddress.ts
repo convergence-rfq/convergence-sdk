@@ -17,11 +17,7 @@ const Key = 'FindResponseByAddressOperation' as const;
  * Finds Response by a given address.
  *
  * ```ts
- * await convergence
- *   .rfqs()
- *   .findResponseByAddress({
- *     address: response.address
- *   });
+ * await convergence.rfqs().findResponseByAddress({ address });
  * ```
  *
  * @group Operations
@@ -74,6 +70,7 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       const rfq = await convergence
         .rfqs()
         .findRfqByAddress({ address: responseAccount.data.rfq });
+
       const collateralMint = await collateralMintCache.get(convergence);
       const response = toResponse(
         responseAccount,
