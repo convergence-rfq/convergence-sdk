@@ -168,6 +168,7 @@ async function fetchLatestOraclePrice(
   aggregatorPubkey: PublicKey,
   commitment?: Commitment
 ) {
+  // TODO: Use retry method
   const aggregatorAccount = await convergence.connection.getAccountInfo(
     aggregatorPubkey,
     commitment
