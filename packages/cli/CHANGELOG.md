@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.3.9
+
+### Patch Changes
+
+- Use latest blockhash in sendRawTransaction
+- Updated dependencies
+  - @convergence-rfq/sdk@4.3.9
+
 ## 4.3.8
 
 ### Patch Changes

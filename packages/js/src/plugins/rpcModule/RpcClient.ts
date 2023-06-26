@@ -174,10 +174,6 @@ export class RpcClient {
     confirmOptions?: ConfirmOptions
   ): Promise<SendAndConfirmTransactionResponse> {
     const transaction = Transaction.from(rawTransaction);
-    const blockhashWithExpiryBlockHeight = {
-      blockhash: transaction.recentBlockhash as string,
-      lastValidBlockHeight: transaction.lastValidBlockHeight as number,
-    };
     const sendOptions: SendOptions = {
       skipPreflight: confirmOptions?.skipPreflight,
       preflightCommitment: confirmOptions?.preflightCommitment,
@@ -189,6 +185,7 @@ export class RpcClient {
         rawTransaction,
         sendOptions
       );
+      const blockhashWithExpiryBlockHeight = await this.getLatestBlockhash();
       const confirmResponse = await this.confirmTransaction(
         signature,
         blockhashWithExpiryBlockHeight,
