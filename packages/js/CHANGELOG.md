@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.3.8
+
+### Patch Changes
+
+- Added sendRawTransaction to RPC client
+
 ## 4.3.7
 
 ### Patch Changes
