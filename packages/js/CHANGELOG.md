@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.3.9
+
+### Patch Changes
+
+- Use latest blockhash in sendRawTransaction
+
 ## 4.3.8
 
 ### Patch Changes
