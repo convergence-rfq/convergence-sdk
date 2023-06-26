@@ -172,8 +172,9 @@ function convertCollateralBpsToOutput(
   value: bignum,
   config: Config
 ): CalculateCollateralForRfqOutput {
-  const requiredCollateral =
-    Number(value) / 10 ** Number(config.collateralMintDecimals);
+  //const requiredCollateral =
+  //  Number(value) / 10 ** Number(config.collateralMintDecimals);
 
+  const requiredCollateral = value;
   return { requiredCollateral };
 }
