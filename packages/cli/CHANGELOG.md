@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.3.10
+
+### Patch Changes
+
+- Add minContextSlot and preflight confirmation to sending transactions
+- Updated dependencies
+  - @convergence-rfq/sdk@4.3.10
+
 ## 4.3.9
 
 ### Patch Changes
