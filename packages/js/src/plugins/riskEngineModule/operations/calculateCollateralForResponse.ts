@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { AuthoritySide, Quote, Side } from '@convergence-rfq/rfq';
+import { Quote, AuthoritySide, Side } from '@convergence-rfq/rfq';
 
 import { calculateRisk } from '../clientCollateralCalculator';
 import { extractLegsMultiplierBps } from '../helpers';
@@ -65,10 +65,10 @@ export type CalculateCollateralForResponseInput = {
   rfqAddress: PublicKey;
 
   /** Bid answer to the RFQ. */
-  bid: Quote;
+  bid?: Quote;
 
   /** Ask answer to the RFQ. */
-  ask: Quote;
+  ask?: Quote;
 };
 
 /**

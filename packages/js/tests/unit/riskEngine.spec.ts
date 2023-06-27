@@ -1,11 +1,12 @@
 import { expect } from 'expect';
 
 import { InstrumentType, DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
-import { createRfq, createUserCvg } from '../helpers';
+import { createRfq, createUserCvg, respondToRfq } from '../helpers';
 
 describe('unit.riskEngine', () => {
   const daoCvg = createUserCvg('dao');
   const takerCvg = createUserCvg('taker');
+  const makerCvg = createUserCvg('maker');
 
   it('fetch config', async () => {
     const config = await daoCvg.riskEngine().fetchConfig();
@@ -111,6 +112,21 @@ describe('unit.riskEngine', () => {
       ],
     });
     expect(config.address).toEqual(daoCvg.riskEngine().pdas().config());
+  });
+
+  it('calculate collateral for response', async () => {
+    const { rfq } = await createRfq(takerCvg, 1.5, 'sell');
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1);
+    const { requiredCollateral } = await daoCvg
+      .riskEngine()
+      .calculateCollateralForResponse({
+        rfqAddress: rfq.address,
+        bid: {
+          __kind: 'FixedSize',
+          priceQuote: { __kind: 'AbsolutePrice', amountBps: 12.5 },
+        },
+      });
+    expect(requiredCollateral).toBeCloseTo(rfqResponse.makerCollateralLocked);
   });
 
   it('calculate collateral for RFQ', async () => {
