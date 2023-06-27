@@ -1,16 +1,13 @@
 import {
   AuthoritySide,
-  FixedSize,
   isFixedSizeBaseAsset,
   isFixedSizeNone,
   isFixedSizeQuoteAsset,
-  OrderType,
+  OrderType as SolitaOrderType,
   Side,
 } from '@convergence-rfq/rfq';
-import { bignum } from '@convergence-rfq/beet';
 
 import { calculateRisk } from '../clientCollateralCalculator';
-import { Config } from '../models';
 import {
   Operation,
   OperationHandler,
@@ -18,12 +15,9 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
-import { convertFixedSizeInput } from '../../rfqModule';
-import {
-  LegInstrument,
-  QuoteInstrument,
-} from '../../../plugins/instrumentModule';
+import { LegInstrument } from '../../../plugins/instrumentModule';
+import { FixedSize, LEG_MULTIPLIER_DECIMALS, toSolitaFixedSize } from "@/plugins/rfqModule";
+import { removeDecimals } from "@/utils";
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -79,13 +73,12 @@ export type CalculateCollateralForRfqInput = {
   /**
    * Order type of the RFQ being created
    */
-  orderType: OrderType;
+  orderType: SolitaOrderType;
   /**
    * Legs of the RFQ being created
    */
   legs: LegInstrument[];
 
-  quoteAsset: QuoteInstrument;
   /**
    * Settlement period of the RFQ being created in seconds
    */
@@ -106,30 +99,27 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
 
       const config = await convergence.riskEngine().fetchConfig(scope);
 
-      const { fixedSize, orderType, legs, quoteAsset, settlementPeriod } =
+      const { fixedSize, orderType, legs, settlementPeriod } =
         operation.input;
 
-      const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
+      const size = toSolitaFixedSize(fixedSize, 0);
 
-      // if (isFixedSizeNone(fixedSize)) {
-      if (isFixedSizeNone(convertedFixedSize)) {
-        return convertCollateralBpsToOutput(
-          config.collateralForVariableSizeRfqCreation,
-          config
-        );
-        // } else if (isFixedSizeQuoteAsset(fixedSize)) {
-      } else if (isFixedSizeQuoteAsset(convertedFixedSize)) {
-        return convertCollateralBpsToOutput(
-          config.collateralForFixedQuoteAmountRfqCreation,
-          config
-        );
-        // } else if (isFixedSizeBaseAsset(fixedSize)) {
-      } else if (isFixedSizeBaseAsset(convertedFixedSize)) {
-        // const { legsMultiplierBps } = fixedSize;
-        const { legsMultiplierBps } = convertedFixedSize;
-        const legMultiplier =
-          Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
-
+      if (isFixedSizeNone(size)) {
+        return {
+          requiredCollateral: removeDecimals(
+            config.collateralForVariableSizeRfqCreation, 
+            Number(config.collateralMintDecimals),
+          )
+        }
+      } else if (isFixedSizeQuoteAsset(size)) {
+        return {
+          requiredCollateral: removeDecimals(
+            config.collateralForFixedQuoteAmountRfqCreation, 
+            Number(config.collateralMintDecimals),
+          )
+        }
+      } else if (isFixedSizeBaseAsset(size)) {
+        const legMultiplier = removeDecimals(size.legsMultiplierBps, LEG_MULTIPLIER_DECIMALS);
         const sideToCase = (side: Side) => {
           return {
             legMultiplier,
@@ -139,11 +129,11 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
         };
 
         const cases = [];
-        if (orderType == OrderType.Buy) {
+        if (orderType == SolitaOrderType.Buy) {
           cases.push(sideToCase(Side.Ask));
-        } else if (orderType == OrderType.Sell) {
+        } else if (orderType == SolitaOrderType.Sell) {
           cases.push(sideToCase(Side.Bid));
-        } else if (orderType == OrderType.TwoWay) {
+        } else if (orderType == SolitaOrderType.TwoWay) {
           cases.push(sideToCase(Side.Ask));
           cases.push(sideToCase(Side.Bid));
         } else {
@@ -166,13 +156,3 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
       throw new Error('Invalid fixed size');
     },
   };
-
-function convertCollateralBpsToOutput(
-  value: bignum,
-  config: Config
-): CalculateCollateralForRfqOutput {
-  const requiredCollateral =
-    Number(value) / 10 ** Number(config.collateralMintDecimals);
-
-  return { requiredCollateral };
-}

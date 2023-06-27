@@ -3,12 +3,10 @@ import { PublicKey, AccountMeta } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertRfq, Rfq } from '../models';
-import { OrderType, FixedSize } from '../types';
+import { assertRfq, FixedSize, Rfq, toSolitaFixedSize } from '../models';
 import {
   calculateExpectedLegsHash,
   instrumentsToLegsAndLegsSize,
-  convertFixedSizeInput,
   instrumentsToLegAccounts,
   legsToBaseAssetAccounts,
 } from '../helpers';
@@ -27,6 +25,7 @@ import {
   QuoteInstrument,
   toQuote,
 } from '../../../plugins/instrumentModule';
+import { OrderType, toSolitaOrderType } from "../models/OrderType";
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -157,7 +156,6 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
 
-    const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
     expectedLegsHash =
       expectedLegsHash ?? calculateExpectedLegsHash(instruments);
 
@@ -169,7 +167,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         legsHash: Buffer.from(expectedLegsHash),
         orderType,
         quoteAsset: toQuote(quoteAsset),
-        fixedSize: convertedFixedSize,
+        fixedSize,
         activeWindow,
         settlingWindow,
         recentTimestamp,
@@ -180,7 +178,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       {
         ...operation.input,
         rfq: rfqPda,
-        fixedSize: convertedFixedSize,
+        fixedSize,
         instruments,
         activeWindow,
         settlingWindow,
@@ -304,9 +302,9 @@ export const createRfqBuilder = async (
           expectedLegsSize,
           expectedLegsHash: Array.from(expectedLegsHash),
           legs,
-          orderType,
+          orderType: toSolitaOrderType(orderType),
           quoteAsset: toQuote(quoteAsset),
-          fixedSize,
+          fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
           activeWindow,
           settlingWindow,
           recentTimestamp,

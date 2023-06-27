@@ -2,10 +2,9 @@ import { PublicKey } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { OrderType, FixedSize } from '../types';
-import { assertRfq, Rfq } from '../models';
+import { assertRfq, FixedSize, Rfq } from '../models';
 
-import { convertFixedSizeInput, calculateExpectedLegsHash } from '../helpers';
+import { calculateExpectedLegsHash } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -23,6 +22,7 @@ import {
 } from '../../../plugins/instrumentModule';
 import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
+import { OrderType } from "../models/OrderType";
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -165,7 +165,6 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         Math.floor(Date.now() / 1_000) - 10
       );
 
-      const convertedFixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
       const expectedLegsHash = calculateExpectedLegsHash(instruments);
 
       const rfqPda = convergence
@@ -176,7 +175,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           legsHash: Buffer.from(expectedLegsHash),
           orderType,
           quoteAsset: toQuote(quoteAsset),
-          fixedSize: convertedFixedSize,
+          fixedSize,
           activeWindow,
           settlingWindow,
           recentTimestamp,
@@ -188,7 +187,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           ...operation.input,
           taker,
           rfq: rfqPda,
-          fixedSize: convertedFixedSize,
+          fixedSize,
           instruments,
           expectedLegsHash,
           recentTimestamp,

@@ -11,8 +11,6 @@ import {
   Quote,
   Side,
   Leg,
-  FixedSize,
-  StoredRfqState,
 } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
@@ -50,7 +48,6 @@ import { collateralMintCache } from '../collateralModule';
 import { Mint } from '../tokenModule';
 import {
   LegInstrument,
-  QuoteInstrument,
   getSerializedLegLength,
   getValidationAccounts,
   serializeAsLeg,
@@ -230,53 +227,6 @@ export const convertOverrideLegMultiplierBps = (
   overrideLegMultiplierBps: number
 ): number => {
   return overrideLegMultiplierBps * Math.pow(10, 9);
-};
-
-export const convertFixedSizeInput = (
-  fixedSize: FixedSize,
-  quoteAsset: QuoteInstrument
-): FixedSize => {
-  if (fixedSize.__kind == 'BaseAsset') {
-    fixedSize.legsMultiplierBps = addDecimals(
-      Number(fixedSize.legsMultiplierBps),
-      LEG_MULTIPLIER_DECIMALS
-    );
-  } else if (fixedSize.__kind == 'QuoteAsset') {
-    fixedSize.quoteAmount = addDecimals(
-      Number(fixedSize.quoteAmount),
-      quoteAsset.getDecimals()
-    );
-  }
-
-  return fixedSize;
-};
-
-export const convertRfqOutput = (
-  rfq: Rfq,
-  collateralMintDecimals: number
-): Rfq => {
-  rfq.nonResponseTakerCollateralLocked = removeDecimals(
-    rfq.nonResponseTakerCollateralLocked,
-    collateralMintDecimals
-  );
-  rfq.totalTakerCollateralLocked = removeDecimals(
-    rfq.totalTakerCollateralLocked,
-    collateralMintDecimals
-  );
-
-  if (rfq.fixedSize.__kind == 'BaseAsset') {
-    rfq.fixedSize.legsMultiplierBps = removeDecimals(
-      rfq.fixedSize.legsMultiplierBps,
-      LEG_MULTIPLIER_DECIMALS
-    );
-  } else if (rfq.fixedSize.__kind == 'QuoteAsset') {
-    rfq.fixedSize.quoteAmount = removeDecimals(
-      rfq.fixedSize.quoteAmount,
-      rfq.quoteAsset.getDecimals()
-    );
-  }
-
-  return rfq;
 };
 
 export const convertResponseOutput = (
@@ -1613,7 +1563,7 @@ export const createAccountsAndMintOptions = async (
 export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
   return rfqs
     .sort((a, b) => {
-      return b.state === StoredRfqState.Active ? 1 : -1;
+      return b.state === 'active' ? 1 : -1;
     })
     .sort((a, b) => {
       if (a.state === b.state) {

@@ -12,10 +12,10 @@ import {
   ABSOLUTE_PRICE_DECIMALS,
   LEG_MULTIPLIER_DECIMALS,
 } from '../rfqModule/constants';
-import { Rfq } from '../rfqModule/models';
+import { Rfq, toSolitaFixedSize } from '../rfqModule/models';
 
 export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
-  const { fixedSize } = rfq;
+  const fixedSize = toSolitaFixedSize(rfq.size, rfq.quoteAsset.getDecimals());
 
   if (isFixedSizeNone(fixedSize)) {
     if (isQuoteFixedSize(quote)) {

@@ -15,3 +15,12 @@ export const addDecimals = (value: number, decimals = 0): BN => {
   const number = value * Math.pow(10, decimals);
   return new BN(number.toString());
 };
+
+/**
+ * Used to convert timestamps from CPL to numbers in milliseconds.
+ * @param timestamp {bignum} Solita timestamp
+ * @returns the timestamp in milliseconds
+ */
+export function convertTimestamp(timestamp: bignum): number {
+  return Number(timestamp) * 1_000;
+}
