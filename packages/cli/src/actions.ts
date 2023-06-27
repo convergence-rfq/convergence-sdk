@@ -7,11 +7,10 @@ import {
   PriceOracle,
   SpotLegInstrument,
   SpotQuoteInstrument,
-  StoredRfqState,
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import { getInstrumentType, getSide, getOrderType, getSize } from './helpers';
+import { getSide } from './helpers';
 import {
   logPk,
   logResponse,
@@ -235,7 +234,7 @@ export const getActiveRfqs = async (opts: Opts) => {
     // NOTE: Paging is not implemented yet
     const rfqs = await cvg.rfqs().findRfqs({});
     rfqs
-      .filter(r => r.state === StoredRfqState.Active)
+      .filter(r => r.state === 'active')
       .sort((a, b) => {
         const aTimeToExpiry = a.creationTimestamp + a.activeWindow;
         const bTimeToExpiry = b.creationTimestamp + b.activeWindow;
@@ -278,8 +277,8 @@ export const createRfq = async (opts: Opts) => {
         ),
       ],
       taker: cvg.rpc().getDefaultFeePayer(),
-      orderType: getOrderType(opts.orderType),
-      fixedSize: getSize(opts.size),
+      orderType: opts.orderType,
+      fixedSize: opts.size,
       quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
       activeWindow: parseInt(opts.activeWindow),
       settlingWindow: parseInt(opts.settlingWindow),
@@ -399,7 +398,7 @@ export const setRiskEngineInstrumentType = async (opts: Opts) => {
   try {
     const { response } = await cvg.riskEngine().setInstrumentType({
       instrumentProgram: new PublicKey(opts.program),
-      instrumentType: getInstrumentType(opts.type),
+      instrumentType: opts.type,
     });
     logResponse(response);
   } catch (e) {
