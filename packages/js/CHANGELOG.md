@@ -1,5 +1,23 @@
 # @convergence-rfq/sdk
 
+## 4.3.10
+
+### Patch Changes
+
+- Add minContextSlot and preflight confirmation to sending transactions
+
+## 4.3.9
+
+### Patch Changes
+
+- Use latest blockhash in sendRawTransaction
+
+## 4.3.8
+
+### Patch Changes
+
+- Added sendRawTransaction to RPC client
+
 ## 4.3.7
 
 ### Patch Changes

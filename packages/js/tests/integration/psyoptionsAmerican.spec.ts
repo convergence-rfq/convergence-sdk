@@ -1,6 +1,6 @@
 import { expect } from 'expect';
 
-import { OrderType, Side } from '../../src';
+import { Side } from '../../src';
 
 import {
   createAmericanCoveredCallRfq,
@@ -18,7 +18,7 @@ describe('integration.psyoptionsAmerican', () => {
   it('covered call [sell]', async () => {
     const { rfq } = await createAmericanCoveredCallRfq(
       takerCvg,
-      OrderType.Sell
+      'sell'
     );
     expect(rfq).toHaveProperty('address');
 

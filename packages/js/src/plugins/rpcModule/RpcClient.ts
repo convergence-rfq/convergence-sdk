@@ -157,14 +157,53 @@ export class RpcClient {
 
     transaction = await this.signTransaction(transaction, signers);
     const rawTransaction = transaction.serialize();
+
+    return await this.sendRawTransaction(
+      rawTransaction,
+      sendOptions,
+      transaction
+    );
+  }
+
+  async sendAndConfirmRawTransaction(
+    rawTransaction: Buffer,
+    confirmOptions?: ConfirmOptions
+  ): Promise<SendAndConfirmTransactionResponse> {
+    const signature = await this.sendRawTransaction(
+      rawTransaction,
+      confirmOptions
+    );
+    const blockhashWithExpiryBlockHeight = await this.getLatestBlockhash();
+    const confirmResponse = await this.confirmTransaction(
+      signature,
+      blockhashWithExpiryBlockHeight,
+      confirmOptions?.commitment
+    );
+    return { signature, confirmResponse, ...blockhashWithExpiryBlockHeight };
+  }
+
+  async sendRawTransaction(
+    rawTransaction: Buffer,
+    sendOptions: SendOptions = {},
+    sourceTransaction?: Transaction
+  ) {
     sendOptions.skipPreflight = this.convergence.skipPreflight;
+    if (sendOptions.preflightCommitment === undefined) {
+      sendOptions.preflightCommitment = this.convergence.connection.commitment;
+    }
+    if (sendOptions.minContextSlot === undefined) {
+      sendOptions.minContextSlot = this.lastContextSlot;
+    }
 
     try {
-      return await this.convergence.connection.sendRawTransaction(
-        rawTransaction,
-        sendOptions
+      return await this.retryGetAccountAction(() =>
+        this.convergence.connection.sendRawTransaction(
+          rawTransaction,
+          sendOptions
+        )
       );
     } catch (error) {
+      const transaction = sourceTransaction ?? Transaction.from(rawTransaction);
       throw this.parseProgramError(error, transaction);
     }
   }
@@ -177,27 +216,19 @@ export class RpcClient {
       blockhash: transaction.recentBlockhash as string,
       lastValidBlockHeight: transaction.lastValidBlockHeight as number,
     };
+
     const rawTransaction = transaction.serialize();
-    const sendOptions: SendOptions = {
-      skipPreflight: confirmOptions?.skipPreflight,
-      preflightCommitment: confirmOptions?.preflightCommitment,
-      maxRetries: confirmOptions?.maxRetries,
-      minContextSlot: confirmOptions?.minContextSlot,
-    };
-    try {
-      const signature = await this.convergence.connection.sendRawTransaction(
-        rawTransaction,
-        sendOptions
-      );
-      const confirmResponse = await this.confirmTransaction(
-        signature,
-        blockhashWithExpiryBlockHeight,
-        confirmOptions?.commitment
-      );
-      return { signature, confirmResponse, ...blockhashWithExpiryBlockHeight };
-    } catch (error) {
-      throw this.parseProgramError(error, transaction);
-    }
+    const signature = await this.sendRawTransaction(
+      rawTransaction,
+      confirmOptions,
+      transaction
+    );
+    const confirmResponse = await this.confirmTransaction(
+      signature,
+      blockhashWithExpiryBlockHeight,
+      confirmOptions?.commitment
+    );
+    return { signature, confirmResponse, ...blockhashWithExpiryBlockHeight };
   }
 
   async confirmTransaction(
@@ -304,7 +335,6 @@ export class RpcClient {
         // it just a plain Error and encodes error as a part of the message
         const isStringError =
           e instanceof Error &&
-          e.message.includes('SolanaJSONRPCError') &&
           e.message.includes('Minimum context slot has not been reached');
         const isClassError =
           e instanceof SolanaJSONRPCError &&

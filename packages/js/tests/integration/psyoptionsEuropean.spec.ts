@@ -93,8 +93,8 @@ describe('integration.psyoptionsEuropean', async () => {
           Side.Bid
         ),
       ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+      orderType: 'sell',
+      fixedSize: { type: 'fixed-base', amount: 1 },
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(rfq).toHaveProperty('address');

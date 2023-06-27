@@ -10,7 +10,7 @@ import {
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import { getInstrumentType, getSide, getOrderType, getSize } from './helpers';
+import { getInstrumentType, getSide, getSize } from './helpers';
 import {
   logPk,
   logResponse,
@@ -232,8 +232,15 @@ export const getActiveRfqs = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     // NOTE: Paging is not implemented yet
-    const rfqs = await cvg.rfqs().findRfqsByActive({});
-    rfqs.map((r: any) => r.map(logRfq));
+    const rfqs = await cvg.rfqs().findRfqs({});
+    rfqs
+      .filter(r => r.state === 'active')
+      .sort((a, b) => {
+        const aTimeToExpiry = a.creationTimestamp + a.activeWindow;
+        const bTimeToExpiry = b.creationTimestamp + b.activeWindow;
+        return aTimeToExpiry - bTimeToExpiry;
+      })
+      .forEach((r: any) => r.map(logRfq));
   } catch (e) {
     logError(e);
   }
@@ -260,6 +267,7 @@ export const createRfq = async (opts: Opts) => {
   ]);
 
   try {
+    const quoteAsset = await SpotQuoteInstrument.create(cvg, quoteMint);
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(
@@ -270,9 +278,9 @@ export const createRfq = async (opts: Opts) => {
         ),
       ],
       taker: cvg.rpc().getDefaultFeePayer(),
-      orderType: getOrderType(opts.orderType),
-      fixedSize: getSize(opts.size),
-      quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
+      orderType: opts.orderType,
+      fixedSize: getSize(opts.size, opts.amount),
+      quoteAsset,
       activeWindow: parseInt(opts.activeWindow),
       settlingWindow: parseInt(opts.settlingWindow),
       collateralInfo: new PublicKey(opts.collateralInfo),

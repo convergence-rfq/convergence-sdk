@@ -25,9 +25,9 @@ describe('unit.response', () => {
 
   before(async () => {
     const [res0, res1, res2] = await Promise.all([
-      createRfq(takerCvg, amount0, OrderType.Buy),
-      createRfq(takerCvg, amount0, OrderType.Sell),
-      createRfq(takerCvg, amount0, OrderType.TwoWay),
+      createRfq(takerCvg, amount0, 'buy'),
+      createRfq(takerCvg, amount0, 'sell'),
+      createRfq(takerCvg, amount0, 'two-way'),
     ]);
 
     expect(res0.response).toHaveProperty('signature');

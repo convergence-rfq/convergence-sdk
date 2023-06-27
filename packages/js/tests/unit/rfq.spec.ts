@@ -1,7 +1,12 @@
 import { expect } from 'expect';
-import { OrderType, Side } from '@convergence-rfq/rfq';
+import { Side } from '@convergence-rfq/rfq';
 
-import { Mint, SpotLegInstrument, SpotQuoteInstrument } from '../../src';
+import {
+  Mint,
+  SpotLegInstrument,
+  SpotQuoteInstrument,
+  FixedSize,
+} from '../../src';
 import { createUserCvg } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
@@ -20,14 +25,30 @@ describe('unit.rfq', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
+  it('find all', async () => {
+    const rfqs = await takerCvg.rfqs().findRfqs({});
+    expect(rfqs.length).toBeGreaterThan(0);
+  });
+
+  it('find all [owner]', async () => {
+    const rfqs = await takerCvg
+      .rfqs()
+      .findRfqs({ owner: takerCvg.identity().publicKey });
+    expect(rfqs.length).toBeGreaterThan(0);
+  });
+
   it('cancel, reclaim and cleanup multiple', async () => {
+    const fixedSize: FixedSize = {
+      type: 'fixed-base',
+      amount: 19,
+    };
     const { rfq: rfq1, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, Side.Bid),
       ],
-      orderType: OrderType.Buy,
-      fixedSize: { __kind: 'None', padding: 0 },
+      orderType: 'buy',
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
+      fixedSize,
     });
     expect(response).toHaveProperty('signature');
 
@@ -37,9 +58,9 @@ describe('unit.rfq', () => {
         instruments: [
           await SpotLegInstrument.create(takerCvg, baseMintBTC, 10, Side.Bid),
         ],
-        orderType: OrderType.Buy,
-        fixedSize: { __kind: 'None', padding: 0 },
+        orderType: 'buy',
         quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
+        fixedSize,
       });
     expect(response2).toHaveProperty('signature');
 
@@ -49,9 +70,9 @@ describe('unit.rfq', () => {
         instruments: [
           await SpotLegInstrument.create(takerCvg, baseMintBTC, 15, Side.Bid),
         ],
-        orderType: OrderType.Buy,
-        fixedSize: { __kind: 'None', padding: 0 },
+        orderType: 'buy',
         quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
+        fixedSize,
       });
     expect(response3).toHaveProperty('signature');
 

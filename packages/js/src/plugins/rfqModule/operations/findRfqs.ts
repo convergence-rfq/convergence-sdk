@@ -4,6 +4,8 @@ import {
   Operation,
   OperationHandler,
   OperationScope,
+  PublicKey,
+  UnparsedAccount,
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
@@ -39,11 +41,10 @@ export type FindRfqsOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsInput = {
-  /** Optional RFQ page. */
-  page?: number;
-
-  /** Optional RFQs per page. */
-  pageCount?: number;
+  /**
+   * Optional RFQ owner.
+   */
+  owner?: PublicKey;
 };
 
 /**
@@ -63,17 +64,23 @@ export const findRfqsOperationHandler: OperationHandler<FindRfqsOperation> = {
     scope: OperationScope
   ): Promise<FindRfqsOutput> => {
     const { programs } = scope;
+    const { owner } = operation.input;
 
     const rfqProgram = convergence.programs().getRfq(programs);
     const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-    const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
-    scope.throwIfCanceled();
+
+    const unparsedAccounts: UnparsedAccount[] = [];
+    if (owner) {
+      const result = await rfqGpaBuilder.whereTaker(owner).get();
+      unparsedAccounts.push(...result);
+    } else {
+      const result = await rfqGpaBuilder.withoutData().get();
+      unparsedAccounts.push(...result);
+    }
 
     const rfqs = await Promise.all(
-      unparsedAccounts.map((unparsedAccount) =>
-        convergence
-          .rfqs()
-          .findRfqByAddress({ address: unparsedAccount.publicKey })
+      unparsedAccounts.map((acc) =>
+        convergence.rfqs().findRfqByAddress({ address: acc.publicKey })
       )
     );
 

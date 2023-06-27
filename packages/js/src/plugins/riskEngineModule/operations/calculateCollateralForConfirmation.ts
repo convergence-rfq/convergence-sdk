@@ -92,7 +92,9 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
       // fetching in parallel
       const [rfq, response, config] = await Promise.all([
         convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
-        convergence.rfqs().findResponseByAddress({ address: responseAddress }),
+        convergence
+          .rfqs()
+          .findResponseByAddress({ address: responseAddress }, scope),
         convergence.riskEngine().fetchConfig(scope),
       ]);
 

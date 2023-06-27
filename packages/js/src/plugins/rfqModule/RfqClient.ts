@@ -28,8 +28,6 @@ import {
   CreateAndAddLegsToRfqInput,
   finalizeRfqConstructionOperation,
   FinalizeRfqConstructionInput,
-  findRfqsByAddressesOperation,
-  FindRfqsByAddressesInput,
   FindRfqsInput,
   findRfqsOperation,
   FindRfqByAddressInput,
@@ -42,12 +40,6 @@ import {
   FindResponsesByOwnerInput,
   findRfqsByInstrumentOperation,
   FindRfqsByInstrumentInput,
-  findRfqsByOwnerOperation,
-  FindRfqsByOwnerInput,
-  findRfqsByTokenOperation,
-  FindRfqsByTokenInput,
-  findRfqsByActiveOperation,
-  FindRfqsByActiveInput,
   partiallySettleLegsOperation,
   PartiallySettleLegsInput,
   partlyRevertSettlementPreparationOperation,
@@ -303,22 +295,6 @@ export class RfqClient {
       .execute(findRfqByAddressOperation(input), options);
   }
 
-  /** {@inheritDoc findRfqsByAddressesOperation} */
-  findRfqsByAddresses(
-    input: FindRfqsByAddressesInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(findRfqsByAddressesOperation(input), options);
-  }
-
-  findRfqsByActive(input: FindRfqsByActiveInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(findRfqsByActiveOperation(input), options);
-  }
-
   /** {@inheritDoc findRfqsByInstrumentOperation} */
   findRfqsByInstrument(
     input: FindRfqsByInstrumentInput,
@@ -327,20 +303,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(findRfqsByInstrumentOperation(input), options);
-  }
-
-  /** {@inheritDoc findRfqsByOwnerOperation} */
-  findRfqsByOwner(input: FindRfqsByOwnerInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(findRfqsByOwnerOperation(input), options);
-  }
-
-  /** {@inheritDoc findRfqsByTokenOperation} */
-  findRfqsByToken(input: FindRfqsByTokenInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(findRfqsByTokenOperation(input), options);
   }
 
   /** {@inheritDoc partiallySettleLegsOperation} */

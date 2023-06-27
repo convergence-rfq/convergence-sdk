@@ -1,5 +1,5 @@
 import { expect } from 'expect';
-import { OrderType, Side } from '@convergence-rfq/rfq';
+import { Side } from '@convergence-rfq/rfq';
 
 import { Mint } from '../../src';
 import {
@@ -32,7 +32,7 @@ describe('integration.spot', () => {
     const amountA = 1.5;
     const amountB = 22_000.86;
 
-    const { rfq } = await createRfq(takerCvg, amountA, OrderType.Sell);
+    const { rfq } = await createRfq(takerCvg, amountA, 'sell');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(
@@ -79,7 +79,7 @@ describe('integration.spot', () => {
     const amountA = 2.5;
     const amountB = 24_300.75 * amountA;
 
-    const { rfq } = await createRfq(takerCvg, amountA, OrderType.Buy);
+    const { rfq } = await createRfq(takerCvg, amountA, 'buy');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(
@@ -124,8 +124,7 @@ describe('integration.spot', () => {
     const amountA = 2.5;
     const amountB = 24_300.75 * amountA;
 
-    // TODO: Change
-    const { rfq } = await createRfq(takerCvg, amountA, OrderType.TwoWay);
+    const { rfq } = await createRfq(takerCvg, amountA, 'two-way');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(

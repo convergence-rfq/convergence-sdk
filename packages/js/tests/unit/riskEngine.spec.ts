@@ -1,12 +1,7 @@
 import { expect } from 'expect';
 
-import {
-  InstrumentType,
-  DEFAULT_RISK_CATEGORIES_INFO,
-  addDecimals,
-  removeDecimals,
-} from '../../src';
-import { createUserCvg } from '../helpers';
+import { InstrumentType, DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
+import { createRfq, createUserCvg } from '../helpers';
 
 describe('unit.riskEngine', () => {
   const daoCvg = createUserCvg('dao');
@@ -119,19 +114,16 @@ describe('unit.riskEngine', () => {
   });
 
   it('calculate collateral for RFQ', async () => {
-    const rfqs = await takerCvg
-      .rfqs()
-      .findRfqsByOwner({ owner: takerCvg.identity().publicKey });
-    const rfq = rfqs[0][0];
-    await daoCvg.riskEngine().calculateCollateralForRfq({
-      legs: rfq.legs,
-      quoteAsset: rfq.quoteAsset,
-      settlementPeriod: rfq.settlingWindow,
-      fixedSize: rfq.fixedSize,
-      orderType: rfq.orderType,
-    });
-    //expect(collateral.requiredCollateral).toBeCloseTo(
-    //  removeDecimals(rfq.totalTakerCollateralLocked, rfq.quoteAsset.decimals)
-    //);
+    const { rfq } = await createRfq(takerCvg, 1.5, 'buy');
+    const { requiredCollateral } = await daoCvg
+      .riskEngine()
+      .calculateCollateralForRfq({
+        legs: rfq.legs,
+        quoteAsset: rfq.quoteAsset,
+        settlementPeriod: rfq.settlingWindow,
+        size: rfq.size,
+        orderType: rfq.orderType,
+      });
+    expect(requiredCollateral).toBeCloseTo(rfq.totalTakerCollateralLocked);
   });
 });

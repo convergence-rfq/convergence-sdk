@@ -15,13 +15,7 @@ import {
   PsyoptionsEuropeanInstrument,
 } from '@convergence-rfq/sdk';
 
-import {
-  formatOrderType,
-  formatState,
-  formatSide,
-  formatInstrument,
-  assertInstrument,
-} from './helpers';
+import { formatSide, formatInstrument, assertInstrument } from './helpers';
 
 // Improves readability of code by preserving terseness
 const l = (...args: any[]) => console.log(...args);
@@ -43,12 +37,8 @@ export const logInstrument = (i: LegInstrument): void => {
     l('Mint:', i.mintAddress.toString());
   } else if (i instanceof PsyoptionsAmericanInstrument) {
     l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
-    // TODO: Add back in?
-    //l('Underlying mint:', i.underlyingMintAddress.toString());
   } else if (i instanceof PsyoptionsEuropeanInstrument) {
-    // TODO: Add back in?
     l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
-    //l('Underlying mint:', i.underlyingMintAddress.toString());
   }
 };
 
@@ -154,14 +144,14 @@ export const logRfq = (r: Rfq) => {
   const created = parseInt(r.creationTimestamp.toString()) * 1_000;
   l('Address:', r.address.toString());
   l('Taker:', r.taker.toString());
-  l('Order type:', formatOrderType(r.orderType));
-  l('Size:', r.fixedSize.__kind === 'None' ? 'open' : 'fixed');
+  l('Order type:', r.orderType);
+  l('Size:', r.size.type === 'open' ? 'open' : 'fixed');
   l('Quote asset:', r.quoteMint.toString());
   l('Created:', new Date(created).toString());
   l(`Active window: ${r.activeWindow} seconds`);
   l(`Settlement window: ${r.settlingWindow} seconds`);
   l('Legs:', r.legs.length);
-  l('State:', formatState(r.state));
+  l('State:', r.state);
   l('Total responses:', r.totalResponses);
   l('Confirmed responses:', r.confirmedResponses);
   l('Cleared responses:', r.clearedResponses);

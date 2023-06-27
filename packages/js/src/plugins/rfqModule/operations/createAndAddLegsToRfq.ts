@@ -1,7 +1,6 @@
 import * as anchor from '@project-serum/anchor';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { OrderType, FixedSize } from '../types';
 import {
   Operation,
   OperationHandler,
@@ -11,11 +10,10 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { assertRfq, Rfq } from '../models';
+import { assertRfq, FixedSize, Rfq } from '../models';
 import {
   calculateExpectedLegsHash,
   calculateExpectedLegsSize,
-  convertFixedSizeInput,
 } from '../helpers';
 import {
   LegInstrument,
@@ -24,6 +22,7 @@ import {
 } from '../../../plugins/instrumentModule';
 import { createRfqBuilder } from './createRfq';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
+import { OrderType } from "../models/OrderType";
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -155,7 +154,6 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
-      fixedSize = convertFixedSizeInput(fixedSize, quoteAsset);
       expectedLegsSize =
         expectedLegsSize ?? (await calculateExpectedLegsSize(instruments));
       expectedLegsHash =

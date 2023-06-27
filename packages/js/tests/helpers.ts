@@ -129,7 +129,7 @@ export const createAmericanCoveredCallRfq = async (
       ),
     ],
     orderType,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+    fixedSize: { type: 'fixed-base', amount: 1 },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
 
@@ -154,13 +154,13 @@ export const createRfq = async (
       await SpotLegInstrument.create(
         cvg,
         baseMint,
-        amount,
+        1,
         // This is always going to bid
         Side.Bid
       ),
     ],
     orderType,
-    fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+    fixedSize: { type: 'fixed-base', amount },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
   return { rfq, response };
