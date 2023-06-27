@@ -11,7 +11,6 @@ import {
   Quote,
   Side,
   Leg,
-  StoredRfqState,
 } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
@@ -1564,7 +1563,7 @@ export const createAccountsAndMintOptions = async (
 export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
   return rfqs
     .sort((a, b) => {
-      return b.state === StoredRfqState.Active ? 1 : -1;
+      return b.state === 'active' ? 1 : -1;
     })
     .sort((a, b) => {
       if (a.state === b.state) {

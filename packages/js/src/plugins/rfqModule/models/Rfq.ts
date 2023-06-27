@@ -9,12 +9,10 @@ import {
 import { LegInstrument, QuoteInstrument } from '@/plugins/instrumentModule';
 import { Convergence } from '@/Convergence';
 
-import { 
-  StoredRfqState as SolitaStoredRfqState,
-} from "@convergence-rfq/rfq";
 import { FixedSize, fromSolitaFixedSize } from "./FixedSize";
 import { collateralMintCache } from "@/plugins/collateralModule";
 import { OrderType, fromSolitaOrderType } from "./OrderType";
+import { StoredRfqState, fromSolitaStoredRfqState } from "./StoredRfqState";
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -60,7 +58,7 @@ export type Rfq = {
   readonly expectedLegsSize: number;
 
   /** The state of the Rfq. */
-  readonly state: SolitaStoredRfqState;
+  readonly state: StoredRfqState;
 
   /** The amount of Taker collateral locked at the time
    *  of finalized construction of the Rfq. */
@@ -118,7 +116,7 @@ export const toRfq = async (
     activeWindow: account.data.activeWindow,
     settlingWindow: account.data.settlingWindow,
     expectedLegsSize: account.data.expectedLegsSize,
-    state: account.data.state,
+    state: fromSolitaStoredRfqState(account.data.state),
     nonResponseTakerCollateralLocked: removeDecimals(account.data.nonResponseTakerCollateralLocked, collateralDecimals),
     totalTakerCollateralLocked: removeDecimals(account.data.totalTakerCollateralLocked, collateralDecimals),
     totalResponses: account.data.totalResponses,
