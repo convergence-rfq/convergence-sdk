@@ -1,6 +1,6 @@
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
-import { convertRfqOutput, getPages, sortByActiveAndExpiry } from '../helpers';
+import { getPages, sortByActiveAndExpiry } from '../helpers';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import {
   Operation,
@@ -10,7 +10,6 @@ import {
   Program,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqsByInstrumentOperation' as const;
 
@@ -78,22 +77,13 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
         operation.input;
       const { commitment } = scope;
 
-      const collateralMint = await collateralMintCache.get(convergence);
-      const collateralMintDecimals = collateralMint.decimals;
-
       if (rfqs) {
         let rfqsByInstrument: Rfq[] = [];
 
         for (const rfq of rfqs) {
           for (const leg of rfq.legs) {
             if (leg.getProgramId().equals(instrumentProgram.address)) {
-              const convertedRfq = convertRfqOutput(
-                rfq,
-                collateralMintDecimals
-              );
-
-              rfqsByInstrument.push(convertedRfq);
-
+              rfqsByInstrument.push(rfq);
               break;
             }
           }
@@ -138,13 +128,8 @@ export const findRfqsByInstrumentOperationHandler: OperationHandler<FindRfqsByIn
               leg.instrumentProgram.toBase58() ===
               instrumentProgram.address.toBase58()
             ) {
-              const convertedRfq = convertRfqOutput(
-                await toRfq(convergence, rfq),
-                collateralMintDecimals
-              );
-
+              const convertedRfq = await toRfq(convergence, rfq);
               parsedRfqs.push(convertedRfq);
-
               break;
             }
           }

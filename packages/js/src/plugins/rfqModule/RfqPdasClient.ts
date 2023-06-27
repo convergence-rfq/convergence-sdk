@@ -1,8 +1,8 @@
 import { Buffer } from 'buffer';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import {
-  FixedSize,
-  OrderType,
+  FixedSize as SolitaFixedSize,
+  OrderType as SolitaOrderType,
   QuoteAsset,
   QuoteRecord,
   FixedSizeRecord,
@@ -23,6 +23,7 @@ import {
 } from '../../types';
 import type { Convergence } from '../../Convergence';
 import { Option } from '../../utils';
+import { FixedSize, toSolitaFixedSize } from "./models";
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -79,7 +80,7 @@ export class RfqPdasClient {
       legsHash,
       serializeOrderTypeData(orderType),
       quoteHash,
-      serializeFixedSizeData(fixedSize),
+      serializeFixedSizeData(toSolitaFixedSize(fixedSize, quoteAsset.instrumentDecimals)),
       toLittleEndian(activeWindow, 4),
       toLittleEndian(settlingWindow, 4),
       recentTimestamp.toArrayLike(Buffer, 'le', 8),
@@ -113,10 +114,10 @@ const serializeOptionQuote = (quote: Option<Quote>) => {
   return Buffer.concat([Buffer.from([1]), serializedQuote]);
 };
 
-const serializeOrderTypeData = (orderType: OrderType): Buffer => {
-  const orderTypeBeet = beet.fixedScalarEnum(OrderType) as beet.FixedSizeBeet<
-    OrderType,
-    OrderType
+const serializeOrderTypeData = (orderType: SolitaOrderType): Buffer => {
+  const orderTypeBeet = beet.fixedScalarEnum(SolitaOrderType) as beet.FixedSizeBeet<
+    SolitaOrderType,
+    SolitaOrderType
   >;
   const orderTypeSerializer = createSerializerFromFixedSizeBeet(orderTypeBeet);
 
@@ -166,7 +167,7 @@ const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
   return quoteAssetSerializer.serialize(quoteAsset);
 };
 
-const serializeFixedSizeData = (fixedSize: FixedSize): Buffer => {
+const serializeFixedSizeData = (fixedSize: SolitaFixedSize): Buffer => {
   const fixedSizeBeet = beet.dataEnum<FixedSizeRecord>([
     [
       'None',
@@ -191,7 +192,7 @@ const serializeFixedSizeData = (fixedSize: FixedSize): Buffer => {
         'FixedSizeRecord["QuoteAsset"]'
       ),
     ],
-  ]) as beet.FixableBeet<FixedSize>;
+  ]) as beet.FixableBeet<SolitaFixedSize>;
 
   const fixedSizeSerializer = createSerializerFromFixableBeet(fixedSizeBeet);
 
@@ -222,7 +223,7 @@ type RfqInput = {
   legsHash: Buffer;
 
   /** The order type of the Rfq. */
-  orderType: OrderType;
+  orderType: SolitaOrderType;
 
   /** The quote asset of the Rfq. */
   quoteAsset: QuoteAsset;

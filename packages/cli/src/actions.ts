@@ -7,6 +7,7 @@ import {
   PriceOracle,
   SpotLegInstrument,
   SpotQuoteInstrument,
+  StoredRfqState,
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
@@ -232,8 +233,15 @@ export const getActiveRfqs = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     // NOTE: Paging is not implemented yet
-    const rfqs = await cvg.rfqs().findRfqsByActive({});
-    rfqs.map((r: any) => r.map(logRfq));
+    const rfqs = await cvg.rfqs().findRfqs({});
+    rfqs
+      .filter(r => r.state === StoredRfqState.Active)
+      .sort((a, b) => {
+        const aTimeToExpiry = a.creationTimestamp + a.activeWindow;
+        const bTimeToExpiry = b.creationTimestamp + b.activeWindow;
+        return aTimeToExpiry - bTimeToExpiry;
+      })
+      .forEach((r: any) => r.map(logRfq));
   } catch (e) {
     logError(e);
   }

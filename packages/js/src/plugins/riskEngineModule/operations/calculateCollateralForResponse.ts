@@ -95,7 +95,7 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       const [rfq, config] = await Promise.all([
         convergence
           .rfqs()
-          .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
+          .findRfqByAddress({ address: rfqAddress }, scope),
         convergence.riskEngine().fetchConfig(scope),
       ]);
 

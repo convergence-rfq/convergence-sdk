@@ -1,7 +1,7 @@
-import { Leg } from '../rfqModule';
 import { LegInstrument, LegInstrumentParser } from './types';
 import type { Convergence } from '@/Convergence';
 import { ConvergencePlugin, Program, PublicKey } from '@/types';
+import { Leg as SolitaLeg } from "@convergence-rfq/rfq";
 
 /** @group Plugins */
 export const instrumentModule = (): ConvergencePlugin => ({
@@ -25,7 +25,7 @@ export const instrumentModule = (): ConvergencePlugin => ({
       legInstrumentParsers.push([programAddress, factory]);
     };
 
-    convergence.parseLegInstrument = function (leg: Leg) {
+    convergence.parseLegInstrument = function (leg: SolitaLeg) {
       const factory = legInstrumentParsers.find(([key]) =>
         leg.instrumentProgram.equals(key)
       )?.[1];
@@ -47,7 +47,7 @@ declare module '../../Convergence' {
       programAddress: PublicKey,
       factory: LegInstrumentParser
     ): void;
-    parseLegInstrument(leg: Leg): LegInstrument;
+    parseLegInstrument(leg: SolitaLeg): LegInstrument;
   }
 }
 

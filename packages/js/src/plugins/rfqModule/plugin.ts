@@ -7,10 +7,6 @@ import {
   createRfqOperationHandler,
   findRfqsByInstrumentOperation,
   findRfqsByInstrumentOperationHandler,
-  findRfqsByTokenOperation,
-  findRfqsByTokenOperationHandler,
-  findRfqsByOwnerOperation,
-  findRfqsByOwnerOperationHandler,
   cancelRfqOperation,
   cancelRfqOperationHandler,
   respondToRfqOperationHandler,
@@ -41,10 +37,6 @@ import {
   findResponsesByOwnerOperationHandler,
   findRfqByAddressOperation,
   findRfqByAddressOperationHandler,
-  findRfqsByAddressesOperation,
-  findRfqsByAddressesOperationHandler,
-  findRfqsByActiveOperation,
-  findRfqsByActiveOperationHandler,
   findRfqsOperation,
   findRfqsOperationHandler,
   partiallySettleLegsOperation,
@@ -155,16 +147,9 @@ export const rfqModule = (): ConvergencePlugin => ({
     op.register(findRfqByAddressOperation, findRfqByAddressOperationHandler);
     op.register(findRfqsOperation, findRfqsOperationHandler);
     op.register(
-      findRfqsByAddressesOperation,
-      findRfqsByAddressesOperationHandler
-    );
-    op.register(findRfqsByActiveOperation, findRfqsByActiveOperationHandler);
-    op.register(
       findRfqsByInstrumentOperation,
       findRfqsByInstrumentOperationHandler
     );
-    op.register(findRfqsByOwnerOperation, findRfqsByOwnerOperationHandler);
-    op.register(findRfqsByTokenOperation, findRfqsByTokenOperationHandler);
     op.register(
       partiallySettleLegsOperation,
       partiallySettleLegsOperationHandler

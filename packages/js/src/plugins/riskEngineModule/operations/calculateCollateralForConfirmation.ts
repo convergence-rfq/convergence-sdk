@@ -93,7 +93,7 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
       const [rfq, response, config] = await Promise.all([
         convergence
           .rfqs()
-          .findRfqByAddress({ address: rfqAddress, convert: false }, scope),
+          .findRfqByAddress({ address: rfqAddress }, scope),
         convergence
           .rfqs()
           .findResponseByAddress(

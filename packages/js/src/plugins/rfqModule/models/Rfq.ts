@@ -1,15 +1,20 @@
 import { PublicKey } from '@solana/web3.js';
-import { bignum } from '@convergence-rfq/beet';
 
-import { OrderType, StoredRfqState, FixedSize } from '../types';
 import { RfqAccount } from '../accounts';
-import { assert } from '../../../utils';
+import { assert, convertTimestamp, removeDecimals } from '../../../utils';
 import {
   SpotLegInstrument,
   SpotQuoteInstrument,
 } from '../../../plugins/spotInstrumentModule';
 import { LegInstrument, QuoteInstrument } from '@/plugins/instrumentModule';
 import { Convergence } from '@/Convergence';
+
+import { 
+  OrderType as SolitaOrderType, 
+  StoredRfqState as SolitaStoredRfqState,
+} from "@convergence-rfq/rfq";
+import { FixedSize, fromSolitaFixedSize } from "./FixedSize";
+import { collateralMintCache } from "@/plugins/collateralModule";
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -28,11 +33,11 @@ export type Rfq = {
   readonly taker: PublicKey;
 
   /** The order type of the Rfq. */
-  readonly orderType: OrderType;
+  readonly orderType: SolitaOrderType;
 
   /** Whether this Rfq is open (no size specified), or a fixed amount of the base asset,
    * or a fixed amount of the quote asset. */
-  readonly fixedSize: FixedSize;
+  readonly size: FixedSize;
 
   /** The quote asset of the Rfq. */
   readonly quoteAsset: QuoteInstrument;
@@ -41,7 +46,7 @@ export type Rfq = {
   readonly quoteMint: PublicKey;
 
   /** The time at which this Rfq was created. */
-  readonly creationTimestamp: bignum;
+  readonly creationTimestamp: number;
 
   /** The number of seconds during which this Rfq can be responded to. */
   readonly activeWindow: number;
@@ -55,15 +60,15 @@ export type Rfq = {
   readonly expectedLegsSize: number;
 
   /** The state of the Rfq. */
-  readonly state: StoredRfqState;
+  readonly state: SolitaStoredRfqState;
 
   /** The amount of Taker collateral locked at the time
    *  of finalized construction of the Rfq. */
-  nonResponseTakerCollateralLocked: bignum;
+  readonly nonResponseTakerCollateralLocked: number;
 
   /** The total amount of Taker collateral locked.
    * This includes collateral added when confirming a Response. */
-  totalTakerCollateralLocked: bignum;
+  readonly totalTakerCollateralLocked: number;
 
   /** The total number of Responses to this Rfq. */
   readonly totalResponses: number;
@@ -92,31 +97,35 @@ export function assertRfq(value: any): asserts value is Rfq {
 export const toRfq = async (
   convergence: Convergence,
   account: RfqAccount
-): Promise<Rfq> => ({
-  model: 'rfq',
-  address: account.publicKey,
-  taker: account.data.taker,
-  orderType: account.data.orderType,
-  fixedSize: account.data.fixedSize,
-  quoteAsset: await SpotQuoteInstrument.parseFromQuote(
+): Promise<Rfq> => {
+  const quoteAsset = await SpotQuoteInstrument.parseFromQuote(
     convergence,
     account.data.quoteAsset
-  ),
-  quoteMint: SpotLegInstrument.deserializeInstrumentData(
-    Buffer.from(account.data.quoteAsset.instrumentData)
-  ).mintAddress,
-  creationTimestamp: account.data.creationTimestamp,
-  activeWindow: account.data.activeWindow,
-  settlingWindow: account.data.settlingWindow,
-  expectedLegsSize: account.data.expectedLegsSize,
-  state: account.data.state,
-  nonResponseTakerCollateralLocked:
-    account.data.nonResponseTakerCollateralLocked,
-  totalTakerCollateralLocked: account.data.totalTakerCollateralLocked,
-  totalResponses: account.data.totalResponses,
-  clearedResponses: account.data.clearedResponses,
-  confirmedResponses: account.data.confirmedResponses,
-  legs: await Promise.all(
-    account.data.legs.map((leg) => convergence.parseLegInstrument(leg))
-  ),
-});
+  );
+  const collateralMint = await collateralMintCache.get(convergence);
+  const collateralDecimals = collateralMint.decimals;
+  return {
+    model: 'rfq',
+    address: account.publicKey,
+    taker: account.data.taker,
+    orderType: account.data.orderType,
+    size: fromSolitaFixedSize(account.data.fixedSize, quoteAsset.getDecimals()),
+    quoteAsset,
+    quoteMint: SpotLegInstrument.deserializeInstrumentData(
+      Buffer.from(account.data.quoteAsset.instrumentData)
+    ).mintAddress,
+    creationTimestamp: convertTimestamp(account.data.creationTimestamp),
+    activeWindow: account.data.activeWindow,
+    settlingWindow: account.data.settlingWindow,
+    expectedLegsSize: account.data.expectedLegsSize,
+    state: account.data.state,
+    nonResponseTakerCollateralLocked: removeDecimals(account.data.nonResponseTakerCollateralLocked, collateralDecimals),
+    totalTakerCollateralLocked: removeDecimals(account.data.totalTakerCollateralLocked, collateralDecimals),
+    totalResponses: account.data.totalResponses,
+    clearedResponses: account.data.clearedResponses,
+    confirmedResponses: account.data.confirmedResponses,
+    legs: await Promise.all(
+      account.data.legs.map((leg) => convergence.parseLegInstrument(leg))
+    ),
+  }
+};
