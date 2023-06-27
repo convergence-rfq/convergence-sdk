@@ -1,4 +1,4 @@
-import { createCreateRfqInstruction, OrderType as SolitaOrderType } from '@convergence-rfq/rfq';
+import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
@@ -25,6 +25,7 @@ import {
   QuoteInstrument,
   toQuote,
 } from '../../../plugins/instrumentModule';
+import { OrderType, toSolitaOrderType } from "../models/OrderType";
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -82,7 +83,7 @@ export type CreateRfqInput = {
   instruments: LegInstrument[];
 
   /** The type of order. */
-  orderType: SolitaOrderType;
+  orderType: OrderType;
 
   /**
    * The type of the Rfq, specifying whether we fix the number of
@@ -301,7 +302,7 @@ export const createRfqBuilder = async (
           expectedLegsSize,
           expectedLegsHash: Array.from(expectedLegsHash),
           legs,
-          orderType,
+          orderType: toSolitaOrderType(orderType),
           quoteAsset: toQuote(quoteAsset),
           fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
           activeWindow,

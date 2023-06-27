@@ -22,7 +22,7 @@ import {
 } from '../../../plugins/instrumentModule';
 import { createRfqBuilder } from './createRfq';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
-import { OrderType as SolitaOrderType } from "@convergence-rfq/rfq";
+import { OrderType } from "../models/OrderType";
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -87,7 +87,7 @@ export type CreateAndAddLegsToRfqInput = {
    *
    * @defaultValue Defaults to creating a two-way order
    */
-  orderType: SolitaOrderType;
+  orderType: OrderType;
 
   /**
    * The type of the Rfq, specifying whether we fix the number of

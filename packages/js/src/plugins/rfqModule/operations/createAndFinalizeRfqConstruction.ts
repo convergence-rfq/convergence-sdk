@@ -22,7 +22,7 @@ import {
 } from '../../../plugins/instrumentModule';
 import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
-import { OrderType as SolitaOrderType } from "@convergence-rfq/rfq";
+import { OrderType } from "../models/OrderType";
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -83,7 +83,7 @@ export type CreateAndFinalizeRfqConstructionInput = {
   instruments: LegInstrument[];
 
   /** The type of order. */
-  orderType: SolitaOrderType;
+  orderType: OrderType;
 
   /**
    * The type of the Rfq, specifying whether we fix the number of

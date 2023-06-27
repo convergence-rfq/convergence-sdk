@@ -24,6 +24,7 @@ import {
 import type { Convergence } from '../../Convergence';
 import { Option } from '../../utils';
 import { FixedSize, toSolitaFixedSize } from "./models";
+import { OrderType, toSolitaOrderType } from "./models/OrderType";
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -78,7 +79,7 @@ export class RfqPdasClient {
       Buffer.from('rfq', 'utf8'),
       taker.toBuffer(),
       legsHash,
-      serializeOrderTypeData(orderType),
+      serializeOrderTypeData(toSolitaOrderType(orderType)),
       quoteHash,
       serializeFixedSizeData(toSolitaFixedSize(fixedSize, quoteAsset.instrumentDecimals)),
       toLittleEndian(activeWindow, 4),
@@ -223,7 +224,7 @@ type RfqInput = {
   legsHash: Buffer;
 
   /** The order type of the Rfq. */
-  orderType: SolitaOrderType;
+  orderType: OrderType;
 
   /** The quote asset of the Rfq. */
   quoteAsset: QuoteAsset;

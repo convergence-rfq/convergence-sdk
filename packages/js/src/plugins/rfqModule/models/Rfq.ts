@@ -10,11 +10,11 @@ import { LegInstrument, QuoteInstrument } from '@/plugins/instrumentModule';
 import { Convergence } from '@/Convergence';
 
 import { 
-  OrderType as SolitaOrderType, 
   StoredRfqState as SolitaStoredRfqState,
 } from "@convergence-rfq/rfq";
 import { FixedSize, fromSolitaFixedSize } from "./FixedSize";
 import { collateralMintCache } from "@/plugins/collateralModule";
+import { OrderType, fromSolitaOrderType } from "./OrderType";
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -33,7 +33,7 @@ export type Rfq = {
   readonly taker: PublicKey;
 
   /** The order type of the Rfq. */
-  readonly orderType: SolitaOrderType;
+  readonly orderType: OrderType;
 
   /** Whether this Rfq is open (no size specified), or a fixed amount of the base asset,
    * or a fixed amount of the quote asset. */
@@ -108,7 +108,7 @@ export const toRfq = async (
     model: 'rfq',
     address: account.publicKey,
     taker: account.data.taker,
-    orderType: account.data.orderType,
+    orderType: fromSolitaOrderType(account.data.orderType),
     size: fromSolitaFixedSize(account.data.fixedSize, quoteAsset.getDecimals()),
     quoteAsset,
     quoteMint: SpotLegInstrument.deserializeInstrumentData(
