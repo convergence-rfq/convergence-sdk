@@ -6,9 +6,10 @@ import { FixableBeetArgsStruct, u8, u64, bignum } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
+import BN from 'bn.js';
 import { Mint } from '../tokenModule';
 import { LegInstrument } from '../instrumentModule';
-import { removeDecimals } from '../../utils';
+import { addDecimals, removeDecimals } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { createAmericanProgram } from './helpers';
@@ -46,15 +47,18 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 
   constructor(
     readonly convergence: Convergence,
-    readonly underlyingMintAddress: PublicKey,
-    readonly underlyingMintDecimals: number,
-    readonly baseAssetIndex: BaseAssetIndex,
-    readonly quoteMint: Mint,
     readonly optionType: OptionType,
-    readonly optionMeta: OptionMarketWithKey,
+    readonly underlyingAmountPerContract: number, // without decimals
+    private readonly underlyingAmountPerContractDecimals: number,
+    readonly strikePrice: number, // without decimals
+    private readonly strikePriceDecimals: number,
+    readonly expiration: number, // timestamp in seconds
+    readonly optionMint: PublicKey,
     readonly optionMetaPubKey: PublicKey,
+    readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
-    readonly side: Side
+    readonly side: Side,
+    private optionMeta?: OptionMarketWithKey
   ) {}
 
   getBaseAssetIndex = () => this.baseAssetIndex;
@@ -86,15 +90,21 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 
     return new PsyoptionsAmericanInstrument(
       convergence,
-      underlyingMint.address,
-      underlyingMint.decimals,
-      mintInfo.mintType.baseAssetIndex,
-      quoteMint,
       optionType,
-      optionMeta,
+      removeDecimals(
+        optionMeta.underlyingAmountPerContract,
+        underlyingMint.decimals
+      ),
+      underlyingMint.decimals,
+      removeDecimals(optionMeta.quoteAmountPerContract, quoteMint.decimals),
+      quoteMint.decimals,
+      Number(optionMeta.expirationUnixTimestamp),
+      optionMeta.optionMint,
       optionMetaPubkey,
+      mintInfo.mintType.baseAssetIndex,
       amount,
-      side
+      side,
+      optionMeta
     );
   }
 
@@ -111,15 +121,28 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     return optionMarket;
   }
 
-  getValidationAccounts() {
+  async getOptionMeta() {
+    if (this.optionMeta === undefined) {
+      this.optionMeta = await PsyoptionsAmericanInstrument.fetchMeta(
+        this.convergence,
+        this.optionMetaPubKey
+      );
+    }
+
+    return this.optionMeta;
+  }
+
+  async getValidationAccounts() {
+    const optionMeta = await this.getOptionMeta();
+
     const mintInfoPda = this.convergence
       .rfqs()
       .pdas()
-      .mintInfo({ mint: this.underlyingMintAddress });
+      .mintInfo({ mint: optionMeta.underlyingAssetMint });
     const quoteAssetMintPda = this.convergence
       .rfqs()
       .pdas()
-      .mintInfo({ mint: this.optionMeta.quoteAssetMint });
+      .mintInfo({ mint: optionMeta.quoteAssetMint });
     return [
       { pubkey: this.optionMetaPubKey, isSigner: false, isWritable: false },
       {
@@ -144,31 +167,25 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   }
 
   serializeInstrumentData(): Buffer {
-    const { optionMeta } = this;
-    const callMint = this.optionMeta.optionMint.toBytes();
-    const optionMarket = this.optionMeta.key.toBytes();
-    const underlyingamountPerContract =
-      optionMeta.underlyingAmountPerContract.toArrayLike(Buffer, 'le', 8);
-    const underlyingAmountPerContractDecimals = this.underlyingMintDecimals;
-    const expirationtime = optionMeta.expirationUnixTimestamp.toArrayLike(
-      Buffer,
-      'le',
-      8
-    );
-    const strikeprice = optionMeta.quoteAmountPerContract.toArrayLike(
-      Buffer,
-      'le',
-      8
-    );
-    const strikePriceDecimals = this.quoteMint.decimals;
+    const callMint = this.optionMint.toBytes();
+    const optionMarket = this.optionMetaPubKey.toBytes();
+    const underlyingamountPerContract = addDecimals(
+      this.underlyingAmountPerContract,
+      this.underlyingAmountPerContractDecimals
+    ).toArrayLike(Buffer, 'le', 8);
+    const expirationtime = new BN(this.expiration).toArrayLike(Buffer, 'le', 8);
+    const strikeprice = addDecimals(
+      this.strikePrice,
+      this.strikePriceDecimals
+    ).toArrayLike(Buffer, 'le', 8);
 
     return Buffer.from(
       new Uint8Array([
         this.optionType == OptionType.CALL ? 0 : 1,
         ...underlyingamountPerContract,
-        underlyingAmountPerContractDecimals,
+        this.underlyingAmountPerContractDecimals,
         ...strikeprice,
-        strikePriceDecimals,
+        this.strikePriceDecimals,
         ...expirationtime,
         ...callMint,
         ...optionMarket,
@@ -183,34 +200,40 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 }
 
 export const psyoptionsAmericanInstrumentParser = {
-  async parseFromLeg(
+  parseFromLeg(
     convergence: Convergence,
     leg: Leg
-  ): Promise<PsyoptionsAmericanInstrument> {
+  ): PsyoptionsAmericanInstrument {
     const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
-    const [{ metaKey, optionType, underlyingAmountPerContractDecimals }] =
-      psyoptionsAmericanInstrumentDataSerializer.deserialize(
-        Buffer.from(instrumentData)
-      );
-
-    const optionMarketWithKey = await PsyoptionsAmericanInstrument.fetchMeta(
-      convergence,
-      metaKey
+    const [
+      {
+        optionType,
+        underlyingAmountPerContract,
+        underlyingAmountPerContractDecimals,
+        strikePrice,
+        strikePriceDecimals,
+        expiration,
+        optionMint,
+        metaKey,
+      },
+    ] = psyoptionsAmericanInstrumentDataSerializer.deserialize(
+      Buffer.from(instrumentData)
     );
-
-    const quoteMint = await convergence
-      .tokens()
-      .findMintByAddress({ address: optionMarketWithKey.quoteAssetMint });
 
     return new PsyoptionsAmericanInstrument(
       convergence,
-      optionMarketWithKey.underlyingAssetMint,
-      underlyingAmountPerContractDecimals,
-      baseAssetIndex,
-      quoteMint,
       optionType,
-      optionMarketWithKey,
+      removeDecimals(
+        underlyingAmountPerContract,
+        underlyingAmountPerContractDecimals
+      ),
+      underlyingAmountPerContractDecimals,
+      removeDecimals(strikePrice, strikePriceDecimals),
+      strikePriceDecimals,
+      Number(expiration),
+      optionMint,
       metaKey,
+      baseAssetIndex,
       removeDecimals(instrumentAmount, PsyoptionsAmericanInstrument.decimals),
       side
     );

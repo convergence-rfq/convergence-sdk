@@ -5,7 +5,7 @@ import { PublicKey } from '../../types';
 import { Convergence } from '../../Convergence';
 
 export interface LegInstrumentParser {
-  parseFromLeg(convergence: Convergence, leg: Leg): Promise<LegInstrument>;
+  parseFromLeg(convergence: Convergence, leg: Leg): LegInstrument;
 }
 
 export interface LegInstrument {
@@ -15,7 +15,7 @@ export interface LegInstrument {
   getDecimals: () => number;
   getSide: () => Side;
   serializeInstrumentData: () => Buffer;
-  getValidationAccounts(): AccountMeta[];
+  getValidationAccounts(): Promise<AccountMeta[]>;
 }
 
 // TODO add registration of quote instruments

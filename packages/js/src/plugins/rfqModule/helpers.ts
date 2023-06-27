@@ -195,25 +195,6 @@ export const faucetAirdropWithMint = async (
   });
 };
 
-// TODO rework to plugin logic
-// export async function convergence.parseLegInstrument( convergence: Convergence,
-//   leg: Leg
-// ): Promise<LegInstrument> {
-//   if (leg.instrumentProgram.equals(spotInstrumentProgram.address)) {
-//     return SpotLegInstrument.parseFromLeg(convergence, leg);
-//   } else if (
-//     leg.instrumentProgram.equals(psyoptionsEuropeanInstrumentProgram.address)
-//   ) {
-//     return PsyoptionsEuropeanInstrument.parseFromLeg(convergence, leg);
-//   } else if (
-//     leg.instrumentProgram.equals(psyoptionsAmericanInstrumentProgram.address)
-//   ) {
-//     return PsyoptionsAmericanInstrument.parseFromLeg(convergence, leg);
-//   }
-
-//   throw new Error('Unsupported instrument program');
-// }
-
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
   itemsPerPage?: number,
@@ -464,10 +445,15 @@ export const legsToBaseAssetAccounts = (
   return baseAssetAccounts;
 };
 
-export const instrumentsToLegAccounts = (
+// TODO remove async part after option instruments refactoring
+export const instrumentsToLegAccounts = async (
   instruments: LegInstrument[]
-): AccountMeta[] => {
-  return instruments.map((i) => getValidationAccounts(i)).flat();
+): Promise<AccountMeta[]> => {
+  const accounts = await Promise.all(
+    instruments.map((i) => getValidationAccounts(i))
+  );
+
+  return accounts.flat();
 };
 
 export const initializeNewOptionMeta = async (
@@ -701,11 +687,7 @@ export const createEuroAccountsAndMintOptions = async (
 
   for (const leg of rfq.legs) {
     if (leg instanceof PsyoptionsEuropeanInstrument) {
-      const euroMetaKey = leg.metaKey;
-      const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
-        convergence,
-        euroMetaKey
-      );
+      const euroMeta = await leg.getOptionMeta();
       const { stableMint, underlyingMint } = euroMeta;
       const stableMintToken = convergence
         .tokens()
@@ -744,7 +726,7 @@ export const createEuroAccountsAndMintOptions = async (
 
       const { instruction: ix1 } = mintOptions(
         europeanProgram,
-        euroMetaKey,
+        leg.optionMetaPubKey,
         euroMeta as EuroMeta,
         minterCollateralKey,
         optionDestination,
@@ -792,10 +774,7 @@ export const getCreateEuroAccountsAndMintOptionsTransaction = async (
 
   for (const leg of rfq.legs) {
     if (leg instanceof PsyoptionsEuropeanInstrument) {
-      const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
-        convergence,
-        leg.metaKey
-      );
+      const euroMeta = await leg.getOptionMeta();
       const { stableMint, underlyingMint } = euroMeta;
       const stableMintToken = convergence
         .tokens()
@@ -833,7 +812,7 @@ export const getCreateEuroAccountsAndMintOptionsTransaction = async (
 
       const { instruction: ix } = mintOptions(
         europeanProgram,
-        leg.metaKey,
+        leg.optionMetaPubKey,
         euroMeta as EuroMeta,
         minterCollateralKey,
         optionDestination,
@@ -1104,11 +1083,7 @@ export const getCreateAccountsAndMintOptionsTransaction = async (
       } else if (leg instanceof PsyoptionsEuropeanInstrument) {
         const amount = leg.getAmount();
 
-        const euroMetaKey = leg.metaKey;
-        const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
-          convergence,
-          euroMetaKey
-        );
+        const euroMeta = await leg.getOptionMeta();
         // euroMeta.underlyingAmountPerContract = new BN(
         //   euroMeta.underlyingAmountPerContract
         // );
@@ -1157,7 +1132,7 @@ export const getCreateAccountsAndMintOptionsTransaction = async (
 
         const { instruction: ix } = mintOptions(
           europeanProgram,
-          euroMetaKey,
+          leg.optionMetaPubKey,
           //@ts-ignore
           euroMeta,
           minterCollateralKey,
@@ -1289,11 +1264,7 @@ export const mintEuropeanOptions = async (
       ) {
         const amount = leg.getAmount();
 
-        const euroMetaKey = leg.metaKey;
-        const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
-          convergence,
-          euroMetaKey
-        );
+        const euroMeta = await leg.getOptionMeta();
         const { stableMint } = euroMeta;
         const { underlyingMint } = euroMeta;
         const stableMintToken = convergence
@@ -1331,7 +1302,7 @@ export const mintEuropeanOptions = async (
         );
         const { instruction: ix } = mintOptions(
           europeanProgram,
-          euroMetaKey,
+          leg.optionMetaPubKey,
           euroMeta as EuroMeta,
           minterCollateralKey,
           optionDestination,
@@ -1414,11 +1385,7 @@ export const getOrCreateEuropeanOptionATAs = async (
       ) {
         flag = true;
 
-        const euroMetaKey = leg.metaKey;
-        const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
-          convergence,
-          euroMetaKey
-        );
+        const euroMeta = await leg.getOptionMeta();
         const { optionType } = leg;
         await getOrCreateATA(
           convergence,
@@ -1575,11 +1542,7 @@ export const createAccountsAndMintOptions = async (
       ) {
         const amount = leg.getAmount();
 
-        const euroMetaKey = leg.metaKey;
-        const euroMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
-          convergence,
-          euroMetaKey
-        );
+        const euroMeta = await leg.getOptionMeta();
         // euroMeta.underlyingAmountPerContract = new BN(
         //   euroMeta.underlyingAmountPerContract
         // );
@@ -1620,7 +1583,7 @@ export const createAccountsAndMintOptions = async (
 
         const { instruction: ix } = mintOptions(
           europeanProgram,
-          euroMetaKey,
+          leg.optionMetaPubKey,
           //@ts-ignore
           euroMeta,
           minterCollateralKey,
@@ -1669,16 +1632,13 @@ export const legToBaseAssetMint = async (
 ) => {
   if (leg instanceof PsyoptionsEuropeanInstrument) {
     const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
-      address:
-        leg.optionType == OptionType.CALL
-          ? leg.meta.callOptionMint
-          : leg.meta.putOptionMint,
+      address: leg.optionMint,
     });
 
     return euroMetaOptionMint;
   } else if (leg instanceof PsyoptionsAmericanInstrument) {
     const americanOptionMint = await convergence.tokens().findMintByAddress({
-      address: leg.optionMeta.optionMint,
+      address: leg.optionMint,
     });
 
     return americanOptionMint;
