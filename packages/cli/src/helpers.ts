@@ -4,6 +4,8 @@ import {
   PsyoptionsAmericanInstrument,
   PsyoptionsEuropeanInstrument,
   LegInstrument,
+  FixedSize,
+  InstrumentType,
 } from '@convergence-rfq/sdk';
 import { Command } from 'commander';
 
@@ -18,6 +20,30 @@ export const getSide = (side: string): Side => {
       return Side.Ask;
     default:
       throw new Error('Invalid side');
+  }
+};
+
+export const getInstrumentType = (type: string): InstrumentType => {
+  switch (type) {
+    case 'spot':
+      return InstrumentType.Spot;
+    case 'option':
+      return InstrumentType.Option;
+    default:
+      throw new Error('Invalid instrument type');
+  }
+};
+
+export const getSize = (size: string, amount: number): FixedSize => {
+  switch (size) {
+    case 'fixed-base':
+      return { type: 'fixed-base', amount };
+    case 'fixed-quote':
+      return { type: 'fixed-quote', amount };
+    case 'open':
+      return { type: 'open' };
+    default:
+      throw new Error('Invalid size');
   }
 };
 

@@ -10,7 +10,7 @@ import {
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import { getSide } from './helpers';
+import { getInstrumentType, getSide, getSize } from './helpers';
 import {
   logPk,
   logResponse,
@@ -267,6 +267,7 @@ export const createRfq = async (opts: Opts) => {
   ]);
 
   try {
+    const quoteAsset = await SpotQuoteInstrument.create(cvg, quoteMint);
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(
@@ -278,8 +279,8 @@ export const createRfq = async (opts: Opts) => {
       ],
       taker: cvg.rpc().getDefaultFeePayer(),
       orderType: opts.orderType,
-      fixedSize: opts.size,
-      quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
+      fixedSize: getSize(opts.size, opts.amount),
+      quoteAsset,
       activeWindow: parseInt(opts.activeWindow),
       settlingWindow: parseInt(opts.settlingWindow),
       collateralInfo: new PublicKey(opts.collateralInfo),
@@ -398,7 +399,7 @@ export const setRiskEngineInstrumentType = async (opts: Opts) => {
   try {
     const { response } = await cvg.riskEngine().setInstrumentType({
       instrumentProgram: new PublicKey(opts.program),
-      instrumentType: opts.type,
+      instrumentType: getInstrumentType(opts.type),
     });
     logResponse(response);
   } catch (e) {
