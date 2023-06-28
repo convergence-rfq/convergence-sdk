@@ -76,13 +76,13 @@ export class OperationClient {
       if (Symbol.asyncIterator in Object(result)) {
         // throw new TypeError('You cannot call execute ')
         const values: O[] = [];
-        for await (let value of result as AsyncGenerator<O, void, void>) {
+        for await (const value of result as AsyncGenerator<O, void, void>) {
           values.push(value);
         }
         return values as O | Promise<O>;;
-      } else {
+      } 
         return await result as O | Promise<O>;
-      }
+      
     }
 
     return new Disposable(signal).run(process);
@@ -106,9 +106,9 @@ export class OperationClient {
   
       if (Symbol.asyncIterator in Object(result)) {
         return result as AsyncGenerator<O, void, void>;
-      } else {
+      } 
         throw new TypeError('toCollection not supported');
-      }
+      
     }
 
     return new Disposable(signal).run(process);
