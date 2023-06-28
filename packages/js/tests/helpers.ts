@@ -154,13 +154,13 @@ export const createRfq = async (
       await SpotLegInstrument.create(
         cvg,
         baseMint,
-        1,
+        amount,
         // This is always going to bid
         Side.Bid
       ),
     ],
     orderType,
-    fixedSize: { type: 'fixed-base', amount },
+    fixedSize: { type: 'fixed-base', amount: 1 },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
   return { rfq, response };
