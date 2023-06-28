@@ -1,4 +1,4 @@
-import { Rfq } from '../models';
+import { Rfq, toRfq } from '../models';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import {
   Operation,
@@ -7,6 +7,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { toRfqAccount } from "../accounts";
 
 const Key = 'FindRfqsOperation' as const;
 
@@ -39,11 +40,11 @@ export type FindRfqsOperation = Operation<
  * @category Inputs
  */
 export type FindRfqsInput = {
-  /** Optional RFQ page. */
-  page?: number;
-
-  /** Optional RFQs per page. */
-  pageCount?: number;
+  /**
+   * Specifies the number of RFQs returned per interation.
+   * Defaults to 100
+   */
+  chunkSize?: number;
 };
 
 /**
@@ -57,26 +58,28 @@ export type FindRfqsOutput = Rfq[];
  * @category Handlers
  */
 export const findRfqsOperationHandler: OperationHandler<FindRfqsOperation> = {
-  handle: async (
+  handle: async function*(
     operation: FindRfqsOperation,
     convergence: Convergence,
     scope: OperationScope
-  ): Promise<FindRfqsOutput> => {
-    const { programs } = scope;
+  ) {
+    const { programs, commitment } = scope;
+    const { input: { chunkSize = 100 } } = operation;
 
     const rfqProgram = convergence.programs().getRfq(programs);
     const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
     const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
     scope.throwIfCanceled();
 
-    const rfqs = await Promise.all(
-      unparsedAccounts.map((unparsedAccount) =>
-        convergence
-          .rfqs()
-          .findRfqByAddress({ address: unparsedAccount.publicKey })
-      )
-    );
+    const unparsedAddresses = unparsedAccounts.map(account => account.publicKey);
 
-    return rfqs;
+    for (let i = 0; i < unparsedAddresses.length; i += chunkSize) {
+      const chunk = unparsedAddresses.slice(i, i + chunkSize);
+
+      const accounts = await convergence.rpc().getMultipleAccounts(chunk, commitment);
+      yield await Promise.all(
+        accounts.map(account => toRfq(convergence, toRfqAccount(account)))
+      );
+    }
   },
 };

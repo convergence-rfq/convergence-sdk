@@ -107,7 +107,7 @@ export type OperationHandler<
     operation: T,
     convergence: Convergence,
     scope: OperationScope
-  ) => O | Promise<O>;
+  ) => O | Promise<O> | AsyncGenerator<O, void, void>;
 };
 
 /**
