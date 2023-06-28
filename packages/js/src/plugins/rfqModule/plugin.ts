@@ -5,8 +5,6 @@ import { RfqClient } from './RfqClient';
 import {
   createRfqOperation,
   createRfqOperationHandler,
-  findRfqsByInstrumentOperation,
-  findRfqsByInstrumentOperationHandler,
   cancelRfqOperation,
   cancelRfqOperationHandler,
   respondToRfqOperationHandler,
@@ -121,10 +119,6 @@ export const rfqModule = (): ConvergencePlugin => ({
     );
     op.register(findRfqByAddressOperation, findRfqByAddressOperationHandler);
     op.register(findRfqsOperation, findRfqsOperationHandler);
-    op.register(
-      findRfqsByInstrumentOperation,
-      findRfqsByInstrumentOperationHandler
-    );
     op.register(
       partiallySettleLegsOperation,
       partiallySettleLegsOperationHandler

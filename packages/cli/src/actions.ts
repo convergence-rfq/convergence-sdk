@@ -221,18 +221,31 @@ export const getAllRfqs = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     // NOTE: Paging is not implemented yet
-    const rfqs = await cvg.rfqs().findRfqs({ page: 0, pageCount: 10 });
+    const iterator = await cvg.rfqs().findRfqs({ chunkSize: 10 });
+    const rfqs = await (await getAll(iterator)).flat();
     rfqs.map(logRfq);
   } catch (e) {
     logError(e);
   }
 };
 
+async function getAll<T>(iter: AsyncGenerator<T, void, void>): Promise<T[]> {
+  const values: T[] = [];
+
+  for await (let value of iter) {
+    values.push(value);
+  }
+
+  return values;
+}
+
 export const getActiveRfqs = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     // NOTE: Paging is not implemented yet
-    const rfqs = await cvg.rfqs().findRfqs({});
+    // TODO: Fix the TYPES please!
+    const iterator = await cvg.rfqs().findRfqs({});
+    const rfqs = await (await getAll(iterator)).flat();
     rfqs
       .filter(r => r.state === 'active')
       .sort((a, b) => {

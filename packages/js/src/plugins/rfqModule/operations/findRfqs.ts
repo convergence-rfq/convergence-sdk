@@ -1,4 +1,4 @@
-import { Rfq } from '../models';
+import { Rfq, toRfq } from '../models';
 import { RfqGpaBuilder } from '../RfqGpaBuilder';
 import {
   Operation,
@@ -9,6 +9,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { toRfqAccount } from '../accounts';
 
 const Key = 'FindRfqsOperation' as const;
 
@@ -45,6 +46,12 @@ export type FindRfqsInput = {
    * Optional RFQ owner.
    */
   owner?: PublicKey;
+
+  /*
+   * Specifies the number of RFQs returned per interation.
+   * Defaults to 100
+   */
+  chunkSize?: number;
 };
 
 /**
@@ -58,13 +65,15 @@ export type FindRfqsOutput = Rfq[];
  * @category Handlers
  */
 export const findRfqsOperationHandler: OperationHandler<FindRfqsOperation> = {
-  handle: async (
+  async *handle(
     operation: FindRfqsOperation,
     convergence: Convergence,
     scope: OperationScope
-  ): Promise<FindRfqsOutput> => {
-    const { programs } = scope;
-    const { owner } = operation.input;
+  ) {
+    const { programs, commitment } = scope;
+    const {
+      input: { chunkSize = 100, owner },
+    } = operation;
 
     const rfqProgram = convergence.programs().getRfq(programs);
     const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
@@ -78,12 +87,19 @@ export const findRfqsOperationHandler: OperationHandler<FindRfqsOperation> = {
       unparsedAccounts.push(...result);
     }
 
-    const rfqs = await Promise.all(
-      unparsedAccounts.map((acc) =>
-        convergence.rfqs().findRfqByAddress({ address: acc.publicKey })
-      )
+    const unparsedAddresses = unparsedAccounts.map(
+      (account) => account.publicKey
     );
 
-    return rfqs;
+    for (let i = 0; i < unparsedAddresses.length; i += chunkSize) {
+      const chunk = unparsedAddresses.slice(i, i + chunkSize);
+
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(chunk, commitment);
+      yield await Promise.all(
+        accounts.map((account) => toRfq(convergence, toRfqAccount(account)))
+      );
+    }
   },
 };

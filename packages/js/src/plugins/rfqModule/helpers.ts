@@ -431,6 +431,7 @@ export const initializeNewOptionMeta = async (
     underlyingMint.address.toBuffer(),
     Buffer.from('underlyingPool', 'utf-8'),
   ]);
+  // TODO: Use retry method
   const underlyingPoolAccount = await convergence.connection.getAccountInfo(
     underlyingPoolKey
   );
@@ -441,6 +442,7 @@ export const initializeNewOptionMeta = async (
     stableMint.address.toBuffer(),
     Buffer.from('stablePool', 'utf-8'),
   ]);
+  // TODO: Use retry method
   const stablePoolAccount = await convergence.connection.getAccountInfo(
     stablePoolKey
   );

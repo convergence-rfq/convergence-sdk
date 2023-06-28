@@ -54,6 +54,18 @@ export const createUserCvg = (user = 'dao'): Convergence => {
 
 /// Utils
 
+export async function getAll<T>(
+  iter: AsyncGenerator<T, void, void>
+): Promise<T[]> {
+  const values: T[] = [];
+
+  for await (const value of iter) {
+    values.push(value);
+  }
+
+  return values;
+}
+
 export const generatePk = async (): Promise<PublicKey> => {
   return await PublicKey.createWithSeed(PROGRAM_ID, uuidv4(), PROGRAM_ID);
 };

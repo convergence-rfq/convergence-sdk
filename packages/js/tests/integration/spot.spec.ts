@@ -29,7 +29,7 @@ describe('integration.spot', () => {
   });
 
   it('sell', async () => {
-    const amountA = 1.5;
+    const amountA = 1.536_421;
     const amountB = 22_000.86;
 
     const { rfq } = await createRfq(takerCvg, amountA, 'sell');

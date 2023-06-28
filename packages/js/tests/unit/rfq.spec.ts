@@ -7,7 +7,7 @@ import {
   SpotQuoteInstrument,
   FixedSize,
 } from '../../src';
-import { createUserCvg } from '../helpers';
+import { createUserCvg, getAll } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
 describe('unit.rfq', () => {
@@ -26,14 +26,16 @@ describe('unit.rfq', () => {
   });
 
   it('find all', async () => {
-    const rfqs = await takerCvg.rfqs().findRfqs({});
+    const iterator = await takerCvg.rfqs().findRfqs({});
+    const rfqs = await (await getAll(iterator)).flat();
     expect(rfqs.length).toBeGreaterThan(0);
   });
 
   it('find all [owner]', async () => {
-    const rfqs = await takerCvg
+    const iterator = await takerCvg
       .rfqs()
       .findRfqs({ owner: takerCvg.identity().publicKey });
+    const rfqs = await (await getAll(iterator)).flat();
     expect(rfqs.length).toBeGreaterThan(0);
   });
 
