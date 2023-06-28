@@ -27,7 +27,6 @@ import {
   logToken,
   logMint,
 } from './logger';
-import { Rfq } from "packages/js/dist/types";
 
 export const createMint = async (opts: Opts) => {
   const cvg = await createCvg(opts);
@@ -223,7 +222,7 @@ export const getAllRfqs = async (opts: Opts) => {
   try {
     // NOTE: Paging is not implemented yet
     const iterator = await cvg.rfqs().findRfqs({ chunkSize: 10 });
-    const rfqs = await getAll(iterator) as unknown as Rfq[];
+    const rfqs = await (await getAll(iterator)).flat();
     rfqs.map(logRfq);
   } catch (e) {
     logError(e);
@@ -246,7 +245,7 @@ export const getActiveRfqs = async (opts: Opts) => {
     // NOTE: Paging is not implemented yet
     // TODO: Fix the TYPES please!
     const iterator = await cvg.rfqs().findRfqs({});
-    const rfqs = await getAll(iterator) as unknown as Rfq[];
+    const rfqs = await (await getAll(iterator)).flat();
     rfqs
       .filter(r => r.state === 'active')
       .sort((a, b) => {
