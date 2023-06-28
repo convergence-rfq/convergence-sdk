@@ -10,7 +10,6 @@ export * from './confirmResponse';
 export * from './createRfq';
 export * from './finalizeRfqConstruction';
 export * from './findRfqByAddress';
-export * from './findRfqsByInstrument';
 export * from './partiallySettleLegs';
 export * from './partiallySettleLegsAndSettle';
 export * from './partlyRevertSettlementPreparation';

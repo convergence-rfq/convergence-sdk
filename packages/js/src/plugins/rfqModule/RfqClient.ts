@@ -42,8 +42,6 @@ import {
   FindResponsesByRfqsInput,
   findResponsesByOwnerOperation,
   FindResponsesByOwnerInput,
-  findRfqsByInstrumentOperation,
-  FindRfqsByInstrumentInput,
   partiallySettleLegsOperation,
   PartiallySettleLegsInput,
   partlyRevertSettlementPreparationOperation,
@@ -308,7 +306,7 @@ export class RfqClient {
   findRfqs(input: FindRfqsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(findRfqsOperation(input), options);
+      .toCollection(findRfqsOperation(input), options);
   }
 
   /** {@inheritDoc findResponsesByRfqOperation} */
@@ -336,16 +334,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(findRfqByAddressOperation(input), options);
-  }
-
-  /** {@inheritDoc findRfqsByInstrumentOperation} */
-  findRfqsByInstrument(
-    input: FindRfqsByInstrumentInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(findRfqsByInstrumentOperation(input), options);
   }
 
   /** {@inheritDoc partiallySettleLegsOperation} */
