@@ -11,6 +11,7 @@ import {
 } from '../../types';
 import { Disposable, DisposableScope } from '../../utils';
 import { OperationHandlerMissingError } from '../../errors';
+import { AsyncCollection, toCollection } from "./AsyncCollection";
 
 /**
  * @group Modules
@@ -93,7 +94,7 @@ export class OperationClient {
     K extends string = KeyOfOperation<T>,
     I = InputOfOperation<T>,
     O = OutputOfOperation<T>
-  >(operation: T, options: OperationOptions = {}): Promise<AsyncGenerator<O, void, void>> {
+  >(operation: T, options: OperationOptions = {}): AsyncCollection<O> {
     const operationHandler = this.get<T, K, I, O>(operation);
     const signal = options.signal ?? new AbortController().signal;
 
@@ -105,13 +106,13 @@ export class OperationClient {
       );
   
       if (Symbol.asyncIterator in Object(result)) {
-        return result as AsyncGenerator<O, void, void>;
+        const generator = result as AsyncGenerator<O, void, void>;
+        return toCollection<O>(() => generator);
       } 
         throw new TypeError('toCollection not supported');
-      
     }
 
-    return new Disposable(signal).run(process);
+    return new Disposable(signal).runSync(process);
   }
 
   protected getOperationScope(
