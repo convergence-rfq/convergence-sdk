@@ -3,7 +3,6 @@ import {
   isFixedSizeBaseAsset,
   isFixedSizeNone,
   isFixedSizeQuoteAsset,
-  OrderType as SolitaOrderType,
   Side,
 } from '@convergence-rfq/rfq';
 
@@ -15,9 +14,17 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { LegInstrument } from '../../../plugins/instrumentModule';
-import { FixedSize, LEG_MULTIPLIER_DECIMALS, toSolitaFixedSize } from "@/plugins/rfqModule";
-import { removeDecimals } from "@/utils";
+import {
+  LegInstrument,
+  QuoteInstrument,
+} from '../../../plugins/instrumentModule';
+import { removeDecimals } from '../../../utils';
+import {
+  FixedSize,
+  LEG_MULTIPLIER_DECIMALS,
+  OrderType,
+  toSolitaFixedSize,
+} from '../../../plugins/rfqModule';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -26,13 +33,13 @@ const Key = 'CalculateCollateralForRfqOperation' as const;
  *
  * ```ts
  * await cvg.riskEngine().calculateCollateralForRfq({
-      fixedSize: {
-        __kind: 'BaseAsset',
-        legsMultiplierBps: 2,
-      },
-      orderType: OrderType.TwoWay,
       legs,
-      settlementPeriod: 5 * 60 * 60, // 5 hours
+      size: {
+        type: 'fixed',
+        amount: 2.1,
+      },
+      orderType: 'two-way',
+      settlementPeriod: 60, // 1 minute
     });
  * ```
  *
@@ -67,20 +74,27 @@ export type CalculateCollateralForRfqOutput = {
  */
 export type CalculateCollateralForRfqInput = {
   /**
-   * Size restriction of the RFQ being created
+   * Size restriction of the RFQ being created.
    */
-  fixedSize: FixedSize;
+  size: FixedSize;
+
   /**
-   * Order type of the RFQ being created
+   * Order type of the RFQ being created.
    */
-  orderType: SolitaOrderType;
+  orderType: OrderType;
+
   /**
-   * Legs of the RFQ being created
+   * Legs of the RFQ being created.
    */
   legs: LegInstrument[];
 
   /**
-   * Settlement period of the RFQ being created in seconds
+   * Quote asset of the RFQ being created.
+   */
+  quoteAsset: QuoteInstrument;
+
+  /**
+   * Settlement period of the RFQ being created in seconds.
    */
   settlementPeriod: number;
 };
@@ -95,31 +109,34 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
       convergence: Convergence,
       scope: OperationScope
     ): Promise<CalculateCollateralForRfqOutput> => {
-      scope.throwIfCanceled();
-
-      const config = await convergence.riskEngine().fetchConfig(scope);
-
-      const { fixedSize, orderType, legs, settlementPeriod } =
-        operation.input;
+      const {
+        orderType,
+        legs,
+        settlementPeriod,
+        size: fixedSize,
+      } = operation.input;
 
       const size = toSolitaFixedSize(fixedSize, 0);
-
+      const config = await convergence.riskEngine().fetchConfig(scope);
       if (isFixedSizeNone(size)) {
         return {
           requiredCollateral: removeDecimals(
-            config.collateralForVariableSizeRfqCreation, 
-            Number(config.collateralMintDecimals),
-          )
-        }
+            config.collateralForVariableSizeRfqCreation,
+            Number(config.collateralMintDecimals)
+          ),
+        };
       } else if (isFixedSizeQuoteAsset(size)) {
         return {
           requiredCollateral: removeDecimals(
-            config.collateralForFixedQuoteAmountRfqCreation, 
-            Number(config.collateralMintDecimals),
-          )
-        }
+            config.collateralForFixedQuoteAmountRfqCreation,
+            Number(config.collateralMintDecimals)
+          ),
+        };
       } else if (isFixedSizeBaseAsset(size)) {
-        const legMultiplier = removeDecimals(size.legsMultiplierBps, LEG_MULTIPLIER_DECIMALS);
+        const legMultiplier = removeDecimals(
+          size.legsMultiplierBps,
+          LEG_MULTIPLIER_DECIMALS
+        );
         const sideToCase = (side: Side) => {
           return {
             legMultiplier,
@@ -129,11 +146,11 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
         };
 
         const cases = [];
-        if (orderType == SolitaOrderType.Buy) {
+        if (orderType == 'buy') {
           cases.push(sideToCase(Side.Ask));
-        } else if (orderType == SolitaOrderType.Sell) {
+        } else if (orderType == 'sell') {
           cases.push(sideToCase(Side.Bid));
-        } else if (orderType == SolitaOrderType.TwoWay) {
+        } else if (orderType == 'two-way') {
           cases.push(sideToCase(Side.Ask));
           cases.push(sideToCase(Side.Bid));
         } else {
@@ -150,7 +167,9 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
         );
 
         const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
-        return { requiredCollateral };
+        return {
+          requiredCollateral,
+        };
       }
 
       throw new Error('Invalid fixed size');

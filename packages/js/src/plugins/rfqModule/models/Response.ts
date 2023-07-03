@@ -1,18 +1,21 @@
 import { PublicKey } from '@solana/web3.js';
-import { bignum, COption } from '@convergence-rfq/beet';
 import {
-  AuthoritySide,
-  Confirmation,
-  DefaultingParty,
-  Quote,
-  StoredResponseState,
+  AuthoritySide as SolitaAuthoritySide,
+  Confirmation as SolitaConfirmation,
+  DefaultingParty as SolitaDefaultingParty,
+  Quote as SolitaQuote,
+  StoredResponseState as SolitaStoredResponseState,
 } from '@convergence-rfq/rfq';
+import { BN } from '@project-serum/anchor';
 
 import { ResponseAccount } from '../accounts';
-import { assert } from '../../../utils';
+import { assert, removeDecimals, addDecimals } from '../../../utils';
+import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
+
+type Quote = SolitaQuote;
 
 /**
- * This model captures all the relevant information about an Response
+ * This model captures all the relevant information about a response
  * on the Solana blockchain.
  *
  * @group Models
@@ -21,53 +24,50 @@ export type Response = {
   /** A model identifier to distinguish models in the SDK. */
   readonly model: 'response';
 
-  /** The address of the Response. */
+  /** The address of the response. */
   readonly address: PublicKey;
 
-  /** The Maker's pubkey address. */
+  /** The maker pubkey address. */
   readonly maker: PublicKey;
 
-  /** The address of the Rfq this Response corresponds to. */
+  /** The address of the RFQ this response corresponds to. */
   readonly rfq: PublicKey;
 
-  /** The timestamp at which this Response was created. */
-  readonly creationTimestamp: bignum;
+  /** The timestamp at which this response was created. */
+  readonly creationTimestamp: number;
 
-  /** The amount of the Maker's collateral locked. */
-  readonly makerCollateralLocked: bignum;
+  /** The bid required for sell and optionally two-way order types. */
+  readonly bid: Quote | null;
 
-  /** The amount of the Taker's collateral locked. */
-  readonly takerCollateralLocked: bignum;
+  /** The ask required for buy and optionally two-way order types. */
+  readonly ask: Quote | null;
 
-  /** The current state of the Response. */
-  readonly state: StoredResponseState;
+  /** The amount of the maker collateral locked. */
+  readonly makerCollateralLocked: number;
 
-  /** The number of legs prepared by the Taker. */
+  /** The amount of the taker collateral locked. */
+  readonly takerCollateralLocked: number;
+
+  /** The current state of the response. */
+  readonly state: SolitaStoredResponseState;
+
+  /** The number of legs prepared by the taker. */
   readonly takerPreparedLegs: number;
 
-  /** The number of legs prepared by the Maker. */
+  /** The number of legs prepared by the maker. */
   readonly makerPreparedLegs: number;
 
   /** The number of legs that have already been settled. */
   readonly settledLegs: number;
 
-  /** The Confirmation of this Response, if any. */
-  readonly confirmed: COption<Confirmation>;
+  /** The optional confirmation of this response. */
+  readonly confirmed: SolitaConfirmation | null;
 
-  /** The defaulting party of this Response, if any. */
-  readonly defaultingParty: COption<DefaultingParty>;
+  /** The optional defaulting party of this response. */
+  readonly defaultingParty: SolitaDefaultingParty | null;
 
-  /** An array of `AuthoritySide`s showing whether the Maker or Taker
-   *  initialized leg preparation for each prepared leg */
-  readonly legPreparationsInitializedBy: AuthoritySide[];
-
-  /** The bid, if any. If the `orderType` of the RFQ is
-   * OrderType.Sell then this field is required. */
-  readonly bid: COption<Quote>;
-
-  /** The ask, if any. If the `orderType` of the RFQ is
-   * OrderType.Buy then this field is required. */
-  readonly ask: COption<Quote>;
+  /** Shows whether the maker or taker initialized preparation for each prepared leg. */
+  readonly legPreparationsInitializedBy: SolitaAuthoritySide[];
 };
 
 /** @group Model Helpers */
@@ -76,25 +76,97 @@ export const isResponse = (value: any): value is Response =>
 
 /** @group Model Helpers */
 export function assertResponse(value: any): asserts value is Response {
-  assert(isResponse(value), `Expected Response model`);
+  assert(isResponse(value), 'Expected Response model');
 }
 
+export const toSolitaQuote = (
+  quote: Quote | null,
+  decimals: number
+): SolitaQuote | null => {
+  if (quote) {
+    const priceQuoteWithDecimals = addDecimals(
+      Number(quote.priceQuote.amountBps),
+      decimals
+    );
+
+    // TODO: Is this correct?
+    quote.priceQuote.amountBps = priceQuoteWithDecimals.mul(
+      new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS))
+    );
+
+    if (quote.__kind === 'Standard') {
+      quote.legsMultiplierBps = addDecimals(
+        Number(quote.legsMultiplierBps),
+        LEG_MULTIPLIER_DECIMALS
+      );
+    }
+
+    return quote;
+  }
+
+  return null;
+};
+
+const fromSolitaQuote = (
+  quote: SolitaQuote | null,
+  decimals: number
+): Quote | null => {
+  if (quote) {
+    const priceQuoteWithoutDecimals = removeDecimals(
+      quote.priceQuote.amountBps,
+      decimals
+    );
+
+    // TODO: Is this correct?
+    quote.priceQuote.amountBps = removeDecimals(
+      new BN(priceQuoteWithoutDecimals),
+      ABSOLUTE_PRICE_DECIMALS
+    );
+
+    if (quote.__kind === 'Standard') {
+      const legsMultiplierBps = removeDecimals(
+        quote.legsMultiplierBps,
+        LEG_MULTIPLIER_DECIMALS
+      );
+      quote.legsMultiplierBps = new BN(legsMultiplierBps);
+    }
+
+    return quote;
+  }
+
+  return null;
+};
+
 /** @group Model Helpers */
-export const toResponse = (account: ResponseAccount): Response => ({
+export const toResponse = (
+  account: ResponseAccount,
+  collateralDecimals: number,
+  quoteDecimals: number
+): Response => ({
   model: 'response',
   address: account.publicKey,
   maker: account.data.maker,
   rfq: account.data.rfq,
-  creationTimestamp: account.data.creationTimestamp,
-  makerCollateralLocked: account.data.makerCollateralLocked,
-  takerCollateralLocked: account.data.takerCollateralLocked,
+  creationTimestamp: Number(account.data.creationTimestamp) * 1_000,
+  makerCollateralLocked: removeDecimals(
+    account.data.makerCollateralLocked,
+    collateralDecimals
+  ),
+  takerCollateralLocked: removeDecimals(
+    account.data.takerCollateralLocked,
+    collateralDecimals
+  ),
+  // TODO: Create new state for UI
   state: account.data.state,
+  // TODO: Abstract with response model method
   takerPreparedLegs: account.data.takerPreparedLegs,
+  // TODO: Abstract with response model method
   makerPreparedLegs: account.data.makerPreparedLegs,
+  // TODO: Abstract with response model method
   settledLegs: account.data.settledLegs,
   confirmed: account.data.confirmed,
   defaultingParty: account.data.defaultingParty,
   legPreparationsInitializedBy: account.data.legPreparationsInitializedBy,
-  bid: account.data.bid,
-  ask: account.data.ask,
+  bid: fromSolitaQuote(account.data.bid, quoteDecimals),
+  ask: fromSolitaQuote(account.data.ask, quoteDecimals),
 });

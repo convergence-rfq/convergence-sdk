@@ -54,8 +54,10 @@ export type CalculateCollateralForConfirmationOperation = Operation<
 export type CalculateCollateralForConfirmationInput = {
   /** The address of the Rfq account. */
   rfqAddress: PublicKey;
+
   /** The address of the response account. */
   responseAddress: PublicKey;
+
   /** Confirmation which collateral requirements are estimated */
   confirmation: Confirmation;
 };
@@ -91,15 +93,10 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
 
       // fetching in parallel
       const [rfq, response, config] = await Promise.all([
+        convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
         convergence
           .rfqs()
-          .findRfqByAddress({ address: rfqAddress }, scope),
-        convergence
-          .rfqs()
-          .findResponseByAddress(
-            { address: responseAddress, convert: false },
-            scope
-          ),
+          .findResponseByAddress({ address: responseAddress }, scope),
         convergence.riskEngine().fetchConfig(scope),
       ]);
 

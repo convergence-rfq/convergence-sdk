@@ -1,4 +1,4 @@
-import { StoredRfqState as SolitaStoredRfqState } from "@convergence-rfq/rfq";
+import { StoredRfqState as SolitaStoredRfqState } from '@convergence-rfq/rfq';
 
 type Constructed = 'constructed';
 type Active = 'active';
@@ -6,8 +6,10 @@ type Canceled = 'canceled';
 
 export type StoredRfqState = Constructed | Active | Canceled;
 
-export function fromSolitaStoredRfqState(state: SolitaStoredRfqState): StoredRfqState {
-  switch(state) {
+export function fromSolitaStoredRfqState(
+  state: SolitaStoredRfqState
+): StoredRfqState {
+  switch (state) {
     case SolitaStoredRfqState.Constructed: {
       return 'constructed';
     }
@@ -20,8 +22,10 @@ export function fromSolitaStoredRfqState(state: SolitaStoredRfqState): StoredRfq
   }
 }
 
-export function toSolitaStoredRfqState(state: StoredRfqState): SolitaStoredRfqState {
-  switch(state) {
+export function toSolitaStoredRfqState(
+  state: StoredRfqState
+): SolitaStoredRfqState {
+  switch (state) {
     case 'constructed': {
       return SolitaStoredRfqState.Constructed;
     }

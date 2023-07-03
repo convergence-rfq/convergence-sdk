@@ -25,7 +25,7 @@ import {
   QuoteInstrument,
   toQuote,
 } from '../../../plugins/instrumentModule';
-import { OrderType, toSolitaOrderType } from "../models/OrderType";
+import { OrderType, toSolitaOrderType } from '../models/OrderType';
 
 const Key = 'CreateRfqOperation' as const;
 

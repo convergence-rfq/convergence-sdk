@@ -15,22 +15,18 @@ import {
   addLegsToRfqOperationHandler,
   cleanUpResponseLegsOperation,
   cleanUpResponseLegsOperationHandler,
-  cleanUpResponseOperation,
-  cleanUpResponseOperationHandler,
+  cleanUpResponsesOperation,
+  cleanUpResponsesOperationHandler,
   cleanUpRfqOperation,
   cleanUpRfqOperationHandler,
   finalizeRfqConstructionOperation,
   finalizeRfqConstructionOperationHandler,
-  cancelResponseOperation,
-  cancelResponseOperationHandler,
   confirmResponseOperation,
   confirmResponseOperationHandler,
   findResponseByAddressOperation,
   findResponseByAddressOperationHandler,
   findResponsesByRfqOperation,
   findResponsesByRfqOperationHandler,
-  findResponsesByRfqsOperation,
-  findResponsesByRfqsOperationHandler,
   findResponsesByOwnerOperation,
   findResponsesByOwnerOperationHandler,
   findRfqByAddressOperation,
@@ -55,40 +51,24 @@ import {
   settleOnePartyDefaultOperationHandler,
   settleTwoPartyDefaultOperation,
   settleTwoPartyDefaultOperationHandler,
-  unlockResponseCollateralOperation,
-  unlockResponseCollateralOperationHandler,
   unlockRfqCollateralOperation,
   unlockRfqCollateralOperationHandler,
   createAndFinalizeRfqConstructionOperation,
   createAndFinalizeRfqConstructionOperationHandler,
   createAndAddLegsToRfqOperation,
   createAndAddLegsToRfqOperationHandler,
-} from './operations';
-import { rfqProgram } from './program';
-import {
   cancelMultipleRfqOperation,
   cancelMultipleRfqOperationHandler,
-} from './operations/cancelMultipleRfq';
-import {
-  cancelMultipleResponseOperation,
-  cancelMultipleResponseOperationHandler,
-} from './operations/cancelMultipleResponse';
-import {
-  cleanUpMultipleResponsesOperation,
-  cleanUpMultipleResponsesOperationHandler,
-} from './operations/cleanUpMultipleResponse';
-import {
-  unlockMultipleResponseCollateralOperation,
-  unlockMultipleResponseCollateralOperationHandler,
-} from './operations/unlockMultipleResponseCollateral';
-import {
+  cancelResponsesOperation,
+  cancelResponsesOperationHandler,
+  unlockResponseCollateralOperation,
+  unlockResponseCollateralOperationHandler,
   unlockMultipleRfqCollateralOperation,
   unlockMultipleRfqCollateralOperationHandler,
-} from './operations/unlockMultipleRfqCollateral';
-import {
   cleanUpMultipleRfqOperation,
   cleanUpMultipleRfqOperationHandler,
-} from './operations/cleanUpMultipleRfq';
+} from './operations';
+import { rfqProgram } from './program';
 
 /** @group Plugins */
 export const rfqModule = (): ConvergencePlugin => ({
@@ -102,15 +82,14 @@ export const rfqModule = (): ConvergencePlugin => ({
     };
 
     const op = convergence.operations();
-
     op.register(
       revertSettlementPreparationOperation,
       revertSettlementPreparationOperationHandler
     );
     op.register(addLegsToRfqOperation, addLegsToRfqOperationHandler);
-    op.register(cancelResponseOperation, cancelResponseOperationHandler);
+    op.register(cancelResponsesOperation, cancelResponsesOperationHandler);
     op.register(cancelRfqOperation, cancelRfqOperationHandler);
-    op.register(cleanUpResponseOperation, cleanUpResponseOperationHandler);
+    op.register(cleanUpResponsesOperation, cleanUpResponsesOperationHandler);
     op.register(
       cleanUpResponseLegsOperation,
       cleanUpResponseLegsOperationHandler
@@ -135,10 +114,6 @@ export const rfqModule = (): ConvergencePlugin => ({
       findResponsesByRfqOperationHandler
     );
     op.register(
-      findResponsesByRfqsOperation,
-      findResponsesByRfqsOperationHandler
-    );
-    op.register(
       findResponsesByOwnerOperation,
       findResponsesByOwnerOperationHandler
     );
@@ -148,7 +123,6 @@ export const rfqModule = (): ConvergencePlugin => ({
       partiallySettleLegsOperation,
       partiallySettleLegsOperationHandler
     );
-
     op.register(
       partlyRevertSettlementPreparationOperation,
       partlyRevertSettlementPreparationOperationHandler
@@ -188,24 +162,16 @@ export const rfqModule = (): ConvergencePlugin => ({
       partiallySettleLegsAndSettleOperation,
       partiallySettleLegsAndSettleOperationHandler
     );
-
     op.register(cancelMultipleRfqOperation, cancelMultipleRfqOperationHandler);
-
-    op.register(
-      cancelMultipleResponseOperation,
-      cancelMultipleResponseOperationHandler
-    );
-    op.register(
-      cleanUpMultipleResponsesOperation,
-      cleanUpMultipleResponsesOperationHandler
-    );
+    op.register(cancelResponsesOperation, cancelResponsesOperationHandler);
+    op.register(cleanUpResponsesOperation, cleanUpResponsesOperationHandler);
     op.register(
       cleanUpMultipleRfqOperation,
       cleanUpMultipleRfqOperationHandler
     );
     op.register(
-      unlockMultipleResponseCollateralOperation,
-      unlockMultipleResponseCollateralOperationHandler
+      unlockResponseCollateralOperation,
+      unlockResponseCollateralOperationHandler
     );
     op.register(
       unlockMultipleRfqCollateralOperation,

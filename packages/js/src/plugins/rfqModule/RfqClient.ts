@@ -11,12 +11,10 @@ import {
   AddInstrumentInput,
   addLegsToRfqOperation,
   AddLegsToRfqInput,
-  cancelResponseOperation,
-  CancelResponseInput,
+  cancelResponsesOperation,
+  CancelResponsesInput,
   cancelRfqOperation,
   CancelRfqInput,
-  cleanUpResponseOperation,
-  CleanUpResponseInput,
   cleanUpResponseLegsOperation,
   CleanUpResponseLegsInput,
   cleanUpRfqOperation,
@@ -38,8 +36,6 @@ import {
   findResponseByAddressOperation,
   findResponsesByRfqOperation,
   FindResponsesByRfqInput,
-  findResponsesByRfqsOperation,
-  FindResponsesByRfqsInput,
   findResponsesByOwnerOperation,
   FindResponsesByOwnerInput,
   partiallySettleLegsOperation,
@@ -69,32 +65,16 @@ import {
   unlockRfqCollateralOperation,
   UnlockRfqCollateralInput,
   createAndFinalizeRfqConstructionOperation,
-} from './operations';
-import { Response } from './models/Response';
-import {
-  UnlockMultipleResponseCollateralInput,
-  unlockMultipleResponseCollateralOperation,
-} from './operations/unlockMultipleResponseCollateral';
-import {
   UnlockMultipleRfqCollateralInput,
   unlockMultipleRfqCollateralOperation,
-} from './operations/unlockMultipleRfqCollateral';
-import {
-  CancelMultipleResponseInput,
-  cancelMultipleResponseOperation,
-} from './operations/cancelMultipleResponse';
-import {
   CancelMultipleRfqInput,
   cancelMultipleRfqOperation,
-} from './operations/cancelMultipleRfq';
-import {
   CleanUpMultipleRfqInput,
   cleanUpMultipleRfqOperation,
-} from './operations/cleanUpMultipleRfq';
-import {
-  CleanUpMultipleResponsesInput,
-  cleanUpMultipleResponsesOperation,
-} from './operations/cleanUpMultipleResponse';
+  CleanUpResponsesInput,
+  cleanUpResponsesOperation,
+} from './operations';
+import { Response } from './models/Response';
 
 /**
  * This is a client for the Rfq module.
@@ -166,20 +146,10 @@ export class RfqClient {
   }
 
   /** {@inheritDoc cancelResponseOperation} */
-  cancelResponse(input: CancelResponseInput, options?: OperationOptions) {
+  cancelResponses(input: CancelResponsesInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(cancelResponseOperation(input), options);
-  }
-
-  /** {@inheritDoc cancelMultipleResponseOperation} */
-  cancelMultipleResponse(
-    input: CancelMultipleResponseInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(cancelMultipleResponseOperation(input), options);
+      .execute(cancelResponsesOperation(input), options);
   }
 
   /** {@inheritDoc cancelRfqOperation} */
@@ -197,10 +167,10 @@ export class RfqClient {
   }
 
   /** {@inheritDoc cleanUpResponseOperation} */
-  cleanUpResponse(input: CleanUpResponseInput, options?: OperationOptions) {
+  cleanUpResponse(input: CleanUpResponsesInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(cleanUpResponseOperation(input), options);
+      .execute(cleanUpResponsesOperation(input), options);
   }
 
   /** {@inheritDoc cleanUpResponseLegsOperation} */
@@ -212,14 +182,11 @@ export class RfqClient {
       .operations()
       .execute(cleanUpResponseLegsOperation(input), options);
   }
-  /** {@inheritDoc cleanUpMultipleResponsesOperation} */
-  cleanUpMultipleResponses(
-    input: CleanUpMultipleResponsesInput,
-    options?: OperationOptions
-  ) {
+  /** {@inheritDoc cleanUpResponsesOperation} */
+  cleanUpResponses(input: CleanUpResponsesInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(cleanUpMultipleResponsesOperation(input), options);
+      .execute(cleanUpResponsesOperation(input), options);
   }
 
   /** {@inheritDoc cleanUpRfqOperation} */
@@ -317,16 +284,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(findResponsesByRfqOperation(input), options);
-  }
-
-  /** {@inheritDoc findResponsesByRfqsOperation} */
-  findResponsesByRfqs(
-    input: FindResponsesByRfqsInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(findResponsesByRfqsOperation(input), options);
   }
 
   /** {@inheritDoc findRfqByAddressOperation} */
@@ -493,16 +450,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(unlockResponseCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc unlockMultipleResponseCollateralOperation} */
-  unlockMultipleResponseCollateral(
-    input: UnlockMultipleResponseCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(unlockMultipleResponseCollateralOperation(input), options);
   }
 
   /** {@inheritDoc unlockRfqCollateralOperation} */

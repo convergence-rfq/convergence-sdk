@@ -6,13 +6,15 @@ import {
   SpotLegInstrument,
   SpotQuoteInstrument,
 } from '../../../plugins/spotInstrumentModule';
-import { LegInstrument, QuoteInstrument } from '@/plugins/instrumentModule';
-import { Convergence } from '@/Convergence';
-
-import { FixedSize, fromSolitaFixedSize } from "./FixedSize";
-import { collateralMintCache } from "@/plugins/collateralModule";
-import { OrderType, fromSolitaOrderType } from "./OrderType";
-import { StoredRfqState, fromSolitaStoredRfqState } from "./StoredRfqState";
+import {
+  LegInstrument,
+  QuoteInstrument,
+} from '../../../plugins/instrumentModule';
+import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../../plugins/collateralModule';
+import { FixedSize, fromSolitaFixedSize } from './FixedSize';
+import { OrderType, fromSolitaOrderType } from './OrderType';
+import { StoredRfqState, fromSolitaStoredRfqState } from './StoredRfqState';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -117,13 +119,19 @@ export const toRfq = async (
     settlingWindow: account.data.settlingWindow,
     expectedLegsSize: account.data.expectedLegsSize,
     state: fromSolitaStoredRfqState(account.data.state),
-    nonResponseTakerCollateralLocked: removeDecimals(account.data.nonResponseTakerCollateralLocked, collateralDecimals),
-    totalTakerCollateralLocked: removeDecimals(account.data.totalTakerCollateralLocked, collateralDecimals),
+    nonResponseTakerCollateralLocked: removeDecimals(
+      account.data.nonResponseTakerCollateralLocked,
+      collateralDecimals
+    ),
+    totalTakerCollateralLocked: removeDecimals(
+      account.data.totalTakerCollateralLocked,
+      collateralDecimals
+    ),
     totalResponses: account.data.totalResponses,
     clearedResponses: account.data.clearedResponses,
     confirmedResponses: account.data.confirmedResponses,
     legs: await Promise.all(
       account.data.legs.map((leg) => convergence.parseLegInstrument(leg))
     ),
-  }
+  };
 };

@@ -10,28 +10,20 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { InstrumentPdasClient } from '../../../plugins/instrumentModule/InstrumentPdasClient';
+import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
 /**
- * Cleans up Legs for a Response
+ * Cleans up legs for a response.
  *
  * ```ts
- *
- * const { rfq } = await convergence.rfqs.create(...);
- * const { rfqResponse } = await convergence
- *                                 .rfqs()
- *                                 .respond({ rfq: rfq.address, ... });
- *
  * await convergence
  *   .rfqs()
  *   .cleanUpResponseLegs({
- *     dao,
  *     rfq: rfq.address,
  *     response: rfqResponse.address,
  *     firstToPrepare: maker.publicKey,
@@ -60,29 +52,32 @@ export type CleanUpResponseLegsOperation = Operation<
  * @category Inputs
  */
 export type CleanUpResponseLegsInput = {
-  /** The protocol address.
+  /**
+   * The address of the RFQ account.
+   */
+  rfq: PublicKey;
+
+  /**
+   * The address of the Reponse account.
+   */
+  response: PublicKey;
+
+  /**
+   * The first maker or taker to begin settlement preparation.
+   */
+  firstToPrepare: PublicKey;
+
+  /**
+   * The number of legs to clear.
+   */
+  legAmountToClear: number;
+
+  /**
+   * The protocol address.
+   *
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
-
-  /** The address of the DAO. */
-  dao: PublicKey;
-
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
-
-  /** The address of the Reponse account. */
-  response: PublicKey;
-
-  /** The first entity (Maker or Taker) to begin settlement preparation. */
-  firstToPrepare: PublicKey;
-
-  /*
-   * Args
-   */
-
-  /** The number of legs to clear. */
-  legAmountToClear: number;
 };
 
 /**
@@ -114,14 +109,11 @@ export const cleanUpResponseLegsOperationHandler: OperationHandler<CleanUpRespon
         },
         scope
       );
-      scope.throwIfCanceled();
 
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+      const output = await builder.sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
-
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
       return { ...output };
@@ -153,12 +145,9 @@ export const cleanUpResponseLegsBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { dao, rfq, response, firstToPrepare, legAmountToClear } = params;
+  const { rfq, response, firstToPrepare, legAmountToClear } = params;
 
-  const rfqProgram = convergence.programs().getRfq(programs);
   const protocol = await protocolCache.get(convergence);
-
-  const anchorRemainingAccounts: AccountMeta[] = [];
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence
@@ -166,7 +155,7 @@ export const cleanUpResponseLegsBuilder = async (
     .findResponseByAddress({ address: response });
 
   const initializedLegs = responseModel.legPreparationsInitializedBy.length;
-
+  const anchorRemainingAccounts: AccountMeta[] = [];
   for (let i = initializedLegs - legAmountToClear; i < initializedLegs; i++) {
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[i].getProgramId(),
@@ -186,21 +175,22 @@ export const cleanUpResponseLegsBuilder = async (
     const baseAssetMint = await legToBaseAssetMint(convergence, leg);
 
     const legAccounts: AccountMeta[] = [
-      // `first_to_prepare`
       {
         pubkey: firstToPrepare,
         isSigner: false,
         isWritable: true,
       },
-      // `escrow`
       {
         pubkey: instrumentEscrowPda,
         isSigner: false,
         isWritable: true,
       },
-      // `backup_receiver`
       {
-        pubkey: await getOrCreateATA(convergence, baseAssetMint!.address, dao),
+        pubkey: await getOrCreateATA(
+          convergence,
+          baseAssetMint!.address,
+          protocol.authority
+        ),
         isSigner: false,
         isWritable: true,
       },
@@ -223,7 +213,7 @@ export const cleanUpResponseLegsBuilder = async (
         {
           legAmountToClear,
         },
-        rfqProgram.address
+        convergence.programs().getRfq(programs).address
       ),
       signers: [],
       key: 'cleanUpResponseLegs',
