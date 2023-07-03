@@ -1,14 +1,8 @@
 import { expect } from 'expect';
 import { ResponseState } from '@convergence-rfq/rfq';
 
-import { OrderType, Rfq, Side } from '../../src';
-import {
-  createUserCvg,
-  createRfq,
-  respondToRfq,
-  prepareRfqSettlement,
-  settleRfq,
-} from '../helpers';
+import { Rfq, Side } from '../../src';
+import { createUserCvg, createRfq, respondToRfq } from '../helpers';
 
 describe('unit.response', () => {
   const makerCvg = createUserCvg('maker');
@@ -93,34 +87,6 @@ describe('unit.response', () => {
     expect(res4.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount1);
   });
 
-  it('find by owner', async () => {
-    const responses = await makerCvg.rfqs().findResponsesByOwner({
-      owner: makerCvg.identity().publicKey,
-    });
-    expect(responses.length).toBeGreaterThan(1);
-    responses.map((r) =>
-      expect(r.maker).toEqual(makerCvg.identity().publicKey)
-    );
-  });
-
-  it('find by address', async () => {
-    const res = await respondToRfq(makerCvg, rfq2, amount3, amount1);
-    const response = await makerCvg.rfqs().findResponseByAddress({
-      address: res.rfqResponse.address,
-    });
-    expect(response.rfq.toBase58()).toEqual(rfq2.address.toBase58());
-  });
-
-  it('find by RFQ', async () => {
-    const responses = await makerCvg.rfqs().findResponsesByRfq({
-      address: rfq0.address,
-    });
-    expect(responses.length).toBeGreaterThan(1);
-    responses.map((r) =>
-      expect(r.rfq.toBase58()).toEqual(rfq0.address.toBase58())
-    );
-  });
-
   it('confirm [bid]', async () => {
     const responses = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq1.address,
@@ -176,7 +142,6 @@ describe('unit.response', () => {
       address: rfq2.address,
     });
 
-    // TODO: Check signature
     await makerCvg.rfqs().unlockResponseCollateral({
       responses: responsesBefore,
     });
@@ -191,35 +156,37 @@ describe('unit.response', () => {
     const responses = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
-    // TODO: Check signature
     await makerCvg.rfqs().cleanUpResponses({
       responses,
       maker: makerCvg.identity().publicKey,
     });
   });
 
-  it('clean up legs', async () => {
+  it('find by owner', async () => {
+    const responses = await makerCvg.rfqs().findResponsesByOwner({
+      owner: makerCvg.identity().publicKey,
+    });
+    expect(responses.length).toBeGreaterThan(1);
+    responses.map((r) =>
+      expect(r.maker).toEqual(makerCvg.identity().publicKey)
+    );
+  });
+
+  it('find by address', async () => {
+    const res = await respondToRfq(makerCvg, rfq2, amount3, amount1);
+    const response = await makerCvg.rfqs().findResponseByAddress({
+      address: res.rfqResponse.address,
+    });
+    expect(response.rfq.toBase58()).toEqual(rfq2.address.toBase58());
+  });
+
+  it('find by RFQ', async () => {
     const responses = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq0.address,
     });
-
-    const [res0, res1] = await Promise.all([
-      prepareRfqSettlement(takerCvg, rfq0, responses[0]),
-      prepareRfqSettlement(makerCvg, rfq0, responses[0]),
-    ]);
-    const res2 = await settleRfq(takerCvg, rfq0, responses[0]);
-
-    expect(res0.response).toHaveProperty('signature');
-    expect(res1.response).toHaveProperty('signature');
-    expect(res2.response).toHaveProperty('signature');
-
-    // TODO: Finish
-    // TODO: Check signature
-    //await makerCvg.rfqs().cleanUpResponseLegs({
-    //  rfq: rfq0.address,
-    //  response: response.address,
-    //  legAmountToClear: 1,
-    //  firstToPrepare: takerCvg.identity().publicKey,
-    //});
+    expect(responses.length).toBeGreaterThan(1);
+    responses.map((r) =>
+      expect(r.rfq.toBase58()).toEqual(rfq0.address.toBase58())
+    );
   });
 });

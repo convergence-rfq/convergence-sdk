@@ -6,6 +6,7 @@ import {
   SpotLegInstrument,
   SpotQuoteInstrument,
   FixedSize,
+  Rfq,
 } from '../../src';
 import { createUserCvg, getAll } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
@@ -78,67 +79,36 @@ describe('unit.rfq', () => {
     expect(rfqs.length).toBeGreaterThan(0);
   });
 
-  it('cancel, reclaim and cleanup multiple', async () => {
-    const fixedSize: FixedSize = {
-      type: 'fixed-base',
-      amount: 19.6,
-    };
-    const { rfq: rfq1, response } = await takerCvg.rfqs().createAndFinalize({
-      instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, Side.Bid),
-      ],
-      orderType: 'buy',
-      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-      fixedSize,
+  it('cancel', async () => {
+    const iterator: any = takerCvg.rfqs().findRfqs({});
+    const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
+      return rfq.state === 'active' && rfq.totalResponses === 0;
     });
-    expect(response).toHaveProperty('signature');
-
-    const { rfq: rfq2, response: response2 } = await takerCvg
-      .rfqs()
-      .createAndFinalize({
-        instruments: [
-          await SpotLegInstrument.create(takerCvg, baseMintBTC, 10, Side.Bid),
-        ],
-        orderType: 'buy',
-        quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-        fixedSize,
-      });
-    expect(response2).toHaveProperty('signature');
-
-    const { rfq: rfq3, response: response3 } = await takerCvg
-      .rfqs()
-      .createAndFinalize({
-        instruments: [
-          await SpotLegInstrument.create(takerCvg, baseMintBTC, 15, Side.Bid),
-        ],
-        orderType: 'buy',
-        quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-        fixedSize,
-      });
-    expect(response3).toHaveProperty('signature');
-
+    expect(rfqs.length).toBeGreaterThan(0);
     await takerCvg
       .rfqs()
-      .cancelMultipleRfq({ rfqs: [rfq1.address, rfq2.address, rfq3.address] });
+      .cancelMultipleRfq({ rfqs: rfqs.map((rfq: any) => rfq.address) });
+  });
 
-    await takerCvg.rfqs().unlockMultipleRfqCollateral({
-      rfqs: [rfq1.address, rfq2.address, rfq3.address],
+  it('unlock', async () => {
+    const iterator: any = takerCvg.rfqs().findRfqs({});
+    const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
+      return rfq.state === 'canceled' && rfq.totalResponses === 0;
     });
-    const refreshedRfq1 = await takerCvg
-      .rfqs()
-      .findRfqByAddress({ address: rfq1.address });
-    const refreshedRfq2 = await takerCvg
-      .rfqs()
-      .findRfqByAddress({ address: rfq2.address });
-    const refreshedRfq3 = await takerCvg
-      .rfqs()
-      .findRfqByAddress({ address: rfq3.address });
+    expect(rfqs.length).toBeGreaterThan(0);
+    await takerCvg.rfqs().unlockMultipleRfqCollateral({
+      rfqs: rfqs.map((rfq: any) => rfq.address),
+    });
+  });
+
+  it('clean up', async () => {
+    const iterator: any = takerCvg.rfqs().findRfqs({});
+    const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
+      return rfq.state === 'canceled';
+    });
+    expect(rfqs.length).toBeGreaterThan(0);
     await takerCvg.rfqs().cleanUpMultipleRfq({
-      rfqs: [
-        refreshedRfq1.address,
-        refreshedRfq2.address,
-        refreshedRfq3.address,
-      ],
+      rfqs: rfqs.map((rfq: any) => rfq.address),
     });
   });
 });
