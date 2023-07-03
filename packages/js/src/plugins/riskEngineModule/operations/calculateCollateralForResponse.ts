@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Quote, Side } from '@convergence-rfq/rfq';
+import { Quote as SolitaQuote, Side } from '@convergence-rfq/rfq';
 
 import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
 import { extractLegsMultiplierBps } from '../helpers';
@@ -11,7 +11,7 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
-import { toSolitaQuote } from '../../rfqModule';
+import { Quote, toSolitaQuote } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -90,17 +90,19 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       convergence: Convergence,
       scope: OperationScope
     ): Promise<CalculateCollateralForResponseOutput> => {
-      const { rfqAddress, bid = null, ask = null } = operation.input;
+      const { rfqAddress, bid, ask } = operation.input;
 
       const [rfq, config] = await Promise.all([
         convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
         convergence.riskEngine().fetchConfig(scope),
       ]);
 
-      const solitaBid = toSolitaQuote(bid, rfq.quoteAsset.getDecimals());
-      const solitaAsk = toSolitaQuote(ask, rfq.quoteAsset.getDecimals());
+      const quoteDecimals = rfq.quoteAsset.getDecimals();
 
-      const getCase = (quote: Quote, side: Side): CalculationCase => {
+      const convertedBid = bid && toSolitaQuote(bid, quoteDecimals);
+      const convertedAsk = ask && toSolitaQuote(ask, quoteDecimals);
+
+      const getCase = (quote: SolitaQuote, side: Side): CalculationCase => {
         const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
         const legMultiplier =
           Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
@@ -113,11 +115,11 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       };
 
       const cases: CalculationCase[] = [];
-      if (solitaBid) {
-        cases.push(getCase(solitaBid, Side.Bid));
+      if (convertedBid) {
+        cases.push(getCase(convertedBid, Side.Bid));
       }
-      if (solitaAsk) {
-        cases.push(getCase(solitaAsk, Side.Ask));
+      if (convertedAsk) {
+        cases.push(getCase(convertedAsk, Side.Ask));
       }
 
       const risks = await calculateRisk(

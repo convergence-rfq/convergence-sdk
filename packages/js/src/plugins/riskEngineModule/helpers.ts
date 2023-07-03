@@ -42,8 +42,7 @@ export function extractLegsMultiplierBps(rfq: Rfq, quote: Quote) {
     // Note that the leg multiplier and absolute price decimals are hardcoded in the
     // protocol. The number is currently 9 which is somewhat arbitrary.
     return new BN(fixedSize.quoteAmount)
-      .mul(new BN(10).pow(new BN(LEG_MULTIPLIER_DECIMALS)))
-      .mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)))
+      .mul(new BN(10).pow(new BN(LEG_MULTIPLIER_DECIMALS + ABSOLUTE_PRICE_DECIMALS)))
       .div(priceBps);
   }
 

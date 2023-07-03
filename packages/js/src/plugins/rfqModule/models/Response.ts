@@ -79,64 +79,6 @@ export function assertResponse(value: any): asserts value is Response {
   assert(isResponse(value), 'Expected Response model');
 }
 
-export const toSolitaQuote = (
-  quote: Quote | null,
-  decimals: number
-): SolitaQuote | null => {
-  if (quote) {
-    const priceQuoteWithDecimals = addDecimals(
-      Number(quote.priceQuote.amountBps),
-      decimals
-    );
-
-    // TODO: Is this correct?
-    quote.priceQuote.amountBps = priceQuoteWithDecimals.mul(
-      new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS))
-    );
-
-    if (quote.__kind === 'Standard') {
-      quote.legsMultiplierBps = addDecimals(
-        Number(quote.legsMultiplierBps),
-        LEG_MULTIPLIER_DECIMALS
-      );
-    }
-
-    return quote;
-  }
-
-  return null;
-};
-
-const fromSolitaQuote = (
-  quote: SolitaQuote | null,
-  decimals: number
-): Quote | null => {
-  if (quote) {
-    const priceQuoteWithoutDecimals = removeDecimals(
-      quote.priceQuote.amountBps,
-      decimals
-    );
-
-    // TODO: Is this correct?
-    quote.priceQuote.amountBps = removeDecimals(
-      new BN(priceQuoteWithoutDecimals),
-      ABSOLUTE_PRICE_DECIMALS
-    );
-
-    if (quote.__kind === 'Standard') {
-      const legsMultiplierBps = removeDecimals(
-        quote.legsMultiplierBps,
-        LEG_MULTIPLIER_DECIMALS
-      );
-      quote.legsMultiplierBps = new BN(legsMultiplierBps);
-    }
-
-    return quote;
-  }
-
-  return null;
-};
-
 /** @group Model Helpers */
 export const toResponse = (
   account: ResponseAccount,

@@ -1,12 +1,12 @@
-import { AuthoritySide as SolitaAuthoritySide } from '@convergence-rfq/rfq';
+import { AuthoritySide as SolitaAuthoritySide } from "@convergence-rfq/rfq";
 
-const Maker = 'maker' as const;
 const Taker = 'taker' as const;
+const Maker = 'maker' as const;
 
-export type AuthoritySide = typeof Maker | typeof Taker;
+export type AuthoritySide = typeof Taker | typeof Maker;
 
-export function fromSolitaAuthoritySide(AuthoritySide: SolitaAuthoritySide): AuthoritySide {
-  switch(AuthoritySide) {
+export function fromSolitaAuthoritySide(authoritySide: SolitaAuthoritySide): AuthoritySide {
+  switch(authoritySide) {
     case SolitaAuthoritySide.Maker: {
       return Maker;
     }
@@ -16,8 +16,8 @@ export function fromSolitaAuthoritySide(AuthoritySide: SolitaAuthoritySide): Aut
   }
 }
 
-export function toSolitaAuthoritySide(AuthoritySide: AuthoritySide): SolitaAuthoritySide {
-  switch(AuthoritySide) {
+export function toSolitaAuthoritySide(authoritySide: AuthoritySide): SolitaAuthoritySide {
+  switch(authoritySide) {
     case Maker: {
       return SolitaAuthoritySide.Maker;
     }
