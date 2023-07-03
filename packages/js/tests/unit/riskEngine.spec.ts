@@ -1,6 +1,6 @@
 import { expect } from 'expect';
 
-import { InstrumentType, DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
+import { Side, InstrumentType, DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
 import { createRfq, createUserCvg, respondToRfq } from '../helpers';
 
 describe('unit.riskEngine', () => {
@@ -114,6 +114,20 @@ describe('unit.riskEngine', () => {
     expect(config.address).toEqual(daoCvg.riskEngine().pdas().config());
   });
 
+  it('calculate collateral for RFQ', async () => {
+    const { rfq } = await createRfq(takerCvg, 1.5, 'buy');
+    const { requiredCollateral } = await daoCvg
+      .riskEngine()
+      .calculateCollateralForRfq({
+        legs: rfq.legs,
+        quoteAsset: rfq.quoteAsset,
+        settlementPeriod: rfq.settlingWindow,
+        size: rfq.size,
+        orderType: rfq.orderType,
+      });
+    expect(requiredCollateral).toBeCloseTo(rfq.totalTakerCollateralLocked);
+  });
+
   it('calculate collateral for response', async () => {
     const { rfq } = await createRfq(takerCvg, 1.5, 'sell');
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1);
@@ -129,17 +143,16 @@ describe('unit.riskEngine', () => {
     expect(requiredCollateral).toBeCloseTo(rfqResponse.makerCollateralLocked);
   });
 
-  it('calculate collateral for RFQ', async () => {
-    const { rfq } = await createRfq(takerCvg, 1.5, 'buy');
+  it('calculate collateral for confirmation', async () => {
+    const { rfq } = await createRfq(takerCvg, 2.7, 'sell');
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 113.9);
     const { requiredCollateral } = await daoCvg
       .riskEngine()
-      .calculateCollateralForRfq({
-        legs: rfq.legs,
-        quoteAsset: rfq.quoteAsset,
-        settlementPeriod: rfq.settlingWindow,
-        size: rfq.size,
-        orderType: rfq.orderType,
+      .calculateCollateralForConfirmation({
+        rfqAddress: rfq.address,
+        responseAddress: rfqResponse.address,
+        confirmation: { side: Side.Ask, overrideLegMultiplierBps: 1 },
       });
-    expect(requiredCollateral).toBeCloseTo(rfq.totalTakerCollateralLocked);
+    expect(requiredCollateral).toBeCloseTo(rfqResponse.makerCollateralLocked);
   });
 });

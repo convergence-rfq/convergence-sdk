@@ -54,8 +54,10 @@ export type CalculateCollateralForConfirmationOperation = Operation<
 export type CalculateCollateralForConfirmationInput = {
   /** The address of the Rfq account. */
   rfqAddress: PublicKey;
+
   /** The address of the response account. */
   responseAddress: PublicKey;
+
   /** Confirmation which collateral requirements are estimated */
   confirmation: Confirmation;
 };
@@ -97,8 +99,6 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
           .findResponseByAddress({ address: responseAddress }, scope),
         convergence.riskEngine().fetchConfig(scope),
       ]);
-
-      // TODO: Remove conversion
 
       let legMultiplierBps;
       if (confirmation.overrideLegMultiplierBps === null) {
