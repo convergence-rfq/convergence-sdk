@@ -54,6 +54,18 @@ export const createUserCvg = (user = 'dao'): Convergence => {
 
 /// Utils
 
+export async function getAll<T>(
+  iter: AsyncGenerator<T, void, void>
+): Promise<T[]> {
+  const values: T[] = [];
+
+  for await (const value of iter) {
+    values.push(value);
+  }
+
+  return values;
+}
+
 export const generatePk = async (): Promise<PublicKey> => {
   return await PublicKey.createWithSeed(PROGRAM_ID, uuidv4(), PROGRAM_ID);
 };
@@ -166,43 +178,44 @@ export const createRfq = async (
   return { rfq, response };
 };
 
-export const confirmRfqResponse = async (
-  cvg: Convergence,
-  rfq: Rfq,
-  response: Response,
-  side: Side
-) => {
-  return await cvg.rfqs().confirmResponse({
-    taker: cvg.rpc().getDefaultFeePayer(),
-    rfq: rfq.address,
-    response: response.address,
-    side,
-  });
-};
-
 export const respondToRfq = async (
   cvg: Convergence,
   rfq: Rfq,
-  amount: number,
-  side: Side
+  bid?: number,
+  ask?: number
 ) => {
-  const quote: Quote = {
-    __kind: 'FixedSize',
-    priceQuote: {
-      __kind: 'AbsolutePrice',
-      amountBps: amount,
-    },
+  if (!bid && !ask) {
+    throw new Error('Must provide bid and/or ask');
+  }
+
+  const amountToQuote = (amountBps: number): Quote => {
+    return {
+      __kind: 'FixedSize',
+      priceQuote: {
+        __kind: 'AbsolutePrice',
+        amountBps,
+      },
+    };
   };
 
-  let args: { bid?: Quote; ask?: Quote };
-  if (side === Side.Bid) {
-    args = { bid: quote };
-  } else {
-    args = { ask: quote };
+  let args: { bid?: Quote; ask?: Quote } = {};
+  if (bid && ask) {
+    args = {
+      ask: amountToQuote(ask),
+      bid: amountToQuote(bid),
+    };
+  } else if (bid) {
+    args = {
+      bid: amountToQuote(bid),
+    };
+  } else if (ask) {
+    args = {
+      ask: amountToQuote(ask),
+    };
   }
 
   return await cvg.rfqs().respond({
-    maker: cvg.rpc().getDefaultFeePayer(),
+    maker: cvg.identity(),
     rfq: rfq.address,
     ...args,
   });

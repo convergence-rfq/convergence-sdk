@@ -2,7 +2,6 @@ import { PublicKey } from '@solana/web3.js';
 
 import { toResponseAccount } from '../accounts';
 import { assertResponse, Response, toResponse } from '../models/Response';
-import { convertResponseOutput } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -10,6 +9,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindResponseByAddressOperation' as const;
 
@@ -17,17 +17,7 @@ const Key = 'FindResponseByAddressOperation' as const;
  * Finds Response by a given address.
  *
  * ```ts
- *
- * const { rfqResponse } =
- *   await convergence
- *     .rfqs()
- *     .respond(...)
- *
- * const rfq = await convergence
- *   .rfqs()
- *   .findResponseByAddress({
- *     address: rfqResponse.address
- *   });
+ * await convergence.rfqs().findResponseByAddress({ address });
  * ```
  *
  * @group Operations
@@ -53,9 +43,6 @@ export type FindResponseByAddressOperation = Operation<
 export type FindResponseByAddressInput = {
   /** The address of the Response account. */
   address: PublicKey;
-
-  /** Optional flag for whether to convert the output to a human-readable format. */
-  convert?: boolean;
 };
 
 /**
@@ -76,26 +63,21 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       scope: OperationScope
     ): Promise<FindResponseByAddressOutput> => {
       const { commitment } = scope;
-      const { address, convert = true } = operation.input;
-      scope.throwIfCanceled();
+      const { address } = operation.input;
 
       const account = await convergence.rpc().getAccount(address, commitment);
-      const response = toResponse(toResponseAccount(account));
+      const responseAccount = toResponseAccount(account);
+      const rfq = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: responseAccount.data.rfq });
+
+      const collateralMint = await collateralMintCache.get(convergence);
+      const response = toResponse(
+        responseAccount,
+        collateralMint.decimals,
+        rfq.quoteAsset.getDecimals()
+      );
       assertResponse(response);
-      scope.throwIfCanceled();
-
-      if (convert) {
-        const rfq = await convergence
-          .rfqs()
-          .findRfqByAddress({ address: response.rfq });
-
-        const convertedResponse = convertResponseOutput(
-          response,
-          rfq.quoteAsset.getDecimals()
-        );
-
-        return convertedResponse;
-      }
 
       return response;
     },

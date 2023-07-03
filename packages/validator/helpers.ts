@@ -68,7 +68,7 @@ export class Ctx {
   dao = getKeypairPk('dao');
   maker = getKeypairPk('maker');
   taker = getKeypairPk('taker');
-  //mintAuthority = getKeypairPk('mint-authority');
+
   baseMintBTC = getKeypairPk('mint-btc');
   baseMintSOL = getKeypairPk('mint-sol');
   quoteMint = getKeypairPk('mint-usd-quote');

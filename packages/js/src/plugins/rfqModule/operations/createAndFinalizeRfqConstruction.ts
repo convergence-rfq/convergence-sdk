@@ -20,9 +20,9 @@ import {
   QuoteInstrument,
   toQuote,
 } from '../../../plugins/instrumentModule';
+import { OrderType } from '../models/OrderType';
 import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
-import { OrderType } from "../models/OrderType";
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -110,7 +110,6 @@ export type CreateAndFinalizeRfqConstructionInput = {
    * Optional address of the Taker's collateral info account.
    *
    * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: taker.publicKey })`
-   *
    */
   collateralInfo?: PublicKey;
 

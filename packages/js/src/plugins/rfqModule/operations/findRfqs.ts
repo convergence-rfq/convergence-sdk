@@ -4,10 +4,12 @@ import {
   Operation,
   OperationHandler,
   OperationScope,
+  PublicKey,
+  UnparsedAccount,
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { toRfqAccount } from "../accounts";
+import { toRfqAccount } from '../accounts';
 
 const Key = 'FindRfqsOperation' as const;
 
@@ -41,6 +43,11 @@ export type FindRfqsOperation = Operation<
  */
 export type FindRfqsInput = {
   /**
+   * Optional RFQ owner.
+   */
+  owner?: PublicKey;
+
+  /*
    * Specifies the number of RFQs returned per interation.
    * Defaults to 100
    */
@@ -58,27 +65,40 @@ export type FindRfqsOutput = Rfq[];
  * @category Handlers
  */
 export const findRfqsOperationHandler: OperationHandler<FindRfqsOperation> = {
-  handle: async function*(
+  async *handle(
     operation: FindRfqsOperation,
     convergence: Convergence,
     scope: OperationScope
   ) {
     const { programs, commitment } = scope;
-    const { input: { chunkSize = 100 } } = operation;
+    const {
+      input: { chunkSize = 100, owner },
+    } = operation;
 
     const rfqProgram = convergence.programs().getRfq(programs);
     const rfqGpaBuilder = new RfqGpaBuilder(convergence, rfqProgram.address);
-    const unparsedAccounts = await rfqGpaBuilder.withoutData().get();
-    scope.throwIfCanceled();
 
-    const unparsedAddresses = unparsedAccounts.map(account => account.publicKey);
+    const unparsedAccounts: UnparsedAccount[] = [];
+    if (owner) {
+      const result = await rfqGpaBuilder.whereTaker(owner).get();
+      unparsedAccounts.push(...result);
+    } else {
+      const result = await rfqGpaBuilder.withoutData().get();
+      unparsedAccounts.push(...result);
+    }
+
+    const unparsedAddresses = unparsedAccounts.map(
+      (account) => account.publicKey
+    );
 
     for (let i = 0; i < unparsedAddresses.length; i += chunkSize) {
       const chunk = unparsedAddresses.slice(i, i + chunkSize);
 
-      const accounts = await convergence.rpc().getMultipleAccounts(chunk, commitment);
+      const accounts = await convergence
+        .rpc()
+        .getMultipleAccounts(chunk, commitment);
       yield await Promise.all(
-        accounts.map(account => toRfq(convergence, toRfqAccount(account)))
+        accounts.map((account) => toRfq(convergence, toRfqAccount(account)))
       );
     }
   },

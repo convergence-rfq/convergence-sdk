@@ -44,9 +44,4 @@ export class RfqGpaBuilder extends GpaBuilder {
   whereState(state: StoredRfqState) {
     return this.where(STATE, Number(state));
   }
-
-  // whereInstrument(address: PublicKey) {
-  //   // TODO: Finish
-  //   return this.where(INSTRUMENT, address);
-  // }
 }

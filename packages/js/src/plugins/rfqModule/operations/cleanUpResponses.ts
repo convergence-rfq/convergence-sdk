@@ -14,28 +14,21 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { InstrumentPdasClient } from '../../../plugins/instrumentModule/InstrumentPdasClient';
+import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { legToBaseAssetMint } from '../helpers';
+import { Response, assertResponse } from '../models/Response';
 
-const Key = 'cleanUpMultipleResponsesOperation' as const;
+const Key = 'cleanUpResponsesOperation' as const;
 
 /**
- * Cleans up a Response.
+ * Cleans up RFQ responses.
  *
  * ```ts
- *
- * const { rfq } = await convergence.rfqs.create(...);
- * const { rfqResponse } =
- *   await convergence
- *     .rfqs()
- *     .respond({ rfq: rfq.address, ... });
- *
  * await convergence
  *   .rfqs()
- *   .cleanUpMultipleResponses({
- *     dao,
+ *   .cleanUpResponses({
  *     rfq: rfq.address,
- *     response: rfqResponse.address,
+ *     responses: [<address>],
  *     firstToPrepare: taker.publicKey
  *   });
  * ```
@@ -43,59 +36,67 @@ const Key = 'cleanUpMultipleResponsesOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const cleanUpMultipleResponsesOperation =
-  useOperation<CleanUpMultipleResponsesOperation>(Key);
+export const cleanUpResponsesOperation =
+  useOperation<CleanUpResponsesOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CleanUpMultipleResponsesOperation = Operation<
+export type CleanUpResponsesOperation = Operation<
   typeof Key,
-  CleanUpMultipleResponsesInput,
-  CleanUpMultipleResponsesOutput
+  CleanUpResponsesInput,
+  CleanUpResponsesOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CleanUpMultipleResponsesInput = {
-  /** The Maker's public key address. */
+export type CleanUpResponsesInput = {
+  /**
+   * The maker public key address.
+   */
   maker: PublicKey;
 
-  /** The protocol address.
+  /**
+   * The address of the reponse accounts.
+   */
+  responses: PublicKey[] | Response[];
+
+  /**
+   * The protocol address.
+   *
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 
-  /** The address of the DAO. */
-  dao: PublicKey;
-
-  /** The address of the Reponse account. */
-  responses: PublicKey[];
+  /**
+   * The address of the DAO.
+   */
+  dao?: PublicKey;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type CleanUpMultipleResponsesOutput = {};
+export type CleanUpResponsesOutput = {};
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const cleanUpMultipleResponsesOperationHandler: OperationHandler<CleanUpMultipleResponsesOperation> =
+export const cleanUpResponsesOperationHandler: OperationHandler<CleanUpResponsesOperation> =
   {
     handle: async (
-      operation: CleanUpMultipleResponsesOperation,
+      operation: CleanUpResponsesOperation,
       convergence: Convergence,
       scope: OperationScope
     ) => {
       scope.throwIfCanceled();
 
-      const txArray = await cleanUpMultipleResponsesBuilder(
+      const txArray = await cleanUpResponsesBuilder(
         convergence,
         {
           ...operation.input,
@@ -123,8 +124,7 @@ export const cleanUpMultipleResponsesOperationHandler: OperationHandler<CleanUpM
  * @group Transaction Builders
  * @category Inputs
  */
-export type CleanUpMultipleResponsesBuilderParams =
-  CleanUpMultipleResponsesInput;
+export type CleanUpResponsesBuilderParams = CleanUpResponsesInput;
 
 /**
  * Cleans up an existing Response.
@@ -133,42 +133,46 @@ export type CleanUpMultipleResponsesBuilderParams =
  * const transactionBuilder = convergence
  *   .rfqs()
  *   .builders()
- *   .cleanUpMultipleResponses({ address });
+ *   .cleanUpResponses({ responses: [<address>, <address>] });
  * ```
  *
  * @group Transaction Builders
  * @category Constructors
  */
-export const cleanUpMultipleResponsesBuilder = async (
+export const cleanUpResponsesBuilder = async (
   convergence: Convergence,
-  params: CleanUpMultipleResponsesBuilderParams,
+  params: CleanUpResponsesBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<Transaction[]> => {
   const txArray: Transaction[] = [];
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { maker = convergence.identity().publicKey, responses, dao } = params;
+  const {
+    responses,
+    maker = convergence.identity().publicKey,
+    dao = convergence.identity().publicKey,
+  } = params;
 
   const rfqProgram = convergence.programs().getRfq(programs);
-
   const anchorRemainingAccounts: AccountMeta[] = [];
 
-  for (const response of responses) {
-    const responseModel = await convergence
-      .rfqs()
-      .findResponseByAddress({ address: response });
+  for (let response of responses) {
+    if (response instanceof PublicKey) {
+      response = await convergence
+        .rfqs()
+        .findResponseByAddress({ address: response });
+    }
+
+    assertResponse(response);
+
     const rfqModel = await convergence
       .rfqs()
-      .findRfqByAddress({ address: responseModel.rfq });
+      .findRfqByAddress({ address: response.rfq });
 
-    const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-
-    const initializedLegs = responseModel.legPreparationsInitializedBy.length;
-
-    for (let i = 0; i < initializedLegs; i++) {
+    for (let i = 0; i < response.legPreparationsInitializedBy.length; i++) {
       const leg = rfqModel.legs[i];
       const firstToPrepare =
-        responseModel.legPreparationsInitializedBy[0] === AuthoritySide.Maker
-          ? responseModel.maker
+        response.legPreparationsInitializedBy[0] === AuthoritySide.Maker
+          ? response.maker
           : rfqModel.taker;
       const instrumentProgramAccount: AccountMeta = {
         pubkey: rfqModel.legs[i].getProgramId(),
@@ -179,13 +183,12 @@ export const cleanUpMultipleResponsesBuilder = async (
       const instrumentEscrowPda = new InstrumentPdasClient(
         convergence
       ).instrumentEscrow({
-        response,
-        index: i,
         rfqModel,
+        response: response.address,
+        index: i,
       });
 
       const baseAssetMint = await legToBaseAssetMint(convergence, leg);
-
       const legAccounts: AccountMeta[] = [
         {
           pubkey: firstToPrepare,
@@ -212,33 +215,35 @@ export const cleanUpMultipleResponsesBuilder = async (
       anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
     }
 
+    const spotInstrumentProgram = convergence.programs().getSpotInstrument();
     const spotInstrumentProgramAccount: AccountMeta = {
       pubkey: spotInstrumentProgram.address,
       isSigner: false,
       isWritable: false,
     };
-
     const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
-      response,
+      response: response.address,
       program: spotInstrumentProgram.address,
     });
     const firstToPrepare =
-      responseModel.legPreparationsInitializedBy[0] === AuthoritySide.Maker
-        ? responseModel.maker
+      response.legPreparationsInitializedBy[0] === AuthoritySide.Maker
+        ? response.maker
         : rfqModel.taker;
-    const quoteAccounts: AccountMeta[] = [
+
+    anchorRemainingAccounts.push(
+      spotInstrumentProgramAccount,
       {
         pubkey: firstToPrepare,
         isSigner: false,
         isWritable: true,
       },
-      //`escrow`
+      // Escrow
       {
         pubkey: quoteEscrowPda,
         isSigner: false,
         isWritable: true,
       },
-      // `receiver_tokens`
+      // Receiver
       {
         pubkey: convergence.tokens().pdas().associatedTokenAccount({
           mint: rfqModel.quoteMint,
@@ -248,12 +253,7 @@ export const cleanUpMultipleResponsesBuilder = async (
         isSigner: false,
         isWritable: true,
       },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    ];
-
-    anchorRemainingAccounts.push(
-      spotInstrumentProgramAccount,
-      ...quoteAccounts
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
     );
 
     const txBuilder = TransactionBuilder.make()
@@ -263,14 +263,14 @@ export const cleanUpMultipleResponsesBuilder = async (
           {
             maker,
             protocol: convergence.protocol().pdas().protocol(),
-            rfq: responseModel.rfq,
-            response,
+            rfq: response.rfq,
+            response: response.address,
             anchorRemainingAccounts,
           },
           rfqProgram.address
         ),
         signers: [],
-        key: 'cleanUpMultipleResponses',
+        key: 'cleanUpResponses',
       });
     const blockHashWithBlockHeight = await convergence
       .rpc()

@@ -10,7 +10,6 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { convertOverrideLegMultiplierBps } from '../helpers';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
@@ -21,18 +20,11 @@ const Key = 'ConfirmResponseOperation' as const;
  * Confirms a response.
  *
  * ```ts
- *
- * const { rfq } = await convergence.rfqs.create(...);
- * const { rfqResponse } =
- *   await convergence
- *     .rfqs()
- *     .respond({ rfq: rfq.address, ... });
- *
  * await convergence
  *   .rfqs()
  *   .confirmResponse({
  *     rfq: rfq.address,
- *     response: rfqResponse.address,
+ *     response: response.address,
  *     side: Side.Bid
  *   });
  * ```
@@ -59,11 +51,51 @@ export type ConfirmResponseOperation = Operation<
  */
 export type ConfirmResponseInput = {
   /**
+   * The address of the RFQ account.
+   */
+  rfq: PublicKey;
+
+  /**
+   * The address of the response account.
+   */
+  response: PublicKey;
+
+  /**
+   * The side of the response to confirm.
+   */
+  side: Side;
+
+  /**
    * The taker of the Rfq as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
+
+  /**
+   * Optional basis points multiplier to override the legMultiplierBps of the
+   * RFQ fixedSize property.
+   */
+  overrideLegMultiplierBps?: COption<bignum>;
+
+  /**
+   * Optional address of the taker collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: taker.publicKey })`
+   */
+  collateralInfo?: PublicKey;
+
+  /**
+   * Optional address of the maker collateral info account.
+   *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
+   */
+  makerCollateralInfo?: PublicKey;
+
+  /**
+   * The address of the collateral token.
+   */
+  collateralToken?: PublicKey;
 
   /**
    * The protocol address.
@@ -72,42 +104,10 @@ export type ConfirmResponseInput = {
    */
   protocol?: PublicKey;
 
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
-
-  /** The address of the Response account. */
-  response: PublicKey;
-
   /**
-   * Optional address of the Taker's collateral info account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: taker.publicKey })`
-   *
+   * The address of the risk engine program.
    */
-  collateralInfo?: PublicKey;
-
-  /**
-   * Optional address of the Maker's collateral info account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
-   *
-   */
-  makerCollateralInfo?: PublicKey;
-
-  /** The address of the collateral token. */
-  collateralToken?: PublicKey;
-
-  /** The address of the risk engine program. */
   riskEngine?: PublicKey;
-
-  /** The Side of the Response to confirm. */
-  side: Side;
-
-  /**
-   * Optional basis points multiplier to override the legMultiplierBps of the
-   * Rfq's fixedSize property.
-   */
-  overrideLegMultiplierBps?: COption<bignum>;
 };
 
 /**
@@ -137,14 +137,11 @@ export const confirmResponseOperationHandler: OperationHandler<ConfirmResponseOp
         },
         scope
       );
-      scope.throwIfCanceled();
 
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+      const output = await builder.sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
-
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
       return { ...output };
@@ -176,7 +173,21 @@ export const confirmResponseBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { taker = convergence.identity(), rfq, response, side } = params;
+  const {
+    rfq,
+    response,
+    side,
+    taker = convergence.identity(),
+    collateralInfo = convergence.collateral().pdas().collateralInfo({
+      user: taker.publicKey,
+      programs,
+    }),
+    collateralToken = convergence.collateral().pdas().collateralToken({
+      user: taker.publicKey,
+      programs,
+    }),
+  } = params;
+
   let { overrideLegMultiplierBps = null } = params;
 
   if (overrideLegMultiplierBps) {
@@ -188,62 +199,27 @@ export const confirmResponseBuilder = async (
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
-
-  const rfqProgram = convergence.programs().getRfq(programs);
-  const riskEngineProgram = convergence.programs().getRiskEngine(programs);
-
-  const takerCollateralInfoPda = convergence
-    .collateral()
-    .pdas()
-    .collateralInfo({
-      user: taker.publicKey,
-      programs,
-    });
-  const makerCollateralInfoPda = convergence
-    .collateral()
-    .pdas()
-    .collateralInfo({
-      user: responseModel.maker,
-      programs,
-    });
-  const collateralTokenPda = convergence.collateral().pdas().collateralToken({
-    user: taker.publicKey,
+  const makerCollateralInfo = convergence.collateral().pdas().collateralInfo({
+    user: responseModel.maker,
     programs,
   });
 
-  const anchorRemainingAccounts: AccountMeta[] = [];
-
-  const [config] = PublicKey.findProgramAddressSync(
-    [Buffer.from('config')],
-    riskEngineProgram.address
-  );
-  const configAccount: AccountMeta = {
-    pubkey: config,
-    isSigner: false,
-    isWritable: false,
-  };
-
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-
-  const baseAssetAccounts: AccountMeta[] = [];
   const baseAssetIndexValuesSet: Set<number> = new Set();
-  const oracleAccounts: AccountMeta[] = [];
-
+  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   for (const leg of rfqModel.legs) {
     baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
   }
 
+  const baseAssetAccounts: AccountMeta[] = [];
+  const oracleAccounts: AccountMeta[] = [];
   const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-
   for (const index of baseAssetIndexValues) {
     const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    const baseAssetAccount: AccountMeta = {
+    baseAssetAccounts.push({
       pubkey: baseAsset,
       isSigner: false,
       isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
+    });
 
     const baseAssetModel = await convergence
       .protocol()
@@ -258,39 +234,41 @@ export const confirmResponseBuilder = async (
     }
   }
 
-  anchorRemainingAccounts.push(
-    configAccount,
-    ...baseAssetAccounts,
-    ...oracleAccounts
-  );
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add(
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1400000,
+          units: 1_400_000,
         }),
         signers: [],
       },
       {
         instruction: createConfirmResponseInstruction(
           {
-            taker: taker.publicKey,
-            protocol: convergence.protocol().pdas().protocol(),
             rfq,
             response,
-            collateralInfo: takerCollateralInfoPda,
-            makerCollateralInfo: makerCollateralInfoPda,
-            collateralToken: collateralTokenPda,
-            riskEngine: riskEngineProgram.address,
-            anchorRemainingAccounts,
+            collateralInfo,
+            makerCollateralInfo,
+            collateralToken,
+            taker: taker.publicKey,
+            protocol: convergence.protocol().pdas().protocol(),
+            riskEngine: convergence.programs().getRiskEngine(programs).address,
+            anchorRemainingAccounts: [
+              {
+                pubkey: convergence.riskEngine().pdas().config(),
+                isSigner: false,
+                isWritable: false,
+              },
+              ...baseAssetAccounts,
+              ...oracleAccounts,
+            ],
           },
           {
             side,
             overrideLegMultiplierBps,
           },
-          rfqProgram.address
+          convergence.programs().getRfq(programs).address
         ),
         signers: [taker],
         key: 'confirmResponse',

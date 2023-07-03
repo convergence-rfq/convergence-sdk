@@ -15,11 +15,7 @@ import {
   PsyoptionsEuropeanInstrument,
 } from '@convergence-rfq/sdk';
 
-import {
-  formatSide,
-  formatInstrument,
-  assertInstrument,
-} from './helpers';
+import { formatSide, formatInstrument, assertInstrument } from './helpers';
 
 // Improves readability of code by preserving terseness
 const l = (...args: any[]) => console.log(...args);

@@ -3,7 +3,6 @@ import { PublicKey } from '@solana/web3.js';
 import { Response, toResponse } from '../models/Response';
 import { Rfq } from '../models';
 import { toResponseAccount } from '../accounts';
-import { getPages, convertResponseOutput } from '../helpers';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import {
   Operation,
@@ -12,6 +11,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindResponsesByOwnerOperation' as const;
 
@@ -47,11 +47,8 @@ export type FindResponsesByOwnerOperation = Operation<
  * @category Inputs
  */
 export type FindResponsesByOwnerInput = {
-  /** The address of the Maker (owner) of the Response(s). */
+  /** The address of the maker of the responses. */
   owner: PublicKey;
-
-  /** Optional array of Responses to search from. */
-  responses?: Response[];
 
   /** Optional number of Responses to return per page. */
   responsesPerPage?: number;
@@ -64,7 +61,7 @@ export type FindResponsesByOwnerInput = {
  * @group Operations
  * @category Outputs
  */
-export type FindResponsesByOwnerOutput = Response[][];
+export type FindResponsesByOwnerOutput = Response[];
 
 /**
  * @group Operations
@@ -75,60 +72,27 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
     handle: async (
       operation: FindResponsesByOwnerOperation,
       convergence: Convergence,
+      // eslint-disable-next-line no-unused-vars
       scope: OperationScope
     ): Promise<FindResponsesByOwnerOutput> => {
-      const { owner, responses, responsesPerPage, numPages } = operation.input;
-      const { programs, commitment } = scope;
-      scope.throwIfCanceled();
+      const { commitment } = scope;
+      const { owner } = operation.input;
 
-      if (responses) {
-        const responsesByOwner: Response[] = [];
-
-        for (const response of responses) {
-          if (response.maker.toBase58() === owner.toBase58()) {
-            const rfq = await convergence
-              .rfqs()
-              .findRfqByAddress({ address: response.rfq });
-
-            const convertedResponse = convertResponseOutput(
-              response,
-              rfq.quoteAsset.getDecimals()
-            );
-
-            responsesByOwner.push(convertedResponse);
-          }
-        }
-        scope.throwIfCanceled();
-
-        const pages = getPages(responsesByOwner, responsesPerPage, numPages);
-
-        return pages;
-      }
-
-      const rfqProgram = convergence.programs().getRfq(programs);
-      const responseGpaBuilder = new ResponseGpaBuilder(
-        convergence,
-        rfqProgram.address
-      );
+      const responseGpaBuilder = new ResponseGpaBuilder(convergence);
       const unparsedAccounts = await responseGpaBuilder
         .withoutData()
         .whereMaker(owner)
         .get();
-      const unparsedAddresses = unparsedAccounts.map(
-        (account) => account.publicKey
-      );
-      scope.throwIfCanceled();
+      const unparsedAddresses = unparsedAccounts.map((acc) => acc.publicKey);
 
-      const callsToGetMultipleAccounts = Math.ceil(
-        unparsedAddresses.length / 100
-      );
+      const collateralMint = await collateralMintCache.get(convergence);
 
       const parsedResponses: Response[] = [];
-
       const matchingResponses: Response[] = [];
       const matchingRfqPromises: Promise<Rfq>[] = [];
 
-      for (let i = 0; i < callsToGetMultipleAccounts; i++) {
+      const callCount = Math.ceil(unparsedAddresses.length / 100);
+      for (let i = 0; i < callCount; i++) {
         const accounts = await convergence
           .rpc()
           .getMultipleAccounts(
@@ -137,8 +101,17 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
           );
 
         for (const account of accounts) {
-          const response = toResponse(toResponseAccount(account));
+          const responseAccount = toResponseAccount(account);
+          const rfq = await convergence
+            .rfqs()
+            .findRfqByAddress({ address: responseAccount.data.rfq });
+          const response = toResponse(
+            responseAccount,
+            collateralMint.decimals,
+            rfq.quoteAsset.getDecimals()
+          );
 
+          // TODO: Should this not already be matching owner?
           if (response.maker.toBase58() === owner.toBase58()) {
             matchingResponses.push(response);
             matchingRfqPromises.push(
@@ -149,23 +122,15 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
       }
 
       const matchingRfqs = await Promise.all(matchingRfqPromises);
-
       for (const matchingRfq of matchingRfqs) {
         for (const matchingResponse of matchingResponses)
           if (
             matchingResponse.rfq.toBase58() === matchingRfq.address.toBase58()
           ) {
-            const convertedResponse = convertResponseOutput(
-              matchingResponse,
-              matchingRfq.quoteAsset.getDecimals()
-            );
-
-            parsedResponses.push(convertedResponse);
+            parsedResponses.push(matchingResponse);
           }
       }
 
-      const pages = getPages(parsedResponses, responsesPerPage, numPages);
-
-      return pages;
+      return parsedResponses;
     },
   };
