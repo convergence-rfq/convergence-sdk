@@ -74,7 +74,7 @@ export async function calculateRisk(
 
   const legInfos = legs.map((leg) => {
     let amount = leg.getAmount();
-    if (leg.getSide() == Side.Bid) {
+    if (leg.getSide() == 'bid') {
       amount = -amount;
     }
 

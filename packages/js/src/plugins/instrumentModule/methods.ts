@@ -4,6 +4,7 @@ import { AccountMeta } from '@solana/web3.js';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { addDecimals } from '../../utils/conversions';
 import { LegInstrument, QuoteInstrument } from './types';
+import { toSolitaSide } from "../rfqModule";
 
 export function toLeg(legInstrument: LegInstrument): Leg {
   return {
@@ -15,7 +16,7 @@ export function toLeg(legInstrument: LegInstrument): Leg {
       legInstrument.getDecimals()
     ),
     instrumentDecimals: legInstrument.getDecimals(),
-    side: legInstrument.getSide(),
+  side: toSolitaSide(legInstrument.getSide()),
   };
 }
 

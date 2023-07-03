@@ -157,7 +157,7 @@ export const settleBuilder = async (
 
     let legTakerAmount = -1;
 
-    if (leg.getSide() == Side.Ask) {
+    if (leg.getSide() == 'ask') {
       legTakerAmount *= -1;
     }
     if (confirmationSide == Side.Bid) {

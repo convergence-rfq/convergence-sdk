@@ -6,3 +6,4 @@ export * from './StoredRfqState';
 export * from './AuthoritySide';
 export * from './StoredResponseState';
 export * from './Quote';
+export * from './ResponseSide';
