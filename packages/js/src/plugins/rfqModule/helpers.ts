@@ -36,7 +36,6 @@ import {
   InstructionWithSigners,
   TransactionBuilder,
   addDecimals,
-  removeDecimals,
 } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
@@ -55,7 +54,6 @@ import {
 } from '../instrumentModule';
 import { SpotLegInstrument } from '../spotInstrumentModule';
 import type { Rfq, Response } from './models';
-import { ABSOLUTE_PRICE_DECIMALS } from './constants';
 
 const { mintOptions } = instructions;
 
@@ -227,30 +225,6 @@ export const convertOverrideLegMultiplierBps = (
   overrideLegMultiplierBps: number
 ): number => {
   return overrideLegMultiplierBps * Math.pow(10, 9);
-};
-
-export const convertResponseOutput = (
-  response: Response,
-  quoteDecimals: number
-): Response => {
-  if (response.bid) {
-    const convertedPriceQuoteAmountBps = removeDecimals(
-      response.bid.priceQuote.amountBps,
-      quoteDecimals + ABSOLUTE_PRICE_DECIMALS
-    );
-
-    response.bid.priceQuote.amountBps = convertedPriceQuoteAmountBps;
-  }
-
-  if (response.ask) {
-    const convertedPriceQuoteAmountBps = removeDecimals(
-      response.ask.priceQuote.amountBps,
-      quoteDecimals + ABSOLUTE_PRICE_DECIMALS
-    );
-
-    response.ask.priceQuote.amountBps = convertedPriceQuoteAmountBps;
-  }
-  return response;
 };
 
 export const calculateExpectedLegsHash = (

@@ -2,17 +2,13 @@ import { PublicKey } from '@solana/web3.js';
 import {
   Confirmation as SolitaConfirmation,
   DefaultingParty as SolitaDefaultingParty,
-  Quote as SolitaQuote,
 } from '@convergence-rfq/rfq';
-import { BN } from '@project-serum/anchor';
 
 import { ResponseAccount } from '../accounts';
-import { assert, removeDecimals, addDecimals } from '../../../utils';
-import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
+import { assert, removeDecimals } from '../../../utils';
 import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
 import { StoredResponseState, fromSolitaStoredResponseState } from "./StoredResponseState";
-
-type Quote = SolitaQuote;
+import { fromSolitaQuote, Quote } from "./Quote";
 
 /**
  * This model captures all the relevant information about a response
@@ -108,6 +104,6 @@ export const toResponse = (
   confirmed: account.data.confirmed,
   defaultingParty: account.data.defaultingParty,
   legPreparationsInitializedBy: account.data.legPreparationsInitializedBy.map(fromSolitaAuthoritySide),
-  bid: fromSolitaQuote(account.data.bid, quoteDecimals),
-  ask: fromSolitaQuote(account.data.ask, quoteDecimals),
+  bid: account.data.bid && fromSolitaQuote(account.data.bid, quoteDecimals),
+  ask: account.data.ask && fromSolitaQuote(account.data.ask, quoteDecimals),
 });
