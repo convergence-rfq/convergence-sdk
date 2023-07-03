@@ -8,7 +8,7 @@ import { LegInstrument, QuoteInstrument } from '../instrumentModule';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { removeDecimals } from '../../utils/conversions';
-import { ResponseSide, fromSolitaSide } from "../rfqModule";
+import { ResponseSide, fromSolitaSide } from '../rfqModule';
 
 type InstrumentData = {
   mintAddress: PublicKey;

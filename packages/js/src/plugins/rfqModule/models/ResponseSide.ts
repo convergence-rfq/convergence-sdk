@@ -1,4 +1,4 @@
-import { Side as SolitaSide } from "@convergence-rfq/rfq";
+import { Side as SolitaSide } from '@convergence-rfq/rfq';
 
 const Bid = 'bid' as const;
 const Ask = 'ask' as const;

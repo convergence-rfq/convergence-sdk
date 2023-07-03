@@ -17,7 +17,7 @@ import { LegInstrument } from '../instrumentModule';
 import { addDecimals, assert, removeDecimals } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import { ResponseSide, fromSolitaSide } from "../rfqModule";
+import { ResponseSide, fromSolitaSide } from '../rfqModule';
 
 type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;

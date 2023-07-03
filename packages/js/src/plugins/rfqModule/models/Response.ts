@@ -7,8 +7,8 @@ import {
 import { ResponseAccount } from '../accounts';
 import { assert, removeDecimals } from '../../../utils';
 import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
-import { StoredResponseState, fromSolitaStoredResponseState } from "./StoredResponseState";
-import { fromSolitaQuote, Quote } from "./Quote";
+import { StoredResponseState, fromSolitaStoredResponseState } from './StoredResponseState';
+import { fromSolitaQuote, Quote } from './Quote';
 
 /**
  * This model captures all the relevant information about a response

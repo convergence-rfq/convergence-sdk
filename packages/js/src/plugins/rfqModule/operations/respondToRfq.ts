@@ -12,8 +12,8 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { Quote, Rfq } from "../models";
-import { toSolitaQuote } from "../models/Quote";
+import { Quote, Rfq } from '../models';
+import { toSolitaQuote } from '../models/Quote';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,

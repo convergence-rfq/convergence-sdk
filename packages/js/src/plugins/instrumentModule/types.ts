@@ -3,7 +3,7 @@ import { AccountMeta } from '@solana/web3.js';
 import { BaseAssetIndex, Leg } from '@convergence-rfq/rfq';
 import { PublicKey } from '../../types';
 import { Convergence } from '../../Convergence';
-import { ResponseSide } from "../rfqModule/models/ResponseSide";
+import { ResponseSide } from '../rfqModule/models/ResponseSide';
 
 export interface LegInstrumentParser {
   parseFromLeg(convergence: Convergence, leg: Leg): LegInstrument;

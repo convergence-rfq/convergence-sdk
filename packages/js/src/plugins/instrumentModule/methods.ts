@@ -3,8 +3,8 @@ import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { addDecimals } from '../../utils/conversions';
+import { toSolitaSide } from '../rfqModule';
 import { LegInstrument, QuoteInstrument } from './types';
-import { toSolitaSide } from "../rfqModule";
 
 export function toLeg(legInstrument: LegInstrument): Leg {
   return {

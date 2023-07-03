@@ -12,8 +12,8 @@ import { LegInstrument } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
+import { ResponseSide, fromSolitaSide } from '../rfqModule';
 import { createAmericanProgram } from './helpers';
-import { ResponseSide, fromSolitaSide } from "../rfqModule";
 
 type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;

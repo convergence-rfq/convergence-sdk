@@ -1,5 +1,5 @@
 import { Commitment, Connection } from '@solana/web3.js';
-import { PROGRAM_ID, Side as SolitaSide } from '@convergence-rfq/rfq';
+import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 import { Program, web3 } from '@project-serum/anchor';
 

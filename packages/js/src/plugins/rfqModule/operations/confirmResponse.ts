@@ -12,7 +12,7 @@ import {
 } from '../../../types';
 import { convertOverrideLegMultiplierBps } from '../helpers';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { ResponseSide, toSolitaSide } from "../models/ResponseSide";
+import { ResponseSide, toSolitaSide } from '../models/ResponseSide';
 
 const Key = 'ConfirmResponseOperation' as const;
 
