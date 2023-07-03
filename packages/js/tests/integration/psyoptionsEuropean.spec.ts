@@ -1,16 +1,10 @@
 import { expect } from 'expect';
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
-import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
-
 import { QUOTE_MINT_PK, BASE_MINT_BTC_PK } from '../constants';
+import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import {
-  IDL as PseudoPythIdl,
-  Pyth,
-} from '../../../validator/fixtures/programs/pseudo_pyth_idl';
-import {
-  OrderType,
   OptionType,
   PsyoptionsEuropeanInstrument,
   Side,
@@ -21,6 +15,7 @@ import {
   mintEuropeanOptions,
   SpotQuoteInstrument,
   SpotLegInstrument,
+  CvgWallet,
 } from '../../src';
 import {
   createPythPriceFeed,
@@ -33,9 +28,6 @@ import {
 describe('integration.psyoptionsEuropean', async () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
-
-  let pseudoPythProgram: anchor.Program<Pyth>;
-  let oracle: PublicKey;
 
   let baseMint: Mint;
   let quoteMint: Mint;
@@ -51,18 +43,16 @@ describe('integration.psyoptionsEuropean', async () => {
 
   it('covered call [sell]', async () => {
     const europeanProgram = await createEuropeanProgram(takerCvg);
-    const provider = new anchor.AnchorProvider(
-      takerCvg.connection,
-      new anchor.Wallet(takerCvg.rpc().getDefaultFeePayer() as Keypair),
-      {}
-    );
-    pseudoPythProgram = new anchor.Program(
-      PseudoPythIdl,
-      new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-      provider
-    );
-    oracle = await createPythPriceFeed(
-      pseudoPythProgram,
+    const oracle = await createPythPriceFeed(
+      new anchor.Program(
+        PseudoPythIdl,
+        new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
+        new anchor.AnchorProvider(
+          takerCvg.connection,
+          new CvgWallet(takerCvg),
+          {}
+        )
+      ),
       17_000,
       quoteMint.decimals * -1
     );

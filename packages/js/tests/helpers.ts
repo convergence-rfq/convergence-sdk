@@ -114,16 +114,13 @@ export const createAmericanCoveredCallRfq = async (
   const quoteMint = await cvg
     .tokens()
     .findMintByAddress({ address: QUOTE_MINT_PK });
-  const min = 3_600;
-  const randomExpiry = min + Math.random();
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
-    createAmericanProgram(cvg),
     baseMint,
     quoteMint,
     27_000,
     1,
-    randomExpiry
+    3_600 + Math.random()
   );
 
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
