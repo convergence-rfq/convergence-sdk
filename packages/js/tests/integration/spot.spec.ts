@@ -35,7 +35,7 @@ describe('integration.spot', () => {
     const amountA = 1.05;
     const amountB = 22_000.86;
 
-    const { rfq } = await createRfq(takerCvg, amountA, OrderType.Sell);
+    const { rfq } = await createRfq(takerCvg, amountA, 'sell');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(
@@ -83,7 +83,7 @@ describe('integration.spot', () => {
     const amountA = 2.5;
     const amountB = 24_300.75 * amountA;
 
-    const { rfq } = await createRfq(takerCvg, amountA, OrderType.Buy);
+    const { rfq } = await createRfq(takerCvg, amountA, 'buy');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(
@@ -134,8 +134,8 @@ describe('integration.spot', () => {
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, Side.Bid),
       ],
-      orderType: OrderType.Buy,
-      fixedSize: { __kind: 'None', padding: 0 },
+      orderType: 'buy',
+      fixedSize: { type: 'open' },
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(response).toHaveProperty('signature');
@@ -146,8 +146,8 @@ describe('integration.spot', () => {
         instruments: [
           await SpotLegInstrument.create(takerCvg, baseMintBTC, 10, Side.Bid),
         ],
-        orderType: OrderType.Buy,
-        fixedSize: { __kind: 'None', padding: 0 },
+        orderType: 'buy',
+        fixedSize: { type: 'open' },
         quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
       });
     expect(response2).toHaveProperty('signature');
@@ -158,8 +158,8 @@ describe('integration.spot', () => {
         instruments: [
           await SpotLegInstrument.create(takerCvg, baseMintBTC, 15, Side.Bid),
         ],
-        orderType: OrderType.Buy,
-        fixedSize: { __kind: 'None', padding: 0 },
+        orderType: 'buy',
+        fixedSize: { type: 'open' },
         quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
       });
     expect(response3).toHaveProperty('signature');
@@ -194,8 +194,8 @@ describe('integration.spot', () => {
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMintBTC, 8, Side.Bid),
       ],
-      orderType: OrderType.Buy,
-      fixedSize: { __kind: 'None', padding: 0 },
+      orderType: 'buy',
+      fixedSize: { type: 'open' },
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
     expect(response).toHaveProperty('signature');
@@ -282,8 +282,8 @@ describe('integration.spot', () => {
           Side.Bid
         ),
       ],
-      orderType: OrderType.Sell,
-      fixedSize: { __kind: 'BaseAsset', legsMultiplierBps: 1 },
+      orderType: 'sell',
+      fixedSize: { type: "fixed-base", amount: 1 },
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
     });
 

@@ -2,7 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 
 import { Rfq, toRfq } from '../models';
 import { toRfqAccount } from '../accounts';
-import { convertRfqOutput } from '../helpers';
+
 import {
   Operation,
   OperationHandler,
@@ -10,7 +10,6 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindRfqByAddressOperation' as const;
 
@@ -46,12 +45,6 @@ export type FindRfqByAddressOperation = Operation<
 export type FindRfqByAddressInput = {
   /** The address of the Rfq. */
   address: PublicKey;
-
-  /** Optional number of decimals of collateral mint, used for conversion. */
-  collateralMintDecimals?: number;
-
-  /** Optional flag for whether to convert the output to a human-readable format. */
-  convert?: boolean;
 };
 
 /**
@@ -72,24 +65,12 @@ export const findRfqByAddressOperationHandler: OperationHandler<FindRfqByAddress
       scope: OperationScope
     ): Promise<FindRfqByAddressOutput> => {
       const { commitment } = scope;
-      const { address, convert = true } = operation.input;
-      let { collateralMintDecimals } = operation.input;
+      const { address } = operation.input;
       scope.throwIfCanceled();
 
       const account = await convergence.rpc().getAccount(address, commitment);
       const rfq = await toRfq(convergence, toRfqAccount(account));
       scope.throwIfCanceled();
-
-      if (convert) {
-        if (!collateralMintDecimals) {
-          const collateralMint = await collateralMintCache.get(convergence);
-          collateralMintDecimals = collateralMint.decimals;
-        }
-
-        const convertedRfq = convertRfqOutput(rfq, collateralMintDecimals);
-
-        return convertedRfq;
-      }
 
       return rfq;
     },

@@ -38,6 +38,19 @@ export class Disposable {
     }
   }
 
+  runSync<T>(
+    callback: (scope: DisposableScope) => T,
+    thenCloseDisposable = true
+  ) {
+    try {
+      return callback(this.getScope());
+    } finally {
+      if (thenCloseDisposable) {
+        this.close();
+      }
+    }
+  }
+
   getScope(): DisposableScope {
     return {
       signal: this.signal,
