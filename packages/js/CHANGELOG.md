@@ -1,5 +1,17 @@
 # @convergence-rfq/sdk
 
+## 4.4.0
+
+### Minor Changes
+
+- ff080022: Added AsyncCollection to SDK and convert findRfqs to return it instead of an AsyncGenerator
+- ff080022: Converted the findRfqs API to an async generator
+- ff080022: Normalized the RFQ plugin interface
+
+### Patch Changes
+
+- ff080022: Exported account plugin
+
 ## 4.3.10
 
 ### Patch Changes
