@@ -150,15 +150,14 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         activeWindow = 5_000,
         settlingWindow = 1_000,
         fixedSize,
+        expectedLegsSize: expectedSize,
+        expectedLegsHash: expectedHash,
       } = operation.input;
-      let { expectedLegsSize, expectedLegsHash } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 
-      expectedLegsSize =
-        expectedLegsSize ?? (await calculateExpectedLegsSize(instruments));
-      expectedLegsHash =
-        expectedLegsHash ?? (await calculateExpectedLegsHash(instruments));
+      const expectedLegsSize = expectedSize ?? await calculateExpectedLegsSize(instruments);
+      const expectedLegsHash = expectedHash ?? await calculateExpectedLegsHash(instruments);
 
       const rfqPda = convergence
         .rfqs()
