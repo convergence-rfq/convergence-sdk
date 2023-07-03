@@ -17,3 +17,4 @@ export * from './psyoptionsAmericanInstrumentModule';
 export * from './protocolModule';
 export * from './systemModule';
 export * from './tokenModule';
+export * from './accountModule';
