@@ -41,6 +41,9 @@ export const removeDecimals = (value: bignum, decimals = 0): number => {
  */
 export const addDecimals = (value: number, decimals = 0): BN => {
   const number = value * Math.pow(10, decimals);
+  if (number !== Math.floor(number)) {
+    throw new Error('Precision lost when converting number to BN');
+  }
   return new BN(number.toString());
 };
 

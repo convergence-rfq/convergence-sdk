@@ -133,7 +133,7 @@ export type CleanUpResponsesBuilderParams = CleanUpResponsesInput;
  * const transactionBuilder = convergence
  *   .rfqs()
  *   .builders()
- *   .cleanUpResponses({ responses: [<address>, <address>], rfq: <address> });
+ *   .cleanUpResponses({ responses: [<address>, <address>] });
  * ```
  *
  * @group Transaction Builders
@@ -168,11 +168,7 @@ export const cleanUpResponsesBuilder = async (
       .rfqs()
       .findRfqByAddress({ address: response.rfq });
 
-    const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-
-    const initializedLegs = response.legPreparationsInitializedBy.length;
-
-    for (let i = 0; i < initializedLegs; i++) {
+    for (let i = 0; i < response.legPreparationsInitializedBy.length; i++) {
       const leg = rfqModel.legs[i];
       const firstToPrepare =
         response.legPreparationsInitializedBy[0] === AuthoritySide.Maker
@@ -193,7 +189,6 @@ export const cleanUpResponsesBuilder = async (
       });
 
       const baseAssetMint = await legToBaseAssetMint(convergence, leg);
-
       const legAccounts: AccountMeta[] = [
         {
           pubkey: firstToPrepare,
@@ -220,12 +215,12 @@ export const cleanUpResponsesBuilder = async (
       anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
     }
 
+    const spotInstrumentProgram = convergence.programs().getSpotInstrument();
     const spotInstrumentProgramAccount: AccountMeta = {
       pubkey: spotInstrumentProgram.address,
       isSigner: false,
       isWritable: false,
     };
-
     const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
       response: response.address,
       program: spotInstrumentProgram.address,

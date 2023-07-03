@@ -25,24 +25,63 @@ describe('unit.rfq', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
+  it('create', async () => {
+    const fixedSize: FixedSize = {
+      type: 'fixed-base',
+      amount: 19.653_038_331,
+    };
+    const { rfq } = await takerCvg.rfqs().createAndFinalize({
+      instruments: [
+        await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, Side.Bid),
+      ],
+      orderType: 'buy',
+      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
+      fixedSize,
+    });
+    // @ts-ignore
+    expect(fixedSize.amount).toBeCloseTo(rfq.size.amount);
+  });
+
+  it('create [size precision error]', async () => {
+    const errors: string[] = [];
+    const fixedSize: FixedSize = {
+      type: 'fixed-base',
+      amount: 19.653_038_331_093,
+    };
+    await takerCvg
+      .rfqs()
+      .createAndFinalize({
+        instruments: [
+          await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, Side.Bid),
+        ],
+        orderType: 'buy',
+        quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
+        fixedSize,
+      })
+      .catch((e) => {
+        errors.push(e.message);
+      });
+    expect(errors[0]).toBe('Precision lost when converting number to BN');
+  });
+
   it('find all', async () => {
-    const iterator = await takerCvg.rfqs().findRfqs({});
-    const rfqs = await (await getAll(iterator)).flat();
+    const iterator: any = takerCvg.rfqs().findRfqs({});
+    const rfqs = (await getAll(iterator)).flat();
     expect(rfqs.length).toBeGreaterThan(0);
   });
 
   it('find all [owner]', async () => {
-    const iterator = await takerCvg
+    const iterator: any = takerCvg
       .rfqs()
       .findRfqs({ owner: takerCvg.identity().publicKey });
-    const rfqs = await (await getAll(iterator)).flat();
+    const rfqs = (await getAll(iterator)).flat();
     expect(rfqs.length).toBeGreaterThan(0);
   });
 
   it('cancel, reclaim and cleanup multiple', async () => {
     const fixedSize: FixedSize = {
       type: 'fixed-base',
-      amount: 19,
+      amount: 19.6,
     };
     const { rfq: rfq1, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
