@@ -53,7 +53,8 @@ import {
   toLeg,
 } from '../instrumentModule';
 import { SpotLegInstrument } from '../spotInstrumentModule';
-import { type Rfq, type Response, fromSolitaSide } from './models';
+import { type Rfq, type Response } from './models';
+import { fromSolitaSide } from "./models/ResponseSide";
 
 const { mintOptions } = instructions;
 

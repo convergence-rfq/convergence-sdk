@@ -12,7 +12,7 @@ import { LegInstrument } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import { ResponseSide, fromSolitaSide } from '../rfqModule';
+import { ResponseSide, fromSolitaSide } from '../rfqModule/models/ResponseSide';
 import { createAmericanProgram } from './helpers';
 
 type PsyoptionsAmericanInstrumentData = {
