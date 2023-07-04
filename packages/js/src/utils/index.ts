@@ -8,7 +8,6 @@ export * from './merkle';
 export * from './Task';
 export * from './TransactionBuilder';
 export * from './types';
-export * from './Provider';
 export * from './CvgWallet';
 export * from './cache';
 export * from './conversions';

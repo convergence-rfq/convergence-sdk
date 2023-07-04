@@ -1,21 +1,22 @@
 import * as anchor from '@project-serum/anchor';
+import { Wallet } from '@project-serum/anchor';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
-import { Convergence } from '../../Convergence';
-import { CvgWallet } from '../../utils';
 
-export const createAmericanProgram = (convergence: Convergence): any => {
-  const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
-    'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
-  );
-  // TODO: Can cause issues on wallet change
+import { Convergence } from '../../Convergence';
+
+export const createAmericanProgram = (
+  convergence: Convergence,
+  wallet?: Wallet
+): any => {
   const provider = new anchor.AnchorProvider(
     convergence.connection,
-    new CvgWallet(convergence),
+    wallet ?? new anchor.Wallet(Keypair.generate()),
     {}
   );
 
   const americanProgram = psyoptionsAmerican.createProgram(
-    psyOptionsAmericanLocalNetProgramId,
+    new PublicKey('R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'),
     provider
   );
 
