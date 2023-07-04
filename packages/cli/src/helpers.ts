@@ -71,17 +71,6 @@ export const formatInstrument = (instrument: Instrument): string => {
   throw new Error('Invalid instrument');
 };
 
-export const formatSide = (side: Side): string => {
-  switch (side) {
-    case Side.Bid:
-      return 'bid';
-    case Side.Ask:
-      return 'ask';
-    default:
-      throw new Error('Invalid side');
-  }
-};
-
 export const addDefaultArgs = (cmd: any) => {
   cmd.option('--rpc-endpoint <string>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
   cmd.option('--keypair-file <string>', 'keypair file', DEFAULT_KEYPAIR_FILE);

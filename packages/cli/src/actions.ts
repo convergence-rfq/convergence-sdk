@@ -10,7 +10,7 @@ import {
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import { getInstrumentType, getSide, getSize } from './helpers';
+import { getInstrumentType, getSize } from './helpers';
 import {
   logPk,
   logResponse,
@@ -276,7 +276,7 @@ export const createRfq = async (opts: Opts) => {
           cvg,
           baseMint,
           opts.amount,
-          getSide(opts.side)
+          opts.side
         ),
       ],
       taker: cvg.rpc().getDefaultFeePayer(),
