@@ -46,7 +46,12 @@ export class GpaBuilder {
    * Returns a function that removes the listener
    */
   subscribe(callback: ProgramAccountChangeCallback, commitment?: Commitment) {
-    const listener = this.convergence.connection.onProgramAccountChange(this.programId, callback, commitment ?? 'confirmed', this.config.filters);
+    const listener = this.convergence.connection.onProgramAccountChange(
+      this.programId,
+      callback,
+      commitment ?? 'confirmed',
+      this.config.filters
+    );
     return () => {
       this.convergence.connection.removeProgramAccountChangeListener(listener)
     };
