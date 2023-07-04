@@ -43,18 +43,21 @@ export class GpaBuilder {
    * Subscribes to changes within the program account 
    * based on the specified commitment, defaults to 'confirmed'.
    * 
-   * Returns a function that removes the listener
+   * Returns a subscription id used to unsubscribe
    */
   subscribe(callback: ProgramAccountChangeCallback, commitment?: Commitment) {
-    const listener = this.convergence.connection.onProgramAccountChange(
+    return this.convergence.connection.onProgramAccountChange(
       this.programId,
       callback,
       commitment ?? 'confirmed',
       this.config.filters
     );
-    return () => {
-      this.convergence.connection.removeProgramAccountChangeListener(listener)
-    };
+  }
+
+  unsubscribe(subscriptionId: number) {
+    return this.convergence.connection.removeProgramAccountChangeListener(
+      subscriptionId
+    );
   }
 
   mergeConfig(config: GetProgramAccountsConfig) {
