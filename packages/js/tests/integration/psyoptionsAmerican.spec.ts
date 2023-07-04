@@ -27,7 +27,7 @@ describe('integration.psyoptionsAmerican', () => {
       .confirmResponse({
         rfq: rfq.address,
         response: rfqResponse.address,
-        side: Side.Bid,
+        side: 'bid',
       });
     expect(confirmResponse).toHaveProperty('signature');
 

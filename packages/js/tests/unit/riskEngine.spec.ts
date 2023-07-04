@@ -136,8 +136,7 @@ describe('unit.riskEngine', () => {
       .calculateCollateralForResponse({
         rfqAddress: rfq.address,
         bid: {
-          __kind: 'FixedSize',
-          priceQuote: { __kind: 'AbsolutePrice', amountBps: 12.5 },
+          price: 12.5,
         },
       });
     expect(requiredCollateral).toBeCloseTo(rfqResponse.makerCollateralLocked);

@@ -254,7 +254,7 @@ export const calculateExpectedLegsSize = (
 ): number => {
   return (
     4 +
-    instruments.map((i) => getSerializedLegLength(i)).reduce((x, y) => x + y)
+    instruments.map((i) => getSerializedLegLength(i)).reduce((x, y) => x + y, 0)
   );
 };
 
