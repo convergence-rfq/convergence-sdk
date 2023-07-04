@@ -130,8 +130,6 @@ export const toRfq = async (
     totalResponses: account.data.totalResponses,
     clearedResponses: account.data.clearedResponses,
     confirmedResponses: account.data.confirmedResponses,
-    legs: await Promise.all(
-      account.data.legs.map((leg) => convergence.parseLegInstrument(leg))
-    ),
+    legs: account.data.legs.map((leg) => convergence.parseLegInstrument(leg)),
   };
 };

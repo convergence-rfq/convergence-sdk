@@ -72,7 +72,7 @@ export const isToken = (value: any): value is Token =>
 
 /** @group Model Helpers */
 export function assertToken(value: any): asserts value is Token {
-  assert(isToken(value), `Expected Token model`);
+  assert(isToken(value), 'Expected Token model');
 }
 
 /** @group Model Helpers */
@@ -115,7 +115,7 @@ export const isTokenWithMint = (value: any): value is TokenWithMint =>
 export function assertTokenWithMint(
   value: any
 ): asserts value is TokenWithMint {
-  assert(isTokenWithMint(value), `Expected TokenWithMint model`);
+  assert(isTokenWithMint(value), 'Expected TokenWithMint model');
 }
 
 /** @group Model Helpers */
