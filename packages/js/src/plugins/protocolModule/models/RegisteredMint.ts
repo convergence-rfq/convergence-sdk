@@ -38,7 +38,7 @@ export const isRegisteredMint = (value: any): value is RegisteredMint =>
 export function assertRegisteredMint(
   value: any
 ): asserts value is RegisteredMint {
-  assert(isRegisteredMint(value), `Expected RegisteredMint model`);
+  assert(isRegisteredMint(value), 'Expected RegisteredMint model');
 }
 
 /** @group Model Helpers */

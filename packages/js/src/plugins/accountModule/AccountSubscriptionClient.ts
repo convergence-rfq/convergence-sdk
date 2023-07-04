@@ -1,4 +1,4 @@
-import type { AccountInfo, PublicKey } from "@solana/web3.js";
+import type { AccountInfo, PublicKey } from '@solana/web3.js';
 import type { Convergence } from '@/Convergence';
 
 type AccountChangeListener = (accountInfo: AccountInfo<Buffer>) => void;
@@ -8,14 +8,16 @@ export class AccountSubscriptionClient {
 
   subscribe(account: PublicKey, listener: AccountChangeListener) {
     const subscriptionId = this.convergence.connection.onAccountChange(
-      account, 
+      account,
       listener,
-      "confirmed"
+      'confirmed'
     );
     return subscriptionId;
   }
 
   unsubscribe(subscriptionId: number) {
-    return this.convergence.connection.removeAccountChangeListener(subscriptionId);
+    return this.convergence.connection.removeAccountChangeListener(
+      subscriptionId
+    );
   }
 }

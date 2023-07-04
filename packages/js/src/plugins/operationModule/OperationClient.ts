@@ -11,7 +11,7 @@ import {
 } from '../../types';
 import { Disposable, DisposableScope } from '../../utils';
 import { OperationHandlerMissingError } from '../../errors';
-import { AsyncCollection, toCollection } from "./AsyncCollection";
+import { AsyncCollection, toCollection } from './AsyncCollection';
 
 /**
  * @group Modules
@@ -73,18 +73,17 @@ export class OperationClient {
         this.convergence,
         this.getOperationScope(options, scope)
       );
-  
+
       if (Symbol.asyncIterator in Object(result)) {
         // throw new TypeError('You cannot call execute ')
         const values: O[] = [];
         for await (const value of result as AsyncGenerator<O, void, void>) {
           values.push(value);
         }
-        return values as O | Promise<O>;;
-      } 
-        return await result as O | Promise<O>;
-      
-    }
+        return values as O | Promise<O>;
+      }
+      return (await result) as O | Promise<O>;
+    };
 
     return new Disposable(signal).run(process);
   }
@@ -104,13 +103,13 @@ export class OperationClient {
         this.convergence,
         this.getOperationScope(options, scope)
       );
-  
+
       if (Symbol.asyncIterator in Object(result)) {
         const generator = result as AsyncGenerator<O, void, void>;
         return toCollection<O>(() => generator);
-      } 
-        throw new TypeError('toCollection not supported');
-    }
+      }
+      throw new TypeError('toCollection not supported');
+    };
 
     return new Disposable(signal).runSync(process);
   }

@@ -22,7 +22,7 @@ export const isRiskEngineProgram = (
 export function assertRiskEngineProgram(
   value: Program
 ): asserts value is RiskEngineProgram {
-  assert(isRiskEngineProgram(value), `Expected RiskEngineProgram model`);
+  assert(isRiskEngineProgram(value), 'Expected RiskEngineProgram model');
 }
 
 /** @group Programs */

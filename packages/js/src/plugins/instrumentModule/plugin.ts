@@ -1,7 +1,8 @@
+import { Leg as SolitaLeg } from '@convergence-rfq/rfq';
+
 import { LegInstrument, LegInstrumentParser } from './types';
 import type { Convergence } from '@/Convergence';
 import { ConvergencePlugin, Program, PublicKey } from '@/types';
-import { Leg as SolitaLeg } from "@convergence-rfq/rfq";
 
 /** @group Plugins */
 export const instrumentModule = (): ConvergencePlugin => ({

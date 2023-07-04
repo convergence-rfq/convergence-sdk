@@ -24,7 +24,7 @@ export function assertpsyoptionsEuropeanInstrumentProgram(
 ): asserts value is PsyoptionsEuropeanInstrumentProgram {
   assert(
     isPsyoptionsEuropeanInstrumentProgram(value),
-    `Expected psyoptionsEuropeanInstrumentProgram model`
+    'Expected psyoptionsEuropeanInstrumentProgram model'
   );
 }
 

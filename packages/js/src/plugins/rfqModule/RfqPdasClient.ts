@@ -23,8 +23,8 @@ import {
 } from '../../types';
 import type { Convergence } from '../../Convergence';
 import { Option } from '../../utils';
-import { FixedSize, toSolitaFixedSize } from "./models";
-import { OrderType, toSolitaOrderType } from "./models/OrderType";
+import { FixedSize, toSolitaFixedSize } from './models';
+import { OrderType, toSolitaOrderType } from './models/OrderType';
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -81,7 +81,9 @@ export class RfqPdasClient {
       legsHash,
       serializeOrderTypeData(toSolitaOrderType(orderType)),
       quoteHash,
-      serializeFixedSizeData(toSolitaFixedSize(fixedSize, quoteAsset.instrumentDecimals)),
+      serializeFixedSizeData(
+        toSolitaFixedSize(fixedSize, quoteAsset.instrumentDecimals)
+      ),
       toLittleEndian(activeWindow, 4),
       toLittleEndian(settlingWindow, 4),
       recentTimestamp.toArrayLike(Buffer, 'le', 8),
@@ -116,10 +118,9 @@ const serializeOptionQuote = (quote: Option<Quote>) => {
 };
 
 const serializeOrderTypeData = (orderType: SolitaOrderType): Buffer => {
-  const orderTypeBeet = beet.fixedScalarEnum(SolitaOrderType) as beet.FixedSizeBeet<
-    SolitaOrderType,
+  const orderTypeBeet = beet.fixedScalarEnum(
     SolitaOrderType
-  >;
+  ) as beet.FixedSizeBeet<SolitaOrderType, SolitaOrderType>;
   const orderTypeSerializer = createSerializerFromFixedSizeBeet(orderTypeBeet);
 
   return orderTypeSerializer.serialize(orderType);
