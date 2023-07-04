@@ -1,7 +1,9 @@
 import { Buffer } from 'buffer';
 import {
+  Commitment,
   GetProgramAccountsConfig,
   GetProgramAccountsFilter,
+  ProgramAccountChangeCallback,
   PublicKey,
 } from '@solana/web3.js';
 import base58 from 'bs58';
@@ -31,6 +33,23 @@ export class GpaBuilder {
   constructor(convergence: Convergence, programId: PublicKey) {
     this.convergence = convergence;
     this.programId = programId;
+  }
+
+  getFilters() {
+    return this.config.filters;
+  }
+
+  /**
+   * Subscribes to changes within the program account 
+   * based on the specified commitment, defaults to 'confirmed'.
+   * 
+   * Returns a function that removes the listener
+   */
+  subscribe(callback: ProgramAccountChangeCallback, commitment?: Commitment) {
+    const listener = this.convergence.connection.onProgramAccountChange(this.programId, callback, commitment ?? 'confirmed', this.config.filters);
+    return () => {
+      this.convergence.connection.removeProgramAccountChangeListener(listener)
+    };
   }
 
   mergeConfig(config: GetProgramAccountsConfig) {
