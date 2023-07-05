@@ -14,6 +14,7 @@ import { blackScholes } from 'black-scholes';
 import { Convergence } from '../../Convergence';
 import { toSolitaRiskCategory } from '../protocolModule';
 import { LegInstrument } from '../instrumentModule';
+import { AuthoritySide } from '../rfqModule/models/AuthoritySide';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
 import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
 import { Config } from './models';
@@ -22,7 +23,6 @@ import {
   SETTLEMENT_WINDOW_BREAKPOINS,
   SETTLEMENT_WINDOW_PEDIODS,
 } from './constants';
-import { AuthoritySide } from "../rfqModule/models/AuthoritySide";
 
 export type CalculationCase = {
   legMultiplier: number;
