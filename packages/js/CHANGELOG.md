@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.4.2
+
+### Patch Changes
+
+- c700c7de: Added StoredResponseState API model
+
 ## 4.4.1
 
 ### Patch Changes

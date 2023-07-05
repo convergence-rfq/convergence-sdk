@@ -1,4 +1,4 @@
-import { AuthoritySide as SolitaAuthoritySide } from "@convergence-rfq/rfq";
+import { AuthoritySide as SolitaAuthoritySide } from '@convergence-rfq/rfq';
 
 const Maker = 'maker' as const;
 const Taker = 'taker' as const;
