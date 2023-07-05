@@ -13,7 +13,7 @@ export function fromSolitaQuote(quote: SolitaQuote, quoteDecimals: number): Quot
       return {
         price: removeDecimals(
           quote.priceQuote.amountBps,
-          quoteDecimals + ABSOLUTE_PRICE_DECIMALS
+          quoteDecimals
         ),
         legsMultiplierBps: removeDecimals(quote.legsMultiplierBps, LEG_MULTIPLIER_DECIMALS)
       };
@@ -22,7 +22,7 @@ export function fromSolitaQuote(quote: SolitaQuote, quoteDecimals: number): Quot
       return {
         price: removeDecimals(
           quote.priceQuote.amountBps,
-          quoteDecimals + ABSOLUTE_PRICE_DECIMALS
+          quoteDecimals
         ),
       };
     }
@@ -36,7 +36,7 @@ export function toSolitaQuote(quote: Quote, quoteDecimals: number): SolitaQuote 
       legsMultiplierBps: addDecimals(quote.legsMultiplierBps, LEG_MULTIPLIER_DECIMALS),
       priceQuote: {
         __kind: 'AbsolutePrice',
-        amountBps: addDecimals(quote.price, quoteDecimals + ABSOLUTE_PRICE_DECIMALS),
+        amountBps: addDecimals(quote.price, quoteDecimals),
       },
     }
   }
@@ -44,7 +44,7 @@ export function toSolitaQuote(quote: Quote, quoteDecimals: number): SolitaQuote 
     __kind: 'FixedSize',
     priceQuote: {
       __kind: 'AbsolutePrice',
-      amountBps: addDecimals(quote.price, quoteDecimals + ABSOLUTE_PRICE_DECIMALS),
+      amountBps: addDecimals(quote.price, quoteDecimals),
     },
   }
 }
