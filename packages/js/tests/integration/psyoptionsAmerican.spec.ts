@@ -19,7 +19,7 @@ describe('integration.psyoptionsAmerican', () => {
     const { rfq } = await createAmericanCoveredCallRfq(takerCvg, 'sell');
     expect(rfq).toHaveProperty('address');
 
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1, Side.Bid);
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1);
     expect(rfqResponse).toHaveProperty('address');
 
     const { response: confirmResponse } = await takerCvg
