@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
-import { AuthoritySide, Confirmation, Side } from '@convergence-rfq/rfq';
+import { Confirmation, Side } from '@convergence-rfq/rfq';
 
-import { calculateRisk } from '../clientCollateralCalculator';
+import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
 import { extractLegsMultiplierBps } from '../helpers';
 import { Convergence } from '../../../Convergence';
 import {
@@ -116,9 +116,9 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
       const legMultiplier =
         Number(legMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
 
-      const calculationCase = {
+      const calculationCase: CalculationCase = {
         legMultiplier,
-        authoritySide: AuthoritySide.Taker,
+        authoritySide: "taker",
         quoteSide: confirmation.side,
       };
 

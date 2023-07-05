@@ -1,12 +1,11 @@
 import {
-  AuthoritySide,
   isFixedSizeBaseAsset,
   isFixedSizeNone,
   isFixedSizeQuoteAsset,
   Side,
 } from '@convergence-rfq/rfq';
 
-import { calculateRisk } from '../clientCollateralCalculator';
+import { calculateRisk, CalculationCase } from '../clientCollateralCalculator';
 import {
   Operation,
   OperationHandler,
@@ -137,15 +136,15 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
           size.legsMultiplierBps,
           LEG_MULTIPLIER_DECIMALS
         );
-        const sideToCase = (side: Side) => {
+        const sideToCase = (side: Side): CalculationCase => {
           return {
             legMultiplier,
-            authoritySide: AuthoritySide.Taker,
+            authoritySide: 'taker',
             quoteSide: side,
           };
         };
 
-        const cases = [];
+        const cases: CalculationCase[] = [];
         if (orderType == 'buy') {
           cases.push(sideToCase(Side.Ask));
         } else if (orderType == 'sell') {
