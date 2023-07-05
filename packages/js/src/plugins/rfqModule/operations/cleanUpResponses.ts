@@ -1,5 +1,4 @@
 import {
-  AuthoritySide,
   createCleanUpResponseInstruction,
 } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, Transaction } from '@solana/web3.js';
@@ -171,7 +170,7 @@ export const cleanUpResponsesBuilder = async (
     for (let i = 0; i < response.legPreparationsInitializedBy.length; i++) {
       const leg = rfqModel.legs[i];
       const firstToPrepare =
-        response.legPreparationsInitializedBy[0] === AuthoritySide.Maker
+        response.legPreparationsInitializedBy[0] === 'maker'
           ? response.maker
           : rfqModel.taker;
       const instrumentProgramAccount: AccountMeta = {
@@ -226,7 +225,7 @@ export const cleanUpResponsesBuilder = async (
       program: spotInstrumentProgram.address,
     });
     const firstToPrepare =
-      response.legPreparationsInitializedBy[0] === AuthoritySide.Maker
+      response.legPreparationsInitializedBy[0] === 'maker'
         ? response.maker
         : rfqModel.taker;
 

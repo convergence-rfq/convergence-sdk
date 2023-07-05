@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 import {
-  AuthoritySide as SolitaAuthoritySide,
   Confirmation as SolitaConfirmation,
   DefaultingParty as SolitaDefaultingParty,
   Quote as SolitaQuote,
@@ -11,6 +10,7 @@ import { BN } from '@project-serum/anchor';
 import { ResponseAccount } from '../accounts';
 import { assert, removeDecimals, addDecimals } from '../../../utils';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
+import { AuthoritySide, fromSolitaAuthoritySide } from "./AuthoritySide";
 
 type Quote = SolitaQuote;
 
@@ -67,7 +67,7 @@ export type Response = {
   readonly defaultingParty: SolitaDefaultingParty | null;
 
   /** Shows whether the maker or taker initialized preparation for each prepared leg. */
-  readonly legPreparationsInitializedBy: SolitaAuthoritySide[];
+  readonly legPreparationsInitializedBy: AuthoritySide[];
 };
 
 /** @group Model Helpers */
@@ -166,7 +166,7 @@ export const toResponse = (
   settledLegs: account.data.settledLegs,
   confirmed: account.data.confirmed,
   defaultingParty: account.data.defaultingParty,
-  legPreparationsInitializedBy: account.data.legPreparationsInitializedBy,
+  legPreparationsInitializedBy: account.data.legPreparationsInitializedBy.map(fromSolitaAuthoritySide),
   bid: fromSolitaQuote(account.data.bid, quoteDecimals),
   ask: fromSolitaQuote(account.data.ask, quoteDecimals),
 });

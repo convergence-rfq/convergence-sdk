@@ -1,7 +1,6 @@
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import {
   createRevertSettlementPreparationInstruction,
-  AuthoritySide,
 } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -17,6 +16,7 @@ import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '../helpers';
+import { AuthoritySide, toSolitaAuthoritySide } from "../models/AuthoritySide";
 
 const Key = 'RevertSettlementPreparationOperation' as const;
 
@@ -151,7 +151,7 @@ export const revertSettlementPreparationBuilder = async (
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
   const sidePreparedLegs: number =
-    side == AuthoritySide.Taker
+    side === 'taker'
       ? parseInt(responseModel.takerPreparedLegs.toString())
       : parseInt(responseModel.makerPreparedLegs.toString());
 
@@ -189,7 +189,7 @@ export const revertSettlementPreparationBuilder = async (
           .associatedTokenAccount({
             mint: baseAssetMint!.address,
             owner:
-              side == AuthoritySide.Maker
+              side === 'maker'
                 ? responseModel.maker
                 : rfqModel.taker,
             programs,
@@ -229,7 +229,7 @@ export const revertSettlementPreparationBuilder = async (
         .associatedTokenAccount({
           mint: rfqModel.quoteMint,
           owner:
-            side == AuthoritySide.Maker ? responseModel.maker : rfqModel.taker,
+            side === 'maker' ? responseModel.maker : rfqModel.taker,
           programs,
         }),
       isSigner: false,
@@ -251,7 +251,7 @@ export const revertSettlementPreparationBuilder = async (
           anchorRemainingAccounts,
         },
         {
-          side,
+          side: toSolitaAuthoritySide(side),
         },
         rfqProgram.address
       ),

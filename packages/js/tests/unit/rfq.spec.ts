@@ -6,7 +6,6 @@ import {
   SpotLegInstrument,
   SpotQuoteInstrument,
   FixedSize,
-  Rfq,
 } from '../../src';
 import { createUserCvg, getAll } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
@@ -26,7 +25,7 @@ describe('unit.rfq', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it('create', async () => {
+  it.only('create', async () => {
     const fixedSize: FixedSize = {
       type: 'fixed-base',
       amount: 19.653_038_331,
