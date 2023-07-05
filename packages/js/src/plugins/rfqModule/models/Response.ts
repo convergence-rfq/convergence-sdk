@@ -10,7 +10,10 @@ import { ResponseAccount } from '../accounts';
 import { assert, removeDecimals, addDecimals } from '../../../utils';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
 import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
-import { StoredResponseState, fromSolitaStoredResponseState } from "./StoredResponseState";
+import {
+  StoredResponseState,
+  fromSolitaStoredResponseState,
+} from './StoredResponseState';
 
 type Quote = SolitaQuote;
 
@@ -165,7 +168,9 @@ export const toResponse = (
   settledLegs: account.data.settledLegs,
   confirmed: account.data.confirmed,
   defaultingParty: account.data.defaultingParty,
-  legPreparationsInitializedBy: account.data.legPreparationsInitializedBy.map(fromSolitaAuthoritySide),
+  legPreparationsInitializedBy: account.data.legPreparationsInitializedBy.map(
+    fromSolitaAuthoritySide
+  ),
   bid: fromSolitaQuote(account.data.bid, quoteDecimals),
   ask: fromSolitaQuote(account.data.ask, quoteDecimals),
 });

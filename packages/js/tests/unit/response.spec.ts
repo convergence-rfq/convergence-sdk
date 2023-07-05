@@ -1,6 +1,4 @@
 import { expect } from 'expect';
-import { ResponseState } from '@convergence-rfq/rfq';
-
 import { Rfq, Side } from '../../src';
 import { createUserCvg, createRfq, respondToRfq } from '../helpers';
 
@@ -134,7 +132,7 @@ describe('unit.response', () => {
     const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
-    responsesAfter.map((r) => expect(r.state).toBe(ResponseState.Canceled));
+    responsesAfter.map((r) => expect(r.state).toBe('canceled'));
   });
 
   it('unlock collateral', async () => {
