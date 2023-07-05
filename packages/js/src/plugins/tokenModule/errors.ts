@@ -29,6 +29,7 @@ export class MintAuthorityMustBeSignerToMintInitialSupplyError extends TokenErro
       problem:
         'You are trying to create a Mint and a Token account and to send an initial ' +
         'supply of token to the newly created Token account. The issue is, you have provided ' +
+        // eslint-disable-next-line quotes
         "a Mint Authority as a Public Key which means we don't have the rights to send this transaction.",
       solution:
         'Please provide the Mint Authority as a Signer when using the "createTokenWithMint" operation ' +

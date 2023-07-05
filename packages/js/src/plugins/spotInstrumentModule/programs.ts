@@ -24,7 +24,7 @@ export function assertSpotInstrumentProgram(
 ): asserts value is SpotInstrumentProgram {
   assert(
     isSpotInstrumentProgram(value),
-    `Expected SpotInstrumentProgram model`
+    'Expected SpotInstrumentProgram model'
   );
 }
 

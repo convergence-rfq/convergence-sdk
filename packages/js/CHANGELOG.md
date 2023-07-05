@@ -1,5 +1,13 @@
 # @convergence-rfq/sdk
 
+## 4.4.1
+
+### Patch Changes
+
+- 1a830ff7: Added API model AuthoritySide
+- 1a830ff7: Fix for fetching RFQs where no wallet is provided
+- 9eeda287: Added subscribe method to GpaBuilers to listen to account changes
+
 ## 4.4.0
 
 ### Minor Changes

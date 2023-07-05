@@ -16,10 +16,7 @@ describe('integration.psyoptionsAmerican', () => {
   const makerCvg = createUserCvg('maker');
 
   it('covered call [sell]', async () => {
-    const { rfq } = await createAmericanCoveredCallRfq(
-      takerCvg,
-      'sell'
-    );
+    const { rfq } = await createAmericanCoveredCallRfq(takerCvg, 'sell');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1, Side.Bid);

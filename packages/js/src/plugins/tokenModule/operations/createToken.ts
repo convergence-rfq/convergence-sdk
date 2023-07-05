@@ -312,11 +312,11 @@ export const createTokenIfMissingBuilder = async (
       problemSuffix:
         `The provided "${tokenVariable}" account ` +
         `at address [${destinationAddress}] does not exist. ` +
-        `Therefore, it needs to be created and passed as a Signer.`,
+        'Therefore, it needs to be created and passed as a Signer.',
       solution:
         `If you want to create the "${tokenVariable}" account, then please pass it as a Signer. ` +
-        `Alternatively, you can pass the owner account as a PublicKey instead to ` +
-        `use (or create) an associated token account.`,
+        'Alternatively, you can pass the owner account as a PublicKey instead to ' +
+        'use (or create) an associated token account.',
     });
   }
 

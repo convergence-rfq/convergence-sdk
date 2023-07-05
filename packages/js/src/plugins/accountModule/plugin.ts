@@ -1,6 +1,6 @@
-import { ConvergencePlugin } from '@/types';
-import { AccountSubscriptionClient } from "./AccountSubscriptionClient";
-import type { Convergence } from '@/Convergence';
+import type { Convergence } from '../../Convergence';
+import { ConvergencePlugin } from '../../types';
+import { AccountSubscriptionClient } from './AccountSubscriptionClient';
 
 /** @group Plugins */
 export const accountModule = (): ConvergencePlugin => ({

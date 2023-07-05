@@ -26,7 +26,7 @@ export class FailedToSendTransactionError extends RpcError {
     super({
       key: 'failed_to_send_transaction',
       title: 'Failed to Send Transaction',
-      problem: `The transaction could not be sent successfully to the network.`,
+      problem: 'The transaction could not be sent successfully to the network.',
       solution: 'Check the error below for more information.',
       options: {
         ...options,
@@ -55,7 +55,7 @@ export class FailedToConfirmTransactionError extends RpcError {
     super({
       key: 'failed_to_confirm_transaction',
       title: 'Failed to Confirm Transaction',
-      problem: `The transaction could not be confirmed.`,
+      problem: 'The transaction could not be confirmed.',
       solution: 'Check the error below for more information.',
       options: { ...options, cause },
     });

@@ -1,4 +1,4 @@
-import { AuthoritySide, RiskCategory, Side } from '@convergence-rfq/rfq';
+import { RiskCategory, Side } from '@convergence-rfq/rfq';
 import {
   futureCommonDataBeet,
   InstrumentType,
@@ -22,6 +22,7 @@ import {
   SETTLEMENT_WINDOW_BREAKPOINS,
   SETTLEMENT_WINDOW_PEDIODS,
 } from './constants';
+import { AuthoritySide } from "../rfqModule/models/AuthoritySide";
 
 export type CalculationCase = {
   legMultiplier: number;
