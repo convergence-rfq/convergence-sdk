@@ -10,7 +10,7 @@ import { BN } from '@project-serum/anchor';
 import { ResponseAccount } from '../accounts';
 import { assert, removeDecimals, addDecimals } from '../../../utils';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
-import { AuthoritySide, fromSolitaAuthoritySide } from "./AuthoritySide";
+import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
 
 type Quote = SolitaQuote;
 

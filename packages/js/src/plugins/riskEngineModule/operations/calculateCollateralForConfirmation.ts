@@ -118,7 +118,7 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
 
       const calculationCase: CalculationCase = {
         legMultiplier,
-        authoritySide: "taker",
+        authoritySide: 'taker',
         quoteSide: confirmation.side,
       };
 
