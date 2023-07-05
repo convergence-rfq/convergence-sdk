@@ -175,6 +175,7 @@ export class TaskIsAlreadyRunningError extends SdkError {
       options,
       key: 'task_is_already_running',
       title: 'Task Is Already Running',
+      // eslint-disable-next-line quotes
       problem: "Trying to re-run a task that hasn't completed yet.",
       solution:
         'Ensure the task has completed using "await" before trying to run it again.',
@@ -249,7 +250,8 @@ export class UnexpectedTypeError extends SdkError {
       key: 'unexpected_type',
       title: 'Unexpected Type',
       problem: `Expected variable [${variable}] to be of type [${expectedType}] but got [${actualType}].`,
-      solution: `Please check that you are providing the right variable for this use case.`,
+      solution:
+        'Please check that you are providing the right variable for this use case.',
     });
   }
 }
@@ -330,12 +332,12 @@ export class NoInstructionsToSendError extends SdkError {
       title: 'No Instructions To Send',
       problem:
         `The input provided to the [${operation}] resulted ` +
-        `in a Transaction containing no Instructions.`,
+        'in a Transaction containing no Instructions.',
       solution:
         solution ??
-        `Ensure that the provided input has an effect on the operation. ` +
-          `This typically happens when trying to update an account with ` +
-          `the same data it already contains.`,
+        'Ensure that the provided input has an effect on the operation. ' +
+          'This typically happens when trying to update an account with ' +
+          'the same data it already contains.',
     });
   }
 }

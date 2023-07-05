@@ -20,6 +20,7 @@ import {
   programId as psyoptionsEuropeanProgramId,
 } from '@mithraic-labs/tokenized-euros';
 import { BN } from 'bn.js';
+
 import {
   UnparsedAccount,
   PublicKeyValues,
@@ -39,7 +40,10 @@ import {
 } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule/instrument';
+import {
+  PsyoptionsAmericanInstrument,
+  createAmericanProgram,
+} from '../psyoptionsAmericanInstrumentModule';
 import { collateralMintCache } from '../collateralModule';
 import { Mint } from '../tokenModule';
 import {
@@ -500,7 +504,6 @@ export const initializeNewOptionMeta = async (
 
 export const initializeNewAmericanOption = async (
   convergence: Convergence,
-  americanProgram: any,
   underlyingMint: Mint,
   quoteMint: Mint,
   quoteAmountPerContract: number,
@@ -514,6 +517,11 @@ export const initializeNewAmericanOption = async (
   );
   const underlyingAmountPerContractBN = new anchor.BN(
     Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
+  );
+
+  const americanProgram = createAmericanProgram(
+    convergence,
+    new CvgWallet(convergence)
   );
 
   const { optionMarketKey, optionMintKey, writerMintKey } =
@@ -549,24 +557,6 @@ export const createEuropeanProgram = async (convergence: Convergence) => {
     convergence.connection.rpcEndpoint,
     new PublicKey(psyoptionsEuropeanProgramId)
   );
-};
-
-export const createAmericanProgram = (convergence: Convergence): any => {
-  const psyOptionsAmericanLocalNetProgramId = new anchor.web3.PublicKey(
-    'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
-  );
-  const provider = new anchor.AnchorProvider(
-    convergence.connection,
-    new CvgWallet(convergence),
-    {}
-  );
-
-  const americanProgram = psyoptionsAmerican.createProgram(
-    psyOptionsAmericanLocalNetProgramId,
-    provider
-  );
-
-  return americanProgram;
 };
 
 export const getOrCreateATA = async (

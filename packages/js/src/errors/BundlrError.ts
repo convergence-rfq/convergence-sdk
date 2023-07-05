@@ -55,10 +55,11 @@ export class AssetUploadFailedError extends BundlrError {
       key: 'asset_upload_failed',
       title: 'Asset Upload Failed',
       problem:
-        `The asset could not be uploaded to the Bundlr network and ` +
+        'The asset could not be uploaded to the Bundlr network and ' +
         `returned the following status code [${status}].`,
       solution:
         'Check the provided status code for more information. For now, this is all we get ' +
+        // eslint-disable-next-line quotes
         "from Bundlr's API but we'll improve this error message as we get more information.",
     });
   }
@@ -72,10 +73,11 @@ export class BundlrWithdrawError extends BundlrError {
       key: 'bundlr_withdraw_error',
       title: 'Bundlr Withdraw Error',
       problem:
-        `The balance could not be withdrawn from the Bundlr network and ` +
+        'The balance could not be withdrawn from the Bundlr network and ' +
         `returned the following status code [${status}].`,
       solution:
         'Check the provided status code for more information. For now, this is all we get ' +
+        // eslint-disable-next-line quotes
         "from Bundlr's API but we'll improve this error message as we get more information.",
     });
   }

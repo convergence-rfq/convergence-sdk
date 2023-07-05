@@ -20,9 +20,9 @@ import {
   QuoteInstrument,
   toQuote,
 } from '../../../plugins/instrumentModule';
+import { OrderType } from '../models/OrderType';
 import { createRfqBuilder } from './createRfq';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
-import { OrderType } from "../models/OrderType";
 
 const Key = 'CreateAndAddLegsToRfqOperation' as const;
 
@@ -149,8 +149,9 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         orderType,
         activeWindow = 5_000,
         settlingWindow = 1_000,
+        fixedSize,
       } = operation.input;
-      let { fixedSize, expectedLegsSize, expectedLegsHash } = operation.input;
+      let { expectedLegsSize, expectedLegsHash } = operation.input;
 
       const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
 

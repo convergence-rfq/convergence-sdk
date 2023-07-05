@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
-import { Quote, AuthoritySide, Side } from '@convergence-rfq/rfq';
+import { Quote, Side } from '@convergence-rfq/rfq';
 
-import { calculateRisk } from '../clientCollateralCalculator';
+import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
 import { extractLegsMultiplierBps } from '../helpers';
 import {
   Operation,
@@ -100,19 +100,19 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       const solitaBid = toSolitaQuote(bid, rfq.quoteAsset.getDecimals());
       const solitaAsk = toSolitaQuote(ask, rfq.quoteAsset.getDecimals());
 
-      const getCase = (quote: Quote, side: Side) => {
+      const getCase = (quote: Quote, side: Side): CalculationCase => {
         const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
         const legMultiplier =
           Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
 
         return {
           legMultiplier,
-          authoritySide: AuthoritySide.Maker,
+          authoritySide: 'maker',
           quoteSide: side,
         };
       };
 
-      const cases = [];
+      const cases: CalculationCase[] = [];
       if (solitaBid) {
         cases.push(getCase(solitaBid, Side.Bid));
       }

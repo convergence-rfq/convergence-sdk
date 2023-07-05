@@ -1,4 +1,4 @@
-import { OrderType as SolitaOrderType } from "@convergence-rfq/rfq";
+import { OrderType as SolitaOrderType } from '@convergence-rfq/rfq';
 
 type Buy = 'buy';
 type Sell = 'sell';
@@ -7,7 +7,7 @@ type TwoWay = 'two-way';
 export type OrderType = Buy | Sell | TwoWay;
 
 export function fromSolitaOrderType(orderType: SolitaOrderType): OrderType {
-  switch(orderType) {
+  switch (orderType) {
     case SolitaOrderType.Buy: {
       return 'buy';
     }
@@ -21,7 +21,7 @@ export function fromSolitaOrderType(orderType: SolitaOrderType): OrderType {
 }
 
 export function toSolitaOrderType(orderType: OrderType): SolitaOrderType {
-  switch(orderType) {
+  switch (orderType) {
     case 'buy': {
       return SolitaOrderType.Buy;
     }
