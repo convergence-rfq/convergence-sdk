@@ -3,7 +3,6 @@ import {
   Confirmation as SolitaConfirmation,
   DefaultingParty as SolitaDefaultingParty,
   Quote as SolitaQuote,
-  StoredResponseState as SolitaStoredResponseState,
 } from '@convergence-rfq/rfq';
 import { BN } from '@project-serum/anchor';
 
@@ -11,6 +10,7 @@ import { ResponseAccount } from '../accounts';
 import { assert, removeDecimals, addDecimals } from '../../../utils';
 import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
 import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
+import { StoredResponseState, fromSolitaStoredResponseState } from "./StoredResponseState";
 
 type Quote = SolitaQuote;
 
@@ -49,7 +49,7 @@ export type Response = {
   readonly takerCollateralLocked: number;
 
   /** The current state of the response. */
-  readonly state: SolitaStoredResponseState;
+  readonly state: StoredResponseState;
 
   /** The number of legs prepared by the taker. */
   readonly takerPreparedLegs: number;
@@ -156,8 +156,7 @@ export const toResponse = (
     account.data.takerCollateralLocked,
     collateralDecimals
   ),
-  // TODO: Create new state for UI
-  state: account.data.state,
+  state: fromSolitaStoredResponseState(account.data.state),
   // TODO: Abstract with response model method
   takerPreparedLegs: account.data.takerPreparedLegs,
   // TODO: Abstract with response model method
