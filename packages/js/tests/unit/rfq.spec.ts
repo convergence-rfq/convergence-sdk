@@ -24,7 +24,7 @@ describe('unit.rfq', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it.only('create', async () => {
+  it('create', async () => {
     const fixedSize: FixedSize = {
       type: 'fixed-base',
       amount: 19.653_038_331,

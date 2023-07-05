@@ -1,5 +1,5 @@
 import { Quote as SolitaQuote } from '@convergence-rfq/rfq';
-import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
+import { LEG_MULTIPLIER_DECIMALS } from '../constants';
 import { addDecimals, removeDecimals } from '@/utils';
 
 export interface Quote {

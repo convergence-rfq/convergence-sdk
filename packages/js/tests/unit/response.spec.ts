@@ -118,7 +118,7 @@ describe('unit.response', () => {
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: responses[0].address,
     });
-    expect(response.confirmed?.side).toBe('ask');
+    expect(response.confirmed?.side).toBe(Side.Ask);
   });
 
   it('cancel', async () => {
@@ -134,7 +134,7 @@ describe('unit.response', () => {
     const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
-    responsesAfter.map((r) => expect(r.state).toBe(ResponseState.Canceled));
+    responsesAfter.map((r) => expect(r.state).toBe('canceled'));
   });
 
   it('unlock collateral', async () => {
