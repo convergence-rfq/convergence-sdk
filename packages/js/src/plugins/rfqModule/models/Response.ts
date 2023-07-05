@@ -7,7 +7,10 @@ import {
 import { ResponseAccount } from '../accounts';
 import { assert, removeDecimals } from '../../../utils';
 import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
-import { StoredResponseState, fromSolitaStoredResponseState } from './StoredResponseState';
+import {
+  StoredResponseState,
+  fromSolitaStoredResponseState,
+} from './StoredResponseState';
 import { fromSolitaQuote, Quote } from './Quote';
 
 /**
@@ -56,9 +59,11 @@ export type Response = {
   /** The number of legs that have already been settled. */
   readonly settledLegs: number;
 
+  // TODO: Should be a ResponseSide?
   /** The optional confirmation of this response. */
   readonly confirmed: SolitaConfirmation | null;
 
+  //
   /** The optional defaulting party of this response. */
   readonly defaultingParty: SolitaDefaultingParty | null;
 
@@ -103,7 +108,9 @@ export const toResponse = (
   settledLegs: account.data.settledLegs,
   confirmed: account.data.confirmed,
   defaultingParty: account.data.defaultingParty,
-  legPreparationsInitializedBy: account.data.legPreparationsInitializedBy.map(fromSolitaAuthoritySide),
+  legPreparationsInitializedBy: account.data.legPreparationsInitializedBy.map(
+    fromSolitaAuthoritySide
+  ),
   bid: account.data.bid && fromSolitaQuote(account.data.bid, quoteDecimals),
   ask: account.data.ask && fromSolitaQuote(account.data.ask, quoteDecimals),
 });
