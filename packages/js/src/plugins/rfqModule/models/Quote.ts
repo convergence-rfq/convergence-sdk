@@ -13,7 +13,15 @@ export function fromSolitaQuote(quote: SolitaQuote, quoteDecimals: number): Quot
     quote.priceQuote.amountBps,
     quoteDecimals
   );
-
+  
+  /** 
+   * TODO: Investigate why we can't combine these operations together
+   * 
+   * The following should work, but doesn't
+   * ```typescript
+   * const price = removeDecimals(quote.priceQuote.amountBps, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
+   * ```
+   */ 
   const price = removeDecimals(
     priceQuoteWithoutDecimals,
     ABSOLUTE_PRICE_DECIMALS
@@ -39,7 +47,16 @@ export function toSolitaQuote(quote: Quote, quoteDecimals: number): SolitaQuote 
     quote.price,
     quoteDecimals
   );
-
+  
+  /** 
+   * TODO: Investigate why we are truncating here, without it we get "Error: Invalid character" from BN.
+   * 
+   * Examples that don't work but probably should
+   * ```typescript
+   * const amountBps = addDecimals(quote.price, quoteDecimals + ABSOLUTE_PRICE_DECIMALS)
+   * const amountBps = quote.price * Math.pow(10, quoteDecimals + ABSOLUTE_PRICE_DECIMALS);
+   * ```
+   */
   const amountBps = priceQuoteWithDecimals.mul(
     new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS))
   );
