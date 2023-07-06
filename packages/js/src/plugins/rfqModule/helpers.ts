@@ -7,7 +7,7 @@ import {
 } from '@solana/web3.js';
 import * as Spl from '@solana/spl-token';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { Leg } from '@convergence-rfq/rfq';
+import { Leg, Side } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
@@ -883,7 +883,7 @@ export const getCreateAccountsAndMintOptionsTransaction = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side && fromSolitaSide(response.confirmed?.side);
+  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
@@ -1023,7 +1023,7 @@ export const mintAmericanOptions = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side && fromSolitaSide(response.confirmed?.side);
+  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
@@ -1099,7 +1099,7 @@ export const mintEuropeanOptions = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side && fromSolitaSide(response.confirmed?.side);
+  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
@@ -1221,7 +1221,7 @@ export const getOrCreateEuropeanOptionATAs = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side && fromSolitaSide(response.confirmed?.side);
+  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
@@ -1272,7 +1272,7 @@ export const getOrCreateAmericanOptionATAs = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side && fromSolitaSide(response.confirmed?.side);
+  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
   let flag = false;
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
@@ -1329,7 +1329,7 @@ export const createAccountsAndMintOptions = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side && fromSolitaSide(response.confirmed?.side);
+  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
 
   const callerIsTaker = caller.publicKey.toBase58() === rfq.taker.toBase58();
   const callerIsMaker =
