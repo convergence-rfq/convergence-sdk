@@ -11,6 +11,7 @@ import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { protocolCache } from '../../protocolModule/cache';
 import { Response } from '../models/Response';
+import { SendAndConfirmTransactionResponse } from '@/plugins';
 
 const Key = 'unlockResponseCollateralOperation' as const;
 
@@ -63,7 +64,9 @@ export type UnlockResponseCollateralInput = {
  * @group Operations
  * @category Outputs
  */
-export type UnlockResponseCollateralOutput = {};
+export type UnlockResponseCollateralOutput = {
+  responses: SendAndConfirmTransactionResponse[];
+};
 
 /**
  * @group Operations
@@ -84,17 +87,20 @@ export const unlockResponseCollateralOperationHandler: OperationHandler<UnlockRe
         scope
       );
 
-      const signedTnxs = await convergence
+      const signedTxs = await convergence
         .identity()
         .signAllTransactions(builder);
 
-      for (const tx of signedTnxs) {
-        await convergence
-          .rpc()
-          .serializeAndSendTransaction(tx, scope.confirmOptions);
-      }
-
+      const responses = await Promise.all(
+        signedTxs.map((signedTx) =>
+          convergence
+            .rpc()
+            .serializeAndSendTransaction(signedTx, scope.confirmOptions)
+        )
+      );
       scope.throwIfCanceled();
+
+      return { responses };
     },
   };
 
