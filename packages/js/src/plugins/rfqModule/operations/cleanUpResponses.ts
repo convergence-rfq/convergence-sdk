@@ -8,7 +8,6 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
