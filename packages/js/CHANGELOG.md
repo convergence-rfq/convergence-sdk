@@ -5,6 +5,7 @@
 ### Patch Changes
 
 - c700c7de: Added StoredResponseState API model
+- c700c7de: Updated Settlement APIs to include Side and Quote models
 
 ## 4.4.1
 
