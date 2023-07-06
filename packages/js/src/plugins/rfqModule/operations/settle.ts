@@ -220,10 +220,10 @@ export const settleBuilder = async (
   });
 
   let quoteReceiverTokens = 1;
-  if (confirmationSide == Side.Bid && (!responseModel.bid || responseModel.bid.price >= 0)) {
+  if (confirmationSide == Side.Bid && responseModel.bid && responseModel.bid.price >= 0) {
     quoteReceiverTokens *= -1;
   } else if (confirmationSide == Side.Ask && responseModel.ask && responseModel.ask.price < 0) {
-      quoteReceiverTokens *= -1;
+    quoteReceiverTokens *= -1;
   }
 
   const quoteAccounts: AccountMeta[] = [

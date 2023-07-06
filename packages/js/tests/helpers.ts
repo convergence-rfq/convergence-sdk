@@ -184,33 +184,11 @@ export const respondToRfq = async (
   if (!bid && !ask) {
     throw new Error('Must provide bid and/or ask');
   }
-
-  const amountToQuote = (amountBps: number): Quote => {
-    return {
-      price: amountBps,
-    };
-  };
-
-  let args: { bid?: Quote; ask?: Quote } = {};
-  if (bid && ask) {
-    args = {
-      ask: amountToQuote(ask),
-      bid: amountToQuote(bid),
-    };
-  } else if (bid) {
-    args = {
-      bid: amountToQuote(bid),
-    };
-  } else if (ask) {
-    args = {
-      ask: amountToQuote(ask),
-    };
-  }
-
   return await cvg.rfqs().respond({
     maker: cvg.identity(),
     rfq: rfq.address,
-    ...args,
+    bid: bid ? { price: bid } : undefined,
+    ask: ask ? { price: ask } : undefined,
   });
 };
 

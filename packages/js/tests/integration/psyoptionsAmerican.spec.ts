@@ -1,7 +1,5 @@
 import { expect } from 'expect';
 
-import { Side } from '../../src';
-
 import {
   createAmericanCoveredCallRfq,
   respondToRfq,

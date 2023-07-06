@@ -90,7 +90,7 @@ describe('integration.psyoptionsEuropean', async () => {
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
 
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0, Side.Bid);
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0);
     await takerCvg.rfqs().confirmResponse({
       rfq: rfq.address,
       response: rfqResponse.address,

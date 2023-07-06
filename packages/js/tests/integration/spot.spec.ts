@@ -38,8 +38,7 @@ describe('integration.spot', () => {
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
-      amountB,
-      Side.Bid
+      amountB
     );
     expect(rfqResponse).toHaveProperty('address');
 
