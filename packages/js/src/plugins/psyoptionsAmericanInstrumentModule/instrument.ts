@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Side, Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
+import { Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { FixableBeetArgsStruct, u8, u64, bignum } from '@convergence-rfq/beet';
@@ -12,6 +12,7 @@ import { LegInstrument } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
+import { ResponseSide, fromSolitaSide } from '../rfqModule/models/ResponseSide';
 import { createAmericanProgram } from './helpers';
 
 type PsyoptionsAmericanInstrumentData = {
@@ -57,7 +58,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     readonly optionMetaPubKey: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
-    readonly side: Side,
+    readonly side: ResponseSide,
     private optionMeta?: OptionMarketWithKey
   ) {}
 
@@ -74,7 +75,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     optionMeta: OptionMarketWithKey,
     optionMetaPubkey: PublicKey,
     amount: number,
-    side: Side
+    side: ResponseSide
   ) {
     const mintInfoAddress = convergence
       .rfqs()
@@ -235,7 +236,7 @@ export const psyoptionsAmericanInstrumentParser = {
       metaKey,
       baseAssetIndex,
       removeDecimals(instrumentAmount, PsyoptionsAmericanInstrument.decimals),
-      side
+      fromSolitaSide(side)
     );
   },
 };
