@@ -1,13 +1,13 @@
 import * as anchor from '@project-serum/anchor';
-import { Wallet } from '@project-serum/anchor';
 import { PublicKey, Keypair } from '@solana/web3.js';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 
 import { Convergence } from '../../Convergence';
+import { CvgWallet } from '../../utils';
 
 export const createAmericanProgram = (
   convergence: Convergence,
-  wallet?: Wallet
+  wallet?: CvgWallet
 ): any => {
   const provider = new anchor.AnchorProvider(
     convergence.connection,
