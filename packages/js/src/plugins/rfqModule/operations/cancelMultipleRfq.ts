@@ -8,8 +8,8 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
 const Key = 'CancelMultipleRfqOperation' as const;
@@ -53,7 +53,10 @@ export type CancelMultipleRfqInput = {
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
-  /** The protocol address.
+
+  /**
+   * The protocol address.
+   *
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
@@ -66,7 +69,9 @@ export type CancelMultipleRfqInput = {
  * @group Operations
  * @category Outputs
  */
-export type CancelMultipleRfqOutput = {};
+export type CancelMultipleRfqOutput = {
+  responses: SendAndConfirmTransactionResponse[];
+};
 
 /**
  * @group Operations
@@ -78,25 +83,26 @@ export const cancelMultipleRfqOperationHandler: OperationHandler<CancelMultipleR
       operation: CancelMultipleRfqOperation,
       convergence: Convergence,
       scope: OperationScope
-    ) => {
-      const txArray = await cancelMultipleRfqBuilder(
+    ): Promise<CancelMultipleRfqOutput> => {
+      const builders = await cancelMultipleRfqBuilder(
         convergence,
         operation.input,
         scope
       );
-      scope.throwIfCanceled();
-      const signedTnxs = await convergence
-        .identity()
-        .signAllTransactions(txArray);
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-        convergence,
-        scope.confirmOptions
-      );
 
-      for (const tx of signedTnxs) {
-        await convergence.rpc().serializeAndSendTransaction(tx, confirmOptions);
-      }
+      const signedTxs = await convergence
+        .identity()
+        .signAllTransactions(builders);
+      const responses = await Promise.all(
+        signedTxs.map((signedTx) =>
+          convergence
+            .rpc()
+            .serializeAndSendTransaction(signedTx, scope.confirmOptions)
+        )
+      );
       scope.throwIfCanceled();
+
+      return { responses };
     },
   };
 
