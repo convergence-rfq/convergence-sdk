@@ -8,7 +8,6 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import {
@@ -58,8 +57,7 @@ export type WithdrawCollateralInput = {
    */
   user?: Signer;
 
-  /** The address of the user's token account where withdrawn
-   * tokens will be transferred to. */
+  /** The address of the user's token account where withdrawn tokens will be transferred to. */
   userTokens?: PublicKey;
 
   /**
@@ -74,10 +72,6 @@ export type WithdrawCollateralInput = {
 
   /** The address of the user's collateral token account. */
   collateralToken?: PublicKey;
-
-  /*
-   * Args
-   */
 
   /** The amount to withdraw */
   amount: number;
@@ -103,8 +97,6 @@ export const withdrawCollateralOperationHandler: OperationHandler<WithdrawCollat
       convergence: Convergence,
       scope: OperationScope
     ) => {
-      scope.throwIfCanceled();
-
       const builder = await withdrawCollateralBuilder(
         convergence,
         {
@@ -112,13 +104,11 @@ export const withdrawCollateralOperationHandler: OperationHandler<WithdrawCollat
         },
         scope
       );
-      scope.throwIfCanceled();
 
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+      const output = await builder.sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
       return output;
@@ -155,7 +145,6 @@ export const withdrawCollateralBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<WithdrawCollateralBuilderContext>> => {
   const { programs } = options;
-  const rfqProgram = convergence.programs().getRfq(programs);
 
   const protocolModel = await protocolCache.get(convergence);
 
@@ -179,23 +168,22 @@ export const withdrawCollateralBuilder = async (
   } = params;
 
   const collateralMint = await collateralMintCache.get(convergence);
-  const collateralDecimals = collateralMint.decimals;
 
   return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)
     .add({
       instruction: createWithdrawCollateralInstruction(
         {
-          user: user.publicKey,
           userTokens,
           protocol,
           collateralInfo,
           collateralToken,
+          user: user.publicKey,
         },
         {
-          amount: addDecimals(amount, collateralDecimals),
+          amount: addDecimals(amount, collateralMint.decimals),
         },
-        rfqProgram.address
+        convergence.programs().getRfq(programs).address
       ),
       signers: [user],
       key: 'withdrawCollateral',

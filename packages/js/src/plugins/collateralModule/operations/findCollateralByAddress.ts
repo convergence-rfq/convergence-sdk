@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { Collateral, toCollateral } from '../models';
+import { Collateral, assertCollateral, toCollateral } from '../models';
 import { toCollateralAccount } from '../accounts';
 import {
   Operation,
@@ -19,7 +19,7 @@ const Key = 'FindCollateralByAddressOperation' as const;
  * ```ts
  * const collateral = await convergence
  *   .collateral()
- *   .findByAddress({ address: user.publicKey });
+ *   .findByAddress({ address: <publicKey> });
  * ```
  *
  * @group Operations
@@ -66,16 +66,15 @@ export const findCollateralByAddressOperationHandler: OperationHandler<FindColla
     ): Promise<FindCollateralByAddressOutput> => {
       const { commitment } = scope;
       const { address } = operation.input;
-      scope.throwIfCanceled();
 
       const collateralMint = await collateralMintCache.get(convergence);
-
       const account = await convergence.rpc().getAccount(address, commitment);
+
       const collateralModel = toCollateral(
         toCollateralAccount(account),
         collateralMint
       );
-      scope.throwIfCanceled();
+      assertCollateral(collateralModel);
 
       return collateralModel;
     },

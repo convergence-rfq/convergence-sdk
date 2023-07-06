@@ -83,13 +83,7 @@ export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
     scope: OperationScope
   ) => {
     const builder = await cancelRfqBuilder(convergence, operation.input, scope);
-    scope.throwIfCanceled();
-
-    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-      convergence,
-      scope.confirmOptions
-    );
-    const output = await builder.sendAndConfirm(convergence, confirmOptions);
+    const output = await builder.sendAndConfirm(convergence);
     scope.throwIfCanceled();
 
     return output;
@@ -121,9 +115,7 @@ export const cancelRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { taker = convergence.identity(), rfq } = params;
-
-  const rfqProgram = convergence.programs().getRfq(programs);
+  const { rfq, taker = convergence.identity() } = params;
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -134,7 +126,7 @@ export const cancelRfqBuilder = async (
           protocol: convergence.protocol().pdas().protocol(),
           rfq,
         },
-        rfqProgram.address
+        convergence.programs().getRfq(programs).address
       ),
       signers: [taker],
       key: 'cancelRfq',

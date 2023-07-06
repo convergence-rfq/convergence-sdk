@@ -1,5 +1,5 @@
 import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
@@ -12,8 +12,8 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { Quote, Rfq } from '../models';
-import { toSolitaQuote } from '../models/Quote';
+import { Quote, Rfq, toSolitaQuote } from '../models';
+import { getRemainingAccounts } from '../../../plugins/instrumentModule';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -29,13 +29,16 @@ const getNextResponsePdaAndDistinguisher = async (
   let response: PublicKey;
   let pdaDistinguisher = 0;
   while (true) {
-    response = cvg.rfqs().pdas().response({
-      rfq,
-      maker,
-      bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
-      ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
-      pdaDistinguisher,
-    });
+    response = cvg
+      .rfqs()
+      .pdas()
+      .response({
+        rfq,
+        maker,
+        bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
+        ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
+        pdaDistinguisher,
+      });
 
     const account = await cvg.rpc().getAccount(response);
     if (!account.exists) {
@@ -49,16 +52,16 @@ const getNextResponsePdaAndDistinguisher = async (
 const Key = 'RespondToRfqOperation' as const;
 
 /**
- * Responds to an Rfq.
+ * Responds to an RFQ.
  *
  * ```ts
  * const { rfqResponse } = await convergence
  *   .rfqs()
  *   .respond({
- *     rfq: rfq.address,
+ *     rfq: <address>,
  *     bid: {
- *       __kind: 'FixedSize',
- *       priceQuote: { __kind: 'AbsolutePrice', amountBps: 1_000 },
+ *       price: 12.4,
+ *       legsMultiplierBps: 1.0
  *     },
  *   });
  * ```
@@ -168,7 +171,6 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
         },
         scope
       );
-      scope.throwIfCanceled();
 
       const output = await builder.sendAndConfirm(
         convergence,
@@ -240,7 +242,6 @@ export const respondToRfqBuilder = async (
   }
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-
   const { response, pdaDistinguisher } =
     await getNextResponsePdaAndDistinguisher(
       convergence,
@@ -251,35 +252,10 @@ export const respondToRfqBuilder = async (
       rfqModel
     );
 
-  // TODO: DRY
-  const baseAssetIndexValuesSet: Set<number> = new Set();
-  for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
-  const baseAssetAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-  const oracleAccounts: AccountMeta[] = [];
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
+  const anchorRemainingAccounts = await getRemainingAccounts(
+    convergence,
+    rfqModel
+  );
 
   return TransactionBuilder.make<RespondToRfqBuilderContext>()
     .setFeePayer(maker)
@@ -303,15 +279,7 @@ export const respondToRfqBuilder = async (
             protocol,
             riskEngine,
             maker: maker.publicKey,
-            anchorRemainingAccounts: [
-              {
-                pubkey: convergence.riskEngine().pdas().config(),
-                isSigner: false,
-                isWritable: false,
-              },
-              ...baseAssetAccounts,
-              ...oracleAccounts,
-            ],
+            anchorRemainingAccounts,
           },
           {
             bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),

@@ -21,8 +21,6 @@ export type Collateral = {
   /** The owner of the Collateral account. */
   readonly user: PublicKey;
 
-  // NOTE: Removed bump and token account bump
-
   /** The amount of locked tokens. */
   readonly lockedTokensAmount: number;
 };

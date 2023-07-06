@@ -1,10 +1,11 @@
 import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
-
 import { AccountMeta } from '@solana/web3.js';
+
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { addDecimals } from '../../utils/conversions';
+import { Convergence } from '../../Convergence';
+import { Rfq, toSolitaSide } from '../rfqModule';
 import { LegInstrument, QuoteInstrument } from './types';
-import { toSolitaSide } from "../rfqModule/models/ResponseSide";
 
 export function toLeg(legInstrument: LegInstrument): Leg {
   return {
@@ -16,7 +17,7 @@ export function toLeg(legInstrument: LegInstrument): Leg {
       legInstrument.getDecimals()
     ),
     instrumentDecimals: legInstrument.getDecimals(),
-  side: toSolitaSide(legInstrument.getSide()),
+    side: toSolitaSide(legInstrument.getSide()),
   };
 }
 
@@ -53,3 +54,51 @@ export function toQuote(legInstrument: QuoteInstrument): QuoteAsset {
     instrumentDecimals: legInstrument.getDecimals(),
   };
 }
+
+export const getRemainingAccounts = async (
+  convergence: Convergence,
+  rfqModel: Rfq
+): Promise<AccountMeta[]> => {
+  const baseAssetIndexValues = [
+    ...new Set(rfqModel.legs.map((leg) => leg.getBaseAssetIndex().value)),
+  ];
+
+  const accounts = await Promise.all(
+    baseAssetIndexValues.map(async (index) => {
+      const baseAsset = convergence.protocol().pdas().baseAsset({ index });
+      const baseAssetModel = await convergence
+        .protocol()
+        .findBaseAssetByAddress({ address: baseAsset });
+
+      const baseAssetAccount: AccountMeta = {
+        pubkey: baseAsset,
+        isSigner: false,
+        isWritable: false,
+      };
+
+      let oracleAccount: AccountMeta | null = null;
+      if (baseAssetModel.priceOracle.address) {
+        oracleAccount = {
+          pubkey: baseAssetModel.priceOracle.address,
+          isSigner: false,
+          isWritable: false,
+        };
+      }
+
+      return { baseAssetAccount, oracleAccount };
+    })
+  );
+
+  const baseAssetAccounts = accounts.map((account) => account.baseAssetAccount);
+  const oracleAccounts = accounts
+    .filter((account) => account.oracleAccount !== null)
+    .map((account) => account.oracleAccount as AccountMeta);
+
+  const riskEngineAccount: AccountMeta = {
+    pubkey: convergence.riskEngine().pdas().config(),
+    isSigner: false,
+    isWritable: false,
+  };
+
+  return [riskEngineAccount, ...baseAssetAccounts, ...oracleAccounts];
+};

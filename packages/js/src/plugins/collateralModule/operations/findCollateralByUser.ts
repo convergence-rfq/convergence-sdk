@@ -18,9 +18,9 @@ const Key = 'FindCollateralByUserOperation' as const;
  * Finds collateral account by a given owner.
  *
  * ```ts
- * const rfqs = await convergence
+ * const collateral = await convergence
  *   .collateral()
- *   .findByUser({ user: user.publicKey });
+ *   .findByUser({ user: <publicKey> });
  * ```
  *
  * @group Operations
@@ -73,12 +73,11 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
         convergence,
         rfqProgram.address
       );
-      const collateral = await gpaBuilder.whereUser(user).get();
-      scope.throwIfCanceled();
 
+      const collateral = await gpaBuilder.whereUser(user).get();
       const collateralMint = await collateralMintCache.get(convergence);
 
-      const collateralModel = collateral
+      return collateral
         .map<Collateral | null>((account) => {
           if (account === null) {
             return null;
@@ -93,7 +92,5 @@ export const findCollateralByUserOperationHandler: OperationHandler<FindCollater
         .filter(
           (collateral): collateral is Collateral => collateral !== null
         )[0];
-
-      return collateralModel;
     },
   };

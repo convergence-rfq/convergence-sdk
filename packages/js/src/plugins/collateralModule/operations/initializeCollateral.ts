@@ -24,7 +24,7 @@ const Key = 'InitializeCollateralOperation' as const;
  * ```ts
  * const rfq = await convergence
  *   .collateral()
- *   .initializeCollateral({});
+ *   .initializeCollateral();
  * ```
  *
  * @group Operations
@@ -69,18 +69,22 @@ export type InitializeCollateralInput = {
    */
   collateralMint?: PublicKey;
 
-  /** Optional address of the User's collateral tokens account.
+  /**
+   * Optional address of the User's collateral tokens account.
    *
-   * @defaultValue `convergence.collateral().pdas().
+   * @defaultValue `convergence
+   *   .collateral()
+   *   .pdas().
    *   collateralTokens({
-   *     user: user.publicKey,
+   *     user: <publicKey>,
    *   })`
    */
   collateralToken?: PublicKey;
 
-  /** Optional address of the User's collateral info account.
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: user.publicKey })`
+  /**
+   * Optional address of the User's collateral info account.
    *
+   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: <publicKey> })`
    */
   collateralInfo?: PublicKey;
 };
@@ -93,7 +97,7 @@ export type InitializeCollateralOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
 
-  /** The newly created Collateral account */
+  /** The newly created collateral account */
   collateral: Collateral;
 };
 
@@ -110,7 +114,6 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
     ) => {
       const { commitment } = scope;
       const { user = convergence.identity() } = operation.input;
-      scope.throwIfCanceled();
 
       const builder = await initializeCollateralBuilder(
         convergence,
@@ -119,13 +122,10 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
         },
         scope
       );
-      scope.throwIfCanceled();
-
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+      const output = await builder.sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
       const account = await convergence
@@ -137,8 +137,6 @@ export const initializeCollateralOperationHandler: OperationHandler<InitializeCo
             .collateralInfo({ user: user.publicKey }),
           commitment
         );
-      scope.throwIfCanceled();
-
       const collateral = toCollateral(toCollateralAccount(account));
       assertCollateral(collateral);
 
@@ -191,20 +189,18 @@ export const initializeCollateralBuilder = async (
       .collateralInfo({ user: user.publicKey }),
   } = params;
 
-  const rfqProgram = convergence.programs().getRfq(programs);
-
   return TransactionBuilder.make<InitializeCollateralBuilderContext>()
     .setFeePayer(user)
     .add({
       instruction: createInitializeCollateralInstruction(
         {
-          user: user.publicKey,
           protocol,
           collateralMint,
           collateralToken,
           collateralInfo,
+          user: user.publicKey,
         },
-        rfqProgram.address
+        convergence.programs().getRfq(programs).address
       ),
       signers: [user],
       key: 'initializeCollateral',

@@ -13,6 +13,7 @@ import {
 import { convertOverrideLegMultiplierBps } from '../helpers';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { ResponseSide, toSolitaSide } from '../models/ResponseSide';
+import { getRemainingAccounts as getValidationAccounts } from '@/plugins/instrumentModule';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -202,35 +203,8 @@ export const confirmResponseBuilder = async (
     programs,
   });
 
-  const baseAssetIndexValuesSet: Set<number> = new Set();
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
-
-  const baseAssetAccounts: AccountMeta[] = [];
-  const oracleAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    baseAssetAccounts.push({
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    });
-
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
+  const validationAccounts = await getValidationAccounts(convergence, rfqModel);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -252,15 +226,7 @@ export const confirmResponseBuilder = async (
             taker: taker.publicKey,
             protocol: convergence.protocol().pdas().protocol(),
             riskEngine: convergence.programs().getRiskEngine(programs).address,
-            anchorRemainingAccounts: [
-              {
-                pubkey: convergence.riskEngine().pdas().config(),
-                isSigner: false,
-                isWritable: false,
-              },
-              ...baseAssetAccounts,
-              ...oracleAccounts,
-            ],
+            anchorRemainingAccounts: validationAccounts,
           },
           {
             side: toSolitaSide(side),

@@ -133,18 +133,14 @@ export const unlockRfqCollateralBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { rfq } = params;
 
-  let { collateralInfo } = params;
-
-  const rfqProgram = convergence.programs().getRfq(programs);
-
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  const collateralInfoPda = convergence.collateral().pdas().collateralInfo({
-    user: rfqModel.taker,
-    programs,
-  });
-
-  collateralInfo = collateralInfo ?? collateralInfoPda;
+  const {
+    collateralInfo = convergence.collateral().pdas().collateralInfo({
+      user: rfqModel.taker,
+      programs,
+    }),
+  } = params;
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -155,7 +151,7 @@ export const unlockRfqCollateralBuilder = async (
           rfq,
           collateralInfo,
         },
-        rfqProgram.address
+        convergence.programs().getRfq(programs).address
       ),
       signers: [],
       key: 'unlockRfqCollateral',

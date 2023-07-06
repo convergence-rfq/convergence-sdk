@@ -144,13 +144,11 @@ export const addLegsToRfqBuilder = async (
   const protocolPdaClient = convergence.protocol().pdas();
   const protocol = protocolPdaClient.protocol();
   const { taker = convergence.identity(), instruments, rfq } = params;
-  // let { instruments } = params;
 
-  const legs = await instrumentsToLegs(instruments);
+  const legs = instrumentsToLegs(instruments);
   const legAccounts = await instrumentsToLegAccounts(instruments);
 
   const baseAssetAccounts: AccountMeta[] = [];
-
   const baseAssetIndexValues = [];
 
   for (const leg of legs) {
