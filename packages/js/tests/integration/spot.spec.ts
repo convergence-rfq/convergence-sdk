@@ -1,5 +1,4 @@
 import { expect } from 'expect';
-import { Side } from '@convergence-rfq/rfq';
 
 import { Mint } from '../../src';
 import {
