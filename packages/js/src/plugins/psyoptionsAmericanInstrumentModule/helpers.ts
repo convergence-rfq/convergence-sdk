@@ -1,9 +1,27 @@
 import * as anchor from '@project-serum/anchor';
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { Transaction, PublicKey, Keypair } from '@solana/web3.js';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 
 import { Convergence } from '../../Convergence';
-import { CvgWallet } from '../../utils';
+import { CvgWallet } from '@/index';
+
+export class NoopWallet {
+  public readonly publicKey: PublicKey;
+
+  constructor(keypair: Keypair) {
+    this.publicKey = keypair.publicKey;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  signTransaction(tx: Transaction): Promise<Transaction> {
+    throw new Error('Method not implemented.');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
+    throw new Error('Method not implemented.');
+  }
+}
 
 export const createAmericanProgram = (
   convergence: Convergence,
@@ -11,7 +29,7 @@ export const createAmericanProgram = (
 ): any => {
   const provider = new anchor.AnchorProvider(
     convergence.connection,
-    wallet ?? new anchor.Wallet(Keypair.generate()),
+    wallet ?? new NoopWallet(Keypair.generate()),
     {}
   );
 
