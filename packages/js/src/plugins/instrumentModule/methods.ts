@@ -4,7 +4,7 @@ import { AccountMeta } from '@solana/web3.js';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { addDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
-import { Rfq, toSolitaSide } from '../rfqModule';
+import { Rfq, toSolitaSide } from '../rfqModule/models';
 import { LegInstrument, QuoteInstrument } from './types';
 
 export function toLeg(legInstrument: LegInstrument): Leg {
