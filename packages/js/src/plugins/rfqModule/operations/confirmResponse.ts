@@ -1,5 +1,5 @@
 import { createConfirmResponseInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';

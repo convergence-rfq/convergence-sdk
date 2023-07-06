@@ -8,7 +8,6 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import {
   TransactionBuilder,
