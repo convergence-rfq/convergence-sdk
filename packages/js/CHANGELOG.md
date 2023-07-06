@@ -1,5 +1,12 @@
 # @convergence-rfq/sdk
 
+## 4.4.3
+
+### Patch Changes
+
+- 3214c2c4: Methods to return multiple txs now return them in responses
+- 3335acbf: No longer importing Anchor Wallet explicitly
+
 ## 4.4.2
 
 ### Patch Changes
