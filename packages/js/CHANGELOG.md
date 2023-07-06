@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.4.5
+
+### Patch Changes
+
+- 30273e1b: Updated Anchor NoopWallet
+
 ## 4.4.4
 
 ### Patch Changes
