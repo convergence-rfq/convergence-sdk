@@ -1,6 +1,4 @@
-import {
-  createCleanUpResponseInstruction,
-} from '@convergence-rfq/rfq';
+import { createCleanUpResponseInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, Transaction } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -10,12 +8,12 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { legToBaseAssetMint } from '../helpers';
 import { Response, assertResponse } from '../models/Response';
+import { SendAndConfirmTransactionResponse } from '@/plugins';
 
 const Key = 'cleanUpResponsesOperation' as const;
 
@@ -80,7 +78,9 @@ export type CleanUpResponsesInput = {
  * @group Operations
  * @category Outputs
  */
-export type CleanUpResponsesOutput = {};
+export type CleanUpResponsesOutput = {
+  responses: SendAndConfirmTransactionResponse[];
+};
 
 /**
  * @group Operations
@@ -104,18 +104,20 @@ export const cleanUpResponsesOperationHandler: OperationHandler<CleanUpResponses
       );
       scope.throwIfCanceled();
 
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
-        convergence,
-        scope.confirmOptions
-      );
-      const signedTnxs = await convergence
+      const signedTxs = await convergence
         .identity()
         .signAllTransactions(txArray);
 
-      for (const tx of signedTnxs) {
-        await convergence.rpc().serializeAndSendTransaction(tx, confirmOptions);
-      }
+      const responses = await Promise.all(
+        signedTxs.map((signedTx) =>
+          convergence
+            .rpc()
+            .serializeAndSendTransaction(signedTx, scope.confirmOptions)
+        )
+      );
       scope.throwIfCanceled();
+
+      return { responses };
     },
   };
 

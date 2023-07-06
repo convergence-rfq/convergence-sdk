@@ -1,6 +1,7 @@
 import { createCancelResponseInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, Transaction } from '@solana/web3.js';
 
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -66,7 +67,9 @@ export type CancelResponsesInput = {
  * @group Operations
  * @category Outputs
  */
-export type CancelResponsesOutput = {};
+export type CancelResponsesOutput = {
+  responses: SendAndConfirmTransactionResponse[];
+};
 
 /**
  * @group Operations
@@ -91,13 +94,16 @@ export const cancelResponsesOperationHandler: OperationHandler<CancelResponsesOp
         .identity()
         .signAllTransactions(builder);
 
-      for (const signedTx of signedTxs) {
-        await convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, scope.confirmOptions);
-      }
-
+      const responses = await Promise.all(
+        signedTxs.map((signedTx) =>
+          convergence
+            .rpc()
+            .serializeAndSendTransaction(signedTx, scope.confirmOptions)
+        )
+      );
       scope.throwIfCanceled();
+
+      return { responses };
     },
   };
 
