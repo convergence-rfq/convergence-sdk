@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.4.4
+
+### Patch Changes
+
+- 71ed402e: Use NoopWallet for Anchor
+
 ## 4.4.3
 
 ### Patch Changes
