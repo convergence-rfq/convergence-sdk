@@ -8,55 +8,55 @@ import {
   useOperation,
   Signer,
 } from '../../../types';
-import { cancelResponseBuilder } from './cancelResponse';
+import { cancelRfqBuilder } from './cancelRfq';
 import { SendAndConfirmTransactionResponse } from '@/plugins';
 
-const Key = 'cancelResponsesOperation' as const;
+const Key = 'CancelRfqsOperation' as const;
 
 /**
- * Cancel multiple response.
+ * Cancels existing Rfqs.
  *
  * ```ts
- * await convergence.rfqs().cancelResponses({ responses });
+ *
+ * await convergence
+ *   .rfqs()
+ *   .cancelRfqs({ rfqs: [<address>] });
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const cancelResponsesOperation =
-  useOperation<CancelResponsesOperation>(Key);
+export const cancelRfqsOperation = useOperation<CancelRfqsOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CancelResponsesOperation = Operation<
+export type CancelRfqsOperation = Operation<
   typeof Key,
-  CancelResponsesInput,
-  CancelResponsesOutput
+  CancelRfqsInput,
+  CancelRfqsOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CancelResponsesInput = {
-  /**
-   * The addresses of the reponses.
-   */
-  responses: PublicKey[];
+export type CancelRfqsInput = {
+  /** The address of the Rfq account. */
+  rfqs: PublicKey[];
 
   /**
-   * The maker as a signer.
+   * The Taker of the Rfq as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
-  maker?: Signer;
+  taker?: Signer;
 
   /**
    * The protocol address.
    *
-   * @defaultValue `convergence.protocol().pdas().get()`
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 };
@@ -65,7 +65,7 @@ export type CancelResponsesInput = {
  * @group Operations
  * @category Outputs
  */
-export type CancelResponsesOutput = {
+export type CancelRfqsOutput = {
   responses: SendAndConfirmTransactionResponse[];
 };
 
@@ -73,27 +73,18 @@ export type CancelResponsesOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cancelResponsesOperationHandler: OperationHandler<CancelResponsesOperation> =
+export const cancelMultipleRfqOperationHandler: OperationHandler<CancelRfqsOperation> =
   {
     handle: async (
-      operation: CancelResponsesOperation,
+      operation: CancelRfqsOperation,
       convergence: Convergence,
       scope: OperationScope
     ) => {
-      const { responses: rfqResponses } = operation.input;
+      const { rfqs } = operation.input;
 
       const builders = await Promise.all(
-        rfqResponses.map((response) =>
-          cancelResponseBuilder(
-            convergence,
-            {
-              response,
-            },
-            scope
-          )
-        )
+        rfqs.map((rfq) => cancelRfqBuilder(convergence, { rfq }, scope))
       );
-
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
       const signedTxs = await convergence
         .identity()

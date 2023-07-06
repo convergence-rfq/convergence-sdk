@@ -30,7 +30,7 @@ export * from './createAndAddLegsToRfq';
 export * from './findResponsesByOwner';
 export * from './findResponsesByRfq';
 export * from './cleanUpMultipleRfq';
-export * from './cancelMultipleRfq';
+export * from './cancelRfqs';
 export * from './unlockResponseCollateral';
 export * from './unlockMultipleRfqCollateral';
 export * from './unlockResponseCollateral';

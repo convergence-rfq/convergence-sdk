@@ -9,7 +9,6 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 
@@ -19,12 +18,9 @@ const Key = 'CancelRfqOperation' as const;
  * Cancels an existing Rfq.
  *
  * ```ts
- *
- * const { rfq } = await convergence.rfqs.create(...);
- *
  * await convergence
  *   .rfqs()
- *   .cancelRfq({ rfq: rfq.address });
+ *   .cancelRfq({ rfq: <address> });
  * ```
  *
  * @group Operations
@@ -54,7 +50,9 @@ export type CancelRfqInput = {
    */
   taker?: Signer;
 
-  /** The protocol address.
+  /**
+   * The protocol address.
+   *
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
@@ -83,13 +81,10 @@ export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
     scope: OperationScope
   ) => {
     const builder = await cancelRfqBuilder(convergence, operation.input, scope);
-    scope.throwIfCanceled();
-
-    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+    const output = await builder.sendAndConfirm(
       convergence,
       scope.confirmOptions
     );
-    const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
     return output;
@@ -122,9 +117,6 @@ export const cancelRfqBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { taker = convergence.identity(), rfq } = params;
-
-  const rfqProgram = convergence.programs().getRfq(programs);
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -134,7 +126,7 @@ export const cancelRfqBuilder = async (
           protocol: convergence.protocol().pdas().protocol(),
           rfq,
         },
-        rfqProgram.address
+        convergence.programs().getRfq(programs).address
       ),
       signers: [taker],
       key: 'cancelRfq',

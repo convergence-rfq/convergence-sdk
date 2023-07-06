@@ -67,8 +67,8 @@ import {
   createAndFinalizeRfqConstructionOperation,
   UnlockMultipleRfqCollateralInput,
   unlockMultipleRfqCollateralOperation,
-  CancelMultipleRfqInput,
-  cancelMultipleRfqOperation,
+  CancelRfqsInput,
+  cancelRfqsOperation,
   CleanUpMultipleRfqInput,
   cleanUpMultipleRfqOperation,
   CleanUpResponsesInput,
@@ -160,10 +160,10 @@ export class RfqClient {
   }
 
   /** {@inheritDoc cancelMultipleRfqOperation} */
-  cancelMultipleRfq(input: CancelMultipleRfqInput, options?: OperationOptions) {
+  cancelMultipleRfq(input: CancelRfqsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(cancelMultipleRfqOperation(input), options);
+      .execute(cancelRfqsOperation(input), options);
   }
 
   /** {@inheritDoc cleanUpResponseOperation} */

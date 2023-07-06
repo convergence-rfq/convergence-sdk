@@ -121,15 +121,15 @@ describe('unit.response', () => {
     expect(response.confirmed?.side).toBe(Side.Ask);
   });
 
-  it('cancel', async () => {
+  it('cancel responses', async () => {
     const responsesBefore = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
 
-    // TODO: Check signature
-    await makerCvg.rfqs().cancelResponses({
-      responses: responsesBefore,
+    const { responses: signatures } = await makerCvg.rfqs().cancelResponses({
+      responses: responsesBefore.map((r) => r.address),
     });
+    expect(signatures.length).toBe(responsesBefore.length);
 
     const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
