@@ -15,7 +15,7 @@ import {
   PsyoptionsEuropeanInstrument,
 } from '@convergence-rfq/sdk';
 
-import { formatSide, formatInstrument, assertInstrument } from './helpers';
+import { formatInstrument, assertInstrument } from './helpers';
 
 // Improves readability of code by preserving terseness
 const l = (...args: any[]) => console.log(...args);
@@ -31,7 +31,7 @@ export const logInstrument = (i: LegInstrument): void => {
   assertInstrument(i);
   l('Instrument:', formatInstrument(i));
   l('Amount:', N(i?.getAmount().toString()));
-  l('Side:', formatSide(i.getSide()));
+  l('Side:', i.getSide());
   if (i instanceof SpotLegInstrument) {
     l('Decimals:', N(i?.decimals.toString()));
     l('Mint:', i.mintAddress.toString());

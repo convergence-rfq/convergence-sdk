@@ -1,5 +1,4 @@
 import { expect } from 'expect';
-import { Side } from '@convergence-rfq/rfq';
 
 import {
   Mint,
@@ -25,14 +24,14 @@ describe('unit.rfq', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it.only('create', async () => {
+  it('create', async () => {
     const fixedSize: FixedSize = {
       type: 'fixed-base',
       amount: 19.653_038_331,
     };
     const { rfq } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, Side.Bid),
+        await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, 'bid'),
       ],
       orderType: 'buy',
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
@@ -52,7 +51,7 @@ describe('unit.rfq', () => {
       .rfqs()
       .createAndFinalize({
         instruments: [
-          await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, Side.Bid),
+          await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, 'bid'),
         ],
         orderType: 'buy',
         quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),

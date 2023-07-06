@@ -157,7 +157,7 @@ export const settleBuilder = async (
 
     let legTakerAmount = -1;
 
-    if (leg.getSide() == Side.Ask) {
+    if (leg.getSide() == 'ask') {
       legTakerAmount *= -1;
     }
     if (confirmationSide == Side.Bid) {
@@ -222,13 +222,11 @@ export const settleBuilder = async (
   let quoteReceiverTokens = 1;
   if (confirmationSide == Side.Bid) {
     quoteReceiverTokens *= -1;
-    //@ts-ignore
-    if (responseModel.bid?.priceQuote.amountBps < 0) {
+    if (responseModel.bid && responseModel.bid.price < 0) {
       quoteReceiverTokens *= -1;
     }
   } else if (confirmationSide == Side.Ask) {
-    //@ts-ignore
-    if (responseModel.ask?.priceQuote.amountBps < 0) {
+    if (responseModel.ask && responseModel.ask.price < 0) {
       quoteReceiverTokens *= -1;
     }
   }

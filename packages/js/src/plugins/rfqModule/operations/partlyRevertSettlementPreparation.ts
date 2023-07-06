@@ -16,7 +16,7 @@ import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '../helpers';
-import { AuthoritySide, toSolitaAuthoritySide } from '../models';
+import { AuthoritySide, toSolitaAuthoritySide } from '../models/AuthoritySide';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 

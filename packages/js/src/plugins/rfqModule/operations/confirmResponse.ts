@@ -1,6 +1,5 @@
-import { createConfirmResponseInstruction, Side } from '@convergence-rfq/rfq';
+import { createConfirmResponseInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
-import { bignum, COption } from '@convergence-rfq/beet';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -13,6 +12,7 @@ import {
 } from '../../../types';
 import { convertOverrideLegMultiplierBps } from '../helpers';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { ResponseSide, toSolitaSide } from '../models/ResponseSide';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -25,7 +25,7 @@ const Key = 'ConfirmResponseOperation' as const;
  *   .confirmResponse({
  *     rfq: rfq.address,
  *     response: response.address,
- *     side: Side.Bid
+ *     side: 'bid' | 'ask'
  *   });
  * ```
  *
@@ -61,22 +61,11 @@ export type ConfirmResponseInput = {
   response: PublicKey;
 
   /**
-   * The side of the response to confirm.
-   */
-  side: Side;
-
-  /**
    * The taker of the Rfq as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
-
-  /**
-   * Optional basis points multiplier to override the legMultiplierBps of the
-   * RFQ fixedSize property.
-   */
-  overrideLegMultiplierBps?: COption<bignum>;
 
   /**
    * Optional address of the taker collateral info account.
@@ -108,6 +97,15 @@ export type ConfirmResponseInput = {
    * The address of the risk engine program.
    */
   riskEngine?: PublicKey;
+
+  /** The Side of the Response to confirm. */
+  side: ResponseSide;
+
+  /**
+   * Optional basis points multiplier to override the legMultiplierBps of the
+   * Rfq's fixedSize property.
+   */
+  overrideLegMultiplierBps?: number;
 };
 
 /**
@@ -265,7 +263,7 @@ export const confirmResponseBuilder = async (
             ],
           },
           {
-            side,
+            side: toSolitaSide(side),
             overrideLegMultiplierBps,
           },
           convergence.programs().getRfq(programs).address

@@ -79,6 +79,8 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       );
       assertResponse(response);
 
+      scope.throwIfCanceled();
+
       return response;
     },
   };

@@ -1,8 +1,8 @@
-import { createRespondToRfqInstruction, Quote } from '@convergence-rfq/rfq';
+import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertResponse, Response, toSolitaQuote } from '../models/Response';
+import { assertResponse, Response } from '../models/Response';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -12,13 +12,16 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { Quote, Rfq } from '../models';
+import { toSolitaQuote } from '../models/Quote';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
   rfq: PublicKey,
   maker: PublicKey,
   bid: Quote | null,
-  ask: Quote | null
+  ask: Quote | null,
+  rfqModel: Rfq
 ): Promise<{
   pdaDistinguisher: number;
   response: PublicKey;
@@ -29,8 +32,8 @@ const getNextResponsePdaAndDistinguisher = async (
     response = cvg.rfqs().pdas().response({
       rfq,
       maker,
-      bid,
-      ask,
+      bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
+      ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
       pdaDistinguisher,
     });
 
@@ -237,16 +240,15 @@ export const respondToRfqBuilder = async (
   }
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  const convertedBid = toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals());
-  const convertedAsk = toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals());
 
   const { response, pdaDistinguisher } =
     await getNextResponsePdaAndDistinguisher(
       convergence,
       rfq,
       maker.publicKey,
-      convertedBid,
-      convertedAsk
+      bid,
+      ask,
+      rfqModel
     );
 
   // TODO: DRY
@@ -312,8 +314,8 @@ export const respondToRfqBuilder = async (
             ],
           },
           {
-            bid: convertedBid,
-            ask: convertedAsk,
+            bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
+            ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
             pdaDistinguisher,
           }
         ),

@@ -1,5 +1,4 @@
 import { expect } from 'expect';
-import { Side } from '@convergence-rfq/rfq';
 
 import { Mint } from '../../src';
 import {
@@ -38,8 +37,7 @@ describe('integration.spot', () => {
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
-      amountB,
-      Side.Bid
+      amountB
     );
     expect(rfqResponse).toHaveProperty('address');
 
@@ -47,7 +45,7 @@ describe('integration.spot', () => {
       taker: takerCvg.identity(),
       rfq: rfq.address,
       response: rfqResponse.address,
-      side: Side.Bid,
+      side: 'bid',
     });
     expect(confirmResponse.response).toHaveProperty('signature');
 
@@ -93,7 +91,7 @@ describe('integration.spot', () => {
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
       rfq: rfq.address,
       response: rfqResponse.address,
-      side: Side.Ask,
+      side: 'ask',
     });
     expect(confirmResponse.response).toHaveProperty('signature');
 
@@ -138,7 +136,7 @@ describe('integration.spot', () => {
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
       rfq: rfq.address,
       response: rfqResponse.address,
-      side: Side.Ask,
+      side: 'ask',
     });
     expect(confirmResponse.response).toHaveProperty('signature');
 

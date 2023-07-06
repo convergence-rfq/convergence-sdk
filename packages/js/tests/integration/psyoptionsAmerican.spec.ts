@@ -1,7 +1,5 @@
 import { expect } from 'expect';
 
-import { Side } from '../../src';
-
 import {
   createAmericanCoveredCallRfq,
   respondToRfq,
@@ -19,7 +17,7 @@ describe('integration.psyoptionsAmerican', () => {
     const { rfq } = await createAmericanCoveredCallRfq(takerCvg, 'sell');
     expect(rfq).toHaveProperty('address');
 
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1, Side.Bid);
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1);
     expect(rfqResponse).toHaveProperty('address');
 
     const { response: confirmResponse } = await takerCvg
@@ -27,7 +25,7 @@ describe('integration.psyoptionsAmerican', () => {
       .confirmResponse({
         rfq: rfq.address,
         response: rfqResponse.address,
-        side: Side.Bid,
+        side: 'bid',
       });
     expect(confirmResponse).toHaveProperty('signature');
 

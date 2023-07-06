@@ -1,8 +1,9 @@
 import { AccountMeta } from '@solana/web3.js';
 
-import { BaseAssetIndex, Leg, Side } from '@convergence-rfq/rfq';
+import { BaseAssetIndex, Leg } from '@convergence-rfq/rfq';
 import { PublicKey } from '../../types';
 import { Convergence } from '../../Convergence';
+import { ResponseSide } from '../rfqModule/models/ResponseSide';
 
 export interface LegInstrumentParser {
   parseFromLeg(convergence: Convergence, leg: Leg): LegInstrument;
@@ -13,7 +14,7 @@ export interface LegInstrument {
   getBaseAssetIndex: () => BaseAssetIndex;
   getAmount: () => number;
   getDecimals: () => number;
-  getSide: () => Side;
+  getSide: () => ResponseSide;
   serializeInstrumentData: () => Buffer;
   getValidationAccounts(): Promise<AccountMeta[]>;
 }

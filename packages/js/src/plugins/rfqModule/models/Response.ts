@@ -2,17 +2,16 @@ import { PublicKey } from '@solana/web3.js';
 import {
   Confirmation as SolitaConfirmation,
   DefaultingParty as SolitaDefaultingParty,
-  Quote as SolitaQuote,
 } from '@convergence-rfq/rfq';
-import { BN } from '@project-serum/anchor';
 
 import { ResponseAccount } from '../accounts';
-import { assert, removeDecimals, addDecimals } from '../../../utils';
-import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
+import { assert, removeDecimals } from '../../../utils';
 import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
-import { StoredResponseState, fromSolitaStoredResponseState } from "./StoredResponseState";
-
-type Quote = SolitaQuote;
+import {
+  StoredResponseState,
+  fromSolitaStoredResponseState,
+} from './StoredResponseState';
+import { fromSolitaQuote, Quote } from './Quote';
 
 /**
  * This model captures all the relevant information about a response
@@ -60,9 +59,11 @@ export type Response = {
   /** The number of legs that have already been settled. */
   readonly settledLegs: number;
 
+  // TODO: Should be a ResponseSide?
   /** The optional confirmation of this response. */
   readonly confirmed: SolitaConfirmation | null;
 
+  //
   /** The optional defaulting party of this response. */
   readonly defaultingParty: SolitaDefaultingParty | null;
 
@@ -78,64 +79,6 @@ export const isResponse = (value: any): value is Response =>
 export function assertResponse(value: any): asserts value is Response {
   assert(isResponse(value), 'Expected Response model');
 }
-
-export const toSolitaQuote = (
-  quote: Quote | null,
-  decimals: number
-): SolitaQuote | null => {
-  if (quote) {
-    const priceQuoteWithDecimals = addDecimals(
-      Number(quote.priceQuote.amountBps),
-      decimals
-    );
-
-    // TODO: Is this correct?
-    quote.priceQuote.amountBps = priceQuoteWithDecimals.mul(
-      new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS))
-    );
-
-    if (quote.__kind === 'Standard') {
-      quote.legsMultiplierBps = addDecimals(
-        Number(quote.legsMultiplierBps),
-        LEG_MULTIPLIER_DECIMALS
-      );
-    }
-
-    return quote;
-  }
-
-  return null;
-};
-
-const fromSolitaQuote = (
-  quote: SolitaQuote | null,
-  decimals: number
-): Quote | null => {
-  if (quote) {
-    const priceQuoteWithoutDecimals = removeDecimals(
-      quote.priceQuote.amountBps,
-      decimals
-    );
-
-    // TODO: Is this correct?
-    quote.priceQuote.amountBps = removeDecimals(
-      new BN(priceQuoteWithoutDecimals),
-      ABSOLUTE_PRICE_DECIMALS
-    );
-
-    if (quote.__kind === 'Standard') {
-      const legsMultiplierBps = removeDecimals(
-        quote.legsMultiplierBps,
-        LEG_MULTIPLIER_DECIMALS
-      );
-      quote.legsMultiplierBps = new BN(legsMultiplierBps);
-    }
-
-    return quote;
-  }
-
-  return null;
-};
 
 /** @group Model Helpers */
 export const toResponse = (
@@ -165,7 +108,9 @@ export const toResponse = (
   settledLegs: account.data.settledLegs,
   confirmed: account.data.confirmed,
   defaultingParty: account.data.defaultingParty,
-  legPreparationsInitializedBy: account.data.legPreparationsInitializedBy.map(fromSolitaAuthoritySide),
-  bid: fromSolitaQuote(account.data.bid, quoteDecimals),
-  ask: fromSolitaQuote(account.data.ask, quoteDecimals),
+  legPreparationsInitializedBy: account.data.legPreparationsInitializedBy.map(
+    fromSolitaAuthoritySide
+  ),
+  bid: account.data.bid && fromSolitaQuote(account.data.bid, quoteDecimals),
+  ask: account.data.ask && fromSolitaQuote(account.data.ask, quoteDecimals),
 });
