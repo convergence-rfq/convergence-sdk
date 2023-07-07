@@ -1,4 +1,3 @@
-export * from '../../protocolModule/operations/addInstrument';
 export * from './addLegsToRfq';
 export * from './cancelResponse';
 export * from './cancelResponses';
@@ -30,7 +29,7 @@ export * from './findResponsesByRfq';
 export * from './createAndAddLegsToRfq';
 export * from './findResponsesByOwner';
 export * from './findResponsesByRfq';
-export * from './cleanUpMultipleRfq';
+export * from './cleanUpRfqs';
 export * from './cancelRfqs';
 export * from './unlockResponseCollateral';
 export * from './unlockMultipleRfqCollateral';

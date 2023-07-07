@@ -3,12 +3,11 @@ import { PublicKey } from '@solana/web3.js';
 import { PartialKeys } from '../../utils';
 import { OperationOptions, token } from '../../types';
 import type { Convergence } from '../../Convergence';
+import { addInstrumentOperation, AddInstrumentInput } from '../protocolModule';
 import { SendTokensInput } from '../tokenModule';
 import { Rfq } from './models';
 import { RfqPdasClient } from './RfqPdasClient';
 import {
-  addInstrumentOperation,
-  AddInstrumentInput,
   addLegsToRfqOperation,
   AddLegsToRfqInput,
   cancelResponseOperation,
@@ -71,8 +70,8 @@ import {
   createAndFinalizeRfqConstructionOperation,
   UnlockMultipleRfqCollateralInput,
   unlockMultipleRfqCollateralOperation,
-  CleanUpMultipleRfqInput,
-  cleanUpMultipleRfqOperation,
+  CleanUpRfqsInput,
+  cleanUpRfqsOperation,
   CleanUpResponsesInput,
   cleanUpResponsesOperation,
 } from './operations';
@@ -162,7 +161,7 @@ export class RfqClient {
       .execute(cancelRfqsOperation(input), options);
   }
 
-  /** {@inheritDoc cleanUpResponseOperation} */
+  /** {@inheritDoc cleanUpResponsesOperation} */
   cleanUpResponse(input: CleanUpResponsesInput, options?: OperationOptions) {
     return this.convergence
       .operations()
@@ -193,13 +192,10 @@ export class RfqClient {
   }
 
   /** {@inheritDoc cleanUpMultipleRfqOperation} */
-  cleanUpMultipleRfq(
-    input: CleanUpMultipleRfqInput,
-    options?: OperationOptions
-  ) {
+  cleanUpMultipleRfq(input: CleanUpRfqsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(cleanUpMultipleRfqOperation(input), options);
+      .execute(cleanUpRfqsOperation(input), options);
   }
 
   /** {@inheritDoc cleanUpRfqOperation} */
