@@ -59,16 +59,12 @@ import {
   unlockRfqCollateralOperationHandler,
   createAndFinalizeRfqConstructionOperation,
   createAndFinalizeRfqConstructionOperationHandler,
-  createAndAddLegsToRfqOperation,
-  createAndAddLegsToRfqOperationHandler,
   cancelRfqsOperation,
   cancelRfqsOperationHandler,
   cancelResponsesOperation,
   cancelResponsesOperationHandler,
   unlockResponseCollateralOperation,
   unlockResponseCollateralOperationHandler,
-  unlockMultipleRfqCollateralOperation,
-  unlockMultipleRfqCollateralOperationHandler,
   cleanUpRfqsOperation,
   cleanUpRfqsOperationHandler,
 } from './operations';
@@ -156,10 +152,6 @@ export const rfqModule = (): ConvergencePlugin => ({
       unlockRfqCollateralOperationHandler
     );
     op.register(
-      createAndAddLegsToRfqOperation,
-      createAndAddLegsToRfqOperationHandler
-    );
-    op.register(
       prepareSettlementAndPrepareMoreLegsOperation,
       prepareSettlementAndPrepareMoreLegsOperationHandler
     );
@@ -174,10 +166,6 @@ export const rfqModule = (): ConvergencePlugin => ({
     op.register(
       unlockResponseCollateralOperation,
       unlockResponseCollateralOperationHandler
-    );
-    op.register(
-      unlockMultipleRfqCollateralOperation,
-      unlockMultipleRfqCollateralOperationHandler
     );
 
     convergence.rfqs = function () {

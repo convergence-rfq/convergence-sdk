@@ -20,7 +20,7 @@ const Key = 'CancelRfqsOperation' as const;
  *
  * await convergence
  *   .rfqs()
- *   .cancelRfqs({ rfqs: [<address>] });
+ *   .cancelRfqs({ rfqs: [<publicKey>] });
  * ```
  *
  * @group Operations

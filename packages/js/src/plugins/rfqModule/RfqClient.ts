@@ -27,8 +27,6 @@ import {
   createRfqOperation,
   CreateRfqInput,
   CreateAndFinalizeRfqConstructionInput,
-  createAndAddLegsToRfqOperation,
-  CreateAndAddLegsToRfqInput,
   finalizeRfqConstructionOperation,
   FinalizeRfqConstructionInput,
   FindRfqsInput,
@@ -68,8 +66,6 @@ import {
   unlockRfqCollateralOperation,
   UnlockRfqCollateralInput,
   createAndFinalizeRfqConstructionOperation,
-  UnlockMultipleRfqCollateralInput,
-  unlockMultipleRfqCollateralOperation,
   CleanUpRfqsInput,
   cleanUpRfqsOperation,
   cleanUpResponseOperation,
@@ -214,16 +210,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(createRfqOperation(input), options);
-  }
-
-  /** {@inheritDoc createRfqAndAddLegsToRfqOperation} */
-  createRfqAndAddLegs(
-    input: CreateAndAddLegsToRfqInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(createAndAddLegsToRfqOperation(input), options);
   }
 
   /** {@inheritDoc createAndFinalizeRfqConstructionOperation} */
@@ -456,16 +442,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(unlockRfqCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc unlockMultipleRfqCollateralOperation} */
-  unlockMultipleRfqCollateral(
-    input: UnlockMultipleRfqCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(unlockMultipleRfqCollateralOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */

@@ -10,7 +10,6 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { LegInstrument } from '../../../plugins/instrumentModule';
@@ -21,20 +20,14 @@ const Key = 'AddLegsToRfqOperation' as const;
  * Adds Legs to an existing Rfq.
  *
  * ```ts
- * const { rfq } = await convergence.rfqs.create(...);
- *
- * const spotInstrument = new SpotInstrument(...);
- * const psyoptionsEuropeanInstrument = new PsyOptionsEuropeanInstrument(...);
- *
  * await convergence
  *   .rfqs()
  *   .addLegsToRfq({
- *     rfq: rfq.address,
+ *     rfq: <publicKey>,
  *     instruments: [
- *       spotInstrument,
- *       psyoptionsEuropeanInstrument,
+ *       await SpotLegInstrument.create(convergence, baseMint, amount, 'bid'),
  *     ],
- *    });
+ *   });
  * ```
  *
  * @group Operations
@@ -57,19 +50,15 @@ export type AddLegsToRfqOperation = Operation<
  * @category Inputs
  */
 export type AddLegsToRfqInput = {
+  /** The address of the Rfq account. */
+  rfq: PublicKey;
+
   /**
    * The owner of the Rfq as a Signer.
    *
    * @defaultValue `convergence.identity()`
    */
   taker?: Signer;
-
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
-
-  /*
-   * Args
-   */
 
   /** The instruments of the order, used to construct legs. */
   instruments: LegInstrument[];
@@ -102,14 +91,10 @@ export const addLegsToRfqOperationHandler: OperationHandler<AddLegsToRfqOperatio
         },
         scope
       );
-      scope.throwIfCanceled();
-
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+      const output = await builder.sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
-
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
       return { ...output };
@@ -129,7 +114,7 @@ export type AddLegsToRfqBuilderParams = AddLegsToRfqInput;
  * const transactionBuilder = convergences
  *   .rfqs()
  *   .builders()
- *   .addLegsToRfq({ address });
+ *   .addLegsToRfq();
  * ```
  *
  * @group Transaction Builders
@@ -144,13 +129,11 @@ export const addLegsToRfqBuilder = async (
   const protocolPdaClient = convergence.protocol().pdas();
   const protocol = protocolPdaClient.protocol();
   const { taker = convergence.identity(), instruments, rfq } = params;
-  // let { instruments } = params;
 
-  const legs = await instrumentsToLegs(instruments);
+  const legs = instrumentsToLegs(instruments);
   const legAccounts = await instrumentsToLegAccounts(instruments);
 
   const baseAssetAccounts: AccountMeta[] = [];
-
   const baseAssetIndexValues = [];
 
   for (const leg of legs) {

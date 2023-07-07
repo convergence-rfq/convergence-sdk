@@ -20,7 +20,7 @@ const Key = 'cancelResponsesOperation' as const;
  * await convergence.
  *   rfqs()
  *   .cancelResponses({
- *     responses: [<address>]
+ *     responses: [<publicKey>]
  * });
  * ```
  *

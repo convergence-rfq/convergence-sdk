@@ -112,7 +112,7 @@ export type CancelResponsesBuilderParams = CancelResponseInput;
  *   .rfqs()
  *   .builders()
  *   .cancel({
- *     response: <address>
+ *     response: <publicKey>
  *   });
  * ```
  *
