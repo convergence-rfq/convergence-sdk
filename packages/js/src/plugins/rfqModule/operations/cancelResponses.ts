@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -9,7 +10,6 @@ import {
   Signer,
 } from '../../../types';
 import { cancelResponseBuilder } from './cancelResponse';
-import { SendAndConfirmTransactionResponse } from '@/plugins';
 
 const Key = 'cancelResponsesOperation' as const;
 

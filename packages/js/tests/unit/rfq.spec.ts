@@ -85,7 +85,7 @@ describe('unit.rfq', () => {
     expect(rfqs.length).toBeGreaterThan(0);
     await takerCvg
       .rfqs()
-      .cancelMultipleRfq({ rfqs: rfqs.map((rfq: any) => rfq.address) });
+      .cancelRfqs({ rfqs: rfqs.map((rfq: any) => rfq.address) });
   });
 
   it('unlock', async () => {
@@ -105,7 +105,7 @@ describe('unit.rfq', () => {
       return rfq.state === 'canceled';
     });
     expect(rfqs.length).toBeGreaterThan(0);
-    await takerCvg.rfqs().cleanUpMultipleRfq({
+    await takerCvg.rfqs().cleanUpRfqs({
       rfqs: rfqs.map((rfq: any) => rfq.address),
     });
   });

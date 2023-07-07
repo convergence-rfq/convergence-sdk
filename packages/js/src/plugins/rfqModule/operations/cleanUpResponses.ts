@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
+import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -72,7 +73,9 @@ export type CleanUpResponsesInput = {
  * @group Operations
  * @category Outputs
  */
-export type CleanUpResponsesOutput = {};
+export type CleanUpResponsesOutput = {
+  responses: SendAndConfirmTransactionResponse[];
+};
 
 /**
  * @group Operations

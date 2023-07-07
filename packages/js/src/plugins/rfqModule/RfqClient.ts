@@ -157,8 +157,8 @@ export class RfqClient {
       .execute(cancelRfqOperation(input), options);
   }
 
-  /** {@inheritDoc cancelMultipleRfqOperation} */
-  cancelMultipleRfq(input: CancelRfqsInput, options?: OperationOptions) {
+  /** {@inheritDoc cancelRfqsOperation} */
+  cancelRfqs(input: CancelRfqsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(cancelRfqsOperation(input), options);
