@@ -48,4 +48,15 @@ describe('unit.cache', () => {
     expect(secondResult).toEqual(101);
     expect(calls).toEqual([100, 101]);
   });
+
+  it('waits for existing fetch to resolve', async () => {
+    let fetchCount = 0;
+    const cache = useCache(async (num: number) => {
+      fetchCount++;
+      await sleep(0.1);
+      return num;
+    });
+    await Promise.all(Array(10).fill(0).map((_, i) => cache.get(i)));
+    expect(fetchCount).toBe(1);
+  })
 });
