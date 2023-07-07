@@ -1,5 +1,12 @@
 # @convergence-rfq/sdk
 
+## 4.4.6
+
+### Patch Changes
+
+- f1e1b8cb: Update cache to resolve existing value before calling getter again
+- 650ce19b: Removed cleanUpResponse from RfqClient
+
 ## 4.4.5
 
 ### Patch Changes
