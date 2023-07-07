@@ -1,5 +1,5 @@
 import { Commitment, Connection } from '@solana/web3.js';
-import { PROGRAM_ID, Quote } from '@convergence-rfq/rfq';
+import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 import { Program, web3 } from '@project-serum/anchor';
 
@@ -11,7 +11,6 @@ import {
   initializeNewAmericanOption,
   toBigNumber,
   createAmericanProgram,
-  Side,
   Rfq,
   Response,
   getOrCreateAmericanOptionATAs,
@@ -125,7 +124,7 @@ export const createAmericanCoveredCallRfq = async (
 
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      await SpotLegInstrument.create(cvg, baseMint, 1.0, Side.Bid),
+      await SpotLegInstrument.create(cvg, baseMint, 1.0, 'bid'),
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
@@ -134,7 +133,7 @@ export const createAmericanCoveredCallRfq = async (
         optionMarket,
         optionMarketKey,
         1,
-        Side.Bid
+        'bid'
       ),
     ],
     orderType,
@@ -165,7 +164,7 @@ export const createRfq = async (
         baseMint,
         amount,
         // This is always going to bid
-        Side.Bid
+        'bid'
       ),
     ],
     orderType,
@@ -184,37 +183,11 @@ export const respondToRfq = async (
   if (!bid && !ask) {
     throw new Error('Must provide bid and/or ask');
   }
-
-  const amountToQuote = (amountBps: number): Quote => {
-    return {
-      __kind: 'FixedSize',
-      priceQuote: {
-        __kind: 'AbsolutePrice',
-        amountBps,
-      },
-    };
-  };
-
-  let args: { bid?: Quote; ask?: Quote } = {};
-  if (bid && ask) {
-    args = {
-      ask: amountToQuote(ask),
-      bid: amountToQuote(bid),
-    };
-  } else if (bid) {
-    args = {
-      bid: amountToQuote(bid),
-    };
-  } else if (ask) {
-    args = {
-      ask: amountToQuote(ask),
-    };
-  }
-
   return await cvg.rfqs().respond({
     maker: cvg.identity(),
     rfq: rfq.address,
-    ...args,
+    bid: bid ? { price: bid } : undefined,
+    ask: ask ? { price: ask } : undefined,
   });
 };
 

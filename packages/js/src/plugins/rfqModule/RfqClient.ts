@@ -166,13 +166,6 @@ export class RfqClient {
       .execute(cancelMultipleRfqOperation(input), options);
   }
 
-  /** {@inheritDoc cleanUpResponseOperation} */
-  cleanUpResponse(input: CleanUpResponsesInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(cleanUpResponsesOperation(input), options);
-  }
-
   /** {@inheritDoc cleanUpResponseLegsOperation} */
   cleanUpResponseLegs(
     input: CleanUpResponseLegsInput,

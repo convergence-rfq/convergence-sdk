@@ -26,7 +26,7 @@
     "object-shorthand": "warn",
     "no-empty": "warn",
     "no-nested-ternary": "warn",
-    "no-unused-vars": "warn",
+    "no-unused-vars": "off",
     "import/no-duplicates": "error",
     "no-restricted-globals": "off",
     "no-else-return": "error",

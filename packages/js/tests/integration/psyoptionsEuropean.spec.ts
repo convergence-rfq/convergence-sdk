@@ -72,7 +72,7 @@ describe('integration.psyoptionsEuropean', async () => {
 
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, Side.Bid),
+        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, 'bid'),
         await PsyoptionsEuropeanInstrument.create(
           takerCvg,
           baseMint,
@@ -80,7 +80,7 @@ describe('integration.psyoptionsEuropean', async () => {
           euroMeta,
           euroMetaKey,
           1,
-          Side.Bid
+          'bid'
         ),
       ],
       orderType: 'sell',
@@ -90,11 +90,11 @@ describe('integration.psyoptionsEuropean', async () => {
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
 
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0, Side.Bid);
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0);
     await takerCvg.rfqs().confirmResponse({
       rfq: rfq.address,
       response: rfqResponse.address,
-      side: Side.Bid,
+      side: 'bid',
     });
 
     await getOrCreateEuropeanOptionATAs(

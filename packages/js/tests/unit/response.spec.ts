@@ -40,11 +40,11 @@ describe('unit.response', () => {
       respondToRfq(makerCvg, rfq0, undefined, amount1),
     ]);
 
-    expect(res0.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount1);
-    expect(res1.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount2);
-    expect(res2.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount3);
-    expect(res3.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount1);
-    expect(res4.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount1);
+    expect(res0.rfqResponse.ask?.price).toBeCloseTo(amount1);
+    expect(res1.rfqResponse.ask?.price).toBeCloseTo(amount2);
+    expect(res2.rfqResponse.ask?.price).toBeCloseTo(amount3);
+    expect(res3.rfqResponse.ask?.price).toBeCloseTo(amount1);
+    expect(res4.rfqResponse.ask?.price).toBeCloseTo(amount1);
   });
 
   it('respond [sell]', async () => {
@@ -56,11 +56,11 @@ describe('unit.response', () => {
       respondToRfq(makerCvg, rfq1, amount1),
     ]);
 
-    expect(res0.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount1);
-    expect(res1.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount2);
-    expect(res2.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount3);
-    expect(res3.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount1);
-    expect(res4.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount1);
+    expect(res0.rfqResponse.bid?.price).toBeCloseTo(amount1);
+    expect(res1.rfqResponse.bid?.price).toBeCloseTo(amount2);
+    expect(res2.rfqResponse.bid?.price).toBeCloseTo(amount3);
+    expect(res3.rfqResponse.bid?.price).toBeCloseTo(amount1);
+    expect(res4.rfqResponse.bid?.price).toBeCloseTo(amount1);
   });
 
   it('respond [two-way]', async () => {
@@ -72,17 +72,17 @@ describe('unit.response', () => {
       respondToRfq(makerCvg, rfq2, amount3, amount1),
     ]);
 
-    expect(res0.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount3);
-    expect(res1.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount1);
-    expect(res2.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount3);
-    expect(res3.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount3);
-    expect(res4.rfqResponse.bid?.priceQuote.amountBps).toEqual(amount3);
+    expect(res0.rfqResponse.bid?.price).toBeCloseTo(amount3);
+    expect(res1.rfqResponse.bid?.price).toBeCloseTo(amount1);
+    expect(res2.rfqResponse.bid?.price).toBeCloseTo(amount3);
+    expect(res3.rfqResponse.bid?.price).toBeCloseTo(amount3);
+    expect(res4.rfqResponse.bid?.price).toBeCloseTo(amount3);
 
-    expect(res0.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount1);
-    expect(res1.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount2);
-    expect(res2.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount2);
-    expect(res3.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount1);
-    expect(res4.rfqResponse.ask?.priceQuote.amountBps).toEqual(amount1);
+    expect(res0.rfqResponse.ask?.price).toBeCloseTo(amount1);
+    expect(res1.rfqResponse.ask?.price).toBeCloseTo(amount2);
+    expect(res2.rfqResponse.ask?.price).toBeCloseTo(amount2);
+    expect(res3.rfqResponse.ask?.price).toBeCloseTo(amount1);
+    expect(res4.rfqResponse.ask?.price).toBeCloseTo(amount1);
   });
 
   it('confirm [bid]', async () => {
@@ -92,7 +92,7 @@ describe('unit.response', () => {
     const res = await takerCvg.rfqs().confirmResponse({
       rfq: rfq1.address,
       response: responses[0].address,
-      side: Side.Bid,
+      side: 'bid',
     });
     expect(res.response).toHaveProperty('signature');
 
@@ -109,7 +109,7 @@ describe('unit.response', () => {
     const res = await takerCvg.rfqs().confirmResponse({
       rfq: rfq0.address,
       response: responses[0].address,
-      side: Side.Ask,
+      side: 'ask',
     });
     expect(res.response).toHaveProperty('signature');
 

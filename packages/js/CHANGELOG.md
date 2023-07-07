@@ -1,5 +1,46 @@
 # @convergence-rfq/sdk
 
+## 4.4.6
+
+### Patch Changes
+
+- f1e1b8cb: Update cache to resolve existing value before calling getter again
+- 650ce19b: Removed cleanUpResponse from RfqClient
+
+## 4.4.5
+
+### Patch Changes
+
+- 30273e1b: Updated Anchor NoopWallet
+
+## 4.4.4
+
+### Patch Changes
+
+- 71ed402e: Use NoopWallet for Anchor
+
+## 4.4.3
+
+### Patch Changes
+
+- 3214c2c4: Methods to return multiple txs now return them in responses
+- 3335acbf: No longer importing Anchor Wallet explicitly
+
+## 4.4.2
+
+### Patch Changes
+
+- c700c7de: Added StoredResponseState API model
+- c700c7de: Updated Settlement APIs to include Side and Quote models
+
+## 4.4.1
+
+### Patch Changes
+
+- 1a830ff7: Added API model AuthoritySide
+- 1a830ff7: Fix for fetching RFQs where no wallet is provided
+- 9eeda287: Added subscribe method to GpaBuilers to listen to account changes
+
 ## 4.4.0
 
 ### Minor Changes

@@ -11,7 +11,7 @@ import {
   useOperation,
 } from '../../../types';
 import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
-import { convertOverrideLegMultiplierBps } from '../../rfqModule';
+import { convertOverrideLegMultiplierBps, toSolitaQuote } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 
@@ -109,7 +109,7 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
           throw Error('Cannot confirm a missing quote!');
         }
 
-        legMultiplierBps = extractLegsMultiplierBps(rfq, confirmedQuote);
+        legMultiplierBps = extractLegsMultiplierBps(rfq, toSolitaQuote(confirmedQuote, rfq.quoteAsset.getDecimals()));
       } else {
         legMultiplierBps = confirmation.overrideLegMultiplierBps;
       }

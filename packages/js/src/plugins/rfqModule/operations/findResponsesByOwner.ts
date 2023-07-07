@@ -1,7 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
 import { Response, toResponse } from '../models/Response';
-import { Rfq } from '../models';
 import { toResponseAccount } from '../accounts';
 import { ResponseGpaBuilder } from '../ResponseGpaBuilder';
 import {
@@ -87,11 +86,10 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
 
       const collateralMint = await collateralMintCache.get(convergence);
 
-      const parsedResponses: Response[] = [];
-      const matchingResponses: Response[] = [];
-      const matchingRfqPromises: Promise<Rfq>[] = [];
+      const responses = [];
 
       const callCount = Math.ceil(unparsedAddresses.length / 100);
+
       for (let i = 0; i < callCount; i++) {
         const accounts = await convergence
           .rpc()
@@ -99,38 +97,27 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
             unparsedAddresses.slice(i * 100, (i + 1) * 100),
             commitment
           );
-
+        
         for (const account of accounts) {
           const responseAccount = toResponseAccount(account);
-          const rfq = await convergence
-            .rfqs()
-            .findRfqByAddress({ address: responseAccount.data.rfq });
-          const response = toResponse(
-            responseAccount,
-            collateralMint.decimals,
-            rfq.quoteAsset.getDecimals()
-          );
 
-          // TODO: Should this not already be matching owner?
-          if (response.maker.toBase58() === owner.toBase58()) {
-            matchingResponses.push(response);
-            matchingRfqPromises.push(
-              convergence.rfqs().findRfqByAddress({ address: response.rfq })
-            );
+          if (responseAccount.data.maker.toBase58() !== owner.toBase58()) {
+            continue;
           }
+          
+          responses.push(
+            convergence
+              .rfqs()
+              .findRfqByAddress({ address: responseAccount.data.rfq })
+              .then(rfq => toResponse(
+                responseAccount,
+                collateralMint.decimals,
+                rfq.quoteAsset.getDecimals()
+              ))
+          );
         }
       }
 
-      const matchingRfqs = await Promise.all(matchingRfqPromises);
-      for (const matchingRfq of matchingRfqs) {
-        for (const matchingResponse of matchingResponses)
-          if (
-            matchingResponse.rfq.toBase58() === matchingRfq.address.toBase58()
-          ) {
-            parsedResponses.push(matchingResponse);
-          }
-      }
-
-      return parsedResponses;
+      return await Promise.all(responses);
     },
   };
