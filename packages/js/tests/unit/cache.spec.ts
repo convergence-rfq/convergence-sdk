@@ -2,7 +2,7 @@ import expect from 'expect';
 import { useCache } from '../../src';
 import { sleep } from '../helpers';
 
-describe('unit.cache', () => {
+describe.only('unit.cache', () => {
   const innerCalls: number[] = [];
   const cachedCall = useCache(async (num: number) => {
     innerCalls.push(num);
@@ -58,5 +58,18 @@ describe('unit.cache', () => {
     });
     await Promise.all(Array(10).fill(0).map((_, i) => cache.get(i)));
     expect(fetchCount).toBe(1);
+  })
+  
+  it('resolves current promise, even after expiry', async () => {
+    let fetchCount = 0;
+    const cache = useCache(async (num: number) => {
+      fetchCount++;
+      await sleep(0.2);
+      return num;
+    }, 0);
+    expect(await cache.get(1)).toBe(1);
+    expect(fetchCount).toBe(1);
+    expect(await cache.get(1)).toBe(1);
+    expect(fetchCount).toBe(2);
   })
 });
