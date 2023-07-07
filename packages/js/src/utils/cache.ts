@@ -17,11 +17,10 @@ export const useCache = <T, U extends any[]>(
         if (Date.now() - cache.time <= stalenessMs) {
           // return cached value
           return cache.value;
-        } else {
-          // clear cached value once expired
-          cache = null;
-          operation = undefined;
         }
+        // clear cached value once expired
+        cache = null;
+        operation = undefined;
       }
 
       // return existing getter promise or start a new one
