@@ -11,6 +11,10 @@ import {
   AddInstrumentInput,
   addLegsToRfqOperation,
   AddLegsToRfqInput,
+  cancelResponseOperation,
+  CancelResponseInput,
+  CancelRfqsInput,
+  cancelRfqsOperation,
   cancelResponsesOperation,
   CancelResponsesInput,
   cancelRfqOperation,
@@ -67,8 +71,6 @@ import {
   createAndFinalizeRfqConstructionOperation,
   UnlockMultipleRfqCollateralInput,
   unlockMultipleRfqCollateralOperation,
-  CancelRfqsInput,
-  cancelRfqsOperation,
   CleanUpMultipleRfqInput,
   cleanUpMultipleRfqOperation,
   CleanUpResponsesInput,
@@ -109,18 +111,6 @@ export class RfqClient {
   constructor(protected readonly convergence: Convergence) {}
 
   /**
-   * You may use the `builders()` client to access the
-   * underlying Transaction Builders of this module.
-   *
-   * ```ts
-   * const buildersClient = convergence.rfqs().builders();
-   * ```
-   */
-  // builders() {
-  //   return new RfqBuildersClient(this.convergence);
-  // }
-
-  /**
    * You may use the `pdas()` client to build PDAs related to this module.
    *
    * ```ts
@@ -146,6 +136,12 @@ export class RfqClient {
   }
 
   /** {@inheritDoc cancelResponseOperation} */
+  cancelResponse(input: CancelResponseInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(cancelResponseOperation(input), options);
+  }
+  /** {@inheritDoc cancelResponsesOperation} */
   cancelResponses(input: CancelResponsesInput, options?: OperationOptions) {
     return this.convergence
       .operations()
@@ -393,7 +389,7 @@ export class RfqClient {
   //  * it directly.
   //  *
   //  * ```ts
-  //  * rfq = await convergence.rfqs().refreshResponse(response);
+  //  * const rfq = await convergence.rfqs().refreshResponse(response);
   //  * ```
   //  */
   refreshResponse<T extends Response | PublicKey>(

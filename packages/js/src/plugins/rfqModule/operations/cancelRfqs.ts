@@ -73,7 +73,7 @@ export type CancelRfqsOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cancelMultipleRfqOperationHandler: OperationHandler<CancelRfqsOperation> =
+export const cancelRfqsOperationHandler: OperationHandler<CancelRfqsOperation> =
   {
     handle: async (
       operation: CancelRfqsOperation,
@@ -83,7 +83,9 @@ export const cancelMultipleRfqOperationHandler: OperationHandler<CancelRfqsOpera
       const { rfqs } = operation.input;
 
       const builders = await Promise.all(
-        rfqs.map((rfq) => cancelRfqBuilder(convergence, { rfq }, scope))
+        rfqs.map((rfq) =>
+          cancelRfqBuilder(convergence, { rfq, ...operation.input }, scope)
+        )
       );
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
       const signedTxs = await convergence

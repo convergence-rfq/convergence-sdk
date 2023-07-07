@@ -1,5 +1,4 @@
 import { expect } from 'expect';
-import { ResponseState } from '@convergence-rfq/rfq';
 
 import { Rfq, Side } from '../../src';
 import { createUserCvg, createRfq, respondToRfq } from '../helpers';
@@ -119,6 +118,26 @@ describe('unit.response', () => {
       address: responses[0].address,
     });
     expect(response.confirmed?.side).toBe(Side.Ask);
+  });
+
+  it('cancel response', async () => {
+    const rfq = rfq0;
+    const responsesBefore = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq.address,
+    });
+    const response = responsesBefore[1];
+
+    const {
+      response: { signature },
+    } = await makerCvg.rfqs().cancelResponse({
+      response: response.address,
+    });
+    expect(signature.length).toBeGreaterThan(0);
+
+    const responseAfter = await makerCvg.rfqs().findResponseByAddress({
+      address: response.address,
+    });
+    expect(responseAfter.state).toBe('canceled');
   });
 
   it('cancel responses', async () => {

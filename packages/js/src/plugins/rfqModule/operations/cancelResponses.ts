@@ -17,7 +17,11 @@ const Key = 'cancelResponsesOperation' as const;
  * Cancel multiple response.
  *
  * ```ts
- * await convergence.rfqs().cancelResponses({ responses });
+ * await convergence.
+ *   rfqs()
+ *   .cancelResponses({
+ *     responses: [<address>]
+ * });
  * ```
  *
  * @group Operations
@@ -88,6 +92,7 @@ export const cancelResponsesOperationHandler: OperationHandler<CancelResponsesOp
             convergence,
             {
               response,
+              ...operation,
             },
             scope
           )

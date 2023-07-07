@@ -10,8 +10,9 @@ import {
   Signer,
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { SendAndConfirmTransactionResponse } from '@/plugins';
 
-const Key = 'cancelResponsesOperation' as const;
+const Key = 'cancelResponseOperation' as const;
 
 /**
  * Cancel multiple response.
@@ -65,7 +66,9 @@ export type CancelResponseInput = {
  * @group Operations
  * @category Outputs
  */
-export type CancelResponseOutput = {};
+export type CancelResponseOutput = {
+  response: SendAndConfirmTransactionResponse;
+};
 
 /**
  * @group Operations
@@ -105,7 +108,12 @@ export type CancelResponsesBuilderParams = CancelResponseInput;
  * Cancels an existing Response.
  *
  * ```ts
- * const builder = convergence.rfqs().builders().cancel({ responses });
+ * const builder = convergence
+ *   .rfqs()
+ *   .builders()
+ *   .cancel({
+ *     response: <address>
+ *   });
  * ```
  *
  * @group Transaction Builders
@@ -117,24 +125,25 @@ export const cancelResponseBuilder = async (
   options: TransactionBuilderOptions = {}
 ) => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { response, maker = convergence.identity() } = params;
+  const {
+    response,
+    maker = convergence.identity(),
+    protocol = convergence.protocol().pdas().protocol(),
+  } = params;
 
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
-  const rfq = await convergence
-    .rfqs()
-    .findRfqByAddress({ address: responseModel.rfq });
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createCancelResponseInstruction(
         {
+          protocol,
           response: responseModel.address,
-          rfq: rfq.address,
+          rfq: responseModel.rfq,
           maker: responseModel.maker,
-          protocol: convergence.protocol().pdas().protocol(),
         },
         convergence.programs().getRfq(programs).address
       ),

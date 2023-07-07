@@ -1,5 +1,6 @@
 export * from '../../protocolModule/operations/addInstrument';
 export * from './addLegsToRfq';
+export * from './cancelResponse';
 export * from './cancelResponses';
 export * from './cancelRfq';
 export * from './cleanUpResponses';

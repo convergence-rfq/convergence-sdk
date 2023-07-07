@@ -43,6 +43,9 @@ export type CancelRfqOperation = Operation<
  * @category Inputs
  */
 export type CancelRfqInput = {
+  /** The address of the Rfq account. */
+  rfq: PublicKey;
+
   /**
    * The Taker of the Rfq as a Signer.
    *
@@ -56,9 +59,6 @@ export type CancelRfqInput = {
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
-
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
 };
 
 /**
@@ -116,15 +116,19 @@ export const cancelRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { taker = convergence.identity(), rfq } = params;
+  const {
+    rfq,
+    taker = convergence.identity(),
+    protocol = convergence.protocol().pdas().protocol(),
+  } = params;
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createCancelRfqInstruction(
         {
-          taker: taker.publicKey,
-          protocol: convergence.protocol().pdas().protocol(),
+          protocol,
           rfq,
+          taker: taker.publicKey,
         },
         convergence.programs().getRfq(programs).address
       ),
