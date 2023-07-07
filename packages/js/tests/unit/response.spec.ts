@@ -171,12 +171,22 @@ describe('unit.response', () => {
     responsesAfter.map((r) => expect(r.makerCollateralLocked).toBe(0));
   });
 
-  it('clean up', async () => {
+  it('clean up response', async () => {
+    const responses = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq2.address,
+    });
+    await makerCvg.rfqs().cleanUpResponse({
+      response: responses[0].address,
+      maker: makerCvg.identity().publicKey,
+    });
+  });
+
+  it('clean up responses', async () => {
     const responses = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
     await makerCvg.rfqs().cleanUpResponses({
-      responses,
+      responses: responses.map((r) => r.address),
       maker: makerCvg.identity().publicKey,
     });
   });

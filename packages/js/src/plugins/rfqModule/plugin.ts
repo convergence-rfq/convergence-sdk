@@ -17,6 +17,8 @@ import {
   addLegsToRfqOperationHandler,
   cleanUpResponseLegsOperation,
   cleanUpResponseLegsOperationHandler,
+  cleanUpResponseOperation,
+  cleanUpResponseOperationHandler,
   cleanUpResponsesOperation,
   cleanUpResponsesOperationHandler,
   cleanUpRfqOperation,
@@ -167,7 +169,7 @@ export const rfqModule = (): ConvergencePlugin => ({
     );
     op.register(cancelRfqsOperation, cancelRfqsOperationHandler);
     op.register(cancelResponsesOperation, cancelResponsesOperationHandler);
-    op.register(cleanUpResponsesOperation, cleanUpResponsesOperationHandler);
+    op.register(cleanUpResponseOperation, cleanUpResponseOperationHandler);
     op.register(cleanUpRfqsOperation, cleanUpRfqsOperationHandler);
     op.register(
       unlockResponseCollateralOperation,

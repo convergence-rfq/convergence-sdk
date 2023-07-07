@@ -72,8 +72,10 @@ import {
   unlockMultipleRfqCollateralOperation,
   CleanUpRfqsInput,
   cleanUpRfqsOperation,
-  CleanUpResponsesInput,
+  cleanUpResponseOperation,
+  CleanUpResponseInput,
   cleanUpResponsesOperation,
+  CleanUpResponsesInput,
 } from './operations';
 import { Response } from './models/Response';
 
@@ -140,6 +142,7 @@ export class RfqClient {
       .operations()
       .execute(cancelResponseOperation(input), options);
   }
+
   /** {@inheritDoc cancelResponsesOperation} */
   cancelResponses(input: CancelResponsesInput, options?: OperationOptions) {
     return this.convergence
@@ -161,13 +164,6 @@ export class RfqClient {
       .execute(cancelRfqsOperation(input), options);
   }
 
-  /** {@inheritDoc cleanUpResponsesOperation} */
-  cleanUpResponse(input: CleanUpResponsesInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(cleanUpResponsesOperation(input), options);
-  }
-
   /** {@inheritDoc cleanUpResponseLegsOperation} */
   cleanUpResponseLegs(
     input: CleanUpResponseLegsInput,
@@ -177,6 +173,14 @@ export class RfqClient {
       .operations()
       .execute(cleanUpResponseLegsOperation(input), options);
   }
+
+  /** {@inheritDoc cleanUpResponseOperation} */
+  cleanUpResponse(input: CleanUpResponseInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(cleanUpResponseOperation(input), options);
+  }
+
   /** {@inheritDoc cleanUpResponsesOperation} */
   cleanUpResponses(input: CleanUpResponsesInput, options?: OperationOptions) {
     return this.convergence
@@ -191,8 +195,8 @@ export class RfqClient {
       .execute(cleanUpRfqOperation(input), options);
   }
 
-  /** {@inheritDoc cleanUpMultipleRfqOperation} */
-  cleanUpMultipleRfq(input: CleanUpRfqsInput, options?: OperationOptions) {
+  /** {@inheritDoc cleanUpRfqsOperation} */
+  cleanUpRfqs(input: CleanUpRfqsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(cleanUpRfqsOperation(input), options);

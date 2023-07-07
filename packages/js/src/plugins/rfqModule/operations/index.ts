@@ -2,6 +2,7 @@ export * from './addLegsToRfq';
 export * from './cancelResponse';
 export * from './cancelResponses';
 export * from './cancelRfq';
+export * from './cleanUpResponse';
 export * from './cleanUpResponses';
 export * from './cleanUpResponseLegs';
 export * from './createAndFinalizeRfqConstruction';
