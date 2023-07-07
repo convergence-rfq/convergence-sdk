@@ -72,4 +72,14 @@ describe.only('unit.cache', () => {
     expect(await cache.get(1)).toBe(1);
     expect(fetchCount).toBe(2);
   })
+
+  it('resolves current promise, even after clean', async () => {
+    const cache = useCache(async (num: number) => {
+      await sleep(0.2);
+      return num;
+    });
+    const value = cache.get(1);
+    cache.clear();
+    expect(await value).toBe(1);
+  })
 });
