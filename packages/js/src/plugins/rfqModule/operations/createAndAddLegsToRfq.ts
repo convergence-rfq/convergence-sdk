@@ -1,5 +1,4 @@
-import * as anchor from '@project-serum/anchor';
-
+import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Operation,
@@ -154,10 +153,12 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         expectedLegsHash: expectedHash,
       } = operation.input;
 
-      const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1000) - 1);
+      const recentTimestamp = new BN(Math.floor(Date.now() / 1000) - 1);
 
-      const expectedLegsSize = expectedSize ?? await calculateExpectedLegsSize(instruments);
-      const expectedLegsHash = expectedHash ?? await calculateExpectedLegsHash(instruments);
+      const expectedLegsSize =
+        expectedSize ?? (await calculateExpectedLegsSize(instruments));
+      const expectedLegsHash =
+        expectedHash ?? (await calculateExpectedLegsHash(instruments));
 
       const rfqPda = convergence
         .rfqs()

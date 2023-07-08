@@ -154,7 +154,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     } = operation.input;
     let { expectedLegsHash } = operation.input;
 
-    const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
+    const recentTimestamp = new BN(Math.floor(Date.now() / 1_000) - 1);
 
     expectedLegsHash =
       expectedLegsHash ?? calculateExpectedLegsHash(instruments);

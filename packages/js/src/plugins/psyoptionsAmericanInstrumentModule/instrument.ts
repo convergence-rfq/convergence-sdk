@@ -168,30 +168,25 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   }
 
   serializeInstrumentData(): Buffer {
-    const callMint = this.optionMint.toBytes();
-    const optionMarket = this.optionMetaPubKey.toBytes();
-    const underlyingamountPerContract = addDecimals(
-      this.underlyingAmountPerContract,
-      this.underlyingAmountPerContractDecimals
-    ).toArrayLike(Buffer, 'le', 8);
-    const expirationtime = new BN(this.expiration).toArrayLike(Buffer, 'le', 8);
-    const strikeprice = addDecimals(
-      this.strikePrice,
-      this.strikePriceDecimals
-    ).toArrayLike(Buffer, 'le', 8);
-
-    return Buffer.from(
-      new Uint8Array([
-        this.optionType == OptionType.CALL ? 0 : 1,
-        ...underlyingamountPerContract,
+    const data: PsyoptionsAmericanInstrumentData = {
+      optionType: this.optionType,
+      underlyingAmountPerContract: addDecimals(
+        this.underlyingAmountPerContract,
+        this.underlyingAmountPerContractDecimals
+      ),
+      underlyingAmountPerContractDecimals:
         this.underlyingAmountPerContractDecimals,
-        ...strikeprice,
-        this.strikePriceDecimals,
-        ...expirationtime,
-        ...callMint,
-        ...optionMarket,
-      ])
-    );
+      strikePrice: addDecimals(this.strikePrice, this.strikePriceDecimals),
+      strikePriceDecimals: this.strikePriceDecimals,
+      expiration: new BN(this.expiration),
+      optionMint: this.optionMint,
+      metaKey: this.optionMetaPubKey,
+    };
+
+    const serializedData =
+      psyoptionsAmericanInstrumentDataSerializer.serialize(data);
+
+    return serializedData;
   }
 
   getProgramId() {

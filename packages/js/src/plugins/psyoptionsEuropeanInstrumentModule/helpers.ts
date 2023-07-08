@@ -1,0 +1,293 @@
+import {
+  EuroMeta,
+  EuroPrimitive,
+  OptionType,
+  createProgram,
+  programId as psyoptionsEuropeanProgramId,
+} from '@mithraic-labs/tokenized-euros';
+import {
+  initializeAllAccountsInstructions,
+  createEuroMetaInstruction,
+  mintOptions,
+} from '@mithraic-labs/tokenized-euros/dist/instructions';
+import * as anchor from '@project-serum/anchor';
+import { Mint } from '@solana/spl-token';
+import { Keypair, PublicKey } from '@solana/web3.js';
+import { BN } from 'bn.js';
+import { TransactionBuilder, addDecimals } from '@/utils';
+import {
+  ATAExistence,
+  Convergence,
+  Pda,
+  PsyoptionsEuropeanInstrument,
+  Side,
+  getOrCreateATA,
+  makeConfirmOptionsFinalizedOnMainnet,
+  toBigNumber,
+} from '@/index';
+
+export interface EuropeanAtaForMinting {
+  optionDestination: PublicKey[];
+  writerDestination: PublicKey[];
+  backupReceiver: PublicKey[];
+}
+
+export const initializeNewOptionMeta = async (
+  convergence: Convergence,
+  oracle: PublicKey,
+  europeanProgram: anchor.Program<EuroPrimitive>,
+  underlyingMint: Mint,
+  stableMint: Mint,
+  strikePrice: number,
+  underlyingAmountPerContract: number,
+  expiresIn: number,
+  oracleProviderId = 1
+) => {
+  const expiration = new BN(Date.now() / 1_000 + expiresIn);
+
+  let { instructions: initializeIxs } = await initializeAllAccountsInstructions(
+    europeanProgram,
+    underlyingMint.address,
+    stableMint.address,
+    oracle,
+    expiration,
+    stableMint.decimals,
+    oracleProviderId
+  );
+
+  const tx = TransactionBuilder.make();
+
+  const underlyingPoolKey = Pda.find(europeanProgram.programId, [
+    underlyingMint.address.toBuffer(),
+    Buffer.from('underlyingPool', 'utf-8'),
+  ]);
+  // TODO: Use retry method
+  const underlyingPoolAccount = await convergence.connection.getAccountInfo(
+    underlyingPoolKey
+  );
+  if (underlyingPoolAccount && initializeIxs.length === 3) {
+    initializeIxs = initializeIxs.slice(1);
+  }
+  const stablePoolKey = Pda.find(europeanProgram.programId, [
+    stableMint.address.toBuffer(),
+    Buffer.from('stablePool', 'utf-8'),
+  ]);
+  // TODO: Use retry method
+  const stablePoolAccount = await convergence.connection.getAccountInfo(
+    stablePoolKey
+  );
+  if (stablePoolAccount && initializeIxs.length === 2) {
+    initializeIxs = initializeIxs.slice(1);
+  } else if (stablePoolAccount && initializeIxs.length === 3) {
+    initializeIxs.splice(1, 1);
+  }
+
+  initializeIxs.forEach((ix) => {
+    tx.add({ instruction: ix, signers: [] });
+  });
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  if (initializeIxs.length > 0) {
+    await tx.sendAndConfirm(convergence, confirmOptions);
+  }
+
+  const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
+  const underlyingAmountPerContractSize = addDecimals(
+    underlyingAmountPerContract,
+    underlyingMint.decimals
+  );
+
+  const {
+    instruction: createIx,
+    euroMeta,
+    euroMetaKey,
+    expirationData,
+  } = await createEuroMetaInstruction(
+    europeanProgram,
+    underlyingMint.address,
+    underlyingMint.decimals,
+    stableMint.address,
+    stableMint.decimals,
+    expiration,
+    toBigNumber(underlyingAmountPerContractSize),
+    toBigNumber(strikePriceSize),
+    stableMint.decimals,
+    oracle,
+    oracleProviderId
+  );
+
+  await TransactionBuilder.make()
+    .add({ instruction: createIx, signers: [] })
+    .sendAndConfirm(convergence);
+
+  return {
+    euroMeta,
+    euroMetaKey,
+    expirationData,
+  };
+};
+
+export const createEuropeanProgram = async (convergence: Convergence) => {
+  return createProgram(
+    convergence.rpc().getDefaultFeePayer() as Keypair,
+    convergence.connection.rpcEndpoint,
+    new PublicKey(psyoptionsEuropeanProgramId)
+  );
+};
+
+export const mintEuropeanOptions = async (
+  convergence: Convergence,
+  responseAddress: PublicKey,
+  caller: PublicKey,
+  europeanProgram: any
+) => {
+  const response = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: responseAddress });
+  const rfq = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: response.rfq });
+  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
+
+  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
+  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
+  const instructions: anchor.web3.TransactionInstruction[] = [];
+
+  for (const leg of rfq.legs) {
+    if (leg instanceof PsyoptionsEuropeanInstrument) {
+      if (
+        (leg.getSide() === confirmedSide && callerIsTaker) ||
+        (leg.getSide() !== confirmedSide && callerIsMaker)
+      ) {
+        const amount = leg.getAmount();
+
+        const euroMeta = await leg.getOptionMeta();
+        const { stableMint } = euroMeta;
+        const { underlyingMint } = euroMeta;
+        const stableMintToken = convergence
+          .tokens()
+          .pdas()
+          .associatedTokenAccount({
+            mint: stableMint,
+            owner: caller,
+          });
+        const underlyingMintToken = convergence
+          .tokens()
+          .pdas()
+          .associatedTokenAccount({
+            mint: underlyingMint,
+            owner: caller,
+          });
+        const minterCollateralKey =
+          leg.optionType == OptionType.PUT
+            ? stableMintToken
+            : underlyingMintToken;
+
+        const optionDestination = await getOrCreateATA(
+          convergence,
+          leg.optionType == OptionType.PUT
+            ? euroMeta.putOptionMint
+            : euroMeta.callOptionMint,
+          caller
+        );
+        const writerDestination = await getOrCreateATA(
+          convergence,
+          leg.optionType == OptionType.PUT
+            ? euroMeta.putWriterMint
+            : euroMeta.callWriterMint,
+          caller
+        );
+        const { instruction: ix } = mintOptions(
+          europeanProgram,
+          leg.optionMetaPubKey,
+          euroMeta as EuroMeta,
+          minterCollateralKey,
+          optionDestination,
+          writerDestination,
+          new BN(addDecimals(amount, PsyoptionsEuropeanInstrument.decimals)),
+          leg.optionType
+        );
+
+        ix.keys[0] = {
+          pubkey: caller,
+          isSigner: true,
+          isWritable: false,
+        };
+
+        instructions.push(ix);
+      }
+    }
+  }
+  if (instructions.length > 0) {
+    const txBuilder = TransactionBuilder.make().setFeePayer(
+      convergence.rpc().getDefaultFeePayer()
+    );
+
+    instructions.forEach((ins) => {
+      txBuilder.add({
+        instruction: ins,
+        signers: [convergence.identity()],
+      });
+    });
+
+    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence, {
+      skipPreflight: true,
+    });
+
+    const sig = await txBuilder.sendAndConfirm(convergence, confirmOptions);
+    return sig;
+  }
+  return null;
+};
+
+export const getOrCreateEuropeanOptionATAs = async (
+  convergence: Convergence,
+  responseAddress: PublicKey,
+  caller: PublicKey
+): Promise<ATAExistence> => {
+  let flag = false;
+  const response = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: responseAddress });
+  const rfq = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: response.rfq });
+  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
+
+  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
+  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
+
+  for (const leg of rfq.legs) {
+    if (leg instanceof PsyoptionsEuropeanInstrument) {
+      if (
+        (leg.getSide() === confirmedSide && callerIsTaker) ||
+        (leg.getSide() !== confirmedSide && callerIsMaker)
+      ) {
+        flag = true;
+
+        const euroMeta = await leg.getOptionMeta();
+        const { optionType } = leg;
+        await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putOptionMint
+            : euroMeta.callOptionMint,
+          caller
+        );
+
+        await getOrCreateATA(
+          convergence,
+          optionType == OptionType.PUT
+            ? euroMeta.putWriterMint
+            : euroMeta.callWriterMint,
+          caller
+        );
+      }
+    }
+  }
+  if (flag === true) {
+    return ATAExistence.EXISTS;
+  }
+  return ATAExistence.NOTEXISTS;
+};
