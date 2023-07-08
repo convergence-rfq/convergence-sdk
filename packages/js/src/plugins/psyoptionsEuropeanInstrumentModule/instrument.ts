@@ -11,7 +11,6 @@ import {
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
-import BN from 'bn.js';
 import { Mint } from '../tokenModule';
 import { LegInstrument } from '../instrumentModule';
 import { addDecimals, assert, removeDecimals } from '../../utils';

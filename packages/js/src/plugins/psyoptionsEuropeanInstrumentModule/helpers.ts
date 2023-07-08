@@ -1,15 +1,4 @@
-import {
-  EuroMeta,
-  EuroPrimitive,
-  OptionType,
-  createProgram,
-  programId as psyoptionsEuropeanProgramId,
-} from '@mithraic-labs/tokenized-euros';
-import {
-  initializeAllAccountsInstructions,
-  createEuroMetaInstruction,
-  mintOptions,
-} from '@mithraic-labs/tokenized-euros/dist/instructions';
+import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
 import { Mint } from '@solana/spl-token';
 import { Keypair, PublicKey } from '@solana/web3.js';
@@ -35,7 +24,7 @@ export interface EuropeanAtaForMinting {
 export const initializeNewOptionMeta = async (
   convergence: Convergence,
   oracle: PublicKey,
-  europeanProgram: anchor.Program<EuroPrimitive>,
+  europeanProgram: anchor.Program<psyoptionsEuropean.EuroPrimitive>,
   underlyingMint: Mint,
   stableMint: Mint,
   strikePrice: number,
@@ -45,15 +34,16 @@ export const initializeNewOptionMeta = async (
 ) => {
   const expiration = new BN(Date.now() / 1_000 + expiresIn);
 
-  let { instructions: initializeIxs } = await initializeAllAccountsInstructions(
-    europeanProgram,
-    underlyingMint.address,
-    stableMint.address,
-    oracle,
-    expiration,
-    stableMint.decimals,
-    oracleProviderId
-  );
+  let { instructions: initializeIxs } =
+    await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
+      europeanProgram,
+      underlyingMint.address,
+      stableMint.address,
+      oracle,
+      expiration,
+      stableMint.decimals,
+      oracleProviderId
+    );
 
   const tx = TransactionBuilder.make();
 
@@ -103,7 +93,7 @@ export const initializeNewOptionMeta = async (
     euroMeta,
     euroMetaKey,
     expirationData,
-  } = await createEuroMetaInstruction(
+  } = await psyoptionsEuropean.instructions.createEuroMetaInstruction(
     europeanProgram,
     underlyingMint.address,
     underlyingMint.decimals,
@@ -129,10 +119,10 @@ export const initializeNewOptionMeta = async (
 };
 
 export const createEuropeanProgram = async (convergence: Convergence) => {
-  return createProgram(
+  return psyoptionsEuropean.createProgram(
     convergence.rpc().getDefaultFeePayer() as Keypair,
     convergence.connection.rpcEndpoint,
-    new PublicKey(psyoptionsEuropeanProgramId)
+    new PublicKey(psyoptionsEuropean.programId)
   );
 };
 
@@ -180,28 +170,28 @@ export const mintEuropeanOptions = async (
             owner: caller,
           });
         const minterCollateralKey =
-          leg.optionType == OptionType.PUT
+          leg.optionType == psyoptionsEuropean.OptionType.PUT
             ? stableMintToken
             : underlyingMintToken;
 
         const optionDestination = await getOrCreateATA(
           convergence,
-          leg.optionType == OptionType.PUT
+          leg.optionType == psyoptionsEuropean.OptionType.PUT
             ? euroMeta.putOptionMint
             : euroMeta.callOptionMint,
           caller
         );
         const writerDestination = await getOrCreateATA(
           convergence,
-          leg.optionType == OptionType.PUT
+          leg.optionType == psyoptionsEuropean.OptionType.PUT
             ? euroMeta.putWriterMint
             : euroMeta.callWriterMint,
           caller
         );
-        const { instruction: ix } = mintOptions(
+        const { instruction: ix } = psyoptionsEuropean.instructions.mintOptions(
           europeanProgram,
           leg.optionMetaPubKey,
-          euroMeta as EuroMeta,
+          euroMeta as psyoptionsEuropean.EuroMeta,
           minterCollateralKey,
           optionDestination,
           writerDestination,
@@ -270,7 +260,7 @@ export const getOrCreateEuropeanOptionATAs = async (
         const { optionType } = leg;
         await getOrCreateATA(
           convergence,
-          optionType == OptionType.PUT
+          optionType === psyoptionsEuropean.OptionType.PUT
             ? euroMeta.putOptionMint
             : euroMeta.callOptionMint,
           caller
@@ -278,7 +268,7 @@ export const getOrCreateEuropeanOptionATAs = async (
 
         await getOrCreateATA(
           convergence,
-          optionType == OptionType.PUT
+          optionType === psyoptionsEuropean.OptionType.PUT
             ? euroMeta.putWriterMint
             : euroMeta.callWriterMint,
           caller
