@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -8,53 +7,44 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
-import { cleanUpResponseBuilder } from './cleanUpResponse';
+import { cleanUpRfqBuilder } from './cleanUpRfq';
+import { SendAndConfirmTransactionResponse } from '@/plugins';
 
-const Key = 'cleanUpResponsesOperation' as const;
+const Key = 'CleanUpRfqsOperation' as const;
 
 /**
- * Cleans up Rfq responses.
+ * Cleans up Rfqs.
  *
  * ```ts
  * await convergence
  *   .rfqs()
- *   .cleanUpResponses({
- *     rfq: <publicKey>,
- *     responses: <publicKey>,
- *     firstToPrepare: <publicKey>
+ *   .cleanUpRfqs({
+ *     rfqs: [<address>]
  *   });
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const cleanUpResponsesOperation =
-  useOperation<CleanUpResponsesOperation>(Key);
+export const cleanUpRfqsOperation = useOperation<CleanUpRfqsOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CleanUpResponsesOperation = Operation<
+export type CleanUpRfqsOperation = Operation<
   typeof Key,
-  CleanUpResponsesInput,
-  CleanUpResponsesOutput
+  CleanUpRfqsInput,
+  CleanUpRfqsOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CleanUpResponsesInput = {
-  /**
-   * The maker public key address.
-   */
-  maker: PublicKey;
-
-  /**
-   * The address of the reponse accounts.
-   */
-  responses: PublicKey[];
+export type CleanUpRfqsInput = {
+  /** The address of the Rfq account. */
+  rfqs: PublicKey[];
 
   /**
    * The protocol address.
@@ -62,18 +52,13 @@ export type CleanUpResponsesInput = {
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
-
-  /**
-   * The address of the DAO.
-   */
-  dao?: PublicKey;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type CleanUpResponsesOutput = {
+export type CleanUpRfqsOutput = {
   responses: SendAndConfirmTransactionResponse[];
 };
 
@@ -81,24 +66,28 @@ export type CleanUpResponsesOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cleanUpResponsesOperationHandler: OperationHandler<CleanUpResponsesOperation> =
+export const cleanUpRfqsOperationHandler: OperationHandler<CleanUpRfqsOperation> =
   {
     handle: async (
-      operation: CleanUpResponsesOperation,
+      operation: CleanUpRfqsOperation,
       convergence: Convergence,
       scope: OperationScope
     ) => {
-      const { responses: rfqResponses } = operation.input;
+      const { rfqs } = operation.input;
 
       const builders = await Promise.all(
-        rfqResponses.map((response) =>
-          cleanUpResponseBuilder(
+        rfqs.map((rfq) =>
+          cleanUpRfqBuilder(
             convergence,
-            { response, ...operation.input },
+            {
+              rfq,
+              ...operation.input,
+            },
             scope
           )
         )
       );
+
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
       const signedTxs = await convergence
         .identity()

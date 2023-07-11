@@ -1,60 +1,57 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
+  Signer,
 } from '../../../types';
-import { cleanUpResponseBuilder } from './cleanUpResponse';
+import { cancelRfqBuilder } from './cancelRfq';
+import { SendAndConfirmTransactionResponse } from '@/plugins';
 
-const Key = 'cleanUpResponsesOperation' as const;
+const Key = 'CancelRfqsOperation' as const;
 
 /**
- * Cleans up Rfq responses.
+ * Cancels existing Rfqs.
  *
  * ```ts
+ *
  * await convergence
  *   .rfqs()
- *   .cleanUpResponses({
- *     rfq: <publicKey>,
- *     responses: <publicKey>,
- *     firstToPrepare: <publicKey>
- *   });
+ *   .cancelRfqs({ rfqs: [<publicKey>] });
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const cleanUpResponsesOperation =
-  useOperation<CleanUpResponsesOperation>(Key);
+export const cancelRfqsOperation = useOperation<CancelRfqsOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CleanUpResponsesOperation = Operation<
+export type CancelRfqsOperation = Operation<
   typeof Key,
-  CleanUpResponsesInput,
-  CleanUpResponsesOutput
+  CancelRfqsInput,
+  CancelRfqsOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CleanUpResponsesInput = {
-  /**
-   * The maker public key address.
-   */
-  maker: PublicKey;
+export type CancelRfqsInput = {
+  /** The address of the Rfq account. */
+  rfqs: PublicKey[];
 
   /**
-   * The address of the reponse accounts.
+   * The Taker of the Rfq as a Signer.
+   *
+   * @defaultValue `convergence.identity()`
    */
-  responses: PublicKey[];
+  taker?: Signer;
 
   /**
    * The protocol address.
@@ -62,18 +59,13 @@ export type CleanUpResponsesInput = {
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
-
-  /**
-   * The address of the DAO.
-   */
-  dao?: PublicKey;
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type CleanUpResponsesOutput = {
+export type CancelRfqsOutput = {
   responses: SendAndConfirmTransactionResponse[];
 };
 
@@ -81,22 +73,18 @@ export type CleanUpResponsesOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cleanUpResponsesOperationHandler: OperationHandler<CleanUpResponsesOperation> =
+export const cancelRfqsOperationHandler: OperationHandler<CancelRfqsOperation> =
   {
     handle: async (
-      operation: CleanUpResponsesOperation,
+      operation: CancelRfqsOperation,
       convergence: Convergence,
       scope: OperationScope
     ) => {
-      const { responses: rfqResponses } = operation.input;
+      const { rfqs } = operation.input;
 
       const builders = await Promise.all(
-        rfqResponses.map((response) =>
-          cleanUpResponseBuilder(
-            convergence,
-            { response, ...operation.input },
-            scope
-          )
+        rfqs.map((rfq) =>
+          cancelRfqBuilder(convergence, { rfq, ...operation.input }, scope)
         )
       );
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
