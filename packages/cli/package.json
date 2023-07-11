@@ -39,7 +39,6 @@
   "scripts": {
     "lint": "eslint --ext js,ts,tsx src",
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
-    "lint:staged": "eslint --fix",
     "clean": "rimraf dist",
     "build": "yarn clean && tsc && tsc-alias && rollup -c",
     "test:init": "ts-mocha -p tsconfig.json --type-check --timeout 100000 tests/integration/init.ts",

@@ -14,9 +14,6 @@
     "lint:fix": {
       "outputs": []
     },
-    "lint:staged": {
-      "outputs": []
-    },
     "test": {
       "dependsOn": ["build"],
       "outputs": []
