@@ -36,8 +36,9 @@
   "scripts": {
     "lint": "eslint --ext js,ts,tsx src",
     "lint:fix": "eslint --fix --ext js,ts,tsx src",
+    "lint:staged": "eslint --fix",
     "clean": "rimraf dist",
-    "build": "pnpm clean && tsc && tsc-alias && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && rollup -c",
+    "build": "yarn clean && tsc && tsc-alias && tsc -p tsconfig.json && tsc-alias -p tsconfig.json && rollup -c",
     "test:coverage": "nyc ts-mocha --timeout 100000 tests/**/*.spec.ts",
     "test": "ts-mocha --paths --timeout 100000 tests/**/*.spec.ts"
   },
