@@ -3,25 +3,22 @@ import * as anchor from '@project-serum/anchor';
 import { Mint } from '@solana/spl-token';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
-import { TransactionBuilder, addDecimals } from '@/utils';
+import { PsyoptionsEuropeanInstrument } from './instrument';
 import {
+  TransactionBuilder,
+  addDecimals,
   ATAExistence,
+  getOrCreateATA,
+} from '@/utils';
+import {
   Convergence,
   Pda,
-  PsyoptionsEuropeanInstrument,
   Side,
-  getOrCreateATA,
   makeConfirmOptionsFinalizedOnMainnet,
   toBigNumber,
 } from '@/index';
 
-export interface EuropeanAtaForMinting {
-  optionDestination: PublicKey[];
-  writerDestination: PublicKey[];
-  backupReceiver: PublicKey[];
-}
-
-export const initializeNewOptionMeta = async (
+export const initializeNewEuropeanOption = async (
   convergence: Convergence,
   oracle: PublicKey,
   europeanProgram: anchor.Program<psyoptionsEuropean.EuroPrimitive>,
@@ -29,10 +26,10 @@ export const initializeNewOptionMeta = async (
   stableMint: Mint,
   strikePrice: number,
   underlyingAmountPerContract: number,
-  expiresIn: number,
+  expiration: number,
   oracleProviderId = 1
 ) => {
-  const expiration = new BN(Date.now() / 1_000 + expiresIn);
+  const expirationTimestamp = new BN(Date.now() / 1_000 + expiration);
 
   let { instructions: initializeIxs } =
     await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
@@ -40,7 +37,7 @@ export const initializeNewOptionMeta = async (
       underlyingMint.address,
       stableMint.address,
       oracle,
-      expiration,
+      expirationTimestamp,
       stableMint.decimals,
       oracleProviderId
     );
@@ -99,7 +96,7 @@ export const initializeNewOptionMeta = async (
     underlyingMint.decimals,
     stableMint.address,
     stableMint.decimals,
-    expiration,
+    expirationTimestamp,
     toBigNumber(underlyingAmountPerContractSize),
     toBigNumber(strikePriceSize),
     stableMint.decimals,

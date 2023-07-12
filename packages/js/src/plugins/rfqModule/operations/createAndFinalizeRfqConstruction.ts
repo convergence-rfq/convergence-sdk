@@ -161,7 +161,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         settlingWindow = 1_000,
       } = operation.input;
 
-      const recentTimestamp = new BN(Math.floor(Date.now() / 1_000) - 10);
+      const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
 
       const expectedLegsHash = calculateExpectedLegsHash(instruments);
 

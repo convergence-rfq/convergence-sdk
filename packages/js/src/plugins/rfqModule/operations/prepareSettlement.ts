@@ -20,10 +20,14 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+  getOrCreateATA,
+} from '../../../utils';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { getOrCreateATA, legToBaseAssetMint } from '../helpers';
+import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'PrepareSettlementOperation' as const;
 

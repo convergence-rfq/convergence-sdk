@@ -9,7 +9,7 @@ import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import BN from 'bn.js';
 import { Mint } from '../tokenModule';
 import { LegInstrument } from '../instrumentModule';
-import { addDecimals, removeDecimals } from '../../utils';
+import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { ResponseSide, fromSolitaSide } from '../rfqModule/models/ResponseSide';

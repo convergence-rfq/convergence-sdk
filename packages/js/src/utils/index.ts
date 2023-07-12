@@ -11,3 +11,4 @@ export * from './types';
 export * from './CvgWallet';
 export * from './cache';
 export * from './conversions';
+export * from './helpers';

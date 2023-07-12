@@ -5,6 +5,10 @@ import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { addDecimals } from '../../utils/conversions';
 import { toSolitaSide } from '../rfqModule/models/ResponseSide';
 import { LegInstrument, QuoteInstrument } from './types';
+import { Convergence } from '@/Convergence';
+import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
+import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
+import { SpotLegInstrument } from '../spotInstrumentModule';
 
 export function toLeg(legInstrument: LegInstrument): Leg {
   return {
@@ -53,3 +57,30 @@ export function toQuote(legInstrument: QuoteInstrument): QuoteAsset {
     instrumentDecimals: legInstrument.getDecimals(),
   };
 }
+
+export const legToBaseAssetMint = async (
+  convergence: Convergence,
+  leg: LegInstrument
+) => {
+  if (leg instanceof PsyoptionsEuropeanInstrument) {
+    const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
+      address: leg.optionMint,
+    });
+
+    return euroMetaOptionMint;
+  } else if (leg instanceof PsyoptionsAmericanInstrument) {
+    const americanOptionMint = await convergence.tokens().findMintByAddress({
+      address: leg.optionMint,
+    });
+
+    return americanOptionMint;
+  } else if (leg instanceof SpotLegInstrument) {
+    const mint = await convergence.tokens().findMintByAddress({
+      address: leg.mintAddress,
+    });
+
+    return mint;
+  }
+
+  throw Error('Unsupported instrument!');
+};

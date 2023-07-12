@@ -15,8 +15,8 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '../helpers';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 

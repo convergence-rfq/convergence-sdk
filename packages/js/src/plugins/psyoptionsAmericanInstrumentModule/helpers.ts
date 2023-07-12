@@ -5,7 +5,7 @@ import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { BN } from 'bn.js';
 import { Convergence } from '../../Convergence';
 import { CvgWallet, InstructionWithSigners, Mint, PsyoptionsAmericanInstrument, Side, TransactionBuilder,getOrCreateATA } from '@/index';
-
+import { ATAExistence } from '@/utils';
 export class NoopWallet {
   public readonly publicKey: PublicKey;
 
@@ -168,18 +168,6 @@ export const initializeNewAmericanOption = async (
   };
 };
 
-
-
-export interface AmericanTokenAtaForMinting {
-  optionToken: PublicKey[];
-  writerToken: PublicKey[];
-  underlyingToken: PublicKey[];
-}
-
-export enum ATAExistence {
-  EXISTS,
-  NOTEXISTS,
-}
 
 
 // used in UI

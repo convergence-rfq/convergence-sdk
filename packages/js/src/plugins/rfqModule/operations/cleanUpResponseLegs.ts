@@ -3,7 +3,6 @@ import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { getOrCreateATA, legToBaseAssetMint } from '../helpers';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -11,15 +10,20 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+  getOrCreateATA,
+} from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { protocolCache } from '../../protocolModule/cache';
+import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
 /**
  * Cleans up legs for a response.
- *
+ 
  * ```ts
  * await convergence
  *   .rfqs()

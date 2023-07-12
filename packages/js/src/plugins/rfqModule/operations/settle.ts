@@ -13,7 +13,7 @@ import {
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '../helpers';
+import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'SettleOperation' as const;
 
