@@ -12,7 +12,7 @@ import {
 } from '../../../types';
 import { convertOverrideLegMultiplierBps } from '../helpers';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { ResponseSide, toSolitaSide } from '../models/ResponseSide';
+import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -255,7 +255,7 @@ export const confirmResponseBuilder = async (
             ],
           },
           {
-            side: toSolitaSide(side),
+            side: toSolitaQuoteSide(side),
             overrideLegMultiplierBps,
           },
           convergence.programs().getRfq(programs).address

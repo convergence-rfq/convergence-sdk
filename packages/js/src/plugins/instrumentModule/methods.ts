@@ -3,7 +3,7 @@ import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { addDecimals } from '../../utils/conversions';
-import { toSolitaSide } from '../rfqModule/models/ResponseSide';
+import { toSolitaLegSide } from '../rfqModule/models/LegSide';
 import { LegInstrument, QuoteInstrument } from './types';
 
 export function toLeg(legInstrument: LegInstrument): Leg {
@@ -16,7 +16,7 @@ export function toLeg(legInstrument: LegInstrument): Leg {
       legInstrument.getDecimals()
     ),
     instrumentDecimals: legInstrument.getDecimals(),
-    side: toSolitaSide(legInstrument.getSide()),
+    side: toSolitaLegSide(legInstrument.getSide()),
   };
 }
 
