@@ -1,6 +1,8 @@
 import { expect } from 'expect';
+// TODO: Should not be using this
+import { QuoteSide } from '@convergence-rfq/rfq';
 
-import { Side, InstrumentType, DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
+import { InstrumentType, DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
 import { createRfq, createUserCvg, respondToRfq } from '../helpers';
 
 describe('unit.riskEngine', () => {
@@ -150,7 +152,7 @@ describe('unit.riskEngine', () => {
       .calculateCollateralForConfirmation({
         rfqAddress: rfq.address,
         responseAddress: rfqResponse.address,
-        confirmation: { side: Side.Ask, overrideLegMultiplierBps: 1 },
+        confirmation: { side: QuoteSide.Ask, overrideLegMultiplierBps: 1 },
       });
     expect(requiredCollateral).toBeCloseTo(rfqResponse.makerCollateralLocked);
   });

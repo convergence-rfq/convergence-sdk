@@ -31,7 +31,7 @@ describe('unit.rfq', () => {
     };
     const { rfq } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, 'bid'),
+        await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, 'long'),
       ],
       orderType: 'buy',
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
@@ -51,7 +51,7 @@ describe('unit.rfq', () => {
       .rfqs()
       .createAndFinalize({
         instruments: [
-          await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, 'bid'),
+          await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, 'long'),
         ],
         orderType: 'buy',
         quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
