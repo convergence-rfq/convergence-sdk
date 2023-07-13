@@ -8,7 +8,7 @@ import { LegInstrument, QuoteInstrument } from '../instrumentModule';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { removeDecimals } from '../../utils/conversions';
-import { ResponseSide, fromSolitaSide } from '../rfqModule/models/ResponseSide';
+import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 
 type InstrumentData = {
   mintAddress: PublicKey;
@@ -34,7 +34,7 @@ export class SpotLegInstrument implements LegInstrument {
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
     readonly decimals: number,
-    readonly side: ResponseSide
+    readonly side: LegSide
   ) {}
 
   getProgramId = () => this.convergence.programs().getSpotInstrument().address;
@@ -47,7 +47,7 @@ export class SpotLegInstrument implements LegInstrument {
     convergence: Convergence,
     mint: Mint,
     amount: number,
-    side: ResponseSide = 'bid'
+    side: LegSide = 'long'
   ): Promise<SpotLegInstrument> {
     const mintInfoAddress = convergence
       .rfqs()
@@ -110,7 +110,7 @@ export const spotLegInstrumentParser = {
       baseAssetIndex,
       removeDecimals(instrumentAmount, instrumentDecimals),
       instrumentDecimals,
-      fromSolitaSide(side)
+      fromSolitaLegSide(side)
     );
   },
 };

@@ -12,7 +12,7 @@ import {
 } from '../../../types';
 import { convertOverrideLegMultiplierBps } from '../helpers';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
-import { ResponseSide, toSolitaSide } from '../models/ResponseSide';
+import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -23,8 +23,8 @@ const Key = 'ConfirmResponseOperation' as const;
  * await convergence
  *   .rfqs()
  *   .confirmResponse({
- *     rfq: rfq.address,
- *     response: response.address,
+ *     rfq: <publicKey>,
+ *     response: <publicKey>,
  *     side: 'bid' | 'ask'
  *   });
  * ```
@@ -50,14 +50,10 @@ export type ConfirmResponseOperation = Operation<
  * @category Inputs
  */
 export type ConfirmResponseInput = {
-  /**
-   * The address of the RFQ account.
-   */
+  /** The address of the RFQ account. */
   rfq: PublicKey;
 
-  /**
-   * The address of the response account.
-   */
+  /** The address of the response account. */
   response: PublicKey;
 
   /**
@@ -81,9 +77,7 @@ export type ConfirmResponseInput = {
    */
   makerCollateralInfo?: PublicKey;
 
-  /**
-   * The address of the collateral token.
-   */
+  /** The address of the collateral token. */
   collateralToken?: PublicKey;
 
   /**
@@ -93,9 +87,7 @@ export type ConfirmResponseInput = {
    */
   protocol?: PublicKey;
 
-  /**
-   * The address of the risk engine program.
-   */
+  /** The address of the risk engine program. */
   riskEngine?: PublicKey;
 
   /** The Side of the Response to confirm. */
@@ -263,7 +255,7 @@ export const confirmResponseBuilder = async (
             ],
           },
           {
-            side: toSolitaSide(side),
+            side: toSolitaQuoteSide(side),
             overrideLegMultiplierBps,
           },
           convergence.programs().getRfq(programs).address

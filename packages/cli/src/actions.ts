@@ -236,7 +236,7 @@ export const getActiveRfqs = async (opts: Opts) => {
     const pages = await cvg.rfqs().findRfqs({}).promise();
     const rfqs = pages.flat();
     rfqs
-      .filter(r => r.state === 'active')
+      .filter((r) => r.state === 'active')
       .sort((a, b) => {
         const aTimeToExpiry = a.creationTimestamp + a.activeWindow;
         const bTimeToExpiry = b.creationTimestamp + b.activeWindow;
@@ -272,12 +272,7 @@ export const createRfq = async (opts: Opts) => {
     const quoteAsset = await SpotQuoteInstrument.create(cvg, quoteMint);
     const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
-        await SpotLegInstrument.create(
-          cvg,
-          baseMint,
-          opts.amount,
-          opts.side
-        ),
+        await SpotLegInstrument.create(cvg, baseMint, opts.amount, 'long'),
       ],
       taker: cvg.rpc().getDefaultFeePayer(),
       orderType: opts.orderType,

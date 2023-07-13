@@ -1,7 +1,7 @@
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import {
   createPartiallySettleLegsInstruction,
-  Side,
+  QuoteSide,
 } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -163,10 +163,10 @@ export const partiallySettleLegsBuilder = async (
 
     let legTakerAmount = -1;
 
-    if (leg.getSide() == 'ask') {
+    if (leg.getSide() == 'short') {
       legTakerAmount *= -1;
     }
-    if (confirmationSide == Side.Bid) {
+    if (confirmationSide == QuoteSide.Bid) {
       legTakerAmount *= -1;
     }
 

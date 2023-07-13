@@ -1,4 +1,4 @@
-import { RiskCategory, Side } from '@convergence-rfq/rfq';
+import { RiskCategory, QuoteSide } from '@convergence-rfq/rfq';
 import {
   futureCommonDataBeet,
   InstrumentType,
@@ -27,7 +27,7 @@ import {
 export type CalculationCase = {
   legMultiplier: number;
   authoritySide: AuthoritySide;
-  quoteSide: Side;
+  quoteSide: QuoteSide;
 };
 
 type PortfolioStatistics = {
@@ -74,7 +74,7 @@ export async function calculateRisk(
 
   const legInfos = legs.map((leg) => {
     let amount = leg.getAmount();
-    if (leg.getSide() == 'bid') {
+    if (leg.getSide() == 'long') {
       amount = -amount;
     }
 

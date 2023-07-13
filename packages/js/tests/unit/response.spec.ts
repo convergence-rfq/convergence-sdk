@@ -1,7 +1,8 @@
 import { expect } from 'expect';
-import { ResponseState } from '@convergence-rfq/rfq';
+// TODO: Should not be using this
+import { QuoteSide } from '@convergence-rfq/rfq';
 
-import { Rfq, Side } from '../../src';
+import { Rfq } from '../../src';
 import { createUserCvg, createRfq, respondToRfq } from '../helpers';
 
 describe('unit.response', () => {
@@ -101,7 +102,7 @@ describe('unit.response', () => {
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: responses[0].address,
     });
-    expect(response.confirmed?.side).toBe(Side.Bid);
+    expect(response.confirmed?.side).toBe(QuoteSide.Bid);
   });
 
   it('confirm [ask]', async () => {
@@ -118,18 +119,38 @@ describe('unit.response', () => {
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: responses[0].address,
     });
-    expect(response.confirmed?.side).toBe(Side.Ask);
+    expect(response.confirmed?.side).toBe(QuoteSide.Ask);
   });
 
-  it('cancel', async () => {
+  it('cancel response', async () => {
+    const rfq = rfq0;
+    const responsesBefore = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq.address,
+    });
+    const response = responsesBefore[1];
+
+    const {
+      response: { signature },
+    } = await makerCvg.rfqs().cancelResponse({
+      response: response.address,
+    });
+    expect(signature.length).toBeGreaterThan(0);
+
+    const responseAfter = await makerCvg.rfqs().findResponseByAddress({
+      address: response.address,
+    });
+    expect(responseAfter.state).toBe('canceled');
+  });
+
+  it('cancel responses', async () => {
     const responsesBefore = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
 
-    // TODO: Check signature
-    await makerCvg.rfqs().cancelResponses({
-      responses: responsesBefore,
+    const { responses: signatures } = await makerCvg.rfqs().cancelResponses({
+      responses: responsesBefore.map((r) => r.address),
     });
+    expect(signatures.length).toBe(responsesBefore.length);
 
     const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
@@ -152,12 +173,22 @@ describe('unit.response', () => {
     responsesAfter.map((r) => expect(r.makerCollateralLocked).toBe(0));
   });
 
-  it('clean up', async () => {
+  it('clean up response', async () => {
+    const responses = await makerCvg.rfqs().findResponsesByRfq({
+      address: rfq2.address,
+    });
+    await makerCvg.rfqs().cleanUpResponse({
+      response: responses[0].address,
+      maker: makerCvg.identity().publicKey,
+    });
+  });
+
+  it('clean up responses', async () => {
     const responses = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
     await makerCvg.rfqs().cleanUpResponses({
-      responses,
+      responses: responses.map((r) => r.address),
       maker: makerCvg.identity().publicKey,
     });
   });

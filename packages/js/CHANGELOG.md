@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.4.7
+
+### Patch Changes
+
+- Updated CPL Solita bindings
+
 ## 4.4.6
 
 ### Patch Changes

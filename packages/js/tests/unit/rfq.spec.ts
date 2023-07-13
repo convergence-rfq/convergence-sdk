@@ -31,7 +31,7 @@ describe('unit.rfq', () => {
     };
     const { rfq } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, 'bid'),
+        await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, 'long'),
       ],
       orderType: 'buy',
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
@@ -51,7 +51,7 @@ describe('unit.rfq', () => {
       .rfqs()
       .createAndFinalize({
         instruments: [
-          await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, 'bid'),
+          await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, 'long'),
         ],
         orderType: 'buy',
         quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
@@ -83,9 +83,10 @@ describe('unit.rfq', () => {
       return rfq.state === 'active' && rfq.totalResponses === 0;
     });
     expect(rfqs.length).toBeGreaterThan(0);
-    await takerCvg
+    const { responses } = await takerCvg
       .rfqs()
-      .cancelMultipleRfq({ rfqs: rfqs.map((rfq: any) => rfq.address) });
+      .cancelRfqs({ rfqs: rfqs.map((rfq: any) => rfq.address) });
+    expect(responses.length).toBe(rfqs.length);
   });
 
   it('unlock', async () => {
@@ -94,9 +95,16 @@ describe('unit.rfq', () => {
       return rfq.state === 'canceled' && rfq.totalResponses === 0;
     });
     expect(rfqs.length).toBeGreaterThan(0);
-    await takerCvg.rfqs().unlockMultipleRfqCollateral({
-      rfqs: rfqs.map((rfq: any) => rfq.address),
-    });
+    const responses = await Promise.all(
+      rfqs.map((rfq: any) =>
+        takerCvg.rfqs().unlockRfqCollateral({
+          rfq: rfq.address,
+        })
+      )
+    );
+    responses.map(({ response }) =>
+      expect(response).toHaveProperty('signature')
+    );
   });
 
   it('clean up', async () => {
@@ -105,7 +113,7 @@ describe('unit.rfq', () => {
       return rfq.state === 'canceled';
     });
     expect(rfqs.length).toBeGreaterThan(0);
-    await takerCvg.rfqs().cleanUpMultipleRfq({
+    await takerCvg.rfqs().cleanUpRfqs({
       rfqs: rfqs.map((rfq: any) => rfq.address),
     });
   });
