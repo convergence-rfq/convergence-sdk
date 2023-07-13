@@ -8,18 +8,7 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
-<<<<<<< HEAD
-import {
-  TransactionBuilder,
-  TransactionBuilderOptions,
-} from '../../../utils/TransactionBuilder';
-import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
-import { Response, assertResponse } from '../models/Response';
-import { legToBaseAssetMint } from '@/plugins/instrumentModule';
-import { SendAndConfirmTransactionResponse } from '@/plugins';
-=======
 import { cleanUpResponseBuilder } from './cleanUpResponse';
->>>>>>> ced46ea3345082f758a15cf7553ef78378f45408
 
 const Key = 'cleanUpResponsesOperation' as const;
 
