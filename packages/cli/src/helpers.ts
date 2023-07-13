@@ -1,5 +1,4 @@
 import {
-  Side,
   SpotLegInstrument,
   PsyoptionsAmericanInstrument,
   PsyoptionsEuropeanInstrument,
@@ -11,17 +10,6 @@ import { Command } from 'commander';
 
 import { Instrument } from './types';
 import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
-
-export const getSide = (side: string): Side => {
-  switch (side) {
-    case 'bid':
-      return Side.Bid;
-    case 'ask':
-      return Side.Ask;
-    default:
-      throw new Error('Invalid side');
-  }
-};
 
 export const getInstrumentType = (type: string): InstrumentType => {
   switch (type) {

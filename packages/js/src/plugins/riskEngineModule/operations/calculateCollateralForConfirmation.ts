@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Confirmation, Side } from '@convergence-rfq/rfq';
+import { Confirmation, QuoteSide } from '@convergence-rfq/rfq';
 
 import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
 import { extractLegsMultiplierBps } from '../helpers';
@@ -11,7 +11,10 @@ import {
   useOperation,
 } from '../../../types';
 import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
-import { convertOverrideLegMultiplierBps, toSolitaQuote } from '../../rfqModule';
+import {
+  convertOverrideLegMultiplierBps,
+  toSolitaQuote,
+} from '../../rfqModule';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 
@@ -103,13 +106,16 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
       let legMultiplierBps;
       if (confirmation.overrideLegMultiplierBps === null) {
         const confirmedQuote =
-          confirmation.side == Side.Bid ? response.bid : response.ask;
+          confirmation.side == QuoteSide.Bid ? response.bid : response.ask;
 
         if (confirmedQuote === null) {
           throw Error('Cannot confirm a missing quote!');
         }
 
-        legMultiplierBps = extractLegsMultiplierBps(rfq, toSolitaQuote(confirmedQuote, rfq.quoteAsset.getDecimals()));
+        legMultiplierBps = extractLegsMultiplierBps(
+          rfq,
+          toSolitaQuote(confirmedQuote, rfq.quoteAsset.getDecimals())
+        );
       } else {
         legMultiplierBps = confirmation.overrideLegMultiplierBps;
       }

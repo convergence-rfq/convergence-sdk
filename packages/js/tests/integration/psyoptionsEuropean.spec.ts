@@ -7,7 +7,6 @@ import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseud
 import {
   OptionType,
   PsyoptionsEuropeanInstrument,
-  Side,
   Mint,
   initializeNewOptionMeta,
   createEuropeanProgram,
@@ -72,7 +71,7 @@ describe('integration.psyoptionsEuropean', async () => {
 
     const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, 'bid'),
+        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, 'long'),
         await PsyoptionsEuropeanInstrument.create(
           takerCvg,
           baseMint,
@@ -80,7 +79,7 @@ describe('integration.psyoptionsEuropean', async () => {
           euroMeta,
           euroMetaKey,
           1,
-          'bid'
+          'long'
         ),
       ],
       orderType: 'sell',
