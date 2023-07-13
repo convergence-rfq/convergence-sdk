@@ -1,9 +1,9 @@
 import * as Spl from '@solana/spl-token';
 import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { Convergence } from '@/Convergence';
-import { token } from '@/types/Amount';
+import { Convergence } from '../Convergence';
+import { token } from '../types/Amount';
+import { Program } from '../types'
 import { collateralMintCache } from '@/plugins/collateralModule/cache';
-import { Program } from '@/types/Program';
 
 export enum ATAExistence {
   EXISTS,

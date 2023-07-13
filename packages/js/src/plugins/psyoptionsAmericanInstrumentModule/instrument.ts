@@ -1,10 +1,10 @@
-import { PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import { Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { FixableBeetArgsStruct, u8, u64, bignum } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
-
+import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import BN from 'bn.js';
 import { Mint } from '../tokenModule';
@@ -13,7 +13,7 @@ import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { ResponseSide, fromSolitaSide } from '../rfqModule/models/ResponseSide';
-import { createAmericanProgram } from './helpers';
+import { CvgWallet } from '../../utils/CvgWallet';
 
 type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;
@@ -234,4 +234,41 @@ export const psyoptionsAmericanInstrumentParser = {
       fromSolitaSide(side)
     );
   },
+};
+
+
+export class NoopWallet {
+  public readonly publicKey: PublicKey;
+
+  constructor(keypair: Keypair) {
+    this.publicKey = keypair.publicKey;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  signTransaction(tx: Transaction): Promise<Transaction> {
+    throw new Error('Method not implemented.');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
+    throw new Error('Method not implemented.');
+  }
+}
+
+export const createAmericanProgram = (
+  convergence: Convergence,
+  wallet?: CvgWallet
+): any => {
+  const provider = new anchor.AnchorProvider(
+    convergence.connection,
+    wallet ?? new NoopWallet(Keypair.generate()),
+    {}
+  );
+
+  const americanProgram = psyoptionsAmerican.createProgram(
+    new PublicKey('R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'),
+    provider
+  );
+
+  return americanProgram;
 };

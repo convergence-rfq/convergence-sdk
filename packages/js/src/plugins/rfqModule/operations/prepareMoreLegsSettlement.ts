@@ -23,8 +23,8 @@ import { Convergence } from '../../../Convergence';
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
-  getOrCreateATA,
-} from '../../../utils';
+} from '../../../utils/TransactionBuilder';
+import { getOrCreateATA } from '../../../utils/helpers';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 

@@ -3,7 +3,8 @@ import { BN } from 'bn.js';
 
 import { Mint } from '../../tokenModule/models/Mint';
 import { CollateralAccount } from '../accounts';
-import { assert, removeDecimals } from '../../../utils';
+import { assert } from '../../../utils/assert';
+import { removeDecimals } from '../../../utils/conversions';
 
 /**
  * This model captures all the relevant information about a collateral account

@@ -4,10 +4,10 @@ import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { MintAuthorityMustBeSignerToMintInitialSupplyError } from '../errors';
 import { TokenWithMint } from '../models/Token';
 import {
-  Option,
   TransactionBuilder,
   TransactionBuilderOptions,
-} from '../../../utils';
+} from '../../../utils/TransactionBuilder';
+import { Option } from '../../../utils/types';
 import {
   isSigner,
   makeConfirmOptionsFinalizedOnMainnet,

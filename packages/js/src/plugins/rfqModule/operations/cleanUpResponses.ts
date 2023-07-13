@@ -9,7 +9,10 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { Response, assertResponse } from '../models/Response';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';

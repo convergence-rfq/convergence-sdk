@@ -4,11 +4,11 @@ import { AccountMeta } from '@solana/web3.js';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { addDecimals } from '../../utils/conversions';
 import { toSolitaSide } from '../rfqModule/models/ResponseSide';
-import { LegInstrument, QuoteInstrument } from './types';
-import { Convergence } from '@/Convergence';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { SpotLegInstrument } from '../spotInstrumentModule';
+import { LegInstrument, QuoteInstrument } from './types';
+import { Convergence } from '@/Convergence';
 
 export function toLeg(legInstrument: LegInstrument): Leg {
   return {

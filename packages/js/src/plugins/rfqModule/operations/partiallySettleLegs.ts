@@ -14,7 +14,10 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
 

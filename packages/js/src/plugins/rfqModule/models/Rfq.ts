@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
-
 import { RfqAccount } from '../accounts';
-import { assert, convertTimestamp, removeDecimals } from '../../../utils';
+import { assert } from '../../../utils/assert';
+import { convertTimestamp, removeDecimals } from '../../../utils/conversions';
 import {
   SpotLegInstrument,
   SpotQuoteInstrument,

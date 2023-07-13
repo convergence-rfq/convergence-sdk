@@ -12,7 +12,10 @@ import {
   Signer,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { LegInstrument } from '../../../plugins/instrumentModule';
 
 const Key = 'AddLegsToRfqOperation' as const;

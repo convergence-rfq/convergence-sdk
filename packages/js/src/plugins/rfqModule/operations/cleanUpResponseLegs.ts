@@ -13,8 +13,8 @@ import {
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
-  getOrCreateATA,
-} from '../../../utils';
+} from '../../../utils/TransactionBuilder';
+import { getOrCreateATA } from '../../../utils/helpers';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { protocolCache } from '../../protocolModule/cache';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';

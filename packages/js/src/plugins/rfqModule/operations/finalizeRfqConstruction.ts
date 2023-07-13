@@ -3,7 +3,10 @@ import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,

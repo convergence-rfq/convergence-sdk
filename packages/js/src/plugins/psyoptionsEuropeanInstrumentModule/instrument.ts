@@ -13,7 +13,8 @@ import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../tokenModule';
 import { LegInstrument } from '../instrumentModule';
-import { addDecimals, assert, removeDecimals } from '../../utils';
+import { addDecimals, removeDecimals } from '../../utils/conversions';
+import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { ResponseSide, fromSolitaSide } from '../rfqModule/models/ResponseSide';

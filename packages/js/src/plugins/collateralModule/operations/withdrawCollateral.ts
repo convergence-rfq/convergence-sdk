@@ -14,10 +14,11 @@ import { Convergence } from '../../../Convergence';
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
-  addDecimals,
-} from '../../../utils';
+} from '../../../utils/TransactionBuilder';
+
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
+import { addDecimals } from '../../..//utils/conversions';
 
 const Key = 'WithdrawCollateralOperation' as const;
 

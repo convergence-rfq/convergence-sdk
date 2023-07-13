@@ -1,22 +1,17 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
-import { Mint } from '@solana/spl-token';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
+import { Side } from '@convergence-rfq/rfq';
+import { Mint } from '../tokenModule';
+import { ATAExistence, getOrCreateATA } from '../../utils/helpers';
+import { addDecimals } from '../../utils/conversions';
+import { TransactionBuilder } from '../../utils/TransactionBuilder';
+import { Convergence } from '../../Convergence';
 import { PsyoptionsEuropeanInstrument } from './instrument';
-import {
-  TransactionBuilder,
-  addDecimals,
-  ATAExistence,
-  getOrCreateATA,
-} from '@/utils';
-import {
-  Convergence,
-  Pda,
-  Side,
-  makeConfirmOptionsFinalizedOnMainnet,
-  toBigNumber,
-} from '@/index';
+import { Pda } from '@/types/Pda';
+import { makeConfirmOptionsFinalizedOnMainnet } from '@/types/Operation';
+import { toBigNumber } from '@/types/BigNumber';
 
 export const initializeNewEuropeanOption = async (
   convergence: Convergence,
@@ -252,7 +247,6 @@ export const getOrCreateEuropeanOptionATAs = async (
         (leg.getSide() !== confirmedSide && callerIsMaker)
       ) {
         flag = true;
-
         const euroMeta = await leg.getOptionMeta();
         const { optionType } = leg;
         await getOrCreateATA(

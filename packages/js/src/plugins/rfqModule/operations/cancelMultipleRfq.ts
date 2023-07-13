@@ -10,7 +10,10 @@ import {
   Signer,
 } from '../../../types';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 
 const Key = 'CancelMultipleRfqOperation' as const;
 

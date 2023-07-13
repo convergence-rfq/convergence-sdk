@@ -4,7 +4,7 @@ import { bignum } from '@convergence-rfq/beet';
 
 import { ConfigAccount } from '../accounts';
 import { RiskCategoryInfo, InstrumentInfo } from '../types';
-import { assert } from '../../../utils';
+import { assert } from '../../../utils/assert';
 import {
   RiskCategory,
   toSolitaRiskCategory,

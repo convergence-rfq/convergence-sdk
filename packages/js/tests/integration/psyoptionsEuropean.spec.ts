@@ -7,9 +7,8 @@ import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseud
 import {
   OptionType,
   PsyoptionsEuropeanInstrument,
-  Side,
   Mint,
-  initializeNewOptionMeta,
+  initializeNewEuropeanOption,
   createEuropeanProgram,
   getOrCreateEuropeanOptionATAs,
   mintEuropeanOptions,
@@ -58,11 +57,11 @@ describe('integration.psyoptionsEuropean', async () => {
     );
     const min = 3_600;
     const randomExpiry = min + Math.random();
-    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
       takerCvg,
       oracle,
       europeanProgram,
-      baseMint,
+      baseMint as Mint,
       quoteMint,
       23_354,
       1,

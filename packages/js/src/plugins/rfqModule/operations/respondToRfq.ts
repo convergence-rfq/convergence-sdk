@@ -11,7 +11,10 @@ import {
   useOperation,
   Signer,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
 
@@ -29,13 +32,16 @@ const getNextResponsePdaAndDistinguisher = async (
   let response: PublicKey;
   let pdaDistinguisher = 0;
   while (true) {
-    response = cvg.rfqs().pdas().response({
-      rfq,
-      maker,
-      bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
-      ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
-      pdaDistinguisher,
-    });
+    response = cvg
+      .rfqs()
+      .pdas()
+      .response({
+        rfq,
+        maker,
+        bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
+        ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
+        pdaDistinguisher,
+      });
 
     const account = await cvg.rpc().getAccount(response);
     if (!account.exists) {

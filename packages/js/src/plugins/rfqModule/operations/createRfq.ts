@@ -11,7 +11,10 @@ import {
   instrumentsToLegAccounts,
   legsToBaseAssetAccounts,
 } from '../helpers';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,

@@ -17,7 +17,7 @@ import {
   LegInstrument,
   QuoteInstrument,
 } from '../../../plugins/instrumentModule';
-import { removeDecimals } from '../../../utils';
+import { removeDecimals } from '../../../utils/conversions';
 import {
   FixedSize,
   LEG_MULTIPLIER_DECIMALS,

@@ -13,8 +13,8 @@ import {
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
-  addDecimals,
-} from '../../../utils';
+} from '../../../utils/TransactionBuilder';
+import { addDecimals } from '../../../utils/conversions';
 import { Convergence } from '../../../Convergence';
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';

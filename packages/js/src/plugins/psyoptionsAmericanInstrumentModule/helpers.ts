@@ -1,47 +1,19 @@
-import * as anchor from '@project-serum/anchor';
-import { Transaction, PublicKey, Keypair } from '@solana/web3.js';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 
 import { BN } from 'bn.js';
+import { Side } from '@convergence-rfq/rfq';
+import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
-import { CvgWallet, InstructionWithSigners, Mint, PsyoptionsAmericanInstrument, Side, TransactionBuilder,getOrCreateATA } from '@/index';
-import { ATAExistence } from '@/utils';
-export class NoopWallet {
-  public readonly publicKey: PublicKey;
 
-  constructor(keypair: Keypair) {
-    this.publicKey = keypair.publicKey;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signTransaction(tx: Transaction): Promise<Transaction> {
-    throw new Error('Method not implemented.');
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-}
-
-export const createAmericanProgram = (
-  convergence: Convergence,
-  wallet?: CvgWallet
-): any => {
-  const provider = new anchor.AnchorProvider(
-    convergence.connection,
-    wallet ?? new NoopWallet(Keypair.generate()),
-    {}
-  );
-
-  const americanProgram = psyoptionsAmerican.createProgram(
-    new PublicKey('R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'),
-    provider
-  );
-
-  return americanProgram;
-};
-
+import { ATAExistence, getOrCreateATA } from '../../utils/helpers';
+import { Mint } from '../tokenModule/models';
+import { CvgWallet } from '../../utils/CvgWallet';
+import {
+  InstructionWithSigners,
+  TransactionBuilder,
+} from '../../utils/TransactionBuilder';
+import { PsyoptionsAmericanInstrument } from './types';
+import { createAmericanProgram } from './instrument';
 
 export const mintAmericanOptions = async (
   convergence: Convergence,
@@ -61,7 +33,7 @@ export const mintAmericanOptions = async (
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
   const instructionWithSigners: InstructionWithSigners[] = [];
   for (const leg of rfq.legs) {
-    if (leg instanceof PsyoptionsAmericanInstrument && americanProgram) {
+    if (leg instanceof PsyoptionsAmericanInstrument) {
       if (
         (leg.getSide() === confirmedSide && callerIsTaker) ||
         (leg.getSide() !== confirmedSide && callerIsMaker)
@@ -72,39 +44,44 @@ export const mintAmericanOptions = async (
           americanProgram,
           leg.optionMetaPubKey
         );
-        const optionToken = await getOrCreateATA(
-          convergence,
-          optionMarket!.optionMint,
-          caller
-        );
-        const writerToken = await getOrCreateATA(
-          convergence,
-          optionMarket!.writerTokenMint,
-          caller
-        );
-        const underlyingToken = await getOrCreateATA(
-          convergence,
-          optionMarket!.underlyingAssetMint,
-          caller
-        );
-        const ixWithSigners =
-          await psyoptionsAmerican.instructions.mintOptionV2Instruction(
-            americanProgram,
-            optionToken,
-            writerToken,
-            underlyingToken,
-            new BN(amount!),
-            optionMarket as psyoptionsAmerican.OptionMarketWithKey
+        if (optionMarket) {
+          const optionToken = await getOrCreateATA(
+            convergence,
+            optionMarket.optionMint,
+            caller
           );
-        ixWithSigners.ix.keys[0] = {
-          pubkey: caller,
-          isSigner: true,
-          isWritable: false,
-        };
-        instructionWithSigners.push({
-          instruction: ixWithSigners.ix,
-          signers: ixWithSigners.signers,
-        });
+
+          const writerToken = await getOrCreateATA(
+            convergence,
+            optionMarket!.writerTokenMint,
+            caller
+          );
+
+          const underlyingToken = await getOrCreateATA(
+            convergence,
+            optionMarket!.underlyingAssetMint,
+            caller
+          );
+
+          const ixWithSigners =
+            await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+              americanProgram,
+              optionToken,
+              writerToken,
+              underlyingToken,
+              new BN(amount!),
+              optionMarket as psyoptionsAmerican.OptionMarketWithKey
+            );
+          ixWithSigners.ix.keys[0] = {
+            pubkey: caller,
+            isSigner: true,
+            isWritable: false,
+          };
+          instructionWithSigners.push({
+            instruction: ixWithSigners.ix,
+            signers: ixWithSigners.signers,
+          });
+        }
       }
     }
   }
@@ -168,8 +145,6 @@ export const initializeNewAmericanOption = async (
   };
 };
 
-
-
 // used in UI
 export const getOrCreateAmericanOptionATAs = async (
   convergence: Convergence,
@@ -188,7 +163,7 @@ export const getOrCreateAmericanOptionATAs = async (
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
   for (const leg of rfq.legs) {
-    if (leg instanceof PsyoptionsAmericanInstrument && americanProgram) {
+    if (leg instanceof PsyoptionsAmericanInstrument) {
       if (
         (leg.getSide() === confirmedSide && callerIsTaker) ||
         (leg.getSide() !== confirmedSide && callerIsMaker)
@@ -199,25 +174,21 @@ export const getOrCreateAmericanOptionATAs = async (
           americanProgram,
           leg.optionMetaPubKey
         );
+        if (optionMarket) {
+          await getOrCreateATA(convergence, optionMarket.optionMint, caller);
 
-        // const optionTokenAta =
-        await getOrCreateATA(
-          convergence,
-          (optionMarket as psyoptionsAmerican.OptionMarketWithKey).optionMint,
-          caller
-        );
+          await getOrCreateATA(
+            convergence,
+            optionMarket!.writerTokenMint,
+            caller
+          );
 
-        await getOrCreateATA(
-          convergence,
-          optionMarket!.writerTokenMint,
-          caller
-        );
-
-        await getOrCreateATA(
-          convergence,
-          optionMarket!.underlyingAssetMint,
-          caller
-        );
+          await getOrCreateATA(
+            convergence,
+            optionMarket!.underlyingAssetMint,
+            caller
+          );
+        }
       }
     }
   }
