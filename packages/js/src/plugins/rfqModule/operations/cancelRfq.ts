@@ -9,7 +9,6 @@ import {
   OperationScope,
   useOperation,
   Signer,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import {
   TransactionBuilder,
@@ -22,12 +21,9 @@ const Key = 'CancelRfqOperation' as const;
  * Cancels an existing Rfq.
  *
  * ```ts
- *
- * const { rfq } = await convergence.rfqs.create(...);
- *
  * await convergence
  *   .rfqs()
- *   .cancelRfq({ rfq: rfq.address });
+ *   .cancelRfq({ rfq: <address> });
  * ```
  *
  * @group Operations
@@ -50,6 +46,9 @@ export type CancelRfqOperation = Operation<
  * @category Inputs
  */
 export type CancelRfqInput = {
+  /** The address of the Rfq account. */
+  rfq: PublicKey;
+
   /**
    * The Taker of the Rfq as a Signer.
    *
@@ -57,13 +56,12 @@ export type CancelRfqInput = {
    */
   taker?: Signer;
 
-  /** The protocol address.
+  /**
+   * The protocol address.
+   *
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
-
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
 };
 
 /**
@@ -86,13 +84,10 @@ export const cancelRfqOperationHandler: OperationHandler<CancelRfqOperation> = {
     scope: OperationScope
   ) => {
     const builder = await cancelRfqBuilder(convergence, operation.input, scope);
-    scope.throwIfCanceled();
-
-    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+    const output = await builder.sendAndConfirm(
       convergence,
       scope.confirmOptions
     );
-    const output = await builder.sendAndConfirm(convergence, confirmOptions);
     scope.throwIfCanceled();
 
     return output;
@@ -124,20 +119,21 @@ export const cancelRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { taker = convergence.identity(), rfq } = params;
-
-  const rfqProgram = convergence.programs().getRfq(programs);
-
+  const {
+    rfq,
+    taker = convergence.identity(),
+    protocol = convergence.protocol().pdas().protocol(),
+  } = params;
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: createCancelRfqInstruction(
         {
-          taker: taker.publicKey,
-          protocol: convergence.protocol().pdas().protocol(),
+          protocol,
           rfq,
+          taker: taker.publicKey,
         },
-        rfqProgram.address
+        convergence.programs().getRfq(programs).address
       ),
       signers: [taker],
       key: 'cancelRfq',

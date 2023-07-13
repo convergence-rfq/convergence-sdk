@@ -1,70 +1,55 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-  Signer,
 } from '../../../types';
-import {
-  TransactionBuilder,
-  TransactionBuilderOptions,
-} from '../../../utils/TransactionBuilder';
-import { Response } from '../models/Response';
+import { cleanUpRfqBuilder } from './cleanUpRfq';
+import { SendAndConfirmTransactionResponse } from '@/plugins';
 
-const Key = 'cancelResponsesOperation' as const;
+const Key = 'CleanUpRfqsOperation' as const;
 
 /**
- * Cancel multiple response.
+ * Cleans up Rfqs.
  *
  * ```ts
- * await convergence.
- *   rfqs()
- *   .cancelResponses({
- *     responses: [<publicKey>]
- * });
+ * await convergence
+ *   .rfqs()
+ *   .cleanUpRfqs({
+ *     rfqs: [<address>]
+ *   });
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const cancelResponsesOperation =
-  useOperation<CancelResponsesOperation>(Key);
+export const cleanUpRfqsOperation = useOperation<CleanUpRfqsOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type CancelResponsesOperation = Operation<
+export type CleanUpRfqsOperation = Operation<
   typeof Key,
-  CancelResponsesInput,
-  CancelResponsesOutput
+  CleanUpRfqsInput,
+  CleanUpRfqsOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type CancelResponsesInput = {
-  /**
-   * The addresses of the reponses.
-   */
-  responses: PublicKey[];
-
-  /**
-   * The maker as a signer.
-   *
-   * @defaultValue `convergence.identity()`
-   */
-  maker?: Signer;
+export type CleanUpRfqsInput = {
+  /** The address of the Rfq account. */
+  rfqs: PublicKey[];
 
   /**
    * The protocol address.
    *
-   * @defaultValue `convergence.protocol().pdas().get()`
+   * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
 };
@@ -73,7 +58,7 @@ export type CancelResponsesInput = {
  * @group Operations
  * @category Outputs
  */
-export type CancelResponsesOutput = {
+export type CleanUpRfqsOutput = {
   responses: SendAndConfirmTransactionResponse[];
 };
 
@@ -81,22 +66,22 @@ export type CancelResponsesOutput = {
  * @group Operations
  * @category Handlers
  */
-export const cancelResponsesOperationHandler: OperationHandler<CancelResponsesOperation> =
+export const cleanUpRfqsOperationHandler: OperationHandler<CleanUpRfqsOperation> =
   {
     handle: async (
-      operation: CancelResponsesOperation,
+      operation: CleanUpRfqsOperation,
       convergence: Convergence,
       scope: OperationScope
     ) => {
-      const { responses: rfqResponses } = operation.input;
+      const { rfqs } = operation.input;
 
       const builders = await Promise.all(
-        rfqResponses.map((response) =>
-          cancelResponseBuilder(
+        rfqs.map((rfq) =>
+          cleanUpRfqBuilder(
             convergence,
             {
-              response,
-              ...operation,
+              rfq,
+              ...operation.input,
             },
             scope
           )

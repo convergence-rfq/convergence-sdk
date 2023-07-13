@@ -4,7 +4,11 @@
   "workspaces": [
     "packages/*"
   ],
-  "references": [{ "path": "packages/cli" }],
+  "references": [
+    {
+      "path": "packages/cli"
+    }
+  ],
   "license": "MIT",
   "description": "Convergence RFQ JavaScript SDK",
   "keywords": [
@@ -31,11 +35,12 @@
     "lint:test": "turbo run lint:test",
     "format": "prettier --write packages/",
     "docs": "typedoc",
-    "docs:deploy": "pnpm run docs && gh-pages --dist docs --dotfiles",
+    "docs:deploy": "yarn run docs && gh-pages --dist docs --dotfiles",
     "packages:new": "node infra/generate-new-package.mjs",
     "packages:change": "changeset",
     "packages:version": "changeset version",
-    "packages:publish": "turbo run lint build && changeset publish"
+    "packages:publish": "turbo run lint build && changeset publish",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",
@@ -76,13 +81,15 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-sort-class-members": "^1.15.2",
     "gh-pages": "^4.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^13.2.3",
     "nx": "^14.8.6",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
     "rollup": "^2.72.0",
     "rollup-plugin-polyfill-node": "^0.9.0",
-    "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-preserve-shebang": "^1.0.1",
+    "rollup-plugin-terser": "^7.0.2",
     "sinon": "^13.0.1",
     "spok": "^1.4.3",
     "tsc-alias": "^1.7.0",
@@ -90,7 +97,10 @@
     "typedoc": "^0.23.0",
     "typescript": "^4.5.4"
   },
-  "dependencies": {
-    "pnpm": "^7.24.3"
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "yarn eslint --fix",
+      "prettier --write"
+    ]
   }
 }

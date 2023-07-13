@@ -3,14 +3,17 @@ import { PublicKey } from '@solana/web3.js';
 import { PartialKeys } from '../../utils';
 import { OperationOptions, token } from '../../types';
 import type { Convergence } from '../../Convergence';
+import { addInstrumentOperation, AddInstrumentInput } from '../protocolModule';
 import { SendTokensInput } from '../tokenModule';
 import { Rfq } from './models';
 import { RfqPdasClient } from './RfqPdasClient';
 import {
-  addInstrumentOperation,
-  AddInstrumentInput,
   addLegsToRfqOperation,
   AddLegsToRfqInput,
+  cancelResponseOperation,
+  CancelResponseInput,
+  CancelRfqsInput,
+  cancelRfqsOperation,
   cancelResponsesOperation,
   CancelResponsesInput,
   cancelRfqOperation,
@@ -24,8 +27,6 @@ import {
   createRfqOperation,
   CreateRfqInput,
   CreateAndFinalizeRfqConstructionInput,
-  createAndAddLegsToRfqOperation,
-  CreateAndAddLegsToRfqInput,
   finalizeRfqConstructionOperation,
   FinalizeRfqConstructionInput,
   FindRfqsInput,
@@ -65,14 +66,12 @@ import {
   unlockRfqCollateralOperation,
   UnlockRfqCollateralInput,
   createAndFinalizeRfqConstructionOperation,
-  UnlockMultipleRfqCollateralInput,
-  unlockMultipleRfqCollateralOperation,
-  CancelMultipleRfqInput,
-  cancelMultipleRfqOperation,
-  CleanUpMultipleRfqInput,
-  cleanUpMultipleRfqOperation,
-  CleanUpResponsesInput,
+  CleanUpRfqsInput,
+  cleanUpRfqsOperation,
+  cleanUpResponseOperation,
+  CleanUpResponseInput,
   cleanUpResponsesOperation,
+  CleanUpResponsesInput,
 } from './operations';
 import { Response } from './models/Response';
 
@@ -109,18 +108,6 @@ export class RfqClient {
   constructor(protected readonly convergence: Convergence) {}
 
   /**
-   * You may use the `builders()` client to access the
-   * underlying Transaction Builders of this module.
-   *
-   * ```ts
-   * const buildersClient = convergence.rfqs().builders();
-   * ```
-   */
-  // builders() {
-  //   return new RfqBuildersClient(this.convergence);
-  // }
-
-  /**
    * You may use the `pdas()` client to build PDAs related to this module.
    *
    * ```ts
@@ -146,6 +133,13 @@ export class RfqClient {
   }
 
   /** {@inheritDoc cancelResponseOperation} */
+  cancelResponse(input: CancelResponseInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(cancelResponseOperation(input), options);
+  }
+
+  /** {@inheritDoc cancelResponsesOperation} */
   cancelResponses(input: CancelResponsesInput, options?: OperationOptions) {
     return this.convergence
       .operations()
@@ -159,18 +153,11 @@ export class RfqClient {
       .execute(cancelRfqOperation(input), options);
   }
 
-  /** {@inheritDoc cancelMultipleRfqOperation} */
-  cancelMultipleRfq(input: CancelMultipleRfqInput, options?: OperationOptions) {
+  /** {@inheritDoc cancelRfqsOperation} */
+  cancelRfqs(input: CancelRfqsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(cancelMultipleRfqOperation(input), options);
-  }
-
-  /** {@inheritDoc cleanUpResponseOperation} */
-  cleanUpResponse(input: CleanUpResponsesInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(cleanUpResponsesOperation(input), options);
+      .execute(cancelRfqsOperation(input), options);
   }
 
   /** {@inheritDoc cleanUpResponseLegsOperation} */
@@ -182,6 +169,14 @@ export class RfqClient {
       .operations()
       .execute(cleanUpResponseLegsOperation(input), options);
   }
+
+  /** {@inheritDoc cleanUpResponseOperation} */
+  cleanUpResponse(input: CleanUpResponseInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(cleanUpResponseOperation(input), options);
+  }
+
   /** {@inheritDoc cleanUpResponsesOperation} */
   cleanUpResponses(input: CleanUpResponsesInput, options?: OperationOptions) {
     return this.convergence
@@ -196,14 +191,11 @@ export class RfqClient {
       .execute(cleanUpRfqOperation(input), options);
   }
 
-  /** {@inheritDoc cleanUpMultipleRfqOperation} */
-  cleanUpMultipleRfq(
-    input: CleanUpMultipleRfqInput,
-    options?: OperationOptions
-  ) {
+  /** {@inheritDoc cleanUpRfqsOperation} */
+  cleanUpRfqs(input: CleanUpRfqsInput, options?: OperationOptions) {
     return this.convergence
       .operations()
-      .execute(cleanUpMultipleRfqOperation(input), options);
+      .execute(cleanUpRfqsOperation(input), options);
   }
 
   /** {@inheritDoc cleanUpRfqOperation} */
@@ -218,16 +210,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(createRfqOperation(input), options);
-  }
-
-  /** {@inheritDoc createRfqAndAddLegsToRfqOperation} */
-  createRfqAndAddLegs(
-    input: CreateAndAddLegsToRfqInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(createAndAddLegsToRfqOperation(input), options);
   }
 
   /** {@inheritDoc createAndFinalizeRfqConstructionOperation} */
@@ -393,7 +375,7 @@ export class RfqClient {
   //  * it directly.
   //  *
   //  * ```ts
-  //  * rfq = await convergence.rfqs().refreshResponse(response);
+  //  * const rfq = await convergence.rfqs().refreshResponse(response);
   //  * ```
   //  */
   refreshResponse<T extends Response | PublicKey>(
@@ -460,16 +442,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(unlockRfqCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc unlockMultipleRfqCollateralOperation} */
-  unlockMultipleRfqCollateral(
-    input: UnlockMultipleRfqCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(unlockMultipleRfqCollateralOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */

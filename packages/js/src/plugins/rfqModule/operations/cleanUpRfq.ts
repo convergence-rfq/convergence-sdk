@@ -8,7 +8,6 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import {
   TransactionBuilder,
@@ -51,21 +50,22 @@ export type CleanUpRfqOperation = Operation<
  * @category Inputs
  */
 export type CleanUpRfqInput = {
+  /** The address of the Rfq account. */
+  rfq: PublicKey;
+
   /**
    * The Taker of the Rfq
    *
    *  @defaultValue `convergence.identity().publicKey`
-   *
    */
   taker?: PublicKey;
 
-  /** The protocol address.
+  /**
+   * The protocol address.
+   *
    * @defaultValue `convergence.protocol().pdas().protocol()`
    */
   protocol?: PublicKey;
-
-  /** The address of the Rfq account. */
-  rfq: PublicKey;
 };
 
 /**
@@ -88,8 +88,6 @@ export const cleanUpRfqOperationHandler: OperationHandler<CleanUpRfqOperation> =
       convergence: Convergence,
       scope: OperationScope
     ): Promise<CleanUpRfqOutput> => {
-      scope.throwIfCanceled();
-
       const builder = await cleanUpRfqBuilder(
         convergence,
         {
@@ -97,14 +95,10 @@ export const cleanUpRfqOperationHandler: OperationHandler<CleanUpRfqOperation> =
         },
         scope
       );
-      scope.throwIfCanceled();
-
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+      const output = await builder.sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
-
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
       return { ...output };
@@ -122,9 +116,9 @@ export type CleanUpRfqBuilderParams = CleanUpRfqInput;
  *
  * ```ts
  * const transactionBuilder = convergence
- * .rfqs()
- * .builders()
- * .cleanUpRfq({ address });
+ *   .rfqs()
+ *   .builders()
+ *   .cleanUpRfq();
  * ```
  *
  * @group Transaction Builders
@@ -137,9 +131,6 @@ export const cleanUpRfqBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { taker = convergence.identity().publicKey, rfq } = params;
-
-  const rfqProgram = convergence.programs().getRfq(programs);
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
@@ -149,7 +140,7 @@ export const cleanUpRfqBuilder = async (
           protocol: convergence.protocol().pdas().protocol(),
           rfq,
         },
-        rfqProgram.address
+        convergence.programs().getRfq(programs).address
       ),
       signers: [],
       key: 'cleanUpRfq',
