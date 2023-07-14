@@ -7,7 +7,6 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
@@ -89,14 +88,11 @@ export const unlockRfqCollateralOperationHandler: OperationHandler<UnlockRfqColl
         },
         scope
       );
-      scope.throwIfCanceled();
 
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+      const output = await builder.sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
-
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
       return output;

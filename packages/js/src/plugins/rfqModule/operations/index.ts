@@ -32,4 +32,4 @@ export * from './findResponsesByRfq';
 export * from './cleanUpRfqs';
 export * from './cancelRfqs';
 export * from './unlockResponseCollateral';
-export * from './unlockResponseCollateral';
+export * from './unlockResponsesCollateral';
