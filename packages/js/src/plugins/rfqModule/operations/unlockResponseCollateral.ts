@@ -1,4 +1,4 @@
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { createUnlockResponseCollateralInstruction } from '@convergence-rfq/rfq';
 
 import {
@@ -10,7 +10,6 @@ import {
 import { Convergence } from '../../../Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { protocolCache } from '../../protocolModule/cache';
-import { Response } from '../models/Response';
 import { SendAndConfirmTransactionResponse } from '@/plugins';
 
 const Key = 'unlockResponseCollateralOperation' as const;
@@ -19,10 +18,10 @@ const Key = 'unlockResponseCollateralOperation' as const;
  * Unlocks collateral for a Response
  *
  * ```ts
- * const rfq = await convergence
+ * await convergence
  *   .rfqs()
  *   .unlockResponseCollateral({
- *     responses,
+ *     response: <publicKey>,
  *   });
  * ```
  *
@@ -48,9 +47,9 @@ export type UnlockResponseCollateralOperation = Operation<
  */
 export type UnlockResponseCollateralInput = {
   /**
-   * The response addresses.
+   * The response address.
    */
-  responses: PublicKey[] | Response[];
+  response: PublicKey;
 
   /**
    * The protocol address.
@@ -65,7 +64,7 @@ export type UnlockResponseCollateralInput = {
  * @category Outputs
  */
 export type UnlockResponseCollateralOutput = {
-  responses: SendAndConfirmTransactionResponse[];
+  response: SendAndConfirmTransactionResponse;
 };
 
 /**
@@ -78,7 +77,7 @@ export const unlockResponseCollateralOperationHandler: OperationHandler<UnlockRe
       operation: UnlockResponseCollateralOperation,
       convergence: Convergence,
       scope: OperationScope
-    ) => {
+    ): Promise<UnlockResponseCollateralOutput> => {
       const builder = await unlockResponseCollateralBuilder(
         convergence,
         {
@@ -87,20 +86,13 @@ export const unlockResponseCollateralOperationHandler: OperationHandler<UnlockRe
         scope
       );
 
-      const signedTxs = await convergence
-        .identity()
-        .signAllTransactions(builder);
-
-      const responses = await Promise.all(
-        signedTxs.map((signedTx) =>
-          convergence
-            .rpc()
-            .serializeAndSendTransaction(signedTx, scope.confirmOptions)
-        )
+      const output = await builder.sendAndConfirm(
+        convergence,
+        scope.confirmOptions
       );
       scope.throwIfCanceled();
 
-      return { responses };
+      return output;
     },
   };
 
@@ -124,80 +116,61 @@ export const unlockResponseCollateralBuilder = async (
   convergence: Convergence,
   params: UnlockResponseCollateralBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<Transaction[]> => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { responses } = params;
+  const { response } = params;
 
   const protocol = await protocolCache.get(convergence);
 
-  const txs = await Promise.all(
-    responses.map(async (response) => {
-      if (response instanceof PublicKey) {
-        response = await convergence
-          .rfqs()
-          .findResponseByAddress({ address: response });
-      }
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
 
-      const { taker } = await convergence
-        .rfqs()
-        .findRfqByAddress({ address: response.rfq });
+  const { taker } = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: responseModel.rfq });
 
-      const builder = TransactionBuilder.make()
-        .setFeePayer(payer)
-        .add({
-          instruction: createUnlockResponseCollateralInstruction(
-            {
-              rfq: response.rfq,
-              response: response.address,
-              protocol: convergence.protocol().pdas().protocol(),
-              takerCollateralInfo: convergence
-                .collateral()
-                .pdas()
-                .collateralInfo({
-                  user: taker,
-                  programs,
-                }),
-              makerCollateralInfo: convergence
-                .collateral()
-                .pdas()
-                .collateralInfo({
-                  user: response.maker,
-                  programs,
-                }),
-              takerCollateralTokens: convergence
-                .collateral()
-                .pdas()
-                .collateralToken({
-                  user: taker,
-                  programs,
-                }),
-              makerCollateralTokens: convergence
-                .collateral()
-                .pdas()
-                .collateralToken({
-                  user: response.maker,
-                  programs,
-                }),
-              protocolCollateralTokens: convergence
-                .collateral()
-                .pdas()
-                .collateralToken({
-                  user: protocol.authority,
-                  programs,
-                }),
-            },
-            convergence.programs().getRfq(programs).address
-          ),
-          signers: [],
-          key: 'unlockeResponseCollateral',
-        });
-      const blockHashWithBlockHeight = await convergence
-        .rpc()
-        .getLatestBlockhash();
-
-      return builder.toTransaction(blockHashWithBlockHeight);
-    })
-  );
-
-  return txs;
+  return TransactionBuilder.make()
+    .setFeePayer(payer)
+    .add({
+      instruction: createUnlockResponseCollateralInstruction(
+        {
+          rfq: responseModel.rfq,
+          response: responseModel.address,
+          protocol: convergence.protocol().pdas().protocol(),
+          takerCollateralInfo: convergence.collateral().pdas().collateralInfo({
+            user: taker,
+            programs,
+          }),
+          makerCollateralInfo: convergence.collateral().pdas().collateralInfo({
+            user: responseModel.maker,
+            programs,
+          }),
+          takerCollateralTokens: convergence
+            .collateral()
+            .pdas()
+            .collateralToken({
+              user: taker,
+              programs,
+            }),
+          makerCollateralTokens: convergence
+            .collateral()
+            .pdas()
+            .collateralToken({
+              user: responseModel.maker,
+              programs,
+            }),
+          protocolCollateralTokens: convergence
+            .collateral()
+            .pdas()
+            .collateralToken({
+              user: protocol.authority,
+              programs,
+            }),
+        },
+        convergence.programs().getRfq(programs).address
+      ),
+      signers: [],
+      key: 'unlockeResponseCollateral',
+    });
 };

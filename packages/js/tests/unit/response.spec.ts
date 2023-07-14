@@ -163,8 +163,8 @@ describe('unit.response', () => {
       address: rfq2.address,
     });
 
-    await makerCvg.rfqs().unlockResponseCollateral({
-      responses: responsesBefore,
+    await makerCvg.rfqs().unlockResponsesCollateral({
+      responses: responsesBefore.map((r) => r.address),
     });
 
     const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
