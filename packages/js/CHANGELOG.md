@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.4.8
+
+### Patch Changes
+
+- Fixed response cleanup block issue
+
 ## 4.4.7
 
 ### Patch Changes

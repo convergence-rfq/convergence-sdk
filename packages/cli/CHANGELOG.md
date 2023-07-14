@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.4.8
+
+### Patch Changes
+
+- Fixed response cleanup block issue
+- Updated dependencies
+  - @convergence-rfq/sdk@4.4.8
+
 ## 4.4.7
 
 ### Patch Changes

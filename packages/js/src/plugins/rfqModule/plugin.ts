@@ -65,6 +65,8 @@ import {
   cancelResponsesOperationHandler,
   unlockResponseCollateralOperation,
   unlockResponseCollateralOperationHandler,
+  unlockResponsesCollateralOperation,
+  unlockResponsesCollateralOperationHandler,
   cleanUpRfqsOperation,
   cleanUpRfqsOperationHandler,
 } from './operations';
@@ -166,6 +168,10 @@ export const rfqModule = (): ConvergencePlugin => ({
     op.register(
       unlockResponseCollateralOperation,
       unlockResponseCollateralOperationHandler
+    );
+    op.register(
+      unlockResponsesCollateralOperation,
+      unlockResponsesCollateralOperationHandler
     );
 
     convergence.rfqs = function () {
