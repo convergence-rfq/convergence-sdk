@@ -106,8 +106,8 @@ export const logProtocol = (p: Protocol): void => {
 export const logRiskEngineConfig = (r: any): void => {
   l('Address:', r.address.toString());
   l(
-    'Collateral for variable size RFQ creation:',
-    N(r.collateralForVariableSizeRfqCreation.toString())
+    'Minimal collateral requirement:',
+    N(r.minCollateralRequirement.toString())
   );
   l(
     'Collateral for fixed quote amount RFQ creation:',

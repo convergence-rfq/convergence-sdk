@@ -20,6 +20,7 @@ import {
   keypairIdentity,
   PublicKey,
   removeDecimals,
+  useCache,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
@@ -142,6 +143,109 @@ export const createAmericanCoveredCallRfq = async (
   });
 
   return { rfq, response, optionMarket };
+};
+
+const cFlyMarketsCache = useCache(async (cvg, baseMint, quoteMint) => {
+  const [
+    { optionMarket: low, optionMarketKey: lowKey },
+    { optionMarket: medium, optionMarketKey: mediumKey },
+    { optionMarket: high, optionMarketKey: highKey },
+  ] = await Promise.all([
+    initializeNewAmericanOption(
+      cvg,
+      baseMint,
+      quoteMint,
+      18_000,
+      1,
+      90 * 24 * 60 * 60 // 90 days
+    ),
+    initializeNewAmericanOption(
+      cvg,
+      baseMint,
+      quoteMint,
+      20_000,
+      1,
+      90 * 24 * 60 * 60 // 90 days
+    ),
+    initializeNewAmericanOption(
+      cvg,
+      baseMint,
+      quoteMint,
+      22_000,
+      1,
+      90 * 24 * 60 * 60 // 90 days
+    ),
+  ]);
+
+  return {
+    low,
+    lowKey,
+
+    medium,
+    mediumKey,
+
+    high,
+    highKey,
+  };
+}, 300);
+
+export const createCFlyRfq = async (
+  cvg: Convergence,
+  orderType: OrderType,
+  reversed: Boolean
+) => {
+  const baseMint = await cvg
+    .tokens()
+    .findMintByAddress({ address: BASE_MINT_BTC_PK });
+  const quoteMint = await cvg
+    .tokens()
+    .findMintByAddress({ address: QUOTE_MINT_PK });
+
+  const optionMarkets = await cFlyMarketsCache.get(cvg, baseMint, quoteMint);
+
+  const {
+    rfq: { address: rfqAddress },
+  } = await cvg.rfqs().create({
+    instruments: [
+      await PsyoptionsAmericanInstrument.create(
+        cvg,
+        baseMint,
+        quoteMint,
+        OptionType.CALL,
+        optionMarkets.low,
+        optionMarkets.lowKey,
+        1,
+        reversed ? 'short' : 'long'
+      ),
+      await PsyoptionsAmericanInstrument.create(
+        cvg,
+        baseMint,
+        quoteMint,
+        OptionType.CALL,
+        optionMarkets.medium,
+        optionMarkets.mediumKey,
+        2,
+        reversed ? 'long' : 'short'
+      ),
+      await PsyoptionsAmericanInstrument.create(
+        cvg,
+        baseMint,
+        quoteMint,
+        OptionType.CALL,
+        optionMarkets.high,
+        optionMarkets.highKey,
+        1,
+        reversed ? 'short' : 'long'
+      ),
+    ],
+    orderType,
+    fixedSize: { type: 'fixed-base', amount: 1 },
+    quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
+    settlingWindow: 90 * 24 * 60 * 60, // 90 days
+  });
+  const { rfq } = await cvg.rfqs().finalizeRfqConstruction({ rfq: rfqAddress });
+
+  return rfq;
 };
 
 export const createRfq = async (
