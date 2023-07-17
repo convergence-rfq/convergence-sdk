@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.4.9
+
+### Patch Changes
+
+- Updated risk engine to no longer experience out of bounds issues
+
 ## 4.4.8
 
 ### Patch Changes

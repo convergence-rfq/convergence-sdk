@@ -120,7 +120,7 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
       if (isFixedSizeNone(size)) {
         return {
           requiredCollateral: removeDecimals(
-            config.collateralForVariableSizeRfqCreation,
+            config.minCollateralRequirement,
             Number(config.collateralMintDecimals)
           ),
         };
