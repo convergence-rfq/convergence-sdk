@@ -2,15 +2,16 @@ import { PublicKey } from '@solana/web3.js';
 import { createUnlockRfqCollateralInstruction } from '@convergence-rfq/rfq';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
+
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
-} from '../../../types';
-import { Convergence } from '../../../Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+} from '@/types';
+import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
+import { Convergence } from '@/Convergence';
 
 const Key = 'UnlockRfqCollateralOperation' as const;
 
