@@ -24,7 +24,7 @@ export type Config = {
   readonly address: PublicKey;
 
   /** The amount of collateral required to create an RFQ with a variable size. */
-  readonly collateralForVariableSizeRfqCreation: bignum;
+  readonly minCollateralRequirement: bignum;
 
   /** The amount of collateral required to create an RFQ with a fixed size. */
   readonly collateralForFixedQuoteAmountRfqCreation: bignum;
@@ -76,8 +76,7 @@ export function assertConfig(value: any): asserts value is Response {
 export const toConfig = (account: ConfigAccount): Config => ({
   model: 'config',
   address: account.publicKey,
-  collateralForVariableSizeRfqCreation:
-    account.data.collateralForVariableSizeRfqCreation,
+  minCollateralRequirement: account.data.minCollateralRequirement,
   collateralForFixedQuoteAmountRfqCreation:
     account.data.collateralForFixedQuoteAmountRfqCreation,
   collateralMintDecimals: account.data.collateralMintDecimals,

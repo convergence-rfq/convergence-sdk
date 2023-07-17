@@ -335,8 +335,7 @@ export const initializeRiskEngine = async (opts: Opts) => {
   try {
     const { response } = await cvg.riskEngine().initializeConfig({
       collateralMintDecimals: opts.collateralMintDecimals,
-      collateralForVariableSizeRfqCreation:
-        opts.collateralForVariableSizeRfqCreation,
+      minCollateralRequirement: opts.minCollateralRequirement,
       collateralForFixedQuoteAmountRfqCreation:
         opts.collateralForFixedQuoteAmountRfqCreation,
       safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
@@ -356,8 +355,7 @@ export const updateRiskEngine = async (opts: Opts) => {
   try {
     const { response } = await cvg.riskEngine().updateConfig({
       collateralMintDecimals: opts.collateralMintDecimals,
-      collateralForVariableSizeRfqCreation:
-        opts.collateralForVariableSizeRfqCreation,
+      minCollateralRequirement: opts.minCollateralRequirement,
       collateralForFixedQuoteAmountRfqCreation:
         opts.collateralForFixedQuoteAmountRfqCreation,
       safetyPriceShiftFactor: opts.safetyPriceShiftFactor,

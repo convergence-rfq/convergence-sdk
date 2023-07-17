@@ -2,7 +2,7 @@ import { RiskCategoryInfo, Scenario } from '@convergence-rfq/risk-engine';
 
 import { toBigNumber as tbn } from '../../types';
 
-export const DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ = tbn(1_000_000_000);
+export const DEFAULT_MIN_COLLATERAL_REQUIREMENT = tbn(1_000_000_000);
 
 export const DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ = tbn(2_000_000_000);
 
