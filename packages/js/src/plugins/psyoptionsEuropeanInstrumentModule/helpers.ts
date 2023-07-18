@@ -4,7 +4,7 @@ import { Keypair, PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
 import { QuoteSide } from '@convergence-rfq/rfq';
 import { Mint } from '../tokenModule';
-import { ATAExistence, getOrCreateATA } from '../../utils/helpers';
+import { ATAExistence, getOrCreateATA } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';

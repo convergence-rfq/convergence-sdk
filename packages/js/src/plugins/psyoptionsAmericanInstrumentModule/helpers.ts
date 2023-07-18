@@ -5,9 +5,9 @@ import { QuoteSide } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
-import { ATAExistence, getOrCreateATA } from '../../utils/helpers';
+import { ATAExistence, getOrCreateATA } from '../../utils/ata';
 import { Mint } from '../tokenModule/models';
-import { CvgWallet } from '../../utils/CvgWallet';
+import { CvgWallet } from '../../utils/Wallets';
 import {
   InstructionWithSigners,
   TransactionBuilder,

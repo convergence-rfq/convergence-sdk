@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
@@ -13,7 +13,7 @@ import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
-import { CvgWallet } from '../../utils/CvgWallet';
+import { CvgWallet, NoopWallet } from '../../utils/Wallets';
 
 type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;
@@ -235,24 +235,6 @@ export const psyoptionsAmericanInstrumentParser = {
     );
   },
 };
-
-export class NoopWallet {
-  public readonly publicKey: PublicKey;
-
-  constructor(keypair: Keypair) {
-    this.publicKey = keypair.publicKey;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signTransaction(tx: Transaction): Promise<Transaction> {
-    throw new Error('Method not implemented.');
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-}
 
 export const createAmericanProgram = (
   convergence: Convergence,
