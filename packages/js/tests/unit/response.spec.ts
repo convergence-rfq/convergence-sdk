@@ -1,6 +1,8 @@
 import { expect } from 'expect';
+// TODO: Should not be using this
+import { QuoteSide } from '@convergence-rfq/rfq';
 
-import { Rfq, Side } from '../../src';
+import { Rfq } from '../../src';
 import { createUserCvg, createRfq, respondToRfq } from '../helpers';
 
 describe('unit.response', () => {
@@ -100,7 +102,7 @@ describe('unit.response', () => {
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: responses[0].address,
     });
-    expect(response.confirmed?.side).toBe(Side.Bid);
+    expect(response.confirmed?.side).toBe(QuoteSide.Bid);
   });
 
   it('confirm [ask]', async () => {
@@ -117,7 +119,7 @@ describe('unit.response', () => {
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: responses[0].address,
     });
-    expect(response.confirmed?.side).toBe(Side.Ask);
+    expect(response.confirmed?.side).toBe(QuoteSide.Ask);
   });
 
   it('cancel response', async () => {
@@ -161,8 +163,8 @@ describe('unit.response', () => {
       address: rfq2.address,
     });
 
-    await makerCvg.rfqs().unlockResponseCollateral({
-      responses: responsesBefore,
+    await makerCvg.rfqs().unlockResponsesCollateral({
+      responses: responsesBefore.map((r) => r.address),
     });
 
     const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({

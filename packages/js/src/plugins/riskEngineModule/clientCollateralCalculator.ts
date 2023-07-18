@@ -1,4 +1,4 @@
-import { RiskCategory, Side } from '@convergence-rfq/rfq';
+import { RiskCategory, QuoteSide } from '@convergence-rfq/rfq';
 import {
   futureCommonDataBeet,
   InstrumentType,
@@ -23,11 +23,12 @@ import {
   SETTLEMENT_WINDOW_BREAKPOINS,
   SETTLEMENT_WINDOW_PEDIODS,
 } from './constants';
+import { removeDecimals } from '@/utils/conversions';
 
 export type CalculationCase = {
   legMultiplier: number;
   authoritySide: AuthoritySide;
-  quoteSide: Side;
+  quoteSide: QuoteSide;
 };
 
 type PortfolioStatistics = {
@@ -74,7 +75,7 @@ export async function calculateRisk(
 
   const legInfos = legs.map((leg) => {
     let amount = leg.getAmount();
-    if (leg.getSide() == 'bid') {
+    if (leg.getSide() == 'long') {
       amount = -amount;
     }
 
@@ -107,7 +108,7 @@ export async function calculateRisk(
 
   const results: number[] = [];
   for (const calculationCase of cases) {
-    results.push(calculateRiskInner(statistics, calculationCase));
+    results.push(calculateRiskInner(statistics, calculationCase, config));
   }
 
   return results;
@@ -115,7 +116,8 @@ export async function calculateRisk(
 
 function calculateRiskInner(
   statistics: PortfolioStatistics,
-  calculationCase: CalculationCase
+  calculationCase: CalculationCase,
+  config: Config
 ): number {
   let portfolioInverted = false;
 
@@ -127,11 +129,18 @@ function calculateRiskInner(
     portfolioInverted = !portfolioInverted;
   }
 
-  const portfolioRisk = portfolioInverted
+  let portfolioRisk = portfolioInverted
     ? statistics.maxProfit
     : statistics.maxLoss;
+  portfolioRisk = Math.max(portfolioRisk, 0); // risk can't be lower that 0
 
-  return portfolioRisk * calculationCase.legMultiplier;
+  return Math.max(
+    portfolioRisk * calculationCase.legMultiplier,
+    removeDecimals(
+      config.minCollateralRequirement,
+      Number(config.collateralMintDecimals)
+    )
+  );
 }
 
 async function fetchBaseAssetInfo(
@@ -269,13 +278,6 @@ function calculateStatisticsForBaseAsset(
   const absoluteValueOfLegs = legValues
     .map((value) => Math.abs(value))
     .reduce((x, y) => x + y, 0);
-
-  if (biggestProfit < 0.0) {
-    throw new Error('Calculations error!');
-  }
-  if (biggestLoss > 0.0) {
-    throw new Error('Calculations error!');
-  }
 
   return {
     biggestProfit,

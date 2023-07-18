@@ -1,4 +1,4 @@
-import { createSettleInstruction, Side } from '@convergence-rfq/rfq';
+import { createSettleInstruction, QuoteSide } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -160,10 +160,10 @@ export const settleBuilder = async (
 
     let legTakerAmount = -1;
 
-    if (leg.getSide() == 'ask') {
+    if (leg.getSide() == 'short') {
       legTakerAmount *= -1;
     }
-    if (confirmationSide == Side.Bid) {
+    if (confirmationSide == QuoteSide.Bid) {
       legTakerAmount *= -1;
     }
 
@@ -223,12 +223,12 @@ export const settleBuilder = async (
   });
 
   let quoteReceiverTokens = 1;
-  if (confirmationSide == Side.Bid) {
+  if (confirmationSide == QuoteSide.Bid) {
     quoteReceiverTokens *= -1;
     if (responseModel.bid && responseModel.bid.price < 0) {
       quoteReceiverTokens *= -1;
     }
-  } else if (confirmationSide == Side.Ask) {
+  } else if (confirmationSide == QuoteSide.Ask) {
     if (responseModel.ask && responseModel.ask.price < 0) {
       quoteReceiverTokens *= -1;
     }

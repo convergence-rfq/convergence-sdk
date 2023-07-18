@@ -2,7 +2,7 @@ import {
   isFixedSizeBaseAsset,
   isFixedSizeNone,
   isFixedSizeQuoteAsset,
-  Side,
+  QuoteSide,
 } from '@convergence-rfq/rfq';
 
 import { calculateRisk, CalculationCase } from '../clientCollateralCalculator';
@@ -120,7 +120,7 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
       if (isFixedSizeNone(size)) {
         return {
           requiredCollateral: removeDecimals(
-            config.collateralForVariableSizeRfqCreation,
+            config.minCollateralRequirement,
             Number(config.collateralMintDecimals)
           ),
         };
@@ -136,7 +136,7 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
           size.legsMultiplierBps,
           LEG_MULTIPLIER_DECIMALS
         );
-        const sideToCase = (side: Side): CalculationCase => {
+        const sideToCase = (side: QuoteSide): CalculationCase => {
           return {
             legMultiplier,
             authoritySide: 'taker',
@@ -146,12 +146,12 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
 
         const cases: CalculationCase[] = [];
         if (orderType == 'buy') {
-          cases.push(sideToCase(Side.Ask));
+          cases.push(sideToCase(QuoteSide.Ask));
         } else if (orderType == 'sell') {
-          cases.push(sideToCase(Side.Bid));
+          cases.push(sideToCase(QuoteSide.Bid));
         } else if (orderType == 'two-way') {
-          cases.push(sideToCase(Side.Ask));
-          cases.push(sideToCase(Side.Bid));
+          cases.push(sideToCase(QuoteSide.Ask));
+          cases.push(sideToCase(QuoteSide.Bid));
         } else {
           throw new Error('Invalid order type');
         }

@@ -258,7 +258,7 @@ export const confirmResponseBuilder = async (
             ],
           },
           {
-            side: toSolitaSide(side),
+            side: toSolitaQuoteSide(side),
             overrideLegMultiplierBps,
           },
           convergence.programs().getRfq(programs).address

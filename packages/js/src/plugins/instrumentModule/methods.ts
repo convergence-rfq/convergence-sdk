@@ -20,7 +20,7 @@ export function toLeg(legInstrument: LegInstrument): Leg {
       legInstrument.getDecimals()
     ),
     instrumentDecimals: legInstrument.getDecimals(),
-    side: toSolitaSide(legInstrument.getSide()),
+    side: toSolitaLegSide(legInstrument.getSide()),
   };
 }
 

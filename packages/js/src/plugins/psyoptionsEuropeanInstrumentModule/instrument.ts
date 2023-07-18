@@ -17,7 +17,7 @@ import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import { ResponseSide, fromSolitaSide } from '../rfqModule/models/ResponseSide';
+import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 
 type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;
@@ -94,7 +94,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     readonly optionMetaPubKey: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
-    readonly side: ResponseSide,
+    readonly side: LegSide,
     private optionMeta?: EuroMeta
   ) {}
 
@@ -110,7 +110,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     meta: EuroMeta,
     metaKey: PublicKey,
     amount: number,
-    side: ResponseSide
+    side: LegSide
   ) {
     const mintInfoAddress = convergence
       .rfqs()
@@ -249,7 +249,7 @@ export const psyoptionsEuropeanInstrumentParser = {
       metaKey,
       baseAssetIndex,
       removeDecimals(instrumentAmount, PsyoptionsEuropeanInstrument.decimals),
-      fromSolitaSide(side)
+      fromSolitaLegSide(side)
     );
   },
 };

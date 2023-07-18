@@ -12,7 +12,7 @@ import { LegInstrument } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import { ResponseSide, fromSolitaSide } from '../rfqModule/models/ResponseSide';
+import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import { CvgWallet } from '../../utils/CvgWallet';
 
 type PsyoptionsAmericanInstrumentData = {
@@ -58,7 +58,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     readonly optionMetaPubKey: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
-    readonly side: ResponseSide,
+    readonly side: LegSide,
     private optionMeta?: OptionMarketWithKey
   ) {}
 
@@ -75,7 +75,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     optionMeta: OptionMarketWithKey,
     optionMetaPubkey: PublicKey,
     amount: number,
-    side: ResponseSide
+    side: LegSide
   ) {
     const mintInfoAddress = convergence
       .rfqs()
@@ -231,11 +231,10 @@ export const psyoptionsAmericanInstrumentParser = {
       metaKey,
       baseAssetIndex,
       removeDecimals(instrumentAmount, PsyoptionsAmericanInstrument.decimals),
-      fromSolitaSide(side)
+      fromSolitaLegSide(side)
     );
   },
 };
-
 
 export class NoopWallet {
   public readonly publicKey: PublicKey;

@@ -1,5 +1,29 @@
 # @convergence-rfq/cli
 
+## 4.4.9
+
+### Patch Changes
+
+- Updated risk engine to no longer experience out of bounds issues
+- Updated dependencies
+  - @convergence-rfq/sdk@4.4.9
+
+## 4.4.8
+
+### Patch Changes
+
+- Fixed response cleanup block issue
+- Updated dependencies
+  - @convergence-rfq/sdk@4.4.8
+
+## 4.4.7
+
+### Patch Changes
+
+- Updated CPL Solita bindings
+- Updated dependencies
+  - @convergence-rfq/sdk@4.4.7
+
 ## 4.4.6
 
 ### Patch Changes

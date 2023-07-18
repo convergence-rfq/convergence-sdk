@@ -7,7 +7,7 @@ import {
   DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
   DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
   DEFAULT_OVERALL_SAFETY_FACTOR,
-  DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
+  DEFAULT_MIN_COLLATERAL_REQUIREMENT,
   DEFAULT_ORACLE_STALENESS,
   DEFAULT_ACCEPTED_ORACLE_CONFIDENCE_INTERVAL_POSITION,
 } from '../constants';
@@ -61,7 +61,7 @@ export type UpdateConfigInput =
       authority?: Signer;
 
       /** The collateral amount required to create a variable size RFQ. */
-      collateralForVariableSizeRfqCreation?: number;
+      minCollateralRequirement?: number;
 
       /** The collateral amount required to create a fixed quote amount RFQ. */
       collateralForFixedQuoteAmountRfqCreation?: number;
@@ -148,7 +148,7 @@ export const updateConfigBuilder = (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     authority = payer,
-    collateralForVariableSizeRfqCreation = DEFAULT_COLLATERAL_FOR_VARIABLE_SIZE_RFQ,
+    minCollateralRequirement = DEFAULT_MIN_COLLATERAL_REQUIREMENT,
     collateralForFixedQuoteAmountRfqCreation = DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ,
     collateralMintDecimals = DEFAULT_MINT_DECIMALS,
     safetyPriceShiftFactor = DEFAULT_SAFETY_PRICE_SHIFT_FACTOR,
@@ -169,7 +169,7 @@ export const updateConfigBuilder = (
           config: convergence.riskEngine().pdas().config(),
         },
         {
-          collateralForVariableSizeRfqCreation,
+          minCollateralRequirement,
           collateralForFixedQuoteAmountRfqCreation,
           collateralMintDecimals,
           safetyPriceShiftFactor,
