@@ -3,7 +3,7 @@ import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { addDecimals } from '../../utils/conversions';
-import { toSolitaSide } from '../rfqModule/models/ResponseSide';
+import { toSolitaLegSide } from '../rfqModule/models/LegSide';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { SpotLegInstrument } from '../spotInstrumentModule';

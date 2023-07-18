@@ -1,7 +1,7 @@
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 
 import { BN } from 'bn.js';
-import { Side } from '@convergence-rfq/rfq';
+import { LegSide, QuoteSide } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
@@ -27,7 +27,8 @@ export const mintAmericanOptions = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
+  const confirmedSide =
+    response.confirmed?.side === QuoteSide.Ask ? 'short' : 'long';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
@@ -160,7 +161,8 @@ export const getOrCreateAmericanOptionATAs = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
+  const confirmedSide =
+    response.confirmed?.side === QuoteSide.Ask ? 'short' : 'long';
   let flag = false;
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();

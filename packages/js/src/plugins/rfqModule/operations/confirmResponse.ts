@@ -15,7 +15,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { ResponseSide, toSolitaSide } from '../models/ResponseSide';
+import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 
 const Key = 'ConfirmResponseOperation' as const;
 
