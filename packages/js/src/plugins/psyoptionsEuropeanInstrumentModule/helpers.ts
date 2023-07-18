@@ -2,7 +2,7 @@ import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
-import { Side } from '@convergence-rfq/rfq';
+import { QuoteSide } from '@convergence-rfq/rfq';
 import { Mint } from '../tokenModule';
 import { ATAExistence, getOrCreateATA } from '../../utils/helpers';
 import { addDecimals } from '../../utils/conversions';
@@ -130,7 +130,8 @@ export const mintEuropeanOptions = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
+  const confirmedSide =
+    response.confirmed?.side === QuoteSide.Ask ? 'short' : 'long';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
@@ -235,7 +236,8 @@ export const getOrCreateEuropeanOptionATAs = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide = response.confirmed?.side === Side.Ask ? 'ask' : 'bid';
+  const confirmedSide =
+    response.confirmed?.side === QuoteSide.Ask ? 'short' : 'long';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
