@@ -61,7 +61,7 @@ describe('integration.psyoptionsEuropean', async () => {
       takerCvg,
       oracle,
       europeanProgram,
-      baseMint as Mint,
+      baseMint,
       quoteMint,
       23_354,
       1,

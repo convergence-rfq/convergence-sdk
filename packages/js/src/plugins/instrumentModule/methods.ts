@@ -58,6 +58,7 @@ export function toQuote(legInstrument: QuoteInstrument): QuoteAsset {
   };
 }
 
+//TODO: refactor this method to use instrument interface in the future
 export const legToBaseAssetMint = async (
   convergence: Convergence,
   leg: LegInstrument

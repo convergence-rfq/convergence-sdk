@@ -102,9 +102,11 @@ export const initializeNewAmericanOption = async (
   quoteMint: Mint,
   quoteAmountPerContract: number,
   underlyingAmountPerContract: number,
-  expiresIn: number
+  expirationTimestamp: number
 ) => {
-  const expiration = new BN(Date.now() / 1_000 + expiresIn);
+  const expirationUnixTimestamp = new BN(
+    Date.now() / 1_000 + expirationTimestamp
+  );
 
   const quoteAmountPerContractBN = new BN(
     Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
@@ -120,7 +122,7 @@ export const initializeNewAmericanOption = async (
 
   const { optionMarketKey, optionMintKey, writerMintKey } =
     await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
-      expirationUnixTimestamp: expiration,
+      expirationUnixTimestamp,
       quoteAmountPerContract: quoteAmountPerContractBN,
       quoteMint: quoteMint.address,
       underlyingAmountPerContract: underlyingAmountPerContractBN,

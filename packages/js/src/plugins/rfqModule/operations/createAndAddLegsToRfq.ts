@@ -153,12 +153,12 @@ export const createAndAddLegsToRfqOperationHandler: OperationHandler<CreateAndAd
         expectedLegsHash: expectedHash,
       } = operation.input;
 
-      const recentTimestamp = new BN(Math.floor(Date.now() / 1000) - 1);
+      const recentTimestamp = new BN(Math.floor(Date.now() / 1000));
 
       const expectedLegsSize =
-        expectedSize ?? (await calculateExpectedLegsSize(instruments));
+        expectedSize ?? calculateExpectedLegsSize(instruments);
       const expectedLegsHash =
-        expectedHash ?? (await calculateExpectedLegsHash(instruments));
+        expectedHash ?? calculateExpectedLegsHash(instruments);
 
       const rfqPda = convergence
         .rfqs()
