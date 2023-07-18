@@ -38,11 +38,11 @@ export class NoopWallet {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   signTransaction(tx: Transaction): Promise<Transaction> {
-    throw new Error('Method not implemented.');
+    throw new Error('This Method is not expected to be called.');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
+    throw new Error('This Method is not expected to be called.');
   }
 }

@@ -103,11 +103,9 @@ export const initializeNewAmericanOption = async (
   quoteMint: Mint,
   quoteAmountPerContract: number,
   underlyingAmountPerContract: number,
-  expirationTimestamp: number
+  expiration: number
 ) => {
-  const expirationUnixTimestamp = new BN(
-    Date.now() / 1_000 + expirationTimestamp
-  );
+  const expirationUnixTimestamp = new BN(Date.now() / 1_000 + expiration);
 
   const quoteAmountPerContractBN = new BN(
     Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
