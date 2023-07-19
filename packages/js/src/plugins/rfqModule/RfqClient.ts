@@ -74,6 +74,8 @@ import {
   CleanUpResponsesInput,
   unlockResponsesCollateralOperation,
   UnlockResponsesCollateralInput,
+  UnlockRfqsCollateralInput,
+  unlockRfqsCollateralOperation,
 } from './operations';
 import { Response } from './models/Response';
 
@@ -454,6 +456,16 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(unlockRfqCollateralOperation(input), options);
+  }
+
+  /** {@inheritDoc unlockRfqsCollateralOperation} */
+  unlockRfqsCollateral(
+    input: UnlockRfqsCollateralInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(unlockRfqsCollateralOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */

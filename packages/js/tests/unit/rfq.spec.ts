@@ -1,5 +1,6 @@
 import { expect } from 'expect';
 
+import { Rfq } from '@convergence-rfq/rfq';
 import {
   Mint,
   SpotLegInstrument,
@@ -91,20 +92,20 @@ describe('unit.rfq', () => {
 
   it('unlock', async () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
-    const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
+    const rfqsBefore = (await getAll(iterator)).flat().filter((rfq: any) => {
       return rfq.state === 'canceled' && rfq.totalResponses === 0;
     });
-    expect(rfqs.length).toBeGreaterThan(0);
-    const responses = await Promise.all(
-      rfqs.map((rfq: any) =>
-        takerCvg.rfqs().unlockRfqCollateral({
-          rfq: rfq.address,
-        })
-      )
-    );
-    responses.map(({ response }) =>
-      expect(response).toHaveProperty('signature')
-    );
+    expect(rfqsBefore.length).toBeGreaterThan(0);
+    const { responses } = await takerCvg.rfqs().unlockRfqsCollateral({
+      rfqs: rfqsBefore.map((rfq: any) => rfq.address),
+    });
+    expect(responses.length).toBe(rfqsBefore.length);
+    const rfqsAfter = (await getAll(iterator)).flat().filter((rfq: any) => {
+      return rfq.state === 'canceled' && rfq.totalResponses === 0;
+    });
+    rfqsAfter.map((rfq: any) => {
+      expect(rfq.totalTakerCollateralLocked).toBe(0);
+    });
   });
 
   it('clean up', async () => {
