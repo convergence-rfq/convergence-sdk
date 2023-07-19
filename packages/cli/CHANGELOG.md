@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.4.10
+
+### Patch Changes
+
+- Added method for unlocking multiple RFQs collateral
+- Updated dependencies
+  - @convergence-rfq/sdk@4.4.10
+
 ## 4.4.9
 
 ### Patch Changes
