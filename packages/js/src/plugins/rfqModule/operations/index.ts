@@ -34,3 +34,4 @@ export * from './cancelRfqs';
 export * from './unlockResponseCollateral';
 export * from './unlockResponsesCollateral';
 export * from './unlockRfqsCollateral';
+export * from './getSettlementResult';

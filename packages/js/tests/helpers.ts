@@ -21,6 +21,7 @@ import {
   PublicKey,
   removeDecimals,
   useCache,
+  LegSide,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
@@ -252,9 +253,18 @@ export const createRfq = async (
   cvg: Convergence,
   amount: number,
   orderType: OrderType,
+  rfqType: 'open' | 'fixed-base' | 'fixed-quote' = 'fixed-base',
   quoteMintPk = QUOTE_MINT_PK,
   baseMintPk = BASE_MINT_BTC_PK
 ) => {
+  let instrumentAmount = 1;
+  let fixedSizeAmount = 1;
+  if (rfqType === 'fixed-base') {
+    instrumentAmount = amount;
+  }
+  if (rfqType === 'fixed-quote') {
+    fixedSizeAmount = amount;
+  }
   const baseMint = await cvg
     .tokens()
     .findMintByAddress({ address: baseMintPk });
@@ -263,10 +273,10 @@ export const createRfq = async (
     .findMintByAddress({ address: quoteMintPk });
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      await SpotLegInstrument.create(cvg, baseMint, amount, 'long'),
+      await SpotLegInstrument.create(cvg, baseMint, instrumentAmount, 'long'),
     ],
     orderType,
-    fixedSize: { type: 'fixed-base', amount: 1 },
+    fixedSize: { type: rfqType, amount: fixedSizeAmount },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
   return { rfq, response };
@@ -276,7 +286,8 @@ export const respondToRfq = async (
   cvg: Convergence,
   rfq: Rfq,
   bid?: number,
-  ask?: number
+  ask?: number,
+  legsMultiplierBps?: number
 ) => {
   if (!bid && !ask) {
     throw new Error('Must provide bid and/or ask');
@@ -284,8 +295,8 @@ export const respondToRfq = async (
   return await cvg.rfqs().respond({
     maker: cvg.identity(),
     rfq: rfq.address,
-    bid: bid ? { price: bid } : undefined,
-    ask: ask ? { price: ask } : undefined,
+    bid: bid ? { price: bid, legsMultiplierBps } : undefined,
+    ask: ask ? { price: ask, legsMultiplierBps } : undefined,
   });
 };
 

@@ -7,7 +7,7 @@ import {
 } from '@solana/web3.js';
 import * as Spl from '@solana/spl-token';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { Leg, QuoteSide } from '@convergence-rfq/rfq';
+import { Leg, QuoteSide, AuthoritySide } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
@@ -36,6 +36,7 @@ import {
   InstructionWithSigners,
   TransactionBuilder,
   addDecimals,
+  removeDecimals,
 } from '../../utils';
 import { Convergence } from '../../Convergence';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
@@ -53,7 +54,7 @@ import {
   toLeg,
 } from '../instrumentModule';
 import { SpotLegInstrument } from '../spotInstrumentModule';
-import { type Rfq, type Response } from './models';
+import { Rfq, Response } from './models';
 
 const { mintOptions } = instructions;
 
@@ -62,11 +63,32 @@ const { initializeAllAccountsInstructions, createEuroMetaInstruction } =
 
 export type HasMintAddress = Rfq | PublicKey;
 
+export enum AssetIdentifier {
+  LEG = 'Leg',
+  QUOTE = 'Quote',
+}
+
 export const toMintAddress = (
   value: PublicKeyValues | HasMintAddress
 ): PublicKey => {
   return toPublicKey(value);
 };
+
+export enum SettlementSide {
+  SENDER = 'sender',
+  RECEIVER = 'receiver',
+}
+
+export interface UISettlementPartyInfo {
+  assetType: AssetIdentifier;
+  amount: number;
+  side: SettlementSide;
+}
+
+export interface SettlementPartyInfo {
+  amount: number | null;
+  receiver: AuthoritySide | null;
+}
 
 /**
  * Take a user and create a wallet for each base asset and collateral asset if not already
@@ -76,6 +98,7 @@ export const toMintAddress = (
  * @param user
  * @returns
  */
+
 export const devnetAirdrops = async (
   cvg: Convergence,
   user: PublicKey,
@@ -1505,4 +1528,225 @@ export const legToBaseAssetMint = async (
   }
 
   throw Error('Unsupported instrument!');
+};
+
+export const getSettlementAssetsReceiver = (
+  rfq: Rfq,
+  response: Response,
+  assetIdentifier: AssetIdentifier,
+  legIndex?: number
+) => {
+  switch (assetIdentifier) {
+    case AssetIdentifier.QUOTE:
+      return getQuoteTokensReceiver(response);
+    case AssetIdentifier.LEG:
+      if (typeof legIndex === 'number') {
+        return getLegAssetsReceiver(rfq, legIndex, response);
+      } else {
+        throw Error('legIndex is required');
+      }
+  }
+};
+
+export const getSettlementAssetsAmountTotransfer = (
+  rfq: Rfq,
+  response: Response,
+  assetIdentifier: AssetIdentifier,
+  legIndex?: number
+) => {
+  switch (assetIdentifier) {
+    case AssetIdentifier.QUOTE:
+      return getQuoteAssetsAmountToTransfer(rfq, response);
+    case AssetIdentifier.LEG:
+      if (typeof legIndex === 'number') {
+        return getLegAssetsAmountToTransfer(rfq, response, legIndex);
+      } else {
+        throw Error('legIndex is required');
+      }
+  }
+};
+
+const getLegAssetsReceiver = (
+  rfq: Rfq,
+  legIndex: number,
+  response: Response
+) => {
+  const rfqleg = rfq.legs[legIndex];
+  const { confirmed } = response;
+  let receiver: AuthoritySide = AuthoritySide.Taker;
+  if (rfqleg.getSide() === 'short') {
+    receiver =
+      receiver === AuthoritySide.Taker
+        ? AuthoritySide.Maker
+        : AuthoritySide.Taker;
+  }
+  if (confirmed?.side === QuoteSide.Bid) {
+    receiver =
+      receiver === AuthoritySide.Taker
+        ? AuthoritySide.Maker
+        : AuthoritySide.Taker;
+  }
+  return receiver;
+};
+
+const getQuoteTokensReceiver = (response: Response) => {
+  const confirmation = response.confirmed;
+  let receiver: AuthoritySide = AuthoritySide.Maker;
+  // const  quote = self.get_confirmed_quote().unwrap();
+  let quote;
+  if (confirmation) {
+    quote = confirmation?.side === QuoteSide.Ask ? response.ask : response.bid;
+    const price = quote?.price;
+
+    if (QuoteSide.Bid === confirmation.side) {
+      receiver =
+        receiver === AuthoritySide.Maker
+          ? AuthoritySide.Taker
+          : AuthoritySide.Maker;
+    }
+    if (price) {
+      if (price < 0) {
+        receiver =
+          receiver === AuthoritySide.Maker
+            ? AuthoritySide.Taker
+            : AuthoritySide.Maker;
+      }
+    }
+  }
+  return receiver;
+};
+
+const getLegAssetsAmountToTransfer = (
+  rfq: Rfq,
+  response: Response,
+  legIndex: number
+) => {
+  const quote = response?.bid ? response.bid : response.ask;
+  const rfqleg = rfq.legs[legIndex];
+  let legsMultiplierBps: number;
+  legsMultiplierBps = getConfirmedlegMultiplierBps(response);
+  if (quote) {
+    switch (rfq.size.type) {
+      case 'fixed-quote':
+        const quoteAmount = rfq.size.amount;
+        const { price } = quote;
+        legsMultiplierBps = quoteAmount / price;
+        break;
+      default:
+        break;
+    }
+    const legAmount = rfqleg.getAmount() * legsMultiplierBps;
+
+    return legAmount;
+  }
+};
+
+const getQuoteAssetsAmountToTransfer = (rfq: Rfq, response: Response) => {
+  const quote = response?.bid ? response.bid : response.ask;
+  let positivePrice: number;
+  if (quote) {
+    let legsMultiplierBps: number;
+    switch (rfq.size.type) {
+      case 'fixed-quote':
+        return rfq.size.amount;
+      case 'fixed-base':
+        legsMultiplierBps = getConfirmedlegMultiplierBps(response);
+        positivePrice = Math.abs(quote.price);
+        return legsMultiplierBps * positivePrice;
+
+      case 'open':
+        legsMultiplierBps = getConfirmedlegMultiplierBps(response);
+        positivePrice = Math.abs(quote.price);
+        return legsMultiplierBps * positivePrice;
+    }
+  }
+};
+
+const getConfirmedlegMultiplierBps = (response: Response) => {
+  const quote = response?.bid ? response.bid : response.ask;
+  const defaultLegMultiplierBps = quote?.legsMultiplierBps
+    ? Number(quote.legsMultiplierBps)
+    : 1;
+  const confirmation = response.confirmed;
+  if (confirmation) {
+    if (confirmation.overrideLegMultiplierBps) {
+      return removeDecimals(confirmation.overrideLegMultiplierBps, 9);
+    } else {
+      return defaultLegMultiplierBps;
+    }
+  } else {
+    return defaultLegMultiplierBps;
+  }
+};
+
+export interface UISettlementResult {
+  takerSending: UISettlementPartyInfo[];
+  takerReceiving: UISettlementPartyInfo[];
+  makerSending: UISettlementPartyInfo[];
+  makerReceiving: UISettlementPartyInfo[];
+}
+export const convertToUISettlementPartyInfo = (
+  legs: SettlementPartyInfo[],
+  quote: SettlementPartyInfo
+): UISettlementResult => {
+  const takerSending: UISettlementPartyInfo[] = [];
+  const takerReceiving: UISettlementPartyInfo[] = [];
+  const makerSending: UISettlementPartyInfo[] = [];
+  const makerReceiving: UISettlementPartyInfo[] = [];
+
+  legs.forEach((leg) => {
+    if (leg.amount) {
+      if (leg.receiver === AuthoritySide.Taker) {
+        takerReceiving.push({
+          assetType: AssetIdentifier.LEG,
+          amount: leg.amount,
+          side: SettlementSide.RECEIVER,
+        });
+        makerSending.push({
+          assetType: AssetIdentifier.LEG,
+          amount: leg.amount,
+          side: SettlementSide.SENDER,
+        });
+      } else {
+        takerSending.push({
+          assetType: AssetIdentifier.LEG,
+          amount: leg.amount,
+          side: SettlementSide.SENDER,
+        });
+        makerReceiving.push({
+          assetType: AssetIdentifier.LEG,
+          amount: leg.amount,
+          side: SettlementSide.RECEIVER,
+        });
+      }
+    }
+  });
+
+  if (quote.amount) {
+    if (quote.receiver === AuthoritySide.Taker) {
+      takerReceiving.push({
+        assetType: AssetIdentifier.QUOTE,
+        amount: quote.amount,
+        side: SettlementSide.RECEIVER,
+      });
+      makerSending.push({
+        assetType: AssetIdentifier.QUOTE,
+        amount: quote.amount,
+        side: SettlementSide.SENDER,
+      });
+    } else {
+      takerSending.push({
+        assetType: AssetIdentifier.QUOTE,
+        amount: quote.amount,
+        side: SettlementSide.SENDER,
+      });
+      makerReceiving.push({
+        assetType: AssetIdentifier.QUOTE,
+        amount: quote.amount,
+        side: SettlementSide.RECEIVER,
+      });
+    }
+  }
+
+  return { takerSending, takerReceiving, makerSending, makerReceiving };
 };
