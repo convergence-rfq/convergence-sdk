@@ -1,91 +1,28 @@
 import { expect } from 'expect';
-import { PublicKey } from '@solana/web3.js';
-import * as anchor from '@project-serum/anchor';
 
-import { QUOTE_MINT_PK, BASE_MINT_BTC_PK } from '../constants';
-import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 import {
-  OptionType,
-  PsyoptionsEuropeanInstrument,
-  Mint,
-  initializeNewOptionMeta,
   createEuropeanProgram,
   getOrCreateEuropeanOptionATAs,
   mintEuropeanOptions,
-  SpotQuoteInstrument,
-  SpotLegInstrument,
-  CvgWallet,
 } from '../../src';
 import {
-  createPythPriceFeed,
   prepareRfqSettlement,
   respondToRfq,
   settleRfq,
   createUserCvg,
+  createEuropeanCoveredCallRfq,
 } from '../helpers';
 
 describe('integration.psyoptionsEuropean', async () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
-  let baseMint: Mint;
-  let quoteMint: Mint;
-
-  before(async () => {
-    baseMint = await takerCvg
-      .tokens()
-      .findMintByAddress({ address: BASE_MINT_BTC_PK });
-    quoteMint = await takerCvg
-      .tokens()
-      .findMintByAddress({ address: QUOTE_MINT_PK });
-  });
-
   it('covered call [sell]', async () => {
-    const europeanProgram = await createEuropeanProgram(takerCvg);
-    const oracle = await createPythPriceFeed(
-      new anchor.Program(
-        PseudoPythIdl,
-        new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-        new anchor.AnchorProvider(
-          takerCvg.connection,
-          new CvgWallet(takerCvg),
-          {}
-        )
-      ),
-      17_000,
-      quoteMint.decimals * -1
-    );
-    const min = 3_600;
-    const randomExpiry = min + Math.random();
-    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    const { rfq, response } = await createEuropeanCoveredCallRfq(
       takerCvg,
-      oracle,
-      europeanProgram,
-      baseMint,
-      quoteMint,
-      23_354,
-      1,
-      randomExpiry,
-      0
+      'sell'
     );
-
-    const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
-      instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, 'long'),
-        await PsyoptionsEuropeanInstrument.create(
-          takerCvg,
-          baseMint,
-          OptionType.CALL,
-          euroMeta,
-          euroMetaKey,
-          1,
-          'long'
-        ),
-      ],
-      orderType: 'sell',
-      fixedSize: { type: 'fixed-base', amount: 1 },
-      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-    });
+    const europeanProgram = await createEuropeanProgram(takerCvg);
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
 
