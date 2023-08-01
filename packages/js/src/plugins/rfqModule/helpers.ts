@@ -1619,17 +1619,13 @@ const getLegAssetsAmountToTransfer = (
       case 'fixed-quote':
         const quoteAmount = rfq.size.amount;
         const { price } = quote;
-        const receiver = getLegAssetsReceiver(rfq, legIndex, response);
-        const quoteDecimals = 6;
+        const quoteDecimals = rfq.quoteAsset.getDecimals();
         const amount = quoteAmount / price;
         if (Number.isInteger(amount)) {
           legsMultiplierBps = amount;
-        } else if (receiver === 'maker') {
-          legsMultiplierBps = Number(amount.toFixed(quoteDecimals)) + 1;
-        } else if (receiver === 'taker') {
+        } else {
           legsMultiplierBps = Number(amount.toFixed(quoteDecimals));
         }
-
         break;
       default:
         break;

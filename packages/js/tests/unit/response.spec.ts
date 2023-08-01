@@ -122,6 +122,7 @@ describe('unit.response', () => {
     expect(response.confirmed?.side).toBe(QuoteSide.Ask);
   });
 
+  // TODO ADD getResponseState function
   it('cancel response', async () => {
     const rfq = rfq0;
     const responsesBefore = await makerCvg.rfqs().findResponsesByRfq({

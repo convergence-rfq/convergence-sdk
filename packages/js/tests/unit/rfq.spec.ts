@@ -78,6 +78,7 @@ describe('unit.rfq', () => {
     expect(rfqs.length).toBeGreaterThan(0);
   });
 
+  // TODO ADD getRfqState function
   it('cancel', async () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {

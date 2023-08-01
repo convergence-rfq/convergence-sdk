@@ -10,6 +10,7 @@ export const CTX = new Ctx();
 
 export const BASE_MINT_DECIMALS = 9;
 export const COLLATERAL_MINT_DECIMALS = 9;
+export const QUOTE_MINT_DECIMALS = 9;
 export const BASE_MINT_BTC_PK = new P(CTX.baseMintBTC);
 export const BASE_MINT_SOL_PK = new P(CTX.baseMintSOL);
 export const QUOTE_MINT_PK = new P(CTX.quoteMint);

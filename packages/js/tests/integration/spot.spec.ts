@@ -9,7 +9,11 @@ import {
   createRfq,
   respondToRfq,
 } from '../helpers';
-import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
+import {
+  BASE_MINT_BTC_PK,
+  QUOTE_MINT_DECIMALS,
+  QUOTE_MINT_PK,
+} from '../constants';
 
 describe('integration.spot', () => {
   const takerCvg = createUserCvg('taker');
@@ -215,24 +219,24 @@ describe('integration.spot', () => {
     });
   });
 
-  it('open-size buy override', async () => {
+  it('open-size sell override', async () => {
     const amountA = 1;
     const amountB = 70;
 
-    const { rfq } = await createRfq(takerCvg, amountA, 'buy', 'open');
+    const { rfq } = await createRfq(takerCvg, amountA, 'sell', 'open');
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
-      undefined,
       amountB,
+      undefined,
       7
     );
     expect(rfqResponse).toHaveProperty('address');
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
       rfq: rfq.address,
       response: rfqResponse.address,
-      side: 'ask',
+      side: 'bid',
       overrideLegMultiplierBps: 5,
     });
     expect(confirmResponse.response).toHaveProperty('signature');
@@ -244,16 +248,51 @@ describe('integration.spot', () => {
       .getSettlementResult({ rfq, response: refreshedResponse });
 
     expect(result).toEqual({
-      quote: { receiver: 'maker', amount: 350 },
-      legs: [{ receiver: 'taker', amount: 5 }],
+      quote: { receiver: 'taker', amount: 350 },
+      legs: [{ receiver: 'maker', amount: 5 }],
     });
   });
 
   it('fixed-quote buy', async () => {
-    const amountA = 2000;
-    const amountB = 3.5;
+    const amountA = 2341.892;
+    const amountB = 3.456;
     const pricePerToken =
       Math.round((amountA / amountB) * Math.pow(10, 6)) / Math.pow(10, 6);
+
+    const { rfq } = await createRfq(takerCvg, amountA, 'buy', 'fixed-quote');
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      undefined,
+      pricePerToken
+    );
+    expect(rfqResponse).toHaveProperty('address');
+    const confirmResponse = await takerCvg.rfqs().confirmResponse({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      side: 'ask',
+    });
+    expect(confirmResponse.response).toHaveProperty('signature');
+    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
+      address: rfqResponse.address,
+    });
+    const result = await takerCvg
+      .rfqs()
+      .getSettlementResult({ rfq, response: refreshedResponse });
+
+    expect(result).toEqual({
+      quote: { receiver: 'maker', amount: 2341.892 },
+      legs: [{ receiver: 'taker', amount: 3.456 }],
+    });
+  });
+
+  it('fixed-quote sell', async () => {
+    const amountA = 8123.893;
+    const amountB = 9.3461;
+    const pricePerToken =
+      Math.round((amountA / amountB) * Math.pow(10, QUOTE_MINT_DECIMALS)) /
+      Math.pow(10, QUOTE_MINT_DECIMALS);
 
     const { rfq } = await createRfq(takerCvg, amountA, 'sell', 'fixed-quote');
     expect(rfq).toHaveProperty('address');
@@ -278,8 +317,8 @@ describe('integration.spot', () => {
       .getSettlementResult({ rfq, response: refreshedResponse });
 
     expect(result).toEqual({
-      quote: { receiver: 'taker', amount: 2000 },
-      legs: [{ receiver: 'maker', amount: 3.5 }],
+      quote: { receiver: 'taker', amount: 8123.893 },
+      legs: [{ receiver: 'maker', amount: 9.3461 }],
     });
   });
 });
