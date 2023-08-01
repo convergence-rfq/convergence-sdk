@@ -1246,14 +1246,6 @@ export const getOrCreateEuropeanOptionATAs = async (
             : euroMeta.callOptionMint,
           caller
         );
-
-        await getOrCreateATA(
-          convergence,
-          optionType == OptionType.PUT
-            ? euroMeta.putWriterMint
-            : euroMeta.callWriterMint,
-          caller
-        );
       }
     }
   }
@@ -1299,13 +1291,6 @@ export const getOrCreateAmericanOptionATAs = async (
           (optionMarket as OptionMarketWithKey).optionMint,
           caller
         );
-
-        await getOrCreateATA(
-          convergence,
-          optionMarket!.writerTokenMint,
-          caller
-        );
-
         await getOrCreateATA(
           convergence,
           optionMarket!.underlyingAssetMint,
