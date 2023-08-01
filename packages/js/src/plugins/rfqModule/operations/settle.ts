@@ -150,10 +150,12 @@ export const settleBuilder = async (
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-  const { legs: legsReceiver } = await convergence.rfqs().getSettlementResult({
-    response: responseModel,
-    rfq: rfqModel,
-  });
+  const { legs: legsReceiver, quote: quoteReceiver } = await convergence
+    .rfqs()
+    .getSettlementResult({
+      response: responseModel,
+      rfq: rfqModel,
+    });
 
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];
@@ -201,8 +203,6 @@ export const settleBuilder = async (
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
 
-  // const confirmationSide = responseModel.confirmed?.side;
-
   const spotInstrumentProgramAccount: AccountMeta = {
     pubkey: spotInstrumentProgram.address,
     isSigner: false,
@@ -212,11 +212,6 @@ export const settleBuilder = async (
   const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
     response,
     program: spotInstrumentProgram.address,
-  });
-
-  const quoteReceiver = await convergence.rfqs().getSettlementResult({
-    response: responseModel,
-    rfq: rfqModel,
   });
 
   const quoteAccounts: AccountMeta[] = [
@@ -233,7 +228,7 @@ export const settleBuilder = async (
         .pdas()
         .associatedTokenAccount({
           mint: rfqModel.quoteMint,
-          owner: quoteReceiver.quote.receiver === 'maker' ? maker : taker,
+          owner: quoteReceiver.receiver === 'maker' ? maker : taker,
           programs,
         }),
       isSigner: false,

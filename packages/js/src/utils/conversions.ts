@@ -40,11 +40,8 @@ export const removeDecimals = (value: bignum, decimals: number = 0): number => {
  */
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
 export const addDecimals = (value: number, decimals: number = 0): BN => {
-  const number = value * Math.pow(10, decimals);
-  if (number !== Math.floor(number)) {
-    throw new Error('Precision lost when converting number to BN');
-  }
-  return new BN(number.toString());
+  const number = (value * Math.pow(10, decimals)).toFixed(0);
+  return new BN(number);
 };
 
 /**

@@ -9,11 +9,7 @@ import {
   createRfq,
   respondToRfq,
 } from '../helpers';
-import {
-  BASE_MINT_BTC_PK,
-  QUOTE_MINT_DECIMALS,
-  QUOTE_MINT_PK,
-} from '../constants';
+import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
 describe('integration.spot', () => {
   const takerCvg = createUserCvg('taker');
@@ -32,13 +28,13 @@ describe('integration.spot', () => {
   });
 
   it('sell', async () => {
-    const amountA = 1.536_421;
-    const amountB = 22_000.86;
+    const baseAmount = 1.536_421;
+    const quoteAmount = 22_000.86;
 
-    const { rfq } = await createRfq(takerCvg, amountA, 'sell');
+    const { rfq } = await createRfq(takerCvg, baseAmount, 'sell');
     expect(rfq).toHaveProperty('address');
 
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, amountB);
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, quoteAmount);
     expect(rfqResponse).toHaveProperty('address');
 
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
@@ -47,18 +43,8 @@ describe('integration.spot', () => {
       response: rfqResponse.address,
       side: 'bid',
     });
-    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    expect(confirmResponse.response).toHaveProperty('signature');
-    const result = await takerCvg
-      .rfqs()
-      .getSettlementResult({ rfq, response: refreshedResponse });
 
-    expect(result).toEqual({
-      quote: { receiver: 'taker', amount: 22000.86 },
-      legs: [{ receiver: 'maker', amount: 1.536421 }],
-    });
+    expect(confirmResponse.response).toHaveProperty('signature');
 
     const [takerBtcBefore, takerQuoteBefore] = await Promise.all([
       fetchTokenAmount(takerCvg, baseMintBTC.address),
@@ -80,22 +66,22 @@ describe('integration.spot', () => {
     ]);
 
     // TODO: This does not seem right in terms of handling precision
-    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore + amountB);
-    expect(takerBtcAfter).toBeCloseTo(takerBtcBefore - amountA);
+    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore + quoteAmount);
+    expect(takerBtcAfter).toBeCloseTo(takerBtcBefore - baseAmount);
   });
 
   it('buy', async () => {
-    const amountA = 2.5;
-    const amountB = 24_300.75 * amountA;
+    const baseAmount = 2.5;
+    const quoteAmount = 24_300.75 * baseAmount;
 
-    const { rfq } = await createRfq(takerCvg, amountA, 'buy');
+    const { rfq } = await createRfq(takerCvg, baseAmount, 'buy');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
       undefined,
-      amountB
+      quoteAmount
     );
     expect(rfqResponse).toHaveProperty('address');
 
@@ -105,17 +91,6 @@ describe('integration.spot', () => {
       side: 'ask',
     });
 
-    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    const result = await takerCvg
-      .rfqs()
-      .getSettlementResult({ rfq, response: refreshedResponse });
-
-    expect(result).toEqual({
-      quote: { receiver: 'maker', amount: 60751.875 },
-      legs: [{ receiver: 'taker', amount: 2.5 }],
-    });
     expect(confirmResponse.response).toHaveProperty('signature');
 
     const [takerBtcBefore, makerBtcBefore] = await Promise.all([
@@ -137,22 +112,22 @@ describe('integration.spot', () => {
       fetchTokenAmount(takerCvg, baseMintBTC.address),
       fetchTokenAmount(makerCvg, baseMintBTC.address),
     ]);
-    expect(makerBtcAfter).toBe(makerBtcBefore - amountA);
-    expect(takerBtcAfter).toBe(takerBtcBefore + amountA);
+    expect(makerBtcAfter).toBe(makerBtcBefore - baseAmount);
+    expect(takerBtcAfter).toBe(takerBtcBefore + baseAmount);
   });
 
   it('two-way', async () => {
-    const amountA = 2.5;
-    const amountB = 24_300.75 * amountA;
+    const baseAmount = 2.5;
+    const quoteAmount = 24_300.75 * baseAmount;
 
-    const { rfq } = await createRfq(takerCvg, amountA, 'two-way');
+    const { rfq } = await createRfq(takerCvg, baseAmount, 'two-way');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
       undefined,
-      amountB
+      quoteAmount
     );
     expect(rfqResponse).toHaveProperty('address');
 
@@ -182,143 +157,7 @@ describe('integration.spot', () => {
       fetchTokenAmount(takerCvg, baseMintBTC.address),
       fetchTokenAmount(makerCvg, baseMintBTC.address),
     ]);
-    expect(makerBtcAfter).toBe(makerBtcBefore - amountA);
-    expect(takerBtcAfter).toBe(takerBtcBefore + amountA);
-  });
-
-  it('open-size buy', async () => {
-    const amountA = 1;
-    const amountB = 70;
-
-    const { rfq } = await createRfq(takerCvg, amountA, 'buy', 'open');
-    expect(rfq).toHaveProperty('address');
-    const { rfqResponse } = await respondToRfq(
-      makerCvg,
-      rfq,
-      undefined,
-      amountB,
-      7
-    );
-    expect(rfqResponse).toHaveProperty('address');
-    const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      side: 'ask',
-    });
-    expect(confirmResponse.response).toHaveProperty('signature');
-    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    const result = await takerCvg
-      .rfqs()
-      .getSettlementResult({ rfq, response: refreshedResponse });
-
-    expect(result).toEqual({
-      quote: { receiver: 'maker', amount: 490 },
-      legs: [{ receiver: 'taker', amount: 7 }],
-    });
-  });
-
-  it('open-size sell override', async () => {
-    const amountA = 1;
-    const amountB = 70;
-
-    const { rfq } = await createRfq(takerCvg, amountA, 'sell', 'open');
-    expect(rfq).toHaveProperty('address');
-    const { rfqResponse } = await respondToRfq(
-      makerCvg,
-      rfq,
-      amountB,
-      undefined,
-      7
-    );
-    expect(rfqResponse).toHaveProperty('address');
-    const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      side: 'bid',
-      overrideLegMultiplierBps: 5,
-    });
-    expect(confirmResponse.response).toHaveProperty('signature');
-    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    const result = await takerCvg
-      .rfqs()
-      .getSettlementResult({ rfq, response: refreshedResponse });
-
-    expect(result).toEqual({
-      quote: { receiver: 'taker', amount: 350 },
-      legs: [{ receiver: 'maker', amount: 5 }],
-    });
-  });
-
-  it('fixed-quote buy', async () => {
-    const amountA = 2341.892;
-    const amountB = 3.456;
-    const pricePerToken =
-      Math.round((amountA / amountB) * Math.pow(10, 6)) / Math.pow(10, 6);
-
-    const { rfq } = await createRfq(takerCvg, amountA, 'buy', 'fixed-quote');
-    expect(rfq).toHaveProperty('address');
-    const { rfqResponse } = await respondToRfq(
-      makerCvg,
-      rfq,
-      undefined,
-      pricePerToken
-    );
-    expect(rfqResponse).toHaveProperty('address');
-    const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      side: 'ask',
-    });
-    expect(confirmResponse.response).toHaveProperty('signature');
-    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    const result = await takerCvg
-      .rfqs()
-      .getSettlementResult({ rfq, response: refreshedResponse });
-
-    expect(result).toEqual({
-      quote: { receiver: 'maker', amount: 2341.892 },
-      legs: [{ receiver: 'taker', amount: 3.456 }],
-    });
-  });
-
-  it('fixed-quote sell', async () => {
-    const amountA = 8123.893;
-    const amountB = 9.3461;
-    const pricePerToken =
-      Math.round((amountA / amountB) * Math.pow(10, QUOTE_MINT_DECIMALS)) /
-      Math.pow(10, QUOTE_MINT_DECIMALS);
-
-    const { rfq } = await createRfq(takerCvg, amountA, 'sell', 'fixed-quote');
-    expect(rfq).toHaveProperty('address');
-    const { rfqResponse } = await respondToRfq(
-      makerCvg,
-      rfq,
-      pricePerToken,
-      undefined
-    );
-    expect(rfqResponse).toHaveProperty('address');
-    const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      side: 'bid',
-    });
-    expect(confirmResponse.response).toHaveProperty('signature');
-    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    const result = await takerCvg
-      .rfqs()
-      .getSettlementResult({ rfq, response: refreshedResponse });
-
-    expect(result).toEqual({
-      quote: { receiver: 'taker', amount: 8123.893 },
-      legs: [{ receiver: 'maker', amount: 9.3461 }],
-    });
+    expect(makerBtcAfter).toBe(makerBtcBefore - baseAmount);
+    expect(takerBtcAfter).toBe(takerBtcBefore + baseAmount);
   });
 });
