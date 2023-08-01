@@ -96,6 +96,20 @@ describe('integration.psyoptionsEuropean', async () => {
       side: 'bid',
     });
 
+    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
+      address: rfqResponse.address,
+    });
+    const result = await takerCvg
+      .rfqs()
+      .getSettlementResult({ rfq, response: refreshedResponse });
+    expect(result).toEqual({
+      quote: { receiver: 'taker', amount: 12 },
+      legs: [
+        { receiver: 'maker', amount: 1 },
+        { receiver: 'maker', amount: 1 },
+      ],
+    });
+
     await getOrCreateEuropeanOptionATAs(
       takerCvg,
       rfqResponse.address,

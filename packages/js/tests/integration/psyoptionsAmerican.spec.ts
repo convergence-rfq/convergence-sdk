@@ -28,7 +28,19 @@ describe('integration.psyoptionsAmerican', () => {
         side: 'bid',
       });
     expect(confirmResponse).toHaveProperty('signature');
-
+    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
+      address: rfqResponse.address,
+    });
+    const result = await takerCvg
+      .rfqs()
+      .getSettlementResult({ rfq, response: refreshedResponse });
+    expect(result).toEqual({
+      quote: { receiver: 'taker', amount: 12.1 },
+      legs: [
+        { receiver: 'maker', amount: 1 },
+        { receiver: 'maker', amount: 1 },
+      ],
+    });
     await setupAmerican(takerCvg, rfqResponse);
 
     const takerResponse = await prepareRfqSettlement(

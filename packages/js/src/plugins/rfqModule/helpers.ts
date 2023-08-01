@@ -7,7 +7,7 @@ import {
 } from '@solana/web3.js';
 import * as Spl from '@solana/spl-token';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { Leg, QuoteSide, AuthoritySide } from '@convergence-rfq/rfq';
+import { Leg, QuoteSide } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
@@ -87,9 +87,10 @@ export interface UISettlementPartyInfo {
 
 export interface SettlementPartyInfo {
   amount: number | null;
-  receiver: AuthoritySide | null;
+  receiver: Receiver | null;
 }
 
+export type Receiver = 'taker' | 'maker';
 /**
  * Take a user and create a wallet for each base asset and collateral asset if not already
  * present. Then mint tokens for devnet usage.
@@ -1573,25 +1574,19 @@ const getLegAssetsReceiver = (
 ) => {
   const rfqleg = rfq.legs[legIndex];
   const { confirmed } = response;
-  let receiver: AuthoritySide = AuthoritySide.Taker;
+  let receiver: Receiver = 'taker';
   if (rfqleg.getSide() === 'short') {
-    receiver =
-      receiver === AuthoritySide.Taker
-        ? AuthoritySide.Maker
-        : AuthoritySide.Taker;
+    receiver = receiver === 'taker' ? 'maker' : 'taker';
   }
   if (confirmed?.side === QuoteSide.Bid) {
-    receiver =
-      receiver === AuthoritySide.Taker
-        ? AuthoritySide.Maker
-        : AuthoritySide.Taker;
+    receiver = receiver === 'taker' ? 'maker' : 'taker';
   }
   return receiver;
 };
 
 const getQuoteTokensReceiver = (response: Response) => {
   const confirmation = response.confirmed;
-  let receiver: AuthoritySide = AuthoritySide.Maker;
+  let receiver: Receiver = 'maker';
   // const  quote = self.get_confirmed_quote().unwrap();
   let quote;
   if (confirmation) {
@@ -1599,17 +1594,11 @@ const getQuoteTokensReceiver = (response: Response) => {
     const price = quote?.price;
 
     if (QuoteSide.Bid === confirmation.side) {
-      receiver =
-        receiver === AuthoritySide.Maker
-          ? AuthoritySide.Taker
-          : AuthoritySide.Maker;
+      receiver = receiver === 'maker' ? 'taker' : 'maker';
     }
     if (price) {
       if (price < 0) {
-        receiver =
-          receiver === AuthoritySide.Maker
-            ? AuthoritySide.Taker
-            : AuthoritySide.Maker;
+        receiver = receiver === 'maker' ? 'taker' : 'maker';
       }
     }
   }
@@ -1630,7 +1619,17 @@ const getLegAssetsAmountToTransfer = (
       case 'fixed-quote':
         const quoteAmount = rfq.size.amount;
         const { price } = quote;
-        legsMultiplierBps = quoteAmount / price;
+        const receiver = getLegAssetsReceiver(rfq, legIndex, response);
+        const quoteDecimals = 6;
+        const amount = quoteAmount / price;
+        if (Number.isInteger(amount)) {
+          legsMultiplierBps = amount;
+        } else if (receiver === 'maker') {
+          legsMultiplierBps = Number(amount.toFixed(quoteDecimals)) + 1;
+        } else if (receiver === 'taker') {
+          legsMultiplierBps = Number(amount.toFixed(quoteDecimals));
+        }
+
         break;
       default:
         break;
@@ -1696,7 +1695,7 @@ export const convertToUISettlementPartyInfo = (
 
   legs.forEach((leg) => {
     if (leg.amount) {
-      if (leg.receiver === AuthoritySide.Taker) {
+      if (leg.receiver === 'taker') {
         takerReceiving.push({
           assetType: AssetIdentifier.LEG,
           amount: leg.amount,
@@ -1723,7 +1722,7 @@ export const convertToUISettlementPartyInfo = (
   });
 
   if (quote.amount) {
-    if (quote.receiver === AuthoritySide.Taker) {
+    if (quote.receiver === 'taker') {
       takerReceiving.push({
         assetType: AssetIdentifier.QUOTE,
         amount: quote.amount,

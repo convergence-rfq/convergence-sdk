@@ -1,4 +1,4 @@
-import { AuthoritySide, createSettleInstruction } from '@convergence-rfq/rfq';
+import { createSettleInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -189,7 +189,7 @@ export const settleBuilder = async (
           .pdas()
           .associatedTokenAccount({
             mint: baseAssetMint!.address,
-            owner: legReceiver.receiver === AuthoritySide.Maker ? maker : taker,
+            owner: legReceiver.receiver === 'maker' ? maker : taker,
             programs,
           }),
         isSigner: false,
@@ -233,10 +233,7 @@ export const settleBuilder = async (
         .pdas()
         .associatedTokenAccount({
           mint: rfqModel.quoteMint,
-          owner:
-            quoteReceiver.quote.receiver === AuthoritySide.Maker
-              ? maker
-              : taker,
+          owner: quoteReceiver.quote.receiver === 'maker' ? maker : taker,
           programs,
         }),
       isSigner: false,

@@ -52,8 +52,8 @@ describe('integration.spot', () => {
       .getSettlementResult({ rfq, response: refreshedResponse });
 
     expect(result).toEqual({
-      quote: { receiver: 0, amount: 22000.86 },
-      legs: [{ receiver: 1, amount: 1.536421 }],
+      quote: { receiver: 'taker', amount: 22000.86 },
+      legs: [{ receiver: 'maker', amount: 1.536421 }],
     });
 
     const [takerBtcBefore, takerQuoteBefore] = await Promise.all([
@@ -109,8 +109,8 @@ describe('integration.spot', () => {
       .getSettlementResult({ rfq, response: refreshedResponse });
 
     expect(result).toEqual({
-      quote: { receiver: 1, amount: 60751.875 },
-      legs: [{ receiver: 0, amount: 2.5 }],
+      quote: { receiver: 'maker', amount: 60751.875 },
+      legs: [{ receiver: 'taker', amount: 2.5 }],
     });
     expect(confirmResponse.response).toHaveProperty('signature');
 
@@ -210,8 +210,8 @@ describe('integration.spot', () => {
       .getSettlementResult({ rfq, response: refreshedResponse });
 
     expect(result).toEqual({
-      quote: { receiver: 1, amount: 490 },
-      legs: [{ receiver: 0, amount: 7 }],
+      quote: { receiver: 'maker', amount: 490 },
+      legs: [{ receiver: 'taker', amount: 7 }],
     });
   });
 
@@ -244,30 +244,30 @@ describe('integration.spot', () => {
       .getSettlementResult({ rfq, response: refreshedResponse });
 
     expect(result).toEqual({
-      quote: { receiver: 1, amount: 350 },
-      legs: [{ receiver: 0, amount: 5 }],
+      quote: { receiver: 'maker', amount: 350 },
+      legs: [{ receiver: 'taker', amount: 5 }],
     });
   });
 
   it('fixed-quote buy', async () => {
     const amountA = 2000;
-    const amountB = 3;
+    const amountB = 3.5;
     const pricePerToken =
       Math.round((amountA / amountB) * Math.pow(10, 6)) / Math.pow(10, 6);
 
-    const { rfq } = await createRfq(takerCvg, amountA, 'buy', 'fixed-quote');
+    const { rfq } = await createRfq(takerCvg, amountA, 'sell', 'fixed-quote');
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
-      undefined,
-      pricePerToken
+      pricePerToken,
+      undefined
     );
     expect(rfqResponse).toHaveProperty('address');
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
       rfq: rfq.address,
       response: rfqResponse.address,
-      side: 'ask',
+      side: 'bid',
     });
     expect(confirmResponse.response).toHaveProperty('signature');
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
@@ -278,8 +278,8 @@ describe('integration.spot', () => {
       .getSettlementResult({ rfq, response: refreshedResponse });
 
     expect(result).toEqual({
-      quote: { receiver: 1, amount: 2000 },
-      legs: [{ receiver: 0, amount: 3 }],
+      quote: { receiver: 'taker', amount: 2000 },
+      legs: [{ receiver: 'maker', amount: 3.5 }],
     });
   });
 });
