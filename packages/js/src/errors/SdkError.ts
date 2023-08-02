@@ -1,10 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
+import { Cluster, Program, Currency } from '../types';
 import {
   ConvergenceError,
   ConvergenceErrorInputWithoutSource,
   ConvergenceErrorOptions,
 } from './ConvergenceError';
-import { Cluster, Program, Currency } from '@/types';
 
 /** @group Errors */
 export class SdkError extends ConvergenceError {

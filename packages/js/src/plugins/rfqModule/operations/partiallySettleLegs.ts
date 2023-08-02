@@ -14,9 +14,12 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '../helpers';
+import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 

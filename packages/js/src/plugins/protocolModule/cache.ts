@@ -1,5 +1,5 @@
 import { Convergence } from '../../Convergence';
-import { useCache } from '../../utils';
+import { useCache } from '../../utils/cache';
 import { ProtocolGpaBuilder } from './ProtocolGpaBuilder';
 import {
   toBaseAssetAccount,

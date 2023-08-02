@@ -1,5 +1,5 @@
 import { Convergence } from '../../Convergence';
-import { useCache } from '../../utils';
+import { useCache } from '../../utils/cache';
 import { protocolCache } from '../protocolModule';
 
 export const collateralMintCache = useCache(async (cvg: Convergence) => {

@@ -5,7 +5,8 @@ import {
 } from '@convergence-rfq/rfq';
 
 import { ResponseAccount } from '../accounts';
-import { assert, removeDecimals } from '../../../utils';
+import { removeDecimals } from '../../../utils/conversions';
+import { assert } from '../../../utils/assert';
 import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
 import {
   StoredResponseState,

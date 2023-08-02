@@ -2,7 +2,10 @@ import { createRegisterMintInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,

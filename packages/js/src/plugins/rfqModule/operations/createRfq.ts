@@ -2,6 +2,7 @@ import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
+import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, FixedSize, Rfq, toSolitaFixedSize } from '../models';
 import {
@@ -10,7 +11,10 @@ import {
   instrumentsToLegAccounts,
   legsToBaseAssetAccounts,
 } from '../helpers';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,
@@ -154,7 +158,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     } = operation.input;
     let { expectedLegsHash } = operation.input;
 
-    const recentTimestamp = new anchor.BN(Math.floor(Date.now() / 1_000) - 1);
+    const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
 
     expectedLegsHash =
       expectedLegsHash ?? calculateExpectedLegsHash(instruments);

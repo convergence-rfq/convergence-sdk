@@ -9,7 +9,6 @@ import {
   AuthoritySide,
 } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { getOrCreateATA, legToBaseAssetMint } from '../helpers';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
@@ -21,8 +20,13 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
+import { getOrCreateATA } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule';
+import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 

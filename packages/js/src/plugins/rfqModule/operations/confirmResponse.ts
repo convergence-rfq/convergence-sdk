@@ -11,7 +11,10 @@ import {
   Signer,
 } from '../../../types';
 import { convertOverrideLegMultiplierBps } from '../helpers';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 
 const Key = 'ConfirmResponseOperation' as const;
