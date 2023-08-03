@@ -8,7 +8,7 @@ import {
   OptionType,
   PsyoptionsEuropeanInstrument,
   Mint,
-  initializeNewOptionMeta,
+  initializeNewEuropeanOption,
   createEuropeanProgram,
   getOrCreateEuropeanOptionATAs,
   mintEuropeanOptions,
@@ -57,7 +57,7 @@ describe('integration.psyoptionsEuropean', async () => {
     );
     const min = 3_600;
     const randomExpiry = min + Math.random();
-    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
       takerCvg,
       oracle,
       europeanProgram,

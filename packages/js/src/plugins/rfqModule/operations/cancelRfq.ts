@@ -10,7 +10,10 @@ import {
   useOperation,
   Signer,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 
 const Key = 'CancelRfqOperation' as const;
 

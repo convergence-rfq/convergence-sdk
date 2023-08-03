@@ -9,7 +9,10 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 
 const Key = 'CleanUpRfqOperation' as const;
 

@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
+import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, FixedSize, Rfq } from '../models';
 
@@ -14,7 +15,10 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import {
   LegInstrument,
   QuoteInstrument,
@@ -160,9 +164,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         settlingWindow = 1_000,
       } = operation.input;
 
-      const recentTimestamp = new anchor.BN(
-        Math.floor(Date.now() / 1_000) - 10
-      );
+      const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
 
       const expectedLegsHash = calculateExpectedLegsHash(instruments);
 

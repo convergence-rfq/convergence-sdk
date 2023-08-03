@@ -11,7 +11,7 @@ import {
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
-import { legToBaseAssetMint } from '../helpers';
+import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import { SendAndConfirmTransactionResponse } from '@/plugins';
 
 const Key = 'cleanUpResponseOperation' as const;

@@ -1,19 +1,19 @@
-import { PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
 import { FixableBeetArgsStruct, u8, u64, bignum } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
-
+import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import BN from 'bn.js';
 import { Mint } from '../tokenModule';
 import { LegInstrument } from '../instrumentModule';
-import { addDecimals, removeDecimals } from '../../utils';
+import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
-import { createAmericanProgram } from './helpers';
+import { CvgWallet, NoopWallet } from '../../utils/Wallets';
 
 type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;
@@ -168,30 +168,25 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   }
 
   serializeInstrumentData(): Buffer {
-    const callMint = this.optionMint.toBytes();
-    const optionMarket = this.optionMetaPubKey.toBytes();
-    const underlyingamountPerContract = addDecimals(
-      this.underlyingAmountPerContract,
-      this.underlyingAmountPerContractDecimals
-    ).toArrayLike(Buffer, 'le', 8);
-    const expirationtime = new BN(this.expiration).toArrayLike(Buffer, 'le', 8);
-    const strikeprice = addDecimals(
-      this.strikePrice,
-      this.strikePriceDecimals
-    ).toArrayLike(Buffer, 'le', 8);
-
-    return Buffer.from(
-      new Uint8Array([
-        this.optionType == OptionType.CALL ? 0 : 1,
-        ...underlyingamountPerContract,
+    const data: PsyoptionsAmericanInstrumentData = {
+      optionType: this.optionType,
+      underlyingAmountPerContract: addDecimals(
+        this.underlyingAmountPerContract,
+        this.underlyingAmountPerContractDecimals
+      ),
+      underlyingAmountPerContractDecimals:
         this.underlyingAmountPerContractDecimals,
-        ...strikeprice,
-        this.strikePriceDecimals,
-        ...expirationtime,
-        ...callMint,
-        ...optionMarket,
-      ])
-    );
+      strikePrice: addDecimals(this.strikePrice, this.strikePriceDecimals),
+      strikePriceDecimals: this.strikePriceDecimals,
+      expiration: new BN(this.expiration),
+      optionMint: this.optionMint,
+      metaKey: this.optionMetaPubKey,
+    };
+
+    const serializedData =
+      psyoptionsAmericanInstrumentDataSerializer.serialize(data);
+
+    return serializedData;
   }
 
   getProgramId() {
@@ -239,4 +234,22 @@ export const psyoptionsAmericanInstrumentParser = {
       fromSolitaLegSide(side)
     );
   },
+};
+
+export const createAmericanProgram = (
+  convergence: Convergence,
+  wallet?: CvgWallet
+): any => {
+  const provider = new anchor.AnchorProvider(
+    convergence.connection,
+    wallet ?? new NoopWallet(Keypair.generate()),
+    {}
+  );
+
+  const americanProgram = psyoptionsAmerican.createProgram(
+    new PublicKey('R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'),
+    provider
+  );
+
+  return americanProgram;
 };

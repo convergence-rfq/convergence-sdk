@@ -11,10 +11,10 @@ import {
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
-import BN from 'bn.js';
 import { Mint } from '../tokenModule';
 import { LegInstrument } from '../instrumentModule';
-import { addDecimals, assert, removeDecimals } from '../../utils';
+import { addDecimals, removeDecimals } from '../../utils/conversions';
+import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
@@ -187,30 +187,24 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
   }
 
   serializeInstrumentData(): Buffer {
-    const callMint = this.optionMint.toBytes();
-    const optionMarket = this.optionMetaPubKey.toBytes();
-    const underlyingamountPerContract = addDecimals(
-      this.underlyingAmountPerContract,
-      this.underlyingAmountPerContractDecimals
-    ).toArrayLike(Buffer, 'le', 8);
-    const expirationtime = new BN(this.expiration).toArrayLike(Buffer, 'le', 8);
-    const strikeprice = addDecimals(
-      this.strikePrice,
-      this.strikePriceDecimals
-    ).toArrayLike(Buffer, 'le', 8);
-
-    return Buffer.from(
-      new Uint8Array([
-        this.optionType == OptionType.CALL ? 0 : 1,
-        ...underlyingamountPerContract,
+    const data: PsyoptionsEuropeanInstrumentData = {
+      optionType: this.optionType,
+      underlyingAmountPerContract: addDecimals(
+        this.underlyingAmountPerContract,
+        this.underlyingAmountPerContractDecimals
+      ),
+      underlyingAmountPerContractDecimals:
         this.underlyingAmountPerContractDecimals,
-        ...strikeprice,
-        this.strikePriceDecimals,
-        ...expirationtime,
-        ...callMint,
-        ...optionMarket,
-      ])
-    );
+      strikePrice: addDecimals(this.strikePrice, this.strikePriceDecimals),
+      strikePriceDecimals: this.strikePriceDecimals,
+      expiration: this.expiration,
+      optionMint: this.optionMint,
+      metaKey: this.optionMetaPubKey,
+    };
+    const serializedData =
+      psyoptionsEuropeanInstrumentDataSerializer.serialize(data);
+
+    return serializedData;
   }
 
   getProgramId(): PublicKey {
