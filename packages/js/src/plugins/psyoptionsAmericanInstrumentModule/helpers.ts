@@ -178,18 +178,6 @@ export const getOrCreateAmericanOptionATAs = async (
         );
         if (optionMarket) {
           await getOrCreateATA(convergence, optionMarket.optionMint, caller);
-
-          await getOrCreateATA(
-            convergence,
-            optionMarket!.writerTokenMint,
-            caller
-          );
-
-          await getOrCreateATA(
-            convergence,
-            optionMarket!.underlyingAssetMint,
-            caller
-          );
         }
       }
     }

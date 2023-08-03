@@ -258,14 +258,6 @@ export const getOrCreateEuropeanOptionATAs = async (
             : euroMeta.callOptionMint,
           caller
         );
-
-        await getOrCreateATA(
-          convergence,
-          optionType === psyoptionsEuropean.OptionType.PUT
-            ? euroMeta.putWriterMint
-            : euroMeta.callWriterMint,
-          caller
-        );
       }
     }
   }
