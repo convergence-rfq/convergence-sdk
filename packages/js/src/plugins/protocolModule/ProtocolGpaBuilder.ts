@@ -7,7 +7,7 @@ import {
 } from '@convergence-rfq/rfq';
 
 import { Convergence } from '../../Convergence';
-import { GpaBuilder } from '../../utils';
+import { GpaBuilder } from '../../utils/GpaBuilder';
 
 const BUMP = 8;
 const INDEX = BUMP + 8;

@@ -1,6 +1,9 @@
 import { createCloseConfigInstruction } from '@convergence-rfq/risk-engine';
 
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,

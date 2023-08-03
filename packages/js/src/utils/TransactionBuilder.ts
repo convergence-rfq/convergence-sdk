@@ -6,8 +6,8 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../plugins/rpcModule';
-import type { Convergence } from '@/Convergence';
-import type { OperationOptions, Signer } from '@/types';
+import type { Convergence } from '../Convergence';
+import type { OperationOptions, Signer } from '../types';
 
 export type InstructionWithSigners = {
   instruction: TransactionInstruction;

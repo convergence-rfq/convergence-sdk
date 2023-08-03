@@ -10,7 +10,10 @@ import {
   useOperation,
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { protocolCache } from '../../protocolModule/cache';
 
 const Key = 'SettleTwoPartyDefaultOperation' as const;

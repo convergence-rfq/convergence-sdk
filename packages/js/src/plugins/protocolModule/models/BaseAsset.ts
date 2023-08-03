@@ -7,7 +7,7 @@ import {
 import { COption } from '@convergence-rfq/beet';
 
 import { BaseAssetAccount } from '../accounts';
-import { assert } from '../../../utils';
+import { assert } from '../../../utils/assert';
 
 export type RiskCategory =
   | 'very-low'

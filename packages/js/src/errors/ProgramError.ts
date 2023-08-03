@@ -1,9 +1,9 @@
+import { Program } from '../types';
 import {
   ConvergenceError,
   ConvergenceErrorInputWithoutSource,
   ConvergenceErrorOptions,
 } from './ConvergenceError';
-import { Program } from '@/types';
 
 type UnderlyingProgramError = Error & { code?: number; logs?: string[] };
 

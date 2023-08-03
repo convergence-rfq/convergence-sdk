@@ -12,7 +12,10 @@ import {
   useOperation,
   Signer,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { riskEngineConfigCache } from '../cache';
 
 const Key = 'SetInstrumentTypeOperation' as const;
