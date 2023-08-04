@@ -24,7 +24,7 @@ import {
   createEuropeanProgram,
   CvgWallet,
   PsyoptionsEuropeanInstrument,
-  initializeNewOptionMeta,
+  initializeNewEuropeanOption,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { IDL as PseudoPythIdl } from '../../validator/fixtures/programs/pseudo_pyth_idl';
@@ -171,7 +171,7 @@ export const createEuropeanCoveredCallRfq = async (
   );
   const min = 3_600;
   const randomExpiry = min + Math.random();
-  const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+  const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
     cvg,
     oracle,
     europeanProgram,

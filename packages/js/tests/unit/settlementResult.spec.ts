@@ -117,7 +117,7 @@ describe('unit.settlementResult', () => {
       .getSettlementResult({ rfq, response: refreshedResponse });
 
     expect(result).toEqual({
-      quote: { receiver: 'maker', amount: 91716.09420480001 },
+      quote: { receiver: 'maker', amount: 91716.094204801 },
       legs: [{ receiver: 'taker', amount: 7.456 }],
     });
   });
@@ -133,14 +133,14 @@ describe('unit.settlementResult', () => {
       rfq,
       quoteAmount,
       undefined,
-      8.456
+      8.456123456
     );
     expect(rfqResponse).toHaveProperty('address');
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
       rfq: rfq.address,
       response: rfqResponse.address,
       side: 'bid',
-      overrideLegMultiplierBps: 5.4872,
+      overrideLegMultiplierBps: 5.487245678,
     });
     expect(confirmResponse.response).toHaveProperty('signature');
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
@@ -151,8 +151,43 @@ describe('unit.settlementResult', () => {
       .getSettlementResult({ rfq, response: refreshedResponse });
 
     expect(result).toEqual({
-      quote: { receiver: 'taker', amount: 389591.035384 },
-      legs: [{ receiver: 'maker', amount: 5.4872 }],
+      quote: { receiver: 'taker', amount: 389594.278520629 },
+      legs: [{ receiver: 'maker', amount: 5.487245678 }],
+    });
+  });
+
+  it('two way rfq , confirming ask side', async () => {
+    const baseAmount = 5.632123779;
+    const quoteAmount1 = 24_300.75;
+    const quoteAmount2 = 28_899.75;
+
+    const { rfq } = await createRfq(takerCvg, baseAmount, 'two-way');
+    expect(rfq).toHaveProperty('address');
+
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      quoteAmount1,
+      quoteAmount2
+    );
+    expect(rfqResponse).toHaveProperty('address');
+
+    const confirmResponse = await takerCvg.rfqs().confirmResponse({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      side: 'ask',
+    });
+    expect(confirmResponse.response).toHaveProperty('signature');
+    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
+      address: rfqResponse.address,
+    });
+    const result = await takerCvg.rfqs().getSettlementResult({
+      rfq,
+      response: refreshedResponse,
+    });
+    expect(result).toEqual({
+      quote: { receiver: 'maker', amount: 28899.75 },
+      legs: [{ receiver: 'taker', amount: 5.632123779 }],
     });
   });
 
