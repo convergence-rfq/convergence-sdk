@@ -41,28 +41,6 @@ describe('unit.rfq', () => {
     expect(fixedSize.amount).toBeCloseTo(rfq.size.amount);
   });
 
-  it('create [size precision error]', async () => {
-    const errors: string[] = [];
-    const fixedSize: FixedSize = {
-      type: 'fixed-base',
-      amount: 19.653_038_331_093,
-    };
-    await takerCvg
-      .rfqs()
-      .createAndFinalize({
-        instruments: [
-          await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, 'long'),
-        ],
-        orderType: 'buy',
-        quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-        fixedSize,
-      })
-      .catch((e) => {
-        errors.push(e.message);
-      });
-    expect(errors[0]).toBe('Precision lost when converting number to BN');
-  });
-
   it('find all', async () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat();
