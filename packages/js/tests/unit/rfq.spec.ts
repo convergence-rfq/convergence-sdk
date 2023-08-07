@@ -1,6 +1,5 @@
 import { expect } from 'expect';
 
-import { Rfq } from '@convergence-rfq/rfq';
 import {
   Mint,
   SpotLegInstrument,

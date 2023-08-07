@@ -3,7 +3,6 @@ import { Rfq, Response } from '../models';
 import { Operation, OperationHandler, useOperation } from '../../../types';
 import { LEG_MULTIPLIER_DECIMALS } from '../constants';
 import { removeDecimals, roundDown, roundUp } from '@/utils';
-import { LegInstrument } from '@/plugins/instrumentModule';
 
 const Key = 'GetSettlementResult' as const;
 
@@ -130,7 +129,7 @@ const getLegAssetsAmountToTransfer = (
   legIndex: number
 ) => {
   const leg = rfq.legs[legIndex];
-  const legsMultiplier = getConfirmedLegMultiplier(response, rfq, leg);
+  const legsMultiplier = getConfirmedLegMultiplier(response, rfq);
   let legAmount = leg.getAmount() * legsMultiplier;
   const receiver = getLegAssetsReceiver(rfq, response, legIndex);
 
@@ -162,30 +161,28 @@ const getQuoteAssetsAmountToTransfer = (rfq: Rfq, response: Response) => {
   return quoteAmount;
 };
 
-const getConfirmedLegMultiplier = (
-  response: Response,
-  rfq: Rfq,
-  leg?: LegInstrument
-) => {
+const getConfirmedLegMultiplier = (response: Response, rfq: Rfq) => {
   const quote = getConfirmedQuote(response);
-  let legsMultiplier = quote?.legsMultiplierBps
-    ? Number(quote.legsMultiplierBps)
-    : 1;
-  if (rfq.size.type === 'fixed-quote' && leg) {
-    const quoteAmount = rfq.size.amount;
-    const price = quote?.price;
-    const amount = quoteAmount / Number(price);
-    if (Number.isInteger(amount)) {
-      legsMultiplier = amount;
-    } else {
-      legsMultiplier = Number(amount.toFixed(LEG_MULTIPLIER_DECIMALS));
-    }
+  if (response.confirmed?.overrideLegMultiplierBps) {
+    return removeDecimals(
+      response.confirmed?.overrideLegMultiplierBps,
+      LEG_MULTIPLIER_DECIMALS
+    );
+  } else if (quote?.legsMultiplierBps) {
+    return quote?.legsMultiplierBps;
   }
-  const { confirmed } = response;
-  if (confirmed?.overrideLegMultiplierBps) {
-    legsMultiplier = removeDecimals(confirmed?.overrideLegMultiplierBps, 9);
+  switch (rfq.size.type) {
+    case 'fixed-quote':
+      const quoteAmount = rfq.size.amount;
+      const price = quote?.price;
+      const amount = quoteAmount / price;
+
+      return Number(amount.toFixed(LEG_MULTIPLIER_DECIMALS));
+
+    case 'fixed-base':
+      return rfq.size.amount;
   }
-  return legsMultiplier;
+  throw new Error('No confirmed leg multiplier');
 };
 
 const getConfirmedQuote = (response: Response) => {
