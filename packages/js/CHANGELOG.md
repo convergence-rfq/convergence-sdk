@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.0
+
+### Patch Changes
+
+- Added getSettlementResult Operation to Rfq Module
+
 ## 4.4.10
 
 ### Patch Changes
