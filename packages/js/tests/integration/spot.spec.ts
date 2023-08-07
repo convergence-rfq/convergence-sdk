@@ -28,17 +28,13 @@ describe('integration.spot', () => {
   });
 
   it('sell', async () => {
-    const amountA = 1.536_421;
-    const amountB = 22_000.86;
+    const baseAmount = 1.536_421;
+    const quoteAmount = 22_000.86;
 
-    const { rfq } = await createRfq(takerCvg, amountA, 'sell');
+    const { rfq } = await createRfq(takerCvg, baseAmount, 'sell');
     expect(rfq).toHaveProperty('address');
 
-    const { rfqResponse } = await respondToRfq(
-      makerCvg,
-      rfq,
-      amountB
-    );
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, quoteAmount);
     expect(rfqResponse).toHaveProperty('address');
 
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
@@ -47,6 +43,7 @@ describe('integration.spot', () => {
       response: rfqResponse.address,
       side: 'bid',
     });
+
     expect(confirmResponse.response).toHaveProperty('signature');
 
     const [takerBtcBefore, takerQuoteBefore] = await Promise.all([
@@ -69,22 +66,22 @@ describe('integration.spot', () => {
     ]);
 
     // TODO: This does not seem right in terms of handling precision
-    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore + amountB);
-    expect(takerBtcAfter).toBeCloseTo(takerBtcBefore - amountA);
+    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore + quoteAmount);
+    expect(takerBtcAfter).toBeCloseTo(takerBtcBefore - baseAmount);
   });
 
   it('buy', async () => {
-    const amountA = 2.5;
-    const amountB = 24_300.75 * amountA;
+    const baseAmount = 2.5;
+    const quoteAmount = 24_300.75 * baseAmount;
 
-    const { rfq } = await createRfq(takerCvg, amountA, 'buy');
+    const { rfq } = await createRfq(takerCvg, baseAmount, 'buy');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
       undefined,
-      amountB
+      quoteAmount
     );
     expect(rfqResponse).toHaveProperty('address');
 
@@ -93,6 +90,7 @@ describe('integration.spot', () => {
       response: rfqResponse.address,
       side: 'ask',
     });
+
     expect(confirmResponse.response).toHaveProperty('signature');
 
     const [takerBtcBefore, makerBtcBefore] = await Promise.all([
@@ -114,22 +112,22 @@ describe('integration.spot', () => {
       fetchTokenAmount(takerCvg, baseMintBTC.address),
       fetchTokenAmount(makerCvg, baseMintBTC.address),
     ]);
-    expect(makerBtcAfter).toBe(makerBtcBefore - amountA);
-    expect(takerBtcAfter).toBe(takerBtcBefore + amountA);
+    expect(makerBtcAfter).toBe(makerBtcBefore - baseAmount);
+    expect(takerBtcAfter).toBe(takerBtcBefore + baseAmount);
   });
 
   it('two-way', async () => {
-    const amountA = 2.5;
-    const amountB = 24_300.75 * amountA;
+    const baseAmount = 2.5;
+    const quoteAmount = 24_300.75 * baseAmount;
 
-    const { rfq } = await createRfq(takerCvg, amountA, 'two-way');
+    const { rfq } = await createRfq(takerCvg, baseAmount, 'two-way');
     expect(rfq).toHaveProperty('address');
 
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
       undefined,
-      amountB
+      quoteAmount
     );
     expect(rfqResponse).toHaveProperty('address');
 
@@ -159,7 +157,7 @@ describe('integration.spot', () => {
       fetchTokenAmount(takerCvg, baseMintBTC.address),
       fetchTokenAmount(makerCvg, baseMintBTC.address),
     ]);
-    expect(makerBtcAfter).toBe(makerBtcBefore - amountA);
-    expect(takerBtcAfter).toBe(takerBtcBefore + amountA);
+    expect(makerBtcAfter).toBe(makerBtcBefore - baseAmount);
+    expect(takerBtcAfter).toBe(takerBtcBefore + baseAmount);
   });
 });

@@ -1,4 +1,4 @@
-import { createSettleInstruction, QuoteSide } from '@convergence-rfq/rfq';
+import { createSettleInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -153,19 +153,16 @@ export const settleBuilder = async (
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const { legs: legsReceiver, quote: quoteReceiver } = await convergence
+    .rfqs()
+    .getSettlementResult({
+      response: responseModel,
+      rfq: rfqModel,
+    });
 
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];
-    const confirmationSide = responseModel.confirmed?.side;
-
-    let legTakerAmount = -1;
-
-    if (leg.getSide() == 'short') {
-      legTakerAmount *= -1;
-    }
-    if (confirmationSide == QuoteSide.Bid) {
-      legTakerAmount *= -1;
-    }
+    const legReceiver = legsReceiver[legIndex];
 
     const baseAssetMint = await legToBaseAssetMint(convergence, leg);
 
@@ -197,7 +194,7 @@ export const settleBuilder = async (
           .pdas()
           .associatedTokenAccount({
             mint: baseAssetMint!.address,
-            owner: legTakerAmount > 0 ? maker : taker,
+            owner: legReceiver.receiver === 'maker' ? maker : taker,
             programs,
           }),
         isSigner: false,
@@ -209,8 +206,6 @@ export const settleBuilder = async (
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
 
-  const confirmationSide = responseModel.confirmed?.side;
-
   const spotInstrumentProgramAccount: AccountMeta = {
     pubkey: spotInstrumentProgram.address,
     isSigner: false,
@@ -221,18 +216,6 @@ export const settleBuilder = async (
     response,
     program: spotInstrumentProgram.address,
   });
-
-  let quoteReceiverTokens = 1;
-  if (confirmationSide == QuoteSide.Bid) {
-    quoteReceiverTokens *= -1;
-    if (responseModel.bid && responseModel.bid.price < 0) {
-      quoteReceiverTokens *= -1;
-    }
-  } else if (confirmationSide == QuoteSide.Ask) {
-    if (responseModel.ask && responseModel.ask.price < 0) {
-      quoteReceiverTokens *= -1;
-    }
-  }
 
   const quoteAccounts: AccountMeta[] = [
     //`escrow`
@@ -248,7 +231,7 @@ export const settleBuilder = async (
         .pdas()
         .associatedTokenAccount({
           mint: rfqModel.quoteMint,
-          owner: quoteReceiverTokens > 0 ? maker : taker,
+          owner: quoteReceiver.receiver === 'maker' ? maker : taker,
           programs,
         }),
       isSigner: false,

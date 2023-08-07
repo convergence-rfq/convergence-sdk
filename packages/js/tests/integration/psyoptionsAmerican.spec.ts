@@ -28,7 +28,6 @@ describe('integration.psyoptionsAmerican', () => {
         side: 'bid',
       });
     expect(confirmResponse).toHaveProperty('signature');
-
     await setupAmerican(takerCvg, rfqResponse);
 
     const takerResponse = await prepareRfqSettlement(
