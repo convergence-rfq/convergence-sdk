@@ -153,11 +153,3 @@ export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
       return 0;
     });
 };
-
-export const roundUp = (amount: number, decimals: number) => {
-  return Math.ceil(amount * Math.pow(10, decimals)) / Math.pow(10, decimals);
-};
-
-export const roundDown = (amount: number, decimals: number) => {
-  return Math.floor(amount * Math.pow(10, decimals)) / Math.pow(10, decimals);
-};

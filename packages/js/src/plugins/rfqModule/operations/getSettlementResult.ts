@@ -2,8 +2,7 @@ import { QuoteSide } from '@convergence-rfq/rfq';
 import { Rfq, Response } from '../models';
 import { Operation, OperationHandler, useOperation } from '../../../types';
 import { LEG_MULTIPLIER_DECIMALS } from '../constants';
-import { roundDown, roundUp } from '../helpers';
-import { removeDecimals } from '@/utils';
+import { removeDecimals, roundDown, roundUp } from '@/utils';
 import { LegInstrument } from '@/plugins/instrumentModule';
 
 const Key = 'GetSettlementResult' as const;
@@ -105,7 +104,7 @@ const getLegAssetsReceiver = (
   if (leg.getSide() === 'short') {
     receiver = inverseReceiver(receiver);
   }
-  if (confirmed?.side === QuoteSide.Bid) {
+  if (confirmed!.side === QuoteSide.Bid) {
     receiver = inverseReceiver(receiver);
   }
   return receiver;
@@ -134,14 +133,13 @@ const getLegAssetsAmountToTransfer = (
   const legsMultiplier = getConfirmedLegMultiplier(response, rfq, leg);
   let legAmount = leg.getAmount() * legsMultiplier;
   const receiver = getLegAssetsReceiver(rfq, response, legIndex);
-  const noOfFractionalDigits = legAmount.toString().split('.')[1]?.length ?? 0;
-  if (noOfFractionalDigits > LEG_MULTIPLIER_DECIMALS) {
-    if (receiver === 'maker') {
-      legAmount = roundUp(legAmount, LEG_MULTIPLIER_DECIMALS);
-    } else if (receiver === 'taker') {
-      legAmount = roundDown(legAmount, LEG_MULTIPLIER_DECIMALS);
-    }
+
+  if (receiver === 'maker') {
+    legAmount = roundUp(legAmount, LEG_MULTIPLIER_DECIMALS);
+  } else if (receiver === 'taker') {
+    legAmount = roundDown(legAmount, LEG_MULTIPLIER_DECIMALS);
   }
+
   return legAmount;
 };
 
@@ -154,14 +152,11 @@ const getQuoteAssetsAmountToTransfer = (rfq: Rfq, response: Response) => {
   const positivePrice = Math.abs(Number(quote?.price));
   let quoteAmount = legsMultiplier * positivePrice;
   const receiver = getQuoteTokensReceiver(response);
-  const noOfFractionalDigits =
-    quoteAmount.toString().split('.')[1]?.length ?? 0;
-  if (noOfFractionalDigits > LEG_MULTIPLIER_DECIMALS) {
-    if (receiver === 'maker') {
-      quoteAmount = roundUp(quoteAmount, LEG_MULTIPLIER_DECIMALS);
-    } else if (receiver === 'taker') {
-      quoteAmount = roundDown(quoteAmount, LEG_MULTIPLIER_DECIMALS);
-    }
+
+  if (receiver === 'maker') {
+    quoteAmount = roundUp(quoteAmount, LEG_MULTIPLIER_DECIMALS);
+  } else if (receiver === 'taker') {
+    quoteAmount = roundDown(quoteAmount, LEG_MULTIPLIER_DECIMALS);
   }
 
   return quoteAmount;
@@ -179,12 +174,11 @@ const getConfirmedLegMultiplier = (
   if (rfq.size.type === 'fixed-quote' && leg) {
     const quoteAmount = rfq.size.amount;
     const price = quote?.price;
-    const legDecimals = leg.getDecimals();
     const amount = quoteAmount / Number(price);
     if (Number.isInteger(amount)) {
       legsMultiplier = amount;
     } else {
-      legsMultiplier = Number(amount.toFixed(legDecimals));
+      legsMultiplier = Number(amount.toFixed(LEG_MULTIPLIER_DECIMALS));
     }
   }
   const { confirmed } = response;

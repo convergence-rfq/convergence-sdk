@@ -191,6 +191,41 @@ describe('unit.settlementResult', () => {
     });
   });
 
+  it('two way rfq , confirming bid side', async () => {
+    const baseAmount = 9.632123779;
+    const quoteAmount1 = 14_300.75;
+    const quoteAmount2 = 18_899.75;
+
+    const { rfq } = await createRfq(takerCvg, baseAmount, 'two-way');
+    expect(rfq).toHaveProperty('address');
+
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      quoteAmount1,
+      quoteAmount2
+    );
+    expect(rfqResponse).toHaveProperty('address');
+
+    const confirmResponse = await takerCvg.rfqs().confirmResponse({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      side: 'bid',
+    });
+    expect(confirmResponse.response).toHaveProperty('signature');
+    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
+      address: rfqResponse.address,
+    });
+    const result = await takerCvg.rfqs().getSettlementResult({
+      rfq,
+      response: refreshedResponse,
+    });
+    expect(result).toEqual({
+      quote: { receiver: 'taker', amount: 14300.75 },
+      legs: [{ receiver: 'maker', amount: 9.632123779 }],
+    });
+  });
+
   it('fixed-base american covered call', async () => {
     const { rfq } = await createAmericanCoveredCallRfq(takerCvg, 'sell');
     expect(rfq).toHaveProperty('address');

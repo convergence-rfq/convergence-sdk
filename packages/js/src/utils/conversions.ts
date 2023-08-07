@@ -53,3 +53,25 @@ export const addDecimals = (value: number, decimals: number = 0): BN => {
 export function convertTimestamp(timestamp: bignum): number {
   return Number(timestamp) * 1_000;
 }
+
+/**
+ * Used to roundUp values to a certain amount of decimals.
+ *
+ * @param amount {number} amount to round Up
+ * @param decimals {number} amount of decimals to round Up to
+ * @returns {number} rounded up amount
+ */
+export const roundUp = (amount: number, decimals: number) => {
+  return Math.ceil(amount * Math.pow(10, decimals)) / Math.pow(10, decimals);
+};
+
+/**
+ * Used to roundDown values to a certain amount of decimals.
+ *
+ * @param amount {number} amount to round down
+ * @param decimals {number} amount of decimals to round down to
+ * @returns {number} rounded down amount
+ */
+export const roundDown = (amount: number, decimals: number) => {
+  return Math.floor(amount * Math.pow(10, decimals)) / Math.pow(10, decimals);
+};
