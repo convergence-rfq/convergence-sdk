@@ -1,16 +1,13 @@
 import { expect } from 'expect';
 
 import {
-  createEuropeanProgram,
-  getOrCreateEuropeanOptionATAs,
-  mintEuropeanOptions,
-} from '../../src';
-import {
   prepareRfqSettlement,
   respondToRfq,
   settleRfq,
   createUserCvg,
   createEuropeanCoveredCallRfq,
+  createEuropeanCallSpdOptionRfq,
+  setupEuropean,
 } from '../helpers';
 
 describe('integration.psyoptionsEuropean', async () => {
@@ -22,7 +19,7 @@ describe('integration.psyoptionsEuropean', async () => {
       takerCvg,
       'sell'
     );
-    const europeanProgram = await createEuropeanProgram(takerCvg);
+
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
 
@@ -33,22 +30,52 @@ describe('integration.psyoptionsEuropean', async () => {
       side: 'bid',
     });
 
-    await getOrCreateEuropeanOptionATAs(
-      takerCvg,
-      rfqResponse.address,
-      takerCvg.rpc().getDefaultFeePayer().publicKey
-    );
-    const tnx = await mintEuropeanOptions(
-      takerCvg,
-      rfqResponse.address,
-      takerCvg.rpc().getDefaultFeePayer().publicKey,
-      europeanProgram
-    );
-    expect(tnx).toHaveProperty('response');
+    await setupEuropean(takerCvg, rfqResponse);
 
     await prepareRfqSettlement(makerCvg, rfq, rfqResponse);
     await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
 
     await settleRfq(takerCvg, rfq, rfqResponse);
+  });
+  it('open size european call option', async () => {
+    const { rfq } = await createEuropeanCallSpdOptionRfq(takerCvg, 'sell');
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      150_123,
+      undefined,
+      5
+    );
+    expect(rfqResponse).toHaveProperty('address');
+
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'bid',
+        overrideLegMultiplierBps: 4,
+      });
+    expect(confirmResponse).toHaveProperty('signature');
+    await setupEuropean(takerCvg, rfqResponse);
+    await setupEuropean(makerCvg, rfqResponse);
+
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
   });
 });

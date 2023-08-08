@@ -27,19 +27,21 @@ export const mintAmericanOptions = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide =
-    response.confirmed?.side === QuoteSide.Ask ? 'short' : 'long';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerIsMaker = caller.toBase58() === response.maker.toBase58();
   const instructionWithSigners: InstructionWithSigners[] = [];
-  for (const leg of rfq.legs) {
+  const { legs } = await convergence.rfqs().getSettlementResult({
+    response,
+    rfq,
+  });
+  for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsAmericanInstrument) {
       if (
-        (leg.getSide() === confirmedSide && callerIsTaker) ||
-        (leg.getSide() !== confirmedSide && callerIsMaker)
+        (legs[index].receiver === 'maker' && callerIsTaker) ||
+        (legs[index].receiver === 'taker' && callerIsMaker)
       ) {
-        const amount = leg.getAmount();
+        const { amount } = legs[index];
 
         const optionMarket = await psyoptionsAmerican.getOptionByKey(
           americanProgram,
