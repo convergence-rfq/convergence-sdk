@@ -132,7 +132,6 @@ export const mintEuropeanOptions = async (
     .findRfqByAddress({ address: response.rfq });
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
-  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
   const instructions: anchor.web3.TransactionInstruction[] = [];
   const { legs } = await convergence.rfqs().getSettlementResult({
     response,
@@ -140,10 +139,9 @@ export const mintEuropeanOptions = async (
   });
   for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsEuropeanInstrument) {
-      if (
-        (legs[index].receiver === 'maker' && callerIsTaker) ||
-        (legs[index].receiver === 'taker' && callerIsMaker)
-      ) {
+      const legReceiver = legs[index].receiver;
+      const callerSide = callerIsTaker ? 'taker' : 'maker';
+      if (legReceiver !== callerSide) {
         const { amount } = legs[index];
 
         const euroMeta = await leg.getOptionMeta();
