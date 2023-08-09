@@ -1,7 +1,6 @@
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 
 import { BN } from 'bn.js';
-import { QuoteSide } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
