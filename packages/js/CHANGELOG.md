@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.1
+
+### Patch Changes
+
+- use getSettlementResult to mintOptions and getOrCreateOptionAtas to cover all cases
+
 ## 4.5.0
 
 ### Patch Changes

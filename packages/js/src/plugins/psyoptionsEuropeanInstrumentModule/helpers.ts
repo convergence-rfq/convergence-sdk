@@ -2,7 +2,6 @@ import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
-import { QuoteSide } from '@convergence-rfq/rfq';
 import { Mint } from '../tokenModule';
 import { ATAExistence, getOrCreateATA } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
@@ -130,20 +129,20 @@ export const mintEuropeanOptions = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide =
-    response.confirmed?.side === QuoteSide.Ask ? 'short' : 'long';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
-  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
+  const callerSide = callerIsTaker ? 'taker' : 'maker';
   const instructions: anchor.web3.TransactionInstruction[] = [];
-
-  for (const leg of rfq.legs) {
+  const { legs } = await convergence.rfqs().getSettlementResult({
+    response,
+    rfq,
+  });
+  for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsEuropeanInstrument) {
-      if (
-        (leg.getSide() === confirmedSide && callerIsTaker) ||
-        (leg.getSide() !== confirmedSide && callerIsMaker)
-      ) {
-        const amount = leg.getAmount();
+      const { receiver } = legs[index];
+
+      if (receiver !== callerSide) {
+        const { amount } = legs[index];
 
         const euroMeta = await leg.getOptionMeta();
         const { stableMint } = euroMeta;
@@ -236,18 +235,17 @@ export const getOrCreateEuropeanOptionATAs = async (
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide =
-    response.confirmed?.side === QuoteSide.Ask ? 'short' : 'long';
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
-  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
-
-  for (const leg of rfq.legs) {
+  const callerSide = callerIsTaker ? 'taker' : 'maker';
+  const { legs } = await convergence.rfqs().getSettlementResult({
+    response,
+    rfq,
+  });
+  for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsEuropeanInstrument) {
-      if (
-        (leg.getSide() === confirmedSide && callerIsTaker) ||
-        (leg.getSide() !== confirmedSide && callerIsMaker)
-      ) {
+      const { receiver } = legs[index];
+      if (receiver !== callerSide) {
         flag = true;
         const euroMeta = await leg.getOptionMeta();
         const { optionType } = leg;
