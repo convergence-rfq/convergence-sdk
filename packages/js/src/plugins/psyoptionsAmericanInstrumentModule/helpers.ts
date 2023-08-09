@@ -29,6 +29,7 @@ export const mintAmericanOptions = async (
     .findRfqByAddress({ address: response.rfq });
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
+  const callerSide = callerIsTaker ? 'taker' : 'maker';
   const instructionWithSigners: InstructionWithSigners[] = [];
   const { legs } = await convergence.rfqs().getSettlementResult({
     response,
@@ -36,9 +37,8 @@ export const mintAmericanOptions = async (
   });
   for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsAmericanInstrument) {
-      const legReceiver = legs[index].receiver;
-      const callerSide = callerIsTaker ? 'taker' : 'maker';
-      if (legReceiver !== callerSide) {
+      const { receiver } = legs[index];
+      if (receiver !== callerSide) {
         const { amount } = legs[index];
 
         const optionMarket = await psyoptionsAmerican.getOptionByKey(
@@ -153,23 +153,24 @@ export const getOrCreateAmericanOptionATAs = async (
   caller: PublicKey,
   americanProgram: any
 ): Promise<ATAExistence> => {
+  let flag = false;
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
   const rfq = await convergence
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
-  const confirmedSide =
-    response.confirmed?.side === QuoteSide.Ask ? 'short' : 'long';
-  let flag = false;
+
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
-  const callerIsMaker = caller.toBase58() === response.maker.toBase58();
-  for (const leg of rfq.legs) {
+  const callerSide = callerIsTaker ? 'taker' : 'maker';
+  const { legs } = await convergence.rfqs().getSettlementResult({
+    response,
+    rfq,
+  });
+  for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsAmericanInstrument) {
-      if (
-        (leg.getSide() === confirmedSide && callerIsTaker) ||
-        (leg.getSide() !== confirmedSide && callerIsMaker)
-      ) {
+      const { receiver } = legs[index];
+      if (receiver !== callerSide) {
         flag = true;
 
         const optionMarket = await psyoptionsAmerican.getOptionByKey(
