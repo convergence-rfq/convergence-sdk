@@ -31,9 +31,8 @@ export function fromSolitaConfirmation(
 
 export function toSolitaConfirmation(confirmation: Confirmation) {
   if (confirmation.overrideLegMultiplier) {
-    const overrideLegMultiplierBps = addDecimals(
-      confirmation.overrideLegMultiplier,
-      LEG_MULTIPLIER_DECIMALS
+    const overrideLegMultiplierBps = toSolitaOverrideLegMultiplierBps(
+      confirmation.overrideLegMultiplier
     );
     return {
       side: confirmation.side,
