@@ -15,7 +15,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
-import { convertOverrideLegMultiplier } from '../helpers';
+import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -184,7 +184,7 @@ export const confirmResponseBuilder = async (
   const { overrideLegMultiplier = null } = params;
   const overrideLegMultiplierBps =
     overrideLegMultiplier &&
-    convertOverrideLegMultiplier(overrideLegMultiplier);
+    toSolitaOverrideLegMultiplierBps(overrideLegMultiplier);
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });

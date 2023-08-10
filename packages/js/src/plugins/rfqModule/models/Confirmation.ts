@@ -2,6 +2,7 @@ import {
   QuoteSide,
   Confirmation as SolitaConfirmation,
 } from '@convergence-rfq/rfq';
+import { COption, bignum } from '@convergence-rfq/beet';
 import { LEG_MULTIPLIER_DECIMALS } from '../constants';
 import { addDecimals, removeDecimals } from '@/utils/conversions';
 
@@ -42,4 +43,10 @@ export function toSolitaConfirmation(confirmation: Confirmation) {
   return {
     side: confirmation.side,
   };
+}
+
+export function toSolitaOverrideLegMultiplierBps(
+  oveerideLegMultiplier: number
+): COption<bignum> {
+  return addDecimals(oveerideLegMultiplier, LEG_MULTIPLIER_DECIMALS);
 }
