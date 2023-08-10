@@ -1,23 +1,38 @@
 import { expect } from 'expect';
 
+import { Mint } from '@solana/spl-token';
 import {
   prepareRfqSettlement,
   respondToRfq,
   settleRfq,
   createUserCvg,
   createEuropeanCoveredCallRfq,
-  createEuropeanCallSpdOptionRfq,
+  createEuropeanOpenSizeCallSpdOptionRfq,
   setupEuropean,
 } from '../helpers';
+import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('integration.psyoptionsEuropean', async () => {
+describe('integration.psyoptionsEuropean', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
+  let baseMint: Mint;
+  let quoteMint: Mint;
+
+  before(async () => {
+    baseMint = await takerCvg
+      .tokens()
+      .findMintByAddress({ address: BASE_MINT_BTC_PK });
+    quoteMint = await takerCvg
+      .tokens()
+      .findMintByAddress({ address: QUOTE_MINT_PK });
+  });
 
   it('covered call [sell]', async () => {
     const { rfq, response } = await createEuropeanCoveredCallRfq(
       takerCvg,
-      'sell'
+      'sell',
+      baseMint,
+      quoteMint
     );
 
     expect(rfq).toHaveProperty('address');
@@ -38,7 +53,12 @@ describe('integration.psyoptionsEuropean', async () => {
     await settleRfq(takerCvg, rfq, rfqResponse);
   });
   it('open size european call option', async () => {
-    const { rfq } = await createEuropeanCallSpdOptionRfq(takerCvg, 'sell');
+    const { rfq } = await createEuropeanOpenSizeCallSpdOptionRfq(
+      takerCvg,
+      'sell',
+      baseMint,
+      quoteMint
+    );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
       makerCvg,
