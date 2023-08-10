@@ -12,6 +12,7 @@ import {
   toLeg,
 } from '../instrumentModule';
 import { Rfq, Response } from './models';
+import { LEG_MULTIPLIER_DECIMALS } from './constants';
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
@@ -44,10 +45,10 @@ export function getPages<T extends UnparsedAccount | Rfq | Response>(
   return pages as T[][];
 }
 
-export const convertOverrideLegMultiplierBps = (
-  overrideLegMultiplierBps: number
+export const convertOverrideLegMultiplier = (
+  overrideLegMultiplier: number
 ): number => {
-  return overrideLegMultiplierBps * Math.pow(10, 9);
+  return overrideLegMultiplier * Math.pow(10, LEG_MULTIPLIER_DECIMALS);
 };
 
 export const calculateExpectedLegsHash = (

@@ -340,6 +340,7 @@ export const createAmericanCallSpdOptionRfq = async (
 
   return { rfq, response, optionMarket1, optionMarket2 };
 };
+
 const cFlyMarketsCache = useCache(async (cvg, baseMint, quoteMint) => {
   const [
     { optionMarket: low, optionMarketKey: lowKey },
@@ -481,7 +482,7 @@ export const respondToRfq = async (
   rfq: Rfq,
   bid?: number,
   ask?: number,
-  legsMultiplierBps?: number
+  legsMultiplier?: number
 ) => {
   if (!bid && !ask) {
     throw new Error('Must provide bid and/or ask');
@@ -489,8 +490,8 @@ export const respondToRfq = async (
   return await cvg.rfqs().respond({
     maker: cvg.identity(),
     rfq: rfq.address,
-    bid: bid ? { price: bid, legsMultiplierBps } : undefined,
-    ask: ask ? { price: ask, legsMultiplierBps } : undefined,
+    bid: bid ? { price: bid, legsMultiplier } : undefined,
+    ask: ask ? { price: ask, legsMultiplier } : undefined,
   });
 };
 

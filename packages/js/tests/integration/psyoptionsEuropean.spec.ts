@@ -55,7 +55,7 @@ describe('integration.psyoptionsEuropean', async () => {
         rfq: rfq.address,
         response: rfqResponse.address,
         side: 'bid',
-        overrideLegMultiplierBps: 4,
+        overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
     await setupEuropean(takerCvg, rfqResponse);
