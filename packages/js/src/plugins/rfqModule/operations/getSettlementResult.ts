@@ -1,9 +1,9 @@
-import { Confirmation, QuoteSide } from '@convergence-rfq/rfq';
+import { QuoteSide } from '@convergence-rfq/rfq';
 import { Rfq, Response } from '../models';
 import { Operation, OperationHandler, useOperation } from '../../../types';
 import { LEG_MULTIPLIER_DECIMALS } from '../constants';
-import { removeDecimals, roundDown, roundUp } from '@/utils';
-
+import { Confirmation } from '../models/Confirmation';
+import { roundDown, roundUp } from '@/utils';
 const Key = 'GetSettlementResult' as const;
 
 export type Receiver = 'taker' | 'maker';
@@ -86,12 +86,7 @@ export const getSettlementResultHandler: OperationHandler<GetSettlementResult> =
         amount: quoteAmount,
       };
       const legs = rfq.legs.map((leg, index) => {
-        const legReceiver = getLegAssetsReceiver(
-          rfq,
-          response,
-          index,
-          confirmed
-        );
+        const legReceiver = getLegAssetsReceiver(rfq, index, confirmed);
         const legAmount = getLegAssetsAmountToTransfer(
           rfq,
           response,
@@ -109,7 +104,6 @@ export const getSettlementResultHandler: OperationHandler<GetSettlementResult> =
 
 const getLegAssetsReceiver = (
   rfq: Rfq,
-  response: Response,
   legIndex: number,
   confirmed: Confirmation | null
 ) => {
@@ -129,7 +123,6 @@ const getQuoteTokensReceiver = (
   confirmed: Confirmation | null
 ) => {
   const quote = getConfirmedQuote(response, confirmed);
-  // const { confirmed } = response;
   let receiver: Receiver = 'maker';
   const price = quote?.price;
   if (QuoteSide.Bid === confirmed?.side) {
@@ -148,9 +141,9 @@ const getLegAssetsAmountToTransfer = (
   confirmed: Confirmation | null
 ) => {
   const leg = rfq.legs[legIndex];
-  const legsMultiplier = getConfirmedLegMultiplier(response, rfq, confirmed);
+  const legsMultiplier = getConfirmedLegsMultiplier(response, rfq, confirmed);
   let legAmount = leg.getAmount() * legsMultiplier;
-  const receiver = getLegAssetsReceiver(rfq, response, legIndex, confirmed);
+  const receiver = getLegAssetsReceiver(rfq, legIndex, confirmed);
 
   if (receiver === 'maker') {
     legAmount = roundUp(legAmount, LEG_MULTIPLIER_DECIMALS);
@@ -167,7 +160,7 @@ const getQuoteAssetsAmountToTransfer = (
   confirmed: Confirmation | null
 ) => {
   const quote = getConfirmedQuote(response, confirmed);
-  const legsMultiplier = getConfirmedLegMultiplier(response, rfq, confirmed);
+  const legsMultiplier = getConfirmedLegsMultiplier(response, rfq, confirmed);
   if (rfq.size.type === 'fixed-quote') {
     return rfq.size.amount;
   }
@@ -184,19 +177,16 @@ const getQuoteAssetsAmountToTransfer = (
   return quoteAmount;
 };
 
-const getConfirmedLegMultiplier = (
+export const getConfirmedLegsMultiplier = (
   response: Response,
   rfq: Rfq,
   confirmed: Confirmation | null
 ) => {
   const quote = getConfirmedQuote(response, confirmed);
-  if (response.confirmed?.overrideLegMultiplierBps) {
-    return removeDecimals(
-      response.confirmed?.overrideLegMultiplierBps,
-      LEG_MULTIPLIER_DECIMALS
-    );
-  } else if (quote?.legsMultiplierBps) {
-    return quote?.legsMultiplierBps;
+  if (response.confirmed?.overrideLegMultiplier) {
+    return response.confirmed?.overrideLegMultiplier;
+  } else if (quote?.legsMultiplier) {
+    return quote?.legsMultiplier;
   }
   switch (rfq.size.type) {
     case 'fixed-quote':

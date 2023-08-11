@@ -49,7 +49,6 @@ describe('unit.settlementResult', () => {
       response: rfqResponse,
       confirmed: {
         side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
-        overrideLegMultiplierBps: null,
       },
     });
 
@@ -107,7 +106,6 @@ describe('unit.settlementResult', () => {
       response: rfqResponse,
       confirmed: {
         side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
-        overrideLegMultiplierBps: null,
       },
     });
 
@@ -156,7 +154,6 @@ describe('unit.settlementResult', () => {
       response: rfqResponse,
       confirmed: {
         side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
-        overrideLegMultiplierBps: null,
       },
     });
 
@@ -203,7 +200,6 @@ describe('unit.settlementResult', () => {
       response: rfqResponse,
       confirmed: {
         side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
-        overrideLegMultiplierBps: null,
       },
     });
 
@@ -216,7 +212,7 @@ describe('unit.settlementResult', () => {
       rfq: rfq.address,
       response: rfqResponse.address,
       side: 'bid',
-      overrideLegMultiplierBps: 5.487245678,
+      overrideLegMultiplier: 5.487245678,
     });
     expect(confirmResponse.response).toHaveProperty('signature');
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
@@ -254,7 +250,6 @@ describe('unit.settlementResult', () => {
       response: rfqResponse,
       confirmed: {
         side: responseSide,
-        overrideLegMultiplierBps: null,
       },
     });
 
@@ -302,7 +297,6 @@ describe('unit.settlementResult', () => {
       response: rfqResponse,
       confirmed: {
         side: responseSide,
-        overrideLegMultiplierBps: null,
       },
     });
 
@@ -346,7 +340,6 @@ describe('unit.settlementResult', () => {
       response: rfqResponse,
       confirmed: {
         side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
-        overrideLegMultiplierBps: null,
       },
     });
 
@@ -397,7 +390,6 @@ describe('unit.settlementResult', () => {
       response: rfqResponse,
       confirmed: {
         side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
-        overrideLegMultiplierBps: null,
       },
     });
 

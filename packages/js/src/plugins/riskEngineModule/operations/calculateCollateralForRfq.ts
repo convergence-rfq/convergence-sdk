@@ -33,6 +33,7 @@ const Key = 'CalculateCollateralForRfqOperation' as const;
  * ```ts
  * await cvg.riskEngine().calculateCollateralForRfq({
       legs,
+      quoteAsset,
       size: {
         type: 'fixed',
         amount: 2.1,
@@ -132,13 +133,13 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
           ),
         };
       } else if (isFixedSizeBaseAsset(size)) {
-        const legMultiplier = removeDecimals(
+        const legsMultiplier = removeDecimals(
           size.legsMultiplierBps,
           LEG_MULTIPLIER_DECIMALS
         );
         const sideToCase = (side: QuoteSide): CalculationCase => {
           return {
-            legMultiplier,
+            legsMultiplier,
             authoritySide: 'taker',
             quoteSide: side,
           };

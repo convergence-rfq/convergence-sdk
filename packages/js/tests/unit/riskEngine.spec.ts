@@ -157,7 +157,7 @@ describe('unit.riskEngine', () => {
       .calculateCollateralForConfirmation({
         rfqAddress: rfq.address,
         responseAddress: rfqResponse.address,
-        confirmation: { side: QuoteSide.Ask, overrideLegMultiplierBps: 1 },
+        confirmation: { side: QuoteSide.Ask, overrideLegMultiplier: 1 },
       });
     expect(requiredCollateral).toBeCloseTo(rfqResponse.makerCollateralLocked);
   });

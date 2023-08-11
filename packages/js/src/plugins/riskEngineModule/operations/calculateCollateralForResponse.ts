@@ -2,7 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 import { Quote as SolitaQuote, QuoteSide } from '@convergence-rfq/rfq';
 
 import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
-import { extractLegsMultiplierBps } from '../helpers';
+import { extractLegsMultiplier } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -10,7 +10,6 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
 import { Quote, toSolitaQuote } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
@@ -22,19 +21,11 @@ const Key = 'CalculateCollateralForResponseOperation' as const;
  * await cvg.riskEngine().calculateCollateralForResponse({
       rfqAddress: rfq.address,
       bid: {
-        __kind: 'Standard',
-        priceQuote: {
-          __kind: 'AbsolutePrice',
-          amountBps: 22_000,
-        },
-        legsMultiplierBps: 20,
+        price:23_000,
+        legsMultiplierBps: 5,
       },
       ask: {
-        __kind: 'Standard',
-        priceQuote: {
-          __kind: 'AbsolutePrice',
-          amountBps: 23_000,
-        },
+        price:23_000,
         legsMultiplierBps: 5,
       },
     });
@@ -106,12 +97,9 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         quote: SolitaQuote,
         side: QuoteSide
       ): CalculationCase => {
-        const legsMultiplierBps = extractLegsMultiplierBps(rfq, quote);
-        const legMultiplier =
-          Number(legsMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
-
+        const legsMultiplier = extractLegsMultiplier(rfq, quote);
         return {
-          legMultiplier,
+          legsMultiplier,
           authoritySide: 'maker',
           quoteSide: side,
         };
