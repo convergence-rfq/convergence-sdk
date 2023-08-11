@@ -315,6 +315,66 @@ export const createAmericanFixedBaseStraddle = async (
   return { rfq, response, optionMarket };
 };
 
+export const createEuropeanFixedBaseStraddle = async (
+  cvg: Convergence,
+  orderType: OrderType,
+  baseMint: any,
+  quoteMint: any
+) => {
+  const europeanProgram = await createEuropeanProgram(cvg);
+  const oracle = await createPythPriceFeed(
+    new anchor.Program(
+      PseudoPythIdl,
+      new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
+      new anchor.AnchorProvider(cvg.connection, new CvgWallet(cvg), {})
+    ),
+    17_000,
+    quoteMint.decimals * -1
+  );
+  const min = 3_600;
+  const randomExpiry = min + Math.random();
+  const { euroMeta: euroMeta, euroMetaKey: euroMetaKey } =
+    await initializeNewEuropeanOption(
+      cvg,
+      oracle,
+      europeanProgram,
+      baseMint,
+      quoteMint,
+      23_354,
+      1,
+      randomExpiry,
+      0
+    );
+
+  const { rfq, response } = await cvg.rfqs().createAndFinalize({
+    instruments: [
+      await PsyoptionsEuropeanInstrument.create(
+        cvg,
+        baseMint,
+        OptionType.CALL,
+        euroMeta,
+        euroMetaKey,
+        1,
+        'long'
+      ),
+      await PsyoptionsEuropeanInstrument.create(
+        cvg,
+        baseMint,
+        OptionType.PUT,
+        euroMeta,
+        euroMetaKey,
+        1,
+        'long'
+      ),
+    ],
+    orderType,
+    fixedSize: { type: 'fixed-base', amount: 1 },
+    quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
+  });
+
+  return { rfq, response, euroMeta };
+};
+
 export const createAmericanOpenSizeCallSpdOptionRfq = async (
   cvg: Convergence,
   orderType: OrderType,

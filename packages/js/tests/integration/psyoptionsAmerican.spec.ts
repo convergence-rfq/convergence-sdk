@@ -194,7 +194,7 @@ describe('integration.psyoptionsAmerican', async () => {
     expect(settlementResponse.response).toHaveProperty('signature');
   });
 
-  it('open size buy american call Spread option [buy]', async () => {
+  it('open size american call Spread [buy]', async () => {
     const { rfq } = await createAmericanOpenSizeCallSpdOptionRfq(
       takerCvg,
       'buy',
@@ -240,7 +240,7 @@ describe('integration.psyoptionsAmerican', async () => {
     expect(settlementResponse.response).toHaveProperty('signature');
   });
 
-  it('open size buy american call Spread option [2-way]', async () => {
+  it('open size american call Spread [2-way]', async () => {
     const { rfq } = await createAmericanOpenSizeCallSpdOptionRfq(
       takerCvg,
       'two-way',
