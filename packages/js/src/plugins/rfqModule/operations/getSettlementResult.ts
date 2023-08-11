@@ -46,7 +46,7 @@ export type GetSettlementResult = Operation<
 export type GetSettlementResultInput = {
   response: Response;
   rfq: Rfq;
-  confirmed: Confirmation | null;
+  confirmation: Confirmation | null;
 };
 
 /**
@@ -67,14 +67,20 @@ export const getSettlementResultHandler: OperationHandler<GetSettlementResult> =
     handle: async (
       operation: GetSettlementResult
     ): Promise<GetSettlementResultOutput> => {
-      const { response, rfq, confirmed } = operation.input;
+      const { response, rfq, confirmation } = operation.input;
+      let confirmed: Confirmation | null = null;
       //Checks
       if (!response.rfq.equals(rfq.address)) {
         throw new Error('Response does not match RFQ');
       }
-      // if (!response.confirmed) {
-      //   throw new Error('Response not confirmed');
-      // }
+      if (confirmation) {
+        confirmed = confirmation;
+      } else if (response?.confirmed) {
+        confirmed = response.confirmed;
+      } else {
+        throw new Error('No confirmation provided');
+      }
+
       const quoteReceiver = getQuoteTokensReceiver(response, confirmed);
       const quoteAmount = getQuoteAssetsAmountToTransfer(
         rfq,
@@ -206,8 +212,6 @@ const getConfirmedQuote = (
   response: Response,
   confirmed: Confirmation | null
 ) => {
-  // const { confirmed } = response;
-
   if (confirmed?.side === QuoteSide.Ask && response?.ask) {
     return response.ask;
   } else if (confirmed?.side === QuoteSide.Bid && response?.bid) {

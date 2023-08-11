@@ -32,7 +32,7 @@ export const mintAmericanOptions = async (
   const { legs } = await convergence.rfqs().getSettlementResult({
     response,
     rfq,
-    confirmed: response.confirmed,
+    confirmation: response.confirmed,
   });
   for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsAmericanInstrument) {
@@ -164,7 +164,7 @@ export const getOrCreateAmericanOptionATAs = async (
   const { legs } = await convergence.rfqs().getSettlementResult({
     response,
     rfq,
-    confirmed: response.confirmed,
+    confirmation: response.confirmed,
   });
   for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsAmericanInstrument) {
