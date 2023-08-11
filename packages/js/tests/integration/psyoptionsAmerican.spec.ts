@@ -217,7 +217,7 @@ describe('integration.psyoptionsAmerican', async () => {
         rfq: rfq.address,
         response: rfqResponse.address,
         side: 'ask',
-        overrideLegMultiplierBps: 4,
+        overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
     await setupAmerican(takerCvg, rfqResponse);

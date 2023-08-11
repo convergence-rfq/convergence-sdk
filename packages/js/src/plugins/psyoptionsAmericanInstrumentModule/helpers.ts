@@ -27,12 +27,12 @@ export const mintAmericanOptions = async (
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
 
-  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
-  const callerSide = callerIsTaker ? 'taker' : 'maker';
+  const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
   const instructionWithSigners: InstructionWithSigners[] = [];
   const { legs } = await convergence.rfqs().getSettlementResult({
     response,
     rfq,
+    confirmed: response.confirmed,
   });
   for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsAmericanInstrument) {
@@ -160,11 +160,11 @@ export const getOrCreateAmericanOptionATAs = async (
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
 
-  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
-  const callerSide = callerIsTaker ? 'taker' : 'maker';
+  const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
   const { legs } = await convergence.rfqs().getSettlementResult({
     response,
     rfq,
+    confirmed: response.confirmed,
   });
   for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsAmericanInstrument) {

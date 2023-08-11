@@ -136,6 +136,7 @@ export const mintEuropeanOptions = async (
   const { legs } = await convergence.rfqs().getSettlementResult({
     response,
     rfq,
+    confirmed: response?.confirmed,
   });
   for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsEuropeanInstrument) {
@@ -241,6 +242,7 @@ export const getOrCreateEuropeanOptionATAs = async (
   const { legs } = await convergence.rfqs().getSettlementResult({
     response,
     rfq,
+    confirmed: response?.confirmed,
   });
   for (const [index, leg] of rfq.legs.entries()) {
     if (leg instanceof PsyoptionsEuropeanInstrument) {

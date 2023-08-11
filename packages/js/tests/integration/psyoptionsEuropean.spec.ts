@@ -200,7 +200,7 @@ describe('integration.psyoptionsEuropean', () => {
         rfq: rfq.address,
         response: rfqResponse.address,
         side: 'ask',
-        overrideLegMultiplierBps: 4,
+        overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
     await setupEuropean(takerCvg, rfqResponse);
@@ -246,7 +246,7 @@ describe('integration.psyoptionsEuropean', () => {
         rfq: rfq.address,
         response: rfqResponse.address,
         side: 'ask',
-        overrideLegMultiplierBps: 4,
+        overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
     await setupEuropean(takerCvg, rfqResponse);
