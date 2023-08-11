@@ -124,7 +124,7 @@ const getLegAssetsReceiver = (
   if (leg.getSide() === 'short') {
     receiver = inverseReceiver(receiver);
   }
-  if (confirmation!.side === QuoteSide.Bid) {
+  if (confirmation.side === QuoteSide.Bid) {
     receiver = inverseReceiver(receiver);
   }
   return receiver;
@@ -137,7 +137,7 @@ const getQuoteTokensReceiver = (
   const quote = getConfirmedQuote(response, confirmation);
   let receiver: Receiver = 'maker';
   const price = quote?.price;
-  if (QuoteSide.Bid === confirmation?.side) {
+  if (QuoteSide.Bid === confirmation.side) {
     receiver = inverseReceiver(receiver);
   }
   if (price < 0) {
@@ -223,9 +223,9 @@ export const getConfirmedLegsMultiplier = (
 };
 
 const getConfirmedQuote = (response: Response, confirmation: Confirmation) => {
-  if (confirmation?.side === QuoteSide.Ask && response?.ask) {
+  if (confirmation.side === QuoteSide.Ask && response?.ask) {
     return response.ask;
-  } else if (confirmation?.side === QuoteSide.Bid && response?.bid) {
+  } else if (confirmation.side === QuoteSide.Bid && response?.bid) {
     return response.bid;
   }
   throw new Error('Confirmed quote not found');
