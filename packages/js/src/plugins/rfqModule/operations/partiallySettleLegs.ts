@@ -161,7 +161,6 @@ export const partiallySettleLegsBuilder = async (
     const { legs } = await convergence.rfqs().getSettlementResult({
       rfq: rfqModel,
       response: responseModel,
-      confirmation: responseModel.confirmed,
     });
     const { receiver } = legs[i];
 

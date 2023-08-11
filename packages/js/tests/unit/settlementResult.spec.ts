@@ -71,7 +71,6 @@ describe('unit.settlementResult', () => {
     const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
-      confirmation: refreshedResponse?.confirmed,
     });
 
     expect(confimedResponseResult).toEqual({
@@ -126,7 +125,6 @@ describe('unit.settlementResult', () => {
     const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
-      confirmation: refreshedResponse?.confirmed,
     });
 
     expect(confimedResponseResult).toEqual({
@@ -173,7 +171,6 @@ describe('unit.settlementResult', () => {
     const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
-      confirmation: refreshedResponse?.confirmed,
     });
 
     expect(confimedResponseResult).toEqual({
@@ -221,7 +218,6 @@ describe('unit.settlementResult', () => {
     const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
-      confirmation: refreshedResponse?.confirmed,
     });
 
     expect(confimedResponseResult).toEqual({
@@ -269,7 +265,6 @@ describe('unit.settlementResult', () => {
     const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
-      confirmation: refreshedResponse?.confirmed,
     });
     expect(confimedResponseResult).toEqual({
       quote: { receiver: 'maker', amount: 28899.75 },
@@ -316,7 +311,6 @@ describe('unit.settlementResult', () => {
     const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
-      confirmation: refreshedResponse?.confirmed,
     });
     expect(confimedResponseResult).toEqual({
       quote: { receiver: 'taker', amount: 14300.75 },
@@ -364,7 +358,6 @@ describe('unit.settlementResult', () => {
     const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
-      confirmation: refreshedResponse?.confirmed,
     });
     expect(confimedResponseResult).toEqual({
       quote: { receiver: 'taker', amount: 12.1 },
@@ -412,7 +405,6 @@ describe('unit.settlementResult', () => {
     const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
-      confirmation: refreshedResponse?.confirmed,
     });
     expect(confimedResponseResult).toEqual({
       quote: { receiver: 'taker', amount: 12.34 },

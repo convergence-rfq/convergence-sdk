@@ -156,7 +156,6 @@ export const settleBuilder = async (
   const { legs, quote } = await convergence.rfqs().getSettlementResult({
     response: responseModel,
     rfq: rfqModel,
-    confirmation: responseModel.confirmed,
   });
 
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
