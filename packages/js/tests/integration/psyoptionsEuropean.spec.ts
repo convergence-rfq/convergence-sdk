@@ -96,7 +96,7 @@ describe('integration.psyoptionsEuropean', () => {
     expect(settlementResponse.response).toHaveProperty('signature');
   });
 
-  it('fixed-size american straddle [sell]', async () => {
+  it('fixed-size european straddle [sell]', async () => {
     const { rfq } = await createEuropeanFixedBaseStraddle(
       takerCvg,
       'sell',
@@ -139,7 +139,7 @@ describe('integration.psyoptionsEuropean', () => {
     expect(settlementResponse.response).toHaveProperty('signature');
   });
 
-  it('fixed-size american straddle [2-way]', async () => {
+  it('fixed-size european straddle [2-way]', async () => {
     const { rfq } = await createEuropeanFixedBaseStraddle(
       takerCvg,
       'two-way',
