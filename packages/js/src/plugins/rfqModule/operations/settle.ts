@@ -153,16 +153,14 @@ export const settleBuilder = async (
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-  const { legs: legsReceiver, quote: quoteReceiver } = await convergence
-    .rfqs()
-    .getSettlementResult({
-      response: responseModel,
-      rfq: rfqModel,
-    });
+  const { legs, quote } = await convergence.rfqs().getSettlementResult({
+    response: responseModel,
+    rfq: rfqModel,
+  });
 
   for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
     const leg = rfqModel.legs[legIndex];
-    const legReceiver = legsReceiver[legIndex];
+    const { receiver } = legs[legIndex];
 
     const baseAssetMint = await legToBaseAssetMint(convergence, leg);
 
@@ -194,7 +192,7 @@ export const settleBuilder = async (
           .pdas()
           .associatedTokenAccount({
             mint: baseAssetMint!.address,
-            owner: legReceiver.receiver === 'maker' ? maker : taker,
+            owner: receiver === 'maker' ? maker : taker,
             programs,
           }),
         isSigner: false,
@@ -231,7 +229,7 @@ export const settleBuilder = async (
         .pdas()
         .associatedTokenAccount({
           mint: rfqModel.quoteMint,
-          owner: quoteReceiver.receiver === 'maker' ? maker : taker,
+          owner: quote.receiver === 'maker' ? maker : taker,
           programs,
         }),
       isSigner: false,

@@ -10,12 +10,12 @@ import {
   useOperation,
   Signer,
 } from '../../../types';
-import { convertOverrideLegMultiplierBps } from '../helpers';
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
+import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -97,10 +97,10 @@ export type ConfirmResponseInput = {
   side: ResponseSide;
 
   /**
-   * Optional basis points multiplier to override the legMultiplierBps of the
+   * Optional basis points multiplier to override the legsMultiplierBps of the
    * Rfq's fixedSize property.
    */
-  overrideLegMultiplierBps?: number;
+  overrideLegMultiplier?: number;
 };
 
 /**
@@ -181,14 +181,10 @@ export const confirmResponseBuilder = async (
     }),
   } = params;
 
-  let { overrideLegMultiplierBps = null } = params;
-
-  if (overrideLegMultiplierBps) {
-    overrideLegMultiplierBps = convertOverrideLegMultiplierBps(
-      Number(overrideLegMultiplierBps)
-    );
-  }
-
+  const { overrideLegMultiplier = null } = params;
+  const overrideLegMultiplierBps =
+    overrideLegMultiplier &&
+    toSolitaOverrideLegMultiplierBps(overrideLegMultiplier);
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });

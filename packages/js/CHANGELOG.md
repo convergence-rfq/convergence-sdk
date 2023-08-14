@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.2
+
+### Patch Changes
+
+- Remove decimals from override legMultiplier and remove Bps suffixes , also improve getSettlementResultOperation to work for non confirmed response
+
 ## 4.5.1
 
 ### Patch Changes

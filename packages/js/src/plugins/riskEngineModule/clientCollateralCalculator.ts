@@ -26,7 +26,7 @@ import {
 import { removeDecimals } from '@/utils/conversions';
 
 export type CalculationCase = {
-  legMultiplier: number;
+  legsMultiplier: number;
   authoritySide: AuthoritySide;
   quoteSide: QuoteSide;
 };
@@ -135,7 +135,7 @@ function calculateRiskInner(
   portfolioRisk = Math.max(portfolioRisk, 0); // risk can't be lower that 0
 
   return Math.max(
-    portfolioRisk * calculationCase.legMultiplier,
+    portfolioRisk * calculationCase.legsMultiplier,
     removeDecimals(
       config.minCollateralRequirement,
       Number(config.collateralMintDecimals)
