@@ -98,7 +98,11 @@ export const unlockResponsesCollateralOperationHandler: OperationHandler<UnlockR
         signedTxs.map((signedTx) =>
           convergence
             .rpc()
-            .serializeAndSendTransaction(signedTx, scope.confirmOptions)
+            .serializeAndSendTransaction(
+              signedTx,
+              lastValidBlockHeight,
+              scope.confirmOptions
+            )
         )
       );
       scope.throwIfCanceled();

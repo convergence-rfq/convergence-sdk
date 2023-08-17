@@ -210,12 +210,31 @@ export class RpcClient {
 
   async serializeAndSendTransaction(
     transaction: Transaction,
+    blockhashWithExpiryBlockHeight?: BlockhashWithExpiryBlockHeight,
     confirmOptions?: ConfirmOptions
   ): Promise<SendAndConfirmTransactionResponse> {
-    const blockhashWithExpiryBlockHeight = {
-      blockhash: transaction.recentBlockhash as string,
-      lastValidBlockHeight: transaction.lastValidBlockHeight as number,
-    };
+    if (blockhashWithExpiryBlockHeight === undefined) {
+      if (typeof transaction.recentBlockhash !== 'string') {
+        throw Error('Recent blockhash have not been passed');
+      }
+
+      if (typeof transaction.lastValidBlockHeight !== 'number') {
+        throw Error('Last valid blockhash have not been passed');
+      }
+
+      blockhashWithExpiryBlockHeight = {
+        blockhash: transaction.recentBlockhash,
+        lastValidBlockHeight: transaction.lastValidBlockHeight,
+      };
+    } else {
+      if (
+        blockhashWithExpiryBlockHeight.blockhash !== transaction.recentBlockhash
+      ) {
+        throw Error(
+          'BlockhashWithExpiryBlockHeight passed does not correspond to transaction'
+        );
+      }
+    }
 
     const rawTransaction = transaction.serialize();
     const signature = await this.sendRawTransaction(
