@@ -75,3 +75,13 @@ export function toSolitaFixedSize(
     }
   }
 }
+
+export const isFixedSizeOpen = (
+  x: FixedSize
+): x is FixedSize & { amount: undefined } => x.type === 'open';
+export const isFixedSizeBaseAsset = (
+  x: FixedSize
+): x is FixedSize & { amount: number } => x.type === 'fixed-base';
+export const isFixedSizeQuoteAsset = (
+  x: FixedSize
+): x is FixedSize & { amount: number } => x.type === 'fixed-quote';

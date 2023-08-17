@@ -1,7 +1,13 @@
 import { AccountMeta } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { Leg } from '@convergence-rfq/rfq';
-
+import {
+  Confirmation,
+  Quote,
+  isFixedSizeBaseAsset,
+  isFixedSizeQuoteAsset,
+  isQuoteStandard,
+} from '../rfqModule/models';
 import { UnparsedAccount } from '../../types';
 import { Convergence } from '../../Convergence';
 import {
@@ -11,7 +17,8 @@ import {
   serializeAsLeg,
   toLeg,
 } from '../instrumentModule';
-import { Rfq, Response } from './models';
+import { Rfq, Response, isFixedSizeOpen } from './models';
+import { LEG_MULTIPLIER_DECIMALS } from './constants';
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
@@ -147,3 +154,37 @@ export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
       return 0;
     });
 };
+
+export function extractLegsMultiplier(
+  rfq: Rfq,
+  quote: Quote,
+  confirmation?: Confirmation
+) {
+  const fixedSize = rfq.size;
+  if (confirmation?.overrideLegMultiplier) {
+    return confirmation.overrideLegMultiplier;
+  }
+  if (isFixedSizeOpen(fixedSize)) {
+    if (isQuoteStandard(quote)) {
+      return quote.legsMultiplier;
+    }
+    throw Error('Fixed size quote cannot be provided to non-fixed size rfq');
+  } else if (isFixedSizeBaseAsset(fixedSize)) {
+    if (isQuoteStandard(quote)) {
+      throw Error('Non fixed size quote cannot be provided to fixed size rfq');
+    }
+    return fixedSize.amount;
+  } else if (isFixedSizeQuoteAsset(fixedSize)) {
+    if (isQuoteStandard(quote)) {
+      throw Error('Non fixed size quote cannot be provided to fixed size rfq');
+    }
+
+    if (quote.price < 0) {
+      throw Error('Negative prices are not allowed for fixed quote amount rfq');
+    }
+    const amount = fixedSize.amount / quote.price;
+    const legsMultiplier = Number(amount.toFixed(LEG_MULTIPLIER_DECIMALS));
+    return legsMultiplier;
+  }
+  throw new Error('Invalid fixed size');
+}

@@ -1,6 +1,5 @@
 import expect from 'expect';
 import { Mint } from '@solana/spl-token';
-import { QuoteSide } from '@convergence-rfq/rfq';
 import {
   createAmericanCoveredCallRfq,
   createEuropeanCoveredCallRfq,
@@ -48,7 +47,7 @@ describe('unit.settlementResult', () => {
       rfq,
       response: rfqResponse,
       confirmation: {
-        side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
+        side: rfqResponse?.ask ? 'ask' : 'bid',
       },
     });
 
@@ -104,7 +103,7 @@ describe('unit.settlementResult', () => {
       rfq,
       response: rfqResponse,
       confirmation: {
-        side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
+        side: rfqResponse?.ask ? 'ask' : 'bid',
       },
     });
 
@@ -151,7 +150,7 @@ describe('unit.settlementResult', () => {
       rfq,
       response: rfqResponse,
       confirmation: {
-        side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
+        side: rfqResponse?.ask ? 'ask' : 'bid',
       },
     });
 
@@ -196,7 +195,7 @@ describe('unit.settlementResult', () => {
       rfq,
       response: rfqResponse,
       confirmation: {
-        side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
+        side: rfqResponse?.ask ? 'ask' : 'bid',
       },
     });
 
@@ -230,7 +229,7 @@ describe('unit.settlementResult', () => {
     const baseAmount = 5.632123779;
     const quoteAmount1 = 24_300.75;
     const quoteAmount2 = 28_899.75;
-    const responseSide = QuoteSide.Bid;
+    const responseSide = 'bid';
     const { rfq } = await createRfq(takerCvg, baseAmount, 'two-way');
     expect(rfq).toHaveProperty('address');
 
@@ -276,7 +275,7 @@ describe('unit.settlementResult', () => {
     const baseAmount = 9.632123779;
     const quoteAmount1 = 14_300.75;
     const quoteAmount2 = 18_899.75;
-    const responseSide = QuoteSide.Bid;
+    const responseSide = 'bid';
     const { rfq } = await createRfq(takerCvg, baseAmount, 'two-way');
     expect(rfq).toHaveProperty('address');
 
@@ -333,7 +332,7 @@ describe('unit.settlementResult', () => {
       rfq,
       response: rfqResponse,
       confirmation: {
-        side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
+        side: rfqResponse?.ask ? 'ask' : 'bid',
       },
     });
 
@@ -382,7 +381,7 @@ describe('unit.settlementResult', () => {
       rfq,
       response: rfqResponse,
       confirmation: {
-        side: rfqResponse?.ask ? QuoteSide.Ask : QuoteSide.Bid,
+        side: rfqResponse?.ask ? 'ask' : 'bid',
       },
     });
 

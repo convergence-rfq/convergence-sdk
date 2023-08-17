@@ -1,8 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
-import { Quote as SolitaQuote, QuoteSide } from '@convergence-rfq/rfq';
 
 import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
-import { extractLegsMultiplier } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -10,7 +8,8 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { Quote, toSolitaQuote } from '../../rfqModule';
+import { Quote, ResponseSide } from '../../rfqModule';
+import { extractLegsMultiplier } from '@/plugins/rfqModule/helpers';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -88,15 +87,7 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
         convergence.riskEngine().fetchConfig(scope),
       ]);
 
-      const quoteDecimals = rfq.quoteAsset.getDecimals();
-
-      const convertedBid = bid && toSolitaQuote(bid, quoteDecimals);
-      const convertedAsk = ask && toSolitaQuote(ask, quoteDecimals);
-
-      const getCase = (
-        quote: SolitaQuote,
-        side: QuoteSide
-      ): CalculationCase => {
+      const getCase = (quote: Quote, side: ResponseSide): CalculationCase => {
         const legsMultiplier = extractLegsMultiplier(rfq, quote);
         return {
           legsMultiplier,
@@ -106,11 +97,11 @@ export const calculateCollateralForResponseOperationHandler: OperationHandler<Ca
       };
 
       const cases: CalculationCase[] = [];
-      if (convertedBid) {
-        cases.push(getCase(convertedBid, QuoteSide.Bid));
+      if (bid) {
+        cases.push(getCase(bid, 'bid'));
       }
-      if (convertedAsk) {
-        cases.push(getCase(convertedAsk, QuoteSide.Ask));
+      if (ask) {
+        cases.push(getCase(ask, 'ask'));
       }
 
       const risks = await calculateRisk(
