@@ -6,7 +6,7 @@ import {
   SpotQuoteInstrument,
   FixedSize,
 } from '../../src';
-import { createUserCvg, getAll } from '../helpers';
+import { createUserCvg, getAll, sleep } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
 describe('unit.rfq', () => {
@@ -57,6 +57,8 @@ describe('unit.rfq', () => {
 
   // TODO ADD getRfqState function
   it('cancel', async () => {
+    // Error Number: 6016. Error Message: Rfq is not in required state.
+    await sleep(1);
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
       return rfq.state === 'active' && rfq.totalResponses === 0;
