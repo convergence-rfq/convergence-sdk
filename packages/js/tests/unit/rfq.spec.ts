@@ -6,10 +6,10 @@ import {
   SpotQuoteInstrument,
   FixedSize,
 } from '../../src';
-import { createUserCvg, getAll, sleep } from '../helpers';
+import { createUserCvg, getAll } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('unit.rfq', async () => {
+describe('unit.rfq', () => {
   const takerCvg = createUserCvg('taker');
 
   let baseMintBTC: Mint;
@@ -58,13 +58,11 @@ describe('unit.rfq', async () => {
   // TODO ADD getRfqState function
   it('cancel', async () => {
     // Error Number: 6016. Error Message: Rfq is not in required state.
-    await sleep(2);
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
       return rfq.state === 'active' && rfq.totalResponses === 0;
     });
     expect(rfqs.length).toBeGreaterThan(0);
-    await sleep(2);
     const { responses } = await takerCvg
       .rfqs()
       .cancelRfqs({ rfqs: rfqs.map((rfq: any) => rfq.address) });
