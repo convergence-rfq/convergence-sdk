@@ -487,6 +487,6 @@ export class RfqClient {
   ) {
     return this.convergence
       .operations()
-      .execute(getSettlementResultOperation(input), options);
+      .executeSync(getSettlementResultOperation(input), options);
   }
 }

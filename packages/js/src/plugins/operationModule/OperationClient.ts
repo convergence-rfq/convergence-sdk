@@ -88,6 +88,27 @@ export class OperationClient {
     return new Disposable(signal).run(process);
   }
 
+  executeSync<
+    T extends Operation<K, I, O>,
+    K extends string = KeyOfOperation<T>,
+    I = InputOfOperation<T>,
+    O = OutputOfOperation<T>
+  >(operation: T, options: OperationOptions = {}): O {
+    const operationHandler = this.get<T, K, I, O>(operation);
+    const signal = options.signal ?? new AbortController().signal;
+
+    const process = (scope: DisposableScope): O => {
+      const result = operationHandler.handle(
+        operation,
+        this.convergence,
+        this.getOperationScope(options, scope)
+      );
+      return result as O;
+    };
+
+    return new Disposable(signal).runSync(process);
+  }
+
   toCollection<
     T extends Operation<K, I, O>,
     K extends string = KeyOfOperation<T>,
