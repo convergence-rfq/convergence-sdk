@@ -95,14 +95,17 @@ export class OperationClient {
     O = OutputOfOperation<T>
   >(operation: T, options: OperationOptions = {}): O {
     const operationHandler = this.get<T, K, I, O>(operation);
-    const signal = options.signal ?? new AbortController().signal;
-
+    const { signal } = options;
+    if (!signal) {
+      throw new Error('Signal is required for executeSync');
+    }
     const process = (scope: DisposableScope): O => {
       const result = operationHandler.handle(
         operation,
         this.convergence,
         this.getOperationScope(options, scope)
       );
+
       return result as O;
     };
 
