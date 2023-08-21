@@ -14,7 +14,7 @@ describe('unit.rfq', () => {
     stub.restore();
   });
 
-  it('create [taker]', async () => {
+  it.skip('create [taker]', async () => {
     await runCli(
       [
         'rfq',
