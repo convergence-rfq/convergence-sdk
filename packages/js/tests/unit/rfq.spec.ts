@@ -9,7 +9,7 @@ import {
 import { createUserCvg, getAll, sleep } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('unit.rfq', () => {
+describe('unit.rfq', async () => {
   const takerCvg = createUserCvg('taker');
 
   let baseMintBTC: Mint;
