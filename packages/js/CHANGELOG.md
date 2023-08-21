@@ -1,5 +1,29 @@
 # @convergence-rfq/sdk
 
+## 4.5.3
+
+### Patch Changes
+
+- Added fix for blockhash and incremented CPL Solita packages to 2.2.12
+
+## 4.5.2
+
+### Patch Changes
+
+- Remove decimals from override legMultiplier and remove Bps suffixes , also improve getSettlementResultOperation to work for non confirmed response
+
+## 4.5.1
+
+### Patch Changes
+
+- use getSettlementResult to mintOptions and getOrCreateOptionAtas to cover all cases
+
+## 4.5.0
+
+### Patch Changes
+
+- Added getSettlementResult Operation to Rfq Module
+
 ## 4.4.10
 
 ### Patch Changes

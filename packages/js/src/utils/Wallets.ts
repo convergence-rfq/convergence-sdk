@@ -28,3 +28,21 @@ export class CvgWallet implements Wallet {
       .signAllTransactions(txs, [this.payer as Signer]);
   };
 }
+
+export class NoopWallet {
+  public readonly publicKey: PublicKey;
+
+  constructor(keypair: Keypair) {
+    this.publicKey = keypair.publicKey;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  signTransaction(tx: Transaction): Promise<Transaction> {
+    throw new Error('This Method is not expected to be called.');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
+    throw new Error('This Method is not expected to be called.');
+  }
+}

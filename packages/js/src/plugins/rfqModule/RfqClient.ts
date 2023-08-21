@@ -76,6 +76,8 @@ import {
   UnlockResponsesCollateralInput,
   UnlockRfqsCollateralInput,
   unlockRfqsCollateralOperation,
+  GetSettlementResultInput,
+  getSettlementResultOperation,
 } from './operations';
 import { Response } from './models/Response';
 
@@ -476,5 +478,15 @@ export class RfqClient {
     return this.convergence
       .tokens()
       .send({ ...input, amount: token(1) }, options);
+  }
+
+  /** {@inheritDoc getSettlementResultOperation} */
+  getSettlementResult(
+    input: GetSettlementResultInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(getSettlementResultOperation(input), options);
   }
 }

@@ -1,6 +1,6 @@
 import { FixedSize as SolitaFixedSize } from '@convergence-rfq/rfq';
 
-import { addDecimals, removeDecimals } from '../../../utils';
+import { addDecimals, removeDecimals } from '../../../utils/conversions';
 import { LEG_MULTIPLIER_DECIMALS } from '../constants';
 
 interface None {

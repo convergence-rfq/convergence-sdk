@@ -11,7 +11,10 @@ import {
   SolAmount,
   useOperation,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 
 const Key = 'TransferSolOperation' as const;
 

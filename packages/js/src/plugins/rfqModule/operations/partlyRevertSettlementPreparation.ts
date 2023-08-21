@@ -1,7 +1,5 @@
 import { PublicKey, AccountMeta } from '@solana/web3.js';
-import {
-  createPartlyRevertSettlementPreparationInstruction,
-} from '@convergence-rfq/rfq';
+import { createPartlyRevertSettlementPreparationInstruction } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -13,10 +11,13 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '../helpers';
 import { AuthoritySide, toSolitaAuthoritySide } from '../models/AuthoritySide';
+import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 
@@ -194,10 +195,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
           .pdas()
           .associatedTokenAccount({
             mint: baseAssetMint!.address,
-            owner:
-              side === 'maker'
-                ? responseModel.maker
-                : rfqModel.taker,
+            owner: side === 'maker' ? responseModel.maker : rfqModel.taker,
             programs,
           }),
         isSigner: false,

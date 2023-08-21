@@ -1,33 +1,21 @@
 import { expect } from 'expect';
-import { PublicKey } from '@solana/web3.js';
-import * as anchor from '@project-serum/anchor';
 
-import { QUOTE_MINT_PK, BASE_MINT_BTC_PK } from '../constants';
-import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
+import { Mint } from '@solana/spl-token';
 import {
-  OptionType,
-  PsyoptionsEuropeanInstrument,
-  Mint,
-  initializeNewOptionMeta,
-  createEuropeanProgram,
-  getOrCreateEuropeanOptionATAs,
-  mintEuropeanOptions,
-  SpotQuoteInstrument,
-  SpotLegInstrument,
-  CvgWallet,
-} from '../../src';
-import {
-  createPythPriceFeed,
   prepareRfqSettlement,
   respondToRfq,
   settleRfq,
   createUserCvg,
+  createEuropeanCoveredCallRfq,
+  createEuropeanOpenSizeCallSpdOptionRfq,
+  setupEuropean,
+  createEuropeanFixedBaseStraddle,
 } from '../helpers';
+import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('integration.psyoptionsEuropean', async () => {
+describe('integration.psyoptionsEuropean', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
-
   let baseMint: Mint;
   let quoteMint: Mint;
 
@@ -41,51 +29,13 @@ describe('integration.psyoptionsEuropean', async () => {
   });
 
   it('covered call [sell]', async () => {
-    const europeanProgram = await createEuropeanProgram(takerCvg);
-    const oracle = await createPythPriceFeed(
-      new anchor.Program(
-        PseudoPythIdl,
-        new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
-        new anchor.AnchorProvider(
-          takerCvg.connection,
-          new CvgWallet(takerCvg),
-          {}
-        )
-      ),
-      17_000,
-      quoteMint.decimals * -1
-    );
-    const min = 3_600;
-    const randomExpiry = min + Math.random();
-    const { euroMeta, euroMetaKey } = await initializeNewOptionMeta(
+    const { rfq, response } = await createEuropeanCoveredCallRfq(
       takerCvg,
-      oracle,
-      europeanProgram,
+      'sell',
       baseMint,
-      quoteMint,
-      23_354,
-      1,
-      randomExpiry,
-      0
+      quoteMint
     );
 
-    const { rfq, response } = await takerCvg.rfqs().createAndFinalize({
-      instruments: [
-        await SpotLegInstrument.create(takerCvg, baseMint, 1.0, 'long'),
-        await PsyoptionsEuropeanInstrument.create(
-          takerCvg,
-          baseMint,
-          OptionType.CALL,
-          euroMeta,
-          euroMetaKey,
-          1,
-          'long'
-        ),
-      ],
-      orderType: 'sell',
-      fixedSize: { type: 'fixed-base', amount: 1 },
-      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-    });
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
 
@@ -96,22 +46,273 @@ describe('integration.psyoptionsEuropean', async () => {
       side: 'bid',
     });
 
-    await getOrCreateEuropeanOptionATAs(
-      takerCvg,
-      rfqResponse.address,
-      takerCvg.rpc().getDefaultFeePayer().publicKey
-    );
-    const tnx = await mintEuropeanOptions(
-      takerCvg,
-      rfqResponse.address,
-      takerCvg.rpc().getDefaultFeePayer().publicKey,
-      europeanProgram
-    );
-    expect(tnx).toHaveProperty('response');
+    await setupEuropean(takerCvg, rfqResponse);
 
     await prepareRfqSettlement(makerCvg, rfq, rfqResponse);
     await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
 
     await settleRfq(takerCvg, rfq, rfqResponse);
+  });
+  it('fixed-size european straddle [buy]', async () => {
+    const { rfq } = await createEuropeanFixedBaseStraddle(
+      takerCvg,
+      'buy',
+      baseMint,
+      quoteMint
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      undefined,
+      60_123
+    );
+    expect(rfqResponse).toHaveProperty('address');
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'ask',
+      });
+    expect(confirmResponse).toHaveProperty('signature');
+    await setupEuropean(takerCvg, rfqResponse);
+    await setupEuropean(makerCvg, rfqResponse);
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
+  });
+
+  it('fixed-size european straddle [sell]', async () => {
+    const { rfq } = await createEuropeanFixedBaseStraddle(
+      takerCvg,
+      'sell',
+      baseMint,
+      quoteMint
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      55_133,
+      undefined
+    );
+    expect(rfqResponse).toHaveProperty('address');
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'bid',
+      });
+    expect(confirmResponse).toHaveProperty('signature');
+    await setupEuropean(takerCvg, rfqResponse);
+    await setupEuropean(makerCvg, rfqResponse);
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
+  });
+
+  it('fixed-size european straddle [2-way]', async () => {
+    const { rfq } = await createEuropeanFixedBaseStraddle(
+      takerCvg,
+      'two-way',
+      baseMint,
+      quoteMint
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 61_222, 60_123);
+    expect(rfqResponse).toHaveProperty('address');
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'ask',
+      });
+    expect(confirmResponse).toHaveProperty('signature');
+    await setupEuropean(takerCvg, rfqResponse);
+    await setupEuropean(makerCvg, rfqResponse);
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
+  });
+
+  it('open size european call Spread [buy]', async () => {
+    const { rfq } = await createEuropeanOpenSizeCallSpdOptionRfq(
+      takerCvg,
+      'buy',
+      baseMint,
+      quoteMint
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      undefined,
+      150_123,
+      5
+    );
+    expect(rfqResponse).toHaveProperty('address');
+
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'ask',
+        overrideLegMultiplier: 4,
+      });
+    expect(confirmResponse).toHaveProperty('signature');
+    await setupEuropean(takerCvg, rfqResponse);
+    await setupEuropean(makerCvg, rfqResponse);
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
+  });
+
+  it('open size european call Spread  [2-way]', async () => {
+    const { rfq } = await createEuropeanOpenSizeCallSpdOptionRfq(
+      takerCvg,
+      'two-way',
+      baseMint,
+      quoteMint
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      220_111,
+      150_123,
+      5
+    );
+    expect(rfqResponse).toHaveProperty('address');
+
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'ask',
+        overrideLegMultiplier: 4,
+      });
+    expect(confirmResponse).toHaveProperty('signature');
+    await setupEuropean(takerCvg, rfqResponse);
+    await setupEuropean(makerCvg, rfqResponse);
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
+  });
+
+  it('open size european call  [sell]', async () => {
+    const { rfq } = await createEuropeanOpenSizeCallSpdOptionRfq(
+      takerCvg,
+      'sell',
+      baseMint,
+      quoteMint
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      150_123,
+      undefined,
+      5
+    );
+    expect(rfqResponse).toHaveProperty('address');
+
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'bid',
+        overrideLegMultiplier: 4,
+      });
+    expect(confirmResponse).toHaveProperty('signature');
+    await setupEuropean(takerCvg, rfqResponse);
+    await setupEuropean(makerCvg, rfqResponse);
+
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
   });
 });
