@@ -58,12 +58,13 @@ describe('unit.rfq', () => {
   // TODO ADD getRfqState function
   it('cancel', async () => {
     // Error Number: 6016. Error Message: Rfq is not in required state.
-    await sleep(1);
+    await sleep(2);
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
       return rfq.state === 'active' && rfq.totalResponses === 0;
     });
     expect(rfqs.length).toBeGreaterThan(0);
+    await sleep(2);
     const { responses } = await takerCvg
       .rfqs()
       .cancelRfqs({ rfqs: rfqs.map((rfq: any) => rfq.address) });
