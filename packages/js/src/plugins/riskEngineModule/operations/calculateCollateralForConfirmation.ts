@@ -97,7 +97,6 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
       if (confirmedQuote === null) {
         throw Error('Cannot confirm a missing quote!');
       }
-      //extract legsMultiplier
       const legsMultiplier = extractLegsMultiplier(
         rfq,
         confirmedQuote,

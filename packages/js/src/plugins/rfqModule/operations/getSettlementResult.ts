@@ -135,7 +135,7 @@ const getQuoteTokensReceiver = (
   const quote = getConfirmedQuote(response, confirmation);
   let receiver: Receiver = 'maker';
   const price = quote?.price;
-  if ('bid' === confirmation.side) {
+  if (confirmation.side === 'bid') {
     receiver = inverseReceiver(receiver);
   }
   if (price < 0) {
