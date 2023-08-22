@@ -98,7 +98,11 @@ export const cancelRfqsOperationHandler: OperationHandler<CancelRfqsOperation> =
         signedTxs.map((signedTx) =>
           convergence
             .rpc()
-            .serializeAndSendTransaction(signedTx, scope.confirmOptions)
+            .serializeAndSendTransaction(
+              signedTx,
+              lastValidBlockHeight,
+              scope.confirmOptions
+            )
         )
       );
       scope.throwIfCanceled();
