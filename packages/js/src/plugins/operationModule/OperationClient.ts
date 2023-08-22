@@ -8,7 +8,6 @@ import {
   OperationHandler,
   OperationOptions,
   OperationScope,
-  SyncOperationHandler,
 } from '../../types';
 import { Disposable, DisposableScope } from '../../utils';
 import { OperationHandlerMissingError } from '../../errors';
@@ -59,23 +58,6 @@ export class OperationClient {
     return operationHandler;
   }
 
-  getSync<
-    T extends Operation<K, I, O>,
-    K extends string = KeyOfOperation<T>,
-    I = InputOfOperation<T>,
-    O = OutputOfOperation<T>
-  >(operation: T): SyncOperationHandler<T, K, I, O> {
-    const operationHandler = this.operationHandlers.get(operation.key) as
-      | SyncOperationHandler<T, K, I, O>
-      | undefined;
-
-    if (!operationHandler) {
-      throw new OperationHandlerMissingError(operation.key);
-    }
-
-    return operationHandler;
-  }
-
   async execute<
     T extends Operation<K, I, O>,
     K extends string = KeyOfOperation<T>,
@@ -104,17 +86,6 @@ export class OperationClient {
     };
 
     return new Disposable(signal).run(process);
-  }
-
-  executeSync<
-    T extends Operation<K, I, O>,
-    K extends string = KeyOfOperation<T>,
-    I = InputOfOperation<T>,
-    O = OutputOfOperation<T>
-  >(operation: T): O {
-    const operationHandler = this.getSync<T, K, I, O>(operation);
-    const result = operationHandler.handle(operation, this.convergence);
-    return result;
   }
 
   toCollection<

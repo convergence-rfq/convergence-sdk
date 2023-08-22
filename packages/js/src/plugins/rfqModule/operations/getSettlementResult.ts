@@ -1,6 +1,6 @@
 import { QuoteSide } from '@convergence-rfq/rfq';
 import { Rfq, Response } from '../models';
-import { Operation, OperationHandler, useOperation } from '../../../types';
+import { Operation, SyncOperationHandler, useOperation } from '../../../types';
 import { LEG_MULTIPLIER_DECIMALS } from '../constants';
 import { Confirmation } from '../models/Confirmation';
 import { roundDown, roundUp } from '@/utils';
@@ -62,7 +62,7 @@ export type GetSettlementResultOutput = {
  * @group Operations
  * @category Handlers
  */
-export const getSettlementResultHandler: OperationHandler<GetSettlementResult> =
+export const getSettlementResultHandler: SyncOperationHandler<GetSettlementResult> =
   {
     handle: (operation: GetSettlementResult): GetSettlementResultOutput => {
       const {
