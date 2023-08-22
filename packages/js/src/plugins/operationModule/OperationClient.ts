@@ -8,7 +8,7 @@ import {
   OperationHandler,
   OperationOptions,
   OperationScope,
-  MinimalSyncOperationHandler,
+  SyncOperationHandler,
 } from '../../types';
 import { Disposable, DisposableScope } from '../../utils';
 import { OperationHandlerMissingError } from '../../errors';
@@ -64,9 +64,9 @@ export class OperationClient {
     K extends string = KeyOfOperation<T>,
     I = InputOfOperation<T>,
     O = OutputOfOperation<T>
-  >(operation: T): MinimalSyncOperationHandler<T, K, I, O> {
+  >(operation: T): SyncOperationHandler<T, K, I, O> {
     const operationHandler = this.operationHandlers.get(operation.key) as
-      | MinimalSyncOperationHandler<T, K, I, O>
+      | SyncOperationHandler<T, K, I, O>
       | undefined;
 
     if (!operationHandler) {

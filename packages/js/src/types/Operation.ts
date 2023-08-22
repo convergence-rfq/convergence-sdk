@@ -110,7 +110,7 @@ export type OperationHandler<
   ) => O | Promise<O> | AsyncGenerator<O, void, void>;
 };
 
-export type MinimalSyncOperationHandler<
+export type SyncOperationHandler<
   T extends Operation<K, I, O>,
   K extends string = KeyOfOperation<T>,
   I = InputOfOperation<T>,
