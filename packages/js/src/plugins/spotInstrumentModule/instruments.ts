@@ -4,11 +4,17 @@ import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../tokenModule';
-import { LegInstrument, QuoteInstrument } from '../instrumentModule';
+import {
+  LegInstrument,
+  QuoteInstrument,
+  getInstrumentProgramIndex,
+} from '../instrumentModule';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { removeDecimals } from '../../utils/conversions';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
+import { Protocol } from '../protocolModule';
+import { SPOT_INSTRUMENT_PROGRAM_ID } from './types';
 
 type InstrumentData = {
   mintAddress: PublicKey;
@@ -32,16 +38,19 @@ export class SpotLegInstrument implements LegInstrument {
     readonly convergence: Convergence,
     readonly mintAddress: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
+    readonly instrumentIndex: number,
     readonly amount: number,
     readonly decimals: number,
     readonly side: LegSide
   ) {}
 
+  getInstrumentIndex = () => this.instrumentIndex;
   getProgramId = () => this.convergence.programs().getSpotInstrument().address;
+  getBaseAssetIndex = () => this.baseAssetIndex;
+  getAssetMint = () => this.mintAddress;
   getSide = () => this.side;
   getDecimals = () => this.decimals;
   getAmount = () => this.amount;
-  getBaseAssetIndex = () => this.baseAssetIndex;
 
   static async create(
     convergence: Convergence,
@@ -61,10 +70,16 @@ export class SpotLegInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
+    const instrumentIndex = getInstrumentProgramIndex(
+      await convergence.protocol().get(),
+      SPOT_INSTRUMENT_PROGRAM_ID
+    );
+
     return new SpotLegInstrument(
       convergence,
       mint.address,
       mintInfo.mintType.baseAssetIndex,
+      instrumentIndex,
       amount,
       mint.decimals,
       side
@@ -92,24 +107,23 @@ export class SpotLegInstrument implements LegInstrument {
 }
 
 export const spotLegInstrumentParser = {
-  parseFromLeg(convergence: Convergence, leg: Leg): SpotLegInstrument {
-    const {
-      side,
-      instrumentAmount,
-      instrumentData,
-      baseAssetIndex,
-      instrumentDecimals,
-    } = leg;
+  parseFromLeg(
+    convergence: Convergence,
+    leg: Leg,
+    instrumentIndex: number
+  ): SpotLegInstrument {
+    const { side, amount, data, baseAssetIndex, amountDecimals } = leg;
     const { mintAddress } = SpotLegInstrument.deserializeInstrumentData(
-      Buffer.from(instrumentData)
+      Buffer.from(data)
     );
 
     return new SpotLegInstrument(
       convergence,
       mintAddress,
       baseAssetIndex,
-      removeDecimals(instrumentAmount, instrumentDecimals),
-      instrumentDecimals,
+      instrumentIndex,
+      removeDecimals(amount, amountDecimals),
+      amountDecimals,
       fromSolitaLegSide(side)
     );
   },
@@ -118,26 +132,36 @@ export const spotLegInstrumentParser = {
 export class SpotQuoteInstrument implements QuoteInstrument {
   protected constructor(
     readonly convergence: Convergence,
+    readonly instrumentIndex: number,
     readonly mintAddress: PublicKey,
     readonly decimals: number
   ) {}
 
+  getInstrumentIndex = () => this.instrumentIndex;
+  getAssetMint = () => this.mintAddress;
   getProgramId = () => this.convergence.programs().getSpotInstrument().address;
   getDecimals = () => this.decimals;
 
-  static async parseFromQuote(
+  static parseFromQuote(
     convergence: Convergence,
+    protocol: Protocol,
     quote: QuoteAsset
-  ): Promise<QuoteInstrument> {
-    const { instrumentData, instrumentDecimals } = quote;
+  ): QuoteInstrument {
+    const { data, decimals } = quote;
     const { mintAddress } = SpotLegInstrument.deserializeInstrumentData(
-      Buffer.from(instrumentData)
+      Buffer.from(data)
+    );
+
+    const instrumentIndex = getInstrumentProgramIndex(
+      protocol,
+      SPOT_INSTRUMENT_PROGRAM_ID
     );
 
     return new SpotQuoteInstrument(
       convergence,
+      instrumentIndex,
       mintAddress,
-      instrumentDecimals
+      decimals
     );
   }
 
@@ -157,7 +181,17 @@ export class SpotQuoteInstrument implements QuoteInstrument {
       throw Error('Quote only supports stablecoin mints!');
     }
 
-    return new SpotQuoteInstrument(convergence, mint.address, mint.decimals);
+    const instrumentIndex = getInstrumentProgramIndex(
+      await convergence.protocol().get(),
+      SPOT_INSTRUMENT_PROGRAM_ID
+    );
+
+    return new SpotQuoteInstrument(
+      convergence,
+      instrumentIndex,
+      mint.address,
+      mint.decimals
+    );
   }
 
   static deserializeInstrumentData(buffer: Buffer): InstrumentData {

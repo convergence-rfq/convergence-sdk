@@ -12,12 +12,13 @@ import {
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../tokenModule';
-import { LegInstrument } from '../instrumentModule';
+import { LegInstrument, getInstrumentProgramIndex } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
+import { PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from './types';
 
 type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;
@@ -93,12 +94,15 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     readonly optionMint: PublicKey,
     readonly optionMetaPubKey: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
+    readonly instrumentIndex: number,
     readonly amount: number,
     readonly side: LegSide,
     private optionMeta?: EuroMeta
   ) {}
 
+  getInstrumentIndex = () => this.instrumentIndex;
   getBaseAssetIndex = () => this.baseAssetIndex;
+  getAssetMint = () => this.optionMint;
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsEuropeanInstrument.decimals;
   getSide = () => this.side;
@@ -124,6 +128,11 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
+    const instrumentIndex = getInstrumentProgramIndex(
+      await convergence.protocol().get(),
+      PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID
+    );
+
     return new PsyoptionsEuropeanInstrument(
       convergence,
       optionType,
@@ -135,6 +144,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       optionType == OptionType.CALL ? meta.callOptionMint : meta.putOptionMint,
       metaKey,
       mintInfo.mintType.baseAssetIndex,
+      instrumentIndex,
       amount,
       side,
       meta
@@ -216,9 +226,10 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 export const psyoptionsEuropeanInstrumentParser = {
   parseFromLeg(
     convergence: Convergence,
-    leg: Leg
+    leg: Leg,
+    instrumentIndex: number
   ): PsyoptionsEuropeanInstrument {
-    const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
+    const { side, amount, data, baseAssetIndex } = leg;
     const [
       {
         optionType,
@@ -231,7 +242,7 @@ export const psyoptionsEuropeanInstrumentParser = {
         metaKey,
       },
     ] = psyoptionsEuropeanInstrumentDataSerializer.deserialize(
-      Buffer.from(instrumentData)
+      Buffer.from(data)
     );
 
     return new PsyoptionsEuropeanInstrument(
@@ -248,7 +259,8 @@ export const psyoptionsEuropeanInstrumentParser = {
       optionMint,
       metaKey,
       baseAssetIndex,
-      removeDecimals(instrumentAmount, PsyoptionsEuropeanInstrument.decimals),
+      instrumentIndex,
+      removeDecimals(amount, PsyoptionsEuropeanInstrument.decimals),
       fromSolitaLegSide(side)
     );
   },

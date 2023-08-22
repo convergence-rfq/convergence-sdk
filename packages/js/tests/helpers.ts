@@ -29,7 +29,7 @@ import {
   mintEuropeanOptions,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
-import { IDL as PseudoPythIdl } from '../../validator/fixtures/programs/pseudo_pyth_idl';
+import { IDL as PseudoPythIdl } from '../../validator/dependencies/pseudo_pyth_idl';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
 const DEFAULT_COMMITMENT = 'confirmed';
 const DEFAULT_SKIP_PREFLIGHT = true;

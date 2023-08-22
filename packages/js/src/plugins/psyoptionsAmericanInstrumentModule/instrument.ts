@@ -8,12 +8,17 @@ import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import BN from 'bn.js';
 import { Mint } from '../tokenModule';
-import { LegInstrument } from '../instrumentModule';
+import { LegInstrument, getInstrumentProgramIndex } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import { CvgWallet, NoopWallet } from '../../utils/Wallets';
+import { PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID } from './types';
+
+export const psyoptionsAmericanProgramId = new PublicKey(
+  'R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'
+);
 
 type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;
@@ -57,12 +62,15 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     readonly optionMint: PublicKey,
     readonly optionMetaPubKey: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
+    readonly instrumentIndex: number,
     readonly amount: number,
     readonly side: LegSide,
     private optionMeta?: OptionMarketWithKey
   ) {}
 
   getBaseAssetIndex = () => this.baseAssetIndex;
+  getInstrumentIndex = () => this.instrumentIndex;
+  getAssetMint = () => this.optionMint;
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
@@ -89,6 +97,11 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
+    const instrumentIndex = getInstrumentProgramIndex(
+      await convergence.protocol().get(),
+      PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID
+    );
+
     return new PsyoptionsAmericanInstrument(
       convergence,
       optionType,
@@ -103,6 +116,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       optionMeta.optionMint,
       optionMetaPubkey,
       mintInfo.mintType.baseAssetIndex,
+      instrumentIndex,
       amount,
       side,
       optionMeta
@@ -198,9 +212,10 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 export const psyoptionsAmericanInstrumentParser = {
   parseFromLeg(
     convergence: Convergence,
-    leg: Leg
+    leg: Leg,
+    instrumentIndex: number
   ): PsyoptionsAmericanInstrument {
-    const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
+    const { side, amount, data, baseAssetIndex } = leg;
     const [
       {
         optionType,
@@ -213,7 +228,7 @@ export const psyoptionsAmericanInstrumentParser = {
         metaKey,
       },
     ] = psyoptionsAmericanInstrumentDataSerializer.deserialize(
-      Buffer.from(instrumentData)
+      Buffer.from(data)
     );
 
     return new PsyoptionsAmericanInstrument(
@@ -230,7 +245,8 @@ export const psyoptionsAmericanInstrumentParser = {
       optionMint,
       metaKey,
       baseAssetIndex,
-      removeDecimals(instrumentAmount, PsyoptionsAmericanInstrument.decimals),
+      instrumentIndex,
+      removeDecimals(amount, PsyoptionsAmericanInstrument.decimals),
       fromSolitaLegSide(side)
     );
   },
@@ -247,7 +263,7 @@ export const createAmericanProgram = (
   );
 
   const americanProgram = psyoptionsAmerican.createProgram(
-    new PublicKey('R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'),
+    psyoptionsAmericanProgramId,
     provider
   );
 

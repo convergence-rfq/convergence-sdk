@@ -77,7 +77,7 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       const collateralMint = await collateralMintCache.get(convergence);
 
       const responses: Response[] = [];
-      
+
       for (let i = 0; i < Math.ceil(responseAddresses.length / 100); i++) {
         const accounts = await convergence
           .rpc()
@@ -88,11 +88,7 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
 
         for (const account of accounts) {
           responses.push(
-            toResponse(
-              toResponseAccount(account),
-              collateralMint.decimals,
-              rfq.quoteAsset.getDecimals()
-            )
+            toResponse(toResponseAccount(account), collateralMint.decimals, rfq)
           );
         }
       }

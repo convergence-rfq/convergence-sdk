@@ -97,23 +97,21 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
             unparsedAddresses.slice(i * 100, (i + 1) * 100),
             commitment
           );
-        
+
         for (const account of accounts) {
           const responseAccount = toResponseAccount(account);
 
           if (responseAccount.data.maker.toBase58() !== owner.toBase58()) {
             continue;
           }
-          
+
           responses.push(
             convergence
               .rfqs()
               .findRfqByAddress({ address: responseAccount.data.rfq })
-              .then(rfq => toResponse(
-                responseAccount,
-                collateralMint.decimals,
-                rfq.quoteAsset.getDecimals()
-              ))
+              .then((rfq) =>
+                toResponse(responseAccount, collateralMint.decimals, rfq)
+              )
           );
         }
       }

@@ -32,6 +32,9 @@ export type Rfq = {
   /** The Taker's pubkey address. */
   readonly taker: PublicKey;
 
+  /** If not null the Rfq is settled through this print trade provider. */
+  readonly printTradeProvider: PublicKey | null;
+
   /** The order type of the Rfq. */
   readonly orderType: OrderType;
 
@@ -93,13 +96,19 @@ export function assertRfq(value: any): asserts value is Rfq {
   assert(isRfq(value), 'Expected Rfq model');
 }
 
+export function isSettledAsPrintTrade(rfq: Rfq): boolean {
+  return rfq.printTradeProvider !== null;
+}
+
 /** @group Model Helpers */
 export const toRfq = async (
   convergence: Convergence,
   account: RfqAccount
 ): Promise<Rfq> => {
+  const protocol = await convergence.protocol().get();
   const quoteAsset = await SpotQuoteInstrument.parseFromQuote(
     convergence,
+    protocol,
     account.data.quoteAsset
   );
   const collateralMint = await collateralMintCache.get(convergence);
@@ -108,11 +117,12 @@ export const toRfq = async (
     model: 'rfq',
     address: account.publicKey,
     taker: account.data.taker,
+    printTradeProvider: account.data.printTradeProvider,
     orderType: fromSolitaOrderType(account.data.orderType),
     size: fromSolitaFixedSize(account.data.fixedSize, quoteAsset.getDecimals()),
     quoteAsset,
     quoteMint: SpotLegInstrument.deserializeInstrumentData(
-      Buffer.from(account.data.quoteAsset.instrumentData)
+      Buffer.from(account.data.quoteAsset.data)
     ).mintAddress,
     creationTimestamp: convertTimestamp(account.data.creationTimestamp),
     activeWindow: account.data.activeWindow,
@@ -130,6 +140,8 @@ export const toRfq = async (
     totalResponses: account.data.totalResponses,
     clearedResponses: account.data.clearedResponses,
     confirmedResponses: account.data.confirmedResponses,
-    legs: account.data.legs.map((leg) => convergence.parseLegInstrument(leg)),
+    legs: account.data.legs.map((leg) =>
+      convergence.parseLegInstrument(leg, protocol)
+    ),
   };
 };

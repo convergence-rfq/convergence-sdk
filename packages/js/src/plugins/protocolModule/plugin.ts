@@ -66,6 +66,7 @@ declare module '../../Convergence' {
 
 declare module '../protocolModule/ProtocolClient' {
   interface ProtocolClient {
+    // TODO this method actually does not exist
     getProtocol(): Protocol;
   }
 }

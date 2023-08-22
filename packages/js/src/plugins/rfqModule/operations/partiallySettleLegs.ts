@@ -1,5 +1,5 @@
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
-import { createPartiallySettleLegsInstruction } from '@convergence-rfq/rfq';
+import { createPartiallySettleEscrowLegsInstruction } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -154,6 +154,10 @@ export const partiallySettleLegsBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  if (responseModel.model !== 'escrowResponse') {
+    throw new Error('Response is not settled as an escrow!');
+  }
+
   const startIndex = parseInt(responseModel.settledLegs.toString());
 
   for (let i = startIndex; i < startIndex + legAmountToSettle; i++) {
@@ -216,7 +220,7 @@ export const partiallySettleLegsBuilder = async (
         signers: [],
       },
       {
-        instruction: createPartiallySettleLegsInstruction(
+        instruction: createPartiallySettleEscrowLegsInstruction(
           {
             protocol: convergence.protocol().pdas().protocol(),
             rfq,

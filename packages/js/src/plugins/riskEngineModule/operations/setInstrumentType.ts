@@ -1,9 +1,7 @@
 import { createSetInstrumentTypeInstruction } from '@convergence-rfq/risk-engine';
-import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Config } from '../models';
-import { InstrumentType } from '../types';
+import { Config, InstrumentType, toSolitaInstrumentType } from '../models';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -63,7 +61,7 @@ export type SetInstrumentTypeInput = {
   /**
    * The address of the instrument program account.
    */
-  instrumentProgram: PublicKey;
+  instrumentIndex: number;
 };
 
 /**
@@ -132,7 +130,7 @@ export const setInstrumentTypeBuilder = (
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { authority = payer, instrumentProgram, instrumentType } = params;
+  const { authority = payer, instrumentIndex, instrumentType } = params;
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
@@ -149,8 +147,8 @@ export const setInstrumentTypeBuilder = (
           config,
         },
         {
-          instrumentProgram,
-          instrumentType,
+          instrumentIndex,
+          instrumentType: toSolitaInstrumentType(instrumentType),
         },
         riskEngineProgram.address
       ),

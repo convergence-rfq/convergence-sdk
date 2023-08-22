@@ -1,5 +1,5 @@
 import { PublicKey, AccountMeta } from '@solana/web3.js';
-import { createRevertSettlementPreparationInstruction } from '@convergence-rfq/rfq';
+import { createRevertEscrowSettlementPreparationInstruction } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -149,6 +149,10 @@ export const revertSettlementPreparationBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  if (responseModel.model !== 'escrowResponse') {
+    throw new Error('Response is not settled as an escrow!');
+  }
+
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
   const sidePreparedLegs: number =
@@ -240,7 +244,7 @@ export const revertSettlementPreparationBuilder = async (
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
-      instruction: createRevertSettlementPreparationInstruction(
+      instruction: createRevertEscrowSettlementPreparationInstruction(
         {
           protocol: convergence.protocol().pdas().protocol(),
           rfq,

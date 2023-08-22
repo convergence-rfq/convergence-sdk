@@ -3,12 +3,13 @@ import { RiskCategoryChange as SolitaRiskCategoryChange } from '@convergence-rfq
 import { bignum } from '@convergence-rfq/beet';
 
 import { ConfigAccount } from '../accounts';
-import { RiskCategoryInfo, InstrumentInfo } from '../types';
+import { RiskCategoryInfo } from '../types';
 import { assert } from '../../../utils/assert';
 import {
   RiskCategory,
   toSolitaRiskCategory,
 } from '../../protocolModule/models';
+import { InstrumentType, fromSolitaInstrumentType } from './InstrumentType';
 
 /**
  * This model captures all the relevant information about a Risk Engine Config
@@ -42,7 +43,7 @@ export type Config = {
   readonly riskCategoriesInfo: RiskCategoryInfo[];
 
   /** The instrument types info. */
-  readonly instrumentTypes: InstrumentInfo[];
+  readonly instrumentTypes: (InstrumentType | null)[];
 };
 
 export type RiskCategoryChange = {
@@ -83,5 +84,7 @@ export const toConfig = (account: ConfigAccount): Config => ({
   safetyPriceShiftFactor: account.data.safetyPriceShiftFactor,
   overallSafetyFactor: account.data.overallSafetyFactor,
   riskCategoriesInfo: account.data.riskCategoriesInfo,
-  instrumentTypes: account.data.instrumentTypes,
+  instrumentTypes: account.data.instrumentTypes.map((instrumentType) =>
+    fromSolitaInstrumentType(instrumentType)
+  ),
 });

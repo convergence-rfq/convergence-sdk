@@ -1,4 +1,4 @@
-import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
+import { createCleanUpResponseEscrowLegsInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -158,6 +158,10 @@ export const cleanUpResponseLegsBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  if (responseModel.model !== 'escrowResponse') {
+    throw new Error('Response is not settled as an escrow!');
+  }
+
   const initializedLegs = responseModel.legPreparationsInitializedBy.length;
   const anchorRemainingAccounts: AccountMeta[] = [];
   for (let i = initializedLegs - legAmountToClear; i < initializedLegs; i++) {
@@ -207,7 +211,7 @@ export const cleanUpResponseLegsBuilder = async (
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
-      instruction: createCleanUpResponseLegsInstruction(
+      instruction: createCleanUpResponseEscrowLegsInstruction(
         {
           protocol: protocol.address,
           rfq,

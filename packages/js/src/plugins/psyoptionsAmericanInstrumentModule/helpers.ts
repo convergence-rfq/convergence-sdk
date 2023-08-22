@@ -11,8 +11,10 @@ import {
   InstructionWithSigners,
   TransactionBuilder,
 } from '../../utils/TransactionBuilder';
-import { PsyoptionsAmericanInstrument } from './types';
-import { createAmericanProgram } from './instrument';
+import {
+  PsyoptionsAmericanInstrument,
+  createAmericanProgram,
+} from './instrument';
 
 export const mintAmericanOptions = async (
   convergence: Convergence,

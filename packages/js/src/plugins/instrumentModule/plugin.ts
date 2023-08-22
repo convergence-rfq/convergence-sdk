@@ -1,5 +1,6 @@
 import { Leg as SolitaLeg } from '@convergence-rfq/rfq';
 
+import { Protocol } from '../protocolModule';
 import { LegInstrument, LegInstrumentParser } from './types';
 import type { Convergence } from '@/Convergence';
 import { ConvergencePlugin, Program, PublicKey } from '@/types';
@@ -7,37 +8,44 @@ import { ConvergencePlugin, Program, PublicKey } from '@/types';
 /** @group Plugins */
 export const instrumentModule = (): ConvergencePlugin => ({
   install(convergence: Convergence) {
-    const legInstrumentParsers: [PublicKey, LegInstrumentParser][] = [];
+    const legInstrumentParsers = new Map<PublicKey, LegInstrumentParser>();
 
     convergence.addLegInstrument = function (
-      programAddress: PublicKey,
+      instrumentProgramAddress: PublicKey,
       factory: LegInstrumentParser
     ) {
-      const entry = legInstrumentParsers.find(([key]) =>
-        programAddress.equals(key)
-      );
-
-      if (entry) {
+      if (legInstrumentParsers.has(instrumentProgramAddress)) {
         throw new Error(
-          `Instrument for address ${programAddress.toString()} is already added!`
+          `Instrument for program ${instrumentProgramAddress} is already added!`
         );
       }
 
-      legInstrumentParsers.push([programAddress, factory]);
+      legInstrumentParsers.set(instrumentProgramAddress, factory);
     };
 
-    convergence.parseLegInstrument = function (leg: SolitaLeg) {
-      const factory = legInstrumentParsers.find(([key]) =>
-        leg.instrumentProgram.equals(key)
-      )?.[1];
+    convergence.parseLegInstrument = function (
+      leg: SolitaLeg,
+      protocol: Protocol
+    ) {
+      if (leg.settlementTypeMetadata.__kind !== 'Instrument') {
+        throw new Error(
+          'Leg is not settled as escrow, cannot parse as instrument'
+        );
+      }
+
+      const { instrumentIndex } = leg.settlementTypeMetadata;
+      const instrumentProgram =
+        protocol.instruments[instrumentIndex].programKey;
+
+      const factory = legInstrumentParsers.get(instrumentProgram);
 
       if (!factory) {
         throw new Error(
-          `Missing leg instrument for address ${leg.instrumentProgram.toString()}`
+          `Missing leg instrument for program ${instrumentProgram}`
         );
       }
 
-      return factory.parseFromLeg(convergence, leg);
+      return factory.parseFromLeg(convergence, leg, instrumentIndex);
     };
   },
 });
@@ -45,15 +53,16 @@ export const instrumentModule = (): ConvergencePlugin => ({
 declare module '../../Convergence' {
   interface Convergence {
     addLegInstrument(
-      programAddress: PublicKey,
+      instrumentProgramAddress: PublicKey,
       factory: LegInstrumentParser
     ): void;
-    parseLegInstrument(leg: SolitaLeg): LegInstrument;
+    parseLegInstrument(leg: SolitaLeg, protocol: Protocol): LegInstrument;
   }
 }
 
 declare module '../programModule/ProgramClient' {
   interface ProgramClient {
+    // TODO remove
     getSpotInstrument(programs?: Program[]): Program;
   }
 }

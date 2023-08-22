@@ -303,6 +303,7 @@ export const createRfqBuilder = async (
           ],
         },
         {
+          printTradeProvider: null,
           expectedLegsSize,
           expectedLegsHash: Array.from(expectedLegsHash),
           legs,

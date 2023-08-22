@@ -4,14 +4,13 @@ import {
   FixedSize as SolitaFixedSize,
   OrderType as SolitaOrderType,
   QuoteAsset,
-  QuoteRecord,
-  FixedSizeRecord,
   Quote,
-  priceQuoteBeet,
+  quoteBeet,
+  quoteAssetBeet,
+  fixedSizeBeet,
 } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as beet from '@convergence-rfq/beet';
-import * as beetSolana from '@convergence-rfq/beet-solana';
 
 import {
   createSerializerFromFixableBeetArgsStruct,
@@ -54,7 +53,7 @@ export class RfqPdasClient {
     const programId = this.programId();
     return Pda.find(programId, [
       Buffer.from('mint_info', 'utf8'),
-      quoteAsset.instrumentData,
+      quoteAsset.data,
     ]);
   }
 
@@ -81,9 +80,7 @@ export class RfqPdasClient {
       legsHash,
       serializeOrderTypeData(toSolitaOrderType(orderType)),
       quoteHash,
-      serializeFixedSizeData(
-        toSolitaFixedSize(fixedSize, quoteAsset.instrumentDecimals)
-      ),
+      serializeFixedSizeData(toSolitaFixedSize(fixedSize, quoteAsset.decimals)),
       toLittleEndian(activeWindow, 4),
       toLittleEndian(settlingWindow, 4),
       recentTimestamp.toArrayLike(Buffer, 'le', 8),
@@ -127,42 +124,12 @@ const serializeOrderTypeData = (orderType: SolitaOrderType): Buffer => {
 };
 
 const serializeQuoteData = (quote: Quote): Buffer => {
-  const quoteBeet = beet.dataEnum<QuoteRecord>([
-    [
-      'Standard',
-      new beet.FixableBeetArgsStruct<QuoteRecord['Standard']>(
-        [
-          ['priceQuote', priceQuoteBeet],
-          ['legsMultiplierBps', beet.u64],
-        ],
-        'QuoteRecord["Standard"]'
-      ),
-    ],
-
-    [
-      'FixedSize',
-      new beet.FixableBeetArgsStruct<QuoteRecord['FixedSize']>(
-        [['priceQuote', priceQuoteBeet]],
-        'QuoteRecord["FixedSize"]'
-      ),
-    ],
-  ]) as beet.FixableBeet<Quote>;
-
   const quoteSerializer = createSerializerFromFixableBeet(quoteBeet);
 
   return quoteSerializer.serialize(quote);
 };
 
 const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
-  const quoteAssetBeet = new beet.FixableBeetArgsStruct<QuoteAsset>(
-    [
-      ['instrumentProgram', beetSolana.publicKey],
-      ['instrumentData', beet.bytes],
-      ['instrumentDecimals', beet.u8],
-    ],
-    'QuoteAsset'
-  );
-
   const quoteAssetSerializer =
     createSerializerFromFixableBeetArgsStruct(quoteAssetBeet);
 
@@ -170,32 +137,6 @@ const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
 };
 
 const serializeFixedSizeData = (fixedSize: SolitaFixedSize): Buffer => {
-  const fixedSizeBeet = beet.dataEnum<FixedSizeRecord>([
-    [
-      'None',
-      new beet.BeetArgsStruct<FixedSizeRecord['None']>(
-        [['padding', beet.u64]],
-        'FixedSizeRecord["None"]'
-      ),
-    ],
-
-    [
-      'BaseAsset',
-      new beet.BeetArgsStruct<FixedSizeRecord['BaseAsset']>(
-        [['legsMultiplierBps', beet.u64]],
-        'FixedSizeRecord["BaseAsset"]'
-      ),
-    ],
-
-    [
-      'QuoteAsset',
-      new beet.BeetArgsStruct<FixedSizeRecord['QuoteAsset']>(
-        [['quoteAmount', beet.u64]],
-        'FixedSizeRecord["QuoteAsset"]'
-      ),
-    ],
-  ]) as beet.FixableBeet<SolitaFixedSize>;
-
   const fixedSizeSerializer = createSerializerFromFixableBeet(fixedSizeBeet);
 
   return fixedSizeSerializer.serialize(fixedSize);

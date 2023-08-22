@@ -1,5 +1,5 @@
 import {
-  createPrepareSettlementInstruction,
+  createPrepareEscrowSettlementInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
 import {
@@ -289,7 +289,7 @@ export const prepareSettlementBuilder = async (
         signers: [],
       },
       {
-        instruction: createPrepareSettlementInstruction(
+        instruction: createPrepareEscrowSettlementInstruction(
           {
             caller: caller.publicKey,
             protocol: convergence.protocol().pdas().protocol(),

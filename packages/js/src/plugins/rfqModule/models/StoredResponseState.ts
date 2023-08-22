@@ -7,9 +7,12 @@ export type StoredResponseState =
   | 'ready-for-settling'
   | 'settled'
   | 'settling-preparations'
-  | 'waiting-for-last-look'
+  | 'settlement-expired'
+  | 'waiting-for-last-look';
 
-export function fromSolitaStoredResponseState(StoredResponseState: SolitaStoredResponseState): StoredResponseState {
+export function fromSolitaStoredResponseState(
+  StoredResponseState: SolitaStoredResponseState
+): StoredResponseState {
   switch (StoredResponseState) {
     case SolitaStoredResponseState.Active: {
       return 'active';
@@ -29,13 +32,18 @@ export function fromSolitaStoredResponseState(StoredResponseState: SolitaStoredR
     case SolitaStoredResponseState.SettlingPreparations: {
       return 'settling-preparations';
     }
+    case SolitaStoredResponseState.SettlementExpired: {
+      return 'settlement-expired';
+    }
     case SolitaStoredResponseState.WaitingForLastLook: {
       return 'waiting-for-last-look';
     }
   }
 }
 
-export function toSolitaStoredResponseState(StoredResponseState: StoredResponseState): SolitaStoredResponseState {
+export function toSolitaStoredResponseState(
+  StoredResponseState: StoredResponseState
+): SolitaStoredResponseState {
   switch (StoredResponseState) {
     case 'active': {
       return SolitaStoredResponseState.Active;
@@ -54,6 +62,9 @@ export function toSolitaStoredResponseState(StoredResponseState: StoredResponseS
     }
     case 'settling-preparations': {
       return SolitaStoredResponseState.SettlingPreparations;
+    }
+    case 'settlement-expired': {
+      return SolitaStoredResponseState.SettlementExpired;
     }
     case 'waiting-for-last-look': {
       return SolitaStoredResponseState.WaitingForLastLook;

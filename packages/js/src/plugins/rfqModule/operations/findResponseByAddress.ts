@@ -75,7 +75,7 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
       const response = toResponse(
         responseAccount,
         collateralMint.decimals,
-        rfq.quoteAsset.getDecimals()
+        rfq
       );
       assertResponse(response);
 

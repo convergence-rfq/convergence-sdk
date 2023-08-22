@@ -6,12 +6,18 @@ import { Convergence } from '../../Convergence';
 import { LegSide } from '../rfqModule/models/LegSide';
 
 export interface LegInstrumentParser {
-  parseFromLeg(convergence: Convergence, leg: Leg): LegInstrument;
+  parseFromLeg(
+    convergence: Convergence,
+    leg: Leg,
+    instrumentIndex: number
+  ): LegInstrument;
 }
 
 export interface LegInstrument {
+  getInstrumentIndex: () => number;
   getProgramId: () => PublicKey;
   getBaseAssetIndex: () => BaseAssetIndex;
+  getAssetMint: () => PublicKey;
   getAmount: () => number;
   getDecimals: () => number;
   getSide: () => LegSide;
@@ -28,6 +34,7 @@ export interface LegInstrument {
 // }
 
 export interface QuoteInstrument {
+  getInstrumentIndex: () => number;
   getProgramId: () => PublicKey;
   getDecimals: () => number;
   serializeInstrumentData: () => Buffer;

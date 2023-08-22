@@ -1,4 +1,4 @@
-import { createSettleInstruction } from '@convergence-rfq/rfq';
+import { createSettleEscrowInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -145,6 +145,10 @@ export const settleBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  if (responseModel.model !== 'escrowResponse') {
+    throw new Error('Response is not settled as an escrow!');
+  }
+
   const { startIndex = parseInt(responseModel.settledLegs.toString()) } =
     params;
 
@@ -250,7 +254,7 @@ export const settleBuilder = async (
         signers: [],
       },
       {
-        instruction: createSettleInstruction(
+        instruction: createSettleEscrowInstruction(
           {
             protocol: convergence.protocol().pdas().protocol(),
             rfq,

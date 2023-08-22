@@ -5,7 +5,7 @@ import {
   ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
-  createPrepareMoreLegsSettlementInstruction,
+  createPrepareMoreEscrowLegsSettlementInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -176,6 +176,10 @@ export const prepareMoreLegsSettlementBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  if (responseModel.model !== 'escrowResponse') {
+    throw new Error('Response is not settled as an escrow!');
+  }
+
   const side =
     caller.publicKey.toBase58() == responseModel.maker.toBase58()
       ? AuthoritySide.Maker
@@ -262,7 +266,7 @@ export const prepareMoreLegsSettlementBuilder = async (
         signers: [],
       },
       {
-        instruction: createPrepareMoreLegsSettlementInstruction(
+        instruction: createPrepareMoreEscrowLegsSettlementInstruction(
           {
             caller: caller.publicKey,
             protocol: convergence.protocol().pdas().protocol(),
