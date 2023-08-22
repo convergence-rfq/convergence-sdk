@@ -57,6 +57,7 @@ describe('unit.rfq', () => {
 
   // TODO ADD getRfqState function
   it('cancel', async () => {
+    // Error Number: 6016. Error Message: Rfq is not in required state.
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
       return rfq.state === 'active' && rfq.totalResponses === 0;

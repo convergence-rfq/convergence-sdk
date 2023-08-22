@@ -110,7 +110,11 @@ export const cleanUpResponsesOperationHandler: OperationHandler<CleanUpResponses
         signedTxs.map((signedTx) =>
           convergence
             .rpc()
-            .serializeAndSendTransaction(signedTx, scope.confirmOptions)
+            .serializeAndSendTransaction(
+              signedTx,
+              lastValidBlockHeight,
+              scope.confirmOptions
+            )
         )
       );
       scope.throwIfCanceled();

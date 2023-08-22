@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.3
+
+### Patch Changes
+
+- Added fix for blockhash and incremented CPL Solita packages to 2.2.12
+
 ## 4.5.2
 
 ### Patch Changes
