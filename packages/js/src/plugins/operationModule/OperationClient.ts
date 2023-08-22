@@ -8,6 +8,7 @@ import {
   OperationHandler,
   OperationOptions,
   OperationScope,
+  MinimalSyncOperationHandler,
 } from '../../types';
 import { Disposable, DisposableScope } from '../../utils';
 import { OperationHandlerMissingError } from '../../errors';
@@ -58,6 +59,23 @@ export class OperationClient {
     return operationHandler;
   }
 
+  getMinimalSync<
+    T extends Operation<K, I, O>,
+    K extends string = KeyOfOperation<T>,
+    I = InputOfOperation<T>,
+    O = OutputOfOperation<T>
+  >(operation: T): MinimalSyncOperationHandler<T, K, I, O> {
+    const operationHandler = this.operationHandlers.get(operation.key) as
+      | MinimalSyncOperationHandler<T, K, I, O>
+      | undefined;
+
+    if (!operationHandler) {
+      throw new OperationHandlerMissingError(operation.key);
+    }
+
+    return operationHandler;
+  }
+
   async execute<
     T extends Operation<K, I, O>,
     K extends string = KeyOfOperation<T>,
@@ -93,23 +111,10 @@ export class OperationClient {
     K extends string = KeyOfOperation<T>,
     I = InputOfOperation<T>,
     O = OutputOfOperation<T>
-  >(operation: T, options: OperationOptions = {}): O {
-    const operationHandler = this.get<T, K, I, O>(operation);
-    const { signal } = options;
-    if (!signal) {
-      throw new Error('Signal is required for executeSync');
-    }
-    const process = (scope: DisposableScope): O => {
-      const result = operationHandler.handle(
-        operation,
-        this.convergence,
-        this.getOperationScope(options, scope)
-      );
-
-      return result as O;
-    };
-
-    return new Disposable(signal).runSync(process);
+  >(operation: T): O {
+    const operationHandler = this.getMinimalSync<T, K, I, O>(operation);
+    const result = operationHandler.handle(operation, this.convergence);
+    return result;
   }
 
   toCollection<

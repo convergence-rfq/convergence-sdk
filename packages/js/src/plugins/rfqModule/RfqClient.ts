@@ -481,12 +481,9 @@ export class RfqClient {
   }
 
   /** {@inheritDoc getSettlementResultOperation} */
-  getSettlementResult(
-    input: GetSettlementResultInput,
-    options?: OperationOptions
-  ) {
+  getSettlementResult(input: GetSettlementResultInput) {
     return this.convergence
       .operations()
-      .executeSync(getSettlementResultOperation(input), options);
+      .executeSync(getSettlementResultOperation(input));
   }
 }
