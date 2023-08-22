@@ -59,7 +59,7 @@ export class OperationClient {
     return operationHandler;
   }
 
-  getMinimalSync<
+  getSync<
     T extends Operation<K, I, O>,
     K extends string = KeyOfOperation<T>,
     I = InputOfOperation<T>,
@@ -112,7 +112,7 @@ export class OperationClient {
     I = InputOfOperation<T>,
     O = OutputOfOperation<T>
   >(operation: T): O {
-    const operationHandler = this.getMinimalSync<T, K, I, O>(operation);
+    const operationHandler = this.getSync<T, K, I, O>(operation);
     const result = operationHandler.handle(operation, this.convergence);
     return result;
   }
