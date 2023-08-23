@@ -7,8 +7,8 @@ import { ATAExistence, getOrCreateATA } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';
+import { InstructionUniquenessTracker } from '../../utils/classes';
 import { PsyoptionsEuropeanInstrument } from './instrument';
-import { Pda } from '@/types/Pda';
 import { makeConfirmOptionsFinalizedOnMainnet } from '@/types/Operation';
 import { toBigNumber } from '@/types/BigNumber';
 
@@ -24,8 +24,8 @@ export const initializeNewEuropeanOption = async (
   oracleProviderId = 1
 ) => {
   const expirationTimestamp = new BN(Date.now() / 1_000 + expiration);
-
-  let { instructions: initializeIxs } =
+  const txBuilderArray: TransactionBuilder[] = [];
+  const { instructions: initializeIxs } =
     await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
       europeanProgram,
       underlyingMint.address,
@@ -36,41 +36,22 @@ export const initializeNewEuropeanOption = async (
       oracleProviderId
     );
 
-  const tx = TransactionBuilder.make();
-
-  const underlyingPoolKey = Pda.find(europeanProgram.programId, [
-    underlyingMint.address.toBuffer(),
-    Buffer.from('underlyingPool', 'utf-8'),
-  ]);
-  // TODO: Use retry method
-  const underlyingPoolAccount = await convergence.connection.getAccountInfo(
-    underlyingPoolKey
-  );
-  if (underlyingPoolAccount && initializeIxs.length === 3) {
-    initializeIxs = initializeIxs.slice(1);
-  }
-  const stablePoolKey = Pda.find(europeanProgram.programId, [
-    stableMint.address.toBuffer(),
-    Buffer.from('stablePool', 'utf-8'),
-  ]);
-  // TODO: Use retry method
-  const stablePoolAccount = await convergence.connection.getAccountInfo(
-    stablePoolKey
-  );
-  if (stablePoolAccount && initializeIxs.length === 2) {
-    initializeIxs = initializeIxs.slice(1);
-  } else if (stablePoolAccount && initializeIxs.length === 3) {
-    initializeIxs.splice(1, 1);
-  }
+  const ixTracker = new InstructionUniquenessTracker([]);
 
   initializeIxs.forEach((ix) => {
-    tx.add({ instruction: ix, signers: [] });
+    if (ixTracker.checkedAdd(ix)) {
+      txBuilderArray.push(
+        new TransactionBuilder().add({ instruction: ix, signers: [] })
+      );
+    }
   });
 
   const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
 
-  if (initializeIxs.length > 0) {
-    await tx.sendAndConfirm(convergence, confirmOptions);
+  if (txBuilderArray.length > 0) {
+    txBuilderArray.forEach(async (txBuilder) => {
+      await txBuilder.sendAndConfirm(convergence, confirmOptions);
+    });
   }
 
   const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
@@ -98,10 +79,11 @@ export const initializeNewEuropeanOption = async (
     oracleProviderId
   );
 
-  await TransactionBuilder.make()
-    .add({ instruction: createIx, signers: [] })
-    .sendAndConfirm(convergence);
-
+  if (ixTracker.checkedAdd(createIx)) {
+    await TransactionBuilder.make()
+      .add({ instruction: createIx, signers: [] })
+      .sendAndConfirm(convergence);
+  }
   return {
     euroMeta,
     euroMetaKey,
