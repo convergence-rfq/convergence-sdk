@@ -43,7 +43,7 @@ describe('unit.settlementResult', () => {
     );
     expect(rfqResponse).toHaveProperty('address');
 
-    const responseResult = await takerCvg.rfqs().getSettlementResult({
+    const responseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: rfqResponse,
       confirmation: {
@@ -67,7 +67,7 @@ describe('unit.settlementResult', () => {
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
+    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
     });
@@ -99,7 +99,7 @@ describe('unit.settlementResult', () => {
       undefined,
       pricePerToken
     );
-    const responseResult = await takerCvg.rfqs().getSettlementResult({
+    const responseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: rfqResponse,
       confirmation: {
@@ -121,7 +121,7 @@ describe('unit.settlementResult', () => {
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
+    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
     });
@@ -146,7 +146,7 @@ describe('unit.settlementResult', () => {
       7.456
     );
     expect(rfqResponse).toHaveProperty('address');
-    const responseResult = await takerCvg.rfqs().getSettlementResult({
+    const responseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: rfqResponse,
       confirmation: {
@@ -167,7 +167,7 @@ describe('unit.settlementResult', () => {
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
+    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
     });
@@ -191,7 +191,7 @@ describe('unit.settlementResult', () => {
       undefined,
       8.456123456
     );
-    const responseResult = await takerCvg.rfqs().getSettlementResult({
+    const responseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: rfqResponse,
       confirmation: {
@@ -214,7 +214,7 @@ describe('unit.settlementResult', () => {
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
+    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
     });
@@ -240,7 +240,7 @@ describe('unit.settlementResult', () => {
       quoteAmount2
     );
     expect(rfqResponse).toHaveProperty('address');
-    const responseResult = await takerCvg.rfqs().getSettlementResult({
+    const responseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: rfqResponse,
       confirmation: {
@@ -261,7 +261,7 @@ describe('unit.settlementResult', () => {
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
+    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
     });
@@ -286,7 +286,7 @@ describe('unit.settlementResult', () => {
       quoteAmount2
     );
     expect(rfqResponse).toHaveProperty('address');
-    const responseResult = await takerCvg.rfqs().getSettlementResult({
+    const responseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: rfqResponse,
       confirmation: {
@@ -307,7 +307,7 @@ describe('unit.settlementResult', () => {
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
+    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
     });
@@ -328,7 +328,7 @@ describe('unit.settlementResult', () => {
 
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1);
     expect(rfqResponse).toHaveProperty('address');
-    const responseResult = await takerCvg.rfqs().getSettlementResult({
+    const responseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: rfqResponse,
       confirmation: {
@@ -354,7 +354,7 @@ describe('unit.settlementResult', () => {
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
+    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
     });
@@ -377,7 +377,7 @@ describe('unit.settlementResult', () => {
     expect(response.signature).toBeDefined();
 
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.34);
-    const responseResult = await takerCvg.rfqs().getSettlementResult({
+    const responseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: rfqResponse,
       confirmation: {
@@ -401,7 +401,7 @@ describe('unit.settlementResult', () => {
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    const confimedResponseResult = await takerCvg.rfqs().getSettlementResult({
+    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
       response: refreshedResponse,
     });
