@@ -64,7 +64,9 @@ export type GetSettlementResultOutput = {
  */
 export const getSettlementResultHandler: OperationHandler<GetSettlementResult> =
   {
-    handle: (operation: GetSettlementResult): GetSettlementResultOutput => {
+    handle: async (
+      operation: GetSettlementResult
+    ): Promise<GetSettlementResultOutput> => {
       const {
         response,
         rfq,
