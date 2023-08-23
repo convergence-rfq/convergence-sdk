@@ -1,17 +1,15 @@
 import { PublicKey } from '@solana/web3.js';
-import { QuoteSide } from '@convergence-rfq/rfq';
 import { Confirmation } from '../../rfqModule/models/Confirmation';
 
 import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
-import { extractLegsMultiplier } from '../helpers';
-import { Convergence } from '../../../Convergence';
+import { Convergence } from '@/Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '../../../types';
-import { toSolitaQuote } from '@/plugins/rfqModule';
+} from '@/types';
+import { extractLegsMultiplier } from '@/plugins/rfqModule/helpers';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 
@@ -25,7 +23,7 @@ const Key = 'CalculateCollateralForConfirmationOperation' as const;
         rfqAddress: rfq.address,
         responseAddress: rfqResponse.address,
         confirmation: {
-          side: Side.Bid,
+          side: 'buy',
           overrideLegMultiplier: 3,
         },
       });
@@ -94,24 +92,16 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         convergence.riskEngine().fetchConfig(scope),
       ]);
 
-      //TODO getSettlementResult logic can be used here to get confirmed
-      let legsMultiplier: number;
-      if (confirmation.overrideLegMultiplier) {
-        legsMultiplier = confirmation.overrideLegMultiplier;
-      } else {
-        const confirmedQuote =
-          confirmation.side == QuoteSide.Bid ? response.bid : response.ask;
-
-        if (confirmedQuote === null) {
-          throw Error('Cannot confirm a missing quote!');
-        }
-
-        legsMultiplier = extractLegsMultiplier(
-          rfq,
-          toSolitaQuote(confirmedQuote, rfq.quoteAsset.getDecimals())
-        );
+      const confirmedQuote =
+        confirmation.side == 'bid' ? response.bid : response.ask;
+      if (confirmedQuote === null) {
+        throw Error('Cannot confirm a missing quote!');
       }
-
+      const legsMultiplier = extractLegsMultiplier(
+        rfq,
+        confirmedQuote,
+        confirmation
+      );
       const calculationCase: CalculationCase = {
         legsMultiplier,
         authoritySide: 'taker',

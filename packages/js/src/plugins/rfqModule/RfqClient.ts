@@ -78,6 +78,7 @@ import {
   unlockRfqsCollateralOperation,
   GetSettlementResultInput,
   getSettlementResultOperation,
+  getSettlementResultHandler,
 } from './operations';
 import { Response } from './models/Response';
 
@@ -481,12 +482,10 @@ export class RfqClient {
   }
 
   /** {@inheritDoc getSettlementResultOperation} */
-  getSettlementResult(
-    input: GetSettlementResultInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(getSettlementResultOperation(input), options);
+  getSettlementResult(input: GetSettlementResultInput) {
+    return getSettlementResultHandler.handle(
+      getSettlementResultOperation(input),
+      this.convergence
+    );
   }
 }

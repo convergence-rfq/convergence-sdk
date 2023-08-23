@@ -110,6 +110,15 @@ export type OperationHandler<
   ) => O | Promise<O> | AsyncGenerator<O, void, void>;
 };
 
+export type SyncOperationHandler<
+  T extends Operation<K, I, O>,
+  K extends string = KeyOfOperation<T>,
+  I = InputOfOperation<T>,
+  O = OutputOfOperation<T>
+> = {
+  handle: (operation: T, convergence: Convergence) => O;
+};
+
 /**
  * @group Operations
  * @category Constructors
