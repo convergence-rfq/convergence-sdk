@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.4
+
+### Patch Changes
+
+- make getSettlementResult a synchronous operation
+
 ## 4.5.3
 
 ### Patch Changes
