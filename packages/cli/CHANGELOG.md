@@ -1,12 +1,5 @@
 # @convergence-rfq/cli
 
-## 4.5.5
-
-### Patch Changes
-
-- Updated dependencies
-  - @convergence-rfq/sdk@4.5.5
-
 ## 4.5.4
 
 ### Patch Changes
