@@ -30,6 +30,7 @@ import {
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { IDL as PseudoPythIdl } from '../../validator/fixtures/programs/pseudo_pyth_idl';
+import { InstructionUniquenessTracker } from '../src/utils/classes';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
 const DEFAULT_COMMITMENT = 'confirmed';
 const DEFAULT_SKIP_PREFLIGHT = true;
@@ -165,6 +166,7 @@ export const createEuropeanCoveredCallRfq = async (
   );
   const min = 3_600;
   const randomExpiry = min + Math.random();
+  const ixTracker = new InstructionUniquenessTracker([]);
   const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
     cvg,
     oracle,
@@ -174,6 +176,7 @@ export const createEuropeanCoveredCallRfq = async (
     23_354,
     1,
     randomExpiry,
+    ixTracker,
     0
   );
 
@@ -215,6 +218,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
   );
   const min = 3_600;
   const randomExpiry = min + Math.random();
+  const ixTracker = new InstructionUniquenessTracker([]);
   const { euroMeta: euroMeta1, euroMetaKey: euroMetaKey1 } =
     await initializeNewEuropeanOption(
       cvg,
@@ -225,8 +229,10 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
       23_354,
       1,
       randomExpiry,
+      ixTracker,
       0
     );
+  sleep(3);
   const { euroMeta: euroMeta2, euroMetaKey: euroMetaKey2 } =
     await initializeNewEuropeanOption(
       cvg,
@@ -237,6 +243,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
       25_354,
       1,
       randomExpiry,
+      ixTracker,
       0
     );
 
@@ -333,6 +340,7 @@ export const createEuropeanFixedBaseStraddle = async (
   );
   const min = 3_600;
   const randomExpiry = min + Math.random();
+  const ixTracker = new InstructionUniquenessTracker([]);
   const { euroMeta: euroMeta, euroMetaKey: euroMetaKey } =
     await initializeNewEuropeanOption(
       cvg,
@@ -343,6 +351,7 @@ export const createEuropeanFixedBaseStraddle = async (
       23_354,
       1,
       randomExpiry,
+      ixTracker,
       0
     );
 

@@ -1,6 +1,6 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import { BN } from 'bn.js';
 import { Mint } from '../tokenModule';
 import { ATAExistence, getOrCreateATA } from '../../utils/ata';
@@ -21,10 +21,11 @@ export const initializeNewEuropeanOption = async (
   strikePrice: number,
   underlyingAmountPerContract: number,
   expiration: number,
+  ixTracker: InstructionUniquenessTracker,
   oracleProviderId = 1
 ) => {
   const expirationTimestamp = new BN(Date.now() / 1_000 + expiration);
-  const txBuilderArray: TransactionBuilder[] = [];
+  const tx: Transaction = new Transaction();
   const { instructions: initializeIxs } =
     await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
       europeanProgram,
@@ -36,23 +37,11 @@ export const initializeNewEuropeanOption = async (
       oracleProviderId
     );
 
-  const ixTracker = new InstructionUniquenessTracker([]);
-
   initializeIxs.forEach((ix) => {
     if (ixTracker.checkedAdd(ix)) {
-      txBuilderArray.push(
-        new TransactionBuilder().add({ instruction: ix, signers: [] })
-      );
+      tx.add(ix);
     }
   });
-
-  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
-
-  if (txBuilderArray.length > 0) {
-    txBuilderArray.forEach(async (txBuilder) => {
-      await txBuilder.sendAndConfirm(convergence, confirmOptions);
-    });
-  }
 
   const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
   const underlyingAmountPerContractSize = addDecimals(
@@ -78,12 +67,19 @@ export const initializeNewEuropeanOption = async (
     oracle,
     oracleProviderId
   );
-
-  if (ixTracker.checkedAdd(createIx)) {
-    await TransactionBuilder.make()
-      .add({ instruction: createIx, signers: [] })
-      .sendAndConfirm(convergence);
+  const euroMetaAccount = await convergence.rpc().getAccount(euroMetaKey);
+  if (!euroMetaAccount.exists && ixTracker.checkedAdd(createIx)) {
+    tx.add(createIx);
   }
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  if (tx.instructions.length > 0) {
+    const latestBlockHash = await convergence.connection.getLatestBlockhash();
+    tx.recentBlockhash = latestBlockHash.blockhash;
+    await convergence.rpc().sendAndConfirmTransaction(tx, confirmOptions);
+  }
+
   return {
     euroMeta,
     euroMetaKey,
