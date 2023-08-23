@@ -1,6 +1,6 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
-import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
 import { Mint } from '../tokenModule';
 import { ATAExistence, getOrCreateATA } from '../../utils/ata';
@@ -25,7 +25,7 @@ export const initializeNewEuropeanOption = async (
   oracleProviderId = 1
 ) => {
   const expirationTimestamp = new BN(Date.now() / 1_000 + expiration);
-  const tx: Transaction = new Transaction();
+  const txBuilder = new TransactionBuilder();
   const { instructions: initializeIxs } =
     await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
       europeanProgram,
@@ -39,7 +39,7 @@ export const initializeNewEuropeanOption = async (
 
   initializeIxs.forEach((ix) => {
     if (ixTracker.checkedAdd(ix)) {
-      tx.add(ix);
+      txBuilder.add({ instruction: ix, signers: [] });
     }
   });
 
@@ -67,17 +67,14 @@ export const initializeNewEuropeanOption = async (
     oracle,
     oracleProviderId
   );
-  const euroMetaAccount = await convergence.rpc().getAccount(euroMetaKey);
-  if (!euroMetaAccount.exists && ixTracker.checkedAdd(createIx)) {
-    tx.add(createIx);
+  // const euroMetaAccount = await convergence.rpc().getAccount(euroMetaKey);
+  if (ixTracker.checkedAdd(createIx)) {
+    txBuilder.add({ instruction: createIx, signers: [] });
   }
+  // const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
 
-  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
-
-  if (tx.instructions.length > 0) {
-    const latestBlockHash = await convergence.connection.getLatestBlockhash();
-    tx.recentBlockhash = latestBlockHash.blockhash;
-    await convergence.rpc().sendAndConfirmTransaction(tx, confirmOptions);
+  if (txBuilder.getInstructionCount() > 0) {
+    txBuilder.sendAndConfirm(convergence);
   }
 
   return {
