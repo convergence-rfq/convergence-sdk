@@ -232,7 +232,6 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
       ixTracker,
       0
     );
-  sleep(3);
   const { euroMeta: euroMeta2, euroMetaKey: euroMetaKey2 } =
     await initializeNewEuropeanOption(
       cvg,
