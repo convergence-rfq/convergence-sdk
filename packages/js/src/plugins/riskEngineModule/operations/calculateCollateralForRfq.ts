@@ -1,9 +1,8 @@
 import {
   isFixedSizeBaseAsset,
-  isFixedSizeNone,
+  isFixedSizeOpen,
   isFixedSizeQuoteAsset,
-  QuoteSide,
-} from '@convergence-rfq/rfq';
+} from '../../rfqModule/models';
 
 import { calculateRisk, CalculationCase } from '../clientCollateralCalculator';
 import {
@@ -18,12 +17,7 @@ import {
   QuoteInstrument,
 } from '../../../plugins/instrumentModule';
 import { removeDecimals } from '../../../utils/conversions';
-import {
-  FixedSize,
-  LEG_MULTIPLIER_DECIMALS,
-  OrderType,
-  toSolitaFixedSize,
-} from '../../../plugins/rfqModule';
+import { FixedSize, OrderType, ResponseSide } from '../../../plugins/rfqModule';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -116,28 +110,24 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
         size: fixedSize,
       } = operation.input;
 
-      const size = toSolitaFixedSize(fixedSize, 0);
       const config = await convergence.riskEngine().fetchConfig(scope);
-      if (isFixedSizeNone(size)) {
+      if (isFixedSizeOpen(fixedSize)) {
         return {
           requiredCollateral: removeDecimals(
             config.minCollateralRequirement,
             Number(config.collateralMintDecimals)
           ),
         };
-      } else if (isFixedSizeQuoteAsset(size)) {
+      } else if (isFixedSizeQuoteAsset(fixedSize)) {
         return {
           requiredCollateral: removeDecimals(
             config.collateralForFixedQuoteAmountRfqCreation,
             Number(config.collateralMintDecimals)
           ),
         };
-      } else if (isFixedSizeBaseAsset(size)) {
-        const legsMultiplier = removeDecimals(
-          size.legsMultiplierBps,
-          LEG_MULTIPLIER_DECIMALS
-        );
-        const sideToCase = (side: QuoteSide): CalculationCase => {
+      } else if (isFixedSizeBaseAsset(fixedSize)) {
+        const legsMultiplier = fixedSize.amount;
+        const sideToCase = (side: ResponseSide): CalculationCase => {
           return {
             legsMultiplier,
             authoritySide: 'taker',
@@ -147,12 +137,12 @@ export const calculateCollateralForRfqOperationHandler: OperationHandler<Calcula
 
         const cases: CalculationCase[] = [];
         if (orderType == 'buy') {
-          cases.push(sideToCase(QuoteSide.Ask));
+          cases.push(sideToCase('ask'));
         } else if (orderType == 'sell') {
-          cases.push(sideToCase(QuoteSide.Bid));
+          cases.push(sideToCase('bid'));
         } else if (orderType == 'two-way') {
-          cases.push(sideToCase(QuoteSide.Ask));
-          cases.push(sideToCase(QuoteSide.Bid));
+          cases.push(sideToCase('ask'));
+          cases.push(sideToCase('bid'));
         } else {
           throw new Error('Invalid order type');
         }

@@ -1,6 +1,4 @@
 import { expect } from 'expect';
-// TODO: Should not be using this
-import { QuoteSide } from '@convergence-rfq/rfq';
 
 import { Rfq } from '../../src';
 import { createUserCvg, createRfq, respondToRfq } from '../helpers';
@@ -102,7 +100,7 @@ describe('unit.response', () => {
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: responses[0].address,
     });
-    expect(response.confirmed?.side).toBe(QuoteSide.Bid);
+    expect(response.confirmed?.side).toBe('bid');
   });
 
   it('confirm [ask]', async () => {
@@ -119,7 +117,7 @@ describe('unit.response', () => {
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: responses[0].address,
     });
-    expect(response.confirmed?.side).toBe(QuoteSide.Ask);
+    expect(response.confirmed?.side).toBe('ask');
   });
 
   // TODO ADD getResponseState function

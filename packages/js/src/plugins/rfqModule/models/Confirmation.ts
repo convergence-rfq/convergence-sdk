@@ -1,13 +1,15 @@
-import {
-  QuoteSide,
-  Confirmation as SolitaConfirmation,
-} from '@convergence-rfq/rfq';
+import { Confirmation as SolitaConfirmation } from '@convergence-rfq/rfq';
 import { COption, bignum } from '@convergence-rfq/beet';
 import { LEG_MULTIPLIER_DECIMALS } from '../constants';
+import {
+  ResponseSide,
+  fromSolitaQuoteSide,
+  toSolitaQuoteSide,
+} from './ResponseSide';
 import { addDecimals, removeDecimals } from '@/utils/conversions';
 
 export interface Confirmation {
-  readonly side: QuoteSide;
+  readonly side: ResponseSide;
   readonly overrideLegMultiplier?: number;
 }
 
@@ -20,12 +22,12 @@ export function fromSolitaConfirmation(
       LEG_MULTIPLIER_DECIMALS
     );
     return {
-      side: confirmation.side,
+      side: fromSolitaQuoteSide(confirmation.side),
       overrideLegMultiplier,
     };
   }
   return {
-    side: confirmation.side,
+    side: fromSolitaQuoteSide(confirmation.side),
   };
 }
 
@@ -35,12 +37,12 @@ export function toSolitaConfirmation(confirmation: Confirmation) {
       confirmation.overrideLegMultiplier
     );
     return {
-      side: confirmation.side,
+      side: toSolitaQuoteSide(confirmation.side),
       overrideLegMultiplierBps,
     };
   }
   return {
-    side: confirmation.side,
+    side: toSolitaQuoteSide(confirmation.side),
   };
 }
 

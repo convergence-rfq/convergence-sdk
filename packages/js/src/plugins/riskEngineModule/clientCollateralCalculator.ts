@@ -1,4 +1,4 @@
-import { RiskCategory, QuoteSide } from '@convergence-rfq/rfq';
+import { RiskCategory } from '@convergence-rfq/rfq';
 import {
   futureCommonDataBeet,
   InstrumentType,
@@ -15,6 +15,7 @@ import { Convergence } from '../../Convergence';
 import { toSolitaRiskCategory } from '../protocolModule';
 import { LegInstrument } from '../instrumentModule';
 import { AuthoritySide } from '../rfqModule/models/AuthoritySide';
+import { ResponseSide } from '../rfqModule';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
 import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
 import { Config } from './models';
@@ -28,7 +29,7 @@ import { removeDecimals } from '@/utils/conversions';
 export type CalculationCase = {
   legsMultiplier: number;
   authoritySide: AuthoritySide;
-  quoteSide: QuoteSide;
+  quoteSide: ResponseSide;
 };
 
 type PortfolioStatistics = {

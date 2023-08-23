@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- make getSettlementResult a synchronous operation
+- make getSettlementResult a synchronous operation & Refactor Client Risk Engine to remove unnecessary decimal conversions and add + replace new Api models from Solita"
 
 ## 4.5.3
 
