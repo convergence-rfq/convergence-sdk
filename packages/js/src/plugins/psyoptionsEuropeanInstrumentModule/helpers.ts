@@ -7,8 +7,8 @@ import { ATAExistence, getOrCreateATA } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';
-import { InstructionUniquenessTracker } from '../../utils/classes';
 import { PsyoptionsEuropeanInstrument } from './instrument';
+import { Pda } from '@/types/Pda';
 import { makeConfirmOptionsFinalizedOnMainnet } from '@/types/Operation';
 import { toBigNumber } from '@/types/BigNumber';
 
@@ -21,12 +21,11 @@ export const initializeNewEuropeanOption = async (
   strikePrice: number,
   underlyingAmountPerContract: number,
   expiration: number,
-  ixTracker: InstructionUniquenessTracker,
   oracleProviderId = 1
 ) => {
   const expirationTimestamp = new BN(Date.now() / 1_000 + expiration);
-  const txBuilder = new TransactionBuilder();
-  const { instructions: initializeIxs } =
+
+  let { instructions: initializeIxs } =
     await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
       europeanProgram,
       underlyingMint.address,
@@ -37,11 +36,42 @@ export const initializeNewEuropeanOption = async (
       oracleProviderId
     );
 
+  const tx = TransactionBuilder.make();
+
+  const underlyingPoolKey = Pda.find(europeanProgram.programId, [
+    underlyingMint.address.toBuffer(),
+    Buffer.from('underlyingPool', 'utf-8'),
+  ]);
+  // TODO: Use retry method
+  const underlyingPoolAccount = await convergence.connection.getAccountInfo(
+    underlyingPoolKey
+  );
+  if (underlyingPoolAccount && initializeIxs.length === 3) {
+    initializeIxs = initializeIxs.slice(1);
+  }
+  const stablePoolKey = Pda.find(europeanProgram.programId, [
+    stableMint.address.toBuffer(),
+    Buffer.from('stablePool', 'utf-8'),
+  ]);
+  // TODO: Use retry method
+  const stablePoolAccount = await convergence.connection.getAccountInfo(
+    stablePoolKey
+  );
+  if (stablePoolAccount && initializeIxs.length === 2) {
+    initializeIxs = initializeIxs.slice(1);
+  } else if (stablePoolAccount && initializeIxs.length === 3) {
+    initializeIxs.splice(1, 1);
+  }
+
   initializeIxs.forEach((ix) => {
-    if (ixTracker.checkedAdd(ix)) {
-      txBuilder.add({ instruction: ix, signers: [] });
-    }
+    tx.add({ instruction: ix, signers: [] });
   });
+
+  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+
+  if (initializeIxs.length > 0) {
+    await tx.sendAndConfirm(convergence, confirmOptions);
+  }
 
   const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
   const underlyingAmountPerContractSize = addDecimals(
@@ -67,15 +97,10 @@ export const initializeNewEuropeanOption = async (
     oracle,
     oracleProviderId
   );
-  // const euroMetaAccount = await convergence.rpc().getAccount(euroMetaKey);
-  if (ixTracker.checkedAdd(createIx)) {
-    txBuilder.add({ instruction: createIx, signers: [] });
-  }
-  // const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
 
-  if (txBuilder.getInstructionCount() > 0) {
-    txBuilder.sendAndConfirm(convergence);
-  }
+  await TransactionBuilder.make()
+    .add({ instruction: createIx, signers: [] })
+    .sendAndConfirm(convergence);
 
   return {
     euroMeta,
