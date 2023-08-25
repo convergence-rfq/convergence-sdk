@@ -9,12 +9,14 @@ import {
   OperationScope,
   useOperation,
   Signer,
+  PublicKey,
 } from '../../../types';
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { riskEngineConfigCache } from '../cache';
+import { getInstrumentProgramIndex } from '@/plugins/instrumentModule';
 
 const Key = 'SetInstrumentTypeOperation' as const;
 
@@ -61,7 +63,7 @@ export type SetInstrumentTypeInput = {
   /**
    * The address of the instrument program account.
    */
-  instrumentIndex: number;
+  instrumentProgram: PublicKey;
 };
 
 /**
@@ -87,9 +89,16 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetInstrumentTypeOutput> => {
+      const protocol = await convergence.protocol().get();
+      const instrumentIndex = getInstrumentProgramIndex(
+        protocol,
+        operation.input.instrumentProgram
+      );
+
       const builder = setInstrumentTypeBuilder(
         convergence,
         operation.input,
+        instrumentIndex,
         scope
       );
 
@@ -127,10 +136,11 @@ export type SetInstrumentTypeBuilderParams = SetInstrumentTypeInput;
 export const setInstrumentTypeBuilder = (
   convergence: Convergence,
   params: SetInstrumentTypeBuilderParams,
+  instrumentIndex: number,
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { authority = payer, instrumentIndex, instrumentType } = params;
+  const { authority = payer, instrumentType } = params;
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 

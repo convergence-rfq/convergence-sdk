@@ -4,23 +4,11 @@ import {
   PsyoptionsEuropeanInstrument,
   LegInstrument,
   FixedSize,
-  InstrumentType,
 } from '@convergence-rfq/sdk';
 import { Command } from 'commander';
 
 import { Instrument } from './types';
 import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
-
-export const getInstrumentType = (type: string): InstrumentType => {
-  switch (type) {
-    case 'spot':
-      return InstrumentType.Spot;
-    case 'option':
-      return InstrumentType.Option;
-    default:
-      throw new Error('Invalid instrument type');
-  }
-};
 
 export const getSize = (size: string, amount: number): FixedSize => {
   switch (size) {

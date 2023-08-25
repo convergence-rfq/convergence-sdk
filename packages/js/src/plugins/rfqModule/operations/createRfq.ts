@@ -169,6 +169,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       .rfq({
         taker: taker.publicKey,
         legsHash: Buffer.from(expectedLegsHash),
+        printTradeProvider: null,
         orderType,
         quoteAsset: toQuote(quoteAsset),
         fixedSize,

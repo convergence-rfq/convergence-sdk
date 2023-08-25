@@ -61,6 +61,7 @@ export class RfqPdasClient {
   rfq({
     taker,
     legsHash,
+    printTradeProvider,
     orderType,
     quoteAsset,
     fixedSize,
@@ -78,6 +79,7 @@ export class RfqPdasClient {
       Buffer.from('rfq', 'utf8'),
       taker.toBuffer(),
       legsHash,
+      (printTradeProvider || PublicKey.default).toBuffer(),
       serializeOrderTypeData(toSolitaOrderType(orderType)),
       quoteHash,
       serializeFixedSizeData(toSolitaFixedSize(fixedSize, quoteAsset.decimals)),
@@ -164,6 +166,8 @@ type RfqInput = {
 
   /** The SHA256 hash of the serialized legs of the RFQ. */
   legsHash: Buffer;
+
+  printTradeProvider: PublicKey | null;
 
   /** The order type of the Rfq. */
   orderType: OrderType;

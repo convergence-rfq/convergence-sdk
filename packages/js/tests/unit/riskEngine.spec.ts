@@ -2,7 +2,7 @@ import { expect } from 'expect';
 // TODO: Should not be using this
 import { QuoteSide } from '@convergence-rfq/rfq';
 
-import { InstrumentType, DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
+import { DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
 import {
   createCFlyRfq,
   createRfq,
@@ -37,7 +37,7 @@ describe('unit.riskEngine', () => {
 
   it('set instrument type [spot]', async () => {
     const { config } = await daoCvg.riskEngine().setInstrumentType({
-      instrumentType: InstrumentType.Spot,
+      instrumentType: 'spot',
       instrumentProgram: daoCvg.programs().getSpotInstrument().address,
     });
     expect(config.address).toEqual(daoCvg.riskEngine().pdas().config());
@@ -45,7 +45,7 @@ describe('unit.riskEngine', () => {
 
   it('set instrument type [american]', async () => {
     const { config } = await daoCvg.riskEngine().setInstrumentType({
-      instrumentType: InstrumentType.Option,
+      instrumentType: 'option',
       instrumentProgram: daoCvg.programs().getPsyoptionsAmericanInstrument()
         .address,
     });
@@ -54,7 +54,7 @@ describe('unit.riskEngine', () => {
 
   it('set instrument type [european]', async () => {
     const { config } = await daoCvg.riskEngine().setInstrumentType({
-      instrumentType: InstrumentType.Option,
+      instrumentType: 'option',
       instrumentProgram: daoCvg.programs().getPsyoptionsEuropeanInstrument()
         .address,
     });

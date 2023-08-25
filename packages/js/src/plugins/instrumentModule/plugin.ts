@@ -8,19 +8,19 @@ import { ConvergencePlugin, Program, PublicKey } from '@/types';
 /** @group Plugins */
 export const instrumentModule = (): ConvergencePlugin => ({
   install(convergence: Convergence) {
-    const legInstrumentParsers = new Map<PublicKey, LegInstrumentParser>();
+    const legInstrumentParsers = new Map<String, LegInstrumentParser>();
 
     convergence.addLegInstrument = function (
       instrumentProgramAddress: PublicKey,
       factory: LegInstrumentParser
     ) {
-      if (legInstrumentParsers.has(instrumentProgramAddress)) {
+      if (legInstrumentParsers.has(instrumentProgramAddress.toBase58())) {
         throw new Error(
           `Instrument for program ${instrumentProgramAddress} is already added!`
         );
       }
 
-      legInstrumentParsers.set(instrumentProgramAddress, factory);
+      legInstrumentParsers.set(instrumentProgramAddress.toBase58(), factory);
     };
 
     convergence.parseLegInstrument = function (
@@ -37,7 +37,7 @@ export const instrumentModule = (): ConvergencePlugin => ({
       const instrumentProgram =
         protocol.instruments[instrumentIndex].programKey;
 
-      const factory = legInstrumentParsers.get(instrumentProgram);
+      const factory = legInstrumentParsers.get(instrumentProgram.toBase58());
 
       if (!factory) {
         throw new Error(

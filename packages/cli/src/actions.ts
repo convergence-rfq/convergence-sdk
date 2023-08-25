@@ -394,7 +394,7 @@ export const setRiskEngineInstrumentType = async (opts: Opts) => {
   try {
     const { response } = await cvg.riskEngine().setInstrumentType({
       instrumentProgram: new PublicKey(opts.program),
-      instrumentType: getInstrumentType(opts.type),
+      instrumentType: opts.type,
     });
     logResponse(response);
   } catch (e) {
