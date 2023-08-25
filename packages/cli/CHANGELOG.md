@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.5.6
+
+### Patch Changes
+
+- Fixed typo in CLI input parameters
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.6
+
 ## 4.5.5
 
 ### Patch Changes

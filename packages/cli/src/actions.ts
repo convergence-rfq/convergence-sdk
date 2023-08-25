@@ -101,9 +101,9 @@ export const initializeProtocol = async (opts: Opts) => {
     const { response, protocol } = await cvg.protocol().initialize({
       collateralMint: new PublicKey(opts.collateralMint),
       protocolTakerFee: opts.protocolTakerFee,
-      protocolMakerFee: opts.protocolTakerFee,
+      protocolMakerFee: opts.protocolMakerFee,
       settlementTakerFee: opts.settlementTakerFee,
-      settlementMakerFee: opts.settlementTakerFee,
+      settlementMakerFee: opts.settlementMakerFee,
     });
     logPk(protocol.address);
     logResponse(response);
