@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 4.5.5
+
+### Patch Changes
+
+- Initialize protocol now takes and utilizes parameters for all fees
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.5
+
 ## 4.5.4
 
 ### Patch Changes
