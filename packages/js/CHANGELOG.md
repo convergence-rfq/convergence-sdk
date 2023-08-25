@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.7
+
+### Patch Changes
+
+- Risk engine config default config is now 10 USDC
+
 ## 4.5.6
 
 ### Patch Changes
