@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.8
+
+### Patch Changes
+
+- Added min collateral requirement flag to CLI
+
 ## 4.5.7
 
 ### Patch Changes
