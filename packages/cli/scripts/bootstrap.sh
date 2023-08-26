@@ -25,6 +25,6 @@ convergence risk-engine set-risk-categories-info --new-value="0.05,5.0,0.10,1.0,
 convergence protocol add-base-asset --ticker=BTC --oracle-address=$BTC_ORACLE_ADDRESS --oracle-source=switchboard 
 convergence protocol add-base-asset --ticker=SOL --oracle-address=$SOL_ORACLE_ADDRESS --oracle-source=switchboard
 
-convergence protocol register-mint --mint=$BTC_MINT_DEVNET --base-asset-index=0 --rpc-endpoint=$RPC_ENDPOINT
-convergence protocol register-mint --mint=$SOL_MINT_DEVNET --base-asset-index=1 --rpc-endpoint=$RPC_ENDPOINT
-convergence protocol register-mint --mint=$USDC_MINT_DEVNET --rpc-endpoint=$RPC_ENDPOINT
+convergence protocol register-mint --mint=$BTC_MINT --base-asset-index=0 
+convergence protocol register-mint --mint=$SOL_MINT --base-asset-index=1
+convergence protocol register-mint --mint=$USDC_MINT
