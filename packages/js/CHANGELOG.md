@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.9
+
+### Patch Changes
+
+- CLI get-registered-mints now logs mint address and decimals
+
 ## 4.5.8
 
 ### Patch Changes
