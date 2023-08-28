@@ -11,13 +11,13 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import {
-  makeConfirmOptionsFinalizedOnMainnet,
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { addDecimals } from '../../../utils/conversions';
 
 const Key = 'InitializeProtocolOperation' as const;
 
@@ -63,6 +63,26 @@ export type InitializeProtocolInput = {
    * The protocol collateral token mint.
    */
   collateralMint: PublicKey;
+
+  /**
+   * The protocol maker fee.
+   */
+  protocolMakerFee?: number;
+
+  /**
+   * The protocol taker fee.
+   */
+  protocolTakerFee?: number;
+
+  /**
+   * The protocol settlement maker fee.
+   */
+  settlementMakerFee?: number;
+
+  /**
+   * The protocol settlement taker fee.
+   */
+  settlementTakerFee?: number;
 };
 
 /**
@@ -98,13 +118,11 @@ export const initializeProtocolOperationHandler: OperationHandler<InitializeProt
         },
         scope
       );
-      scope.throwIfCanceled();
 
-      const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
+      const output = await builder.sendAndConfirm(
         convergence,
         scope.confirmOptions
       );
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
       const protocol = await convergence.protocol().get({});
@@ -159,17 +177,43 @@ export const createProtocolBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<InitializeProtocolBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { collateralMint } = params;
+  const {
+    collateralMint,
+    protocolMakerFee = 0,
+    protocolTakerFee = 0,
+    settlementTakerFee = 0,
+    settlementMakerFee = 0,
+  } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq();
   const riskEngineProgram = convergence.programs().getRiskEngine();
 
   const protocol = convergence.protocol().pdas().protocol();
+  const collateralMintTokenAccount = await convergence
+    .tokens()
+    .findMintByAddress({ address: collateralMint });
 
-  // TODO: Make this configurable
-  const settleFees: FeeParameters = { takerBps: 1, makerBps: 1 };
-  const defaultFees: FeeParameters = { takerBps: 1, makerBps: 1 };
+  const settleFees: FeeParameters = {
+    takerBps: addDecimals(
+      settlementTakerFee,
+      collateralMintTokenAccount.decimals
+    ),
+    makerBps: addDecimals(
+      settlementMakerFee,
+      collateralMintTokenAccount.decimals
+    ),
+  };
+  const defaultFees: FeeParameters = {
+    takerBps: addDecimals(
+      protocolTakerFee,
+      collateralMintTokenAccount.decimals
+    ),
+    makerBps: addDecimals(
+      protocolMakerFee,
+      collateralMintTokenAccount.decimals
+    ),
+  };
 
   return TransactionBuilder.make<InitializeProtocolBuilderContext>()
     .setFeePayer(payer)
