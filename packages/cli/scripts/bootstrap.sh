@@ -9,8 +9,8 @@ convergence protocol initialize --taker-fee=1 --maker-fee=0 --collateral-mint=$U
 convergence risk-engine initialize
 
 convergence protocol add-instrument --instrument-program=$SPOT_INSTRUMENT                --can-be-used-as-quote=true --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4 
-convergence protocol add-instrument --instrument-program=$PSYOPTIONS_EUROPEAN_INSTRUMENT --can-be-used-as-quote=true --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
-convergence protocol add-instrument --instrument-program=$PSYOPTIONS_AMERICAN_INSTRUMENT --can-be-used-as-quote=true --validate-data-account-amount=3 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
+convergence protocol add-instrument --instrument-program=$PSYOPTIONS_EUROPEAN_INSTRUMENT --can-be-used-as-quote=false --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
+convergence protocol add-instrument --instrument-program=$PSYOPTIONS_AMERICAN_INSTRUMENT --can-be-used-as-quote=false --validate-data-account-amount=3 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
 
 convergence risk-engine set-instrument-type --program=$SPOT_INSTRUMENT                --type=spot     
 convergence risk-engine set-instrument-type --program=$PSYOPTIONS_AMERICAN_INSTRUMENT --type=option  
