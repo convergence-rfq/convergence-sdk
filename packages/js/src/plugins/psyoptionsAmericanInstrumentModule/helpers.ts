@@ -1,16 +1,17 @@
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 
 import { BN } from 'bn.js';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
-import { ATAExistence, getOrCreateATA } from '../../utils/ata';
+import {
+  ATAExistence,
+  getOrCreateATA,
+  getOrCreateATAInx,
+} from '../../utils/ata';
 import { Mint } from '../tokenModule/models';
 import { CvgWallet } from '../../utils/Wallets';
-import {
-  InstructionWithSigners,
-  TransactionBuilder,
-} from '../../utils/TransactionBuilder';
+import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
 
@@ -28,12 +29,15 @@ export const mintAmericanOptions = async (
     .findRfqByAddress({ address: response.rfq });
 
   const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
-  const instructionWithSigners: InstructionWithSigners[] = [];
-  const { legs } = await convergence.rfqs().getSettlementResult({
+
+  const { legs } = convergence.rfqs().getSettlementResult({
     response,
     rfq,
   });
+
+  const txBuilderArray: TransactionBuilder[] = [];
   for (const [index, leg] of rfq.legs.entries()) {
+    const instructions: TransactionInstruction[] = [];
     if (leg instanceof PsyoptionsAmericanInstrument) {
       const { receiver } = legs[index];
       if (receiver !== callerSide) {
@@ -44,23 +48,43 @@ export const mintAmericanOptions = async (
           leg.optionMetaPubKey
         );
         if (optionMarket) {
-          const optionToken = await getOrCreateATA(
-            convergence,
-            optionMarket.optionMint,
-            caller
-          );
+          const { ataPubKey: optionToken, instruction: optionTokenIx } =
+            await getOrCreateATAInx(
+              convergence,
+              optionMarket.optionMint,
+              caller
+            );
+          if (optionTokenIx) {
+            instructions.push(optionTokenIx);
+          }
 
-          const writerToken = await getOrCreateATA(
-            convergence,
-            optionMarket!.writerTokenMint,
-            caller
-          );
+          const { ataPubKey: writerToken, instruction: writerTokenIx } =
+            await getOrCreateATAInx(
+              convergence,
+              optionMarket!.writerTokenMint,
+              caller
+            );
+          if (writerTokenIx) {
+            // instructionWithSigners.push({
+            //   instruction: writerTokenIx,
+            //   signers: [],
+            // });
+            instructions.push(writerTokenIx);
+          }
 
-          const underlyingToken = await getOrCreateATA(
-            convergence,
-            optionMarket!.underlyingAssetMint,
-            caller
-          );
+          const { ataPubKey: underlyingToken, instruction: underlyingTokenIx } =
+            await getOrCreateATAInx(
+              convergence,
+              optionMarket!.underlyingAssetMint,
+              caller
+            );
+          if (underlyingTokenIx) {
+            // instructionWithSigners.push({
+            //   instruction: underlyingTokenIx,
+            //   signers: [],
+            // });
+            instructions.push(underlyingTokenIx);
+          }
 
           const ixWithSigners =
             await psyoptionsAmerican.instructions.mintOptionV2Instruction(
@@ -76,23 +100,43 @@ export const mintAmericanOptions = async (
             isSigner: true,
             isWritable: false,
           };
-          instructionWithSigners.push({
-            instruction: ixWithSigners.ix,
-            signers: ixWithSigners.signers,
-          });
+          // instructionWithSigners.push({
+          //   instruction: ixWithSigners.ix,
+          //   signers: ixWithSigners.signers,
+          // });
+          instructions.push(ixWithSigners.ix);
         }
       }
     }
+    if (instructions.length > 0) {
+      const txBuilder = TransactionBuilder.make().setFeePayer(
+        convergence.rpc().getDefaultFeePayer()
+      );
+      instructions.forEach((ins) => {
+        txBuilder.add({
+          instruction: ins,
+          signers: [convergence.identity()],
+        });
+      });
+      // txBuilder.add(...instructionWithSigners);
+      txBuilderArray.push(txBuilder);
+    }
   }
-  if (instructionWithSigners.length > 0) {
-    const payer = convergence.rpc().getDefaultFeePayer();
-    const txBuilder = TransactionBuilder.make().setFeePayer(payer);
-
-    txBuilder.add(...instructionWithSigners);
-    const sig = await txBuilder.sendAndConfirm(convergence);
-    return sig;
+  if (txBuilderArray.length > 0) {
+    const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+    const signedTxs = await convergence
+      .identity()
+      .signAllTransactions(
+        txBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
+      );
+    await Promise.all(
+      signedTxs.map((signedTx) =>
+        convergence
+          .rpc()
+          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+      )
+    );
   }
-  return null;
 };
 
 export const initializeNewAmericanOption = async (

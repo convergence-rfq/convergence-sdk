@@ -3,7 +3,11 @@ import * as anchor from '@project-serum/anchor';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
 import { Mint } from '../tokenModule';
-import { ATAExistence, getOrCreateATA } from '../../utils/ata';
+import {
+  ATAExistence,
+  getOrCreateATA,
+  getOrCreateATAInx,
+} from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';
@@ -130,14 +134,15 @@ export const mintEuropeanOptions = async (
     .rfqs()
     .findRfqByAddress({ address: response.rfq });
 
-  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
-  const callerSide = callerIsTaker ? 'taker' : 'maker';
-  const instructions: anchor.web3.TransactionInstruction[] = [];
-  const { legs } = await convergence.rfqs().getSettlementResult({
+  const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
+
+  const { legs } = convergence.rfqs().getSettlementResult({
     response,
     rfq,
   });
+  const txBuilderArray: TransactionBuilder[] = [];
   for (const [index, leg] of rfq.legs.entries()) {
+    const instructions: anchor.web3.TransactionInstruction[] = [];
     if (leg instanceof PsyoptionsEuropeanInstrument) {
       const { receiver } = legs[index];
 
@@ -166,20 +171,33 @@ export const mintEuropeanOptions = async (
             ? stableMintToken
             : underlyingMintToken;
 
-        const optionDestination = await getOrCreateATA(
+        const {
+          ataPubKey: optionDestination,
+          instruction: optionDestinationAtaIx,
+        } = await getOrCreateATAInx(
           convergence,
           leg.optionType == psyoptionsEuropean.OptionType.PUT
             ? euroMeta.putOptionMint
             : euroMeta.callOptionMint,
           caller
         );
-        const writerDestination = await getOrCreateATA(
+
+        if (optionDestinationAtaIx) {
+          instructions.push(optionDestinationAtaIx);
+        }
+        const {
+          ataPubKey: writerDestination,
+          instruction: writerDestinationAtaInx,
+        } = await getOrCreateATAInx(
           convergence,
           leg.optionType == psyoptionsEuropean.OptionType.PUT
             ? euroMeta.putWriterMint
             : euroMeta.callWriterMint,
           caller
         );
+        if (writerDestinationAtaInx) {
+          instructions.push(writerDestinationAtaInx);
+        }
         const { instruction: ix } = psyoptionsEuropean.instructions.mintOptions(
           europeanProgram,
           leg.optionMetaPubKey,
@@ -200,27 +218,34 @@ export const mintEuropeanOptions = async (
         instructions.push(ix);
       }
     }
-  }
-  if (instructions.length > 0) {
-    const txBuilder = TransactionBuilder.make().setFeePayer(
-      convergence.rpc().getDefaultFeePayer()
-    );
-
-    instructions.forEach((ins) => {
-      txBuilder.add({
-        instruction: ins,
-        signers: [convergence.identity()],
+    if (instructions.length > 0) {
+      const txBuilder = TransactionBuilder.make().setFeePayer(
+        convergence.rpc().getDefaultFeePayer()
+      );
+      instructions.forEach((ins) => {
+        txBuilder.add({
+          instruction: ins,
+          signers: [convergence.identity()],
+        });
       });
-    });
-
-    const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence, {
-      skipPreflight: true,
-    });
-
-    const sig = await txBuilder.sendAndConfirm(convergence, confirmOptions);
-    return sig;
+      txBuilderArray.push(txBuilder);
+    }
   }
-  return null;
+  if (txBuilderArray.length > 0) {
+    const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+    const signedTxs = await convergence
+      .identity()
+      .signAllTransactions(
+        txBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
+      );
+    await Promise.all(
+      signedTxs.map((signedTx) =>
+        convergence
+          .rpc()
+          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+      )
+    );
+  }
 };
 
 export const getOrCreateEuropeanOptionATAs = async (

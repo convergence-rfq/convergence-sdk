@@ -35,31 +35,36 @@ export const getOrCreateATA = async (
   return ata;
 };
 
+interface GetOrCreateATAInxReturnType {
+  ataPubKey: PublicKey;
+  instruction?: TransactionInstruction;
+}
+
 export const getOrCreateATAInx = async (
   convergence: Convergence,
   mint: PublicKey,
   owner: PublicKey,
   programs?: Program[]
-): Promise<TransactionInstruction | PublicKey> => {
+): Promise<GetOrCreateATAInxReturnType> => {
   const pda = convergence.tokens().pdas().associatedTokenAccount({
     mint,
     owner,
     programs,
   });
   const account = await convergence.rpc().getAccount(pda);
-  let ix: TransactionInstruction;
+  const payer = convergence.rpc().getDefaultFeePayer();
   if (!account.exists) {
-    ix = Spl.createAssociatedTokenAccountInstruction(
-      owner,
+    const ix = Spl.createAssociatedTokenAccountInstruction(
+      payer.publicKey,
       pda,
       owner,
       mint,
       Spl.TOKEN_PROGRAM_ID,
       Spl.ASSOCIATED_TOKEN_PROGRAM_ID
     );
-    return ix;
+    return { ataPubKey: pda, instruction: ix };
   }
-  return pda;
+  return { ataPubKey: pda };
 };
 
 export const devnetAirdrops = async (

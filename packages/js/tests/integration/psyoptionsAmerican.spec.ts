@@ -10,6 +10,7 @@ import {
   setupAmerican,
   createAmericanOpenSizeCallSpdOptionRfq,
   createAmericanFixedBaseStraddle,
+  fetchTokenAmount,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
@@ -71,7 +72,7 @@ describe('integration.psyoptionsAmerican', () => {
   });
 
   it('fixed-size american straddle [buy]', async () => {
-    const { rfq } = await createAmericanFixedBaseStraddle(
+    const { rfq, optionMarket } = await createAmericanFixedBaseStraddle(
       takerCvg,
       'buy',
       baseMint,
@@ -95,13 +96,19 @@ describe('integration.psyoptionsAmerican', () => {
     expect(confirmResponse).toHaveProperty('signature');
     await setupAmerican(takerCvg, rfqResponse);
     await setupAmerican(makerCvg, rfqResponse);
+    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
+      address: rfqResponse.address,
+    });
+    const res = takerCvg.rfqs().getSettlementResult({
+      rfq,
+      response: refreshedResponse,
+    });
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
       rfqResponse
     );
     expect(takerResponse.response).toHaveProperty('signature');
-
     const makerResponse = await prepareRfqSettlement(
       makerCvg,
       rfq,
@@ -114,7 +121,7 @@ describe('integration.psyoptionsAmerican', () => {
   });
 
   it('fixed-size american straddle [sell]', async () => {
-    const { rfq } = await createAmericanFixedBaseStraddle(
+    const { rfq, optionMarket } = await createAmericanFixedBaseStraddle(
       takerCvg,
       'sell',
       baseMint,
@@ -138,13 +145,13 @@ describe('integration.psyoptionsAmerican', () => {
     expect(confirmResponse).toHaveProperty('signature');
     await setupAmerican(takerCvg, rfqResponse);
     await setupAmerican(makerCvg, rfqResponse);
+
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
       rfqResponse
     );
     expect(takerResponse.response).toHaveProperty('signature');
-
     const makerResponse = await prepareRfqSettlement(
       makerCvg,
       rfq,
