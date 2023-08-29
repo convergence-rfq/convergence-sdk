@@ -79,6 +79,9 @@ import {
   GetSettlementResultInput,
   getSettlementResultOperation,
   getSettlementResultHandler,
+  GetResponseStateInput,
+  getResponseStateOperation,
+  getResponseStateHandler,
 } from './operations';
 import { Response } from './models/Response';
 
@@ -485,6 +488,14 @@ export class RfqClient {
   getSettlementResult(input: GetSettlementResultInput) {
     return getSettlementResultHandler.handle(
       getSettlementResultOperation(input),
+      this.convergence
+    );
+  }
+
+  /** {@inheritDoc getResponseState} */
+  getResponseState(input: GetResponseStateInput) {
+    return getResponseStateHandler.handle(
+      getResponseStateOperation(input),
       this.convergence
     );
   }

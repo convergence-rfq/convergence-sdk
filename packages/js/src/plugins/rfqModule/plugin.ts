@@ -73,6 +73,8 @@ import {
   cleanUpRfqsOperationHandler,
   getSettlementResultOperation,
   getSettlementResultHandler,
+  getResponseStateOperation,
+  getResponseStateHandler,
 } from './operations';
 import { rfqProgram } from './program';
 
@@ -182,6 +184,7 @@ export const rfqModule = (): ConvergencePlugin => ({
       unlockRfqsCollateralOperationHandler
     );
     op.register(getSettlementResultOperation, getSettlementResultHandler);
+    op.register(getResponseStateOperation, getResponseStateHandler);
 
     convergence.rfqs = function () {
       return new RfqClient(this);
