@@ -77,7 +77,7 @@ export const getResponseStateHandler: SyncOperationHandler<GetResponseState> = {
       timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
     );
     const rfqExpired = timestampExpiry.getTime() <= Date.now();
-    const settlememtWindowElapsed = timestampSettlement.getTime() <= Date.now();
+    const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
     const confirmedResponseSide =
       (responseSide === 'ask' && response?.confirmed?.side === 'ask') ||
       (responseSide === 'bid' && response?.confirmed?.side === 'bid');
@@ -101,7 +101,7 @@ export const getResponseStateHandler: SyncOperationHandler<GetResponseState> = {
 
     const defaulted = response.defaultingParty
       ? response.defaultingParty !== null
-      : settlememtWindowElapsed &&
+      : settlementWindowElapsed &&
         (!partyPreparedLegsComplete || !counterpartyPreparedLegsComplete);
 
     const responseConfirmed = response?.confirmed !== null;

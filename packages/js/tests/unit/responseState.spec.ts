@@ -9,7 +9,7 @@ import {
 import { createUserCvg, sleep } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('unit.getResponseState', () => {
+describe('unit.ResponseState', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
@@ -71,7 +71,7 @@ describe('unit.getResponseState', () => {
       }).responseState
     ).toBe('Cancelled');
 
-    //Unlock Response Collateral
+    //Unlock Response Collateral for maker
     refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
@@ -127,7 +127,7 @@ describe('unit.getResponseState', () => {
       },
     });
 
-    //Approve
+    //Approve for taker
     expect(
       takerCvg.rfqs().getResponseState({
         response: rfqResponse,
@@ -185,7 +185,7 @@ describe('unit.getResponseState', () => {
       taker: takerCvg.identity().publicKey,
     });
 
-    //Settled
+    //Settled for maker
     refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
@@ -221,7 +221,8 @@ describe('unit.getResponseState', () => {
       },
     });
     await sleep(3);
-    //Expired
+
+    //Expired for taker
     expect(
       takerCvg.rfqs().getResponseState({
         response: rfqResponse,
@@ -264,7 +265,8 @@ describe('unit.getResponseState', () => {
     const refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    //Approve
+
+    //Approve for taker
     expect(
       takerCvg.rfqs().getResponseState({
         response: refreshedResponse,
@@ -274,7 +276,7 @@ describe('unit.getResponseState', () => {
       }).responseState
     ).toBe('Settle');
 
-    //Rejected
+    //Rejected for maker
     expect(
       takerCvg.rfqs().getResponseState({
         response: refreshedResponse,
