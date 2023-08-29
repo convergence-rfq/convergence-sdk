@@ -81,6 +81,11 @@ import {
   getSettlementResultHandler,
 } from './operations';
 import { Response } from './models/Response';
+import {
+  GetRfqStateInput,
+  getRfqStateHandler,
+  getRfqStateOperation,
+} from './operations/getRfqState';
 
 /**
  * This is a client for the Rfq module.
@@ -485,6 +490,13 @@ export class RfqClient {
   getSettlementResult(input: GetSettlementResultInput) {
     return getSettlementResultHandler.handle(
       getSettlementResultOperation(input),
+      this.convergence
+    );
+  }
+
+  getRfqState(input: GetRfqStateInput) {
+    return getRfqStateHandler.handle(
+      getRfqStateOperation(input),
       this.convergence
     );
   }
