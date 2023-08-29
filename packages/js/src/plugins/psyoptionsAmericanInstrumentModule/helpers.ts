@@ -39,10 +39,8 @@ export const mintAmericanOptions = async (
   for (const [index, leg] of rfq.legs.entries()) {
     const instructions: TransactionInstruction[] = [];
     if (leg instanceof PsyoptionsAmericanInstrument) {
-      const { receiver } = legs[index];
+      const { receiver, amount } = legs[index];
       if (receiver !== callerSide) {
-        const { amount } = legs[index];
-
         const optionMarket = await psyoptionsAmerican.getOptionByKey(
           americanProgram,
           leg.optionMetaPubKey

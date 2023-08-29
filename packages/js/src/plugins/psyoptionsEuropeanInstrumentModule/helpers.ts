@@ -205,7 +205,7 @@ export const mintEuropeanOptions = async (
           minterCollateralKey,
           optionDestination,
           writerDestination,
-          new BN(addDecimals(amount, PsyoptionsEuropeanInstrument.decimals)),
+          addDecimals(amount, PsyoptionsEuropeanInstrument.decimals),
           leg.optionType
         );
 

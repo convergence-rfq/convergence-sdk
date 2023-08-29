@@ -11,6 +11,7 @@ import {
   createAmericanOpenSizeCallSpdOptionRfq,
   createAmericanFixedBaseStraddle,
   fetchTokenAmount,
+  sleep,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
@@ -96,6 +97,7 @@ describe('integration.psyoptionsAmerican', () => {
     expect(confirmResponse).toHaveProperty('signature');
     await setupAmerican(takerCvg, rfqResponse);
     await setupAmerican(makerCvg, rfqResponse);
+
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
@@ -103,11 +105,21 @@ describe('integration.psyoptionsAmerican', () => {
       rfq,
       response: refreshedResponse,
     });
+    console.log(res);
+    await sleep(3);
+    const [takerOpAfter, makerOpAfter] = await Promise.all([
+      fetchTokenAmount(takerCvg, optionMarket.optionMint),
+      fetchTokenAmount(makerCvg, optionMarket.optionMint),
+    ]);
+
+    console.log('maker', makerOpAfter);
+    console.log('taker', takerOpAfter);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
       rfqResponse
     );
+
     expect(takerResponse.response).toHaveProperty('signature');
     const makerResponse = await prepareRfqSettlement(
       makerCvg,
@@ -145,6 +157,14 @@ describe('integration.psyoptionsAmerican', () => {
     expect(confirmResponse).toHaveProperty('signature');
     await setupAmerican(takerCvg, rfqResponse);
     await setupAmerican(makerCvg, rfqResponse);
+
+    const [takerOpAfter, makerOpAfter] = await Promise.all([
+      fetchTokenAmount(takerCvg, optionMarket.optionMint),
+      fetchTokenAmount(makerCvg, optionMarket.optionMint),
+    ]);
+
+    console.log('maker', makerOpAfter);
+    console.log('taker', takerOpAfter);
 
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
