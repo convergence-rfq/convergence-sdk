@@ -1,5 +1,5 @@
 import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
@@ -17,6 +17,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
+import { getRiskEngineAccounts } from '@/plugins/riskEngineModule';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -257,35 +258,10 @@ export const respondToRfqBuilder = async (
       rfqModel
     );
 
-  // TODO: DRY
-  const baseAssetIndexValuesSet: Set<number> = new Set();
-  for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
-  const baseAssetAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-  const oracleAccounts: AccountMeta[] = [];
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
+  const riskEngineAccounts = await getRiskEngineAccounts(
+    convergence,
+    rfqModel.legs
+  );
 
   return TransactionBuilder.make<RespondToRfqBuilderContext>()
     .setFeePayer(maker)
@@ -309,15 +285,7 @@ export const respondToRfqBuilder = async (
             protocol,
             riskEngine,
             maker: maker.publicKey,
-            anchorRemainingAccounts: [
-              {
-                pubkey: convergence.riskEngine().pdas().config(),
-                isSigner: false,
-                isWritable: false,
-              },
-              ...baseAssetAccounts,
-              ...oracleAccounts,
-            ],
+            anchorRemainingAccounts: riskEngineAccounts,
           },
           {
             bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),

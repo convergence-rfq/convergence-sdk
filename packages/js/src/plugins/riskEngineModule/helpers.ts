@@ -8,12 +8,14 @@ import {
 } from '@convergence-rfq/rfq';
 import BN from 'bn.js';
 
+import { AccountMeta, PublicKey } from '@solana/web3.js';
 import {
   ABSOLUTE_PRICE_DECIMALS,
   LEG_MULTIPLIER_DECIMALS,
 } from '../rfqModule/constants';
 import { Rfq, toSolitaFixedSize } from '../rfqModule/models';
 import { removeDecimals } from '@/utils/conversions';
+import { Convergence, LegInstrument, PrintTradeLeg } from '@/index';
 
 export function extractLegsMultiplier(rfq: Rfq, quote: SolitaQuote) {
   const fixedSize = toSolitaFixedSize(rfq.size, rfq.quoteAsset.getDecimals());
@@ -54,4 +56,41 @@ export function extractLegsMultiplier(rfq: Rfq, quote: SolitaQuote) {
   }
 
   throw new Error('Invalid fixed size');
+}
+
+export async function getRiskEngineAccounts(
+  cvg: Convergence,
+  legs: LegInstrument[] | PrintTradeLeg[]
+): Promise<AccountMeta[]> {
+  const configAddress = cvg.riskEngine().pdas().config();
+
+  const baseAssetIndexSet: Set<number> = new Set(
+    legs.map((leg) => leg.getBaseAssetIndex().value)
+  );
+  const uniqueBaseAssetIndexes = Array.from(baseAssetIndexSet);
+
+  const baseAssetAddresses = uniqueBaseAssetIndexes.map((value) =>
+    cvg.protocol().pdas().baseAsset({ index: value })
+  );
+
+  const oracleInfos = await Promise.all(
+    baseAssetAddresses.map(async (baseAsset) =>
+      cvg.protocol().findBaseAssetByAddress({ address: baseAsset })
+    )
+  );
+  const oracleAddresses = oracleInfos
+    .map((oracleInfo) => oracleInfo.priceOracle.address)
+    .filter((address): address is PublicKey => address !== undefined);
+
+  const allAddresses = [
+    configAddress,
+    ...baseAssetAddresses,
+    ...oracleAddresses,
+  ];
+
+  return allAddresses.map((address) => ({
+    pubkey: address,
+    isSigner: false,
+    isWritable: false,
+  }));
 }

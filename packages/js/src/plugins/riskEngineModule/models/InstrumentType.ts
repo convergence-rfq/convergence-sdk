@@ -45,3 +45,20 @@ export function toSolitaInstrumentType(
     }
   }
 }
+
+export function toNumberInstrumentType(instrumentType: InstrumentType): number {
+  switch (instrumentType) {
+    case 'spot': {
+      return 1;
+    }
+    case 'option': {
+      return 2;
+    }
+    case 'term-future': {
+      return 3;
+    }
+    case 'perp-future': {
+      return 4;
+    }
+  }
+}

@@ -22,7 +22,8 @@ import {
 import {
   LegInstrument,
   QuoteInstrument,
-  toQuote,
+  serializeInstrumentAsSolitaLeg,
+  instrumentToQuote,
 } from '../../../plugins/instrumentModule';
 import { OrderType } from '../models/OrderType';
 import { createRfqBuilder } from './createRfq';
@@ -166,7 +167,10 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
 
       const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
 
-      const expectedLegsHash = calculateExpectedLegsHash(instruments);
+      const serializedLegs = instruments.map((instruments) =>
+        serializeInstrumentAsSolitaLeg(instruments)
+      );
+      const expectedLegsHash = calculateExpectedLegsHash(serializedLegs);
 
       const rfqPda = convergence
         .rfqs()
@@ -176,7 +180,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           legsHash: Buffer.from(expectedLegsHash),
           printTradeProvider: null,
           orderType,
-          quoteAsset: toQuote(quoteAsset),
+          quoteAsset: instrumentToQuote(quoteAsset),
           fixedSize,
           activeWindow,
           settlingWindow,

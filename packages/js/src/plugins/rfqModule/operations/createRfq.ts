@@ -7,7 +7,7 @@ import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, FixedSize, Rfq, toSolitaFixedSize } from '../models';
 import {
   calculateExpectedLegsHash,
-  instrumentsToLegsAndLegsSize,
+  calculateExpectedLegsSize,
   instrumentsToLegAccounts,
   legsToBaseAssetAccounts,
 } from '../helpers';
@@ -27,7 +27,9 @@ import { Convergence } from '../../../Convergence';
 import {
   LegInstrument,
   QuoteInstrument,
-  toQuote,
+  serializeInstrumentAsSolitaLeg,
+  instrumentToQuote,
+  instrumentToSolitaLeg,
 } from '../../../plugins/instrumentModule';
 import { OrderType, toSolitaOrderType } from '../models/OrderType';
 
@@ -159,9 +161,11 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     let { expectedLegsHash } = operation.input;
 
     const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
-
+    const serializedLegs = instruments.map((instrument) =>
+      serializeInstrumentAsSolitaLeg(instrument)
+    );
     expectedLegsHash =
-      expectedLegsHash ?? calculateExpectedLegsHash(instruments);
+      expectedLegsHash ?? calculateExpectedLegsHash(serializedLegs);
 
     const rfqPda = convergence
       .rfqs()
@@ -171,7 +175,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         legsHash: Buffer.from(expectedLegsHash),
         printTradeProvider: null,
         orderType,
-        quoteAsset: toQuote(quoteAsset),
+        quoteAsset: instrumentToQuote(quoteAsset),
         fixedSize,
         activeWindow,
         settlingWindow,
@@ -255,10 +259,14 @@ export const createRfqBuilder = async (
   } = params;
   let { expectedLegsSize } = params;
 
-  const [legs, expectedLegsSizeValue] = await instrumentsToLegsAndLegsSize(
-    instruments
+  const solitaLegs = instruments.map((instrument) =>
+    instrumentToSolitaLeg(instrument)
   );
-  expectedLegsSize = expectedLegsSize ?? expectedLegsSizeValue;
+  const serializedLegs = instruments.map((instrument) =>
+    serializeInstrumentAsSolitaLeg(instrument)
+  );
+  expectedLegsSize =
+    expectedLegsSize ?? calculateExpectedLegsSize(serializedLegs);
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -276,13 +284,13 @@ export const createRfqBuilder = async (
       pubkey: convergence
         .rfqs()
         .pdas()
-        .quote({ quoteAsset: toQuote(quoteAsset) }),
+        .quote({ quoteAsset: instrumentToQuote(quoteAsset) }),
       isSigner: false,
       isWritable: false,
     },
   ];
 
-  const baseAssetAccounts = legsToBaseAssetAccounts(convergence, legs);
+  const baseAssetAccounts = legsToBaseAssetAccounts(convergence, solitaLegs);
   const legAccounts = await instrumentsToLegAccounts(instruments);
 
   return TransactionBuilder.make()
@@ -307,9 +315,9 @@ export const createRfqBuilder = async (
           printTradeProvider: null,
           expectedLegsSize,
           expectedLegsHash: Array.from(expectedLegsHash),
-          legs,
+          legs: solitaLegs,
           orderType: toSolitaOrderType(orderType),
-          quoteAsset: toQuote(quoteAsset),
+          quoteAsset: instrumentToQuote(quoteAsset),
           fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
           activeWindow,
           settlingWindow,

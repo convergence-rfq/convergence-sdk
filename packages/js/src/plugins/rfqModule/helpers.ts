@@ -6,10 +6,8 @@ import { UnparsedAccount } from '../../types';
 import { Convergence } from '../../Convergence';
 import {
   LegInstrument,
-  getSerializedLegLength,
   getValidationAccounts,
-  serializeAsLeg,
-  toLeg,
+  instrumentToSolitaLeg,
 } from '../instrumentModule';
 import { Rfq, Response } from './models';
 
@@ -45,18 +43,11 @@ export function getPages<T extends UnparsedAccount | Rfq | Response>(
 }
 
 export const calculateExpectedLegsHash = (
-  instruments: LegInstrument[]
+  serializedLegs: Buffer[]
 ): Uint8Array => {
-  const serializedLegsData: Buffer[] = instruments.map((i) =>
-    serializeAsLeg(i)
-  );
-
   const lengthBuffer = Buffer.alloc(4);
-  lengthBuffer.writeInt32LE(instruments.length);
-  const fullLegDataBuffer = Buffer.concat([
-    lengthBuffer,
-    ...serializedLegsData,
-  ]);
+  lengthBuffer.writeInt32LE(serializedLegs.length);
+  const fullLegDataBuffer = Buffer.concat([lengthBuffer, ...serializedLegs]);
 
   const hash = new Sha256();
   hash.update(fullLegDataBuffer);
@@ -65,37 +56,12 @@ export const calculateExpectedLegsHash = (
   return expectedLegsHash;
 };
 
-export const calculateExpectedLegsSize = (
-  instruments: LegInstrument[]
-): number => {
-  return (
-    4 +
-    instruments.map((i) => getSerializedLegLength(i)).reduce((x, y) => x + y, 0)
-  );
-};
-
-// TODO remove
-export const instrumentsToLegsAndLegsSize = (
-  instruments: LegInstrument[]
-): [Leg[], number] => {
-  return [
-    instrumentsToLegs(instruments),
-    calculateExpectedLegsSize(instruments),
-  ];
+export const calculateExpectedLegsSize = (serializedLegs: Buffer[]): number => {
+  return 4 + serializedLegs.map((leg) => leg.length).reduce((x, y) => x + y, 0);
 };
 
 export const instrumentsToLegs = (instruments: LegInstrument[]): Leg[] => {
-  return instruments.map((i) => toLeg(i));
-};
-
-// TODO remove
-export const instrumentsToLegsAndExpectedLegsHash = (
-  instruments: LegInstrument[]
-): [Leg[], Uint8Array] => {
-  return [
-    instrumentsToLegs(instruments),
-    calculateExpectedLegsHash(instruments),
-  ];
+  return instruments.map((i) => instrumentToSolitaLeg(i));
 };
 
 export const legsToBaseAssetAccounts = (

@@ -8,7 +8,7 @@ import { Protocol } from '../protocolModule';
 import { LegInstrument, QuoteInstrument } from './types';
 import { Convergence } from '@/Convergence';
 
-export function toLeg(legInstrument: LegInstrument): Leg {
+export function instrumentToSolitaLeg(legInstrument: LegInstrument): Leg {
   return {
     settlementTypeMetadata: {
       __kind: 'Instrument',
@@ -22,13 +22,9 @@ export function toLeg(legInstrument: LegInstrument): Leg {
   };
 }
 
-export function serializeAsLeg(legInstrument: LegInstrument) {
+export function serializeInstrumentAsSolitaLeg(legInstrument: LegInstrument) {
   const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
-  return legSerializer.serialize(toLeg(legInstrument));
-}
-
-export function getSerializedLegLength(legInstrument: LegInstrument) {
-  return serializeAsLeg(legInstrument).length;
+  return legSerializer.serialize(instrumentToSolitaLeg(legInstrument));
 }
 
 export function getProgramAccount(legInstrument: LegInstrument): AccountMeta {
@@ -48,7 +44,7 @@ export async function getValidationAccounts(
   );
 }
 
-export function toQuote(legInstrument: QuoteInstrument): QuoteAsset {
+export function instrumentToQuote(legInstrument: QuoteInstrument): QuoteAsset {
   return {
     settlementTypeMetadata: {
       __kind: 'Instrument',
