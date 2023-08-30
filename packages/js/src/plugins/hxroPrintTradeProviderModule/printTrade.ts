@@ -1,28 +1,77 @@
 import { PublicKey } from '@solana/web3.js';
-import { PrintTrade, PrintTradeQuote } from '../printTradeModule';
+import {
+  OptionType,
+  futureCommonDataBeet,
+  optionCommonDataBeet,
+} from '@convergence-rfq/risk-engine';
+import BN from 'bn.js';
+import {
+  PrintTrade,
+  PrintTradeLeg,
+  PrintTradeQuote,
+} from '../printTradeModule';
 import { LegSide } from '../rfqModule';
-import { HXRO_QUOTE_DECIMALS } from './constants';
+import { HXRO_LEG_DECIMALS, HXRO_QUOTE_DECIMALS } from './constants';
 import { Convergence } from '@/Convergence';
+import { Fraction, createSerializerFromFixedSizeBeet } from '@/types';
 
 export type HxroLegInput = {
-  productIndex: number;
   amount: number;
   side: LegSide;
+  productAddress: PublicKey;
+  productInfo: HxroOptionInfo | HxroTermFutureInfo | HxroPerpFutureInfo;
+};
+
+type HxroCommonProductInfo = {
+  productIndex: number;
+  baseAssetIndex: number;
+};
+export type HxroOptionInfo = HxroCommonProductInfo & {
+  instrumentType: 'option';
+  optionType: OptionType;
+  strikePrice: Fraction;
+  expirationTimestamp: number;
+};
+export type HxroTermFutureInfo = HxroCommonProductInfo & {
+  instrumentType: 'term-future';
+};
+export type HxroPerpFutureInfo = HxroCommonProductInfo & {
+  instrumentType: 'perp-future';
 };
 
 export class HxroPrintTrade implements PrintTrade {
   protected constructor(
     protected cvg: Convergence,
-    protected mpgAddress: PublicKey
+    protected mpgAddress: PublicKey,
+    protected legsInfo: HxroLegInput[]
   ) {}
 
   getPrintTradeProviderProgramId = () =>
     this.cvg.programs().getHxroPrintTradeProvider().address;
-  getLegs = () => {
-    throw Error('TODO!');
-  };
+  getLegs = () => this.legsInfo.map((legInfo) => new HxroLeg(legInfo));
   getQuote = () => new HxroQuote();
   getValidationAccounts = () => {
+    const validationAccounts = this.legsInfo
+      .map((legInfo) => {
+        const productAccountInfo = {
+          pubkey: legInfo.productAddress,
+          isSigner: false,
+          isWritable: false,
+        };
+
+        const baseAssetAccountInfo = {
+          pubkey: this.cvg
+            .protocol()
+            .pdas()
+            .baseAsset({ index: legInfo.productInfo.baseAssetIndex }),
+          isSigner: false,
+          isWritable: false,
+        };
+
+        return [productAccountInfo, baseAssetAccountInfo];
+      })
+      .flat();
+
     return [
       {
         pubkey: this.cvg.hxro().pdas().config(),
@@ -34,17 +83,57 @@ export class HxroPrintTrade implements PrintTrade {
         isSigner: false,
         isWritable: false,
       },
-      // TODO add legs accounts
+      ...validationAccounts,
     ];
   };
 
   static async create(cvg: Convergence, legsInfo: HxroLegInput[]) {
     const config = await cvg.hxro().getConfig();
-    return new HxroPrintTrade(cvg, config.validMpg);
+    return new HxroPrintTrade(cvg, config.validMpg, legsInfo);
   }
 }
 
 class HxroQuote implements PrintTradeQuote {
   getDecimals = () => HXRO_QUOTE_DECIMALS;
   serializeInstrumentData = () => Buffer.from([]);
+}
+
+class HxroLeg implements PrintTradeLeg {
+  constructor(protected legInfo: HxroLegInput) {}
+
+  getInstrumentType = () => this.legInfo.productInfo.instrumentType;
+  getBaseAssetIndex = () => ({
+    value: this.legInfo.productInfo.baseAssetIndex,
+  });
+  getAmount = () => this.legInfo.amount;
+  getDecimals = () => HXRO_LEG_DECIMALS;
+  getSide = () => this.legInfo.side;
+  serializeInstrumentData = () => {
+    let buffer;
+    if (this.legInfo.productInfo.instrumentType == 'option') {
+      const serializer =
+        createSerializerFromFixedSizeBeet(optionCommonDataBeet);
+      buffer = serializer.serialize({
+        optionType: this.legInfo.productInfo.optionType,
+        underlyingAmountPerContract: new BN(1),
+        underlyingAmountPerContractDecimals: 0,
+        strikePrice: this.legInfo.productInfo.strikePrice.mantissa,
+        strikePriceDecimals: this.legInfo.productInfo.strikePrice.decimals,
+        expirationTimestamp: new BN(
+          this.legInfo.productInfo.expirationTimestamp
+        ),
+      });
+    } else {
+      const serializer =
+        createSerializerFromFixedSizeBeet(futureCommonDataBeet);
+      buffer = serializer.serialize({
+        underlyingAmountPerContract: new BN(1),
+        underlyingAmountPerContractDecimals: 0,
+      });
+    }
+
+    buffer.writeUInt8(this.legInfo.productInfo.productIndex);
+
+    return buffer;
+  };
 }
