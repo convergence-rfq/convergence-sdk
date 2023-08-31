@@ -29,8 +29,10 @@ export type ResponseState =
  *
  * ```ts
  * const result = await convergence.rfqs().getResponseStateAndAction({
- *  response,
+ * response,
  * rfq,
+ * caller: 'taker'| 'maker,
+ * responseSide: 'ask' | 'bid'
  * })
  * ```
  *
@@ -80,154 +82,128 @@ export const getResponseStateAndActionHandler: SyncOperationHandler<GetResponseS
       operation: GetResponseStateAndAction
     ): GetResponseStateAndActionOutput => {
       const { response, caller, rfq, responseSide } = operation.input;
-      let responseState: ResponseState;
-      switch (true) {
-        case response.state === 'active':
-          responseState = 'Active';
-          break;
-        case response.state === 'settling-preparations':
-          responseState = 'SettlingPreparations';
-          break;
-        case response.state === 'ready-for-settling':
-          responseState = 'ReadyForSettling';
-          break;
-        case response.state === 'settled':
-          responseState = 'Settled';
-          break;
-        case response.state === 'defaulted':
-          responseState = 'Defaulted';
-          break;
-        case response.state === 'canceled':
-          responseState = 'Cancelled';
-          break;
-        case response.state === 'waiting-for-last-look':
-          responseState = 'WaitingForLastLook';
-          break;
-        default:
-          responseState = null;
-          break;
-      }
-
       if (!response.rfq.equals(rfq.address)) {
         throw new Error('Response does not match RFQ');
       }
-      let responseAction: ResponseAction;
-      const timestampStart = new Date(Number(rfq.creationTimestamp));
-      const timestampExpiry = new Date(
-        timestampStart.getTime() + Number(rfq.activeWindow) * 1000
+
+      const responseState = getResponseState(response);
+      const responseAction = getResponseAction(
+        response,
+        rfq,
+        responseSide,
+        caller,
+        responseState
       );
-      const timestampSettlement = new Date(
-        timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
-      );
-      const rfqExpired = timestampExpiry.getTime() <= Date.now();
-      const settlementWindowElapsed =
-        timestampSettlement.getTime() <= Date.now();
-      const confirmedResponseSide =
-        (responseSide === 'ask' && response?.confirmed?.side === 'ask') ||
-        (responseSide === 'bid' && response?.confirmed?.side === 'bid');
-
-      const confirmedInverseResponseSide =
-        (responseSide === 'ask' && response?.confirmed?.side !== 'ask') ||
-        (responseSide === 'bid' && response?.confirmed?.side !== 'bid');
-
-      const takerPreparedLegsComplete =
-        response.takerPreparedLegs === rfq.legs.length;
-      const makerPreparedLegsComplete =
-        response.makerPreparedLegs === rfq.legs.length;
-      const partyPreparedLegsComplete =
-        caller === 'maker'
-          ? makerPreparedLegsComplete
-          : takerPreparedLegsComplete;
-      const counterpartyPreparedLegsComplete =
-        caller === 'maker'
-          ? takerPreparedLegsComplete
-          : makerPreparedLegsComplete;
-
-      const defaulted = response.defaultingParty
-        ? response.defaultingParty !== null
-        : settlementWindowElapsed &&
-          (!partyPreparedLegsComplete || !counterpartyPreparedLegsComplete);
-
-      const responseConfirmed = response?.confirmed !== null;
-      switch (caller) {
-        case 'maker':
-          switch (true) {
-            case responseState === 'Active' &&
-              !responseConfirmed &&
-              !rfqExpired:
-              responseAction = 'Cancel';
-              break;
-            case ((responseState === 'Active' &&
-              !responseConfirmed &&
-              rfqExpired) ||
-              responseState === 'Cancelled') &&
-              response.makerCollateralLocked > 0:
-              responseAction = 'UnlockCollateral';
-              break;
-            case (responseState === 'Active' ||
-              responseState === 'Cancelled') &&
-              response.makerCollateralLocked === 0:
-              responseAction = 'Cleanup';
-              break;
-            case responseConfirmed && confirmedInverseResponseSide:
-              responseAction = 'Rejected';
-              break;
-            case confirmedResponseSide &&
-              (responseState === 'SettlingPreparations' ||
-                responseState === 'ReadyForSettling') &&
-              !defaulted:
-              responseAction = 'Settle';
-              break;
-            case defaulted || responseState === 'Defaulted':
-              responseAction = 'Defaulted';
-              break;
-            case !defaulted && responseState === 'Settled':
-              responseAction = 'Settled';
-              break;
-            default:
-              responseAction = null;
-              break;
-          }
-          break;
-
-        case 'taker':
-          switch (true) {
-            case responseState === 'Active' && rfqExpired && !responseConfirmed:
-              responseAction = 'Expired';
-              break;
-            case responseState === 'Cancelled':
-              responseAction = 'Cancelled';
-              break;
-            case responseConfirmed && confirmedInverseResponseSide:
-              responseAction = 'Rejected';
-              break;
-            case responseState === 'Active' &&
-              !rfqExpired &&
-              !responseConfirmed:
-              responseAction = 'Approve';
-              break;
-            case confirmedResponseSide &&
-              (responseState === 'SettlingPreparations' ||
-                responseState === 'ReadyForSettling') &&
-              !defaulted:
-              responseAction = 'Settle';
-              break;
-            case defaulted || responseState === 'Defaulted':
-              responseAction = 'Defaulted';
-              break;
-            case responseState === 'Settled':
-              responseAction = 'Settled';
-              break;
-            default:
-              responseAction = null;
-              break;
-          }
-          break;
-        default:
-          responseAction = null;
-          break;
-      }
-
       return { responseState, responseAction };
     },
   };
+
+const getResponseState = (response: Response): ResponseState => {
+  if (response.state === 'active') return 'Active';
+  if (response.state === 'settling-preparations') return 'SettlingPreparations';
+  if (response.state === 'ready-for-settling') return 'ReadyForSettling';
+  if (response.state === 'settled') return 'Settled';
+  if (response.state === 'defaulted') return 'Defaulted';
+  if (response.state === 'canceled') return 'Cancelled';
+  if (response.state === 'waiting-for-last-look') return 'WaitingForLastLook';
+  return null;
+};
+
+const getResponseAction = (
+  response: Response,
+  rfq: Rfq,
+  responseSide: 'ask' | 'bid',
+  caller: 'maker' | 'taker',
+  responseState: ResponseState
+): ResponseAction => {
+  const timestampStart = new Date(Number(rfq.creationTimestamp));
+  const timestampExpiry = new Date(
+    timestampStart.getTime() + Number(rfq.activeWindow) * 1000
+  );
+  const timestampSettlement = new Date(
+    timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
+  );
+  const rfqExpired = timestampExpiry.getTime() <= Date.now();
+  const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
+  const confirmedResponseSide =
+    (responseSide === 'ask' && response?.confirmed?.side === 'ask') ||
+    (responseSide === 'bid' && response?.confirmed?.side === 'bid');
+
+  const confirmedInverseResponseSide =
+    (responseSide === 'ask' && response?.confirmed?.side !== 'ask') ||
+    (responseSide === 'bid' && response?.confirmed?.side !== 'bid');
+
+  const takerPreparedLegsComplete =
+    response.takerPreparedLegs === rfq.legs.length;
+  const makerPreparedLegsComplete =
+    response.makerPreparedLegs === rfq.legs.length;
+  const partyPreparedLegsComplete =
+    caller === 'maker' ? makerPreparedLegsComplete : takerPreparedLegsComplete;
+  const counterpartyPreparedLegsComplete =
+    caller === 'maker' ? takerPreparedLegsComplete : makerPreparedLegsComplete;
+
+  const defaulted = response.defaultingParty
+    ? response.defaultingParty !== null
+    : settlementWindowElapsed &&
+      (!partyPreparedLegsComplete || !counterpartyPreparedLegsComplete);
+
+  const responseConfirmed = response?.confirmed !== null;
+
+  if (caller === 'maker') {
+    if (responseState === 'Active' && !responseConfirmed && !rfqExpired)
+      return 'Cancel';
+
+    if (
+      (responseState === 'Active' && !responseConfirmed && rfqExpired) ||
+      (responseState === 'Cancelled' && response.makerCollateralLocked > 0)
+    )
+      return 'UnlockCollateral';
+
+    if (
+      (responseState === 'Active' || responseState === 'Cancelled') &&
+      response.makerCollateralLocked === 0
+    )
+      return 'Cleanup';
+
+    if (responseConfirmed && confirmedInverseResponseSide) return 'Rejected';
+
+    if (
+      confirmedResponseSide &&
+      (responseState === 'SettlingPreparations' ||
+        responseState === 'ReadyForSettling') &&
+      !defaulted
+    )
+      return 'Settle';
+
+    if (defaulted || responseState === 'Defaulted') return 'Defaulted';
+
+    if (!defaulted && responseState === 'Settled') return 'Settled';
+
+    return null;
+  } else if (caller === 'taker') {
+    if (responseState === 'Active' && rfqExpired && !responseConfirmed)
+      return 'Expired';
+
+    if (responseState === 'Cancelled') return 'Cancelled';
+
+    if (responseConfirmed && confirmedInverseResponseSide) return 'Rejected';
+
+    if (responseState === 'Active' && !rfqExpired && !responseConfirmed)
+      return 'Approve';
+
+    if (
+      confirmedResponseSide &&
+      (responseState === 'SettlingPreparations' ||
+        responseState === 'ReadyForSettling') &&
+      !defaulted
+    )
+      return 'Settle';
+
+    if (defaulted || responseState === 'Defaulted') return 'Defaulted';
+
+    if (responseState === 'Settled') return 'Settled';
+
+    return null;
+  }
+  return null;
+};
