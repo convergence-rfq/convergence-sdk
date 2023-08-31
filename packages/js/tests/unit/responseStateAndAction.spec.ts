@@ -9,7 +9,7 @@ import {
 import { createUserCvg, sleep } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('unit.ResponseStateAndAction', () => {
+describe('unit.responseStateAndAction', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
@@ -25,7 +25,7 @@ describe('unit.ResponseStateAndAction', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it('[Kill, Reclaim, Cleanup, Cancelled]', async () => {
+  it('[Cancel, UnlockCollateral, Cleanup, Cancelled]', async () => {
     let refreshedResponse: Response;
     const fixedSize: FixedSize = {
       type: 'fixed-base',
@@ -46,7 +46,7 @@ describe('unit.ResponseStateAndAction', () => {
       },
     });
 
-    //Kill for maker
+    //Cancel for maker
     expect(
       takerCvg.rfqs().getResponseStateAndAction({
         response: rfqResponse,
@@ -54,7 +54,7 @@ describe('unit.ResponseStateAndAction', () => {
         caller: 'maker',
         responseSide: 'bid',
       }).responseAction
-    ).toBe('Kill');
+    ).toBe('Cancel');
 
     await makerCvg.rfqs().cancelResponse({ response: rfqResponse.address });
     refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
@@ -82,7 +82,7 @@ describe('unit.ResponseStateAndAction', () => {
         caller: 'maker',
         responseSide: 'bid',
       }).responseAction
-    ).toBe('Reclaim');
+    ).toBe('UnlockCollateral');
     await makerCvg.rfqs().unlockResponseCollateral({
       response: refreshedResponse.address,
     });

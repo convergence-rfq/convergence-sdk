@@ -3,7 +3,7 @@ import { Operation, SyncOperationHandler, useOperation } from '../../../types';
 const Key = 'GetResponseStateAndAction' as const;
 export type ResponseAction =
   | 'Cancel'
-  | 'UnlockCollatral'
+  | 'UnlockCollateral'
   | 'Cleanup'
   | 'Rejected'
   | 'Defaulted'
@@ -162,7 +162,7 @@ export const getResponseStateAndActionHandler: SyncOperationHandler<GetResponseS
               rfqExpired) ||
               responseState === 'Cancelled') &&
               response.makerCollateralLocked > 0:
-              responseAction = 'UnlockCollatral';
+              responseAction = 'UnlockCollateral';
               break;
             case (responseState === 'Active' ||
               responseState === 'Cancelled') &&
