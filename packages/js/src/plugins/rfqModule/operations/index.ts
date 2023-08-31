@@ -35,4 +35,4 @@ export * from './unlockResponseCollateral';
 export * from './unlockResponsesCollateral';
 export * from './unlockRfqsCollateral';
 export * from './getSettlementResult';
-export * from './getResponseState';
+export * from './getResponseStateAndAction';

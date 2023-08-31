@@ -9,7 +9,7 @@ import {
 import { createUserCvg, sleep } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('unit.ResponseState', () => {
+describe('unit.ResponseStateAndAction', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
@@ -48,12 +48,12 @@ describe('unit.ResponseState', () => {
 
     //Kill for maker
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: rfqResponse,
         rfq,
         caller: 'maker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Kill');
 
     await makerCvg.rfqs().cancelResponse({ response: rfqResponse.address });
@@ -63,12 +63,12 @@ describe('unit.ResponseState', () => {
 
     //Cancelled for taker
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
         rfq,
         caller: 'taker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Cancelled');
 
     //Unlock Response Collateral for maker
@@ -76,12 +76,12 @@ describe('unit.ResponseState', () => {
       address: rfqResponse.address,
     });
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
         rfq,
         caller: 'maker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Reclaim');
     await makerCvg.rfqs().unlockResponseCollateral({
       response: refreshedResponse.address,
@@ -92,12 +92,12 @@ describe('unit.ResponseState', () => {
       address: rfqResponse.address,
     });
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
         rfq,
         caller: 'maker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Cleanup');
 
     await makerCvg.rfqs().cleanUpResponse({
@@ -129,12 +129,12 @@ describe('unit.ResponseState', () => {
 
     //Approve for taker
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: rfqResponse,
         rfq,
         caller: 'taker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Approve');
 
     await takerCvg.rfqs().confirmResponse({
@@ -148,22 +148,22 @@ describe('unit.ResponseState', () => {
       address: rfqResponse.address,
     });
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
         rfq,
         caller: 'maker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Settle');
 
     //Settle for taker
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
         rfq,
         caller: 'taker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Settle');
 
     await takerCvg.rfqs().prepareSettlement({
@@ -190,12 +190,12 @@ describe('unit.ResponseState', () => {
       address: rfqResponse.address,
     });
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
         rfq,
         caller: 'maker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Settled');
   });
 
@@ -224,12 +224,12 @@ describe('unit.ResponseState', () => {
 
     //Expired for taker
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: rfqResponse,
         rfq,
         caller: 'taker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Expired');
   });
 
@@ -268,22 +268,22 @@ describe('unit.ResponseState', () => {
 
     //Approve for taker
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
         rfq,
         caller: 'taker',
         responseSide: 'bid',
-      }).responseState
+      }).responseAction
     ).toBe('Settle');
 
     //Rejected for maker
     expect(
-      takerCvg.rfqs().getResponseState({
+      takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
         rfq,
         caller: 'taker',
         responseSide: 'ask',
-      }).responseState
+      }).responseAction
     ).toBe('Rejected');
   });
 });
