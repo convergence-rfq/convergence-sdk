@@ -63,10 +63,6 @@ export const mintAmericanOptions = async (
               caller
             );
           if (writerTokenIx) {
-            // instructionWithSigners.push({
-            //   instruction: writerTokenIx,
-            //   signers: [],
-            // });
             instructions.push(writerTokenIx);
           }
 
@@ -77,10 +73,6 @@ export const mintAmericanOptions = async (
               caller
             );
           if (underlyingTokenIx) {
-            // instructionWithSigners.push({
-            //   instruction: underlyingTokenIx,
-            //   signers: [],
-            // });
             instructions.push(underlyingTokenIx);
           }
 
@@ -98,10 +90,6 @@ export const mintAmericanOptions = async (
             isSigner: true,
             isWritable: false,
           };
-          // instructionWithSigners.push({
-          //   instruction: ixWithSigners.ix,
-          //   signers: ixWithSigners.signers,
-          // });
           instructions.push(ixWithSigners.ix);
         }
       }
@@ -116,7 +104,6 @@ export const mintAmericanOptions = async (
           signers: [convergence.identity()],
         });
       });
-      // txBuilder.add(...instructionWithSigners);
       txBuilderArray.push(txBuilder);
     }
   }

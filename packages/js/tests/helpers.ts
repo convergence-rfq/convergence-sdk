@@ -653,12 +653,6 @@ export const createPythPriceFeed = async (
 
 export const setupAmerican = async (cvg: Convergence, response: Response) => {
   const americanProgram = createAmericanProgram(cvg);
-  await getOrCreateAmericanOptionATAs(
-    cvg,
-    response.address,
-    cvg.identity().publicKey,
-    americanProgram
-  );
   await mintAmericanOptions(
     cvg,
     response.address,
