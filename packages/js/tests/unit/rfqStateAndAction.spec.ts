@@ -9,7 +9,7 @@ import {
 import { createUserCvg } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('unit.rfqState', () => {
+describe('unit.rfqStateAndAction', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
 
@@ -25,7 +25,7 @@ describe('unit.rfqState', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it('[Kill, Reclaim, Cleanup, Respond, None]', async () => {
+  it('[Cancel, UnlockCollateral, Cleanup, Respond, Null]', async () => {
     let refreshedRfq: Rfq;
     const fixedSize: FixedSize = {
       type: 'fixed-base',
@@ -40,20 +40,20 @@ describe('unit.rfqState', () => {
       fixedSize,
     });
 
-    //Kill for taker
+    //Cancel for taker
     expect(
-      takerCvg.rfqs().getRfqState({
+      takerCvg.rfqs().getRfqStateAndAction({
         rfq,
         caller: 'taker',
-      }).rfqState
-    ).toBe('Kill');
+      }).rfqAction
+    ).toBe('Cancel');
 
     // Respond for maker
     expect(
-      takerCvg.rfqs().getRfqState({
+      takerCvg.rfqs().getRfqStateAndAction({
         rfq,
         caller: 'maker',
-      }).rfqState
+      }).rfqAction
     ).toBe('Respond');
 
     await takerCvg.rfqs().cancelRfq({ rfq: rfq.address });
@@ -61,21 +61,21 @@ describe('unit.rfqState', () => {
       address: rfq.address,
     });
 
-    //Reclaim for taker
+    //UnlockCollateral for taker
     expect(
-      takerCvg.rfqs().getRfqState({
+      takerCvg.rfqs().getRfqStateAndAction({
         rfq: refreshedRfq,
         caller: 'taker',
-      }).rfqState
-    ).toBe('Reclaim');
+      }).rfqAction
+    ).toBe('UnlockCollateral');
 
-    //None for maker
+    //null for maker
     expect(
-      takerCvg.rfqs().getRfqState({
+      takerCvg.rfqs().getRfqStateAndAction({
         rfq: refreshedRfq,
         caller: 'maker',
-      }).rfqState
-    ).toBe('None');
+      }).rfqAction
+    ).toBe(null);
 
     await takerCvg.rfqs().unlockRfqCollateral({
       rfq: rfq.address,
@@ -86,14 +86,14 @@ describe('unit.rfqState', () => {
 
     //Cleanup for taker
     expect(
-      takerCvg.rfqs().getRfqState({
+      takerCvg.rfqs().getRfqStateAndAction({
         rfq: refreshedRfq,
         caller: 'taker',
-      }).rfqState
+      }).rfqAction
     ).toBe('Cleanup');
   });
 
-  it('[Resubmit, Responses]', async () => {
+  it('[FinalizeConstruction, Responses]', async () => {
     let refreshedRfq: Rfq;
     const fixedSize: FixedSize = {
       type: 'fixed-base',
@@ -108,13 +108,13 @@ describe('unit.rfqState', () => {
       fixedSize,
     });
 
-    //Resubmit for taker
+    //FinalizeConstruction for taker
     expect(
-      takerCvg.rfqs().getRfqState({
+      takerCvg.rfqs().getRfqStateAndAction({
         rfq,
         caller: 'taker',
-      }).rfqState
-    ).toBe('Resubmit');
+      }).rfqAction
+    ).toBe('FinalizeConstruction');
 
     await takerCvg.rfqs().finalizeRfqConstruction({
       rfq: rfq.address,
@@ -123,13 +123,13 @@ describe('unit.rfqState', () => {
       .rfqs()
       .findRfqByAddress({ address: rfq.address });
 
-    //Kill for taker
+    //Cancel for taker
     expect(
-      takerCvg.rfqs().getRfqState({
+      takerCvg.rfqs().getRfqStateAndAction({
         rfq: refreshedRfq,
         caller: 'taker',
-      }).rfqState
-    ).toBe('Kill');
+      }).rfqAction
+    ).toBe('Cancel');
 
     await makerCvg.rfqs().respond({
       rfq: rfq.address,
@@ -144,10 +144,10 @@ describe('unit.rfqState', () => {
 
     //Responses for taker
     expect(
-      takerCvg.rfqs().getRfqState({
+      takerCvg.rfqs().getRfqStateAndAction({
         rfq: refreshedRfq,
         caller: 'taker',
-      }).rfqState
-    ).toBe('Responses');
+      }).rfqAction
+    ).toBe('NewResponses');
   });
 });

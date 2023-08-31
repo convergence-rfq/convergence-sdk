@@ -82,10 +82,10 @@ import {
 } from './operations';
 import { Response } from './models/Response';
 import {
-  GetRfqStateInput,
-  getRfqStateHandler,
-  getRfqStateOperation,
-} from './operations/getRfqState';
+  GetRfqStateAndActionInput,
+  getRfqStateAndActionHandler,
+  getRfqStateAndActionOperation,
+} from './operations/getRfqStateAndAction';
 
 /**
  * This is a client for the Rfq module.
@@ -494,9 +494,9 @@ export class RfqClient {
     );
   }
 
-  getRfqState(input: GetRfqStateInput) {
-    return getRfqStateHandler.handle(
-      getRfqStateOperation(input),
+  getRfqStateAndAction(input: GetRfqStateAndActionInput) {
+    return getRfqStateAndActionHandler.handle(
+      getRfqStateAndActionOperation(input),
       this.convergence
     );
   }

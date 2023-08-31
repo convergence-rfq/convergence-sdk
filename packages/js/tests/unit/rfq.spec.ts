@@ -55,14 +55,14 @@ describe('unit.rfq', () => {
     expect(rfqs.length).toBeGreaterThan(0);
   });
 
-  // TODO ADD getRfqState function
+  // TODO ADD getRfqStateAndAction function
   it('cancel', async () => {
     // Error Number: 6016. Error Message: Rfq is not in required state.
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
       return (
-        takerCvg.rfqs().getRfqState({ rfq, caller: 'taker' }).rfqState ===
-        'Kill'
+        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
+          .rfqAction === 'Cancel'
       );
     });
     expect(rfqs.length).toBeGreaterThan(0);
@@ -76,8 +76,8 @@ describe('unit.rfq', () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqsBefore = (await getAll(iterator)).flat().filter((rfq: any) => {
       return (
-        takerCvg.rfqs().getRfqState({ rfq, caller: 'taker' }).rfqState ===
-        'Reclaim'
+        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
+          .rfqAction === 'UnlockCollateral'
       );
     });
     expect(rfqsBefore.length).toBeGreaterThan(0);
@@ -87,8 +87,8 @@ describe('unit.rfq', () => {
     expect(responses.length).toBe(rfqsBefore.length);
     const rfqsAfter = (await getAll(iterator)).flat().filter((rfq: any) => {
       return (
-        takerCvg.rfqs().getRfqState({ rfq, caller: 'taker' }).rfqState ===
-        'Cleanup'
+        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
+          .rfqAction === 'Cleanup'
       );
     });
     rfqsAfter.map((rfq: any) => {
@@ -100,8 +100,8 @@ describe('unit.rfq', () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
       return (
-        takerCvg.rfqs().getRfqState({ rfq, caller: 'taker' }).rfqState ===
-        'Cleanup'
+        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
+          .rfqAction === 'Cleanup'
       );
     });
     expect(rfqs.length).toBeGreaterThan(0);
