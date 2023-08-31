@@ -58,6 +58,7 @@
     "@convergence-rfq/risk-engine": "3.0.0-dev",
     "@convergence-rfq/spot-instrument": "3.0.0-dev",
     "@coral-xyz/borsh": "^0.26.0",
+    "@hxronetwork/dexterity-ts": "^1.5.36",
     "@mithraic-labs/psy-american": "^0.2.3",
     "@mithraic-labs/tokenized-euros": "^0.2.3",
     "@noble/ed25519": "^1.7.1",

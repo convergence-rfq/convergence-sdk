@@ -14,8 +14,11 @@ import {
   LEG_MULTIPLIER_DECIMALS,
 } from '../rfqModule/constants';
 import { Rfq, toSolitaFixedSize } from '../rfqModule/models';
+import { LegInstrument } from '../instrumentModule';
+import { PrintTradeLeg } from '../printTradeModule';
+import { toPriceOracle } from '../protocolModule';
 import { removeDecimals } from '@/utils/conversions';
-import { Convergence, LegInstrument, PrintTradeLeg } from '@/index';
+import { Convergence } from '@/Convergence';
 
 export function extractLegsMultiplier(rfq: Rfq, quote: SolitaQuote) {
   const fixedSize = toSolitaFixedSize(rfq.size, rfq.quoteAsset.getDecimals());
@@ -79,7 +82,7 @@ export async function getRiskEngineAccounts(
     )
   );
   const oracleAddresses = oracleInfos
-    .map((oracleInfo) => oracleInfo.priceOracle.address)
+    .map((oracleInfo) => toPriceOracle(oracleInfo).address)
     .filter((address): address is PublicKey => address !== undefined);
 
   const allAddresses = [

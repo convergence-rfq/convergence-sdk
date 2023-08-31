@@ -17,7 +17,7 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { LegInstrument } from '@/plugins/instrumentModule';
-import { getRiskEngineAccounts } from '@/plugins/riskEngineModule';
+import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 

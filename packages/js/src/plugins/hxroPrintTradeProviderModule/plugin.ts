@@ -1,8 +1,10 @@
 import { ProgramClient } from '../programModule';
 import { HxroClient } from './client';
 import {
-  getHxroPrintTradeProviderConfigOperation,
-  getHxroPrintTradeProviderConfigOperationHandler,
+  fetchHxroPrintTradeProviderConfigOperation,
+  fetchHxroPrintTradeProviderConfigOperationHandler,
+  fetchHxroProductsOperation,
+  fetchHxroProductsOperationHandler,
 } from './operations';
 import { hxroPrintTradeProviderProgram } from './program';
 import { Convergence } from '@/Convergence';
@@ -21,9 +23,11 @@ export const hxroModule = (): ConvergencePlugin => ({
     const op = convergence.operations();
 
     op.register(
-      getHxroPrintTradeProviderConfigOperation,
-      getHxroPrintTradeProviderConfigOperationHandler
+      fetchHxroPrintTradeProviderConfigOperation,
+      fetchHxroPrintTradeProviderConfigOperationHandler
     );
+
+    op.register(fetchHxroProductsOperation, fetchHxroProductsOperationHandler);
 
     convergence.hxro = function () {
       return new HxroClient(this);

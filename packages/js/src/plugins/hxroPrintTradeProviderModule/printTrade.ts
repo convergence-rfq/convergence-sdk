@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 import {
-  OptionType,
   futureCommonDataBeet,
   optionCommonDataBeet,
 } from '@convergence-rfq/risk-engine';
@@ -10,34 +9,10 @@ import {
   PrintTradeLeg,
   PrintTradeQuote,
 } from '../printTradeModule';
-import { LegSide } from '../rfqModule';
 import { HXRO_LEG_DECIMALS, HXRO_QUOTE_DECIMALS } from './constants';
+import { HxroLegInput } from './types';
 import { Convergence } from '@/Convergence';
-import { Fraction, createSerializerFromFixedSizeBeet } from '@/types';
-
-export type HxroLegInput = {
-  amount: number;
-  side: LegSide;
-  productAddress: PublicKey;
-  productInfo: HxroOptionInfo | HxroTermFutureInfo | HxroPerpFutureInfo;
-};
-
-type HxroCommonProductInfo = {
-  productIndex: number;
-  baseAssetIndex: number;
-};
-export type HxroOptionInfo = HxroCommonProductInfo & {
-  instrumentType: 'option';
-  optionType: OptionType;
-  strikePrice: Fraction;
-  expirationTimestamp: number;
-};
-export type HxroTermFutureInfo = HxroCommonProductInfo & {
-  instrumentType: 'term-future';
-};
-export type HxroPerpFutureInfo = HxroCommonProductInfo & {
-  instrumentType: 'perp-future';
-};
+import { createSerializerFromFixedSizeBeet } from '@/types';
 
 export class HxroPrintTrade implements PrintTrade {
   protected constructor(
@@ -54,7 +29,7 @@ export class HxroPrintTrade implements PrintTrade {
     const validationAccounts = this.legsInfo
       .map((legInfo) => {
         const productAccountInfo = {
-          pubkey: legInfo.productAddress,
+          pubkey: legInfo.productInfo.productAddress,
           isSigner: false,
           isWritable: false,
         };
@@ -88,7 +63,7 @@ export class HxroPrintTrade implements PrintTrade {
   };
 
   static async create(cvg: Convergence, legsInfo: HxroLegInput[]) {
-    const config = await cvg.hxro().getConfig();
+    const config = await cvg.hxro().fetchConfig();
     return new HxroPrintTrade(cvg, config.validMpg, legsInfo);
   }
 }

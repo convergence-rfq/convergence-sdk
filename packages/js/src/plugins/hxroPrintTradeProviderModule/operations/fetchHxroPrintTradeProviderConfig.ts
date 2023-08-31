@@ -11,45 +11,45 @@ import {
   toHxroPrintTradeProviderConfig,
 } from '../models';
 
-const Key = 'GetHxroPrintTradeProviderConfig' as const;
+const Key = 'FetchHxroPrintTradeProviderConfig' as const;
 
-export const getHxroPrintTradeProviderConfigOperation =
-  useOperation<GetHxroPrintTradeProviderConfigOperation>(Key);
+export const fetchHxroPrintTradeProviderConfigOperation =
+  useOperation<FetchHxroPrintTradeProviderConfigOperation>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type GetHxroPrintTradeProviderConfigOperation = Operation<
+export type FetchHxroPrintTradeProviderConfigOperation = Operation<
   typeof Key,
-  GetHxroPrintTradeProviderConfigInput,
-  GetHxroPrintTradeProviderConfigOutput
+  FetchHxroPrintTradeProviderConfigInput,
+  FetchHxroPrintTradeProviderConfigOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type GetHxroPrintTradeProviderConfigInput = {} | undefined;
+export type FetchHxroPrintTradeProviderConfigInput = {} | undefined;
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type GetHxroPrintTradeProviderConfigOutput =
+export type FetchHxroPrintTradeProviderConfigOutput =
   HxroPrintTradeProviderConfig;
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const getHxroPrintTradeProviderConfigOperationHandler: OperationHandler<GetHxroPrintTradeProviderConfigOperation> =
+export const fetchHxroPrintTradeProviderConfigOperationHandler: OperationHandler<FetchHxroPrintTradeProviderConfigOperation> =
   {
     handle: async (
-      _operation: GetHxroPrintTradeProviderConfigOperation,
+      _operation: FetchHxroPrintTradeProviderConfigOperation,
       cvg: Convergence,
       scope: OperationScope
-    ): Promise<GetHxroPrintTradeProviderConfigOutput> => {
+    ): Promise<FetchHxroPrintTradeProviderConfigOutput> => {
       const { commitment } = scope;
 
       const configAddress = cvg.hxro().pdas().config();

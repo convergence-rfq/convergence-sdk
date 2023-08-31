@@ -1,1 +1,2 @@
-export * from './getHxroPrintTradeProviderConfig';
+export * from './fetchHxroPrintTradeProviderConfig';
+export * from './fetchHxroProducts';

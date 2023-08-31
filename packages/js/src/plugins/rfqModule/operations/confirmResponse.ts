@@ -16,7 +16,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
-import { getRiskEngineAccounts } from '@/plugins/riskEngineModule';
+import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 
 const Key = 'ConfirmResponseOperation' as const;
 

@@ -17,7 +17,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
-import { getRiskEngineAccounts } from '@/plugins/riskEngineModule';
+import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,

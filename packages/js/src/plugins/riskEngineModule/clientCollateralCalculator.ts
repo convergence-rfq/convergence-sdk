@@ -11,7 +11,7 @@ import { Commitment, PublicKey } from '@solana/web3.js';
 import { blackScholes } from 'black-scholes';
 
 import { Convergence } from '../../Convergence';
-import { toSolitaRiskCategory } from '../protocolModule';
+import { toPriceOracle, toSolitaRiskCategory } from '../protocolModule';
 import { LegInstrument } from '../instrumentModule';
 import { AuthoritySide } from '../rfqModule/models/AuthoritySide';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
@@ -156,14 +156,15 @@ async function fetchBaseAssetInfo(
   const baseAsset = await convergence
     .protocol()
     .findBaseAssetByAddress({ address });
+  const oracleAddress = toPriceOracle(baseAsset).address;
 
-  if (!baseAsset.priceOracle.address) {
+  if (!oracleAddress) {
     throw new Error('Price oracle address is missing');
   }
 
   const price = await fetchLatestOraclePrice(
     convergence,
-    baseAsset.priceOracle.address,
+    oracleAddress,
     commitment
   );
 

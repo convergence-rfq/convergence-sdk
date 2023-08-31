@@ -1,6 +1,8 @@
 import {
-  GetHxroPrintTradeProviderConfigInput,
-  getHxroPrintTradeProviderConfigOperation,
+  FetchHxroPrintTradeProviderConfigInput,
+  FetchHxroProductsInput,
+  fetchHxroPrintTradeProviderConfigOperation,
+  fetchHxroProductsOperation,
 } from './operations';
 import { HxroPdasClient } from './pdas';
 import { OperationOptions } from '@/types';
@@ -9,24 +11,22 @@ import { Convergence } from '@/Convergence';
 export class HxroClient {
   constructor(protected readonly cvg: Convergence) {}
 
-  /**
-   * You may use the `pdas()` client to build PDAs related to this module.
-   *
-   * ```ts
-   * const pdasClient = convergence.rfqs().pdas();
-   * ```
-   */
   pdas() {
     return new HxroPdasClient(this.cvg);
   }
 
-  /** {@inheritDoc addInstrumentOperation} */
-  getConfig(
-    input?: GetHxroPrintTradeProviderConfigInput,
+  fetchConfig(
+    input?: FetchHxroPrintTradeProviderConfigInput,
     options?: OperationOptions
   ) {
     return this.cvg
       .operations()
-      .execute(getHxroPrintTradeProviderConfigOperation(input), options);
+      .execute(fetchHxroPrintTradeProviderConfigOperation(input), options);
+  }
+
+  fetchProducts(input?: FetchHxroProductsInput, options?: OperationOptions) {
+    return this.cvg
+      .operations()
+      .execute(fetchHxroProductsOperation(input), options);
   }
 }
