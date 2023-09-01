@@ -55,15 +55,12 @@ describe('unit.rfq', () => {
     expect(rfqs.length).toBeGreaterThan(0);
   });
 
-  // TODO ADD getRfqStateAndAction function
+  // TODO ADD getRfqState function
   it('cancel', async () => {
     // Error Number: 6016. Error Message: Rfq is not in required state.
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return (
-        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
-          .rfqAction === 'Cancel'
-      );
+      return rfq.state === 'active' && rfq.totalResponses === 0;
     });
     expect(rfqs.length).toBeGreaterThan(0);
     const { responses } = await takerCvg
@@ -75,10 +72,7 @@ describe('unit.rfq', () => {
   it('unlock', async () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqsBefore = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return (
-        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
-          .rfqAction === 'UnlockCollateral'
-      );
+      return rfq.state === 'canceled' && rfq.totalResponses === 0;
     });
     expect(rfqsBefore.length).toBeGreaterThan(0);
     const { responses } = await takerCvg.rfqs().unlockRfqsCollateral({
@@ -86,10 +80,7 @@ describe('unit.rfq', () => {
     });
     expect(responses.length).toBe(rfqsBefore.length);
     const rfqsAfter = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return (
-        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
-          .rfqAction === 'Cleanup'
-      );
+      return rfq.state === 'canceled' && rfq.totalResponses === 0;
     });
     rfqsAfter.map((rfq: any) => {
       expect(rfq.totalTakerCollateralLocked).toBe(0);
@@ -99,10 +90,7 @@ describe('unit.rfq', () => {
   it('clean up', async () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return (
-        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
-          .rfqAction === 'Cleanup'
-      );
+      return rfq.state === 'canceled';
     });
     expect(rfqs.length).toBeGreaterThan(0);
     await takerCvg.rfqs().cleanUpRfqs({
