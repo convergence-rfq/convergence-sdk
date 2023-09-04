@@ -79,7 +79,7 @@ export const getRfqStateAndActionHandler: SyncOperationHandler<GetRfqStateAndAct
         timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
       );
       const rfqState = getRfqState(rfq, timestampExpiry, timestampSettlement);
-      const rfqStateValidUntil = getRfqStateValidaity(
+      const rfqStateValidUntil = getRfqStateValidity(
         rfqState,
         rfq,
         timestampExpiry,
@@ -90,7 +90,7 @@ export const getRfqStateAndActionHandler: SyncOperationHandler<GetRfqStateAndAct
     },
   };
 
-const getRfqStateValidaity = (
+const getRfqStateValidity = (
   rfqState: RfqState,
   rfq: Rfq,
   timestampExpiry: Date,
