@@ -1,6 +1,6 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import { BN } from 'bn.js';
 import { Mint } from '../tokenModule';
 import {
@@ -12,12 +12,12 @@ import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';
 import { PsyoptionsEuropeanInstrument } from './instrument';
-import { Pda } from '@/types/Pda';
-import { makeConfirmOptionsFinalizedOnMainnet } from '@/types/Operation';
+import { InstructionUniquenessTracker } from './classes';
 import { toBigNumber } from '@/types/BigNumber';
 
 export const initializeNewEuropeanOption = async (
   convergence: Convergence,
+  ixTracker: InstructionUniquenessTracker,
   oracle: PublicKey,
   europeanProgram: anchor.Program<psyoptionsEuropean.EuroPrimitive>,
   underlyingMint: Mint,
@@ -29,7 +29,7 @@ export const initializeNewEuropeanOption = async (
 ) => {
   const expirationTimestamp = new BN(Date.now() / 1_000 + expiration);
 
-  let { instructions: initializeIxs } =
+  const { instructions: initializeIxs } =
     await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
       europeanProgram,
       underlyingMint.address,
@@ -40,41 +40,45 @@ export const initializeNewEuropeanOption = async (
       oracleProviderId
     );
 
-  const tx = TransactionBuilder.make();
+  const tx = new Transaction();
 
-  const underlyingPoolKey = Pda.find(europeanProgram.programId, [
-    underlyingMint.address.toBuffer(),
-    Buffer.from('underlyingPool', 'utf-8'),
-  ]);
-  // TODO: Use retry method
-  const underlyingPoolAccount = await convergence.connection.getAccountInfo(
-    underlyingPoolKey
-  );
-  if (underlyingPoolAccount && initializeIxs.length === 3) {
-    initializeIxs = initializeIxs.slice(1);
-  }
-  const stablePoolKey = Pda.find(europeanProgram.programId, [
-    stableMint.address.toBuffer(),
-    Buffer.from('stablePool', 'utf-8'),
-  ]);
-  // TODO: Use retry method
-  const stablePoolAccount = await convergence.connection.getAccountInfo(
-    stablePoolKey
-  );
-  if (stablePoolAccount && initializeIxs.length === 2) {
-    initializeIxs = initializeIxs.slice(1);
-  } else if (stablePoolAccount && initializeIxs.length === 3) {
-    initializeIxs.splice(1, 1);
-  }
+  // const underlyingPoolKey = Pda.find(europeanProgram.programId, [
+  //   underlyingMint.address.toBuffer(),
+  //   Buffer.from('underlyingPool', 'utf-8'),
+  // ]);
+  // // TODO: Use retry method
+  // const underlyingPoolAccount = await convergence.connection.getAccountInfo(
+  //   underlyingPoolKey
+  // );
+  // if (underlyingPoolAccount && initializeIxs.length === 3) {
+  //   initializeIxs = initializeIxs.slice(1);
+  // }
+  // const stablePoolKey = Pda.find(europeanProgram.programId, [
+  //   stableMint.address.toBuffer(),
+  //   Buffer.from('stablePool', 'utf-8'),
+  // ]);
+  // // TODO: Use retry method
+  // const stablePoolAccount = await convergence.connection.getAccountInfo(
+  //   stablePoolKey
+  // );
+  // if (stablePoolAccount && initializeIxs.length === 2) {
+  //   initializeIxs = initializeIxs.slice(1);
+  // } else if (stablePoolAccount && initializeIxs.length === 3) {
+  //   initializeIxs.splice(1, 1);
+  // }
 
   initializeIxs.forEach((ix) => {
-    tx.add({ instruction: ix, signers: [] });
+    if (ixTracker.checkedAdd(ix)) tx.add(ix);
   });
 
-  const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
+  // const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
 
-  if (initializeIxs.length > 0) {
-    await tx.sendAndConfirm(convergence, confirmOptions);
+  if (tx.instructions.length > 0) {
+    const latestBlockHash = await convergence.rpc().getLatestBlockhash();
+    tx.recentBlockhash = latestBlockHash.blockhash;
+    tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
+    await convergence.identity().signTransaction(tx);
+    await convergence.rpc().serializeAndSendTransaction(tx, latestBlockHash);
   }
 
   const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
@@ -102,9 +106,16 @@ export const initializeNewEuropeanOption = async (
     oracleProviderId
   );
 
-  await TransactionBuilder.make()
-    .add({ instruction: createIx, signers: [] })
-    .sendAndConfirm(convergence);
+  if (ixTracker.checkedAdd(createIx)) {
+    const createTx = new Transaction().add(createIx);
+    const latestBlockHash = await convergence.rpc().getLatestBlockhash();
+    createTx.recentBlockhash = latestBlockHash.blockhash;
+    createTx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
+    const signedTx = await convergence.identity().signTransaction(createTx);
+    await convergence
+      .rpc()
+      .serializeAndSendTransaction(signedTx, latestBlockHash);
+  }
 
   return {
     euroMeta,
@@ -124,9 +135,9 @@ export const createEuropeanProgram = async (convergence: Convergence) => {
 export const mintEuropeanOptions = async (
   convergence: Convergence,
   responseAddress: PublicKey,
-  caller: PublicKey,
-  europeanProgram: any
+  caller: PublicKey
 ) => {
+  const europeanProgram = await createEuropeanProgram(convergence);
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -263,7 +274,7 @@ export const getOrCreateEuropeanOptionATAs = async (
 
   const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
   const callerSide = callerIsTaker ? 'taker' : 'maker';
-  const { legs } = await convergence.rfqs().getSettlementResult({
+  const { legs } = convergence.rfqs().getSettlementResult({
     response,
     rfq,
   });

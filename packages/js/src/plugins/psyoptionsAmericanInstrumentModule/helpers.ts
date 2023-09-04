@@ -18,9 +18,9 @@ import { createAmericanProgram } from './instrument';
 export const mintAmericanOptions = async (
   convergence: Convergence,
   responseAddress: PublicKey,
-  caller: PublicKey,
-  americanProgram: any
+  caller: PublicKey
 ) => {
+  const americanProgram = createAmericanProgram(convergence);
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -35,9 +35,9 @@ export const mintAmericanOptions = async (
     rfq,
   });
 
-  const txBuilderArray: TransactionBuilder[] = [];
+  // const ataInstructions: TransactionInstruction[] = [];
+  const mintInstructions: TransactionInstruction[] = [];
   for (const [index, leg] of rfq.legs.entries()) {
-    const instructions: TransactionInstruction[] = [];
     if (leg instanceof PsyoptionsAmericanInstrument) {
       const { receiver, amount } = legs[index];
       if (receiver !== callerSide) {
@@ -46,36 +46,30 @@ export const mintAmericanOptions = async (
           leg.optionMetaPubKey
         );
         if (optionMarket) {
-          const { ataPubKey: optionToken, instruction: optionTokenIx } =
-            await getOrCreateATAInx(
-              convergence,
-              optionMarket.optionMint,
-              caller
-            );
-          if (optionTokenIx) {
-            instructions.push(optionTokenIx);
-          }
-
-          const { ataPubKey: writerToken, instruction: writerTokenIx } =
-            await getOrCreateATAInx(
-              convergence,
-              optionMarket!.writerTokenMint,
-              caller
-            );
-          if (writerTokenIx) {
-            instructions.push(writerTokenIx);
-          }
-
-          const { ataPubKey: underlyingToken, instruction: underlyingTokenIx } =
-            await getOrCreateATAInx(
-              convergence,
-              optionMarket!.underlyingAssetMint,
-              caller
-            );
-          if (underlyingTokenIx) {
-            instructions.push(underlyingTokenIx);
-          }
-
+          const optionToken = await getOrCreateATA(
+            convergence,
+            optionMarket.optionMint,
+            caller
+          );
+          // if (optionTokenIx) {
+          //   ataInstructions.push(optionTokenIx);
+          // }
+          const writerToken = await getOrCreateATA(
+            convergence,
+            optionMarket!.writerTokenMint,
+            caller
+          );
+          // if (writerTokenIx) {
+          //   ataInstructions.push(writerTokenIx);
+          // }
+          const underlyingToken = await getOrCreateATA(
+            convergence,
+            optionMarket!.underlyingAssetMint,
+            caller
+          );
+          // if (underlyingTokenIx) {
+          //   ataInstructions.push(underlyingTokenIx);
+          // }
           const ixWithSigners =
             await psyoptionsAmerican.instructions.mintOptionV2Instruction(
               americanProgram,
@@ -90,37 +84,75 @@ export const mintAmericanOptions = async (
             isSigner: true,
             isWritable: false,
           };
-          instructions.push(ixWithSigners.ix);
+          mintInstructions.push(ixWithSigners.ix);
         }
       }
     }
-    if (instructions.length > 0) {
-      const txBuilder = TransactionBuilder.make().setFeePayer(
-        convergence.rpc().getDefaultFeePayer()
-      );
-      instructions.forEach((ins) => {
-        txBuilder.add({
-          instruction: ins,
-          signers: [convergence.identity()],
-        });
-      });
-      txBuilderArray.push(txBuilder);
-    }
+    // if (mintInstructions.length > 0) {
+    //   const txBuilder = TransactionBuilder.make().setFeePayer(
+    //     convergence.rpc().getDefaultFeePayer()
+    //   );
+    //   mintInstructions.forEach((ins) => {
+    //     txBuilder.add({
+    //       instruction: ins,
+    //       signers: [convergence.identity()],
+    //     });
+    //   });
+    //   mintTxBuilderArray.push(txBuilder);
+    // }
   }
-  if (txBuilderArray.length > 0) {
-    const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-    const signedTxs = await convergence
-      .identity()
-      .signAllTransactions(
-        txBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
-      );
-    await Promise.all(
-      signedTxs.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
+  // if (mintTxBuilderArray.length > 0) {
+  //   const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+  //   const signedTxs = await convergence
+  //     .identity()
+  //     .signAllTransactions(
+  //       mintTxBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
+  //     );
+  //   signedTxs.forEach((signedTx) =>
+  //     convergence
+  //       .rpc()
+  //       .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+  //   );
+  // }
+
+  // if (ataInstructions.length > 0) {
+  //   const txBuilder = TransactionBuilder.make().setFeePayer(
+  //     convergence.rpc().getDefaultFeePayer()
+  //   );
+  //   ataInstructions.forEach((ins) => {
+  //     txBuilder.add({
+  //       instruction: ins,
+  //       signers: [convergence.identity()],
+  //     });
+  //   });
+  //   const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+  //   const signedTx = await convergence
+  //     .identity()
+  //     .signTransaction(txBuilder.toTransaction(lastValidBlockHeight));
+
+  //   await convergence
+  //     .rpc()
+  //     .serializeAndSendTransaction(signedTx, lastValidBlockHeight);
+  // }
+
+  if (mintInstructions.length > 0) {
+    const txBuilder = TransactionBuilder.make().setFeePayer(
+      convergence.rpc().getDefaultFeePayer()
     );
+    mintInstructions.forEach((ins) => {
+      txBuilder.add({
+        instruction: ins,
+        signers: [convergence.identity()],
+      });
+    });
+    const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+    const signedTx = await convergence
+      .identity()
+      .signTransaction(txBuilder.toTransaction(lastValidBlockHeight));
+
+    await convergence
+      .rpc()
+      .serializeAndSendTransaction(signedTx, lastValidBlockHeight);
   }
 };
 

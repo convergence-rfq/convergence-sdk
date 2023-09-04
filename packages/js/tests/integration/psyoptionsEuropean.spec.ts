@@ -8,7 +8,6 @@ import {
   createUserCvg,
   createEuropeanCoveredCallRfq,
   createEuropeanOpenSizeCallSpdOptionRfq,
-  setupEuropean,
   createEuropeanFixedBaseStraddle,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
@@ -46,7 +45,7 @@ describe('integration.psyoptionsEuropean', () => {
       side: 'bid',
     });
 
-    await setupEuropean(takerCvg, rfqResponse);
+    // await setupEuropean(takerCvg, rfqResponse);
 
     await prepareRfqSettlement(makerCvg, rfq, rfqResponse);
     await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
@@ -76,8 +75,8 @@ describe('integration.psyoptionsEuropean', () => {
         side: 'ask',
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
+    // await setupEuropean(takerCvg, rfqResponse);
+    // await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -119,8 +118,8 @@ describe('integration.psyoptionsEuropean', () => {
         side: 'bid',
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
+    // await setupEuropean(takerCvg, rfqResponse);
+    // await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -157,8 +156,8 @@ describe('integration.psyoptionsEuropean', () => {
         side: 'ask',
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
+    // await setupEuropean(takerCvg, rfqResponse);
+    // await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -203,8 +202,8 @@ describe('integration.psyoptionsEuropean', () => {
         overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
+    // await setupEuropean(takerCvg, rfqResponse);
+    // await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -249,8 +248,8 @@ describe('integration.psyoptionsEuropean', () => {
         overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
+    // await setupEuropean(takerCvg, rfqResponse);
+    // await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -295,8 +294,8 @@ describe('integration.psyoptionsEuropean', () => {
         overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
+    // await setupEuropean(takerCvg, rfqResponse);
+    // await setupEuropean(makerCvg, rfqResponse);
 
     const takerResponse = await prepareRfqSettlement(
       takerCvg,

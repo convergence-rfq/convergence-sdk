@@ -96,13 +96,20 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementAndPrepareMoreLegsOutput> => {
-      const { caller = convergence.identity(), legAmountToPrepare } =
-        operation.input;
+      const {
+        caller = convergence.identity(),
+        legAmountToPrepare,
+        rfq,
+      } = operation.input;
 
       const MAX_TX_SIZE = 1232;
+      const rfqModel = await convergence.rfqs().findRfqByAddress({
+        address: rfq,
+      });
 
       let prepareBuilder = await prepareSettlementBuilder(
         convergence,
+        rfqModel,
         {
           ...operation.input,
         },
@@ -124,6 +131,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
 
         prepareBuilder = await prepareSettlementBuilder(
           convergence,
+          rfqModel,
           {
             ...operation.input,
             legAmountToPrepare: halvedLegAmount,

@@ -24,10 +24,16 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { getOrCreateATA } from '../../../utils/ata';
+import { Rfq } from '../../rfqModule';
+import { getOrCreateATA, getOrCreateATAInx } from '../../../utils/ata';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import {
+  mintAmericanOptions,
+  psyoptionsAmericanInstrumentProgram,
+} from '@/plugins/psyoptionsAmericanInstrumentModule';
+import { mintEuropeanOptions } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -112,8 +118,18 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
+      const {
+        response,
+        rfq,
+        caller = convergence.identity(),
+      } = operation.input;
+
+      const rfqModel = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: rfq });
       const builder = await prepareSettlementBuilder(
         convergence,
+        rfqModel,
         {
           ...operation.input,
         },
@@ -125,6 +141,12 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         scope.confirmOptions
       );
 
+      const optionStyle = findOptionStyle(rfqModel);
+      if (optionStyle === 'american') {
+        await mintAmericanOptions(convergence, response, caller?.publicKey);
+      } else {
+        await mintEuropeanOptions(convergence, response, caller?.publicKey);
+      }
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
@@ -153,6 +175,7 @@ export type PrepareSettlementBuilderParams = PrepareSettlementInput;
  */
 export const prepareSettlementBuilder = async (
   convergence: Convergence,
+  rfqModel: Rfq,
   params: PrepareSettlementBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
@@ -166,7 +189,7 @@ export const prepareSettlementBuilder = async (
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  // const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
@@ -307,4 +330,14 @@ export const prepareSettlementBuilder = async (
         key: 'prepareSettlement',
       }
     );
+};
+
+const findOptionStyle = (rfq: Rfq) => {
+  const american = rfq.legs.every((leg) =>
+    leg.getProgramId().equals(psyoptionsAmericanInstrumentProgram.address)
+  );
+  if (american) {
+    return 'american';
+  }
+  return 'european';
 };

@@ -52,17 +52,14 @@ export const getOrCreateATAInx = async (
     programs,
   });
   const account = await convergence.rpc().getAccount(pda);
-  const payer = convergence.rpc().getDefaultFeePayer();
   if (!account.exists) {
-    const ix = Spl.createAssociatedTokenAccountInstruction(
-      payer.publicKey,
+    const instruction = Spl.createAssociatedTokenAccountInstruction(
+      owner,
       pda,
       owner,
-      mint,
-      Spl.TOKEN_PROGRAM_ID,
-      Spl.ASSOCIATED_TOKEN_PROGRAM_ID
+      mint
     );
-    return { ataPubKey: pda, instruction: ix };
+    return { ataPubKey: pda, instruction };
   }
   return { ataPubKey: pda };
 };
