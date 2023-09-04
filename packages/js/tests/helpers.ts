@@ -149,7 +149,8 @@ export const createEuropeanCoveredCallRfq = async (
   cvg: Convergence,
   orderType: OrderType,
   baseMint: any,
-  quoteMint: any
+  quoteMint: any,
+  ixTracker: InstructionUniquenessTracker
 ) => {
   const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
@@ -163,7 +164,6 @@ export const createEuropeanCoveredCallRfq = async (
   );
   const min = 3_600;
   const randomExpiry = min + Math.random();
-  const ixTracker = new InstructionUniquenessTracker([]);
   const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
     cvg,
     ixTracker,
@@ -201,7 +201,8 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
   cvg: Convergence,
   orderType: OrderType,
   baseMint: any,
-  quoteMint: any
+  quoteMint: any,
+  ixTracker: InstructionUniquenessTracker
 ) => {
   const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
@@ -213,7 +214,6 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
     17_000,
     quoteMint.decimals * -1
   );
-  const ixTracker = new InstructionUniquenessTracker([]);
   const min = 3_600;
   const randomExpiry = min + Math.random();
   const { euroMeta: euroMeta1, euroMetaKey: euroMetaKey1 } =
@@ -322,7 +322,8 @@ export const createEuropeanFixedBaseStraddle = async (
   cvg: Convergence,
   orderType: OrderType,
   baseMint: any,
-  quoteMint: any
+  quoteMint: any,
+  ixTracker: InstructionUniquenessTracker
 ) => {
   const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
@@ -336,7 +337,7 @@ export const createEuropeanFixedBaseStraddle = async (
   );
   const min = 3_600;
   const randomExpiry = min + Math.random();
-  const ixTracker = new InstructionUniquenessTracker([]);
+
   const { euroMeta: euroMeta, euroMetaKey: euroMetaKey } =
     await initializeNewEuropeanOption(
       cvg,

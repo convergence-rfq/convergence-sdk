@@ -12,13 +12,14 @@ import {
   QUOTE_MINT_DECIMALS,
   QUOTE_MINT_PK,
 } from '../constants';
+import { InstructionUniquenessTracker } from '../../src';
 
 describe('unit.settlementResult', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
   let baseMint: Mint;
   let quoteMint: Mint;
-
+  const ixTracker = new InstructionUniquenessTracker([]);
   before(async () => {
     baseMint = await takerCvg
       .tokens()
@@ -371,7 +372,8 @@ describe('unit.settlementResult', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker
     );
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();

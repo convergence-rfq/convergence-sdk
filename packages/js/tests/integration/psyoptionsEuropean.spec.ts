@@ -11,13 +11,14 @@ import {
   createEuropeanFixedBaseStraddle,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
+import { InstructionUniquenessTracker } from '../../src';
 
 describe('integration.psyoptionsEuropean', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
   let baseMint: Mint;
   let quoteMint: Mint;
-
+  const ixTracker = new InstructionUniquenessTracker([]);
   before(async () => {
     baseMint = await takerCvg
       .tokens()
@@ -32,7 +33,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker
     );
 
     expect(rfq).toHaveProperty('address');
@@ -57,7 +59,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'buy',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -100,7 +103,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -118,8 +122,6 @@ describe('integration.psyoptionsEuropean', () => {
         side: 'bid',
       });
     expect(confirmResponse).toHaveProperty('signature');
-    // await setupEuropean(takerCvg, rfqResponse);
-    // await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -143,7 +145,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'two-way',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 61_222, 60_123);
@@ -156,8 +159,6 @@ describe('integration.psyoptionsEuropean', () => {
         side: 'ask',
       });
     expect(confirmResponse).toHaveProperty('signature');
-    // await setupEuropean(takerCvg, rfqResponse);
-    // await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -181,7 +182,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'buy',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -202,8 +204,6 @@ describe('integration.psyoptionsEuropean', () => {
         overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
-    // await setupEuropean(takerCvg, rfqResponse);
-    // await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -227,7 +227,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'two-way',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -248,8 +249,6 @@ describe('integration.psyoptionsEuropean', () => {
         overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
-    // await setupEuropean(takerCvg, rfqResponse);
-    // await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -273,7 +272,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -294,8 +294,6 @@ describe('integration.psyoptionsEuropean', () => {
         overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
-    // await setupEuropean(takerCvg, rfqResponse);
-    // await setupEuropean(makerCvg, rfqResponse);
 
     const takerResponse = await prepareRfqSettlement(
       takerCvg,

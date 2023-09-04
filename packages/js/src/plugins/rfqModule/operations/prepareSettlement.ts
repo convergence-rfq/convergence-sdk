@@ -127,6 +127,13 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       const rfqModel = await convergence
         .rfqs()
         .findRfqByAddress({ address: rfq });
+
+      const optionStyle = findOptionStyle(rfqModel);
+      if (optionStyle === 'american') {
+        await mintAmericanOptions(convergence, response, caller?.publicKey);
+      } else {
+        await mintEuropeanOptions(convergence, response, caller?.publicKey);
+      }
       const builder = await prepareSettlementBuilder(
         convergence,
         rfqModel,
@@ -141,12 +148,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         scope.confirmOptions
       );
 
-      const optionStyle = findOptionStyle(rfqModel);
-      if (optionStyle === 'american') {
-        await mintAmericanOptions(convergence, response, caller?.publicKey);
-      } else {
-        await mintEuropeanOptions(convergence, response, caller?.publicKey);
-      }
       const output = await builder.sendAndConfirm(convergence, confirmOptions);
       scope.throwIfCanceled();
 
