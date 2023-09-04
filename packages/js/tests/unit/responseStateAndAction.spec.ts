@@ -244,6 +244,8 @@ describe('unit.responseStateAndAction', () => {
       ],
       orderType: 'two-way',
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
+      activeWindow: 6,
+      settlingWindow: 3,
       fixedSize,
     });
     const { rfqResponse } = await makerCvg.rfqs().respond({
@@ -266,7 +268,7 @@ describe('unit.responseStateAndAction', () => {
       address: rfqResponse.address,
     });
 
-    //Approve for taker
+    //Settle for taker
     expect(
       takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
@@ -285,5 +287,33 @@ describe('unit.responseStateAndAction', () => {
         responseSide: 'ask',
       }).responseAction
     ).toBe('Rejected');
+
+    await takerCvg.rfqs().prepareSettlement({
+      response: rfqResponse.address,
+      rfq: rfq.address,
+      legAmountToPrepare: rfq.legs.length,
+    });
+
+    await sleep(9);
+
+    //Defaulted for taker
+    expect(
+      takerCvg.rfqs().getResponseStateAndAction({
+        response: refreshedResponse,
+        rfq,
+        caller: 'taker',
+        responseSide: 'bid',
+      }).responseAction
+    ).toBe('Defaulted');
+
+    //Defaulted for maker
+    expect(
+      takerCvg.rfqs().getResponseStateAndAction({
+        response: refreshedResponse,
+        rfq,
+        caller: 'maker',
+        responseSide: 'bid',
+      }).responseAction
+    ).toBe('Defaulted');
   });
 });

@@ -1,6 +1,18 @@
 import { Rfq, Response } from '../models';
 import { Operation, SyncOperationHandler, useOperation } from '../../../types';
 const Key = 'GetResponseStateAndAction' as const;
+export type ResponseState =
+  | 'Active'
+  | 'Cancelled'
+  | 'Expired'
+  | 'Defaulted'
+  | 'Settled'
+  | 'SettlingPreparations'
+  | 'ReadyForSettling'
+  | 'WaitingForLastLook'
+  | 'OnlyMakerPrepared'
+  | 'OnlyTakerPrepared';
+
 export type ResponseAction =
   | 'Cancel'
   | 'UnlockCollateral'
@@ -12,16 +24,6 @@ export type ResponseAction =
   | 'Expired'
   | 'Approve'
   | 'Cancelled'
-  | null;
-
-export type ResponseState =
-  | 'Active'
-  | 'Cancelled'
-  | 'Defaulted'
-  | 'Settled'
-  | 'SettlingPreparations'
-  | 'ReadyForSettling'
-  | 'WaitingForLastLook'
   | null;
 
 /**
@@ -85,28 +87,66 @@ export const getResponseStateAndActionHandler: SyncOperationHandler<GetResponseS
       if (!response.rfq.equals(rfq.address)) {
         throw new Error('Response does not match RFQ');
       }
-
-      const responseState = getResponseState(response);
+      const timestampStart = new Date(Number(rfq.creationTimestamp));
+      const timestampExpiry = new Date(
+        timestampStart.getTime() + Number(rfq.activeWindow) * 1000
+      );
+      const timestampSettlement = new Date(
+        timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
+      );
+      const responseState = getResponseState(
+        response,
+        rfq,
+        timestampExpiry,
+        timestampSettlement
+      );
       const responseAction = getResponseAction(
         response,
         rfq,
         responseSide,
         caller,
-        responseState
+        responseState,
+        timestampSettlement
       );
       return { responseState, responseAction };
     },
   };
 
-const getResponseState = (response: Response): ResponseState => {
-  if (response.state === 'active') return 'Active';
-  if (response.state === 'settling-preparations') return 'SettlingPreparations';
-  if (response.state === 'ready-for-settling') return 'ReadyForSettling';
-  if (response.state === 'settled') return 'Settled';
-  if (response.state === 'defaulted') return 'Defaulted';
-  if (response.state === 'canceled') return 'Cancelled';
-  if (response.state === 'waiting-for-last-look') return 'WaitingForLastLook';
-  return null;
+const getResponseState = (
+  response: Response,
+  rfq: Rfq,
+  timestampExpiry: Date,
+  timestampSettlement: Date
+): ResponseState => {
+  const rfqExpired = timestampExpiry.getTime() <= Date.now();
+  const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
+  switch (response.state) {
+    case 'active':
+      if (!rfqExpired) return 'Active';
+      return 'Expired';
+    case 'canceled':
+      return 'Cancelled';
+    case 'waiting-for-last-look':
+      if (!rfqExpired) return 'WaitingForLastLook';
+      return 'Expired';
+    case 'settling-preparations':
+      if (!settlementWindowElapsed) {
+        if (response.makerPreparedLegs === rfq.legs.length)
+          return 'OnlyMakerPrepared';
+        if (response.takerPreparedLegs === rfq.legs.length)
+          return 'OnlyTakerPrepared';
+        return 'SettlingPreparations';
+      }
+      return 'Defaulted';
+    case 'ready-for-settling':
+      return 'ReadyForSettling';
+    case 'settled':
+      return 'Settled';
+    case 'defaulted':
+      return 'Defaulted';
+    default:
+      throw new Error('Invalid Response state');
+  }
 };
 
 const getResponseAction = (
@@ -114,17 +154,9 @@ const getResponseAction = (
   rfq: Rfq,
   responseSide: 'ask' | 'bid',
   caller: 'maker' | 'taker',
-  responseState: ResponseState
+  responseState: ResponseState,
+  timestampSettlement: Date
 ): ResponseAction => {
-  const timestampStart = new Date(Number(rfq.creationTimestamp));
-  const timestampExpiry = new Date(
-    timestampStart.getTime() + Number(rfq.activeWindow) * 1000
-  );
-  const timestampSettlement = new Date(
-    timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
-  );
-  const rfqExpired = timestampExpiry.getTime() <= Date.now();
-  const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
   const confirmedResponseSide =
     (responseSide === 'ask' && response?.confirmed?.side === 'ask') ||
     (responseSide === 'bid' && response?.confirmed?.side === 'bid');
@@ -142,68 +174,73 @@ const getResponseAction = (
   const counterpartyPreparedLegsComplete =
     caller === 'maker' ? takerPreparedLegsComplete : makerPreparedLegsComplete;
 
+  const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
   const defaulted = response.defaultingParty
     ? response.defaultingParty !== null
     : settlementWindowElapsed &&
       (!partyPreparedLegsComplete || !counterpartyPreparedLegsComplete);
 
   const responseConfirmed = response?.confirmed !== null;
+  if (responseConfirmed && confirmedResponseSide && defaulted)
+    return 'Defaulted';
+  switch (caller) {
+    case 'maker':
+      switch (responseState) {
+        case 'Active':
+          if (!responseConfirmed) return 'Cancel';
+          if (responseConfirmed && confirmedInverseResponseSide)
+            return 'Rejected';
+          break;
+        case 'Expired':
+          if (!responseConfirmed && response.makerCollateralLocked > 0)
+            return 'UnlockCollateral';
+        case 'Cancelled':
+          if (response.makerCollateralLocked > 0) return 'UnlockCollateral';
+          if (response.makerCollateralLocked === 0) return 'Cleanup';
+          break;
+        case 'SettlingPreparations':
+        case 'OnlyMakerPrepared':
+        case 'OnlyTakerPrepared':
+        case 'ReadyForSettling':
+          if (defaulted) return 'Defaulted';
+          if (confirmedInverseResponseSide) return 'Rejected';
+          if (confirmedResponseSide) return 'Settle';
+          break;
+        case 'Settled':
+          if (confirmedInverseResponseSide) return 'Rejected';
+          return 'Settled';
+        case 'Defaulted':
+          if (confirmedInverseResponseSide) return 'Rejected';
+          return 'Defaulted';
+      }
+      break;
 
-  if (caller === 'maker') {
-    if (responseState === 'Active' && !responseConfirmed && !rfqExpired)
-      return 'Cancel';
-
-    if (
-      (responseState === 'Active' && !responseConfirmed && rfqExpired) ||
-      (responseState === 'Cancelled' && response.makerCollateralLocked > 0)
-    )
-      return 'UnlockCollateral';
-
-    if (
-      (responseState === 'Active' || responseState === 'Cancelled') &&
-      response.makerCollateralLocked === 0
-    )
-      return 'Cleanup';
-
-    if (responseConfirmed && confirmedInverseResponseSide) return 'Rejected';
-
-    if (
-      confirmedResponseSide &&
-      (responseState === 'SettlingPreparations' ||
-        responseState === 'ReadyForSettling') &&
-      !defaulted
-    )
-      return 'Settle';
-
-    if (defaulted || responseState === 'Defaulted') return 'Defaulted';
-
-    if (!defaulted && responseState === 'Settled') return 'Settled';
-
-    return null;
-  } else if (caller === 'taker') {
-    if (responseState === 'Active' && rfqExpired && !responseConfirmed)
-      return 'Expired';
-
-    if (responseState === 'Cancelled') return 'Cancelled';
-
-    if (responseConfirmed && confirmedInverseResponseSide) return 'Rejected';
-
-    if (responseState === 'Active' && !rfqExpired && !responseConfirmed)
-      return 'Approve';
-
-    if (
-      confirmedResponseSide &&
-      (responseState === 'SettlingPreparations' ||
-        responseState === 'ReadyForSettling') &&
-      !defaulted
-    )
-      return 'Settle';
-
-    if (defaulted || responseState === 'Defaulted') return 'Defaulted';
-
-    if (responseState === 'Settled') return 'Settled';
-
-    return null;
+    case 'taker':
+      switch (responseState) {
+        case 'Active':
+          if (!responseConfirmed) return 'Approve';
+          if (responseConfirmed && confirmedInverseResponseSide)
+            return 'Rejected';
+          break;
+        case 'Expired':
+          return 'Expired';
+        case 'Cancelled':
+          return 'Cancelled';
+        case 'SettlingPreparations':
+        case 'OnlyMakerPrepared':
+        case 'OnlyTakerPrepared':
+        case 'ReadyForSettling':
+          if (confirmedInverseResponseSide) return 'Rejected';
+          if (confirmedResponseSide) return 'Settle';
+          break;
+        case 'Settled':
+          if (confirmedInverseResponseSide) return 'Rejected';
+          return 'Settled';
+        case 'Defaulted':
+          if (confirmedInverseResponseSide) return 'Rejected';
+          return 'Defaulted';
+      }
+      break;
   }
   return null;
 };
