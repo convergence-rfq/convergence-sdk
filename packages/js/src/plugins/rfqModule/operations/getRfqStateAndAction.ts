@@ -8,8 +8,7 @@ export type RfqState =
   | 'Constructed'
   | 'Expired'
   | 'Settling'
-  | 'SettlingEnded'
-  | null;
+  | 'SettlingEnded';
 
 export type RfqAction =
   | 'Cancel'
@@ -72,54 +71,60 @@ export const getRfqStateAndActionHandler: SyncOperationHandler<GetRfqStateAndAct
   {
     handle: (operation: GetRfqStateAndAction): GetRfqStateAndActionOutput => {
       const { rfq, caller } = operation.input;
-      const rfqState = getRfqState(rfq);
-      const rfqStateValidUntil = getRfqStateValidaity(rfqState, rfq);
+      const timestampStart = new Date(Number(rfq.creationTimestamp));
+      const timestampExpiry = new Date(
+        timestampStart.getTime() + Number(rfq.activeWindow) * 1000
+      );
+      const timestampSettlement = new Date(
+        timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
+      );
+      const rfqState = getRfqState(rfq, timestampExpiry, timestampSettlement);
+      const rfqStateValidUntil = getRfqStateValidaity(
+        rfqState,
+        rfq,
+        timestampExpiry,
+        timestampSettlement
+      );
       const rfqAction = getRfqAction(rfq, rfqState, caller);
       return { rfqState, rfqStateValidUntil, rfqAction };
     },
   };
 
-const getRfqStateValidaity = (rfqState: RfqState, rfq: Rfq) => {
+const getRfqStateValidaity = (
+  rfqState: RfqState,
+  rfq: Rfq,
+  timestampExpiry: Date,
+  timestampSettlement: Date
+) => {
   if (rfqState === 'Active') {
-    const timestampStart = new Date(Number(rfq.creationTimestamp));
-    const timestampExpiry = new Date(
-      timestampStart.getTime() + Number(rfq.activeWindow) * 1000
-    );
     return timestampExpiry;
   }
-
   if (rfqState === 'Settling') {
-    const timestampStart = new Date(Number(rfq.creationTimestamp));
-    const timestampExpiry = new Date(
-      timestampStart.getTime() + Number(rfq.activeWindow) * 1000
-    );
-    const timestampSettlement = new Date(
-      timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
-    );
     return timestampSettlement;
   }
   return null;
 };
 
-const getRfqState = (rfq: Rfq): RfqState => {
-  const timestampStart = new Date(Number(rfq.creationTimestamp));
-  const timestampExpiry = new Date(
-    timestampStart.getTime() + Number(rfq.activeWindow) * 1000
-  );
+const getRfqState = (
+  rfq: Rfq,
+  timestampExpiry: Date,
+  timestampSettlement: Date
+): RfqState => {
   const rfqExpired = timestampExpiry.getTime() <= Date.now();
-  const timestampSettlement = new Date(
-    timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
-  );
   const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
-  if (rfq.state === 'constructed') return 'Constructed';
-  if (rfq.state === 'canceled') return 'Cancelled';
-  if (rfq.state === 'active') {
-    if (!rfqExpired) return 'Active';
-    if (rfqExpired && rfq.confirmedResponses === 0) return 'Expired';
-    if (!settlementWindowElapsed) return 'Settling';
-    if (settlementWindowElapsed) return 'SettlingEnded';
+  switch (rfq.state) {
+    case 'constructed':
+      return 'Constructed';
+    case 'canceled':
+      return 'Cancelled';
+    case 'active': {
+      if (!rfqExpired) return 'Active';
+      if (rfqExpired && rfq.confirmedResponses === 0) return 'Expired';
+      if (!settlementWindowElapsed) return 'Settling';
+      if (settlementWindowElapsed) return 'SettlingEnded';
+    }
   }
-  return null;
+  throw new Error('Invalid Rfq state');
 };
 
 const getRfqAction = (
@@ -127,47 +132,48 @@ const getRfqAction = (
   rfqState: RfqState,
   caller: 'maker' | 'taker'
 ): RfqAction => {
-  const timestampStart = new Date(Number(rfq.creationTimestamp));
-  const timestampExpiry = new Date(
-    timestampStart.getTime() + Number(rfq.activeWindow) * 1000
-  );
-  const rfqExpired = timestampExpiry.getTime() <= Date.now();
   const pendingResponses = rfq.totalResponses - rfq.clearedResponses;
-  if (
-    rfqState === 'Active' &&
-    !rfqExpired &&
-    caller === 'taker' &&
-    pendingResponses === 0
-  )
-    return 'Cancel';
 
-  if (rfqState === 'Constructed' && caller === 'taker')
-    return 'FinalizeConstruction';
-
-  if (rfqState === 'Constructed' && caller === 'maker') return null;
-
-  if (caller === 'taker' && pendingResponses > 0) return 'NewResponses';
-
-  if (rfqState === 'Active' && !rfqExpired && caller === 'maker')
-    return 'Respond';
-
-  if (
-    ((rfqState === 'Active' && pendingResponses === 0 && rfqExpired) ||
-      rfqState === 'Cancelled') &&
-    caller === 'taker' &&
-    rfq.totalTakerCollateralLocked > 0
-  )
-    return 'UnlockCollateral';
-
-  if (
-    (rfqState === 'Cancelled' || rfqState === 'Active') &&
-    pendingResponses === 0 &&
-    rfq.totalTakerCollateralLocked == 0 &&
-    caller === 'taker'
-  )
-    return 'Cleanup';
-
-  if (caller === 'maker') return null;
-
+  switch (rfqState) {
+    case 'Active':
+      if (caller === 'taker' && pendingResponses > 0) return 'NewResponses';
+      if (caller === 'taker' && pendingResponses === 0) return 'Cancel';
+      if (caller === 'maker') return 'Respond';
+      break;
+    case 'Constructed':
+      if (caller === 'taker') return 'FinalizeConstruction';
+      if (caller === 'maker') return null;
+      break;
+    case 'Expired':
+      if (
+        caller === 'taker' &&
+        pendingResponses === 0 &&
+        rfq.totalTakerCollateralLocked > 0
+      )
+        return 'UnlockCollateral';
+      if (
+        caller === 'taker' &&
+        pendingResponses === 0 &&
+        rfq.totalTakerCollateralLocked == 0
+      )
+        return 'Cleanup';
+      break;
+    case 'Cancelled':
+      if (
+        caller === 'taker' &&
+        pendingResponses === 0 &&
+        rfq.totalTakerCollateralLocked > 0
+      )
+        return 'UnlockCollateral';
+      if (
+        caller === 'taker' &&
+        pendingResponses === 0 &&
+        rfq.totalTakerCollateralLocked == 0
+      )
+        return 'Cleanup';
+      break;
+    default:
+      return null;
+  }
   return null;
 };

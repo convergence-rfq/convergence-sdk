@@ -6,7 +6,7 @@ import {
   FixedSize,
   Rfq,
 } from '../../src';
-import { createUserCvg } from '../helpers';
+import { createUserCvg, sleep } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
 describe('unit.rfqStateAndAction', () => {
@@ -29,7 +29,7 @@ describe('unit.rfqStateAndAction', () => {
     let refreshedRfq: Rfq;
     const fixedSize: FixedSize = {
       type: 'fixed-base',
-      amount: 19.653_038_331,
+      amount: 19.65,
     };
     const { rfq } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
@@ -97,7 +97,7 @@ describe('unit.rfqStateAndAction', () => {
     let refreshedRfq: Rfq;
     const fixedSize: FixedSize = {
       type: 'fixed-base',
-      amount: 19.653_038_331,
+      amount: 12.122,
     };
     const { rfq } = await takerCvg.rfqs().create({
       instruments: [
@@ -149,5 +149,56 @@ describe('unit.rfqStateAndAction', () => {
         caller: 'taker',
       }).rfqAction
     ).toBe('NewResponses');
+  });
+
+  it('[UnlockCollateral,Cleanup] when rfq is expired', async () => {
+    const fixedSize: FixedSize = {
+      type: 'fixed-base',
+      amount: 1,
+    };
+    const { rfq } = await takerCvg.rfqs().createAndFinalize({
+      instruments: [
+        await SpotLegInstrument.create(takerCvg, baseMintBTC, 12.1, 'long'),
+      ],
+      orderType: 'sell',
+      quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
+      activeWindow: 3,
+      settlingWindow: 3,
+      fixedSize,
+    });
+
+    await sleep(4);
+
+    //UnlockCollateral for taker
+    expect(
+      takerCvg.rfqs().getRfqStateAndAction({
+        rfq,
+        caller: 'taker',
+      }).rfqAction
+    ).toBe('UnlockCollateral');
+
+    //null for maker
+    expect(
+      takerCvg.rfqs().getRfqStateAndAction({
+        rfq,
+        caller: 'maker',
+      }).rfqAction
+    ).toBe(null);
+
+    await takerCvg.rfqs().unlockRfqCollateral({
+      rfq: rfq.address,
+    });
+
+    const refreshedRfq = await makerCvg.rfqs().findRfqByAddress({
+      address: rfq.address,
+    });
+
+    //Cleanup for taker
+    expect(
+      takerCvg.rfqs().getRfqStateAndAction({
+        rfq: refreshedRfq,
+        caller: 'taker',
+      }).rfqAction
+    ).toBe('Cleanup');
   });
 });
