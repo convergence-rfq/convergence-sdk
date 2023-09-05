@@ -10,7 +10,6 @@ import {
   getOrCreateATAInx,
 } from '../../utils/ata';
 import { Mint } from '../tokenModule/models';
-import { CvgWallet } from '../../utils/Wallets';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
@@ -20,8 +19,7 @@ export const mintAmericanOptions = async (
   responseAddress: PublicKey,
   caller: PublicKey
 ) => {
-  const cvgWallet = new CvgWallet(convergence);
-  const americanProgram = createAmericanProgram(convergence, cvgWallet);
+  const americanProgram = createAmericanProgram(convergence);
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -131,10 +129,7 @@ export const initializeNewAmericanOption = async (
     Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
   );
 
-  const americanProgram = createAmericanProgram(
-    convergence,
-    new CvgWallet(convergence)
-  );
+  const americanProgram = createAmericanProgram(convergence);
 
   const { optionMarketKey, optionMintKey, writerMintKey } =
     await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {

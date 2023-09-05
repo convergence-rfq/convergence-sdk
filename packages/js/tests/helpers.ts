@@ -598,7 +598,7 @@ export const prepareRfqSettlement = async (
   response: Response
 ) => {
   return await cvg.rfqs().prepareSettlement({
-    caller: cvg.rpc().getDefaultFeePayer(),
+    caller: cvg.identity(),
     rfq: rfq.address,
     response: response.address,
     legAmountToPrepare: rfq.legs.length,
