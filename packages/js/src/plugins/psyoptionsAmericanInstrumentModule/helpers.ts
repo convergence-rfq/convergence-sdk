@@ -120,20 +120,25 @@ export const mintAmericanOptions = async (
 
   if (ataSignedTx.length > 0) {
     const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-    ataSignedTx.map(
-      async (signedTx) =>
-        await convergence
+
+    await Promise.all(
+      ataSignedTx.map((signedTx) =>
+        convergence
           .rpc()
           .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+      )
     );
   }
   if (mintSignedTx.length > 0) {
     const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-    mintSignedTx.map(
-      async (signedTx) =>
-        await convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+
+    await Promise.all(
+      mintSignedTx.map(
+        async (signedTx) =>
+          await convergence
+            .rpc()
+            .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+      )
     );
   }
 };

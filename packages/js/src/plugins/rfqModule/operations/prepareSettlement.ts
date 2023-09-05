@@ -316,11 +316,12 @@ export const prepareSettlementBuilder = async (
       .signAllTransactions(
         ataTxBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
       );
-    signedTxs.map(
-      async (signedTx) =>
-        await convergence
+    await Promise.all(
+      signedTxs.map((signedTx) =>
+        convergence
           .rpc()
           .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+      )
     );
   }
 

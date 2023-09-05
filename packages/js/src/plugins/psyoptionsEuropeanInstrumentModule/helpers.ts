@@ -256,20 +256,22 @@ export const mintEuropeanOptions = async (
 
   if (ataSignedTx.length > 0) {
     const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-    ataSignedTx.map(
-      async (signedTx) =>
-        await convergence
+    await Promise.all(
+      ataSignedTx.map((signedTx) =>
+        convergence
           .rpc()
           .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+      )
     );
   }
   if (mintSignedTx.length > 0) {
     const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-    mintSignedTx.map(
-      async (signedTx) =>
-        await convergence
+    await Promise.all(
+      mintSignedTx.map((signedTx) =>
+        convergence
           .rpc()
           .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+      )
     );
   }
 };
