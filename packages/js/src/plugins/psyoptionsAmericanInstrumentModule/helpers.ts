@@ -13,13 +13,15 @@ import { Mint } from '../tokenModule/models';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
+import { CvgWallet } from '@/index';
 
 export const mintAmericanOptions = async (
   convergence: Convergence,
   responseAddress: PublicKey,
   caller: PublicKey
 ) => {
-  const americanProgram = createAmericanProgram(convergence);
+  const cvgWallet = new CvgWallet(convergence);
+  const americanProgram = createAmericanProgram(convergence, cvgWallet);
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -129,7 +131,8 @@ export const initializeNewAmericanOption = async (
     Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
   );
 
-  const americanProgram = createAmericanProgram(convergence);
+  const cvgWallet = new CvgWallet(convergence);
+  const americanProgram = createAmericanProgram(convergence, cvgWallet);
 
   const { optionMarketKey, optionMintKey, writerMintKey } =
     await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
