@@ -163,7 +163,7 @@ export const createEuropeanCoveredCallRfq = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random() * 10;
+  const randomExpiry = min + Math.random();
   const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
     cvg,
     ixTracker,
@@ -336,7 +336,7 @@ export const createEuropeanFixedBaseStraddle = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random() * 100;
+  const randomExpiry = min + Math.random();
 
   const { euroMeta: euroMeta, euroMetaKey: euroMetaKey } =
     await initializeNewEuropeanOption(
