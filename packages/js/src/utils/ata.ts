@@ -6,11 +6,6 @@ import { TransactionBuilder } from '../utils/TransactionBuilder';
 import { collateralMintCache } from '@/plugins/collateralModule/cache';
 import { createTokenBuilder } from '@/plugins/tokenModule/operations/createToken';
 
-export enum ATAExistence {
-  EXISTS,
-  NOTEXISTS,
-}
-
 export const getOrCreateATA = async (
   convergence: Convergence,
   mint: PublicKey,

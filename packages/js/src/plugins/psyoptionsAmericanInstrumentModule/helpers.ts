@@ -8,16 +8,59 @@ import {
 } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
-import {
-  ATAExistence,
-  getOrCreateATA,
-  getOrCreateATAtxBuilder,
-} from '../../utils/ata';
+import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { Mint } from '../tokenModule/models';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { CvgWallet } from '../../utils/Wallets';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
+
+export const initializeNewAmericanOption = async (
+  convergence: Convergence,
+  underlyingMint: Mint,
+  quoteMint: Mint,
+  quoteAmountPerContract: number,
+  underlyingAmountPerContract: number,
+  expiration: number
+) => {
+  const expirationUnixTimestamp = new BN(Date.now() / 1_000 + expiration);
+
+  const quoteAmountPerContractBN = new BN(
+    Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
+  );
+  const underlyingAmountPerContractBN = new BN(
+    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
+  );
+
+  const cvgWallet = new CvgWallet(convergence);
+  const americanProgram = createAmericanProgram(convergence, cvgWallet);
+
+  const { optionMarketKey, optionMintKey, writerMintKey } =
+    await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
+      expirationUnixTimestamp,
+      quoteAmountPerContract: quoteAmountPerContractBN,
+      quoteMint: quoteMint.address,
+      underlyingAmountPerContract: underlyingAmountPerContractBN,
+      underlyingMint: underlyingMint.address,
+    });
+
+  const optionMarket = (await psyoptionsAmerican.getOptionByKey(
+    americanProgram,
+    optionMarketKey
+  )) as psyoptionsAmerican.OptionMarketWithKey;
+
+  const optionMint = await convergence
+    .tokens()
+    .findMintByAddress({ address: optionMintKey });
+
+  return {
+    optionMarketKey,
+    optionMarket,
+    optionMintKey,
+    writerMintKey,
+    optionMint,
+  };
+};
 
 export const mintAmericanOptions = async (
   convergence: Convergence,
@@ -142,93 +185,4 @@ export const mintAmericanOptions = async (
       })
     );
   }
-};
-
-export const initializeNewAmericanOption = async (
-  convergence: Convergence,
-  underlyingMint: Mint,
-  quoteMint: Mint,
-  quoteAmountPerContract: number,
-  underlyingAmountPerContract: number,
-  expiration: number
-) => {
-  const expirationUnixTimestamp = new BN(Date.now() / 1_000 + expiration);
-
-  const quoteAmountPerContractBN = new BN(
-    Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
-  );
-  const underlyingAmountPerContractBN = new BN(
-    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
-  );
-
-  const cvgWallet = new CvgWallet(convergence);
-  const americanProgram = createAmericanProgram(convergence, cvgWallet);
-
-  const { optionMarketKey, optionMintKey, writerMintKey } =
-    await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
-      expirationUnixTimestamp,
-      quoteAmountPerContract: quoteAmountPerContractBN,
-      quoteMint: quoteMint.address,
-      underlyingAmountPerContract: underlyingAmountPerContractBN,
-      underlyingMint: underlyingMint.address,
-    });
-
-  const optionMarket = (await psyoptionsAmerican.getOptionByKey(
-    americanProgram,
-    optionMarketKey
-  )) as psyoptionsAmerican.OptionMarketWithKey;
-
-  const optionMint = await convergence
-    .tokens()
-    .findMintByAddress({ address: optionMintKey });
-
-  return {
-    optionMarketKey,
-    optionMarket,
-    optionMintKey,
-    writerMintKey,
-    optionMint,
-  };
-};
-
-// used in UI
-export const getOrCreateAmericanOptionATAs = async (
-  convergence: Convergence,
-  responseAddress: PublicKey,
-  caller: PublicKey,
-  americanProgram: any
-): Promise<ATAExistence> => {
-  let flag = false;
-  const response = await convergence
-    .rfqs()
-    .findResponseByAddress({ address: responseAddress });
-  const rfq = await convergence
-    .rfqs()
-    .findRfqByAddress({ address: response.rfq });
-
-  const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
-  const { legs } = await convergence.rfqs().getSettlementResult({
-    response,
-    rfq,
-  });
-  for (const [index, leg] of rfq.legs.entries()) {
-    if (leg instanceof PsyoptionsAmericanInstrument) {
-      const { receiver } = legs[index];
-      if (receiver !== callerSide) {
-        flag = true;
-
-        const optionMarket = await psyoptionsAmerican.getOptionByKey(
-          americanProgram,
-          leg.optionMetaPubKey
-        );
-        if (optionMarket) {
-          await getOrCreateATA(convergence, optionMarket.optionMint, caller);
-        }
-      }
-    }
-  }
-  if (flag === true) {
-    return ATAExistence.EXISTS;
-  }
-  return ATAExistence.NOTEXISTS;
 };

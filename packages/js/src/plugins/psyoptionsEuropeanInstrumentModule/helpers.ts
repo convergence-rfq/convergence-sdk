@@ -8,11 +8,7 @@ import {
 } from '@solana/web3.js';
 import { BN } from 'bn.js';
 import { Mint } from '../tokenModule';
-import {
-  ATAExistence,
-  getOrCreateATA,
-  getOrCreateATAtxBuilder,
-} from '../../utils/ata';
+import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';
@@ -47,36 +43,9 @@ export const initializeNewEuropeanOption = async (
 
   const tx = new Transaction();
 
-  // const underlyingPoolKey = Pda.find(europeanProgram.programId, [
-  //   underlyingMint.address.toBuffer(),
-  //   Buffer.from('underlyingPool', 'utf-8'),
-  // ]);
-  // // TODO: Use retry method
-  // const underlyingPoolAccount = await convergence.connection.getAccountInfo(
-  //   underlyingPoolKey
-  // );
-  // if (underlyingPoolAccount && initializeIxs.length === 3) {
-  //   initializeIxs = initializeIxs.slice(1);
-  // }
-  // const stablePoolKey = Pda.find(europeanProgram.programId, [
-  //   stableMint.address.toBuffer(),
-  //   Buffer.from('stablePool', 'utf-8'),
-  // ]);
-  // // TODO: Use retry method
-  // const stablePoolAccount = await convergence.connection.getAccountInfo(
-  //   stablePoolKey
-  // );
-  // if (stablePoolAccount && initializeIxs.length === 2) {
-  //   initializeIxs = initializeIxs.slice(1);
-  // } else if (stablePoolAccount && initializeIxs.length === 3) {
-  //   initializeIxs.splice(1, 1);
-  // }
-
   initializeIxs.forEach((ix) => {
     if (ixTracker.checkedAdd(ix)) tx.add(ix);
   });
-
-  // const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(convergence);
 
   if (tx.instructions.length > 0) {
     const latestBlockHash = await convergence.rpc().getLatestBlockhash();
@@ -278,46 +247,4 @@ export const mintEuropeanOptions = async (
       })
     );
   }
-};
-
-export const getOrCreateEuropeanOptionATAs = async (
-  convergence: Convergence,
-  responseAddress: PublicKey,
-  caller: PublicKey
-): Promise<ATAExistence> => {
-  let flag = false;
-  const response = await convergence
-    .rfqs()
-    .findResponseByAddress({ address: responseAddress });
-  const rfq = await convergence
-    .rfqs()
-    .findRfqByAddress({ address: response.rfq });
-
-  const callerIsTaker = caller.toBase58() === rfq.taker.toBase58();
-  const callerSide = callerIsTaker ? 'taker' : 'maker';
-  const { legs } = convergence.rfqs().getSettlementResult({
-    response,
-    rfq,
-  });
-  for (const [index, leg] of rfq.legs.entries()) {
-    if (leg instanceof PsyoptionsEuropeanInstrument) {
-      const { receiver } = legs[index];
-      if (receiver !== callerSide) {
-        flag = true;
-        const euroMeta = await leg.getOptionMeta();
-        const { optionType } = leg;
-        await getOrCreateATA(
-          convergence,
-          optionType === psyoptionsEuropean.OptionType.PUT
-            ? euroMeta.putOptionMint
-            : euroMeta.callOptionMint,
-          caller
-        );
-      }
-    }
-  }
-  if (flag === true) {
-    return ATAExistence.EXISTS;
-  }
-  return ATAExistence.NOTEXISTS;
 };
