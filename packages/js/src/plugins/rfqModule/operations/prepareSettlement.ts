@@ -25,7 +25,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { Rfq } from '../../rfqModule';
-import { getOrCreateATA } from '../../../utils/ata';
+import { getOrCreateATAtxBuilder } from '../../../utils/ata';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
@@ -251,6 +251,7 @@ export const prepareSettlementBuilder = async (
 
   anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
 
+  const ataTxBuilderArray: TransactionBuilder[] = [];
   for (let legIndex = 0; legIndex < legAmountToPrepare; legIndex++) {
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[legIndex].getProgramId(),
@@ -266,6 +267,16 @@ export const prepareSettlementBuilder = async (
       rfqModel,
     });
 
+    const { ataPubKey, txBuilder } = await getOrCreateATAtxBuilder(
+      convergence,
+      baseAssetMints[legIndex].address,
+      caller.publicKey,
+      programs
+    );
+    if (txBuilder) {
+      ataTxBuilderArray.push(txBuilder);
+    }
+
     const legAccounts: AccountMeta[] = [
       // `caller`
       {
@@ -275,12 +286,7 @@ export const prepareSettlementBuilder = async (
       },
       // `caller_token_account`
       {
-        pubkey: await getOrCreateATA(
-          convergence,
-          baseAssetMints[legIndex].address,
-          caller.publicKey,
-          programs
-        ),
+        pubkey: ataPubKey,
         isSigner: false,
         isWritable: true,
       },
@@ -301,6 +307,21 @@ export const prepareSettlementBuilder = async (
       { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
     ];
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
+  }
+
+  if (ataTxBuilderArray.length > 0) {
+    const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+    const signedTxs = await convergence
+      .identity()
+      .signAllTransactions(
+        ataTxBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
+      );
+    signedTxs.map(
+      async (signedTx) =>
+        await convergence
+          .rpc()
+          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+    );
   }
 
   return TransactionBuilder.make()
@@ -334,7 +355,7 @@ export const prepareSettlementBuilder = async (
 };
 
 const findOptionStyle = (rfq: Rfq) => {
-  const american = rfq.legs.every((leg) =>
+  const american = rfq.legs.some((leg) =>
     leg.getProgramId().equals(psyoptionsAmericanInstrumentProgram.address)
   );
   if (american) {

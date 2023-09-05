@@ -113,7 +113,8 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     convergence: Convergence,
     metaKey: PublicKey
   ): Promise<OptionMarketWithKey> {
-    const americanProgram = createAmericanProgram(convergence);
+    const cvgWallet = new CvgWallet(convergence);
+    const americanProgram = createAmericanProgram(convergence, cvgWallet);
     const optionMarket = (await psyoptionsAmerican.getOptionByKey(
       americanProgram,
       metaKey

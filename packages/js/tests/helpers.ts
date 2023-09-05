@@ -125,7 +125,7 @@ export const createAmericanCoveredCallRfq = async (
 
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
-      await SpotLegInstrument.create(cvg, baseMint, 0.00118, 'short'),
+      await SpotLegInstrument.create(cvg, baseMint, 1.0, 'long'),
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
@@ -277,7 +277,7 @@ export const createAmericanFixedBaseStraddle = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const expiration = 3_600 + Math.random();
+  const expiration = 3_600 + Math.random() * 100;
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
     baseMint,
@@ -336,7 +336,7 @@ export const createEuropeanFixedBaseStraddle = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random();
+  const randomExpiry = min + Math.random() * 100;
 
   const { euroMeta: euroMeta, euroMetaKey: euroMetaKey } =
     await initializeNewEuropeanOption(
