@@ -148,7 +148,7 @@ describe('unit.rfqStateAndAction', () => {
         rfq: refreshedRfq,
         caller: 'taker',
       }).rfqAction
-    ).toBe('NewResponses');
+    ).toBe('ViewResponses');
   });
 
   it('[UnlockCollateral,Cleanup] when rfq is expired', async () => {
