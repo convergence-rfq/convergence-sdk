@@ -1,6 +1,11 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
-import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  Keypair,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { BN } from 'bn.js';
 import { Mint } from '../tokenModule';
 import {
@@ -153,13 +158,10 @@ export const mintEuropeanOptions = async (
   });
   const txBuilderArray: TransactionBuilder[] = [];
   for (const [index, leg] of rfq.legs.entries()) {
-    const instructions: anchor.web3.TransactionInstruction[] = [];
+    const instructions: TransactionInstruction[] = [];
     if (leg instanceof PsyoptionsEuropeanInstrument) {
-      const { receiver } = legs[index];
-
+      const { receiver, amount } = legs[index];
       if (receiver !== callerSide) {
-        const { amount } = legs[index];
-
         const euroMeta = await leg.getOptionMeta();
         const { stableMint } = euroMeta;
         const { underlyingMint } = euroMeta;

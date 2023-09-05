@@ -25,7 +25,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { Rfq } from '../../rfqModule';
-import { getOrCreateATA, getOrCreateATAInx } from '../../../utils/ata';
+import { getOrCreateATA } from '../../../utils/ata';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';

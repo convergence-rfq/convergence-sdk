@@ -11,6 +11,7 @@ import {
   createAmericanFixedBaseStraddle,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
+import { getOrCreateATAInx } from '../../src';
 
 describe('integration.psyoptionsAmerican', () => {
   const takerCvg = createUserCvg('taker');
@@ -27,7 +28,7 @@ describe('integration.psyoptionsAmerican', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it('covered call [sell]', async () => {
+  it('american covered call [sell]', async () => {
     const { rfq } = await createAmericanCoveredCallRfq(
       takerCvg,
       'sell',
@@ -46,7 +47,32 @@ describe('integration.psyoptionsAmerican', () => {
         response: rfqResponse.address,
         side: 'bid',
       });
+
+    const refreshedRfq = await takerCvg.rfqs().findRfqByAddress({
+      address: rfq.address,
+    });
+
+    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
+      address: rfqResponse.address,
+    });
+
+    const bal = await getOrCreateATAInx(
+      takerCvg,
+      baseMint.address,
+      takerCvg.identity().publicKey
+    );
+    const acc = await takerCvg.tokens().findTokenByAddress({
+      address: bal.ataPubKey,
+    });
+    console.log('acc', Number(acc.amount.basisPoints) / Math.pow(10, 9));
+
+    const result = takerCvg.rfqs().getSettlementResult({
+      rfq: refreshedRfq,
+      response: refreshedResponse,
+    });
+    console.log('res', result);
     expect(confirmResponse).toHaveProperty('signature');
+
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -132,6 +158,7 @@ describe('integration.psyoptionsAmerican', () => {
         side: 'bid',
       });
     expect(confirmResponse).toHaveProperty('signature');
+
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
