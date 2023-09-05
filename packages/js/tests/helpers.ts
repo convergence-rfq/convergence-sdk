@@ -370,7 +370,7 @@ export const createEuropeanFixedBaseStraddle = async (
         euroMeta,
         euroMetaKey,
         1,
-        'long'
+        'short'
       ),
     ],
     orderType,
