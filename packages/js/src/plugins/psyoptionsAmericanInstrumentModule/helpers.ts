@@ -92,7 +92,7 @@ export const mintAmericanOptions = async (
       instructions.forEach((ins) => {
         txBuilder.add({
           instruction: ins,
-          signers: [convergence.identity()],
+          signers: [convergence.rpc().getDefaultFeePayer()],
         });
       });
       txBuilderArray.push(txBuilder);
