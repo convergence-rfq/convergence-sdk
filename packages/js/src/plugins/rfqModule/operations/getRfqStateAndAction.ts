@@ -16,7 +16,7 @@ export type RfqAction =
   | 'Cleanup'
   | 'FinalizeConstruction'
   | 'Respond'
-  | 'NewResponses'
+  | 'ViewResponses'
   | null;
 /**
  * getRfqStateAndAction.
@@ -136,7 +136,7 @@ const getRfqAction = (
 
   switch (rfqState) {
     case 'Active':
-      if (caller === 'taker' && pendingResponses > 0) return 'NewResponses';
+      if (caller === 'taker' && pendingResponses > 0) return 'ViewResponses';
       if (caller === 'taker' && pendingResponses === 0) return 'Cancel';
       if (caller === 'maker') return 'Respond';
       break;
