@@ -10,7 +10,7 @@ import {
   createEuropeanOpenSizeCallSpdOptionRfq,
   createEuropeanFixedBaseStraddle,
 } from '../helpers';
-import { BASE_MINT_SOL_PK, QUOTE_MINT_PK } from '../constants';
+import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 import { InstructionUniquenessTracker } from '../../src';
 
 describe('integration.psyoptionsEuropean', () => {
@@ -22,7 +22,7 @@ describe('integration.psyoptionsEuropean', () => {
   before(async () => {
     baseMint = await takerCvg
       .tokens()
-      .findMintByAddress({ address: BASE_MINT_SOL_PK });
+      .findMintByAddress({ address: BASE_MINT_BTC_PK });
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
