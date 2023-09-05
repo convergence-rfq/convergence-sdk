@@ -255,23 +255,27 @@ export const mintEuropeanOptions = async (
   const mintSignedTx = signedTxs.slice(ataTxBuilderArray.length);
 
   if (ataSignedTx.length > 0) {
-    const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
     await Promise.all(
-      ataSignedTx.map((signedTx) =>
+      ataSignedTx.map(async (signedTx) => {
+        const lastValidBlockHeight = await convergence
+          .rpc()
+          .getLatestBlockhash();
         convergence
           .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
+          .serializeAndSendTransaction(signedTx, lastValidBlockHeight);
+      })
     );
   }
   if (mintSignedTx.length > 0) {
-    const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
     await Promise.all(
-      mintSignedTx.map((signedTx) =>
+      mintSignedTx.map(async (signedTx) => {
+        const lastValidBlockHeight = await convergence
+          .rpc()
+          .getLatestBlockhash();
         convergence
           .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
+          .serializeAndSendTransaction(signedTx, lastValidBlockHeight);
+      })
     );
   }
 };
