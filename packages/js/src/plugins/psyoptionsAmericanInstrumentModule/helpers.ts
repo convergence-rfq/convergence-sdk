@@ -11,9 +11,9 @@ import {
 } from '../../utils/ata';
 import { Mint } from '../tokenModule/models';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
+import { CvgWallet } from '../../utils/Wallets';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
-import { CvgWallet } from '@/index';
 
 export const mintAmericanOptions = async (
   convergence: Convergence,
