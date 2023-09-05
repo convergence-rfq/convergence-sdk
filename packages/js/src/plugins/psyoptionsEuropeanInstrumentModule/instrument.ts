@@ -82,6 +82,7 @@ const euroMetaSerializer = createSerializerFromFixableBeetArgsStruct(
  */
 export class PsyoptionsEuropeanInstrument implements LegInstrument {
   static readonly decimals = 4;
+  legType: 'escrow';
 
   constructor(
     readonly convergence: Convergence,
@@ -98,7 +99,9 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     readonly amount: number,
     readonly side: LegSide,
     private optionMeta?: EuroMeta
-  ) {}
+  ) {
+    this.legType = 'escrow';
+  }
 
   getInstrumentIndex = () => this.instrumentIndex;
   getBaseAssetIndex = () => this.baseAssetIndex;

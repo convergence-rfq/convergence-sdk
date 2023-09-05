@@ -62,3 +62,24 @@ export function toNumberInstrumentType(instrumentType: InstrumentType): number {
     }
   }
 }
+
+export function fromNumberInstrumentType(
+  instrumentType: number
+): InstrumentType {
+  switch (instrumentType) {
+    case 1: {
+      return 'spot';
+    }
+    case 2: {
+      return 'option';
+    }
+    case 3: {
+      return 'term-future';
+    }
+    case 4: {
+      return 'perp-future';
+    }
+    default:
+      throw new Error('Invalid instrument type!');
+  }
+}

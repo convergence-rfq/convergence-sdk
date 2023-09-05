@@ -139,13 +139,16 @@ export const cleanUpResponseBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  if (responseModel.model !== 'escrowResponse') {
-    throw new Error('Response is not settled as an escrow!');
-  }
-
   const rfqModel = await convergence
     .rfqs()
     .findRfqByAddress({ address: responseModel.rfq });
+
+  if (
+    responseModel.model !== 'escrowResponse' ||
+    rfqModel.model !== 'escrowRfq'
+  ) {
+    throw new Error('Response is not settled as an escrow!');
+  }
 
   for (let i = 0; i < responseModel.legPreparationsInitializedBy.length; i++) {
     const leg = rfqModel.legs[i];

@@ -14,6 +14,8 @@ export interface LegInstrumentParser {
 }
 
 export interface LegInstrument {
+  legType: 'escrow';
+
   getInstrumentIndex: () => number;
   getProgramId: () => PublicKey;
   getBaseAssetIndex: () => BaseAssetIndex;

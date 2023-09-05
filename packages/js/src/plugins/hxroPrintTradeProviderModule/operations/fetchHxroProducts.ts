@@ -56,14 +56,20 @@ export const fetchHxroProductsOperationHandler: OperationHandler<FetchHxroProduc
       cvg: Convergence,
       scope: OperationScope
     ): Promise<FetchHxroProductsOutput> => {
-      // const debug = console.debug;
-      // console.debug = () => {};
-      const manifest = await dexterity.getManifest(
-        cvg.connection.rpcEndpoint,
-        true,
-        new CvgWallet(cvg)
-      );
-      // console.debug = debug;
+      // dexterity.getManifest adds a lot of clutter to logs, so we disable console.debug for this call
+      // TODO: remove this workaround when dexterity library is updated
+      const { debug } = console;
+      console.debug = () => {};
+      let manifest: any; // dexterity doesn't export a type for a manifest
+      try {
+        manifest = await dexterity.getManifest(
+          cvg.connection.rpcEndpoint,
+          true,
+          new CvgWallet(cvg)
+        );
+      } finally {
+        console.debug = debug;
+      }
 
       const baseProductData = await parseBaseProductData(cvg, manifest);
       scope.throwIfCanceled();

@@ -171,6 +171,13 @@ export const prepareSettlementBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  if (
+    responseModel.model !== 'escrowResponse' ||
+    rfqModel.model !== 'escrowRfq'
+  ) {
+    throw new Error('Response is not settled as an escrow!');
+  }
+
   const side =
     caller.publicKey.toBase58() == responseModel.maker.toBase58()
       ? AuthoritySide.Maker

@@ -50,6 +50,7 @@ export const psyoptionsAmericanInstrumentDataSerializer =
 
 export class PsyoptionsAmericanInstrument implements LegInstrument {
   static readonly decimals = 0;
+  legType: 'escrow';
 
   constructor(
     readonly convergence: Convergence,
@@ -66,7 +67,9 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     readonly amount: number,
     readonly side: LegSide,
     private optionMeta?: OptionMarketWithKey
-  ) {}
+  ) {
+    this.legType = 'escrow';
+  }
 
   getBaseAssetIndex = () => this.baseAssetIndex;
   getInstrumentIndex = () => this.instrumentIndex;

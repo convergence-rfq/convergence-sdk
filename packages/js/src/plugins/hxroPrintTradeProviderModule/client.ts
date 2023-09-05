@@ -1,6 +1,8 @@
 import {
   FetchHxroPrintTradeProviderConfigInput,
+  FetchHxroPrintTradeProviderConfigOutput,
   FetchHxroProductsInput,
+  FetchHxroProductsOutput,
   fetchHxroPrintTradeProviderConfigOperation,
   fetchHxroProductsOperation,
 } from './operations';
@@ -18,13 +20,16 @@ export class HxroClient {
   fetchConfig(
     input?: FetchHxroPrintTradeProviderConfigInput,
     options?: OperationOptions
-  ) {
+  ): Promise<FetchHxroPrintTradeProviderConfigOutput> {
     return this.cvg
       .operations()
       .execute(fetchHxroPrintTradeProviderConfigOperation(input), options);
   }
 
-  fetchProducts(input?: FetchHxroProductsInput, options?: OperationOptions) {
+  fetchProducts(
+    input?: FetchHxroProductsInput,
+    options?: OperationOptions
+  ): Promise<FetchHxroProductsOutput> {
     return this.cvg
       .operations()
       .execute(fetchHxroProductsOperation(input), options);

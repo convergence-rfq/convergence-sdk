@@ -34,6 +34,8 @@ export const SpotInstrumentDataSerializer =
  * @group Models
  */
 export class SpotLegInstrument implements LegInstrument {
+  legType: 'escrow';
+
   constructor(
     readonly convergence: Convergence,
     readonly mintAddress: PublicKey,
@@ -42,7 +44,9 @@ export class SpotLegInstrument implements LegInstrument {
     readonly amount: number,
     readonly decimals: number,
     readonly side: LegSide
-  ) {}
+  ) {
+    this.legType = 'escrow';
+  }
 
   getInstrumentIndex = () => this.instrumentIndex;
   getProgramId = () => this.convergence.programs().getSpotInstrument().address;

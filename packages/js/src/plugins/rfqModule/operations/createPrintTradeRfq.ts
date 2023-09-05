@@ -188,7 +188,7 @@ export const createPrintTradeFullFlowRfqBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { rfq } = params;
+  const { rfq, printTrade } = params;
 
   const createRfqBuilder = await createPrintTradeRfqBuilder(
     convergence,
@@ -199,7 +199,7 @@ export const createPrintTradeFullFlowRfqBuilder = async (
     await validateRfqByPrintTradeProviderBuilder(convergence, params, options);
   const finalizeRfqConstruction = await finalizeRfqConstructionBuilder(
     convergence,
-    params,
+    { ...params, legs: printTrade.getLegs() },
     options
   );
 
@@ -273,7 +273,7 @@ export const createPrintTradeRfqBuilder = async (
           anchorRemainingAccounts: [...baseAssetAccounts],
         },
         {
-          printTradeProvider: null,
+          printTradeProvider: printTrade.getPrintTradeProviderProgramId(),
           expectedLegsSize,
           expectedLegsHash: Array.from(expectedLegsHash),
           legs: solitaLegs,
@@ -302,7 +302,7 @@ export const validateRfqByPrintTradeProviderBuilder = async (
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const validationAccounts = getPrintTradeValidationAccounts(printTrade);
+  const validationAccounts = await getPrintTradeValidationAccounts(printTrade);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

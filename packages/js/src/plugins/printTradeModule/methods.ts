@@ -1,7 +1,7 @@
 import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
-import { toSolitaLegSide } from '../rfqModule';
-import { toNumberInstrumentType } from '../riskEngineModule';
+import { toSolitaLegSide } from '../rfqModule/models';
+import { toNumberInstrumentType } from '../riskEngineModule/models';
 import { PrintTrade, PrintTradeLeg, PrintTradeQuote } from './types';
 import { addDecimals } from '@/utils';
 import { createSerializerFromFixableBeetArgsStruct } from '@/types';
@@ -48,10 +48,10 @@ export function getPrintTradeProgramAccount(
   };
 }
 
-export function getPrintTradeValidationAccounts(
+export async function getPrintTradeValidationAccounts(
   printTrade: PrintTrade
-): AccountMeta[] {
+): Promise<AccountMeta[]> {
   return [getPrintTradeProgramAccount(printTrade)].concat(
-    printTrade.getValidationAccounts()
+    await printTrade.getValidationAccounts()
   );
 }

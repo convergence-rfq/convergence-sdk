@@ -1,33 +1,40 @@
-import { PublicKey } from '@solana/web3.js';
 import {
   futureCommonDataBeet,
   optionCommonDataBeet,
 } from '@convergence-rfq/risk-engine';
 import BN from 'bn.js';
+import { Leg as SolitaLeg } from '@convergence-rfq/rfq';
 import {
   PrintTrade,
   PrintTradeLeg,
+  PrintTradeParser,
   PrintTradeQuote,
 } from '../printTradeModule';
+import { fromNumberInstrumentType } from '../riskEngineModule';
+import { fromSolitaLegSide } from '../rfqModule';
 import { HXRO_LEG_DECIMALS, HXRO_QUOTE_DECIMALS } from './constants';
 import { HxroLegInput } from './types';
 import { Convergence } from '@/Convergence';
-import { createSerializerFromFixedSizeBeet } from '@/types';
+import { createSerializerFromFixedSizeBeet, toFractional } from '@/types';
+import { removeDecimals } from '@/utils';
 
 export class HxroPrintTrade implements PrintTrade {
-  protected constructor(
-    protected cvg: Convergence,
-    protected mpgAddress: PublicKey,
-    protected legsInfo: HxroLegInput[]
-  ) {}
+  constructor(protected cvg: Convergence, protected legsInfo: HxroLegInput[]) {}
 
   getPrintTradeProviderProgramId = () =>
     this.cvg.programs().getHxroPrintTradeProvider().address;
   getLegs = () => this.legsInfo.map((legInfo) => new HxroLeg(legInfo));
   getQuote = () => new HxroQuote();
-  getValidationAccounts = () => {
+  getValidationAccounts = async () => {
+    const { validMpg } = await this.cvg.hxro().fetchConfig();
+
     const validationAccounts = this.legsInfo
       .map((legInfo) => {
+        // TODO add in-place product fetching
+        if (legInfo.productInfo.productAddress === undefined) {
+          throw Error('Product addresses not fetched!');
+        }
+
         const productAccountInfo = {
           pubkey: legInfo.productInfo.productAddress,
           isSigner: false,
@@ -54,17 +61,71 @@ export class HxroPrintTrade implements PrintTrade {
         isWritable: false,
       },
       {
-        pubkey: this.mpgAddress,
+        pubkey: validMpg,
         isSigner: false,
         isWritable: false,
       },
       ...validationAccounts,
     ];
   };
+}
 
-  static async create(cvg: Convergence, legsInfo: HxroLegInput[]) {
-    const config = await cvg.hxro().fetchConfig();
-    return new HxroPrintTrade(cvg, config.validMpg, legsInfo);
+export class HxroPrintTradeParser implements PrintTradeParser {
+  parsePrintTrade(cvg: Convergence, legs: SolitaLeg[]): PrintTrade {
+    const parsedLegInfo = legs.map((leg): HxroLegInput => {
+      if (leg.settlementTypeMetadata.__kind == 'Instrument') {
+        throw new Error('Invalid settlement leg type');
+      }
+
+      const instrumentType = fromNumberInstrumentType(
+        leg.settlementTypeMetadata.instrumentType
+      );
+      let productInfo;
+      if (instrumentType == 'option') {
+        const serializer =
+          createSerializerFromFixedSizeBeet(optionCommonDataBeet);
+        const legData = Buffer.from(leg.data);
+        const [optionData, offset] = serializer.deserialize(legData);
+        const productIndex = legData.readUInt8(offset);
+
+        productInfo = {
+          instrumentType,
+          baseAssetIndex: leg.baseAssetIndex.value,
+          productIndex,
+          optionType: optionData.optionType,
+          strikePrice: toFractional(
+            optionData.strikePrice,
+            optionData.strikePriceDecimals
+          ),
+          expirationTimestamp: Number(optionData.expirationTimestamp),
+        };
+      } else if (
+        instrumentType == 'perp-future' ||
+        instrumentType == 'term-future'
+      ) {
+        const serializer =
+          createSerializerFromFixedSizeBeet(futureCommonDataBeet);
+        const legData = Buffer.from(leg.data);
+        const [, offset] = serializer.deserialize(legData);
+        const productIndex = legData.readUInt8(offset);
+
+        productInfo = {
+          instrumentType,
+          baseAssetIndex: leg.baseAssetIndex.value,
+          productIndex,
+        };
+      } else {
+        throw new Error('Unsupporeted instrument type!');
+      }
+
+      return {
+        amount: removeDecimals(leg.amount, leg.amountDecimals),
+        side: fromSolitaLegSide(leg.side),
+        productInfo,
+      };
+    });
+
+    return new HxroPrintTrade(cvg, parsedLegInfo);
   }
 }
 
@@ -74,7 +135,11 @@ class HxroQuote implements PrintTradeQuote {
 }
 
 class HxroLeg implements PrintTradeLeg {
-  constructor(protected legInfo: HxroLegInput) {}
+  legType: 'printTrade';
+
+  constructor(protected legInfo: HxroLegInput) {
+    this.legType = 'printTrade';
+  }
 
   getInstrumentType = () => this.legInfo.productInfo.instrumentType;
   getBaseAssetIndex = () => ({
@@ -84,11 +149,11 @@ class HxroLeg implements PrintTradeLeg {
   getDecimals = () => HXRO_LEG_DECIMALS;
   getSide = () => this.legInfo.side;
   serializeInstrumentData = () => {
-    let buffer;
+    let riskEngineBuffer;
     if (this.legInfo.productInfo.instrumentType == 'option') {
       const serializer =
         createSerializerFromFixedSizeBeet(optionCommonDataBeet);
-      buffer = serializer.serialize({
+      riskEngineBuffer = serializer.serialize({
         optionType: this.legInfo.productInfo.optionType,
         underlyingAmountPerContract: new BN(1),
         underlyingAmountPerContractDecimals: 0,
@@ -101,14 +166,15 @@ class HxroLeg implements PrintTradeLeg {
     } else {
       const serializer =
         createSerializerFromFixedSizeBeet(futureCommonDataBeet);
-      buffer = serializer.serialize({
+      riskEngineBuffer = serializer.serialize({
         underlyingAmountPerContract: new BN(1),
         underlyingAmountPerContractDecimals: 0,
       });
     }
 
-    buffer.writeUInt8(this.legInfo.productInfo.productIndex);
+    const productInfoBuffer = Buffer.alloc(1);
+    productInfoBuffer.writeUInt8(this.legInfo.productInfo.productIndex);
 
-    return buffer;
+    return Buffer.concat([riskEngineBuffer, productInfoBuffer]);
   };
 }

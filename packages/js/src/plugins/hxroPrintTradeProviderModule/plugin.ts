@@ -7,7 +7,8 @@ import {
   fetchHxroProductsOperationHandler,
 } from './operations';
 import { hxroPrintTradeProviderProgram } from './program';
-import { Convergence } from '@/Convergence';
+import { HxroPrintTradeParser } from './printTrade';
+import type { Convergence } from '@/Convergence';
 import { ConvergencePlugin, Program } from '@/types';
 
 export const hxroModule = (): ConvergencePlugin => ({
@@ -32,6 +33,11 @@ export const hxroModule = (): ConvergencePlugin => ({
     convergence.hxro = function () {
       return new HxroClient(this);
     };
+
+    convergence.addPrintTradeParser(
+      hxroPrintTradeProviderProgram.address,
+      new HxroPrintTradeParser()
+    );
   },
 });
 

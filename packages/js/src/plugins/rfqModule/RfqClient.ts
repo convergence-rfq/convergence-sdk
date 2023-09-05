@@ -78,6 +78,8 @@ import {
   unlockRfqsCollateralOperation,
   GetSettlementResultInput,
   getSettlementResultOperation,
+  CreatePrintTradeRfqInput,
+  createPrintTradeRfqOperation,
 } from './operations';
 import { Response } from './models/Response';
 
@@ -236,6 +238,16 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(finalizeRfqConstructionOperation(input), options);
+  }
+
+  /** {@inheritDoc createPrintTradeRfqOperation} */
+  createPrintTrade(
+    input: CreatePrintTradeRfqInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(createPrintTradeRfqOperation(input), options);
   }
 
   /** {@inheritDoc findResponseByAddressOperation} */

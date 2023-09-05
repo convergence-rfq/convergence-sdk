@@ -18,6 +18,7 @@ import {
 import { Convergence } from '../../../Convergence';
 import { LegInstrument } from '@/plugins/instrumentModule';
 import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
+import { PrintTradeLeg } from '@/plugins/printTradeModule';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
@@ -87,7 +88,7 @@ export type FinalizeRfqConstructionInput = {
    * Is passed automatically when `createAndFinalize`
    * is called. Else the legs are extracted from the rfq account.
    */
-  legs?: LegInstrument[];
+  legs?: LegInstrument[] | PrintTradeLeg[];
 };
 
 /**

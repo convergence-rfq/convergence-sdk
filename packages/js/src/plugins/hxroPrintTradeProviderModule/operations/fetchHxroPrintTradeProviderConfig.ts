@@ -5,11 +5,8 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { toHxroPrintTradeProviderConfigAccount } from '../accounts';
-import {
-  HxroPrintTradeProviderConfig,
-  toHxroPrintTradeProviderConfig,
-} from '../models';
+import { HxroPrintTradeProviderConfig } from '../models';
+import { configCache } from '../cache';
 
 const Key = 'FetchHxroPrintTradeProviderConfig' as const;
 
@@ -52,11 +49,7 @@ export const fetchHxroPrintTradeProviderConfigOperationHandler: OperationHandler
     ): Promise<FetchHxroPrintTradeProviderConfigOutput> => {
       const { commitment } = scope;
 
-      const configAddress = cvg.hxro().pdas().config();
-      const account = await cvg.rpc().getAccount(configAddress, commitment);
-      const configAccount = toHxroPrintTradeProviderConfigAccount(account);
-
-      const config = toHxroPrintTradeProviderConfig(configAccount);
+      const config = await configCache.get(cvg, commitment);
 
       scope.throwIfCanceled();
 

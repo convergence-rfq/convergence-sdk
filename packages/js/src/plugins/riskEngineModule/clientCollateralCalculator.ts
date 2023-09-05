@@ -14,6 +14,7 @@ import { Convergence } from '../../Convergence';
 import { toPriceOracle, toSolitaRiskCategory } from '../protocolModule';
 import { LegInstrument } from '../instrumentModule';
 import { AuthoritySide } from '../rfqModule/models/AuthoritySide';
+import { PrintTradeLeg } from '../printTradeModule';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
 import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
 import { Config, InstrumentType } from './models';
@@ -57,7 +58,7 @@ type LegInfo = {
 export async function calculateRisk(
   convergence: Convergence,
   config: Config,
-  legs: LegInstrument[],
+  legs: LegInstrument[] | PrintTradeLeg[],
   cases: CalculationCase[],
   settlementPeriod: number,
   commitment?: Commitment
@@ -77,19 +78,26 @@ export async function calculateRisk(
       amount = -amount;
     }
 
-    const assetType = config.instrumentTypes[leg.getInstrumentIndex()];
-    if (assetType === null) {
-      throw new Error(
-        `Instrument index ${leg.getInstrumentIndex()} is not registered in the risk engine`
-      );
-    }
+    let assetType: InstrumentType;
+    if (leg.legType === 'printTrade') {
+      assetType = leg.getInstrumentType();
+    } else {
+      const escrowAssetType = config.instrumentTypes[leg.getInstrumentIndex()];
+      if (escrowAssetType === null) {
+        throw new Error(
+          `Instrument index ${leg.getInstrumentIndex()} is not registered in the risk engine`
+        );
+      }
 
-    if (assetType === undefined) {
-      throw Error(
-        `Instrument ${leg
-          .getProgramId()
-          .toString()} is missing from risk engine config!`
-      );
+      if (escrowAssetType === undefined) {
+        throw Error(
+          `Instrument ${leg
+            .getProgramId()
+            .toString()} is missing from risk engine config!`
+        );
+      }
+
+      assetType = escrowAssetType;
     }
 
     return {

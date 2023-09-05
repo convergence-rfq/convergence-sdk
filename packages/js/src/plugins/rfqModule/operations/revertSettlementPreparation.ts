@@ -149,7 +149,10 @@ export const revertSettlementPreparationBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  if (responseModel.model !== 'escrowResponse') {
+  if (
+    responseModel.model !== 'escrowResponse' ||
+    rfqModel.model !== 'escrowRfq'
+  ) {
     throw new Error('Response is not settled as an escrow!');
   }
 

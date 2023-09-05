@@ -73,6 +73,8 @@ import {
   cleanUpRfqsOperationHandler,
   getSettlementResultOperation,
   getSettlementResultHandler,
+  createPrintTradeRfqOperation,
+  createPrintTradeRfqOperationHandler,
 } from './operations';
 import { rfqProgram } from './program';
 
@@ -107,6 +109,10 @@ export const rfqModule = (): ConvergencePlugin => ({
     op.register(
       createAndFinalizeRfqConstructionOperation,
       createAndFinalizeRfqConstructionOperationHandler
+    );
+    op.register(
+      createPrintTradeRfqOperation,
+      createPrintTradeRfqOperationHandler
     );
     op.register(
       finalizeRfqConstructionOperation,

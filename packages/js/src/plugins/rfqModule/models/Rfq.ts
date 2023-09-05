@@ -15,6 +15,11 @@ import { collateralMintCache } from '../../../plugins/collateralModule';
 import { FixedSize, fromSolitaFixedSize } from './FixedSize';
 import { OrderType, fromSolitaOrderType } from './OrderType';
 import { StoredRfqState, fromSolitaStoredRfqState } from './StoredRfqState';
+import {
+  PrintTrade,
+  PrintTradeLeg,
+  PrintTradeQuote,
+} from '@/plugins/printTradeModule';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -22,18 +27,12 @@ import { StoredRfqState, fromSolitaStoredRfqState } from './StoredRfqState';
  *
  * @group Models
  */
-export type Rfq = {
-  /** A model identifier to distinguish models in the SDK. */
-  readonly model: 'rfq';
-
+type CommonRfq = {
   /** The address of the Rfq. */
   readonly address: PublicKey;
 
   /** The Taker's pubkey address. */
   readonly taker: PublicKey;
-
-  /** If not null the Rfq is settled through this print trade provider. */
-  readonly printTradeProvider: PublicKey | null;
 
   /** The order type of the Rfq. */
   readonly orderType: OrderType;
@@ -41,12 +40,6 @@ export type Rfq = {
   /** Whether this Rfq is open (no size specified), or a fixed amount of the base asset,
    * or a fixed amount of the quote asset. */
   readonly size: FixedSize;
-
-  /** The quote asset of the Rfq. */
-  readonly quoteAsset: QuoteInstrument;
-
-  /** The quote asset mint. */
-  readonly quoteMint: PublicKey;
 
   /** The time at which this Rfq was created. */
   readonly creationTimestamp: number;
@@ -82,14 +75,42 @@ export type Rfq = {
 
   /** The number of confirmed Responses to the Rfq. */
   readonly confirmedResponses: number;
+};
+
+export type EscrowRfq = CommonRfq & {
+  /** A model identifier to distinguish models in the SDK. */
+  readonly model: 'escrowRfq';
+
+  /** The quote asset of the Rfq. */
+  readonly quoteAsset: QuoteInstrument;
+
+  /** The quote asset mint. */
+  readonly quoteMint: PublicKey;
 
   /** The legs of the Rfq. */
   readonly legs: LegInstrument[];
 };
 
+export type PrintTradeRfq = CommonRfq & {
+  /** A model identifier to distinguish models in the SDK. */
+  readonly model: 'printTradeRfq';
+
+  /** A model that stores legs, quote info and a settlement venue. */
+  readonly printTrade: PrintTrade;
+
+  /** The quote asset of the Rfq. */
+  readonly quoteAsset: PrintTradeQuote;
+
+  /** The legs of the Rfq. */
+  readonly legs: PrintTradeLeg[];
+};
+
+export type Rfq = EscrowRfq | PrintTradeRfq;
+
 /** @group Model Helpers */
 export const isRfq = (value: any): value is Rfq =>
-  typeof value === 'object' && value.model === 'rfq';
+  typeof value === 'object' &&
+  (value.model === 'escrowRfq' || value.model === 'printTradeRfq');
 
 /** @group Model Helpers */
 export function assertRfq(value: any): asserts value is Rfq {
@@ -97,33 +118,28 @@ export function assertRfq(value: any): asserts value is Rfq {
 }
 
 export function isSettledAsPrintTrade(rfq: Rfq): boolean {
-  return rfq.printTradeProvider !== null;
+  return rfq.model === 'printTradeRfq';
 }
 
 /** @group Model Helpers */
 export const toRfq = async (
-  convergence: Convergence,
+  cvg: Convergence,
   account: RfqAccount
 ): Promise<Rfq> => {
-  const protocol = await convergence.protocol().get();
+  const protocol = await cvg.protocol().get();
   const quoteAsset = await SpotQuoteInstrument.parseFromQuote(
-    convergence,
+    cvg,
     protocol,
     account.data.quoteAsset
   );
-  const collateralMint = await collateralMintCache.get(convergence);
+  const collateralMint = await collateralMintCache.get(cvg);
   const collateralDecimals = collateralMint.decimals;
-  return {
-    model: 'rfq',
+
+  const commonRfq: CommonRfq = {
     address: account.publicKey,
     taker: account.data.taker,
-    printTradeProvider: account.data.printTradeProvider,
     orderType: fromSolitaOrderType(account.data.orderType),
     size: fromSolitaFixedSize(account.data.fixedSize, quoteAsset.getDecimals()),
-    quoteAsset,
-    quoteMint: SpotLegInstrument.deserializeInstrumentData(
-      Buffer.from(account.data.quoteAsset.data)
-    ).mintAddress,
     creationTimestamp: convertTimestamp(account.data.creationTimestamp),
     activeWindow: account.data.activeWindow,
     settlingWindow: account.data.settlingWindow,
@@ -140,8 +156,32 @@ export const toRfq = async (
     totalResponses: account.data.totalResponses,
     clearedResponses: account.data.clearedResponses,
     confirmedResponses: account.data.confirmedResponses,
-    legs: account.data.legs.map((leg) =>
-      convergence.parseLegInstrument(leg, protocol)
-    ),
+  };
+
+  if (account.data.printTradeProvider === null) {
+    return {
+      model: 'escrowRfq',
+      ...commonRfq,
+      quoteAsset,
+      quoteMint: SpotLegInstrument.deserializeInstrumentData(
+        Buffer.from(account.data.quoteAsset.data)
+      ).mintAddress,
+      legs: account.data.legs.map((leg) =>
+        cvg.parseLegInstrument(leg, protocol)
+      ),
+    };
+  }
+
+  const printTrade = cvg.parsePrintTrade(
+    account.data.printTradeProvider,
+    account.data.legs,
+    account.data.quoteAsset
+  );
+  return {
+    model: 'printTradeRfq',
+    ...commonRfq,
+    printTrade,
+    legs: printTrade.getLegs(),
+    quoteAsset: printTrade.getQuote(),
   };
 };

@@ -11,7 +11,7 @@ export type HxroLegInput = {
 
 type HxroCommonProductInfo = {
   productIndex: number;
-  productAddress: PublicKey;
+  productAddress?: PublicKey;
   baseAssetIndex: number;
 };
 export type HxroOptionInfo = HxroCommonProductInfo & {

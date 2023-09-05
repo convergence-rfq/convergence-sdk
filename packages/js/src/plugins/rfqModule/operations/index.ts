@@ -8,6 +8,7 @@ export * from './cleanUpResponseLegs';
 export * from './createAndFinalizeRfqConstruction';
 export * from './cleanUpRfq';
 export * from './confirmResponse';
+export * from './createPrintTradeRfq';
 export * from './createRfq';
 export * from './finalizeRfqConstruction';
 export * from './findRfqByAddress';
