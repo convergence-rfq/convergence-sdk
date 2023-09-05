@@ -19,13 +19,15 @@ export class CvgWallet implements Wallet {
   }
 
   signTransaction = (tx: Transaction): Promise<Transaction> => {
-    return this.convergence.rpc().signTransaction(tx, [this.payer as Signer]);
+    return this.convergence
+      .rpc()
+      .signTransaction(tx, [this.convergence.identity() as Signer]);
   };
 
   signAllTransactions = (txs: Transaction[]): Promise<Transaction[]> => {
     return this.convergence
       .rpc()
-      .signAllTransactions(txs, [this.payer as Signer]);
+      .signAllTransactions(txs, [this.convergence.identity() as Signer]);
   };
 }
 
