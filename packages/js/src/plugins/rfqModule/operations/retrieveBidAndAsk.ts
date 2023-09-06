@@ -1,129 +1,143 @@
 import { Quote, Rfq } from '../models';
 import { Operation, SyncOperationHandler, useOperation } from '../../../types';
 import { FixedSize } from '../models/FixedSize';
-const Key = 'RetrieveAskAndBid' as const;
-
-export type Receiver = 'taker' | 'maker';
-
-export interface SettlementPartyInfo {
-  amount: number;
-  receiver: Receiver;
-}
-
+import { LEG_MULTIPLIER_DECIMALS } from '../constants';
+const Key = 'RetrieveBidAndAsk' as const;
 /**
- * retrieveAskAndBid.
+ * retrieveBidAndAsk.
  *
  * ```ts
- * const result = await convergence.rfqs().retrieveAskAndBid({
+ * const result = await convergence.rfqs().retrieveBidAndAsk({
  * rfq,
- * })
+ * ask: {
+ * price: 1,
+ * legsMultiplier: 1
+ * },
+ * bid: {
+ * price: 1,
+ * legsMultiplier: 1
+ * }
+ * });
+ *
  * ```
  *
  * @group Operations
  * @category Constructors
  */
-export const retrieveAskAndBidOperation = useOperation<RetrieveAskAndBid>(Key);
+export const retrieveBidAndAskOperation = useOperation<RetrieveBidAndAsk>(Key);
 
 /**
  * @group Operations
  * @category Types
  */
-export type RetrieveAskAndBid = Operation<
+export type RetrieveBidAndAsk = Operation<
   typeof Key,
-  RetrieveAskAndBidInput,
-  RetrieveAskAndBidOutput
+  RetrieveBidAndAskInput,
+  RetrieveBidAndAskOutput
 >;
 
 /**
  * @group Operations
  * @category Inputs
  */
-export type RetrieveAskAndBidInput = {
+
+export type RetrieveBidAndAskInput = {
   rfq: Rfq;
-  bidBaseSize: string;
-  bidQuoteAmount: string;
-  askBaseSize: string;
-  askQuoteAmount: string;
+  ask?: {
+    price: number;
+    legsMultiplier: number | null;
+  };
+  bid?: {
+    price: number;
+    legsMultiplier: number | null;
+  };
 };
 
 /**
  * @group Operations
  * @category Outputs
  */
-export type RetrieveAskAndBidOutput = {
-  ask: Quote | null;
-  bid: Quote;
+export type RetrieveBidAndAskOutput = {
+  calculatedAsk: Quote | null;
+  calculatedBid: Quote | null;
 };
 
 /**
  * @group Operations
  * @category Handlers
  */
-export const retrieveAskAndBidHandler: SyncOperationHandler<RetrieveAskAndBid> =
+export const retrieveBidAndAskHandler: SyncOperationHandler<RetrieveBidAndAsk> =
   {
-    handle: (operation: RetrieveAskAndBid): RetrieveAskAndBidOutput => {
-      const { rfq, bidBaseSize, bidQuoteAmount, askBaseSize, askQuoteAmount } =
-        operation.input;
-      let bid: Quote | null;
-      let ask: Quote | null;
+    handle: (operation: RetrieveBidAndAsk): RetrieveBidAndAskOutput => {
+      const { rfq, ask, bid } = operation.input;
+      let calculatedBid: Quote | null = null;
+      let calculatedAsk: Quote | null = null;
       // Get the base and quote decimals
-      const baseDecimals = rfq.legs[0].getDecimals();
+      const baseDecimals = LEG_MULTIPLIER_DECIMALS;
       const quoteDecimals = rfq.quoteAsset.getDecimals();
+      let tmpAskLegMultiplier: number | null = null;
+      let tmpAskPrice: number | null = null;
+      let tmpAskPricePerToken: number | null = null;
+      let tmpBidLegMultiplier: number | null = null;
+      let tmpBidPrice: number | null = null;
+      let tmpBidPricePerToken: number | null = null;
 
       const { size } = rfq;
-      const tmpBidBaseSize =
-        bidBaseSize === '' || Number(bidBaseSize) <= 0
-          ? null
-          : Math.round(Number(bidBaseSize) * Math.pow(10, baseDecimals)) /
-            Math.pow(10, baseDecimals);
-      const tmpAskBaseSize =
-        askBaseSize === '' || Number(askBaseSize) <= 0
-          ? null
-          : Math.round(Number(askBaseSize) * Math.pow(10, baseDecimals)) /
-            Math.pow(10, baseDecimals);
-      const tmpBidQuoteAmount =
-        bidQuoteAmount === '' || Number(bidQuoteAmount) <= 0
-          ? null
-          : Math.round(Number(bidQuoteAmount) * Math.pow(10, quoteDecimals)) /
-            Math.pow(10, quoteDecimals);
-      const tmpAskQuoteAmount =
-        askQuoteAmount === '' || Number(askQuoteAmount) <= 0
-          ? null
-          : Math.round(Number(askQuoteAmount) * Math.pow(10, quoteDecimals)) /
-            Math.pow(10, quoteDecimals);
-      const tmpAskPricePerToken =
-        tmpAskQuoteAmount && tmpAskBaseSize
-          ? Math.round(
-              (tmpAskQuoteAmount / tmpAskBaseSize) * Math.pow(10, quoteDecimals)
-            ) / Math.pow(10, quoteDecimals)
-          : null;
-      const tmpBidPricePerToken =
-        tmpBidQuoteAmount && tmpBidBaseSize
-          ? Math.round(
-              (tmpBidQuoteAmount / tmpBidBaseSize) * Math.pow(10, quoteDecimals)
-            ) / Math.pow(10, quoteDecimals)
-          : null;
 
-      if (type === 'fixed-base') {
+      if (ask) {
+        tmpAskLegMultiplier =
+          !ask?.legsMultiplier || ask?.legsMultiplier <= 0
+            ? null
+            : roundToDecimals(ask.legsMultiplier, baseDecimals);
+        tmpAskPrice =
+          !ask?.price || ask?.price <= 0
+            ? null
+            : Math.round(ask?.price * Math.pow(10, quoteDecimals)) /
+              Math.pow(10, quoteDecimals);
+        tmpAskPricePerToken =
+          tmpAskPrice && tmpAskLegMultiplier
+            ? roundToDecimals(tmpAskPrice / tmpAskLegMultiplier, quoteDecimals)
+            : null;
+      }
+      if (bid) {
+        tmpBidLegMultiplier =
+          !bid?.legsMultiplier || bid?.legsMultiplier <= 0
+            ? null
+            : roundToDecimals(bid.legsMultiplier, baseDecimals);
+
+        tmpBidPrice =
+          !bid?.price || bid?.price <= 0
+            ? null
+            : roundToDecimals(bid.price, quoteDecimals);
+
+        tmpBidPricePerToken =
+          tmpBidPrice && tmpBidLegMultiplier
+            ? roundToDecimals(tmpBidPrice / tmpBidLegMultiplier, quoteDecimals)
+            : null;
+      } else {
+        throw new Error('ask and bid both cannot be null');
+      }
+
+      if (size.type === 'fixed-base') {
         switch (rfq.orderType) {
           case 'buy':
-            ask = tmpAskQuoteAmount
-              ? getResponseObject(size, tmpAskQuoteAmount, null)
+            calculatedAsk = tmpAskPrice
+              ? getQuote(size, tmpAskPrice, null)
               : null;
-            bid = null;
+            calculatedBid = null;
             break;
           case 'sell':
-            ask = null;
-            bid = tmpBidQuoteAmount
-              ? getResponseObject(size, tmpBidQuoteAmount, null)
+            calculatedAsk = null;
+            calculatedBid = tmpBidPrice
+              ? getQuote(size, tmpBidPrice, null)
               : null;
             break;
           case 'two-way':
-            ask = tmpAskQuoteAmount
-              ? getResponseObject(size, tmpAskQuoteAmount, null)
+            calculatedAsk = tmpAskPrice
+              ? getQuote(size, tmpAskPrice, null)
               : null;
-            bid = tmpBidQuoteAmount
-              ? getResponseObject(size, tmpBidQuoteAmount, null)
+            calculatedBid = tmpBidPrice
+              ? getQuote(size, tmpBidPrice, null)
               : null;
             break;
           default:
@@ -132,23 +146,23 @@ export const retrieveAskAndBidHandler: SyncOperationHandler<RetrieveAskAndBid> =
       } else if (size.type === 'fixed-quote') {
         switch (rfq.orderType) {
           case 'buy':
-            ask = tmpAskPricePerToken
-              ? getResponseObject(size, tmpAskPricePerToken, null)
+            calculatedAsk = tmpAskPricePerToken
+              ? getQuote(size, tmpAskPricePerToken, null)
               : null;
-            bid = null;
+            calculatedBid = null;
             break;
           case 'sell':
-            ask = null;
-            bid = tmpBidPricePerToken
-              ? getResponseObject(size, tmpBidPricePerToken, null)
+            calculatedAsk = null;
+            calculatedBid = tmpBidPricePerToken
+              ? getQuote(size, tmpBidPricePerToken, null)
               : null;
             break;
           case 'two-way':
-            ask = tmpAskPricePerToken
-              ? getResponseObject(size, tmpAskPricePerToken, null)
+            calculatedAsk = tmpAskPricePerToken
+              ? getQuote(size, tmpAskPricePerToken, null)
               : null;
-            bid = tmpBidPricePerToken
-              ? getResponseObject(size, tmpBidPricePerToken, null)
+            calculatedBid = tmpBidPricePerToken
+              ? getQuote(size, tmpBidPricePerToken, null)
               : null;
             break;
           default:
@@ -157,27 +171,27 @@ export const retrieveAskAndBidHandler: SyncOperationHandler<RetrieveAskAndBid> =
       } else if (size.type === 'open') {
         switch (rfq.orderType) {
           case 'buy':
-            ask =
-              tmpAskBaseSize && tmpAskPricePerToken
-                ? getResponseObject(size, tmpAskPricePerToken, tmpAskBaseSize)
+            calculatedAsk =
+              tmpAskLegMultiplier && tmpAskPricePerToken
+                ? getQuote(size, tmpAskPricePerToken, tmpAskLegMultiplier)
                 : null;
-            bid = null;
+            calculatedBid = null;
             break;
           case 'sell':
-            ask = null;
-            bid =
-              tmpBidBaseSize && tmpBidPricePerToken
-                ? getResponseObject(size, tmpBidPricePerToken, tmpBidBaseSize)
+            calculatedAsk = null;
+            calculatedBid =
+              tmpBidLegMultiplier && tmpBidPricePerToken
+                ? getQuote(size, tmpBidPricePerToken, tmpBidLegMultiplier)
                 : null;
             break;
           case 'two-way':
-            ask =
-              tmpAskBaseSize && tmpAskPricePerToken
-                ? getResponseObject(size, tmpAskPricePerToken, tmpAskBaseSize)
+            calculatedAsk =
+              tmpAskLegMultiplier && tmpAskPricePerToken
+                ? getQuote(size, tmpAskPricePerToken, tmpAskLegMultiplier)
                 : null;
-            bid =
-              tmpBidBaseSize && tmpBidPricePerToken
-                ? getResponseObject(size, tmpBidPricePerToken, tmpBidBaseSize)
+            calculatedBid =
+              tmpBidLegMultiplier && tmpBidPricePerToken
+                ? getQuote(size, tmpBidPricePerToken, tmpBidLegMultiplier)
                 : null;
             break;
           default:
@@ -185,11 +199,11 @@ export const retrieveAskAndBidHandler: SyncOperationHandler<RetrieveAskAndBid> =
         }
       }
 
-      return { ask, bid };
+      return { calculatedAsk, calculatedBid };
     },
   };
 
-const getResponseObject = (
+const getQuote = (
   size: FixedSize,
   amount: number,
   legsMultiplier: number | null
@@ -206,4 +220,8 @@ const getResponseObject = (
     price: amount,
   };
   return response;
+};
+
+const roundToDecimals = (value: number, decimals: number) => {
+  return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
 };
