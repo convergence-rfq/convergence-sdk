@@ -10,7 +10,7 @@ import {
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import { getInstrumentType, getSize } from './helpers';
+import { getSize } from './helpers';
 import {
   logPk,
   logResponse,

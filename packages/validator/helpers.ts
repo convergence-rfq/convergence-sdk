@@ -131,6 +131,7 @@ export class Ctx {
   takerCollateralInfo = getAccountPk('rfq-collateral-info-taker');
   makerCollateralToken = getAccountPk('rfq-collateral-token-maker');
   takerCollateralToken = getAccountPk('rfq-collateral-token-taker');
+  hxroMpg = getHxroAccountPk('mpg');
 
   // Switchboard
   switchboardBTCOracle = getDepAccountPk('btc_20000_oracle_switchboard');
@@ -148,6 +149,13 @@ export const getAccountPk = (user: string): string => {
 
 export const getDepAccountPk = (user: string): string => {
   const f = path.join(DEPS, user + '.json');
+  const fileContent = fs.readFileSync(f, 'utf-8');
+  const json = JSON.parse(fileContent);
+  return json.pubkey;
+};
+
+export const getHxroAccountPk = (name: string): string => {
+  const f = path.join(HXRO_DEPS, 'accounts', name + '.json');
   const fileContent = fs.readFileSync(f, 'utf-8');
   const json = JSON.parse(fileContent);
   return json.pubkey;

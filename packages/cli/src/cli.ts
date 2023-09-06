@@ -8,6 +8,7 @@ import {
   rfqGroup,
   tokenGroup,
 } from './groups';
+import { hxroGroup } from './groups/hxro';
 
 export const makeCli = (): Command => {
   const cmds = [
@@ -17,6 +18,7 @@ export const makeCli = (): Command => {
     riskEngineGroup,
     collateralGroup,
     rfqGroup,
+    hxroGroup,
   ];
 
   const cli = new Command();

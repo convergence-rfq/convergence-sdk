@@ -13,6 +13,9 @@ import {
   SpotLegInstrument,
   PsyoptionsAmericanInstrument,
   PsyoptionsEuropeanInstrument,
+  toPriceOracle,
+  PrintTradeLeg,
+  HxroPrintTradeProviderConfig,
 } from '@convergence-rfq/sdk';
 
 import { formatInstrument, assertInstrument } from './helpers';
@@ -27,18 +30,21 @@ export const logPk = (p: PublicKey): void => l('Address:', p.toString());
 
 export const logTx = (t: string): void => l('Tx:', t);
 
-export const logInstrument = (i: LegInstrument): void => {
-  assertInstrument(i);
-  l('Instrument:', formatInstrument(i));
+export const logInstrument = (i: LegInstrument | PrintTradeLeg): void => {
   l('Amount:', N(i?.getAmount().toString()));
   l('Side:', i.getSide());
-  if (i instanceof SpotLegInstrument) {
-    l('Decimals:', N(i?.decimals.toString()));
-    l('Mint:', i.mintAddress.toString());
-  } else if (i instanceof PsyoptionsAmericanInstrument) {
-    l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
-  } else if (i instanceof PsyoptionsEuropeanInstrument) {
-    l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
+
+  if (i.legType == 'escrow') {
+    assertInstrument(i);
+    l('Instrument:', formatInstrument(i));
+    if (i instanceof SpotLegInstrument) {
+      l('Decimals:', N(i?.decimals.toString()));
+      l('Mint:', i.mintAddress.toString());
+    } else if (i instanceof PsyoptionsAmericanInstrument) {
+      l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
+    } else if (i instanceof PsyoptionsEuropeanInstrument) {
+      l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
+    }
   }
 };
 
@@ -46,16 +52,17 @@ export const logResponse = (r: SendAndConfirmTransactionResponse): void =>
   l('Tx:', r.signature);
 
 export const logBaseAsset = (b: BaseAsset): void => {
+  const priceOracle = toPriceOracle(b);
   l('Address:', b.address.toString());
   l('Ticker:', b.ticker.toString());
   l('Enabled:', b.enabled);
   l('Index:', b.index);
   l('Risk category:', b.riskCategory);
-  l('Oracle source:', b.priceOracle.source);
-  if (b.priceOracle.address) {
-    l('Oracle address:', b.priceOracle.address.toString());
-  } else if (b.priceOracle.price) {
-    l('Oracle price:', b.priceOracle.price.toString());
+  l('Oracle source:', priceOracle.source);
+  if (priceOracle.address) {
+    l('Oracle address:', priceOracle.address.toString());
+  } else if (priceOracle.price) {
+    l('Oracle price:', priceOracle.price.toString());
   }
 };
 
@@ -146,7 +153,9 @@ export const logRfq = (r: Rfq) => {
   l('Taker:', r.taker.toString());
   l('Order type:', r.orderType);
   l('Size:', r.size.type === 'open' ? 'open' : 'fixed');
-  l('Quote asset:', r.quoteMint.toString());
+  if (r.model === 'escrowRfq') {
+    l('Quote asset:', r.quoteMint.toString());
+  }
   l('Created:', new Date(created).toString());
   l(`Active window: ${r.activeWindow} seconds`);
   l(`Settlement window: ${r.settlingWindow} seconds`);
@@ -155,4 +164,9 @@ export const logRfq = (r: Rfq) => {
   l('Total responses:', r.totalResponses);
   l('Confirmed responses:', r.confirmedResponses);
   l('Cleared responses:', r.clearedResponses);
+};
+
+export const logHxroConfig = (d: HxroPrintTradeProviderConfig) => {
+  l('Address:', d.address.toString());
+  l('Valid Hxro market product group:', d.validMpg.toString());
 };

@@ -1,15 +1,17 @@
 import { expect } from 'expect';
 import { BN } from 'bn.js';
 
+import { Keypair } from '@solana/web3.js';
 import { createUserCvg } from '../helpers';
 import { HxroOptionInfo, HxroPrintTrade, PublicKey } from '../../src';
 
 describe('unit.hxro', () => {
-  const cvg = createUserCvg('taker');
-  const cvg2 = createUserCvg('maker');
+  const cvgTaker = createUserCvg('taker');
+  const cvgMaker = createUserCvg('maker');
+  const cvgAuthority = createUserCvg('dao');
 
   it('get hxro config', async () => {
-    const result = await cvg.hxro().fetchConfig();
+    const result = await cvgTaker.hxro().fetchConfig();
     expect(result).toEqual({
       model: 'hxroPrintTradeProviderConfig',
       validMpg: new PublicKey('GCXr6LDZurWK8Hkm18gZzJ7jUgvrYEVFFeWUR346fd42'),
@@ -17,7 +19,7 @@ describe('unit.hxro', () => {
   });
 
   it('get hxro products', async () => {
-    const results = await cvg.hxro().fetchProducts();
+    const results = await cvgTaker.hxro().fetchProducts();
 
     // BN comparison fails without it
     const optionProduct = results[1] as HxroOptionInfo;
@@ -49,10 +51,21 @@ describe('unit.hxro', () => {
     ]);
   });
 
+  it('can modify hxro config', async () => {
+    const randomKey = new Keypair().publicKey;
+    const { validMpg: oldMpg } = await cvgAuthority.hxro().fetchConfig();
+    await cvgAuthority.hxro().modifyConfig({ validMpg: randomKey });
+    const { validMpg } = await cvgAuthority.hxro().fetchConfig();
+    expect(validMpg).toEqual(randomKey);
+
+    // set back
+    await cvgAuthority.hxro().modifyConfig({ validMpg: oldMpg });
+  });
+
   it('can create hxro rfq', async () => {
-    const products = await cvg.hxro().fetchProducts();
-    const { rfq } = await cvg.rfqs().createPrintTrade({
-      printTrade: new HxroPrintTrade(cvg, [
+    const products = await cvgTaker.hxro().fetchProducts();
+    const { rfq } = await cvgTaker.rfqs().createPrintTrade({
+      printTrade: new HxroPrintTrade(cvgTaker, [
         { amount: 1, side: 'long', productInfo: products[0] },
       ]),
       orderType: 'buy',
@@ -61,7 +74,7 @@ describe('unit.hxro', () => {
       settlingWindow: 5000,
     });
 
-    const { rfqResponse } = await cvg2
+    await cvgMaker
       .rfqs()
       .respond({ rfq: rfq.address, ask: { price: 123, legsMultiplier: 1 } });
   });

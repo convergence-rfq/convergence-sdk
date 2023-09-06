@@ -3,8 +3,14 @@ import {
   FetchHxroPrintTradeProviderConfigOutput,
   FetchHxroProductsInput,
   FetchHxroProductsOutput,
+  InitializeHxroConfigInput,
+  InitializeHxroConfigOutput,
+  ModifyHxroConfigInput,
+  ModifyHxroConfigOutput,
   fetchHxroPrintTradeProviderConfigOperation,
   fetchHxroProductsOperation,
+  initializeHxroConfigOperation,
+  modifyHxroConfigOperation,
 } from './operations';
 import { HxroPdasClient } from './pdas';
 import { OperationOptions } from '@/types';
@@ -33,5 +39,23 @@ export class HxroClient {
     return this.cvg
       .operations()
       .execute(fetchHxroProductsOperation(input), options);
+  }
+
+  initializeConfig(
+    input: InitializeHxroConfigInput,
+    options?: OperationOptions
+  ): Promise<InitializeHxroConfigOutput> {
+    return this.cvg
+      .operations()
+      .execute(initializeHxroConfigOperation(input), options);
+  }
+
+  modifyConfig(
+    input: ModifyHxroConfigInput,
+    options?: OperationOptions
+  ): Promise<ModifyHxroConfigOutput> {
+    return this.cvg
+      .operations()
+      .execute(modifyHxroConfigOperation(input), options);
   }
 }

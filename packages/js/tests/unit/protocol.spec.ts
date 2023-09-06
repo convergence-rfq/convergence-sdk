@@ -4,6 +4,7 @@ import {
   protocolCache,
   baseAssetsCache,
   registeredMintsCache,
+  toPriceOracle,
 } from '../../src';
 import { createUserCvg, generateTicker } from '../helpers';
 import {
@@ -166,7 +167,7 @@ describe('unit.protocol', () => {
     const baseAsset = await cvg
       .protocol()
       .findBaseAssetByAddress({ address: baseAssetPda });
-    expect(baseAsset.priceOracle.price).toEqual(price);
+    expect(toPriceOracle(baseAsset).price).toEqual(price);
   });
 
   it('register mint', async () => {
