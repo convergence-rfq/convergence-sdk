@@ -68,7 +68,7 @@ describe('unit.responseStateAndAction', () => {
         rfq,
         caller: 'taker',
         responseSide: 'bid',
-      }).responseAction
+      }).responseState
     ).toBe('Cancelled');
 
     //Unlock Response Collateral for maker
@@ -195,7 +195,7 @@ describe('unit.responseStateAndAction', () => {
         rfq,
         caller: 'maker',
         responseSide: 'bid',
-      }).responseAction
+      }).responseState
     ).toBe('Settled');
   });
 
@@ -229,7 +229,7 @@ describe('unit.responseStateAndAction', () => {
         rfq,
         caller: 'taker',
         responseSide: 'bid',
-      }).responseAction
+      }).responseState
     ).toBe('Expired');
   });
 
@@ -285,7 +285,7 @@ describe('unit.responseStateAndAction', () => {
         rfq,
         caller: 'taker',
         responseSide: 'ask',
-      }).responseAction
+      }).responseState
     ).toBe('Rejected');
 
     await takerCvg.rfqs().prepareSettlement({
@@ -303,7 +303,7 @@ describe('unit.responseStateAndAction', () => {
         rfq,
         caller: 'taker',
         responseSide: 'bid',
-      }).responseAction
+      }).responseState
     ).toBe('Defaulted');
 
     //Defaulted for maker
@@ -313,7 +313,7 @@ describe('unit.responseStateAndAction', () => {
         rfq,
         caller: 'maker',
         responseSide: 'bid',
-      }).responseAction
+      }).responseState
     ).toBe('Defaulted');
   });
 });

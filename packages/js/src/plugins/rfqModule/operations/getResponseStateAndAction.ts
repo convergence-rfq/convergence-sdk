@@ -11,19 +11,15 @@ export type ResponseState =
   | 'ReadyForSettling'
   | 'WaitingForLastLook'
   | 'OnlyMakerPrepared'
-  | 'OnlyTakerPrepared';
+  | 'OnlyTakerPrepared'
+  | 'Rejected';
 
 export type ResponseAction =
   | 'Cancel'
   | 'UnlockCollateral'
   | 'Cleanup'
-  | 'Rejected'
-  | 'Defaulted'
   | 'Settle'
-  | 'Settled'
-  | 'Expired'
   | 'Approve'
-  | 'Cancelled'
   | null;
 
 /**
@@ -98,15 +94,15 @@ export const getResponseStateAndActionHandler: SyncOperationHandler<GetResponseS
         response,
         rfq,
         timestampExpiry,
-        timestampSettlement
+        timestampSettlement,
+        caller,
+        responseSide
       );
       const responseAction = getResponseAction(
         response,
-        rfq,
-        responseSide,
-        caller,
         responseState,
-        timestampSettlement
+        rfq,
+        caller
       );
       return { responseState, responseAction };
     },
@@ -116,10 +112,32 @@ const getResponseState = (
   response: Response,
   rfq: Rfq,
   timestampExpiry: Date,
-  timestampSettlement: Date
+  timestampSettlement: Date,
+  caller: 'maker' | 'taker',
+  responseSide: 'ask' | 'bid'
 ): ResponseState => {
   const rfqExpired = timestampExpiry.getTime() <= Date.now();
   const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
+  const confirmedInverseResponseSide =
+    (responseSide === 'ask' && response?.confirmed?.side !== 'ask') ||
+    (responseSide === 'bid' && response?.confirmed?.side !== 'bid');
+  const responseConfirmed = response?.confirmed !== null;
+
+  const takerPreparedLegsComplete =
+    response.takerPreparedLegs === rfq.legs.length;
+  const makerPreparedLegsComplete =
+    response.makerPreparedLegs === rfq.legs.length;
+  const partyPreparedLegsComplete =
+    caller === 'maker' ? makerPreparedLegsComplete : takerPreparedLegsComplete;
+  const counterpartyPreparedLegsComplete =
+    caller === 'maker' ? takerPreparedLegsComplete : makerPreparedLegsComplete;
+  const defaulted = response.defaultingParty
+    ? response.defaultingParty !== null
+    : settlementWindowElapsed &&
+      (!partyPreparedLegsComplete || !counterpartyPreparedLegsComplete);
+
+  if (responseConfirmed && confirmedInverseResponseSide) return 'Rejected';
+
   switch (response.state) {
     case 'active':
       if (!rfqExpired) return 'Active';
@@ -130,6 +148,7 @@ const getResponseState = (
       if (!rfqExpired) return 'WaitingForLastLook';
       return 'Expired';
     case 'settling-preparations':
+      if (defaulted) return 'Defaulted';
       if (!settlementWindowElapsed) {
         if (response.makerPreparedLegs === rfq.legs.length)
           return 'OnlyMakerPrepared';
@@ -139,6 +158,7 @@ const getResponseState = (
       }
       return 'Defaulted';
     case 'ready-for-settling':
+      if (defaulted) return 'Defaulted';
       return 'ReadyForSettling';
     case 'settled':
       return 'Settled';
@@ -151,45 +171,16 @@ const getResponseState = (
 
 const getResponseAction = (
   response: Response,
-  rfq: Rfq,
-  responseSide: 'ask' | 'bid',
-  caller: 'maker' | 'taker',
   responseState: ResponseState,
-  timestampSettlement: Date
+  rfq: Rfq,
+  caller: 'maker' | 'taker'
 ): ResponseAction => {
-  const confirmedResponseSide =
-    (responseSide === 'ask' && response?.confirmed?.side === 'ask') ||
-    (responseSide === 'bid' && response?.confirmed?.side === 'bid');
-
-  const confirmedInverseResponseSide =
-    (responseSide === 'ask' && response?.confirmed?.side !== 'ask') ||
-    (responseSide === 'bid' && response?.confirmed?.side !== 'bid');
-
-  const takerPreparedLegsComplete =
-    response.takerPreparedLegs === rfq.legs.length;
-  const makerPreparedLegsComplete =
-    response.makerPreparedLegs === rfq.legs.length;
-  const partyPreparedLegsComplete =
-    caller === 'maker' ? makerPreparedLegsComplete : takerPreparedLegsComplete;
-  const counterpartyPreparedLegsComplete =
-    caller === 'maker' ? takerPreparedLegsComplete : makerPreparedLegsComplete;
-
-  const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
-  const defaulted = response.defaultingParty
-    ? response.defaultingParty !== null
-    : settlementWindowElapsed &&
-      (!partyPreparedLegsComplete || !counterpartyPreparedLegsComplete);
-
   const responseConfirmed = response?.confirmed !== null;
-  if (responseConfirmed && confirmedResponseSide && defaulted)
-    return 'Defaulted';
   switch (caller) {
     case 'maker':
       switch (responseState) {
         case 'Active':
           if (!responseConfirmed) return 'Cancel';
-          if (responseConfirmed && confirmedInverseResponseSide)
-            return 'Rejected';
           break;
         case 'Expired':
           if (!responseConfirmed && response.makerCollateralLocked > 0)
@@ -202,16 +193,11 @@ const getResponseAction = (
         case 'OnlyMakerPrepared':
         case 'OnlyTakerPrepared':
         case 'ReadyForSettling':
-          if (defaulted) return 'Defaulted';
-          if (confirmedInverseResponseSide) return 'Rejected';
-          if (confirmedResponseSide) return 'Settle';
-          break;
+          return 'Settle';
         case 'Settled':
-          if (confirmedInverseResponseSide) return 'Rejected';
-          return 'Settled';
         case 'Defaulted':
-          if (confirmedInverseResponseSide) return 'Rejected';
-          return 'Defaulted';
+        case 'Rejected':
+          return null;
       }
       break;
 
@@ -219,26 +205,18 @@ const getResponseAction = (
       switch (responseState) {
         case 'Active':
           if (!responseConfirmed) return 'Approve';
-          if (responseConfirmed && confirmedInverseResponseSide)
-            return 'Rejected';
           break;
-        case 'Expired':
-          return 'Expired';
-        case 'Cancelled':
-          return 'Cancelled';
         case 'SettlingPreparations':
         case 'OnlyMakerPrepared':
         case 'OnlyTakerPrepared':
         case 'ReadyForSettling':
-          if (confirmedInverseResponseSide) return 'Rejected';
-          if (confirmedResponseSide) return 'Settle';
-          break;
+          return 'Settle';
         case 'Settled':
-          if (confirmedInverseResponseSide) return 'Rejected';
-          return 'Settled';
         case 'Defaulted':
-          if (confirmedInverseResponseSide) return 'Rejected';
-          return 'Defaulted';
+        case 'Expired':
+        case 'Cancelled':
+        case 'Rejected':
+          return null;
       }
       break;
   }
