@@ -13,10 +13,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import {
-  LegInstrument,
-  QuoteInstrument,
-} from '../../../plugins/instrumentModule';
+import { LegInstrument } from '../../../plugins/instrumentModule';
 import { removeDecimals } from '../../../utils/conversions';
 import {
   FixedSize,
@@ -24,6 +21,7 @@ import {
   OrderType,
   toSolitaFixedSize,
 } from '../../../plugins/rfqModule';
+import { PrintTradeLeg } from '@/plugins/printTradeModule';
 
 const Key = 'CalculateCollateralForRfqOperation' as const;
 
@@ -86,12 +84,7 @@ export type CalculateCollateralForRfqInput = {
   /**
    * Legs of the RFQ being created.
    */
-  legs: LegInstrument[];
-
-  /**
-   * Quote asset of the RFQ being created.
-   */
-  quoteAsset: QuoteInstrument;
+  legs: LegInstrument[] | PrintTradeLeg[];
 
   /**
    * Settlement period of the RFQ being created in seconds.

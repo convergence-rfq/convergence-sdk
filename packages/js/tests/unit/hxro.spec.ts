@@ -14,6 +14,7 @@ describe('unit.hxro', () => {
     const result = await cvgTaker.hxro().fetchConfig();
     expect(result).toEqual({
       model: 'hxroPrintTradeProviderConfig',
+      address: cvgTaker.hxro().pdas().config(),
       validMpg: new PublicKey('GCXr6LDZurWK8Hkm18gZzJ7jUgvrYEVFFeWUR346fd42'),
     });
   });
