@@ -229,7 +229,6 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
       randomExpiry,
       0
     );
-  await sleep(2);
   const { euroMeta: euroMeta2, euroMetaKey: euroMetaKey2 } =
     await initializeNewEuropeanOption(
       cvg,

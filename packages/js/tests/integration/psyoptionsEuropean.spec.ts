@@ -11,7 +11,6 @@ import {
   createEuropeanCoveredCallRfq,
   createEuropeanOpenSizeCallSpdOptionRfq,
   createEuropeanFixedBaseStraddle,
-  sleep,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 import { InstructionUniquenessTracker } from '../../src/utils/';
@@ -57,7 +56,6 @@ describe('integration.psyoptionsEuropean', () => {
     await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
 
     await settleRfq(takerCvg, rfq, rfqResponse);
-    await sleep(1);
   });
 
   it('fixed-size european straddle [buy]', async () => {

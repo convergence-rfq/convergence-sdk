@@ -10,6 +10,7 @@ import { Convergence } from '../../Convergence';
 import { InstructionUniquenessTracker } from '../../utils/classes';
 import { PsyoptionsEuropeanInstrument } from './instrument';
 import { toBigNumber } from '@/types/BigNumber';
+import { CvgWallet } from '@/index';
 
 export const initializeNewEuropeanOption = async (
   convergence: Convergence,
@@ -92,9 +93,13 @@ export const initializeNewEuropeanOption = async (
 };
 
 export const createEuropeanProgram = async (convergence: Convergence) => {
-  return psyoptionsEuropean.createProgram(
-    convergence.rpc().getDefaultFeePayer() as Keypair,
-    convergence.connection.rpcEndpoint,
+  const cvgWallet = new CvgWallet(convergence);
+  return psyoptionsEuropean.createProgramFromProvider(
+    new anchor.AnchorProvider(
+      convergence.connection,
+      cvgWallet,
+      anchor.AnchorProvider.defaultOptions()
+    ),
     new PublicKey(psyoptionsEuropean.programId)
   );
 };
