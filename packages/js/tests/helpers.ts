@@ -3,6 +3,7 @@ import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
+import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import {
   Convergence,
   OrderType,
@@ -12,18 +13,17 @@ import {
   toBigNumber,
   Rfq,
   Response,
-  mintAmericanOptions,
+  prepareAmericanOptions,
   SpotQuoteInstrument,
   SpotLegInstrument,
   keypairIdentity,
   PublicKey,
   removeDecimals,
   useCache,
-  createEuropeanProgram,
   CvgWallet,
   PsyoptionsEuropeanInstrument,
   initializeNewEuropeanOption,
-  mintEuropeanOptions,
+  prepareEuropeanOptions,
   InstructionUniquenessTracker,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
@@ -150,9 +150,9 @@ export const createEuropeanCoveredCallRfq = async (
   orderType: OrderType,
   baseMint: any,
   quoteMint: any,
-  ixTracker: InstructionUniquenessTracker
+  ixTracker: InstructionUniquenessTracker,
+  europeanProgram: Program<EuroPrimitive>
 ) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
     new anchor.Program(
       PseudoPythIdl,
@@ -202,9 +202,9 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
   orderType: OrderType,
   baseMint: any,
   quoteMint: any,
-  ixTracker: InstructionUniquenessTracker
+  ixTracker: InstructionUniquenessTracker,
+  europeanProgram: Program<EuroPrimitive>
 ) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
     new anchor.Program(
       PseudoPythIdl,
@@ -229,6 +229,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
       randomExpiry,
       0
     );
+  await sleep(2);
   const { euroMeta: euroMeta2, euroMetaKey: euroMetaKey2 } =
     await initializeNewEuropeanOption(
       cvg,
@@ -323,9 +324,9 @@ export const createEuropeanFixedBaseStraddle = async (
   orderType: OrderType,
   baseMint: any,
   quoteMint: any,
-  ixTracker: InstructionUniquenessTracker
+  ixTracker: InstructionUniquenessTracker,
+  europeanProgram: Program<EuroPrimitive>
 ) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
     new anchor.Program(
       PseudoPythIdl,
@@ -657,11 +658,11 @@ export const createPythPriceFeed = async (
 };
 
 export const setupAmerican = async (cvg: Convergence, response: Response) => {
-  await mintAmericanOptions(cvg, response.address, cvg.identity().publicKey);
+  await prepareAmericanOptions(cvg, response.address, cvg.identity().publicKey);
 };
 
 export const setupEuropean = async (cvg: Convergence, response: Response) => {
-  await mintEuropeanOptions(
+  await prepareEuropeanOptions(
     cvg,
     response.address,
     cvg.rpc().getDefaultFeePayer().publicKey

@@ -30,10 +30,13 @@ import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import {
-  mintAmericanOptions,
+  prepareAmericanOptions,
   psyoptionsAmericanInstrumentProgram,
 } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { mintEuropeanOptions } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import {
+  prepareEuropeanOptions,
+  psyoptionsEuropeanInstrumentProgram,
+} from '@/plugins/psyoptionsEuropeanInstrumentModule';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -128,11 +131,11 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         .rfqs()
         .findRfqByAddress({ address: rfq });
 
-      const optionStyle = findOptionStyle(rfqModel);
-      if (optionStyle === 'american') {
-        await mintAmericanOptions(convergence, response, caller?.publicKey);
-      } else {
-        await mintEuropeanOptions(convergence, response, caller?.publicKey);
+      if (doesRfqLegContainsPsyoptionsAmerican(rfqModel)) {
+        await prepareAmericanOptions(convergence, response, caller?.publicKey);
+      }
+      if (doesRfqLegContainsPsyoptionsEuropean(rfqModel)) {
+        await prepareEuropeanOptions(convergence, response, caller?.publicKey);
       }
       const builder = await prepareSettlementBuilder(
         convergence,
@@ -355,12 +358,14 @@ export const prepareSettlementBuilder = async (
     );
 };
 
-const findOptionStyle = (rfq: Rfq) => {
-  const american = rfq.legs.some((leg) =>
+const doesRfqLegContainsPsyoptionsAmerican = (rfq: Rfq) => {
+  return rfq.legs.some((leg) =>
     leg.getProgramId().equals(psyoptionsAmericanInstrumentProgram.address)
   );
-  if (american) {
-    return 'american';
-  }
-  return 'european';
+};
+
+const doesRfqLegContainsPsyoptionsEuropean = (rfq: Rfq) => {
+  return rfq.legs.some((leg) =>
+    leg.getProgramId().equals(psyoptionsEuropeanInstrumentProgram.address)
+  );
 };
