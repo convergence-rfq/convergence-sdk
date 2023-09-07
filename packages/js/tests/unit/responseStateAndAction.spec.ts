@@ -244,8 +244,8 @@ describe('unit.responseStateAndAction', () => {
       ],
       orderType: 'two-way',
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-      activeWindow: 6,
-      settlingWindow: 3,
+      activeWindow: 2,
+      settlingWindow: 1,
       fixedSize,
     });
     const { rfqResponse } = await makerCvg.rfqs().respond({
@@ -294,7 +294,7 @@ describe('unit.responseStateAndAction', () => {
       legAmountToPrepare: rfq.legs.length,
     });
 
-    await sleep(9);
+    await sleep(3);
 
     //Defaulted for taker
     expect(
