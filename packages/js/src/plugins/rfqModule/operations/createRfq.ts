@@ -68,6 +68,8 @@ export type CreateRfqOperation = Operation<
   CreateRfqOutput
 >;
 
+export type RfqInstrumentType = 'Spot' | 'Options' | 'Futures';
+
 /**
  * @group Operations
  * @category Inputs
@@ -123,6 +125,11 @@ export type CreateRfqInput = {
    * additional legs will not be added in the future.
    */
   expectedLegsHash?: Uint8Array;
+
+  /**
+   * RfqInstrument type can be Spot,Options,Futures etc
+   */
+  rfqInstrumentType: RfqInstrumentType;
 };
 
 /**
