@@ -1,6 +1,6 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
-import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { BN } from 'bn.js';
 import { Mint } from '../tokenModule';
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
@@ -8,9 +8,9 @@ import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';
 import { InstructionUniquenessTracker } from '../../utils/classes';
+import { CvgWallet } from '../../utils/Wallets';
 import { PsyoptionsEuropeanInstrument } from './instrument';
 import { toBigNumber } from '@/types/BigNumber';
-import { CvgWallet } from '@/index';
 
 export const initializeNewEuropeanOption = async (
   convergence: Convergence,
