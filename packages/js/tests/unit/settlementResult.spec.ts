@@ -1,5 +1,7 @@
 import expect from 'expect';
 import { Mint } from '@solana/spl-token';
+import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
+import { Program } from '@project-serum/anchor';
 import {
   createAmericanCoveredCallRfq,
   createEuropeanCoveredCallRfq,
@@ -12,13 +14,14 @@ import {
   QUOTE_MINT_DECIMALS,
   QUOTE_MINT_PK,
 } from '../constants';
-import { InstructionUniquenessTracker } from '../../src';
+import { InstructionUniquenessTracker, createEuropeanProgram } from '../../src';
 
 describe('unit.settlementResult', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
   let baseMint: Mint;
   let quoteMint: Mint;
+  let europeanProgram: Program<EuroPrimitive>;
   const ixTracker = new InstructionUniquenessTracker([]);
   before(async () => {
     baseMint = await takerCvg
@@ -27,6 +30,7 @@ describe('unit.settlementResult', () => {
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
+    europeanProgram = await createEuropeanProgram(takerCvg);
   });
 
   it('fixed-base buy', async () => {
@@ -373,7 +377,8 @@ describe('unit.settlementResult', () => {
       'sell',
       baseMint,
       quoteMint,
-      ixTracker
+      ixTracker,
+      europeanProgram
     );
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
