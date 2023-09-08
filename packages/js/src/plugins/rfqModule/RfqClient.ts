@@ -79,6 +79,9 @@ import {
   GetSettlementResultInput,
   getSettlementResultOperation,
   getSettlementResultHandler,
+  GetResponseStateAndActionInput,
+  getResponseStateAndActionOperation,
+  getResponseStateAndActionHandler,
 } from './operations';
 import { Response } from './models/Response';
 import {
@@ -494,6 +497,15 @@ export class RfqClient {
     );
   }
 
+  /** {@inheritDoc getResponseStateAndAction} */
+  getResponseStateAndAction(input: GetResponseStateAndActionInput) {
+    return getResponseStateAndActionHandler.handle(
+      getResponseStateAndActionOperation(input),
+      this.convergence
+    );
+  }
+
+  /** {@inheritDoc getRFqStateAndAction} */
   getRfqStateAndAction(input: GetRfqStateAndActionInput) {
     return getRfqStateAndActionHandler.handle(
       getRfqStateAndActionOperation(input),
