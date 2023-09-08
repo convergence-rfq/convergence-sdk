@@ -38,11 +38,14 @@ export class InstructionUniquenessTracker {
       let checked = 0;
       instructions.forEach((ix) => {
         if (!this.matchInstruction(ix)) {
-          this.IxArray.push(ix);
           checked++;
         }
       });
-      return checked === ixLength;
+      if (checked === ixLength) {
+        this.IxArray.push(...instructions);
+        return true;
+      }
+      return false;
     } else if (ix instanceof TransactionInstruction) {
       if (!this.matchInstruction(ix)) {
         this.IxArray.push(ix);

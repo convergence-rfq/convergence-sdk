@@ -136,8 +136,7 @@ export const prepareEuropeanOptions = async (
       continue;
     }
     const euroMeta = await leg.getOptionMeta();
-    const { stableMint } = euroMeta;
-    const { underlyingMint } = euroMeta;
+    const { stableMint, underlyingMint } = euroMeta;
     const stableMintToken = convergence.tokens().pdas().associatedTokenAccount({
       mint: stableMint,
       owner: caller,

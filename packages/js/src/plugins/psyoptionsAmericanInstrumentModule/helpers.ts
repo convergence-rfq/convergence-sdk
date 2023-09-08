@@ -93,63 +93,58 @@ export const prepareAmericanOptions = async (
     }
 
     const optionMarket = await leg.getOptionMeta();
-    if (optionMarket) {
-      const optionToken = await getOrCreateATAtxBuilder(
-        convergence,
-        optionMarket.optionMint,
-        caller
-      );
-      if (
-        optionToken.txBuilder &&
-        ixTracker.checkedAdd(optionToken.txBuilder)
-      ) {
-        ataTxBuilderArray.push(optionToken.txBuilder);
-      }
-      const writerToken = await getOrCreateATAtxBuilder(
-        convergence,
-        optionMarket!.writerTokenMint,
-        caller
-      );
-      if (
-        writerToken.txBuilder &&
-        ixTracker.checkedAdd(writerToken.txBuilder)
-      ) {
-        ataTxBuilderArray.push(writerToken.txBuilder);
-      }
-      const underlyingToken = await getOrCreateATAtxBuilder(
-        convergence,
-        optionMarket!.underlyingAssetMint,
-        caller
-      );
-      if (
-        underlyingToken.txBuilder &&
-        ixTracker.checkedAdd(underlyingToken.txBuilder)
-      ) {
-        ataTxBuilderArray.push(underlyingToken.txBuilder);
-      }
-      const ixWithSigners =
-        await psyoptionsAmerican.instructions.mintOptionInstruction(
-          americanProgram,
-          optionToken.ataPubKey,
-          writerToken.ataPubKey,
-          underlyingToken.ataPubKey,
-          new BN(amount!),
-          optionMarket as psyoptionsAmerican.OptionMarketWithKey
-        );
-      ixWithSigners.ix.keys[0] = {
-        pubkey: caller,
-        isSigner: true,
-        isWritable: false,
-      };
-      const mintTxBuilder = TransactionBuilder.make().setFeePayer(
-        convergence.rpc().getDefaultFeePayer()
-      );
-      mintTxBuilder.add({
-        instruction: ixWithSigners.ix,
-        signers: [convergence.identity()],
-      });
-      mintTxBuilderArray.push(mintTxBuilder);
+    if (!optionMarket) {
+      continue;
     }
+    const optionToken = await getOrCreateATAtxBuilder(
+      convergence,
+      optionMarket.optionMint,
+      caller
+    );
+    if (optionToken.txBuilder && ixTracker.checkedAdd(optionToken.txBuilder)) {
+      ataTxBuilderArray.push(optionToken.txBuilder);
+    }
+    const writerToken = await getOrCreateATAtxBuilder(
+      convergence,
+      optionMarket!.writerTokenMint,
+      caller
+    );
+    if (writerToken.txBuilder && ixTracker.checkedAdd(writerToken.txBuilder)) {
+      ataTxBuilderArray.push(writerToken.txBuilder);
+    }
+    const underlyingToken = await getOrCreateATAtxBuilder(
+      convergence,
+      optionMarket!.underlyingAssetMint,
+      caller
+    );
+    if (
+      underlyingToken.txBuilder &&
+      ixTracker.checkedAdd(underlyingToken.txBuilder)
+    ) {
+      ataTxBuilderArray.push(underlyingToken.txBuilder);
+    }
+    const ixWithSigners =
+      await psyoptionsAmerican.instructions.mintOptionInstruction(
+        americanProgram,
+        optionToken.ataPubKey,
+        writerToken.ataPubKey,
+        underlyingToken.ataPubKey,
+        new BN(amount!),
+        optionMarket as psyoptionsAmerican.OptionMarketWithKey
+      );
+    ixWithSigners.ix.keys[0] = {
+      pubkey: caller,
+      isSigner: true,
+      isWritable: false,
+    };
+    const mintTxBuilder = TransactionBuilder.make().setFeePayer(
+      convergence.rpc().getDefaultFeePayer()
+    );
+    mintTxBuilder.add({
+      instruction: ixWithSigners.ix,
+      signers: [convergence.identity()],
+    });
+    mintTxBuilderArray.push(mintTxBuilder);
   }
   let signedTxs: Transaction[] = [];
   const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
