@@ -84,6 +84,11 @@ import {
   retrieveBidAndAskOperation,
 } from './operations';
 import { Response } from './models/Response';
+import {
+  GetRfqStateAndActionInput,
+  getRfqStateAndActionHandler,
+  getRfqStateAndActionOperation,
+} from './operations/getRfqStateAndAction';
 
 /**
  * This is a client for the Rfq module.
@@ -493,10 +498,17 @@ export class RfqClient {
   }
 
   /** {@inheritDoc retrieveBidAndAskOperation} */
-
   retrieveBidAndAsk(input: RetrieveBidAndAskInput) {
     return retrieveBidAndAskHandler.handle(
       retrieveBidAndAskOperation(input),
+      this.convergence
+    );
+  }
+
+  /** {@inheritDoc getRfqStateAndAction} */
+  getRfqStateAndAction(input: GetRfqStateAndActionInput) {
+    return getRfqStateAndActionHandler.handle(
+      getRfqStateAndActionOperation(input),
       this.convergence
     );
   }

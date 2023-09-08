@@ -77,6 +77,10 @@ import {
   retrieveBidAndAskOperation,
 } from './operations';
 import { rfqProgram } from './program';
+import {
+  getRfqStateAndActionHandler,
+  getRfqStateAndActionOperation,
+} from './operations/getRfqStateAndAction';
 
 /** @group Plugins */
 export const rfqModule = (): ConvergencePlugin => ({
@@ -184,6 +188,7 @@ export const rfqModule = (): ConvergencePlugin => ({
       unlockRfqsCollateralOperationHandler
     );
     op.register(getSettlementResultOperation, getSettlementResultHandler);
+    op.register(getRfqStateAndActionOperation, getRfqStateAndActionHandler);
 
     op.register(retrieveBidAndAskOperation, retrieveBidAndAskHandler);
 
