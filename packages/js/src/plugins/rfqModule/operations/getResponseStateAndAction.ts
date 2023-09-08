@@ -1,5 +1,11 @@
 import { DefaultingParty } from '@convergence-rfq/rfq';
-import { Rfq, Response } from '../models';
+import {
+  Rfq,
+  Response,
+  ResponseSide,
+  AuthoritySide,
+  inverseResponseSide,
+} from '../models';
 import { Operation, SyncOperationHandler, useOperation } from '../../../types';
 const Key = 'GetResponseStateAndAction' as const;
 export type ResponseState =
@@ -100,15 +106,9 @@ export const getResponseStateAndActionHandler: SyncOperationHandler<GetResponseS
         rfq,
         timestampExpiry,
         timestampSettlement,
-        caller,
         responseSide
       );
-      const responseAction = getResponseAction(
-        response,
-        responseState,
-        rfq,
-        caller
-      );
+      const responseAction = getResponseAction(response, responseState, caller);
       return { responseState, responseAction };
     },
   };
@@ -118,32 +118,21 @@ const getResponseState = (
   rfq: Rfq,
   timestampExpiry: Date,
   timestampSettlement: Date,
-  caller: 'maker' | 'taker',
-  responseSide: 'ask' | 'bid'
+  responseSide: ResponseSide
 ): ResponseState => {
   const rfqExpired = timestampExpiry.getTime() <= Date.now();
   const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
   const confirmedInverseResponseSide =
-    (responseSide === 'ask' && response?.confirmed?.side !== 'ask') ||
-    (responseSide === 'bid' && response?.confirmed?.side !== 'bid');
+    response?.confirmed?.side === inverseResponseSide(responseSide);
   const responseConfirmed = response?.confirmed !== null;
-  const takerPreparedLegsComplete =
-    response.takerPreparedLegs === rfq.legs.length;
-  const makerPreparedLegsComplete =
-    response.makerPreparedLegs === rfq.legs.length;
-  const defaulted = response.defaultingParty
-    ? response.defaultingParty !== null
-    : settlementWindowElapsed &&
-      (!makerPreparedLegsComplete || !takerPreparedLegsComplete);
-
-  let { defaultingParty } = response;
-
-  if (defaulted && defaultingParty === null) {
-    if (!makerPreparedLegsComplete && !takerPreparedLegsComplete)
-      defaultingParty = DefaultingParty.Both;
-    if (!makerPreparedLegsComplete) defaultingParty = DefaultingParty.Maker;
-    if (!takerPreparedLegsComplete) defaultingParty = DefaultingParty.Taker;
-  }
+  const makerPrepared = hasMakerPrepared(response, rfq);
+  const takerPrepared = hasTakerPrepared(response, rfq);
+  const defaultingParty = getDefautingParty(
+    response,
+    settlementWindowElapsed,
+    makerPrepared,
+    takerPrepared
+  );
 
   if (responseConfirmed && confirmedInverseResponseSide) return 'Rejected';
   switch (response.state) {
@@ -157,10 +146,8 @@ const getResponseState = (
       return 'Expired';
     case 'settling-preparations':
       if (!settlementWindowElapsed) {
-        if (response.makerPreparedLegs === rfq.legs.length)
-          return 'OnlyMakerPrepared';
-        if (response.takerPreparedLegs === rfq.legs.length)
-          return 'OnlyTakerPrepared';
+        if (makerPrepared) return 'OnlyMakerPrepared';
+        if (takerPrepared) return 'OnlyTakerPrepared';
         return 'SettlingPreparations';
       }
       switch (defaultingParty) {
@@ -192,8 +179,7 @@ const getResponseState = (
 const getResponseAction = (
   response: Response,
   responseState: ResponseState,
-  rfq: Rfq,
-  caller: 'maker' | 'taker'
+  caller: AuthoritySide
 ): ResponseAction => {
   const responseConfirmed = response?.confirmed !== null;
   switch (caller) {
@@ -204,17 +190,14 @@ const getResponseAction = (
           break;
         case 'Expired':
         case 'Cancelled':
+        case 'Settled':
           if (response.makerCollateralLocked > 0) return 'UnlockCollateral';
           if (response.makerCollateralLocked === 0) return 'Cleanup';
-          break;
         case 'SettlingPreparations':
         case 'OnlyMakerPrepared':
         case 'OnlyTakerPrepared':
         case 'ReadyForSettling':
           return 'Settle';
-        case 'Settled':
-          if (response.makerCollateralLocked > 0) return 'UnlockCollateral';
-          if (response.makerCollateralLocked === 0) return 'Cleanup';
         case 'MakerDefaulted':
         case 'TakerDefaulted':
           return 'Settle One Party Defaulted';
@@ -235,13 +218,13 @@ const getResponseAction = (
         case 'OnlyTakerPrepared':
         case 'ReadyForSettling':
           return 'Settle';
-        case 'Settled':
         case 'MakerDefaulted':
           return 'Settle One Party Defaulted';
         case 'TakerDefaulted':
           return 'Settle One Party Defaulted';
         case 'BothDefaulted':
           return 'Settle Both Party Defaulted';
+        case 'Settled':
         case 'Expired':
         case 'Cancelled':
           if (response.takerCollateralLocked > 0) return 'UnlockCollateral';
@@ -252,4 +235,33 @@ const getResponseAction = (
       break;
   }
   return null;
+};
+
+const getDefautingParty = (
+  response: Response,
+  settlementWindowElapsed: boolean,
+  makerPrepared: boolean,
+  takerPrepared: boolean
+): DefaultingParty | null => {
+  let { defaultingParty } = response;
+  if (defaultingParty) return defaultingParty;
+  const defaulted =
+    settlementWindowElapsed && (!makerPrepared || !takerPrepared);
+
+  if (defaulted && defaultingParty === null) {
+    if (!makerPrepared && !takerPrepared)
+      defaultingParty = DefaultingParty.Both;
+    if (!makerPrepared) defaultingParty = DefaultingParty.Maker;
+    if (!takerPrepared) defaultingParty = DefaultingParty.Taker;
+  }
+
+  return null;
+};
+
+const hasMakerPrepared = (response: Response, rfq: Rfq) => {
+  return response.makerPreparedLegs === rfq.legs.length;
+};
+
+const hasTakerPrepared = (response: Response, rfq: Rfq) => {
+  return response.takerPreparedLegs === rfq.legs.length;
 };

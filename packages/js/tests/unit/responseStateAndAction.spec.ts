@@ -300,7 +300,7 @@ describe('unit.responseStateAndAction', () => {
     refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
-    //MkaerDefaulted for taker
+    //MakerDefaulted for taker
     expect(
       takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
