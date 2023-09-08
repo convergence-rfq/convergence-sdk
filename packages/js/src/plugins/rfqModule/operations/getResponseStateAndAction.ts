@@ -7,6 +7,7 @@ import {
   inverseResponseSide,
 } from '../models';
 import { Operation, SyncOperationHandler, useOperation } from '../../../types';
+import { RfqTimers } from '@/utils/classes';
 const Key = 'GetResponseStateAndAction' as const;
 export type ResponseState =
   | 'Active'
@@ -94,18 +95,11 @@ export const getResponseStateAndActionHandler: SyncOperationHandler<GetResponseS
       if (!response.rfq.equals(rfq.address)) {
         throw new Error('Response does not match RFQ');
       }
-      const timestampStart = new Date(Number(rfq.creationTimestamp));
-      const timestampExpiry = new Date(
-        timestampStart.getTime() + Number(rfq.activeWindow) * 1000
-      );
-      const timestampSettlement = new Date(
-        timestampExpiry.getTime() + Number(rfq.settlingWindow) * 1000
-      );
+      const rfqTimers = new RfqTimers(rfq);
       const responseState = getResponseState(
         response,
         rfq,
-        timestampExpiry,
-        timestampSettlement,
+        rfqTimers,
         responseSide
       );
       const responseAction = getResponseAction(response, responseState, caller);
@@ -116,12 +110,11 @@ export const getResponseStateAndActionHandler: SyncOperationHandler<GetResponseS
 const getResponseState = (
   response: Response,
   rfq: Rfq,
-  timestampExpiry: Date,
-  timestampSettlement: Date,
+  rfqTimers: RfqTimers,
   responseSide: ResponseSide
 ): ResponseState => {
-  const rfqExpired = timestampExpiry.getTime() <= Date.now();
-  const settlementWindowElapsed = timestampSettlement.getTime() <= Date.now();
+  const rfqExpired = rfqTimers.isRfqExpired();
+  const settlementWindowElapsed = rfqTimers.isRfqSettlementWindowElapsed();
   const confirmedInverseResponseSide =
     response?.confirmed?.side === inverseResponseSide(responseSide);
   const responseConfirmed = response?.confirmed !== null;
@@ -243,16 +236,15 @@ const getDefautingParty = (
   makerPrepared: boolean,
   takerPrepared: boolean
 ): DefaultingParty | null => {
-  let { defaultingParty } = response;
+  const { defaultingParty } = response;
   if (defaultingParty) return defaultingParty;
   const defaulted =
     settlementWindowElapsed && (!makerPrepared || !takerPrepared);
 
   if (defaulted && defaultingParty === null) {
-    if (!makerPrepared && !takerPrepared)
-      defaultingParty = DefaultingParty.Both;
-    if (!makerPrepared) defaultingParty = DefaultingParty.Maker;
-    if (!takerPrepared) defaultingParty = DefaultingParty.Taker;
+    if (!makerPrepared && !takerPrepared) return DefaultingParty.Both;
+    if (!makerPrepared) return DefaultingParty.Maker;
+    if (!takerPrepared) return DefaultingParty.Taker;
   }
 
   return null;
