@@ -24,7 +24,7 @@ export type ResponseAction =
   | 'Settle'
   | 'Approve'
   | 'Settle One Party Defaulted'
-  | 'Settle Both Parties Defaulted'
+  | 'Settle Both Party Defaulted'
   | null;
 
 /**
@@ -127,9 +127,25 @@ const getResponseState = (
     (responseSide === 'ask' && response?.confirmed?.side !== 'ask') ||
     (responseSide === 'bid' && response?.confirmed?.side !== 'bid');
   const responseConfirmed = response?.confirmed !== null;
+  const takerPreparedLegsComplete =
+    response.takerPreparedLegs === rfq.legs.length;
+  const makerPreparedLegsComplete =
+    response.makerPreparedLegs === rfq.legs.length;
+  const defaulted = response.defaultingParty
+    ? response.defaultingParty !== null
+    : settlementWindowElapsed &&
+      (!makerPreparedLegsComplete || !takerPreparedLegsComplete);
+
+  let { defaultingParty } = response;
+
+  if (defaulted && defaultingParty === null) {
+    if (!makerPreparedLegsComplete && !takerPreparedLegsComplete)
+      defaultingParty = DefaultingParty.Both;
+    if (!makerPreparedLegsComplete) defaultingParty = DefaultingParty.Maker;
+    if (!takerPreparedLegsComplete) defaultingParty = DefaultingParty.Taker;
+  }
 
   if (responseConfirmed && confirmedInverseResponseSide) return 'Rejected';
-  const { defaultingParty } = response;
   switch (response.state) {
     case 'active':
       if (!rfqExpired) return 'Active';
@@ -187,8 +203,6 @@ const getResponseAction = (
           if (!responseConfirmed) return 'Cancel';
           break;
         case 'Expired':
-          if (!responseConfirmed && response.makerCollateralLocked > 0)
-            return 'UnlockCollateral';
         case 'Cancelled':
           if (response.makerCollateralLocked > 0) return 'UnlockCollateral';
           if (response.makerCollateralLocked === 0) return 'Cleanup';
@@ -205,7 +219,7 @@ const getResponseAction = (
         case 'TakerDefaulted':
           return 'Settle One Party Defaulted';
         case 'BothDefaulted':
-          return 'Settle Both Parties Defaulted';
+          return 'Settle Both Party Defaulted';
         case 'Rejected':
           return null;
       }
@@ -227,9 +241,11 @@ const getResponseAction = (
         case 'TakerDefaulted':
           return 'Settle One Party Defaulted';
         case 'BothDefaulted':
-          return 'Settle Both Parties Defaulted';
+          return 'Settle Both Party Defaulted';
         case 'Expired':
         case 'Cancelled':
+          if (response.takerCollateralLocked > 0) return 'UnlockCollateral';
+          if (response.takerCollateralLocked === 0) return 'Cleanup';
         case 'Rejected':
           return null;
       }

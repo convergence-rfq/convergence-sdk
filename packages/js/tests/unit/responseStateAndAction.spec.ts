@@ -234,6 +234,7 @@ describe('unit.responseStateAndAction', () => {
   });
 
   it('[Rejected, Defaulted]', async () => {
+    let refreshedResponse: Response;
     const fixedSize: FixedSize = {
       type: 'fixed-base',
       amount: 19.653_038_331,
@@ -264,7 +265,7 @@ describe('unit.responseStateAndAction', () => {
       rfq: rfq.address,
     });
 
-    const refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
+    refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
     });
 
@@ -296,7 +297,10 @@ describe('unit.responseStateAndAction', () => {
 
     await sleep(3);
 
-    //Defaulted for taker
+    refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
+      address: rfqResponse.address,
+    });
+    //MkaerDefaulted for taker
     expect(
       takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
@@ -304,9 +308,8 @@ describe('unit.responseStateAndAction', () => {
         caller: 'taker',
         responseSide: 'bid',
       }).responseState
-    ).toBe('Defaulted');
-
-    //Defaulted for maker
+    ).toBe('MakerDefaulted');
+    //MakerDefaulted for maker
     expect(
       takerCvg.rfqs().getResponseStateAndAction({
         response: refreshedResponse,
@@ -314,6 +317,6 @@ describe('unit.responseStateAndAction', () => {
         caller: 'maker',
         responseSide: 'bid',
       }).responseState
-    ).toBe('Defaulted');
+    ).toBe('MakerDefaulted');
   });
 });
