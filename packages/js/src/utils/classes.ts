@@ -22,25 +22,26 @@ export class InstructionUniquenessTracker {
     );
   };
   private matchInstruction = (ixToBeAdded: TransactionInstruction): boolean => {
-    this.IxArray.forEach((ix) => {
-      if (
-        this.matchKeys(ix.keys, ixToBeAdded.keys) &&
-        ix.programId.equals(ixToBeAdded.programId) &&
-        ix.data.equals(ixToBeAdded.data)
-      )
-        return true;
-    });
-    return false;
+    return !this.IxArray.every(
+      (ix) =>
+        !(
+          this.matchKeys(ix.keys, ixToBeAdded.keys) &&
+          ix.programId.equals(ixToBeAdded.programId) &&
+          ix.data.equals(ixToBeAdded.data)
+        )
+    );
   };
   checkedAdd(ix: TransactionInstruction | TransactionBuilder): boolean {
     if (ix instanceof TransactionBuilder) {
       const instructions = ix.getInstructions();
       const ixLength = instructions.length;
       let checked = 0;
-      instructions.forEach((ix) => {
+      instructions.every((ix) => {
         if (!this.matchInstruction(ix)) {
           checked++;
+          return true;
         }
+        return false;
       });
       if (checked === ixLength) {
         this.IxArray.push(...instructions);

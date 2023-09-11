@@ -93,9 +93,6 @@ export const prepareAmericanOptions = async (
     }
 
     const optionMarket = await leg.getOptionMeta();
-    if (!optionMarket) {
-      continue;
-    }
     const optionToken = await getOrCreateATAtxBuilder(
       convergence,
       optionMarket.optionMint,
