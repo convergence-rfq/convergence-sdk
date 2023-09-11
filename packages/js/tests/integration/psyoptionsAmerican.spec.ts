@@ -36,7 +36,10 @@ describe('integration.psyoptionsAmerican', () => {
       quoteMint
     );
     expect(rfq).toHaveProperty('address');
-
+    console.log(
+      'rfq.optionMeta',
+      rfq.legs[1].getMetaData().underlyingMint.toBase58()
+    );
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1);
     expect(rfqResponse).toHaveProperty('address');
 

@@ -8,7 +8,7 @@ import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import BN from 'bn.js';
 import { Mint } from '../tokenModule';
-import { LegInstrument } from '../instrumentModule';
+import { LegInstrument, LegMetaData } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
@@ -59,13 +59,20 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
     readonly side: LegSide,
-    private optionMeta?: OptionMarketWithKey
+    public optionMeta: OptionMarketWithKey
   ) {}
 
   getBaseAssetIndex = () => this.baseAssetIndex;
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
+  getMetaData() {
+    const legMetaData: LegMetaData = {
+      legType: 'options',
+      underlyingMint: this.optionMeta.underlyingAssetMint,
+    };
+    return legMetaData;
+  }
 
   static async create(
     convergence: Convergence,
@@ -196,10 +203,10 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 }
 
 export const psyoptionsAmericanInstrumentParser = {
-  parseFromLeg(
+  async parseFromLeg(
     convergence: Convergence,
     leg: Leg
-  ): PsyoptionsAmericanInstrument {
+  ): Promise<PsyoptionsAmericanInstrument> {
     const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
     const [
       {
@@ -215,7 +222,10 @@ export const psyoptionsAmericanInstrumentParser = {
     ] = psyoptionsAmericanInstrumentDataSerializer.deserialize(
       Buffer.from(instrumentData)
     );
-
+    const optionMeta = await PsyoptionsAmericanInstrument.fetchMeta(
+      convergence,
+      metaKey
+    );
     return new PsyoptionsAmericanInstrument(
       convergence,
       optionType,
@@ -231,7 +241,8 @@ export const psyoptionsAmericanInstrumentParser = {
       metaKey,
       baseAssetIndex,
       removeDecimals(instrumentAmount, PsyoptionsAmericanInstrument.decimals),
-      fromSolitaLegSide(side)
+      fromSolitaLegSide(side),
+      optionMeta
     );
   },
 };

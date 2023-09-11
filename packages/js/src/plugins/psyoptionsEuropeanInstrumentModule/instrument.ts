@@ -12,7 +12,7 @@ import {
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../tokenModule';
-import { LegInstrument } from '../instrumentModule';
+import { LegInstrument, LegMetaData } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
@@ -95,13 +95,20 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
     readonly side: LegSide,
-    private optionMeta?: EuroMeta
+    public optionMeta: EuroMeta
   ) {}
 
   getBaseAssetIndex = () => this.baseAssetIndex;
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsEuropeanInstrument.decimals;
   getSide = () => this.side;
+  getMetaData() {
+    const legMetaData: LegMetaData = {
+      legType: 'options',
+      underlyingMint: this.optionMeta.underlyingMint,
+    };
+    return legMetaData;
+  }
 
   static async create(
     convergence: Convergence,
@@ -214,10 +221,10 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 }
 
 export const psyoptionsEuropeanInstrumentParser = {
-  parseFromLeg(
+  async parseFromLeg(
     convergence: Convergence,
     leg: Leg
-  ): PsyoptionsEuropeanInstrument {
+  ): Promise<PsyoptionsEuropeanInstrument> {
     const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
     const [
       {
@@ -233,7 +240,10 @@ export const psyoptionsEuropeanInstrumentParser = {
     ] = psyoptionsEuropeanInstrumentDataSerializer.deserialize(
       Buffer.from(instrumentData)
     );
-
+    const optionMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
+      convergence,
+      metaKey
+    );
     return new PsyoptionsEuropeanInstrument(
       convergence,
       optionType,
@@ -249,7 +259,8 @@ export const psyoptionsEuropeanInstrumentParser = {
       metaKey,
       baseAssetIndex,
       removeDecimals(instrumentAmount, PsyoptionsEuropeanInstrument.decimals),
-      fromSolitaLegSide(side)
+      fromSolitaLegSide(side),
+      optionMeta
     );
   },
 };

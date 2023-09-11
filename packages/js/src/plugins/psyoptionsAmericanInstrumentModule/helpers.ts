@@ -2,6 +2,7 @@ import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 
 import { BN } from 'bn.js';
 import { PublicKey } from '@solana/web3.js';
+import { Leg } from '@convergence-rfq/rfq';
 import { Convergence } from '../../Convergence';
 
 import { ATAExistence, getOrCreateATA } from '../../utils/ata';
@@ -11,8 +12,10 @@ import {
   InstructionWithSigners,
   TransactionBuilder,
 } from '../../utils/TransactionBuilder';
+import { LegInstrument } from '../instrumentModule';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
+import { psyoptionsAmericanInstrumentProgram } from './programs';
 
 export const mintAmericanOptions = async (
   convergence: Convergence,
@@ -185,3 +188,9 @@ export const getOrCreateAmericanOptionATAs = async (
   }
   return ATAExistence.NOTEXISTS;
 };
+
+export function hasPsyoptionsAmericanLeg(legs: Leg[]): boolean {
+  return legs.some((leg) =>
+    leg.instrumentProgram.equals(psyoptionsAmericanInstrumentProgram.address)
+  );
+}

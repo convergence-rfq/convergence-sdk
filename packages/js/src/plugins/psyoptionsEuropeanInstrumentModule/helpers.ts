@@ -2,12 +2,15 @@ import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { BN } from 'bn.js';
+import { Leg } from '@convergence-rfq/rfq';
 import { Mint } from '../tokenModule';
 import { ATAExistence, getOrCreateATA } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';
+import { LegInstrument } from '../instrumentModule';
 import { PsyoptionsEuropeanInstrument } from './instrument';
+import { psyoptionsEuropeanInstrumentProgram } from './programs';
 import { Pda } from '@/types/Pda';
 import { makeConfirmOptionsFinalizedOnMainnet } from '@/types/Operation';
 import { toBigNumber } from '@/types/BigNumber';
@@ -264,3 +267,9 @@ export const getOrCreateEuropeanOptionATAs = async (
   }
   return ATAExistence.NOTEXISTS;
 };
+
+export function hasPsyoptionsEuropeanLeg(legs: Leg[]): boolean {
+  return legs.some((leg) =>
+    leg.instrumentProgram.equals(psyoptionsEuropeanInstrumentProgram.address)
+  );
+}
