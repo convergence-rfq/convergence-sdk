@@ -35,10 +35,6 @@ describe('integration.psyoptionsEuropean', () => {
       baseMint,
       quoteMint
     );
-    console.log(
-      'rfq.optionMeta',
-      rfq.legs[1].getMetaData().underlyingMint.toBase58()
-    );
     expect(rfq).toHaveProperty('address');
     expect(response.signature).toBeDefined();
 

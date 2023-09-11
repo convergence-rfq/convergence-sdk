@@ -37,12 +37,8 @@ describe('unit.rfq', () => {
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
       fixedSize,
     });
-    console.log(
-      'rfq.optionMeta',
-      rfq.legs[1].getMetaData().underlyingMint.toBase58()
-    );
-    // @ts-ignore
 
+    // @ts-ignore
     expect(fixedSize.amount).toBeCloseTo(rfq.size.amount);
   });
 

@@ -4,11 +4,7 @@ import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../tokenModule';
-import {
-  LegInstrument,
-  LegMetaData,
-  QuoteInstrument,
-} from '../instrumentModule';
+import { LegInstrument, QuoteInstrument } from '../instrumentModule';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { removeDecimals } from '../../utils/conversions';
@@ -46,13 +42,7 @@ export class SpotLegInstrument implements LegInstrument {
   getDecimals = () => this.decimals;
   getAmount = () => this.amount;
   getBaseAssetIndex = () => this.baseAssetIndex;
-  getMetaData() {
-    const legMetaData: LegMetaData = {
-      legType: 'spot',
-      underlyingMint: this.mintAddress,
-    };
-    return legMetaData;
-  }
+  getBaseAssetMint = () => this.mintAddress;
   static async create(
     convergence: Convergence,
     mint: Mint,

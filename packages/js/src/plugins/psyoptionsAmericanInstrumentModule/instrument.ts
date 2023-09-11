@@ -8,7 +8,7 @@ import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import BN from 'bn.js';
 import { Mint } from '../tokenModule';
-import { LegInstrument, LegMetaData } from '../instrumentModule';
+import { LegInstrument } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
@@ -66,13 +66,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
-  getMetaData() {
-    const legMetaData: LegMetaData = {
-      legType: 'options',
-      underlyingMint: this.optionMeta.underlyingAssetMint,
-    };
-    return legMetaData;
-  }
+  getBaseAssetMint = () => this.optionMeta.underlyingAssetMint;
 
   static async create(
     convergence: Convergence,

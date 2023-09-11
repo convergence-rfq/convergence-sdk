@@ -12,7 +12,7 @@ import {
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../tokenModule';
-import { LegInstrument, LegMetaData } from '../instrumentModule';
+import { LegInstrument } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
@@ -102,13 +102,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsEuropeanInstrument.decimals;
   getSide = () => this.side;
-  getMetaData() {
-    const legMetaData: LegMetaData = {
-      legType: 'options',
-      underlyingMint: this.optionMeta.underlyingMint,
-    };
-    return legMetaData;
-  }
+  getBaseAssetMint = () => this.optionMeta.underlyingMint;
 
   static async create(
     convergence: Convergence,

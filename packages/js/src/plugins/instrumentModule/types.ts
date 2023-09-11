@@ -9,11 +9,6 @@ export interface LegInstrumentParser {
   parseFromLeg(convergence: Convergence, leg: Leg): LegInstrument;
 }
 
-export type LegMetaData = {
-  legType: 'spot' | 'options' | 'futures';
-  underlyingMint: PublicKey;
-};
-
 export interface LegInstrument {
   getProgramId: () => PublicKey;
   getBaseAssetIndex: () => BaseAssetIndex;
@@ -22,7 +17,7 @@ export interface LegInstrument {
   getSide: () => LegSide;
   serializeInstrumentData: () => Buffer;
   getValidationAccounts(): Promise<AccountMeta[]>;
-  getMetaData(): LegMetaData;
+  getBaseAssetMint(): PublicKey;
 }
 
 // TODO add registration of quote instruments
