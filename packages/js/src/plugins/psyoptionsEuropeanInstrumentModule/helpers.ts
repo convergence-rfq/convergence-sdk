@@ -8,7 +8,6 @@ import { ATAExistence, getOrCreateATA } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';
-import { LegInstrument } from '../instrumentModule';
 import { PsyoptionsEuropeanInstrument } from './instrument';
 import { psyoptionsEuropeanInstrumentProgram } from './programs';
 import { Pda } from '@/types/Pda';

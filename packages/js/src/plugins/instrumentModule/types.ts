@@ -6,7 +6,7 @@ import { Convergence } from '../../Convergence';
 import { LegSide } from '../rfqModule/models/LegSide';
 
 export interface LegInstrumentParser {
-  parseFromLeg(convergence: Convergence, leg: Leg): LegInstrument;
+  parseFromLeg(convergence: Convergence, leg: Leg): Promise<LegInstrument>;
 }
 
 export interface LegInstrument {

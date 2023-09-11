@@ -12,7 +12,6 @@ import {
   InstructionWithSigners,
   TransactionBuilder,
 } from '../../utils/TransactionBuilder';
-import { LegInstrument } from '../instrumentModule';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
 import { psyoptionsAmericanInstrumentProgram } from './programs';

@@ -15,8 +15,6 @@ import { collateralMintCache } from '../../../plugins/collateralModule';
 import { FixedSize, fromSolitaFixedSize } from './FixedSize';
 import { OrderType, fromSolitaOrderType } from './OrderType';
 import { StoredRfqState, fromSolitaStoredRfqState } from './StoredRfqState';
-import { hasPsyoptionsAmericanLeg } from '@/plugins/psyoptionsAmericanInstrumentModule';
-import { hasPsyoptionsEuropeanLeg } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -107,14 +105,9 @@ export const toRfq = async (
   const collateralMint = await collateralMintCache.get(convergence);
   const collateralDecimals = collateralMint.decimals;
   const { legs } = account.data;
-  let parsedLegs: LegInstrument[];
-  if (hasPsyoptionsAmericanLeg(legs) || hasPsyoptionsEuropeanLeg(legs)) {
-    parsedLegs = await Promise.all(
-      legs.map((leg) => convergence.parseLegInstrument(leg))
-    );
-  } else {
-    parsedLegs = legs.map((leg) => convergence.parseLegInstrument(leg));
-  }
+  const parsedLegs = await Promise.all(
+    legs.map((leg) => convergence.parseLegInstrument(leg))
+  );
 
   return {
     model: 'rfq',

@@ -48,7 +48,7 @@ declare module '../../Convergence' {
       programAddress: PublicKey,
       factory: LegInstrumentParser
     ): void;
-    parseLegInstrument(leg: SolitaLeg): LegInstrument;
+    parseLegInstrument(leg: SolitaLeg): Promise<LegInstrument>;
   }
 }
 
