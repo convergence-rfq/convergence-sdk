@@ -11,11 +11,16 @@ import {
   PrintTradeQuote,
 } from '../printTradeModule';
 import { fromNumberInstrumentType } from '../riskEngineModule';
-import { fromSolitaLegSide } from '../rfqModule';
+import { AuthoritySide, Rfq, Response, fromSolitaLegSide } from '../rfqModule';
 import { HXRO_LEG_DECIMALS, HXRO_QUOTE_DECIMALS } from './constants';
 import { HxroLegInput } from './types';
+import { fetchValidHxroMpg, getHxroManifest } from './helpers';
 import { Convergence } from '@/Convergence';
-import { createSerializerFromFixedSizeBeet, toFractional } from '@/types';
+import {
+  PublicKey,
+  createSerializerFromFixedSizeBeet,
+  toFractional,
+} from '@/types';
 import { removeDecimals } from '@/utils';
 
 export class HxroPrintTrade implements PrintTrade {
@@ -66,6 +71,76 @@ export class HxroPrintTrade implements PrintTrade {
         isWritable: false,
       },
       ...validationAccounts,
+    ];
+  };
+
+  getSettlementPreparationAccounts = async (
+    rfq: Rfq,
+    response: Response,
+    side: AuthoritySide,
+    additionalParams: any
+  ) => {
+    if (
+      !AdditionalHxroSettlementPreparationParameters.verify(additionalParams)
+    ) {
+      throw new Error(
+        'Invalid type of additional params is passed to prepare print trade settlement!'
+      );
+    }
+
+    const [user, counterparty] =
+      side === 'taker'
+        ? [rfq.taker, response.maker]
+        : [response.maker, rfq.taker];
+
+    const manifest = await getHxroManifest(this.cvg);
+    const [mpg, userTrg, counterpartyTrg, operatorTrgs] = await Promise.all([
+      fetchValidHxroMpg(this.cvg, manifest),
+      manifest.getTRG(additionalParams.userTrgAddress),
+      manifest.getTRG(additionalParams.counterpartyTrgAddress),
+      manifest.getTRGsOfOwner(this.cvg.hxro().pdas().operator()),
+    ]);
+
+    // @ts-ignore
+    const operatorTrg = operatorTrgs[0];
+    if (!user.equals(userTrg.owner)) {
+      throw new Error('Invalid user trg authority!');
+    }
+    if (!counterparty.equals(counterpartyTrg.owner)) {
+      throw new Error('Invalid counterparty trg authority!');
+    }
+
+    return [
+      {
+        pubkey: this.cvg.hxro().pdas().operator(),
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: this.cvg.hxro().pdas().config(),
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: manifest.fields.dexProgram.programId,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: mpg.address, // TODO
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: this.cvg.identity().publicKey,
+        isSigner: true,
+        isWritable: false,
+      },
+      {
+        pubkey: userTrg.pubkey, // TODO
+        isSigner: true,
+        isWritable: false,
+      },
     ];
   };
 }
@@ -177,4 +252,17 @@ class HxroLeg implements PrintTradeLeg {
 
     return Buffer.concat([riskEngineBuffer, productInfoBuffer]);
   };
+}
+
+export class AdditionalHxroSettlementPreparationParameters {
+  constructor(
+    public userTrgAddress: PublicKey,
+    public counterpartyTrgAddress: PublicKey
+  ) {}
+
+  static verify(
+    parameters: any
+  ): parameters is AdditionalHxroSettlementPreparationParameters {
+    return parameters instanceof AdditionalHxroSettlementPreparationParameters;
+  }
 }

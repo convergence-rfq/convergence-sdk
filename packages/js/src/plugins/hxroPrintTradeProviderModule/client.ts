@@ -5,11 +5,14 @@ import {
   FetchHxroProductsOutput,
   InitializeHxroConfigInput,
   InitializeHxroConfigOutput,
+  InitializeOperatorTraderRiskGroupInput,
+  InitializeOperatorTraderRiskGroupOutput,
   ModifyHxroConfigInput,
   ModifyHxroConfigOutput,
   fetchHxroPrintTradeProviderConfigOperation,
   fetchHxroProductsOperation,
   initializeHxroConfigOperation,
+  initializeOperatorTraderRiskGroupOperation,
   modifyHxroConfigOperation,
 } from './operations';
 import { HxroPdasClient } from './pdas';
@@ -57,5 +60,14 @@ export class HxroClient {
     return this.cvg
       .operations()
       .execute(modifyHxroConfigOperation(input), options);
+  }
+
+  initializeOperatorTraderRiskGroup(
+    input: InitializeOperatorTraderRiskGroupInput,
+    options?: OperationOptions
+  ): Promise<InitializeOperatorTraderRiskGroupOutput> {
+    return this.cvg
+      .operations()
+      .execute(initializeOperatorTraderRiskGroupOperation(input), options);
   }
 }

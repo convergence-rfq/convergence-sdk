@@ -9,6 +9,11 @@ export class HxroPdasClient {
     return Pda.find(programId, [Buffer.from('config', 'utf8')]);
   }
 
+  operator(): Pda {
+    const programId = this.programId();
+    return Pda.find(programId, [Buffer.from('operator', 'utf8')]);
+  }
+
   private programId(programs?: Program[]) {
     return this.cvg.programs().getHxroPrintTradeProvider(programs).address;
   }

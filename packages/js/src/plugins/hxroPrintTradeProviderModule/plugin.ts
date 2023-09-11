@@ -7,6 +7,8 @@ import {
   fetchHxroProductsOperationHandler,
   initializeHxroConfigOperation,
   initializeHxroConfigOperationHandler,
+  initializeOperatorTraderRiskGroupOperation,
+  initializeOperatorTraderRiskGroupOperationHandler,
   modifyHxroConfigOperation,
   modifyHxroConfigOperationHandler,
 } from './operations';
@@ -37,6 +39,10 @@ export const hxroModule = (): ConvergencePlugin => ({
       initializeHxroConfigOperationHandler
     );
     op.register(modifyHxroConfigOperation, modifyHxroConfigOperationHandler);
+    op.register(
+      initializeOperatorTraderRiskGroupOperation,
+      initializeOperatorTraderRiskGroupOperationHandler
+    );
 
     convergence.hxro = function () {
       return new HxroClient(this);

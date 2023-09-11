@@ -58,9 +58,43 @@ export const displayConfig = async (opts: Opts) => {
   }
 };
 
+const initializeOperatorTRGCmd = (c: Command) =>
+  addCmd(
+    c,
+    'initialize-operator-trg',
+    'initialized a trg for an operator, which is required for hxro settlements',
+    initializeOperatorTRG,
+    [
+      {
+        flags: '--hxro-risk-engine <string>',
+        description:
+          'Overrides hxro risk engine address. Should be used primarely for testing purposes',
+        defaultValue: '',
+      },
+    ]
+  );
+
+export const initializeOperatorTRG = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+
+  try {
+    const hxroRiskEngineAddress =
+      opts.hxroRiskEngine !== ''
+        ? new PublicKey(opts.hxroRiskEngine)
+        : undefined;
+    const response = await cvg.hxro().initializeOperatorTraderRiskGroup({
+      hxroRiskEngineAddress,
+    });
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
 export const hxroGroup = (c: Command) => {
   const group = c.command('hxro');
   initializeConfigCmd(group);
   modifyConfigCmd(group);
   displayConfigCmd(group);
+  initializeOperatorTRGCmd(group);
 };

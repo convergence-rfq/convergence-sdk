@@ -18,6 +18,7 @@ export * from './partlyRevertSettlementPreparation';
 export * from './prepareMoreLegsSettlement';
 export * from './prepareSettlement';
 export * from './prepareSettlementAndPrepareMoreLegs';
+export * from './preparePrintTradeSettlement';
 export * from './respondToRfq';
 export * from './findRfqs';
 export * from './revertSettlementPreparation';

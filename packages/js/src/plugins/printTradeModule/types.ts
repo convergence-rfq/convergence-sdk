@@ -5,7 +5,7 @@ import {
   QuoteAsset as SolitaQuoteAsset,
 } from '@convergence-rfq/rfq';
 import { InstrumentType } from '../riskEngineModule';
-import { LegSide } from '../rfqModule';
+import { LegSide, Rfq, Response, AuthoritySide } from '../rfqModule';
 import { Convergence } from '@/Convergence';
 
 export interface PrintTrade {
@@ -13,6 +13,12 @@ export interface PrintTrade {
   getLegs: () => PrintTradeLeg[];
   getQuote: () => PrintTradeQuote;
   getValidationAccounts: () => Promise<AccountMeta[]>;
+  getSettlementPreparationAccounts: (
+    rfq: Rfq,
+    response: Response,
+    side: AuthoritySide,
+    additionalParams: any
+  ) => Promise<AccountMeta[]>;
 }
 
 export interface PrintTradeLeg {

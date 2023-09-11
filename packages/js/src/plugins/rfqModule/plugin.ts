@@ -75,6 +75,8 @@ import {
   getSettlementResultHandler,
   createPrintTradeRfqOperation,
   createPrintTradeRfqOperationHandler,
+  preparePrintTradeSettlementOperationHandler,
+  preparePrintTradeSettlementOperation,
 } from './operations';
 import { rfqProgram } from './program';
 
@@ -145,6 +147,10 @@ export const rfqModule = (): ConvergencePlugin => ({
       prepareMoreLegsSettlementOperationHandler
     );
     op.register(prepareSettlementOperation, prepareSettlementOperationHandler);
+    op.register(
+      preparePrintTradeSettlementOperation,
+      preparePrintTradeSettlementOperationHandler
+    );
     op.register(respondToRfqOperation, respondToRfqOperationHandler);
     op.register(settleOperation, settleOperationHandler);
     op.register(

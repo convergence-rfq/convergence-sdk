@@ -2,8 +2,14 @@ import { expect } from 'expect';
 import { BN } from 'bn.js';
 
 import { Keypair } from '@solana/web3.js';
-import { createUserCvg } from '../helpers';
-import { HxroOptionInfo, HxroPrintTrade, PublicKey } from '../../src';
+import { createUserCvg, ensureHxroOperatorTRGInitialized } from '../helpers';
+import {
+  AdditionalHxroSettlementPreparationParameters,
+  HxroOptionInfo,
+  HxroPrintTrade,
+  PublicKey,
+} from '../../src';
+import { CTX } from '../constants';
 
 describe('unit.hxro', () => {
   const cvgTaker = createUserCvg('taker');
@@ -64,6 +70,8 @@ describe('unit.hxro', () => {
   });
 
   it('can create hxro rfq', async () => {
+    await ensureHxroOperatorTRGInitialized(cvgAuthority);
+
     const products = await cvgTaker.hxro().fetchProducts();
     const { rfq } = await cvgTaker.rfqs().createPrintTrade({
       printTrade: new HxroPrintTrade(cvgTaker, [
@@ -75,8 +83,18 @@ describe('unit.hxro', () => {
       settlingWindow: 5000,
     });
 
-    await cvgMaker
+    const { rfqResponse } = await cvgMaker
       .rfqs()
       .respond({ rfq: rfq.address, ask: { price: 123, legsMultiplier: 1 } });
+
+    await cvgTaker.rfqs().preparePrintTradeSettlement({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      additionalPrintTradeInfo:
+        new AdditionalHxroSettlementPreparationParameters(
+          new PublicKey(CTX.hxroTakerTrg),
+          new PublicKey(CTX.hxroMakerTrg)
+        ),
+    });
   });
 });

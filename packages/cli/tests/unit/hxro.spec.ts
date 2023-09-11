@@ -2,6 +2,7 @@ import { expect } from 'expect';
 import sinon, { SinonStub } from 'sinon';
 
 import { ADDRESS_LABEL, HXRO_MPG, TX_LABEL, runCli } from '../helpers';
+import { HXRO_RISK_ENGINE } from '../../../validator';
 
 describe('unit.hxro', () => {
   let stub: SinonStub;
@@ -20,8 +21,18 @@ describe('unit.hxro', () => {
     expect(stub.args[1][0]).toEqual('Valid Hxro market product group:');
   });
 
-  it('display config', async () => {
+  it('modify config', async () => {
     await runCli(['hxro', 'modify-config', '--valid-mpg', HXRO_MPG]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('initialize operator TRG', async () => {
+    await runCli([
+      'hxro',
+      'initialize-operator-trg',
+      '--hxro-risk-engine',
+      HXRO_RISK_ENGINE,
+    ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 });

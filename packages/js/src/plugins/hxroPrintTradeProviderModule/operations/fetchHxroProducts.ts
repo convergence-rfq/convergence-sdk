@@ -2,6 +2,7 @@ import dexterity from '@hxronetwork/dexterity-ts';
 import BN from 'bn.js';
 import { OptionType } from '@convergence-rfq/risk-engine';
 import { HxroProductInfo } from '../types';
+import { fetchValidHxroMpg, getHxroManifest } from '../helpers';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -10,7 +11,6 @@ import {
   PublicKey,
   useOperation,
 } from '@/types';
-import { CvgWallet } from '@/utils';
 import { BaseAsset } from '@/plugins/protocolModule';
 
 const Key = 'FetchHxroProducts' as const;
@@ -56,21 +56,7 @@ export const fetchHxroProductsOperationHandler: OperationHandler<FetchHxroProduc
       cvg: Convergence,
       scope: OperationScope
     ): Promise<FetchHxroProductsOutput> => {
-      // dexterity.getManifest adds a lot of clutter to logs, so we disable console.debug for this call
-      // TODO: remove this workaround when dexterity library is updated
-      const { debug } = console;
-      console.debug = () => {};
-      let manifest: any; // dexterity doesn't export a type for a manifest
-      try {
-        manifest = await dexterity.getManifest(
-          cvg.connection.rpcEndpoint,
-          true,
-          new CvgWallet(cvg)
-        );
-      } finally {
-        console.debug = debug;
-      }
-
+      const manifest = await getHxroManifest(cvg);
       const baseProductData = await parseBaseProductData(cvg, manifest);
       scope.throwIfCanceled();
 
@@ -91,9 +77,7 @@ const parseBaseProductData = async (
   cvg: Convergence,
   manifest: any
 ): Promise<BaseProductData[]> => {
-  const { validMpg } = await cvg.hxro().fetchConfig();
-
-  const mpg = await manifest.getMPG(validMpg);
+  const mpg = await fetchValidHxroMpg(cvg, manifest);
 
   return [...dexterity.Manifest.GetProductsOfMPG(mpg).values()]
     .filter((productInfo) => productInfo.product?.outright !== undefined)

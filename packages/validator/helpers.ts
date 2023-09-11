@@ -28,7 +28,7 @@ const HXRO_DEX = 'FUfpR31LmcP1VSbz5zDaM7nxnH55iBHkpwusgrnhaFjL';
 const HXRO_AAOB = 'DchhQ6g8LyRCM5mnao1MAg3g9twfqBbDmUWgpQpFfn1b';
 const HXRO_INSTRUMENT = '8981bZYszfz1FrFVx7gcUm61RfawMoAHnURuERRJKdkq';
 const HXRO_FEES = '5T9gt3frWPAvu1hxEULbsKrP2WF4ggqSxCMqpJvtWXHV';
-const HXRO_RISK_ENGINE = 'BVDTB61eHY7UnCb4ueatdaV4rctTzqfLAL6sQDeMNSHA';
+export const HXRO_RISK_ENGINE = 'BVDTB61eHY7UnCb4ueatdaV4rctTzqfLAL6sQDeMNSHA';
 
 const getBaseArgs = () => [
   '--account',
@@ -131,13 +131,17 @@ export class Ctx {
   takerCollateralInfo = getAccountPk('rfq-collateral-info-taker');
   makerCollateralToken = getAccountPk('rfq-collateral-token-maker');
   takerCollateralToken = getAccountPk('rfq-collateral-token-taker');
-  hxroMpg = getHxroAccountPk('mpg');
 
   // Switchboard
   switchboardBTCOracle = getDepAccountPk('btc_20000_oracle_switchboard');
 
   // Pyth
   pythSOLOracle = getDepAccountPk('sol_30_oracle_pyth');
+
+  // Hxro
+  hxroMpg = getHxroAccountPk('mpg');
+  hxroTakerTrg = getHxroAccountPk('taker-trg');
+  hxroMakerTrg = getHxroAccountPk('maker-trg');
 }
 
 export const getAccountPk = (user: string): string => {

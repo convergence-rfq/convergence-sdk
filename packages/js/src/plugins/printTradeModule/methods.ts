@@ -1,6 +1,11 @@
 import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
-import { toSolitaLegSide } from '../rfqModule/models';
+import {
+  Rfq,
+  Response,
+  AuthoritySide,
+  toSolitaLegSide,
+} from '../rfqModule/models';
 import { toNumberInstrumentType } from '../riskEngineModule/models';
 import { PrintTrade, PrintTradeLeg, PrintTradeQuote } from './types';
 import { addDecimals } from '@/utils';
@@ -53,5 +58,22 @@ export async function getPrintTradeValidationAccounts(
 ): Promise<AccountMeta[]> {
   return [getPrintTradeProgramAccount(printTrade)].concat(
     await printTrade.getValidationAccounts()
+  );
+}
+
+export async function getSettlementPreparationAccounts(
+  printTrade: PrintTrade,
+  rfq: Rfq,
+  response: Response,
+  side: AuthoritySide,
+  additionalInfo: any
+): Promise<AccountMeta[]> {
+  return [getPrintTradeProgramAccount(printTrade)].concat(
+    await printTrade.getSettlementPreparationAccounts(
+      rfq,
+      response,
+      side,
+      additionalInfo
+    )
   );
 }

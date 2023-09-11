@@ -53,7 +53,11 @@ export const initializeHxroConfigOperationHandler: OperationHandler<InitializeHx
       cvg: Convergence,
       scope: OperationScope
     ): Promise<InitializeHxroConfigOutput> => {
-      const builder = await initializeHxroBuilder(cvg, operation.input, scope);
+      const builder = await initializeHxroConfigBuilder(
+        cvg,
+        operation.input,
+        scope
+      );
       scope.throwIfCanceled();
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
@@ -66,7 +70,7 @@ export const initializeHxroConfigOperationHandler: OperationHandler<InitializeHx
     },
   };
 
-export const initializeHxroBuilder = async (
+export const initializeHxroConfigBuilder = async (
   cvg: Convergence,
   params: InitializeHxroConfigInput,
   options: TransactionBuilderOptions = {}

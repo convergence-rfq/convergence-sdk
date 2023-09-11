@@ -1,4 +1,4 @@
-import { AccountMeta } from '@solana/web3.js';
+import { AccountMeta, PublicKey } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { Leg } from '@convergence-rfq/rfq';
 
@@ -9,7 +9,7 @@ import {
   getValidationAccounts,
   instrumentToSolitaLeg,
 } from '../instrumentModule';
-import { Rfq, Response } from './models';
+import { Rfq, Response, AuthoritySide } from './models';
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
@@ -112,4 +112,20 @@ export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
       }
       return 0;
     });
+};
+
+export const getAuthoritySide = (
+  user: PublicKey,
+  rfq: Rfq,
+  response: Response
+): AuthoritySide | null => {
+  if (rfq.taker.equals(user)) {
+    return 'taker';
+  }
+
+  if (response.maker.equals(user)) {
+    return 'maker';
+  }
+
+  return null;
 };

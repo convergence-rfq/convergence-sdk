@@ -28,7 +28,7 @@ import {
   getOrCreateEuropeanOptionATAs,
   mintEuropeanOptions,
 } from '../src';
-import { getUserKp, RPC_ENDPOINT } from '../../validator';
+import { getUserKp, HXRO_RISK_ENGINE, RPC_ENDPOINT } from '../../validator';
 import { IDL as PseudoPythIdl } from '../../validator/dependencies/pseudo_pyth_idl';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
 const DEFAULT_COMMITMENT = 'confirmed';
@@ -680,4 +680,20 @@ export const setupEuropean = async (cvg: Convergence, response: Response) => {
     cvg.rpc().getDefaultFeePayer().publicKey,
     europeanProgram
   );
+};
+
+let hxroOperatorTRGInitialized = false;
+
+export const ensureHxroOperatorTRGInitialized = async (
+  cvgAuthority: Convergence
+) => {
+  if (hxroOperatorTRGInitialized) {
+    return;
+  }
+
+  await cvgAuthority.hxro().initializeOperatorTraderRiskGroup({
+    hxroRiskEngineAddress: new PublicKey(HXRO_RISK_ENGINE),
+  });
+
+  hxroOperatorTRGInitialized = true;
 };

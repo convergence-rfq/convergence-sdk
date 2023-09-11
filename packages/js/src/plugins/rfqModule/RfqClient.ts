@@ -80,6 +80,8 @@ import {
   getSettlementResultOperation,
   CreatePrintTradeRfqInput,
   createPrintTradeRfqOperation,
+  preparePrintTradeSettlementOperation,
+  PreparePrintTradeSettlementInput,
 } from './operations';
 import { Response } from './models/Response';
 
@@ -358,6 +360,16 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(prepareSettlementAndPrepareMoreLegsOperation(input), options);
+  }
+
+  /** {@inheritDoc preparePrintTradeSettlementOperation} */
+  preparePrintTradeSettlement(
+    input: PreparePrintTradeSettlementInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(preparePrintTradeSettlementOperation(input), options);
   }
 
   /**
