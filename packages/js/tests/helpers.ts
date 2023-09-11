@@ -118,7 +118,7 @@ export const createAmericanCoveredCallRfq = async (
     cvg,
     baseMint,
     quoteMint,
-    44_000,
+    44_000 + Math.random() * 100,
     1,
     3_600 + Math.random() * 100
   );
@@ -163,7 +163,7 @@ export const createEuropeanCoveredCallRfq = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random() * 100;
+  const randomExpiry = min + Math.random() * 1000;
   const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
     cvg,
     ixTracker,
@@ -215,7 +215,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random() * 100;
+  const randomExpiry = min + Math.random() * 1000;
   const { euroMeta: euroMeta1, euroMetaKey: euroMetaKey1 } =
     await initializeNewEuropeanOption(
       cvg,
@@ -224,7 +224,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
       europeanProgram,
       baseMint,
       quoteMint,
-      23_354,
+      23_822,
       1,
       randomExpiry,
       0
@@ -237,7 +237,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
       europeanProgram,
       baseMint,
       quoteMint,
-      25_354,
+      28_822,
       1,
       randomExpiry,
       0
@@ -277,12 +277,12 @@ export const createAmericanFixedBaseStraddle = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const expiration = 3_600 + Math.random() * 100;
+  const expiration = 3_600 + Math.random() * 1000;
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
     baseMint,
     quoteMint,
-    27_000,
+    29_210,
     1,
     expiration
   );
@@ -336,7 +336,7 @@ export const createEuropeanFixedBaseStraddle = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random() * 100;
+  const randomExpiry = min + Math.random() * 1000;
 
   const { euroMeta: euroMeta, euroMetaKey: euroMetaKey } =
     await initializeNewEuropeanOption(
@@ -387,7 +387,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const expiration = 3_600 + Math.random() * 100;
+  const expiration = 3_600 + Math.random() * 1000;
   const { optionMarketKey: optionMarketKey1, optionMarket: optionMarket1 } =
     await initializeNewAmericanOption(
       cvg,
