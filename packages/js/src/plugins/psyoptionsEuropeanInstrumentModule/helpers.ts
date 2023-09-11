@@ -46,9 +46,7 @@ export const initializeNewEuropeanOption = async (
   if (tx.instructions.length > 0) {
     tx.recentBlockhash = latestBlockHash.blockhash;
     tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
-    await convergence
-      .rpc()
-      .sendAndConfirmTransaction(tx, [convergence.identity()]);
+    await convergence.rpc().sendAndConfirmTransaction(tx);
   }
 
   const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
@@ -80,9 +78,7 @@ export const initializeNewEuropeanOption = async (
     const createTx = new Transaction().add(createIx);
     createTx.recentBlockhash = latestBlockHash.blockhash;
     createTx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
-    await convergence
-      .rpc()
-      .sendAndConfirmTransaction(createTx, [convergence.identity()]);
+    await convergence.rpc().sendAndConfirmTransaction(createTx);
   }
 
   return {
