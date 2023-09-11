@@ -37,16 +37,20 @@ export const initializeNewEuropeanOption = async (
       oracleProviderId
     );
 
-  const tx = new Transaction();
+  const inititalizeTxBuilder = TransactionBuilder.make().setFeePayer(
+    convergence.rpc().getDefaultFeePayer()
+  );
 
   initializeIxs.forEach((ix) => {
-    if (ixTracker.checkedAdd(ix)) tx.add(ix);
+    if (ixTracker.checkedAdd(ix))
+      inititalizeTxBuilder.add({
+        instruction: ix,
+        signers: [convergence.identity()],
+      });
   });
-  const latestBlockHash = await convergence.rpc().getLatestBlockhash();
-  if (tx.instructions.length > 0) {
-    tx.recentBlockhash = latestBlockHash.blockhash;
-    tx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
-    await convergence.rpc().sendAndConfirmTransaction(tx);
+
+  if (inititalizeTxBuilder.getInstructions().length > 0) {
+    await inititalizeTxBuilder.sendAndConfirm(convergence);
   }
 
   const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
@@ -75,10 +79,14 @@ export const initializeNewEuropeanOption = async (
   );
 
   if (ixTracker.checkedAdd(createIx)) {
-    const createTx = new Transaction().add(createIx);
-    createTx.recentBlockhash = latestBlockHash.blockhash;
-    createTx.feePayer = convergence.rpc().getDefaultFeePayer().publicKey;
-    await convergence.rpc().sendAndConfirmTransaction(createTx);
+    const createTxBuilder = TransactionBuilder.make().setFeePayer(
+      convergence.rpc().getDefaultFeePayer()
+    );
+    createTxBuilder.add({
+      instruction: createIx,
+      signers: [convergence.identity()],
+    });
+    await createTxBuilder.sendAndConfirm(convergence);
   }
 
   return {
