@@ -15,11 +15,9 @@ describe('unit.retrieveBidAndAsk', () => {
       rfq,
       ask: {
         price: quoteAmount,
-        legsMultiplier: null,
       },
       bid: {
         price: quoteAmount,
-        legsMultiplier: 100,
       },
     });
 
@@ -40,11 +38,9 @@ describe('unit.retrieveBidAndAsk', () => {
       rfq,
       ask: {
         price: quoteAmount,
-        legsMultiplier: null,
       },
       bid: {
         price: quoteAmount + 1000,
-        legsMultiplier: null,
       },
     });
 
@@ -65,11 +61,9 @@ describe('unit.retrieveBidAndAsk', () => {
       rfq,
       ask: {
         price: quoteAmount,
-        legsMultiplier: null,
       },
       bid: {
         price: quoteAmount + 1000,
-        legsMultiplier: null,
       },
     });
 
@@ -97,7 +91,6 @@ describe('unit.retrieveBidAndAsk', () => {
         legsMultiplier: 20,
       },
     });
-
     expect(bidAndAsk).toEqual({
       calculatedAsk: { price: 72.3217, legsMultiplier: 10 },
       calculatedBid: { price: 186.16085, legsMultiplier: 20 },

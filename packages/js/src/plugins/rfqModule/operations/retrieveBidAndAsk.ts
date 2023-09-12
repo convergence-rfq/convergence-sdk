@@ -1,7 +1,7 @@
 import { Quote, Rfq } from '../models';
 import { Operation, SyncOperationHandler, useOperation } from '../../../types';
 import { FixedSize } from '../models/FixedSize';
-import { LEG_MULTIPLIER_DECIMALS } from '../constants';
+import { roundDown } from '@/utils';
 const Key = 'RetrieveBidAndAsk' as const;
 /**
  * retrieveBidAndAsk.
@@ -44,12 +44,12 @@ export type RetrieveBidAndAsk = Operation<
 export type RetrieveBidAndAskInput = {
   rfq: Rfq;
   ask?: {
-    price: number;
-    legsMultiplier: number | null;
+    price?: number;
+    legsMultiplier?: number;
   };
   bid?: {
-    price: number;
-    legsMultiplier: number | null;
+    price?: number;
+    legsMultiplier?: number;
   };
 };
 
@@ -72,129 +72,104 @@ export const retrieveBidAndAskHandler: SyncOperationHandler<RetrieveBidAndAsk> =
       const { rfq, ask, bid } = operation.input;
       let calculatedBid: Quote | null = null;
       let calculatedAsk: Quote | null = null;
-      // Get the base and quote decimals
-      const baseDecimals = LEG_MULTIPLIER_DECIMALS;
-      const quoteDecimals = rfq.quoteAsset.getDecimals();
-      let tmpAskLegMultiplier: number | null = null;
-      let tmpAskPrice: number | null = null;
-      let tmpAskPricePerToken: number | null = null;
-      let tmpBidLegMultiplier: number | null = null;
-      let tmpBidPrice: number | null = null;
-      let tmpBidPricePerToken: number | null = null;
-
       const { size } = rfq;
-
-      if (ask) {
-        tmpAskLegMultiplier =
-          !ask?.legsMultiplier || ask?.legsMultiplier <= 0
-            ? null
-            : roundToDecimals(ask.legsMultiplier, baseDecimals);
-        tmpAskPrice =
-          !ask?.price || ask?.price <= 0
-            ? null
-            : Math.round(ask?.price * Math.pow(10, quoteDecimals)) /
-              Math.pow(10, quoteDecimals);
-        tmpAskPricePerToken =
-          tmpAskPrice && tmpAskLegMultiplier
-            ? roundToDecimals(tmpAskPrice / tmpAskLegMultiplier, quoteDecimals)
-            : null;
-      }
-      if (bid) {
-        tmpBidLegMultiplier =
-          !bid?.legsMultiplier || bid?.legsMultiplier <= 0
-            ? null
-            : roundToDecimals(bid.legsMultiplier, baseDecimals);
-
-        tmpBidPrice =
-          !bid?.price || bid?.price <= 0
-            ? null
-            : roundToDecimals(bid.price, quoteDecimals);
-
-        tmpBidPricePerToken =
-          tmpBidPrice && tmpBidLegMultiplier
-            ? roundToDecimals(tmpBidPrice / tmpBidLegMultiplier, quoteDecimals)
-            : null;
-      } else {
-        throw new Error('ask and bid both cannot be null');
-      }
-
       if (size.type === 'fixed-base') {
         switch (rfq.orderType) {
           case 'buy':
-            calculatedAsk = tmpAskPrice
-              ? getQuote(size, tmpAskPrice, null)
-              : null;
-            calculatedBid = null;
+            if (ask?.price) {
+              calculatedAsk = getQuote(size, ask.price, rfq);
+            }
             break;
           case 'sell':
-            calculatedAsk = null;
-            calculatedBid = tmpBidPrice
-              ? getQuote(size, tmpBidPrice, null)
-              : null;
+            if (bid?.price) {
+              calculatedBid = getQuote(size, bid.price, rfq);
+            }
             break;
           case 'two-way':
-            calculatedAsk = tmpAskPrice
-              ? getQuote(size, tmpAskPrice, null)
-              : null;
-            calculatedBid = tmpBidPrice
-              ? getQuote(size, tmpBidPrice, null)
-              : null;
-            break;
-          default:
+            if (ask?.price) {
+              calculatedAsk = getQuote(size, ask.price, rfq);
+            }
+            if (bid?.price) {
+              calculatedBid = getQuote(size, bid.price, rfq);
+            }
             break;
         }
       } else if (size.type === 'fixed-quote') {
         switch (rfq.orderType) {
           case 'buy':
-            calculatedAsk = tmpAskPricePerToken
-              ? getQuote(size, tmpAskPricePerToken, null)
-              : null;
-            calculatedBid = null;
+            if (ask?.price && ask.legsMultiplier) {
+              calculatedAsk = getQuote(
+                size,
+                ask.price / ask.legsMultiplier,
+                rfq
+              );
+            }
             break;
           case 'sell':
-            calculatedAsk = null;
-            calculatedBid = tmpBidPricePerToken
-              ? getQuote(size, tmpBidPricePerToken, null)
-              : null;
+            if (bid?.price && bid.legsMultiplier) {
+              calculatedBid = getQuote(
+                size,
+                bid.price / bid.legsMultiplier,
+                rfq
+              );
+            }
             break;
           case 'two-way':
-            calculatedAsk = tmpAskPricePerToken
-              ? getQuote(size, tmpAskPricePerToken, null)
-              : null;
-            calculatedBid = tmpBidPricePerToken
-              ? getQuote(size, tmpBidPricePerToken, null)
-              : null;
-            break;
-          default:
+            if (ask?.price && ask.legsMultiplier) {
+              calculatedAsk = getQuote(
+                size,
+                ask.price / ask.legsMultiplier,
+                rfq
+              );
+            }
+            if (bid?.price && bid.legsMultiplier) {
+              calculatedBid = getQuote(
+                size,
+                bid.price / bid.legsMultiplier,
+                rfq
+              );
+            }
             break;
         }
       } else if (size.type === 'open') {
         switch (rfq.orderType) {
           case 'buy':
-            calculatedAsk =
-              tmpAskLegMultiplier && tmpAskPricePerToken
-                ? getQuote(size, tmpAskPricePerToken, tmpAskLegMultiplier)
-                : null;
-            calculatedBid = null;
+            if (ask?.price && ask.legsMultiplier) {
+              calculatedAsk = getQuote(
+                size,
+                ask.price / ask.legsMultiplier,
+                rfq,
+                ask.legsMultiplier
+              );
+            }
             break;
           case 'sell':
-            calculatedAsk = null;
-            calculatedBid =
-              tmpBidLegMultiplier && tmpBidPricePerToken
-                ? getQuote(size, tmpBidPricePerToken, tmpBidLegMultiplier)
-                : null;
+            if (bid?.price && bid.legsMultiplier) {
+              calculatedBid = getQuote(
+                size,
+                bid.price / bid.legsMultiplier,
+                rfq,
+                bid.legsMultiplier
+              );
+            }
             break;
           case 'two-way':
-            calculatedAsk =
-              tmpAskLegMultiplier && tmpAskPricePerToken
-                ? getQuote(size, tmpAskPricePerToken, tmpAskLegMultiplier)
-                : null;
-            calculatedBid =
-              tmpBidLegMultiplier && tmpBidPricePerToken
-                ? getQuote(size, tmpBidPricePerToken, tmpBidLegMultiplier)
-                : null;
-            break;
-          default:
+            if (ask?.price && ask.legsMultiplier) {
+              calculatedAsk = getQuote(
+                size,
+                ask.price / ask.legsMultiplier,
+                rfq,
+                ask.legsMultiplier
+              );
+            }
+            if (bid?.price && bid.legsMultiplier) {
+              calculatedBid = getQuote(
+                size,
+                bid.price / bid.legsMultiplier,
+                rfq,
+                bid.legsMultiplier
+              );
+            }
             break;
         }
       }
@@ -206,22 +181,19 @@ export const retrieveBidAndAskHandler: SyncOperationHandler<RetrieveBidAndAsk> =
 const getQuote = (
   size: FixedSize,
   amount: number,
-  legsMultiplier: number | null
+  rfq: Rfq,
+  legsMultiplier?: number
 ) => {
-  if (amount === null) return null;
+  let response: Quote;
   if (size.type === 'open') {
-    const response: Quote = {
-      price: amount,
-      legsMultiplier: legsMultiplier ? legsMultiplier : undefined,
+    response = {
+      price: roundDown(amount, rfq.quoteAsset.getDecimals()),
+      legsMultiplier,
     };
     return response;
   }
-  const response: Quote = {
-    price: amount,
+  response = {
+    price: roundDown(amount, rfq.quoteAsset.getDecimals()),
   };
   return response;
-};
-
-const roundToDecimals = (value: number, decimals: number) => {
-  return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
 };
