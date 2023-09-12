@@ -12,6 +12,10 @@ convergence protocol add-instrument --instrument-program=$SPOT_INSTRUMENT       
 convergence protocol add-instrument --instrument-program=$PSYOPTIONS_EUROPEAN_INSTRUMENT --can-be-used-as-quote=true --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
 convergence protocol add-instrument --instrument-program=$PSYOPTIONS_AMERICAN_INSTRUMENT --can-be-used-as-quote=true --validate-data-account-amount=3 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4
 
+convergence protocol add-print-trade-provider --print-trade-provider-program $HXRO_PRINT_TRADE_PROVIDER --settlement-can-expire false
+convergence hxro initialize-config --valid-mpg $HXRO_MPG
+convergence hxro initialize-operator-trg
+
 convergence risk-engine set-instrument-type --program=$SPOT_INSTRUMENT                --type=spot     
 convergence risk-engine set-instrument-type --program=$PSYOPTIONS_AMERICAN_INSTRUMENT --type=option  
 convergence risk-engine set-instrument-type --program=$PSYOPTIONS_EUROPEAN_INSTRUMENT --type=option

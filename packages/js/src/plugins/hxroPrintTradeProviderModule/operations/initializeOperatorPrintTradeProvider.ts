@@ -100,7 +100,7 @@ export const initializeOperatorTraderRiskGroupBuilder = async (
   const systemProgram = cvg.programs().getSystem(programs);
 
   const { validMpg } = await cvg.hxro().fetchConfig();
-  const dexProgram: PublicKey = manifest.fields.dexProgram.programId;
+  const { dexProgram } = manifest.fields;
   const { feeModelProgramId, feeModelConfigurationAcct } =
     await fetchValidHxroMpg(cvg, manifest);
   const [traderFeeStateAcct] = PublicKey.findProgramAddressSync(
@@ -114,17 +114,16 @@ export const initializeOperatorTraderRiskGroupBuilder = async (
 
   const riskEngineProgram =
     hxroRiskEngineAddress ?? manifest.fields.riskProgram.programId;
+  const createTrgInstruction =
+    await dexProgram.account.traderRiskGroup.createInstruction(
+      trgAccount,
+      64336 // copied from hxro SDK TRG_SIZE variable
+    );
 
   return TransactionBuilder.make<{}>()
     .setFeePayer(payer)
     .add({
-      instruction: SystemProgram.createAccount({
-        fromPubkey: cvg.identity().publicKey,
-        newAccountPubkey: trgAccount.publicKey,
-        lamports: 448224000,
-        space: 64272,
-        programId: dexProgram,
-      }),
+      instruction: createTrgInstruction,
       signers: [payer, trgAccount],
       key: 'createOperatorTraderRiskGroupAccount',
     })
