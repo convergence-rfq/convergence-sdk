@@ -37,3 +37,4 @@ export * from './unlockRfqsCollateral';
 export * from './getSettlementResult';
 export * from './retrieveBidAndAsk';
 export * from './getResponseStateAndAction';
+export * from './getRfqStateAndAction';

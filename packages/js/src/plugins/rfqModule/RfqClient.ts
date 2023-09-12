@@ -79,19 +79,17 @@ import {
   GetSettlementResultInput,
   getSettlementResultOperation,
   getSettlementResultHandler,
-  GetResponseStateAndActionInput,
-  getResponseStateAndActionOperation,
-  getResponseStateAndActionHandler,
   RetrieveBidAndAskInput,
   retrieveBidAndAskHandler,
   retrieveBidAndAskOperation,
-} from './operations';
-import { Response } from './models/Response';
-import {
+  GetResponseStateAndActionInput,
+  getResponseStateAndActionHandler,
+  getResponseStateAndActionOperation,
   GetRfqStateAndActionInput,
   getRfqStateAndActionHandler,
   getRfqStateAndActionOperation,
-} from './operations/getRfqStateAndAction';
+} from './operations';
+import { Response } from './models/Response';
 
 /**
  * This is a client for the Rfq module.
@@ -500,6 +498,23 @@ export class RfqClient {
     );
   }
 
+  /** {@inheritDoc retrieveBidAndAskOperation} */
+  retrieveBidAndAsk(input: RetrieveBidAndAskInput) {
+    return retrieveBidAndAskHandler.handle(
+      retrieveBidAndAskOperation(input),
+      this.convergence
+    );
+  }
+
+  /** {@inheritDoc getResponseStateAndAction} */
+  getResponseStateAndAction(input: GetResponseStateAndActionInput) {
+    return getResponseStateAndActionHandler.handle(
+      getResponseStateAndActionOperation(input),
+      this.convergence
+    );
+  }
+
+  /** {@inheritDoc getRFqStateAndAction} */
   getRfqStateAndAction(input: GetRfqStateAndActionInput) {
     return getRfqStateAndActionHandler.handle(
       getRfqStateAndActionOperation(input),
