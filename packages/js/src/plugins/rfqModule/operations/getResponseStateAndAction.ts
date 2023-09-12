@@ -251,9 +251,17 @@ const getDefautingParty = (
 };
 
 const hasMakerPrepared = (response: Response, rfq: Rfq) => {
-  return response.makerPreparedLegs === rfq.legs.length;
+  if (response.model === 'escrowResponse') {
+    return response.makerPreparedLegs === rfq.legs.length;
+  }
+
+  return response.makerPrepared;
 };
 
 const hasTakerPrepared = (response: Response, rfq: Rfq) => {
-  return response.takerPreparedLegs === rfq.legs.length;
+  if (response.model === 'escrowResponse') {
+    return response.takerPreparedLegs === rfq.legs.length;
+  }
+
+  return response.takerPrepared;
 };
