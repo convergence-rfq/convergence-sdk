@@ -51,13 +51,23 @@ const initializeProtocolCmd = (c: Command) =>
       description: 'collateral mint address',
     },
     {
-      flags: '--maker-fee <number>',
-      description: 'maker fee',
+      flags: '--protocol-maker-fee <number>',
+      description: 'protocol maker fee',
       defaultValue: '0',
     },
     {
-      flags: '--taker-fee <number>',
-      description: 'taker fee',
+      flags: '--protocol-taker-fee <number>',
+      description: 'protocol taker fee',
+      defaultValue: '0',
+    },
+    {
+      flags: '--settlement-maker-fee <number>',
+      description: 'settlement maker fee',
+      defaultValue: '0',
+    },
+    {
+      flags: '--settlement-taker-fee <number>',
+      description: 'settlement taker fee',
       defaultValue: '0',
     },
   ]);

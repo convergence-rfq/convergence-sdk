@@ -38,7 +38,7 @@ describe('unit.protocol', () => {
 
   it('get-registered-mints', async () => {
     await runCli(['protocol', 'get-registered-mints']);
-    expect(stub.args[1][0]).toEqual(ADDRESS_LABEL);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 
   it('close', async () => {
@@ -179,7 +179,7 @@ describe('unit.protocol', () => {
 
   it('get-registered-mints', async () => {
     await runCli(['protocol', 'get-registered-mints']);
-    expect(stub.args[1][0]).toEqual(ADDRESS_LABEL);
+    expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 
   it('register-mint [collateral]', async () => {

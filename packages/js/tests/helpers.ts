@@ -165,6 +165,7 @@ export const createEuropeanCoveredCallRfq = async (
   );
   const min = 3_600;
   const randomExpiry = min + Math.random();
+
   const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
     cvg,
     oracle,

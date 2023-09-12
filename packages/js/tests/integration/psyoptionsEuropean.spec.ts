@@ -269,7 +269,7 @@ describe('integration.psyoptionsEuropean', () => {
     expect(settlementResponse.response).toHaveProperty('signature');
   });
 
-  it('open size european call  [sell]', async () => {
+  it('open size european call Spread [sell]', async () => {
     const { rfq } = await createEuropeanOpenSizeCallSpdOptionRfq(
       takerCvg,
       'sell',

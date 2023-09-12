@@ -68,6 +68,8 @@ export const logBaseAsset = (b: BaseAsset): void => {
 
 export const logRegisteredMint = (r: RegisteredMint): void => {
   l('Address:', r.address.toString());
+  l('Mint:', r.mintAddress.toString());
+  l('Decimals:', r.decimals.toString());
 };
 
 export const logCollateral = (c: Collateral): void => {

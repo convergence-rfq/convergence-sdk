@@ -17,14 +17,19 @@ const riskEngineOptions = [
     defaultValue: '6',
   },
   {
+    flags: '--min-collateral-requirement <number>',
+    description: 'collateral for fixed quote amount RFQ creation',
+    defaultValue: '10000000',
+  },
+  {
     flags: '--collateral-for-variable-size-rfq-creation <number>',
     description: 'collateral for variable size RFQ creation',
-    defaultValue: '1000000000',
+    defaultValue: '10000000',
   },
   {
     flags: '--collateral-for-fixed-quote-amount-rfq-creation <number>',
     description: 'collateral for fixed quote amount RFQ creation',
-    defaultValue: '2000000000',
+    defaultValue: '10000000',
   },
   {
     flags: '--safety-price-shift-factor <number>',

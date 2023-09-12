@@ -13,7 +13,7 @@ import {
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
-describe('integration.psyoptionsAmerican', async () => {
+describe('integration.psyoptionsAmerican', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
   let baseMint: Mint;

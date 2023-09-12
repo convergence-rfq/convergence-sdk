@@ -1,5 +1,47 @@
 # @convergence-rfq/sdk
 
+## 4.5.9
+
+### Patch Changes
+
+- CLI get-registered-mints now logs mint address and decimals
+
+## 4.5.8
+
+### Patch Changes
+
+- Added min collateral requirement flag to CLI
+
+## 4.5.7
+
+### Patch Changes
+
+- Risk engine config default config is now 10 USDC
+
+## 4.5.6
+
+### Patch Changes
+
+- Fixed typo in CLI input parameters
+
+## 4.5.5
+
+### Patch Changes
+
+- Initialize protocol now takes and utilizes parameters for all fees
+
+## 4.5.4
+
+### Patch Changes
+
+- make getSettlementResult a synchronous operation & Refactor Client Risk Engine to remove unnecessary decimal conversions and add + replace new Api models from Solita"
+
+## 4.5.3
+
+### Patch Changes
+
+- Added fix for blockhash and incremented CPL Solita packages to 2.2.12
+
 ## 4.5.2
 
 ### Patch Changes

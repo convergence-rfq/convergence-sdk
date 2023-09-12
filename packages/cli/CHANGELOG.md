@@ -1,5 +1,60 @@
 # @convergence-rfq/cli
 
+## 4.5.9
+
+### Patch Changes
+
+- CLI get-registered-mints now logs mint address and decimals
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.9
+
+## 4.5.8
+
+### Patch Changes
+
+- Added min collateral requirement flag to CLI
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.8
+
+## 4.5.7
+
+### Patch Changes
+
+- Risk engine config default config is now 10 USDC
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.7
+
+## 4.5.6
+
+### Patch Changes
+
+- Fixed typo in CLI input parameters
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.6
+
+## 4.5.5
+
+### Patch Changes
+
+- Initialize protocol now takes and utilizes parameters for all fees
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.5
+
+## 4.5.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.4
+
+## 4.5.3
+
+### Patch Changes
+
+- Added fix for blockhash and incremented CPL Solita packages to 2.2.12
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.3
+
 ## 4.5.2
 
 ### Patch Changes
