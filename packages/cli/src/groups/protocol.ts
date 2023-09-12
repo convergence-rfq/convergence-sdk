@@ -8,6 +8,7 @@ import {
   getProtocol,
   getBaseAssets,
   closeProtocol,
+  addPrintTradeProvider,
 } from '../actions';
 
 import { addCmd } from '../helpers';
@@ -70,6 +71,24 @@ const addInstrumentCmd = (c: Command) =>
     commonOptions
   );
 
+const addPrintTradeProviderCmd = (c: Command) =>
+  addCmd(
+    c,
+    'add-print-trade-provider',
+    'adds print trade provider to the protocol',
+    addPrintTradeProvider,
+    [
+      {
+        flags: '--print-trade-provider-program <string>',
+        description: 'print trade provider program address',
+      },
+      {
+        flags: '--settlement-can-expire <boolean>',
+        description: 'settlement can expire',
+      },
+    ]
+  );
+
 const closeCmd = (c: Command) =>
   addCmd(c, 'close', 'closes protocol configuration', closeProtocol);
 
@@ -130,6 +149,7 @@ export const protocolGroup = (c: Command) => {
   const group = c.command('protocol');
   initializeProtocolCmd(group);
   addInstrumentCmd(group);
+  addPrintTradeProviderCmd(group);
   addBaseAssetCmd(group);
   registerMintCmd(group);
   getRegisteredMintsCmd(group);

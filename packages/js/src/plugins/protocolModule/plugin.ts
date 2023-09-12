@@ -20,6 +20,8 @@ import {
   findBaseAssetByAddressOperationHandler,
   closeProtocolOperation,
   closeProtocolOperationHandler,
+  addPrintTradeProviderOperation,
+  addPrintTradeProviderOperationHandler,
 } from './operations';
 import { Protocol } from './models';
 import { ConvergencePlugin } from '@/types';
@@ -35,6 +37,10 @@ export const protocolModule = (): ConvergencePlugin => ({
     );
     op.register(getProtocolOperation, getProtocolOperationHandler);
     op.register(addInstrumentOperation, addInstrumentOperationHandler);
+    op.register(
+      addPrintTradeProviderOperation,
+      addPrintTradeProviderOperationHandler
+    );
     op.register(addBaseAssetOperation, addBaseAssetOperationHandler);
     op.register(registerMintOperation, registerMintOperationHandler);
     op.register(getBaseAssetsOperation, getBaseAssetsOperationHandler);

@@ -19,6 +19,8 @@ import {
   getRegisteredMintsOperation,
   closeProtocolOperation,
   CloseProtocolInput,
+  AddPrintTradeProviderInput,
+  addPrintTradeProviderOperation,
 } from './operations';
 import { ProtocolPdasClient } from './ProtocolPdasClient';
 import { OperationOptions } from '@/types';
@@ -70,6 +72,16 @@ export class ProtocolClient {
     return this.convergence
       .operations()
       .execute(addInstrumentOperation(input), options);
+  }
+
+  /** {@inheritDoc addPrintTradeProviderOperation} */
+  addPrintTradeProvider(
+    input: AddPrintTradeProviderInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(addPrintTradeProviderOperation(input), options);
   }
 
   /** {@inheritDoc getProtocolOperation} */

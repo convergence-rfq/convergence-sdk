@@ -4,6 +4,7 @@ import sinon, { SinonStub } from 'sinon';
 import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
 import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
+import { PROGRAM_ADDRESS as HXRO_PRINT_TRADE_PROVIDER_PROGRAM_ADDRESS } from '@convergence-rfq/hxro-print-trade-provider';
 
 import {
   ADDRESS_LABEL,
@@ -117,6 +118,18 @@ describe('unit.protocol', () => {
       '3',
       '--clean-up-account-amount',
       '4',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('add-print-trade-provider [hxro]', async () => {
+    await runCli([
+      'protocol',
+      'add-print-trade-provider',
+      '--print-trade-provider-program',
+      HXRO_PRINT_TRADE_PROVIDER_PROGRAM_ADDRESS,
+      '--settlement-can-expire',
+      'false',
     ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });

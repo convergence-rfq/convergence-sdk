@@ -127,6 +127,19 @@ export const addInstrument = async (opts: Opts) => {
   }
 };
 
+export const addPrintTradeProvider = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const { response } = await cvg.protocol().addPrintTradeProvider({
+      printTradeProviderProgram: new PublicKey(opts.printTradeProviderProgram),
+      settlementCanExpire: opts.settlementCanExpire,
+    });
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
 export const addBaseAsset = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
