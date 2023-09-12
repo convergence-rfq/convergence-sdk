@@ -79,6 +79,9 @@ import {
   GetSettlementResultInput,
   getSettlementResultOperation,
   getSettlementResultHandler,
+  GetResponseStateAndActionInput,
+  getResponseStateAndActionOperation,
+  getResponseStateAndActionHandler,
   RetrieveBidAndAskInput,
   retrieveBidAndAskHandler,
   retrieveBidAndAskOperation,
@@ -497,15 +500,6 @@ export class RfqClient {
     );
   }
 
-  /** {@inheritDoc retrieveBidAndAskOperation} */
-  retrieveBidAndAsk(input: RetrieveBidAndAskInput) {
-    return retrieveBidAndAskHandler.handle(
-      retrieveBidAndAskOperation(input),
-      this.convergence
-    );
-  }
-
-  /** {@inheritDoc getRfqStateAndAction} */
   getRfqStateAndAction(input: GetRfqStateAndActionInput) {
     return getRfqStateAndActionHandler.handle(
       getRfqStateAndActionOperation(input),
