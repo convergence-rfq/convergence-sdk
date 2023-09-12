@@ -28,3 +28,10 @@ export function toSolitaQuoteSide(responseSide: ResponseSide): SolitaQuoteSide {
     }
   }
 }
+
+export const inverseResponseSide = (side: ResponseSide): ResponseSide => {
+  if (side === Bid) {
+    return Ask;
+  }
+  return Bid;
+};
