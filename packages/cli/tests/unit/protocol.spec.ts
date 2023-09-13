@@ -163,6 +163,20 @@ describe('unit.protocol', () => {
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
+  it('change-base-asset [switchboard]', async () => {
+    await runCli([
+      'protocol',
+      'change-base-asset-parameters',
+      '--index',
+      '0',
+      '--enabled',
+      'true',
+      '--in-place-price',
+      '42',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
   it('add-base-asset [pyth]', async () => {
     await runCli([
       'protocol',

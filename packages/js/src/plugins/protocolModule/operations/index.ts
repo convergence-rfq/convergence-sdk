@@ -1,6 +1,7 @@
 export * from './initializeProtocol';
 export * from './getProtocol';
 export * from './addInstrument';
+export * from './changeBaseAssetParameters';
 export * from './addPrintTradeProvider';
 export * from './registerMint';
 export * from './addBaseAsset';

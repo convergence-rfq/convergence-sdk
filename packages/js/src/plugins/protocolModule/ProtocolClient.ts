@@ -21,6 +21,8 @@ import {
   CloseProtocolInput,
   AddPrintTradeProviderInput,
   addPrintTradeProviderOperation,
+  ChangeBaseAssetParametersInput,
+  changeBaseAssetParametersOperation,
 } from './operations';
 import { ProtocolPdasClient } from './ProtocolPdasClient';
 import { OperationOptions } from '@/types';
@@ -102,6 +104,16 @@ export class ProtocolClient {
     return this.convergence
       .operations()
       .execute(addBaseAssetOperation(input), options);
+  }
+
+  /** {@inheritDoc changeBaseAssetParametersOperation} */
+  changeBaseAssetParameters(
+    input: ChangeBaseAssetParametersInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(changeBaseAssetParametersOperation(input), options);
   }
 
   /** {@inheritDoc registerMintOperation} */

@@ -19,7 +19,24 @@ export type RiskCategory =
   | 'custom-2'
   | 'custom-3';
 
+export const isRiskCategory = (value: string): value is RiskCategory => {
+  return [
+    'very-low',
+    'low',
+    'medium',
+    'high',
+    'very-high',
+    'custom-1',
+    'custom-2',
+    'custom-3',
+  ].includes(value);
+};
+
 export type OracleSource = 'switchboard' | 'pyth' | 'in-place';
+
+export const isOracleSource = (value: string): value is OracleSource => {
+  return ['switchboard', 'pyth', 'in-place'].includes(value);
+};
 
 export type PriceOracle = {
   source: OracleSource;
@@ -118,6 +135,21 @@ export const toOracleSource = (
       return 'pyth';
     case SolitaOracleSource.InPlace:
       return 'in-place';
+    default:
+      throw new Error(`Unsupported oracle source: ${oracleSource}`);
+  }
+};
+
+export const toSolitaOracleSource = (
+  oracleSource: OracleSource
+): SolitaOracleSource => {
+  switch (oracleSource) {
+    case 'switchboard':
+      return SolitaOracleSource.Switchboard;
+    case 'pyth':
+      return SolitaOracleSource.Pyth;
+    case 'in-place':
+      return SolitaOracleSource.InPlace;
     default:
       throw new Error(`Unsupported oracle source: ${oracleSource}`);
   }

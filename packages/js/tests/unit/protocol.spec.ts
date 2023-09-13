@@ -5,6 +5,7 @@ import {
   baseAssetsCache,
   registeredMintsCache,
   toPriceOracle,
+  BaseAsset,
 } from '../../src';
 import { createUserCvg, generateTicker } from '../helpers';
 import {
@@ -168,6 +169,19 @@ describe('unit.protocol', () => {
       .protocol()
       .findBaseAssetByAddress({ address: baseAssetPda });
     expect(toPriceOracle(baseAsset).price).toEqual(price);
+  });
+
+  it('change base asset parameters', async () => {
+    const { response } = await cvg.protocol().changeBaseAssetParameters({
+      index: 0,
+      enabled: true,
+      inPlacePrice: 42,
+    });
+    expect(response).toHaveProperty('signature');
+
+    const baseAssets: BaseAsset[] = await cvg.protocol().getBaseAssets();
+    const baseAsset = baseAssets.find((x) => x.index === 0);
+    expect(baseAsset?.inPlacePrice).toBe(42);
   });
 
   it('register mint', async () => {

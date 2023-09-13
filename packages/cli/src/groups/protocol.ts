@@ -9,6 +9,7 @@ import {
   getBaseAssets,
   closeProtocol,
   addPrintTradeProvider,
+  changeBaseAssetParameters,
 } from '../actions';
 
 import { addCmd } from '../helpers';
@@ -130,6 +131,51 @@ const addBaseAssetCmd = (c: Command) =>
     },
   ]);
 
+const changeBaseAssetParametersCmd = (c: Command) =>
+  addCmd(
+    c,
+    'change-base-asset-parameters',
+    'change existing base asset parameters',
+    changeBaseAssetParameters,
+    [
+      {
+        flags: '--index <number>',
+        description: 'base asset index',
+      },
+      {
+        flags: '--enabled <string>',
+        description: 'true to enable base asset, false to disable',
+        defaultValue: null,
+      },
+      {
+        flags: '--risk-category <string>',
+        description: 'risk category',
+        defaultValue: null,
+      },
+      {
+        flags: '--oracle-source <string>',
+        description: 'oracle source',
+        defaultValue: null,
+      },
+      {
+        flags: '--switchboard-oracle <string>',
+        description: 'switchboard oracle, none to unset',
+        defaultValue: null,
+      },
+      {
+        flags: '--pyth-oracle <string>',
+        description: 'pyth oracle, none to unset',
+        defaultValue: null,
+      },
+
+      {
+        flags: '--in-place-price <number>',
+        description: 'in place price, -1 to unset',
+        defaultValue: null,
+      },
+    ]
+  );
+
 const registerMintCmd = (c: Command) =>
   addCmd(c, 'register-mint', 'registers protocol mint', registerMint, [
     { flags: '--mint <string>', description: 'mint address' },
@@ -161,6 +207,7 @@ export const protocolGroup = (c: Command) => {
   addInstrumentCmd(group);
   addPrintTradeProviderCmd(group);
   addBaseAssetCmd(group);
+  changeBaseAssetParametersCmd(group);
   registerMintCmd(group);
   getRegisteredMintsCmd(group);
   getCmd(group);

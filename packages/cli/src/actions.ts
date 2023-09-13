@@ -7,6 +7,8 @@ import {
   PriceOracle,
   SpotLegInstrument,
   SpotQuoteInstrument,
+  isRiskCategory,
+  isOracleSource,
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
@@ -169,6 +171,85 @@ export const addBaseAsset = async (opts: Opts) => {
       ticker: opts.ticker,
       riskCategory: opts.riskCategory,
       priceOracle,
+    });
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
+export const changeBaseAssetParameters = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const {
+      index,
+      enabled: enabledOpts,
+      riskCategory,
+      oracleSource,
+      switchboardOracle: switchboardOracleOpts,
+      pythOracle: pythOracleOpts,
+      inPlacePrice: inPlacePriceOpts,
+    }: {
+      index: number;
+      enabled?: string;
+      riskCategory?: string;
+      oracleSource?: string;
+      switchboardOracle?: string;
+      pythOracle?: string;
+      inPlacePrice?: number;
+    } = opts;
+
+    let enabled;
+    switch (enabledOpts) {
+      case undefined:
+        break;
+      case 'true':
+        enabled = true;
+        break;
+      case 'false':
+        enabled = false;
+        break;
+      default:
+        throw new Error('Unrecognized enabled parameter!');
+    }
+
+    if (riskCategory !== undefined && !isRiskCategory(riskCategory)) {
+      throw new Error('Unrecognized risk category parameter!');
+    }
+
+    if (oracleSource !== undefined && !isOracleSource(oracleSource)) {
+      throw new Error('Unrecognized oracle source parameter!');
+    }
+
+    let switchboardOracle;
+    if (switchboardOracleOpts === 'none') {
+      switchboardOracle = null;
+    } else if (typeof switchboardOracleOpts === 'string') {
+      switchboardOracle = new PublicKey(switchboardOracleOpts);
+    }
+
+    let pythOracle;
+    if (pythOracleOpts === 'none') {
+      pythOracle = null;
+    } else if (typeof pythOracleOpts === 'string') {
+      pythOracle = new PublicKey(pythOracleOpts);
+    }
+
+    let inPlacePrice;
+    if (inPlacePriceOpts === -1) {
+      inPlacePrice = null;
+    } else if (typeof inPlacePriceOpts === 'number') {
+      inPlacePrice = inPlacePriceOpts;
+    }
+
+    const { response } = await cvg.protocol().changeBaseAssetParameters({
+      index,
+      enabled,
+      riskCategory,
+      oracleSource,
+      switchboardOracle,
+      pythOracle,
+      inPlacePrice,
     });
     logResponse(response);
   } catch (e) {
