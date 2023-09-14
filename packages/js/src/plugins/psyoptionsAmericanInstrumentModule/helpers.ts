@@ -120,13 +120,20 @@ export const prepareAmericanOptions = async (
     ) {
       ataTxBuilderArray.push(underlyingToken.txBuilder);
     }
+    const { tokenBalance } = await convergence.tokens().getTokenBalance({
+      mintAddress: optionMarket.optionMint,
+      owner: caller,
+      mintDecimals: PsyoptionsAmericanInstrument.decimals,
+    });
+
+    const tokensToMint = amount - tokenBalance;
     const ixWithSigners =
       await psyoptionsAmerican.instructions.mintOptionInstruction(
         americanProgram,
         optionToken.ataPubKey,
         writerToken.ataPubKey,
         underlyingToken.ataPubKey,
-        new BN(amount!),
+        new BN(tokensToMint!),
         optionMarket as psyoptionsAmerican.OptionMarketWithKey
       );
     ixWithSigners.ix.keys[0] = {
