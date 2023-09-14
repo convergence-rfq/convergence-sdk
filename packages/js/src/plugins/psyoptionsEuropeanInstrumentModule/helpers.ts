@@ -188,8 +188,8 @@ export const prepareEuropeanOptions = async (
     const { tokenBalance } = await convergence.tokens().getTokenBalance({
       mintAddress:
         leg.optionType == psyoptionsEuropean.OptionType.PUT
-          ? euroMeta.putWriterMint
-          : euroMeta.callWriterMint,
+          ? euroMeta.putOptionMint
+          : euroMeta.callOptionMint,
       owner: caller,
       mintDecimals: PsyoptionsEuropeanInstrument.decimals,
     });
