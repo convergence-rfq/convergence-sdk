@@ -1,6 +1,6 @@
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { BN } from 'bn.js';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
 import { ATAExistence, getOrCreateATA } from '../../utils/ata';
@@ -10,9 +10,10 @@ import {
   InstructionWithSigners,
   TransactionBuilder,
 } from '../../utils/TransactionBuilder';
+import { CreateOptionInstrumentsResult } from '../instrumentModule';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
-import { OptionType, OptionStrategyData } from '@/utils';
+import { InstructionUniquenessTracker } from '@/utils';
 
 export const mintAmericanOptions = async (
   convergence: Convergence,
@@ -186,123 +187,176 @@ export const getOrCreateAmericanOptionATAs = async (
   return ATAExistence.NOTEXISTS;
 };
 
-interface CreatePsyAmericanInstrumentsResult {
-  optionMarketTxArray: Transaction[];
-  psyAmericanInstrumentArray: PsyoptionsAmericanInstrument[];
-}
-
-export const createPsyAmericanInstruments = async (
-  strategyData: OptionStrategyData[],
-  quoteMint: Mint,
-  underlyingMint: Mint,
-  cvg: Convergence
-): Promise<CreatePsyAmericanInstrumentsResult> => {
-  const optionMarketTxArray: Transaction[] = [];
-  const psyAmericanInstrumentArray: PsyoptionsAmericanInstrument[] = [];
+export const createPsyAmericanMarket = async (
+  cvg: Convergence,
+  underlyingMint: PublicKey,
+  underlyingMintDecimals: number,
+  stableMint: PublicKey,
+  stableMintDecimals: number,
+  strike: number,
+  expiresIn: number,
+  ixTracker: InstructionUniquenessTracker
+): Promise<CreateOptionInstrumentsResult> => {
   const cvgWallet = new CvgWallet(cvg);
   const americanProgram = createAmericanProgram(cvg, cvgWallet);
 
-  for (const leg of strategyData) {
-    const transaction = new Transaction();
-    let quoteAmountPerContract = new BN(leg.strike);
-    let underlyingAmountPerContract = new BN('1');
-    const amount = leg.size;
-    const direction = leg.direction ? 'long' : 'short';
-    const optionType =
-      leg.instrument.toLowerCase() === 'call'
-        ? OptionType.CALL
-        : OptionType.PUT;
-    const expiresIn = new Date(leg.expiry).getTime() / 1000;
-    // Initialize the options meta the long way
-    const expiration = new BN(expiresIn);
-    quoteAmountPerContract = new BN(
-      Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
-    );
-    underlyingAmountPerContract = new BN(
-      Number(underlyingAmountPerContract) *
-        Math.pow(10, underlyingMint.decimals)
-    );
+  const optionMarketTxBuilder = TransactionBuilder.make().setFeePayer(
+    cvg.identity()
+  );
 
-    let optionMarket: psyoptionsAmerican.OptionMarketWithKey | null = null;
-    const [optionMarketKey, bump] =
-      await psyoptionsAmerican.deriveOptionKeyFromParams({
-        expirationUnixTimestamp: expiration,
-        programId: americanProgram.programId,
-        quoteAmountPerContract,
-        quoteMint: quoteMint.address,
-        underlyingAmountPerContract,
-        underlyingMint: underlyingMint.address,
-      });
-    optionMarket = await psyoptionsAmerican.getOptionByKey(
-      americanProgram,
-      optionMarketKey
-    );
+  let quoteAmountPerContract = new BN(strike);
+  let underlyingAmountPerContract = new BN('1');
 
-    // If there is no existing market, derive the optionMarket from inputs
-    if (optionMarket == null) {
-      const optionMarketIx =
-        await psyoptionsAmerican.instructions.initializeOptionInstruction(
-          americanProgram,
-          {
-            /** The option market expiration timestamp in seconds */
-            expirationUnixTimestamp: expiration,
-            quoteAmountPerContract,
-            quoteMint: quoteMint.address,
-            underlyingAmountPerContract,
-            underlyingMint: underlyingMint.address,
-          }
-        );
-      const feeOwner = psyoptionsAmerican.FEE_OWNER_KEY;
-      const mintFeeAccount = cvg.tokens().pdas().associatedTokenAccount({
-        mint: underlyingMint.address,
-        owner: feeOwner,
-      });
-      const exerciseFeeAccount = cvg.tokens().pdas().associatedTokenAccount({
-        mint: quoteMint.address,
-        owner: feeOwner,
-      });
-      optionMarket = {
-        optionMint: optionMarketIx.optionMintKey,
-        writerTokenMint: optionMarketIx.writerMintKey,
-        underlyingAssetMint: underlyingMint.address,
-        quoteAssetMint: quoteMint.address,
-        underlyingAmountPerContract,
-        quoteAmountPerContract,
-        expirationUnixTimestamp: expiration,
-        underlyingAssetPool: optionMarketIx.underlyingAssetPoolKey,
-        quoteAssetPool: optionMarketIx.quoteAssetPoolKey,
-        mintFeeAccount,
-        exerciseFeeAccount,
-        expired: false,
-        bumpSeed: bump,
-        key: optionMarketKey,
-      };
-      //TODO : ADD this after we get the prs merged
-      // if (ixTracker.checkedAdd(optionMarketIx.tx)) {
-      transaction.add(optionMarketIx.tx);
-      // }
-      const latestBlockHash = await cvg.connection.getLatestBlockhash();
-      transaction.recentBlockhash = latestBlockHash.blockhash;
-      transaction.feePayer = cvg.identity().publicKey;
+  // Initialize the options meta the long way
+  const expirationUnixTimestamp = new BN(Date.now() / 1_000 + expiresIn);
+  quoteAmountPerContract = new BN(
+    Number(quoteAmountPerContract) * Math.pow(10, stableMintDecimals)
+  );
+  underlyingAmountPerContract = new BN(
+    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMintDecimals)
+  );
 
-      optionMarketTxArray.push(transaction);
-      const psyAmericanInstrument: PsyoptionsAmericanInstrument =
-        await PsyoptionsAmericanInstrument.create(
-          cvg,
+  let optionMarket: psyoptionsAmerican.OptionMarketWithKey | null = null;
+  const [optionMarketKey, bump] =
+    await psyoptionsAmerican.deriveOptionKeyFromParams({
+      expirationUnixTimestamp,
+      programId: americanProgram.programId,
+      quoteAmountPerContract,
+      quoteMint: stableMint,
+      underlyingAmountPerContract,
+      underlyingMint,
+    });
+  optionMarket = await psyoptionsAmerican.getOptionByKey(
+    americanProgram,
+    optionMarketKey
+  );
+
+  console.log('optionMarket', optionMarketKey.toBase58());
+  // If there is no existing market, derive the optionMarket from inputs
+  if (optionMarket == null) {
+    const optionMarketIx =
+      await psyoptionsAmerican.instructions.initializeOptionInstruction(
+        americanProgram,
+        {
+          /** The option market expiration timestamp in seconds */
+          expirationUnixTimestamp,
+          quoteAmountPerContract,
+          quoteMint: stableMint,
+          underlyingAmountPerContract,
           underlyingMint,
-          quoteMint,
-          optionType,
-          optionMarket,
-          optionMarketKey,
-          amount,
-          direction
-        );
-      psyAmericanInstrumentArray.push(psyAmericanInstrument);
+        }
+      );
+    const feeOwner = psyoptionsAmerican.FEE_OWNER_KEY;
+    const mintFeeAccount = cvg.tokens().pdas().associatedTokenAccount({
+      mint: underlyingMint,
+      owner: feeOwner,
+    });
+
+    console.log('mintFeeAccount', mintFeeAccount.toBase58());
+    const exerciseFeeAccount = cvg.tokens().pdas().associatedTokenAccount({
+      mint: stableMint,
+      owner: feeOwner,
+    });
+
+    console.log('exerciseFeeAccount', exerciseFeeAccount.toBase58());
+    console.log('identity:', cvg.identity().publicKey.toBase58());
+    optionMarket = {
+      optionMint: optionMarketIx.optionMintKey,
+      writerTokenMint: optionMarketIx.writerMintKey,
+      underlyingAssetMint: underlyingMint,
+      quoteAssetMint: stableMint,
+      underlyingAmountPerContract,
+      quoteAmountPerContract,
+      expirationUnixTimestamp,
+      underlyingAssetPool: optionMarketIx.underlyingAssetPoolKey,
+      quoteAssetPool: optionMarketIx.quoteAssetPoolKey,
+      mintFeeAccount,
+      exerciseFeeAccount,
+      expired: false,
+      bumpSeed: bump,
+      key: optionMarketKey,
+    };
+
+    if (ixTracker.checkedAdd(optionMarketIx.tx)) {
+      optionMarketTxBuilder.add({
+        instruction: optionMarketIx.tx,
+        signers: [cvg.identity()],
+      });
     }
   }
 
-  return {
-    optionMarketTxArray,
-    psyAmericanInstrumentArray,
+  if (optionMarketTxBuilder.getInstructionCount() > 0) {
+    return optionMarketTxBuilder;
+  }
+  return null;
+};
+
+export type GetAmericanOptionMetaResult = {
+  americanMeta: psyoptionsAmerican.OptionMarketWithKey;
+  americanMetaKey: PublicKey;
+};
+export const getAmericanOptionMeta = async (
+  cvg: Convergence,
+  americanProgram: any,
+  underlyingMint: Mint,
+  stableMint: Mint,
+  expiresIn: number,
+  underlyingAmountPerContract: number,
+  quoteAmountPerContract: number
+): Promise<GetAmericanOptionMetaResult> => {
+  const expirationUnixTimestamp = new BN(Date.now() / 1_000 + expiresIn);
+  const quoteAmountPerContractBN = new BN(
+    Number(quoteAmountPerContract) * Math.pow(10, stableMint.decimals)
+  );
+  const underlyingAmountPerContractBN = new BN(
+    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
+  );
+  const optionMarketIx =
+    await psyoptionsAmerican.instructions.initializeOptionInstruction(
+      americanProgram,
+      {
+        /** The option market expiration timestamp in seconds */
+        expirationUnixTimestamp,
+        quoteAmountPerContract: quoteAmountPerContractBN,
+        quoteMint: stableMint.address,
+        underlyingAmountPerContract: underlyingAmountPerContractBN,
+        underlyingMint: underlyingMint.address,
+      }
+    );
+  const feeOwner = psyoptionsAmerican.FEE_OWNER_KEY;
+  const mintFeeAccount = cvg.tokens().pdas().associatedTokenAccount({
+    mint: underlyingMint.address,
+    owner: feeOwner,
+  });
+  const exerciseFeeAccount = cvg.tokens().pdas().associatedTokenAccount({
+    mint: stableMint.address,
+    owner: feeOwner,
+  });
+  const [americanMetaKey, bump] =
+    await psyoptionsAmerican.deriveOptionKeyFromParams({
+      expirationUnixTimestamp,
+      programId: americanProgram.programId,
+      quoteAmountPerContract: quoteAmountPerContractBN,
+      quoteMint: stableMint.address,
+      underlyingAmountPerContract: underlyingAmountPerContractBN,
+      underlyingMint: underlyingMint.address,
+    });
+  const americanMeta: psyoptionsAmerican.OptionMarketWithKey = {
+    optionMint: optionMarketIx.optionMintKey,
+    writerTokenMint: optionMarketIx.writerMintKey,
+    underlyingAssetMint: underlyingMint.address,
+    quoteAssetMint: stableMint.address,
+    underlyingAmountPerContract: underlyingAmountPerContractBN,
+    quoteAmountPerContract: quoteAmountPerContractBN,
+    expirationUnixTimestamp,
+    underlyingAssetPool: optionMarketIx.underlyingAssetPoolKey,
+    quoteAssetPool: optionMarketIx.quoteAssetPoolKey,
+    mintFeeAccount,
+    exerciseFeeAccount,
+    expired: false,
+    bumpSeed: bump,
+    key: americanMetaKey,
   };
+
+  return { americanMeta, americanMetaKey };
 };

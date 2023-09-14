@@ -5,7 +5,10 @@ import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, FixedSize, Rfq } from '../models';
 
-import { calculateExpectedLegsHash } from '../helpers';
+import {
+  calculateExpectedLegsHash,
+  // convertInstrumentsDataToInstrmentsWithTnx,
+} from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -27,6 +30,7 @@ import {
 import { OrderType } from '../models/OrderType';
 import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
+import { InstructionUniquenessTracker } from '@/utils/classes';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -137,7 +141,7 @@ export type CreateAndFinalizeRfqConstructionInput = {
  */
 export type CreateAndFinalizeRfqConstructionOutput = {
   /** The blockchain response from sending and confirming the transaction. */
-  response: SendAndConfirmTransactionResponse;
+  responses: SendAndConfirmTransactionResponse[];
 
   /** The newly created Rfq. */
   rfq: Rfq;
@@ -156,8 +160,8 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
     ): Promise<CreateAndFinalizeRfqConstructionOutput> => {
       const {
         taker = convergence.identity(),
-        instruments,
         orderType,
+        instruments,
         fixedSize,
         quoteAsset,
         activeWindow = 5_000,
@@ -165,7 +169,22 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       } = operation.input;
 
       const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
+      const optionMarketTxArray: TransactionBuilder[] = [];
+      const ixTracker = new InstructionUniquenessTracker([]);
+      for (const ins of instruments) {
+        const optionMarketTx = await ins.getPreparationsBeforeRfqCreation(
+          ixTracker
+        );
+        if (optionMarketTx) {
+          optionMarketTx.getInstructions().map((ins) =>
+            ins.keys.map((key) => {
+              console.log(key.pubkey.toBase58());
+            })
+          );
 
+          optionMarketTxArray.push(optionMarketTx);
+        }
+      }
       const expectedLegsHash = calculateExpectedLegsHash(instruments);
 
       const rfqPda = convergence
@@ -189,7 +208,6 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           taker,
           rfq: rfqPda,
           fixedSize,
-          instruments,
           expectedLegsHash,
           recentTimestamp,
         },
@@ -201,7 +219,40 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         convergence,
         scope.confirmOptions
       );
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      const builders = [...optionMarketTxArray, builder];
+      const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+      const signedTxs = await convergence
+        .identity()
+        .signAllTransactions(
+          builders.map((b) => b.toTransaction(lastValidBlockHeight))
+        );
+
+      const optionMarketSignedTxs = signedTxs.slice(
+        0,
+        optionMarketTxArray.length
+      );
+      const rfqCreationSignedTxs = signedTxs.slice(optionMarketTxArray.length);
+
+      for (const signedTx of optionMarketSignedTxs) {
+        await convergence
+          .rpc()
+          .serializeAndSendTransaction(
+            signedTx,
+            lastValidBlockHeight,
+            confirmOptions
+          );
+      }
+      const responses: SendAndConfirmTransactionResponse[] = [];
+      for (const signedTx of rfqCreationSignedTxs) {
+        const response = await convergence
+          .rpc()
+          .serializeAndSendTransaction(
+            signedTx,
+            lastValidBlockHeight,
+            confirmOptions
+          );
+        responses.push(response);
+      }
       scope.throwIfCanceled();
 
       const rfq = await convergence
@@ -209,7 +260,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         .findRfqByAddress({ address: rfqPda });
       assertRfq(rfq);
 
-      return { ...output, rfq };
+      return { responses, rfq };
     },
   };
 

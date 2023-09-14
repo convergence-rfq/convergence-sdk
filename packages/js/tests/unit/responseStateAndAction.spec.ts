@@ -31,6 +31,7 @@ describe('unit.responseStateAndAction', () => {
       type: 'fixed-base',
       amount: 19.653_038_331,
     };
+
     const { rfq } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, 'long'),
@@ -112,6 +113,7 @@ describe('unit.responseStateAndAction', () => {
       type: 'fixed-base',
       amount: 19.653_038_331,
     };
+
     const { rfq } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, 'long'),
@@ -204,6 +206,7 @@ describe('unit.responseStateAndAction', () => {
       type: 'fixed-base',
       amount: 19.653_038_331,
     };
+
     const { rfq } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, 'long'),
@@ -239,6 +242,7 @@ describe('unit.responseStateAndAction', () => {
       type: 'fixed-base',
       amount: 19.653_038_331,
     };
+
     const { rfq } = await takerCvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(takerCvg, baseMintBTC, 5.12, 'long'),

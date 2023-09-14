@@ -8,12 +8,17 @@ import * as anchor from '@project-serum/anchor';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import BN from 'bn.js';
 import { Mint } from '../tokenModule';
-import { LegInstrument } from '../instrumentModule';
+import {
+  CreateOptionInstrumentsResult,
+  LegInstrument,
+} from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import { CvgWallet, NoopWallet } from '../../utils/Wallets';
+import { createPsyAmericanMarket, getAmericanOptionMeta } from './helpers';
+import { InstructionUniquenessTracker } from '@/utils/classes';
 
 type PsyoptionsAmericanInstrumentData = {
   optionType: OptionType;
@@ -66,16 +71,35 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
+  async getPreparationsBeforeRfqCreation(
+    ixTracker: InstructionUniquenessTracker
+  ): Promise<CreateOptionInstrumentsResult> {
+    if (!this.optionMeta) {
+      throw new Error('Option Meta is not defined');
+    }
+    const optionMarketTx = await createPsyAmericanMarket(
+      this.convergence,
+      this.optionMeta.underlyingAssetMint,
+      this.underlyingAmountPerContractDecimals,
+      this.optionMeta.quoteAssetMint,
+      this.strikePriceDecimals,
+      this.strikePrice,
+      this.expiration,
+      ixTracker
+    );
+
+    return optionMarketTx;
+  }
 
   static async create(
     convergence: Convergence,
     underlyingMint: Mint,
-    quoteMint: Mint,
+    stableMint: Mint,
     optionType: OptionType,
-    optionMeta: OptionMarketWithKey,
-    optionMetaPubkey: PublicKey,
     amount: number,
-    side: LegSide
+    side: LegSide,
+    strike: number,
+    expiresIn: number
   ) {
     const mintInfoAddress = convergence
       .rfqs()
@@ -89,23 +113,33 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
+    const cvgWallet = new CvgWallet(convergence);
+    const americanProgram = await createAmericanProgram(convergence, cvgWallet);
+    const { americanMeta: meta, americanMetaKey: metaKey } =
+      await getAmericanOptionMeta(
+        convergence,
+        americanProgram,
+        underlyingMint,
+        stableMint,
+        expiresIn,
+        1,
+        strike
+      );
+
     return new PsyoptionsAmericanInstrument(
       convergence,
       optionType,
-      removeDecimals(
-        optionMeta.underlyingAmountPerContract,
-        underlyingMint.decimals
-      ),
+      removeDecimals(meta.underlyingAmountPerContract, underlyingMint.decimals),
       underlyingMint.decimals,
-      removeDecimals(optionMeta.quoteAmountPerContract, quoteMint.decimals),
-      quoteMint.decimals,
-      Number(optionMeta.expirationUnixTimestamp),
-      optionMeta.optionMint,
-      optionMetaPubkey,
+      removeDecimals(meta.quoteAmountPerContract, stableMint.decimals),
+      stableMint.decimals,
+      Number(meta.expirationUnixTimestamp),
+      meta.optionMint,
+      metaKey,
       mintInfo.mintType.baseAssetIndex,
       amount,
       side,
-      optionMeta
+      meta
     );
   }
 

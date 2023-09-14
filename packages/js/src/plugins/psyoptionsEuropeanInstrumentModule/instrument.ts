@@ -12,12 +12,21 @@ import {
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../tokenModule';
-import { LegInstrument } from '../instrumentModule';
+import {
+  CreateOptionInstrumentsResult,
+  LegInstrument,
+} from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
+import {
+  createEuropeanProgram,
+  createPsyEuropeanMarket,
+  getEuropeanOptionMeta,
+} from './helpers';
+import { InstructionUniquenessTracker } from '@/utils';
 
 type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;
@@ -102,15 +111,39 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsEuropeanInstrument.decimals;
   getSide = () => this.side;
+  async getPreparationsBeforeRfqCreation(
+    ixTracker: InstructionUniquenessTracker
+  ): Promise<CreateOptionInstrumentsResult> {
+    const europeanProgram = await createEuropeanProgram(this.convergence);
+    if (!this.optionMeta) {
+      throw new Error('Option Meta is not defined');
+    }
+    const optionMarketTx = await createPsyEuropeanMarket(
+      this.convergence,
+      this.optionMeta.underlyingMint,
+      this.underlyingAmountPerContractDecimals,
+      this.optionMeta.stableMint,
+      this.strikePriceDecimals,
+      this.strikePrice,
+      this.optionMeta.oracle,
+      this.expiration,
+      ixTracker,
+      europeanProgram
+    );
+
+    return optionMarketTx;
+  }
 
   static async create(
     convergence: Convergence,
     underlyingMint: Mint,
+    stableMint: Mint,
     optionType: OptionType,
-    meta: EuroMeta,
-    metaKey: PublicKey,
     amount: number,
-    side: LegSide
+    side: LegSide,
+    strike: number,
+    oracleAddress: PublicKey,
+    expiresIn: number
   ) {
     const mintInfoAddress = convergence
       .rfqs()
@@ -123,7 +156,18 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     if (mintInfo.mintType.__kind === 'Stablecoin') {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
-
+    const europeanProgram = await createEuropeanProgram(convergence);
+    const { euroMeta: meta, euroMetaKey: metaKey } =
+      await getEuropeanOptionMeta(
+        europeanProgram,
+        underlyingMint,
+        stableMint,
+        expiresIn,
+        1,
+        strike,
+        oracleAddress,
+        0
+      );
     return new PsyoptionsEuropeanInstrument(
       convergence,
       optionType,

@@ -4,10 +4,14 @@ import { BaseAssetIndex, Leg } from '@convergence-rfq/rfq';
 import { PublicKey } from '../../types';
 import { Convergence } from '../../Convergence';
 import { LegSide } from '../rfqModule/models/LegSide';
+import { TransactionBuilder } from '@/utils/TransactionBuilder';
+import { InstructionUniquenessTracker } from '@/utils/classes';
 
 export interface LegInstrumentParser {
   parseFromLeg(convergence: Convergence, leg: Leg): LegInstrument;
 }
+
+export type CreateOptionInstrumentsResult = TransactionBuilder | null;
 
 export interface LegInstrument {
   getProgramId: () => PublicKey;
@@ -17,6 +21,9 @@ export interface LegInstrument {
   getSide: () => LegSide;
   serializeInstrumentData: () => Buffer;
   getValidationAccounts(): Promise<AccountMeta[]>;
+  getPreparationsBeforeRfqCreation(
+    ixTracker: InstructionUniquenessTracker
+  ): Promise<CreateOptionInstrumentsResult>;
 }
 
 // TODO add registration of quote instruments

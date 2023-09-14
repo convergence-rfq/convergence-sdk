@@ -1,6 +1,6 @@
 import { expect } from 'expect';
 
-import { Mint } from '@solana/spl-token';
+import { Mint } from '../../src/plugins/tokenModule';
 import {
   createAmericanCoveredCallRfq,
   respondToRfq,
@@ -28,7 +28,7 @@ describe('integration.psyoptionsAmerican', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it('covered call [sell]', async () => {
+  it('american covered call [sell]', async () => {
     const { rfq } = await createAmericanCoveredCallRfq(
       takerCvg,
       'sell',

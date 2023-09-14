@@ -23,9 +23,9 @@ describe('unit.response', () => {
       createRfq(takerCvg, amount0, 'two-way'),
     ]);
 
-    expect(res0.response).toHaveProperty('signature');
-    expect(res1.response).toHaveProperty('signature');
-    expect(res2.response).toHaveProperty('signature');
+    expect(res0.responses[0]).toHaveProperty('signature');
+    expect(res1.responses[0]).toHaveProperty('signature');
+    expect(res2.responses[0]).toHaveProperty('signature');
 
     rfq0 = res0.rfq;
     rfq1 = res1.rfq;

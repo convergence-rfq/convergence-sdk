@@ -6,8 +6,6 @@ import * as anchor from '@project-serum/anchor';
 import {
   Convergence,
   OrderType,
-  OptionType,
-  PsyoptionsAmericanInstrument,
   initializeNewAmericanOption,
   toBigNumber,
   createAmericanProgram,
@@ -16,17 +14,19 @@ import {
   getOrCreateAmericanOptionATAs,
   mintAmericanOptions,
   SpotQuoteInstrument,
-  SpotLegInstrument,
   keypairIdentity,
   PublicKey,
   removeDecimals,
   useCache,
   createEuropeanProgram,
   CvgWallet,
-  PsyoptionsEuropeanInstrument,
-  initializeNewEuropeanOption,
   getOrCreateEuropeanOptionATAs,
   mintEuropeanOptions,
+  // LegInstrumentInputData,
+  OptionType,
+  PsyoptionsAmericanInstrument,
+  PsyoptionsEuropeanInstrument,
+  SpotLegInstrument,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { IDL as PseudoPythIdl } from '../../validator/fixtures/programs/pseudo_pyth_idl';
@@ -116,16 +116,8 @@ export const createAmericanCoveredCallRfq = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
-    cvg,
-    baseMint,
-    quoteMint,
-    27_000,
-    1,
-    3_600 + Math.random()
-  );
-
-  const { rfq, response } = await cvg.rfqs().createAndFinalize({
+  const randomExpiry = 3_600 + Math.random() * 1000;
+  const { rfq, responses } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, 1.0, 'long'),
       await PsyoptionsAmericanInstrument.create(
@@ -133,10 +125,10 @@ export const createAmericanCoveredCallRfq = async (
         baseMint,
         quoteMint,
         OptionType.CALL,
-        optionMarket,
-        optionMarketKey,
         1,
-        'long'
+        'long',
+        24_534,
+        randomExpiry
       ),
     ],
     orderType,
@@ -144,7 +136,7 @@ export const createAmericanCoveredCallRfq = async (
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
 
-  return { rfq, response, optionMarket };
+  return { rfq, responses };
 };
 
 export const createEuropeanCoveredCallRfq = async (
@@ -153,7 +145,6 @@ export const createEuropeanCoveredCallRfq = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
     new anchor.Program(
       PseudoPythIdl,
@@ -166,36 +157,26 @@ export const createEuropeanCoveredCallRfq = async (
   const min = 3_600;
   const randomExpiry = min + Math.random();
 
-  const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
-    cvg,
-    oracle,
-    europeanProgram,
-    baseMint,
-    quoteMint,
-    23_354,
-    1,
-    randomExpiry,
-    0
-  );
-
-  const { rfq, response } = await cvg.rfqs().createAndFinalize({
+  const { rfq, responses } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, 1.0, 'long'),
       await PsyoptionsEuropeanInstrument.create(
         cvg,
         baseMint,
+        quoteMint,
         OptionType.CALL,
-        euroMeta,
-        euroMetaKey,
         1,
-        'long'
+        'long',
+        24_534,
+        oracle,
+        randomExpiry
       ),
     ],
     orderType,
     fixedSize: { type: 'fixed-base', amount: 1 },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
-  return { rfq, response, euroMeta };
+  return { rfq, responses };
 };
 
 export const createEuropeanOpenSizeCallSpdOptionRfq = async (
@@ -204,7 +185,6 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
     new anchor.Program(
       PseudoPythIdl,
@@ -215,58 +195,38 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random();
-  const { euroMeta: euroMeta1, euroMetaKey: euroMetaKey1 } =
-    await initializeNewEuropeanOption(
-      cvg,
-      oracle,
-      europeanProgram,
-      baseMint,
-      quoteMint,
-      23_354,
-      1,
-      randomExpiry,
-      0
-    );
-  const { euroMeta: euroMeta2, euroMetaKey: euroMetaKey2 } =
-    await initializeNewEuropeanOption(
-      cvg,
-      oracle,
-      europeanProgram,
-      baseMint,
-      quoteMint,
-      25_354,
-      1,
-      randomExpiry,
-      0
-    );
+  const randomExpiry = min + Math.random() * 1000;
 
-  const { rfq, response } = await cvg.rfqs().createAndFinalize({
+  const { rfq, responses } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
         cvg,
         baseMint,
+        quoteMint,
         OptionType.CALL,
-        euroMeta1,
-        euroMetaKey1,
         1,
-        'long'
+        'long',
+        29_000,
+        oracle,
+        randomExpiry
       ),
       await PsyoptionsEuropeanInstrument.create(
         cvg,
         baseMint,
+        quoteMint,
         OptionType.CALL,
-        euroMeta2,
-        euroMetaKey2,
         1,
-        'short'
+        'long',
+        31_000,
+        oracle,
+        randomExpiry
       ),
     ],
     orderType,
     fixedSize: { type: 'open' },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
-  return { rfq, response, euroMeta1, euroMeta2 };
+  return { rfq, responses };
 };
 
 export const createAmericanFixedBaseStraddle = async (
@@ -275,37 +235,29 @@ export const createAmericanFixedBaseStraddle = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const expiration = 3_600 + Math.random();
-  const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
-    cvg,
-    baseMint,
-    quoteMint,
-    27_000,
-    1,
-    expiration
-  );
+  const randomExpiry = 3_600 + Math.random() * 1000;
 
-  const { rfq, response } = await cvg.rfqs().createAndFinalize({
+  const { rfq, responses } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
         quoteMint,
         OptionType.CALL,
-        optionMarket,
-        optionMarketKey,
         1,
-        'long'
+        'long',
+        27_000,
+        randomExpiry
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
         quoteMint,
-        OptionType.PUT,
-        optionMarket,
-        optionMarketKey,
+        OptionType.CALL,
         1,
-        'long'
+        'long',
+        29_000,
+        randomExpiry
       ),
     ],
     orderType,
@@ -313,7 +265,7 @@ export const createAmericanFixedBaseStraddle = async (
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
 
-  return { rfq, response, optionMarket };
+  return { rfq, responses };
 };
 
 export const createEuropeanFixedBaseStraddle = async (
@@ -322,7 +274,6 @@ export const createEuropeanFixedBaseStraddle = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
     new anchor.Program(
       PseudoPythIdl,
@@ -333,39 +284,31 @@ export const createEuropeanFixedBaseStraddle = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random();
-  const { euroMeta: euroMeta, euroMetaKey: euroMetaKey } =
-    await initializeNewEuropeanOption(
-      cvg,
-      oracle,
-      europeanProgram,
-      baseMint,
-      quoteMint,
-      23_354,
-      1,
-      randomExpiry,
-      0
-    );
+  const randomExpiry = min + Math.random() * 1000;
 
-  const { rfq, response } = await cvg.rfqs().createAndFinalize({
+  const { rfq, responses } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
         cvg,
         baseMint,
+        quoteMint,
         OptionType.CALL,
-        euroMeta,
-        euroMetaKey,
         1,
-        'long'
+        'long',
+        26_334,
+        oracle,
+        randomExpiry
       ),
       await PsyoptionsEuropeanInstrument.create(
         cvg,
         baseMint,
+        quoteMint,
         OptionType.PUT,
-        euroMeta,
-        euroMetaKey,
         1,
-        'long'
+        'long',
+        26_334,
+        oracle,
+        randomExpiry
       ),
     ],
     orderType,
@@ -373,7 +316,7 @@ export const createEuropeanFixedBaseStraddle = async (
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
 
-  return { rfq, response, euroMeta };
+  return { rfq, responses };
 };
 
 export const createAmericanOpenSizeCallSpdOptionRfq = async (
@@ -382,47 +325,29 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const expiration = 3_600 + Math.random();
-  const { optionMarketKey: optionMarketKey1, optionMarket: optionMarket1 } =
-    await initializeNewAmericanOption(
-      cvg,
-      baseMint,
-      quoteMint,
-      27_000,
-      1,
-      expiration
-    );
-  const { optionMarketKey: optionMarketKey2, optionMarket: optionMarket2 } =
-    await initializeNewAmericanOption(
-      cvg,
-      baseMint,
-      quoteMint,
-      33_000,
-      1,
-      expiration
-    );
+  const randomExpiry = 3_600 + Math.random() * 1000;
 
-  const { rfq, response } = await cvg.rfqs().createAndFinalize({
+  const { rfq, responses } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
         quoteMint,
         OptionType.CALL,
-        optionMarket1,
-        optionMarketKey1,
         1,
-        'long'
+        'long',
+        33_000,
+        randomExpiry
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
         quoteMint,
         OptionType.CALL,
-        optionMarket2,
-        optionMarketKey2,
         1,
-        'short'
+        'short',
+        31_000,
+        randomExpiry
       ),
     ],
     orderType,
@@ -430,7 +355,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
 
-  return { rfq, response, optionMarket1, optionMarket2 };
+  return { rfq, responses };
 };
 
 const cFlyMarketsCache = useCache(async (cvg, baseMint, quoteMint) => {
@@ -489,8 +414,7 @@ export const createCFlyRfq = async (
     .tokens()
     .findMintByAddress({ address: QUOTE_MINT_PK });
 
-  const optionMarkets = await cFlyMarketsCache.get(cvg, baseMint, quoteMint);
-
+  const randomExpiry = 3_600 + Math.random() * 1000;
   const {
     rfq: { address: rfqAddress },
   } = await cvg.rfqs().create({
@@ -500,30 +424,30 @@ export const createCFlyRfq = async (
         baseMint,
         quoteMint,
         OptionType.CALL,
-        optionMarkets.low,
-        optionMarkets.lowKey,
         1,
-        reversed ? 'short' : 'long'
+        reversed ? 'short' : 'long',
+        33_000,
+        randomExpiry
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
         quoteMint,
         OptionType.CALL,
-        optionMarkets.medium,
-        optionMarkets.mediumKey,
         2,
-        reversed ? 'long' : 'short'
+        reversed ? 'long' : 'short',
+        35_000,
+        randomExpiry
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
         baseMint,
         quoteMint,
         OptionType.CALL,
-        optionMarkets.high,
-        optionMarkets.highKey,
         1,
-        reversed ? 'short' : 'long'
+        reversed ? 'short' : 'long',
+        37_000,
+        randomExpiry
       ),
     ],
     orderType,
@@ -558,7 +482,7 @@ export const createRfq = async (
   const quoteMint = await cvg
     .tokens()
     .findMintByAddress({ address: quoteMintPk });
-  const { rfq, response } = await cvg.rfqs().createAndFinalize({
+  const { rfq, responses } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, instrumentAmount, 'long'),
     ],
@@ -566,7 +490,7 @@ export const createRfq = async (
     fixedSize: { type: rfqType, amount: fixedSizeAmount },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
-  return { rfq, response };
+  return { rfq, responses };
 };
 
 export const respondToRfq = async (

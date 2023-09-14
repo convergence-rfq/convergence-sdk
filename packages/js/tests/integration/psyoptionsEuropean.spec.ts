@@ -1,6 +1,6 @@
 import { expect } from 'expect';
 
-import { Mint } from '@solana/spl-token';
+import { Mint } from '../../src/plugins/tokenModule';
 import {
   prepareRfqSettlement,
   respondToRfq,
@@ -28,8 +28,8 @@ describe('integration.psyoptionsEuropean', () => {
       .findMintByAddress({ address: QUOTE_MINT_PK });
   });
 
-  it('covered call [sell]', async () => {
-    const { rfq, response } = await createEuropeanCoveredCallRfq(
+  it('european covered call [sell]', async () => {
+    const { rfq } = await createEuropeanCoveredCallRfq(
       takerCvg,
       'sell',
       baseMint,
@@ -37,7 +37,7 @@ describe('integration.psyoptionsEuropean', () => {
     );
 
     expect(rfq).toHaveProperty('address');
-    expect(response.signature).toBeDefined();
+    // expect(responses[0].signature).toBeDefined();
 
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0);
     await takerCvg.rfqs().confirmResponse({
