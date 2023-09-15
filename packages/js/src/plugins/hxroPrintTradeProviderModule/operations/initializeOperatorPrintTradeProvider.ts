@@ -99,15 +99,17 @@ export const initializeOperatorTraderRiskGroupBuilder = async (
     .getHxroPrintTradeProvider();
   const systemProgram = cvg.programs().getSystem(programs);
 
-  const { validMpg } = await cvg.hxro().fetchConfig();
   const { dexProgram } = manifest.fields;
-  const { feeModelProgramId, feeModelConfigurationAcct } =
-    await fetchValidHxroMpg(cvg, manifest);
+  const {
+    pubkey: mpgAddress,
+    feeModelProgramId,
+    feeModelConfigurationAcct,
+  } = await fetchValidHxroMpg(cvg, manifest);
   const [traderFeeStateAcct] = PublicKey.findProgramAddressSync(
     [
       Buffer.from('trader_fee_acct'),
       trgAccount.publicKey.toBuffer(),
-      validMpg.toBuffer(),
+      mpgAddress.toBuffer(),
     ],
     feeModelProgramId
   );
@@ -142,11 +144,11 @@ export const initializeOperatorTraderRiskGroupBuilder = async (
           authority: cvg.identity().publicKey,
           protocol: cvg.protocol().pdas().protocol(),
           config: cvg.hxro().pdas().config(),
-          marketProductGroup: validMpg,
+          marketProductGroup: mpgAddress,
           operator: cvg.hxro().pdas().operator(),
           dex: manifest.fields.dexProgram.programId,
           operatorTrg: trgAccount.publicKey,
-          riskAndFeeSigner: dexterity.Manifest.GetRiskAndFeeSigner(validMpg),
+          riskAndFeeSigner: dexterity.Manifest.GetRiskAndFeeSigner(mpgAddress),
           traderRiskStateAcct: riskStateAccount.publicKey,
           traderFeeStateAcct,
           riskEngineProgram,

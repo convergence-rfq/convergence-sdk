@@ -1,10 +1,10 @@
 import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
 import {
-  Rfq,
-  Response,
   AuthoritySide,
   toSolitaLegSide,
+  PrintTradeResponse,
+  PrintTradeRfq,
 } from '../rfqModule/models';
 import { toNumberInstrumentType } from '../riskEngineModule/models';
 import { PrintTrade, PrintTradeLeg, PrintTradeQuote } from './types';
@@ -63,8 +63,8 @@ export async function getPrintTradeValidationAccounts(
 
 export async function getSettlementPreparationAccounts(
   printTrade: PrintTrade,
-  rfq: Rfq,
-  response: Response,
+  rfq: PrintTradeRfq,
+  response: PrintTradeResponse,
   side: AuthoritySide,
   additionalInfo: any
 ): Promise<AccountMeta[]> {

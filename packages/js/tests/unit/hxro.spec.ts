@@ -87,12 +87,26 @@ describe('unit.hxro', () => {
       .rfqs()
       .respond({ rfq: rfq.address, ask: { price: 123, legsMultiplier: 1 } });
 
+    await cvgTaker.rfqs().confirmResponse({
+      response: rfqResponse.address,
+      rfq: rfq.address,
+      side: 'ask',
+    });
+
     await cvgTaker.rfqs().preparePrintTradeSettlement({
       rfq: rfq.address,
       response: rfqResponse.address,
       additionalPrintTradeInfo:
         new AdditionalHxroSettlementPreparationParameters(
-          new PublicKey(CTX.hxroTakerTrg),
+          new PublicKey(CTX.hxroTakerTrg)
+        ),
+    });
+
+    await cvgMaker.rfqs().preparePrintTradeSettlement({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      additionalPrintTradeInfo:
+        new AdditionalHxroSettlementPreparationParameters(
           new PublicKey(CTX.hxroMakerTrg)
         ),
     });

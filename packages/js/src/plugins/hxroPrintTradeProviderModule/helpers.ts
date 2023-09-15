@@ -25,5 +25,5 @@ export const fetchValidHxroMpg = async (cvg: Convergence, manifest: any) => {
   const { validMpg } = await cvg.hxro().fetchConfig();
 
   const mpg = await manifest.getMPG(validMpg);
-  return mpg;
+  return { pubkey: validMpg, ...mpg };
 };

@@ -4,6 +4,7 @@ import {
 } from '@convergence-rfq/risk-engine';
 import BN from 'bn.js';
 import { Leg as SolitaLeg } from '@convergence-rfq/rfq';
+import dexterity from '@hxronetwork/dexterity-ts';
 import {
   PrintTrade,
   PrintTradeLeg,
@@ -11,7 +12,12 @@ import {
   PrintTradeQuote,
 } from '../printTradeModule';
 import { fromNumberInstrumentType } from '../riskEngineModule';
-import { AuthoritySide, Rfq, Response, fromSolitaLegSide } from '../rfqModule';
+import {
+  AuthoritySide,
+  fromSolitaLegSide,
+  PrintTradeRfq,
+  PrintTradeResponse,
+} from '../rfqModule';
 import { HXRO_LEG_DECIMALS, HXRO_QUOTE_DECIMALS } from './constants';
 import { HxroLegInput } from './types';
 import { fetchValidHxroMpg, getHxroManifest } from './helpers';
@@ -75,8 +81,8 @@ export class HxroPrintTrade implements PrintTrade {
   };
 
   getSettlementPreparationAccounts = async (
-    rfq: Rfq,
-    response: Response,
+    rfq: PrintTradeRfq,
+    response: PrintTradeResponse,
     side: AuthoritySide,
     additionalParams: any
   ) => {
@@ -94,21 +100,53 @@ export class HxroPrintTrade implements PrintTrade {
         : [response.maker, rfq.taker];
 
     const manifest = await getHxroManifest(this.cvg);
-    const [mpg, userTrg, counterpartyTrg, operatorTrgs] = await Promise.all([
+    const [mpg, userTrgs, counterpartyTrgs, operatorTrgs] = await Promise.all([
       fetchValidHxroMpg(this.cvg, manifest),
-      manifest.getTRG(additionalParams.userTrgAddress),
-      manifest.getTRG(additionalParams.counterpartyTrgAddress),
+      manifest.getTRGsOfOwner(user),
+      manifest.getTRGsOfOwner(counterparty),
       manifest.getTRGsOfOwner(this.cvg.hxro().pdas().operator()),
     ]);
 
-    // @ts-ignore
-    const operatorTrg = operatorTrgs[0];
-    if (!user.equals(userTrg.owner)) {
+    const { pubkey: userTrgAddress, trg: userTrg } = userTrgs[0];
+    const { pubkey: counterpartyTrgAddress, trg: counterpartyTrg } =
+      counterpartyTrgs[0];
+    const { pubkey: operatorTrgAddress } = operatorTrgs[0];
+    if (!user?.equals(userTrg.owner)) {
       throw new Error('Invalid user trg authority!');
     }
-    if (!counterparty.equals(counterpartyTrg.owner)) {
+    if (!counterparty?.equals(counterpartyTrg.owner)) {
       throw new Error('Invalid counterparty trg authority!');
     }
+
+    const dexProgramId = manifest.fields.dexProgram.programId;
+    const [firstToPrepare, secondToPrepare] =
+      response.printTradeInitializedBy === null
+        ? [userTrgAddress, counterpartyTrgAddress]
+        : [counterpartyTrgAddress, userTrgAddress];
+    const [printTradeAddress] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('print_trade'),
+        firstToPrepare.toBuffer(),
+        secondToPrepare.toBuffer(),
+      ],
+      dexProgramId
+    );
+
+    const riskAndFeeSigner = dexterity.Manifest.GetRiskAndFeeSigner(mpg.pubkey);
+    const systemProgram = this.cvg.programs().getSystem();
+
+    const [covarianceAddress] = PublicKey.findProgramAddressSync(
+      [Buffer.from('s'), mpg.pubkey.toBuffer()],
+      mpg.riskEngineProgramId
+    );
+    const [correlationAddress] = PublicKey.findProgramAddressSync(
+      [Buffer.from('r'), mpg.pubkey.toBuffer()],
+      mpg.riskEngineProgramId
+    );
+    const [markPricesAddress] = PublicKey.findProgramAddressSync(
+      [Buffer.from('mark_prices'), mpg.pubkey.toBuffer()],
+      mpg.riskEngineProgramId
+    );
 
     return [
       {
@@ -122,12 +160,12 @@ export class HxroPrintTrade implements PrintTrade {
         isWritable: false,
       },
       {
-        pubkey: manifest.fields.dexProgram.programId,
+        pubkey: dexProgramId,
         isSigner: false,
         isWritable: false,
       },
       {
-        pubkey: mpg.address, // TODO
+        pubkey: mpg.pubkey,
         isSigner: false,
         isWritable: true,
       },
@@ -137,9 +175,67 @@ export class HxroPrintTrade implements PrintTrade {
         isWritable: false,
       },
       {
-        pubkey: userTrg.pubkey, // TODO
-        isSigner: true,
+        pubkey: userTrgAddress,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: counterpartyTrgAddress,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: operatorTrgAddress,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: printTradeAddress,
+        isSigner: false,
+        isWritable: true,
+      },
+      { pubkey: mpg.feeModelProgramId, isSigner: false, isWritable: false },
+      {
+        pubkey: mpg.feeModelConfigurationAcct,
+        isSigner: false,
         isWritable: false,
+      },
+      { pubkey: mpg.feeOutputRegister, isSigner: false, isWritable: true },
+      { pubkey: mpg.riskEngineProgramId, isSigner: false, isWritable: false },
+      {
+        pubkey: mpg.riskModelConfigurationAcct,
+        isSigner: false,
+        isWritable: false,
+      },
+      { pubkey: mpg.riskOutputRegister, isSigner: false, isWritable: true },
+      { pubkey: riskAndFeeSigner, isSigner: false, isWritable: false },
+      { pubkey: userTrg.feeStateAccount, isSigner: false, isWritable: true },
+      { pubkey: userTrg.riskStateAccount, isSigner: false, isWritable: true },
+      {
+        pubkey: counterpartyTrg.feeStateAccount,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: counterpartyTrg.riskStateAccount,
+        isSigner: false,
+        isWritable: true,
+      },
+      { pubkey: systemProgram.address, isSigner: false, isWritable: false },
+      {
+        pubkey: covarianceAddress,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: correlationAddress,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: markPricesAddress,
+        isSigner: false,
+        isWritable: true,
       },
     ];
   };
@@ -255,10 +351,7 @@ class HxroLeg implements PrintTradeLeg {
 }
 
 export class AdditionalHxroSettlementPreparationParameters {
-  constructor(
-    public userTrgAddress: PublicKey,
-    public counterpartyTrgAddress: PublicKey
-  ) {}
+  constructor(public userTrgAddress: PublicKey) {}
 
   static verify(
     parameters: any
