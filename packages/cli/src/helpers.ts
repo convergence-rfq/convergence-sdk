@@ -49,6 +49,7 @@ export const formatInstrument = (instrument: Instrument): string => {
 
 export const addDefaultArgs = (cmd: any) => {
   cmd.option('--rpc-endpoint <string>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
+  cmd.option('--skip-preflight', 'skip preflight', false);
   cmd.option('--keypair-file <string>', 'keypair file', DEFAULT_KEYPAIR_FILE);
   cmd.option('--verbose <boolean>', 'verbose', false);
   return cmd;
