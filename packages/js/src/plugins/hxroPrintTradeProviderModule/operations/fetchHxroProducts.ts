@@ -127,6 +127,25 @@ const expandProductData = async (
   const isOption =
     !strikePriceIsZero &&
     (instrumentType === 'expiring-call' || instrumentType === 'expiring-put');
+  const isTermFuture = strikePriceIsZero && instrumentType === 'expiring-call';
+  const isPerpFuture = instrumentType === 'recurring-call';
+  const expirationTimestamp =
+    isOption || isTermFuture
+      ? initializationTime.add(fullFundingPeriod)
+      : undefined;
+
+  // filter out expired products
+  if (expirationTimestamp !== undefined) {
+    const currentTimestamp = Date.now() / 1000; // convert to seconds
+
+    console.log(
+      `Current: ${currentTimestamp}, expiration: ${expirationTimestamp}`
+    );
+    if (expirationTimestamp <= currentTimestamp) {
+      return null;
+    }
+  }
+
   if (isOption) {
     return {
       ...commonInResponse,
@@ -134,19 +153,16 @@ const expandProductData = async (
       optionType:
         instrumentType === 'expiring-call' ? OptionType.Call : OptionType.Put,
       strikePrice: strike,
-      expirationTimestamp: initializationTime.add(fullFundingPeriod),
+      expirationTimestamp,
     };
   }
-
-  const isTermFuture = strikePriceIsZero && instrumentType === 'expiring-call';
   if (isTermFuture) {
     return {
       ...commonInResponse,
       instrumentType: 'term-future',
+      expirationTimestamp,
     };
   }
-
-  const isPerpFuture = instrumentType === 'recurring-call';
   if (isPerpFuture) {
     return {
       ...commonInResponse,

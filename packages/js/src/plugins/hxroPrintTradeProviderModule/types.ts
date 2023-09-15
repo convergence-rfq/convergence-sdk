@@ -22,6 +22,7 @@ export type HxroOptionInfo = HxroCommonProductInfo & {
 };
 export type HxroTermFutureInfo = HxroCommonProductInfo & {
   instrumentType: 'term-future';
+  expirationTimestamp: number;
 };
 export type HxroPerpFutureInfo = HxroCommonProductInfo & {
   instrumentType: 'perp-future';
