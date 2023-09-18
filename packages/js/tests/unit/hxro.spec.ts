@@ -7,6 +7,7 @@ import {
   AdditionalHxroSettlementPreparationParameters,
   HxroOptionInfo,
   HxroPrintTrade,
+  HxroLeg,
   PublicKey,
 } from '../../src';
 import { CTX } from '../constants';
@@ -67,6 +68,31 @@ describe('unit.hxro', () => {
 
     // set back
     await cvgAuthority.hxro().modifyConfig({ validMpg: oldMpg });
+  });
+
+  it('can overwrite print trade with whole product data', async () => {
+    await ensureHxroOperatorTRGInitialized(cvgAuthority);
+
+    const products = await cvgTaker.hxro().fetchProducts();
+    const { rfq } = await cvgTaker.rfqs().createPrintTrade({
+      printTrade: new HxroPrintTrade(cvgTaker, [
+        { amount: 1, side: 'long', productInfo: products[0] },
+      ]),
+      orderType: 'buy',
+      fixedSize: { type: 'open' },
+      activeWindow: 1000,
+      settlingWindow: 5000,
+    });
+
+    expect(
+      (rfq.legs[0] as HxroLeg).legInfo.productInfo.productAddress
+    ).toBeUndefined();
+    (rfq.printTrade as HxroPrintTrade).overwriteWithFullHxroProductData(
+      products
+    );
+    expect(
+      (rfq.legs[0] as HxroLeg).legInfo.productInfo.productAddress
+    ).toBeDefined();
   });
 
   it('can create hxro rfq', async () => {

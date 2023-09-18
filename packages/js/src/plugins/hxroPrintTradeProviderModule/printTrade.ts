@@ -19,7 +19,7 @@ import {
   PrintTradeResponse,
 } from '../rfqModule';
 import { HXRO_LEG_DECIMALS, HXRO_QUOTE_DECIMALS } from './constants';
-import { HxroLegInput } from './types';
+import { HxroLegInput, HxroProductInfo } from './types';
 import { fetchValidHxroMpg, getHxroManifest } from './helpers';
 import { Convergence } from '@/Convergence';
 import {
@@ -79,7 +79,6 @@ export class HxroPrintTrade implements PrintTrade {
       ...validationAccounts,
     ];
   };
-
   getSettlementPreparationAccounts = async (
     rfq: PrintTradeRfq,
     response: PrintTradeResponse,
@@ -239,6 +238,25 @@ export class HxroPrintTrade implements PrintTrade {
       },
     ];
   };
+
+  // after an rfq is parsed from an on-chain data, as much data is possible is parsed from there
+  // but some product info is missing in the rfq on-chain data
+  // this method overwrites hxro product data and can be used to fill all the missing data
+  overwriteWithFullHxroProductData = (fullProductsData: HxroProductInfo[]) => {
+    for (const legInfo of this.legsInfo) {
+      const fullProductData = fullProductsData.find(
+        (data) => data.productIndex === legInfo.productInfo.productIndex
+      );
+
+      if (fullProductData === undefined) {
+        throw new Error(
+          `Missing a product by index ${legInfo.productInfo.productIndex}`
+        );
+      }
+
+      legInfo.productInfo = fullProductData;
+    }
+  };
 }
 
 export class HxroPrintTradeParser implements PrintTradeParser {
@@ -305,10 +323,10 @@ class HxroQuote implements PrintTradeQuote {
   serializeInstrumentData = () => Buffer.from([]);
 }
 
-class HxroLeg implements PrintTradeLeg {
+export class HxroLeg implements PrintTradeLeg {
   legType: 'printTrade';
 
-  constructor(protected legInfo: HxroLegInput) {
+  constructor(public legInfo: HxroLegInput) {
     this.legType = 'printTrade';
   }
 

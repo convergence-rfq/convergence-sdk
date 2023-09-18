@@ -138,9 +138,6 @@ const expandProductData = async (
   if (expirationTimestamp !== undefined) {
     const currentTimestamp = Date.now() / 1000; // convert to seconds
 
-    console.log(
-      `Current: ${currentTimestamp}, expiration: ${expirationTimestamp}`
-    );
     if (expirationTimestamp <= currentTimestamp) {
       return null;
     }

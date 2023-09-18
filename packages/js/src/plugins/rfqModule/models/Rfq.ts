@@ -108,13 +108,25 @@ export type PrintTradeRfq = CommonRfq & {
 export type Rfq = EscrowRfq | PrintTradeRfq;
 
 /** @group Model Helpers */
-export const isRfq = (value: any): value is Rfq =>
-  typeof value === 'object' &&
-  (value.model === 'escrowRfq' || value.model === 'printTradeRfq');
+export const isEscrowRfq = (value: any): value is Rfq =>
+  typeof value === 'object' && value.model === 'escrowRfq';
+
+export const isPrintTradeRfq = (value: any): value is Rfq =>
+  typeof value === 'object' && value.model === 'printTradeRfq';
 
 /** @group Model Helpers */
 export function assertRfq(value: any): asserts value is Rfq {
-  assert(isRfq(value), 'Expected Rfq model');
+  assert(isEscrowRfq(value) || isPrintTradeRfq(value), 'Expected Rfq model');
+}
+
+export function assertEscrowRfq(value: any): asserts value is EscrowRfq {
+  assert(isEscrowRfq(value), 'Expected Escrow Rfq model');
+}
+
+export function assertPrintTradeRfq(
+  value: any
+): asserts value is PrintTradeRfq {
+  assert(isPrintTradeRfq(value), 'Expected Print Trade Rfq model');
 }
 
 export function isSettledAsPrintTrade(rfq: Rfq): boolean {

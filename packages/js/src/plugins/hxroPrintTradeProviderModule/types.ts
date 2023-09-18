@@ -11,6 +11,7 @@ export type HxroLegInput = {
 
 type HxroCommonProductInfo = {
   productIndex: number;
+  // Can be missing in a case when parsed from a leg but the data haven't been extended with hxro product data
   productAddress?: PublicKey;
   baseAssetIndex: number;
 };
@@ -22,7 +23,8 @@ export type HxroOptionInfo = HxroCommonProductInfo & {
 };
 export type HxroTermFutureInfo = HxroCommonProductInfo & {
   instrumentType: 'term-future';
-  expirationTimestamp: number;
+  // Can be missing in a case when parsed from a leg but the data haven't been extended with hxro product data
+  expirationTimestamp?: number;
 };
 export type HxroPerpFutureInfo = HxroCommonProductInfo & {
   instrumentType: 'perp-future';

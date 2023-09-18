@@ -7,7 +7,12 @@ import * as anchor from '@project-serum/anchor';
 
 import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { assertRfq, FixedSize, Rfq, toSolitaFixedSize } from '../models';
+import {
+  assertPrintTradeRfq,
+  FixedSize,
+  PrintTradeRfq,
+  toSolitaFixedSize,
+} from '../models';
 import {
   calculateExpectedLegsHash,
   calculateExpectedLegsSize,
@@ -95,7 +100,7 @@ export type CreatePrintTradeRfqOutput = {
   response: SendAndConfirmTransactionResponse;
 
   /** The newly created Rfq. */
-  rfq: Rfq;
+  rfq: PrintTradeRfq;
 };
 
 /**
@@ -164,7 +169,7 @@ export const createPrintTradeRfqOperationHandler: OperationHandler<CreatePrintTr
       const rfq = await convergence
         .rfqs()
         .findRfqByAddress({ address: rfqPda });
-      assertRfq(rfq);
+      assertPrintTradeRfq(rfq);
 
       return { ...output, rfq };
     },
