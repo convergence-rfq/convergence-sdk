@@ -23,7 +23,7 @@ import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import {
   createEuropeanProgram,
-  createPsyEuropeanMarket,
+  getPsyEuropeanMarketTxBuilder,
   getEuropeanOptionMeta,
 } from './helpers';
 import { InstructionUniquenessTracker } from '@/utils';
@@ -118,7 +118,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     if (!this.optionMeta) {
       throw new Error('Option Meta is not defined');
     }
-    const optionMarketTx = await createPsyEuropeanMarket(
+    const optionMarketTxBuilder = await getPsyEuropeanMarketTxBuilder(
       this.convergence,
       this.optionMeta.underlyingMint,
       this.underlyingAmountPerContractDecimals,
@@ -131,7 +131,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       europeanProgram
     );
 
-    return optionMarketTx;
+    return optionMarketTxBuilder;
   }
 
   static async create(

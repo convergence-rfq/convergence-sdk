@@ -283,8 +283,8 @@ export class RpcClient {
 
   async sendAndConfirmTransaction(
     transaction: Transaction | TransactionBuilder,
-    confirmOptions?: ConfirmOptions,
-    signers: Signer[] = []
+    signers: Signer[] = [],
+    confirmOptions?: ConfirmOptions
   ): Promise<SendAndConfirmTransactionResponse> {
     const prepared = await this.prepareTransaction(transaction, signers);
     const { blockhashWithExpiryBlockHeight } = prepared;

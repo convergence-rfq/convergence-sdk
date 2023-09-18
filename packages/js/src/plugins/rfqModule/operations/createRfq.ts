@@ -32,6 +32,7 @@ import {
   toQuote,
 } from '../../../plugins/instrumentModule';
 import { OrderType, toSolitaOrderType } from '../models/OrderType';
+import { InstructionUniquenessTracker } from '@/utils/classes';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -161,11 +162,14 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     let { expectedLegsHash } = operation.input;
 
     const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
-    const optionMarketTxArray: TransactionBuilder[] = [];
+    const optionMarketTxBuilderArray: TransactionBuilder[] = [];
+    const ixTracker = new InstructionUniquenessTracker([]);
     for (const ins of instruments) {
-      const optionMarketTx = await ins.getPreparationsBeforeRfqCreation();
-      if (optionMarketTx) {
-        optionMarketTxArray.push(optionMarketTx);
+      const optionMarketTxBuilder = await ins.getPreparationsBeforeRfqCreation(
+        ixTracker
+      );
+      if (optionMarketTxBuilder) {
+        optionMarketTxBuilderArray.push(optionMarketTxBuilder);
       }
     }
     expectedLegsHash =
@@ -206,7 +210,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     );
 
     // const output = await builder.sendAndConfirm(convergence, confirmOptions);
-    const builders = [...optionMarketTxArray, builder];
+    const builders = [...optionMarketTxBuilderArray, builder];
     const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
     const signedTxs = await convergence
       .identity()
@@ -216,9 +220,11 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
 
     const optionMarketSignedTxs = signedTxs.slice(
       0,
-      optionMarketTxArray.length
+      optionMarketTxBuilderArray.length
     );
-    const rfqCreationSignedTxs = signedTxs.slice(optionMarketTxArray.length);
+    const rfqCreationSignedTxs = signedTxs.slice(
+      optionMarketTxBuilderArray.length
+    );
 
     for (const signedTx of optionMarketSignedTxs) {
       await convergence

@@ -17,7 +17,10 @@ import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import { CvgWallet, NoopWallet } from '../../utils/Wallets';
-import { createPsyAmericanMarket, getAmericanOptionMeta } from './helpers';
+import {
+  getPsyAmericanMarketTxBuilder,
+  getAmericanOptionMeta,
+} from './helpers';
 import { InstructionUniquenessTracker } from '@/utils/classes';
 
 type PsyoptionsAmericanInstrumentData = {
@@ -77,7 +80,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     if (!this.optionMeta) {
       throw new Error('Option Meta is not defined');
     }
-    const optionMarketTx = await createPsyAmericanMarket(
+    const optionMarketTxBuilder = await getPsyAmericanMarketTxBuilder(
       this.convergence,
       this.optionMeta.underlyingAssetMint,
       this.underlyingAmountPerContractDecimals,
@@ -88,7 +91,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       ixTracker
     );
 
-    return optionMarketTx;
+    return optionMarketTxBuilder;
   }
 
   static async create(
@@ -147,7 +150,8 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     convergence: Convergence,
     metaKey: PublicKey
   ): Promise<OptionMarketWithKey> {
-    const americanProgram = createAmericanProgram(convergence);
+    const cvgWallet = new CvgWallet(convergence);
+    const americanProgram = createAmericanProgram(convergence, cvgWallet);
     const optionMarket = (await psyoptionsAmerican.getOptionByKey(
       americanProgram,
       metaKey

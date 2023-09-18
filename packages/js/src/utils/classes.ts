@@ -34,16 +34,10 @@ export class InstructionUniquenessTracker {
   checkedAdd(ix: TransactionInstruction | TransactionBuilder): boolean {
     if (ix instanceof TransactionBuilder) {
       const instructions = ix.getInstructions();
-      const ixLength = instructions.length;
-      let checked = 0;
-      instructions.every((ix) => {
-        if (!this.matchInstruction(ix)) {
-          checked++;
-          return true;
-        }
-        return false;
-      });
-      if (checked === ixLength) {
+      const areAllUnique = instructions.every(
+        (ix) => !this.matchInstruction(ix)
+      );
+      if (areAllUnique) {
         this.IxArray.push(...instructions);
         return true;
       }
