@@ -3,7 +3,7 @@ import { BN } from 'bn.js';
 import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
-import { ATAExistence, getOrCreateATA } from '../../utils/ata';
+import { ATAExistence, getOrCreateATAInx } from '../../utils/ata';
 import { Mint } from '../tokenModule/models';
 import { CvgWallet } from '../../utils/Wallets';
 import {
@@ -208,7 +208,7 @@ export const createPsyAmericanMarket = async (
   let underlyingAmountPerContract = new BN('1');
 
   // Initialize the options meta the long way
-  const expirationUnixTimestamp = new BN(Date.now() / 1_000 + expiresIn);
+  const expirationUnixTimestamp = new BN(expiresIn);
   quoteAmountPerContract = new BN(
     Number(quoteAmountPerContract) * Math.pow(10, stableMintDecimals)
   );
@@ -231,7 +231,6 @@ export const createPsyAmericanMarket = async (
     optionMarketKey
   );
 
-  console.log('optionMarket', optionMarketKey.toBase58());
   // If there is no existing market, derive the optionMarket from inputs
   if (optionMarket == null) {
     const optionMarketIx =
@@ -247,19 +246,13 @@ export const createPsyAmericanMarket = async (
         }
       );
     const feeOwner = psyoptionsAmerican.FEE_OWNER_KEY;
-    const mintFeeAccount = cvg.tokens().pdas().associatedTokenAccount({
-      mint: underlyingMint,
-      owner: feeOwner,
-    });
+    const mintFeeAccount = await getOrCreateATAtxBuilder(
+      cvg,
+      underlyingMint,
+      feeOwner
+    );
+    const exerciseFeeAccount = await getOrCreateATA(cvg, stableMint, feeOwner);
 
-    console.log('mintFeeAccount', mintFeeAccount.toBase58());
-    const exerciseFeeAccount = cvg.tokens().pdas().associatedTokenAccount({
-      mint: stableMint,
-      owner: feeOwner,
-    });
-
-    console.log('exerciseFeeAccount', exerciseFeeAccount.toBase58());
-    console.log('identity:', cvg.identity().publicKey.toBase58());
     optionMarket = {
       optionMint: optionMarketIx.optionMintKey,
       writerTokenMint: optionMarketIx.writerMintKey,

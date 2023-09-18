@@ -176,12 +176,6 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           ixTracker
         );
         if (optionMarketTx) {
-          optionMarketTx.getInstructions().map((ins) =>
-            ins.keys.map((key) => {
-              console.log(key.pubkey.toBase58());
-            })
-          );
-
           optionMarketTxArray.push(optionMarketTx);
         }
       }
