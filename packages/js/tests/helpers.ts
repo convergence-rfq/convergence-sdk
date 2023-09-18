@@ -3,11 +3,10 @@ import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
-import { EuroPrimitive, OptionType } from '@mithraic-labs/tokenized-euros';
+import { OptionType } from '@mithraic-labs/tokenized-euros';
 import {
   Convergence,
   OrderType,
-  initializeNewAmericanOption,
   toBigNumber,
   Rfq,
   Response,
@@ -16,11 +15,9 @@ import {
   keypairIdentity,
   PublicKey,
   removeDecimals,
-  useCache,
   CvgWallet,
   PsyoptionsEuropeanInstrument,
   prepareEuropeanOptions,
-  InstructionUniquenessTracker,
   PsyoptionsAmericanInstrument,
   SpotLegInstrument,
 } from '../src';
@@ -139,9 +136,7 @@ export const createEuropeanCoveredCallRfq = async (
   cvg: Convergence,
   orderType: OrderType,
   baseMint: any,
-  quoteMint: any,
-  ixTracker: InstructionUniquenessTracker,
-  europeanProgram: Program<EuroPrimitive>
+  quoteMint: any
 ) => {
   const oracle = await createPythPriceFeed(
     new anchor.Program(
@@ -181,9 +176,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
   cvg: Convergence,
   orderType: OrderType,
   baseMint: any,
-  quoteMint: any,
-  ixTracker: InstructionUniquenessTracker,
-  europeanProgram: Program<EuroPrimitive>
+  quoteMint: any
 ) => {
   const oracle = await createPythPriceFeed(
     new anchor.Program(
@@ -272,9 +265,7 @@ export const createEuropeanFixedBaseStraddle = async (
   cvg: Convergence,
   orderType: OrderType,
   baseMint: any,
-  quoteMint: any,
-  ixTracker: InstructionUniquenessTracker,
-  europeanProgram: Program<EuroPrimitive>
+  quoteMint: any
 ) => {
   const oracle = await createPythPriceFeed(
     new anchor.Program(
@@ -359,50 +350,6 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
 
   return { rfq, responses };
 };
-
-const cFlyMarketsCache = useCache(async (cvg, baseMint, quoteMint) => {
-  const [
-    { optionMarket: low, optionMarketKey: lowKey },
-    { optionMarket: medium, optionMarketKey: mediumKey },
-    { optionMarket: high, optionMarketKey: highKey },
-  ] = await Promise.all([
-    initializeNewAmericanOption(
-      cvg,
-      baseMint,
-      quoteMint,
-      18_000,
-      1,
-      90 * 24 * 60 * 60 // 90 days
-    ),
-    initializeNewAmericanOption(
-      cvg,
-      baseMint,
-      quoteMint,
-      20_000,
-      1,
-      90 * 24 * 60 * 60 // 90 days
-    ),
-    initializeNewAmericanOption(
-      cvg,
-      baseMint,
-      quoteMint,
-      22_000,
-      1,
-      90 * 24 * 60 * 60 // 90 days
-    ),
-  ]);
-
-  return {
-    low,
-    lowKey,
-
-    medium,
-    mediumKey,
-
-    high,
-    highKey,
-  };
-}, 300);
 
 export const createCFlyRfq = async (
   cvg: Convergence,

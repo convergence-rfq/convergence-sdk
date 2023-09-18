@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { EuroMeta } from '@convergence-rfq/psyoptions-european-instrument';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
@@ -11,6 +11,9 @@ import {
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
+import { BN, Program } from '@project-serum/anchor';
+import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
+import * as anchor from '@project-serum/anchor';
 import { Mint } from '../tokenModule';
 import {
   CreateOptionInstrumentsResult,
@@ -22,11 +25,22 @@ import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import {
-  createEuropeanProgram,
-  getPsyEuropeanMarketTxBuilder,
-  getEuropeanOptionMeta,
-} from './helpers';
-import { InstructionUniquenessTracker } from '@/utils';
+  CvgWallet,
+  InstructionUniquenessTracker,
+  TransactionBuilder,
+} from '@/utils';
+
+export const createEuropeanProgram = async (convergence: Convergence) => {
+  const cvgWallet = new CvgWallet(convergence);
+  return psyoptionsEuropean.createProgramFromProvider(
+    new anchor.AnchorProvider(
+      convergence.connection,
+      cvgWallet,
+      anchor.AnchorProvider.defaultOptions()
+    ),
+    new PublicKey(psyoptionsEuropean.programId)
+  );
+};
 
 type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;
@@ -296,4 +310,124 @@ export const psyoptionsEuropeanInstrumentParser = {
       fromSolitaLegSide(side)
     );
   },
+};
+
+export const getPsyEuropeanMarketTxBuilder = async (
+  cvg: Convergence,
+  underlyingMint: PublicKey,
+  underlyingMintDecimals: number,
+  stableMint: PublicKey,
+  stableMintDecimals: number,
+  strike: number,
+  oracleAddress: PublicKey,
+  expiresIn: number,
+  ixTracker: InstructionUniquenessTracker,
+  europeanProgram: Program<psyoptionsEuropean.EuroPrimitive>
+): Promise<CreateOptionInstrumentsResult> => {
+  const optionMarketTxBuilder = TransactionBuilder.make().setFeePayer(
+    cvg.rpc().getDefaultFeePayer()
+  );
+  const instructions: TransactionInstruction[] = [];
+
+  let quoteAmountPerContract = new BN(strike);
+  let underlyingAmountPerContract = new BN('1');
+  const expirationTimestamp = new BN(expiresIn);
+  const oracleProviderId = 0; // Switchboard = 1, Pyth = 0
+  quoteAmountPerContract = new BN(
+    Number(quoteAmountPerContract) * Math.pow(10, stableMintDecimals)
+  );
+  underlyingAmountPerContract = new BN(
+    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMintDecimals)
+  );
+
+  // Initialize all accounts for European program
+  const { instructions: initializeIxs } =
+    await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
+      europeanProgram,
+      underlyingMint,
+      stableMint,
+      oracleAddress,
+      expirationTimestamp,
+      stableMintDecimals,
+      oracleProviderId
+    );
+
+  initializeIxs.forEach((ix) => {
+    if (ixTracker.checkedAdd(ix)) {
+      instructions.push(ix);
+    }
+  });
+
+  // Retrieve the euro meta account and a creation instruction (may or may not be required)
+  const { instruction: createIx, euroMetaKey } =
+    await psyoptionsEuropean.instructions.createEuroMetaInstruction(
+      europeanProgram,
+      underlyingMint,
+      underlyingMintDecimals,
+      stableMint,
+      stableMintDecimals,
+      expirationTimestamp,
+      underlyingAmountPerContract,
+      quoteAmountPerContract,
+      stableMintDecimals,
+      oracleAddress,
+      oracleProviderId
+    );
+
+  const euroMetaKeyAccount = await cvg.rpc().getAccount(euroMetaKey);
+  if (!euroMetaKeyAccount.exists) {
+    if (ixTracker.checkedAdd(createIx)) {
+      instructions.push(createIx);
+    }
+  }
+
+  if (instructions.length > 0) {
+    instructions.forEach((ix) => {
+      optionMarketTxBuilder.add({ instruction: ix, signers: [cvg.identity()] });
+    });
+  }
+  if (optionMarketTxBuilder.getInstructionCount() > 0) {
+    return optionMarketTxBuilder;
+  }
+  return null;
+};
+
+export type GetEuropeanOptionMetaResult = {
+  euroMeta: EuroMeta;
+  euroMetaKey: PublicKey;
+};
+
+export const getEuropeanOptionMeta = async (
+  europeanProgram: Program<psyoptionsEuropean.EuroPrimitive>,
+  underlyingMint: Mint,
+  stableMint: Mint,
+  expiresIn: number,
+  underlyingAmountPerContract: number,
+  quoteAmountPerContract: number,
+  oracleAddress: PublicKey,
+  oracleProviderId: number
+): Promise<GetEuropeanOptionMetaResult> => {
+  const expirationTimestamp = new BN(Date.now() / 1_000 + expiresIn);
+  const quoteAmountPerContractBN = new BN(
+    Number(quoteAmountPerContract) * Math.pow(10, stableMint.decimals)
+  );
+  const underlyingAmountPerContractBN = new BN(
+    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
+  );
+  const { euroMeta, euroMetaKey } =
+    await psyoptionsEuropean.instructions.createEuroMetaInstruction(
+      europeanProgram,
+      underlyingMint.address,
+      underlyingMint.decimals,
+      stableMint.address,
+      stableMint.decimals,
+      expirationTimestamp,
+      underlyingAmountPerContractBN,
+      quoteAmountPerContractBN,
+      stableMint.decimals,
+      oracleAddress,
+      oracleProviderId
+    );
+
+  return { euroMeta, euroMetaKey };
 };

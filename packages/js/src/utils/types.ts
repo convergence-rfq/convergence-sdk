@@ -13,8 +13,3 @@ export type RequiredKeys<T extends object, K extends keyof T = keyof T> = Omit<
 export type Option<T> = T | null;
 
 export type Opaque<T, K> = T & { __opaque__: K };
-
-export enum OptionType {
-  CALL = 0,
-  PUT = 1,
-}

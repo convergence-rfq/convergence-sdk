@@ -1,7 +1,4 @@
 import { expect } from 'expect';
-
-import { Program } from '@project-serum/anchor';
-import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import { Mint } from '../../src/plugins/tokenModule';
 import {
   prepareRfqSettlement,
@@ -13,16 +10,12 @@ import {
   createEuropeanFixedBaseStraddle,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
-import { InstructionUniquenessTracker } from '../../src/utils/';
-import { createEuropeanProgram } from '../../src';
 
 describe('integration.psyoptionsEuropean', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
   let baseMint: Mint;
   let quoteMint: Mint;
-  let europeanProgram: Program<EuroPrimitive>;
-  const ixTracker = new InstructionUniquenessTracker([]);
   before(async () => {
     baseMint = await takerCvg
       .tokens()
@@ -30,7 +23,6 @@ describe('integration.psyoptionsEuropean', () => {
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
-    europeanProgram = await createEuropeanProgram(takerCvg);
   });
 
   it('european covered call [sell]', async () => {
@@ -38,9 +30,7 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint,
-      ixTracker,
-      europeanProgram
+      quoteMint
     );
 
     expect(rfq).toHaveProperty('address');
@@ -63,9 +53,7 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'buy',
       baseMint,
-      quoteMint,
-      ixTracker,
-      europeanProgram
+      quoteMint
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -106,9 +94,7 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'buy',
       baseMint,
-      quoteMint,
-      ixTracker,
-      europeanProgram
+      quoteMint
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -152,9 +138,7 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint,
-      ixTracker,
-      europeanProgram
+      quoteMint
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -195,9 +179,7 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'two-way',
       baseMint,
-      quoteMint,
-      ixTracker,
-      europeanProgram
+      quoteMint
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -241,9 +223,7 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'two-way',
       baseMint,
-      quoteMint,
-      ixTracker,
-      europeanProgram
+      quoteMint
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 61_222, 60_123);
@@ -279,9 +259,7 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint,
-      ixTracker,
-      europeanProgram
+      quoteMint
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
