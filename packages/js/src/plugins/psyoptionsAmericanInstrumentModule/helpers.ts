@@ -3,7 +3,7 @@ import { BN } from 'bn.js';
 import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
-import { ATAExistence, getOrCreateATAInx } from '../../utils/ata';
+import { ATAExistence, getOrCreateATA } from '../../utils/ata';
 import { Mint } from '../tokenModule/models';
 import { CvgWallet } from '../../utils/Wallets';
 import {
@@ -246,11 +246,7 @@ export const createPsyAmericanMarket = async (
         }
       );
     const feeOwner = psyoptionsAmerican.FEE_OWNER_KEY;
-    const mintFeeAccount = await getOrCreateATAtxBuilder(
-      cvg,
-      underlyingMint,
-      feeOwner
-    );
+    const mintFeeAccount = await getOrCreateATA(cvg, underlyingMint, feeOwner);
     const exerciseFeeAccount = await getOrCreateATA(cvg, stableMint, feeOwner);
 
     optionMarket = {
