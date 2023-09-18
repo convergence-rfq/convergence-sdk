@@ -9,7 +9,7 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { settleBuilder } from './settle';
+import { settleEscrowBuilder } from './settle';
 import { partiallySettleLegsBuilder } from './partiallySettleLegs';
 
 const Key = 'PartiallySettleLegsAndSettleOperation' as const;
@@ -107,10 +107,19 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
         scope.confirmOptions
       );
 
-      let settleRfqBuilder = await settleBuilder(
+      const rfqModel = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: rfq });
+
+      if (rfqModel.model !== 'escrowRfq') {
+        throw new Error('Only escrow rfqs allowed!');
+      }
+
+      let settleRfqBuilder = await settleEscrowBuilder(
         convergence,
         {
-          ...operation.input,
+          response: operation.input.response,
+          rfq: rfqModel,
         },
         scope
       );
@@ -120,10 +129,6 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
         .rpc()
         .getTransactionSize(settleRfqBuilder, []);
 
-      const rfqModel = await convergence
-        .rfqs()
-        .findRfqByAddress({ address: rfq });
-
       let slicedIndex = rfqModel.legs.length;
 
       while (settleTxSize == -1 || settleTxSize + 193 > MAX_TX_SIZE) {
@@ -131,10 +136,11 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
         // const startIndex = rfqModel.legs.length - index;
         const startIndex = rfqModel.legs.length - index + 3;
 
-        settleRfqBuilder = await settleBuilder(
+        settleRfqBuilder = await settleEscrowBuilder(
           convergence,
           {
-            ...operation.input,
+            response: operation.input.response,
+            rfq: rfqModel,
             startIndex,
           },
           scope

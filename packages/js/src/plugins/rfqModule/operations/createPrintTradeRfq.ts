@@ -38,7 +38,7 @@ import {
   serializePrintTradeAsSolitaLeg,
   printTradeToSolitaLeg,
   printTradetoSolitaQuote,
-  getPrintTradeValidationAccounts,
+  prependWithProviderProgram,
 } from '@/plugins/printTradeModule';
 
 const Key = 'CreatePrintTradeRfqOperation' as const;
@@ -307,7 +307,10 @@ export const validateRfqByPrintTradeProviderBuilder = async (
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const validationAccounts = await getPrintTradeValidationAccounts(printTrade);
+  const validationAccounts = prependWithProviderProgram(
+    printTrade,
+    await printTrade.getValidationAccounts()
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

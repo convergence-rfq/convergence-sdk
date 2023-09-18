@@ -136,5 +136,9 @@ describe('unit.hxro', () => {
           new PublicKey(CTX.hxroMakerTrg)
         ),
     });
+
+    await cvgTaker.rfqs().settle({
+      response: rfqResponse.address,
+    });
   });
 });

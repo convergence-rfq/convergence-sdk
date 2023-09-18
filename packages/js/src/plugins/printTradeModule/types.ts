@@ -24,6 +24,10 @@ export interface PrintTrade {
     side: AuthoritySide,
     additionalParams: any
   ) => Promise<AccountMeta[]>;
+  getSettlementAccounts: (
+    rfq: PrintTradeRfq,
+    response: PrintTradeResponse
+  ) => Promise<AccountMeta[]>;
 }
 
 export interface PrintTradeLeg {

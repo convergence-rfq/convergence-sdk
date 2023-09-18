@@ -16,7 +16,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { getAuthoritySide } from '../helpers';
 import { toSolitaAuthoritySide } from '../models';
-import { getSettlementPreparationAccounts } from '@/plugins/printTradeModule';
+import { prependWithProviderProgram } from '@/plugins/printTradeModule';
 
 const Key = 'PreparePrintTradeSettlementOperation' as const;
 
@@ -141,12 +141,14 @@ export const preparePrintTradeSettlementBuilder = async (
   }
 
   const { printTrade } = rfqModel;
-  const printTradeAccounts = await getSettlementPreparationAccounts(
+  const printTradeAccounts = prependWithProviderProgram(
     printTrade,
-    rfqModel,
-    responseModel,
-    side,
-    additionalPrintTradeInfo
+    await printTrade.getSettlementPreparationAccounts(
+      rfqModel,
+      responseModel,
+      side,
+      additionalPrintTradeInfo
+    )
   );
 
   return TransactionBuilder.make()
