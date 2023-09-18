@@ -334,7 +334,7 @@ export const getPsyAmericanMarketTxBuilder = async (
   );
 
   // If there is no existing market, derive the optionMarket from inputs
-  if (optionMarket == null) {
+  if (!optionMarket) {
     const { optionMarketIx, mintFeeAccount, exerciseFeeAccount } =
       await getPsyAmericanOptionMarketAccounts(
         cvg,
