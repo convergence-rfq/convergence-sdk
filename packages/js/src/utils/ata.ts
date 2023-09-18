@@ -31,7 +31,7 @@ export const getOrCreateATA = async (
   return ata;
 };
 
-interface GetOrCreateATAtxBuilderReturnType {
+export interface GetOrCreateATAtxBuilderReturnType {
   ataPubKey: PublicKey;
   txBuilder?: TransactionBuilder;
 }

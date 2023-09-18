@@ -1,8 +1,5 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
-import * as anchor from '@project-serum/anchor';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { BN } from 'bn.js';
-import { Mint } from '../tokenModule';
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
@@ -12,91 +9,6 @@ import {
   PsyoptionsEuropeanInstrument,
   createEuropeanProgram,
 } from './instrument';
-import { toBigNumber } from '@/types/BigNumber';
-
-export const initializeNewEuropeanOption = async (
-  convergence: Convergence,
-  ixTracker: InstructionUniquenessTracker,
-  oracle: PublicKey,
-  europeanProgram: anchor.Program<psyoptionsEuropean.EuroPrimitive>,
-  underlyingMint: Mint,
-  stableMint: Mint,
-  strikePrice: number,
-  underlyingAmountPerContract: number,
-  expiration: number,
-  oracleProviderId = 1
-) => {
-  const expirationTimestamp = new BN(Date.now() / 1_000 + expiration);
-
-  const { instructions: initializeIxs } =
-    await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
-      europeanProgram,
-      underlyingMint.address,
-      stableMint.address,
-      oracle,
-      expirationTimestamp,
-      stableMint.decimals,
-      oracleProviderId
-    );
-
-  const inititalizeTxBuilder = TransactionBuilder.make().setFeePayer(
-    convergence.rpc().getDefaultFeePayer()
-  );
-
-  initializeIxs.forEach((ix) => {
-    if (ixTracker.checkedAdd(ix))
-      inititalizeTxBuilder.add({
-        instruction: ix,
-        signers: [convergence.identity()],
-      });
-  });
-
-  if (inititalizeTxBuilder.getInstructions().length > 0) {
-    await inititalizeTxBuilder.sendAndConfirm(convergence);
-  }
-
-  const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
-  const underlyingAmountPerContractSize = addDecimals(
-    underlyingAmountPerContract,
-    underlyingMint.decimals
-  );
-
-  const {
-    instruction: createIx,
-    euroMeta,
-    euroMetaKey,
-    expirationData,
-  } = await psyoptionsEuropean.instructions.createEuroMetaInstruction(
-    europeanProgram,
-    underlyingMint.address,
-    underlyingMint.decimals,
-    stableMint.address,
-    stableMint.decimals,
-    expirationTimestamp,
-    toBigNumber(underlyingAmountPerContractSize),
-    toBigNumber(strikePriceSize),
-    stableMint.decimals,
-    oracle,
-    oracleProviderId
-  );
-
-  if (ixTracker.checkedAdd(createIx)) {
-    const createTxBuilder = TransactionBuilder.make().setFeePayer(
-      convergence.rpc().getDefaultFeePayer()
-    );
-    createTxBuilder.add({
-      instruction: createIx,
-      signers: [convergence.identity()],
-    });
-    await createTxBuilder.sendAndConfirm(convergence);
-  }
-
-  return {
-    euroMeta,
-    euroMetaKey,
-    expirationData,
-  };
-};
 
 // create European Option ATAs and mint options
 export const prepareEuropeanOptions = async (

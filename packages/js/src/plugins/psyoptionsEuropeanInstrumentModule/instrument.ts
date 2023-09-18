@@ -177,7 +177,6 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
         underlyingMint,
         stableMint,
         expiresIn,
-        1,
         strike,
         oracleAddress,
         0
@@ -329,15 +328,13 @@ export const getPsyEuropeanMarketTxBuilder = async (
   );
   const instructions: TransactionInstruction[] = [];
 
-  let quoteAmountPerContract = new BN(strike);
-  let underlyingAmountPerContract = new BN('1');
   const expirationTimestamp = new BN(expiresIn);
   const oracleProviderId = 0; // Switchboard = 1, Pyth = 0
-  quoteAmountPerContract = new BN(
-    Number(quoteAmountPerContract) * Math.pow(10, stableMintDecimals)
+  const quoteAmountPerContract = new BN(
+    addDecimals(strike, stableMintDecimals)
   );
-  underlyingAmountPerContract = new BN(
-    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMintDecimals)
+  const underlyingAmountPerContract = new BN(
+    addDecimals(1, underlyingMintDecimals)
   );
 
   // Initialize all accounts for European program
@@ -402,17 +399,16 @@ export const getEuropeanOptionMeta = async (
   underlyingMint: Mint,
   stableMint: Mint,
   expiresIn: number,
-  underlyingAmountPerContract: number,
-  quoteAmountPerContract: number,
+  strike: number,
   oracleAddress: PublicKey,
   oracleProviderId: number
 ): Promise<GetEuropeanOptionMetaResult> => {
   const expirationTimestamp = new BN(Date.now() / 1_000 + expiresIn);
-  const quoteAmountPerContractBN = new BN(
-    Number(quoteAmountPerContract) * Math.pow(10, stableMint.decimals)
+  const quoteAmountPerContract = new BN(
+    addDecimals(strike, stableMint.decimals)
   );
-  const underlyingAmountPerContractBN = new BN(
-    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
+  const underlyingAmountPerContract = new BN(
+    addDecimals(1, underlyingMint.decimals)
   );
   const { euroMeta, euroMetaKey } =
     await psyoptionsEuropean.instructions.createEuroMetaInstruction(
@@ -422,8 +418,8 @@ export const getEuropeanOptionMeta = async (
       stableMint.address,
       stableMint.decimals,
       expirationTimestamp,
-      underlyingAmountPerContractBN,
-      quoteAmountPerContractBN,
+      underlyingAmountPerContract,
+      quoteAmountPerContract,
       stableMint.decimals,
       oracleAddress,
       oracleProviderId

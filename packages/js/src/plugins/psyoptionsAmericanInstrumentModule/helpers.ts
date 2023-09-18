@@ -4,59 +4,12 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
-import { Mint } from '../tokenModule/models';
 import { CvgWallet } from '../../utils/Wallets';
 import { InstructionUniquenessTracker } from '../../utils/classes';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
 import { TransactionBuilder } from '@/utils/TransactionBuilder';
 
-export const initializeNewAmericanOption = async (
-  convergence: Convergence,
-  underlyingMint: Mint,
-  quoteMint: Mint,
-  quoteAmountPerContract: number,
-  underlyingAmountPerContract: number,
-  expiration: number
-) => {
-  const expirationUnixTimestamp = new BN(Date.now() / 1_000 + expiration);
-
-  const quoteAmountPerContractBN = new BN(
-    Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
-  );
-  const underlyingAmountPerContractBN = new BN(
-    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
-  );
-
-  const cvgWallet = new CvgWallet(convergence);
-  const americanProgram = createAmericanProgram(convergence, cvgWallet);
-
-  const { optionMarketKey, optionMintKey, writerMintKey } =
-    await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
-      expirationUnixTimestamp,
-      quoteAmountPerContract: quoteAmountPerContractBN,
-      quoteMint: quoteMint.address,
-      underlyingAmountPerContract: underlyingAmountPerContractBN,
-      underlyingMint: underlyingMint.address,
-    });
-
-  const optionMarket = (await psyoptionsAmerican.getOptionByKey(
-    americanProgram,
-    optionMarketKey
-  )) as psyoptionsAmerican.OptionMarketWithKey;
-
-  const optionMint = await convergence
-    .tokens()
-    .findMintByAddress({ address: optionMintKey });
-
-  return {
-    optionMarketKey,
-    optionMarket,
-    optionMintKey,
-    writerMintKey,
-    optionMint,
-  };
-};
 //create American Options ATAs and mint Options
 export const prepareAmericanOptions = async (
   convergence: Convergence,
