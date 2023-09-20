@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { AccountMeta, PublicKey } from '@solana/web3.js';
 import { Leg, BaseAssetIndex, QuoteAsset } from '@convergence-rfq/rfq';
 import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
@@ -42,6 +42,44 @@ export class SpotLegInstrument implements LegInstrument {
   getDecimals = () => this.decimals;
   getAmount = () => this.amount;
   getBaseAssetIndex = () => this.baseAssetIndex;
+  async getBaseAssetAccount(): Promise<AccountMeta> {
+    const baseAsset = this.convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: this.baseAssetIndex.value });
+
+    const baseAssetAccount: AccountMeta = {
+      pubkey: baseAsset,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    return baseAssetAccount;
+  }
+  async getBaseAssetMint(): Promise<PublicKey> {
+    return this.mintAddress;
+  }
+
+  async getOracleAccount(baseAssetIndex: number): Promise<AccountMeta> {
+    const baseAsset = this.convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: baseAssetIndex });
+
+    const baseAssetModel = await this.convergence
+      .protocol()
+      .findBaseAssetByAddress({ address: baseAsset });
+
+    if (!baseAssetModel.priceOracle.address) {
+      throw Error('Base asset does not have a price oracle!');
+    }
+    const oracleAccount = {
+      pubkey: baseAssetModel.priceOracle.address,
+      isSigner: false,
+      isWritable: false,
+    };
+    return oracleAccount;
+  }
 
   static async create(
     convergence: Convergence,

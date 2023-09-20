@@ -1,4 +1,4 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { AccountMeta, Keypair, PublicKey } from '@solana/web3.js';
 import { Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
@@ -66,7 +66,44 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
+  async getBaseAssetAccount(): Promise<AccountMeta> {
+    const baseAsset = this.convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: this.baseAssetIndex.value });
 
+    const baseAssetAccount: AccountMeta = {
+      pubkey: baseAsset,
+      isSigner: false,
+      isWritable: false,
+    };
+
+    return baseAssetAccount;
+  }
+  async getBaseAssetMint(): Promise<PublicKey> {
+    return this.un;
+  }
+
+  async getOracleAccount(baseAssetIndex: number): Promise<AccountMeta> {
+    const baseAsset = this.convergence
+      .protocol()
+      .pdas()
+      .baseAsset({ index: baseAssetIndex });
+
+    const baseAssetModel = await this.convergence
+      .protocol()
+      .findBaseAssetByAddress({ address: baseAsset });
+
+    if (!baseAssetModel.priceOracle.address) {
+      throw Error('Base asset does not have a price oracle!');
+    }
+    const oracleAccount = {
+      pubkey: baseAssetModel.priceOracle.address,
+      isSigner: false,
+      isWritable: false,
+    };
+    return oracleAccount;
+  }
   static async create(
     convergence: Convergence,
     underlyingMint: Mint,

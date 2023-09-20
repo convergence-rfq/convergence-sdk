@@ -17,6 +17,9 @@ export interface LegInstrument {
   getSide: () => LegSide;
   serializeInstrumentData: () => Buffer;
   getValidationAccounts(): Promise<AccountMeta[]>;
+  getBaseAssetMint(): Promise<PublicKey>;
+  getBaseAssetAccount(): Promise<AccountMeta>;
+  getOracleAccount(baseAssetIndex: number): Promise<AccountMeta>;
 }
 
 // TODO add registration of quote instruments
