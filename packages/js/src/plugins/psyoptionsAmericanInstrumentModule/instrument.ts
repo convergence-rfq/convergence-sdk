@@ -122,7 +122,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 
     const cvgWallet = new CvgWallet(convergence);
     const americanProgram = await createAmericanProgram(convergence, cvgWallet);
-    const { optionMint, metaKey } = await getAmericanOptionMeta(
+    const { optionMint, metaKey } = await getAmericanOptionkeys(
       americanProgram,
       underlyingMint,
       stableMint,
@@ -312,7 +312,6 @@ export const getPsyAmericanMarketIxs = async (
 
   const optionMarketIxs: TransactionInstruction[] = [];
 
-  // Initialize the options meta the long way
   const expirationUnixTimestamp = new BN(expiresIn);
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMintDecimals)
@@ -365,7 +364,7 @@ export type GetAmericanOptionMetaResult = {
   optionMint: PublicKey;
   metaKey: PublicKey;
 };
-export const getAmericanOptionMeta = async (
+export const getAmericanOptionkeys = async (
   americanProgram: any,
   underlyingMint: Mint,
   stableMint: Mint,
@@ -381,7 +380,7 @@ export const getAmericanOptionMeta = async (
     addDecimals(underlyingAmountPerContract, underlyingMint.decimals)
   );
 
-  const [americanMetaKey] = await psyoptionsAmerican.deriveOptionKeyFromParams({
+  const [metaKey] = await psyoptionsAmerican.deriveOptionKeyFromParams({
     expirationUnixTimestamp,
     programId: americanProgram.programId,
     quoteAmountPerContract: quoteAmountPerContractBN,
@@ -391,11 +390,11 @@ export const getAmericanOptionMeta = async (
   });
 
   const [optionMint] = PublicKey.findProgramAddressSync(
-    [americanMetaKey.toBuffer(), Buffer.from('optionToken')],
+    [metaKey.toBuffer(), Buffer.from('optionToken')],
     americanProgram.programId
   );
 
-  return { optionMint, metaKey: americanMetaKey };
+  return { optionMint, metaKey };
 };
 
 export type GetPsyAmericanOptionMarketAccounts = {

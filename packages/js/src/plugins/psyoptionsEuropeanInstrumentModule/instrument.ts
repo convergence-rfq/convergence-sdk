@@ -133,7 +133,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     if (!this.oracleAddress) {
       throw new Error('Missing oracle address');
     }
-    const optionMarketIxs = await getPsyEuropeanMarketTxBuilder(
+    const optionMarketIxs = await getPsyEuropeanMarketIxs(
       this.convergence,
       this.underlyingAssetMint,
       this.underlyingAmountPerContractDecimals,
@@ -174,7 +174,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
     const expirationUnixTimestamp = Date.now() / 1_000 + expiresIn;
     const europeanProgram = await createEuropeanProgram(convergence);
-    const { metaKey, optionMint } = await getEuropeanOptionMeta(
+    const { metaKey, optionMint } = await getEuropeanOptionKeys(
       europeanProgram,
       underlyingMint,
       stableMint,
@@ -315,7 +315,7 @@ export const psyoptionsEuropeanInstrumentParser = {
   },
 };
 
-export const getPsyEuropeanMarketTxBuilder = async (
+export const getPsyEuropeanMarketIxs = async (
   cvg: Convergence,
   underlyingMint: PublicKey,
   underlyingMintDecimals: number,
@@ -382,7 +382,7 @@ export type GetEuropeanOptionMetaResult = {
   metaKey: PublicKey;
 };
 
-export const getEuropeanOptionMeta = async (
+export const getEuropeanOptionKeys = async (
   europeanProgram: Program<psyoptionsEuropean.EuroPrimitive>,
   underlyingMint: Mint,
   stableMint: Mint,
