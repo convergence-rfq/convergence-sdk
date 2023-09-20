@@ -1,7 +1,6 @@
 import expect from 'expect';
 import {
   createAmericanCoveredCallRfq,
-  createEuropeanCoveredCallRfq,
   createRfq,
   createUserCvg,
   respondToRfq,
@@ -366,15 +365,15 @@ describe('unit.settlementResult', () => {
       ],
     });
   });
-  it('fixed-base european covered call', async () => {
-    const { responses, rfq } = await createEuropeanCoveredCallRfq(
+  it('fixed-base american covered call', async () => {
+    const { response, rfq } = await createAmericanCoveredCallRfq(
       takerCvg,
       'sell',
       baseMint,
       quoteMint
     );
     expect(rfq).toHaveProperty('address');
-    expect(responses[0].signature).toBeDefined();
+    expect(response.signature).toBeDefined();
 
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.34);
     const responseResult = takerCvg.rfqs().getSettlementResult({

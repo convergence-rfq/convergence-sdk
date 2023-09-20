@@ -7,9 +7,11 @@ import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, FixedSize, Rfq, toSolitaFixedSize } from '../models';
 import {
   calculateExpectedLegsHash,
-  instrumentsToLegsAndLegsSize,
   instrumentsToLegAccounts,
   legsToBaseAssetAccounts,
+  getRfqLegstoAdd,
+  instrumentsToLegs,
+  calculateExpectedLegsSize,
   // convertInstrumentsDataToInstrmentsWithTnx,
 } from '../helpers';
 import {
@@ -134,7 +136,7 @@ export type CreateRfqInput = {
  */
 export type CreateRfqOutput = {
   /** The blockchain response from sending and confirming the transaction. */
-  responses: SendAndConfirmTransactionResponse[];
+  response: SendAndConfirmTransactionResponse;
 
   /** The newly created Rfq. */
   rfq: Rfq;
@@ -160,15 +162,23 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       settlingWindow = 1_000,
     } = operation.input;
     let { expectedLegsHash } = operation.input;
-
+    const payer = convergence.rpc().getDefaultFeePayer();
     const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
     const optionMarketTxBuilderArray: TransactionBuilder[] = [];
     const ixTracker = new InstructionUniquenessTracker([]);
     for (const ins of instruments) {
-      const optionMarketTxBuilder = await ins.getPreparationsBeforeRfqCreation(
-        ixTracker
-      );
-      if (optionMarketTxBuilder) {
+      const optionMarketIxs = await ins.getPreparationsBeforeRfqCreation();
+      const optionMarketTxBuilder =
+        TransactionBuilder.make().setFeePayer(payer);
+      if (optionMarketIxs.length > 0) {
+        optionMarketIxs.forEach((ix) => {
+          if (ixTracker.checkedAdd(ix)) {
+            optionMarketTxBuilder.add({
+              instruction: ix,
+              signers: [convergence.identity()],
+            });
+          }
+        });
         optionMarketTxBuilderArray.push(optionMarketTxBuilder);
       }
     }
@@ -193,6 +203,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       convergence,
       {
         ...operation.input,
+        instruments,
         rfq: rfqPda,
         fixedSize,
         activeWindow,
@@ -222,9 +233,14 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       0,
       optionMarketTxBuilderArray.length
     );
-    const rfqCreationSignedTxs = signedTxs.slice(
-      optionMarketTxBuilderArray.length
+    const createRfqSignedTx = signedTxs[optionMarketTxBuilderArray.length];
+
+    const addLegsSignedTxs = signedTxs.slice(
+      optionMarketSignedTxs.length + 1,
+      signedTxs.length - 1
     );
+
+    const finalizedrfqSignedTx = signedTxs[signedTxs.length - 1];
 
     for (const signedTx of optionMarketSignedTxs) {
       await convergence
@@ -235,23 +251,41 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
           confirmOptions
         );
     }
-    const responses: SendAndConfirmTransactionResponse[] = [];
-    for (const signedTx of rfqCreationSignedTxs) {
-      const response = await convergence
-        .rpc()
-        .serializeAndSendTransaction(
-          signedTx,
-          lastValidBlockHeight,
-          confirmOptions
-        );
-      responses.push(response);
-    }
+
+    await convergence
+      .rpc()
+      .serializeAndSendTransaction(
+        createRfqSignedTx,
+        lastValidBlockHeight,
+        confirmOptions
+      );
+
+    await Promise.all(
+      addLegsSignedTxs.map((signedTx) =>
+        convergence
+          .rpc()
+          .serializeAndSendTransaction(
+            signedTx,
+            lastValidBlockHeight,
+            confirmOptions
+          )
+      )
+    );
+
+    const response = await convergence
+      .rpc()
+      .serializeAndSendTransaction(
+        finalizedrfqSignedTx,
+        lastValidBlockHeight,
+        confirmOptions
+      );
+
     scope.throwIfCanceled();
 
     const rfq = await convergence.rfqs().findRfqByAddress({ address: rfqPda });
     assertRfq(rfq);
 
-    return { responses, rfq };
+    return { response, rfq };
   },
 };
 
@@ -301,9 +335,10 @@ export const createRfqBuilder = async (
   } = params;
   let { expectedLegsSize } = params;
 
-  const [legs, expectedLegsSizeValue] = await instrumentsToLegsAndLegsSize(
-    instruments
-  );
+  const { initialLegsToAdd } = getRfqLegstoAdd(instruments.length);
+  const instrumentsToAdd = instruments.slice(0, initialLegsToAdd);
+  const legs = instrumentsToLegs(instrumentsToAdd);
+  const expectedLegsSizeValue = calculateExpectedLegsSize(instruments);
   expectedLegsSize = expectedLegsSize ?? expectedLegsSizeValue;
 
   const systemProgram = convergence.programs().getSystem(programs);
@@ -329,7 +364,7 @@ export const createRfqBuilder = async (
   ];
 
   const baseAssetAccounts = legsToBaseAssetAccounts(convergence, legs);
-  const legAccounts = await instrumentsToLegAccounts(instruments);
+  const legAccounts = await instrumentsToLegAccounts(instrumentsToAdd);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

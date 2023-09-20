@@ -1,4 +1,5 @@
 import { expect } from 'expect';
+import { Program, AnchorProvider } from '@project-serum/anchor';
 import { Mint } from '../../src/plugins/tokenModule';
 import {
   prepareRfqSettlement,
@@ -8,14 +9,20 @@ import {
   createEuropeanCoveredCallRfq,
   createEuropeanOpenSizeCallSpdOptionRfq,
   createEuropeanFixedBaseStraddle,
+  createEuropeanIronCondor,
+  createPythPriceFeed,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
+import { PublicKey } from '../../src';
+import { CvgWallet } from '../../src/utils/Wallets';
+import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
 
 describe('integration.psyoptionsEuropean', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
   let baseMint: Mint;
   let quoteMint: Mint;
+  let oracle: PublicKey;
   before(async () => {
     baseMint = await takerCvg
       .tokens()
@@ -23,18 +30,28 @@ describe('integration.psyoptionsEuropean', () => {
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
+    oracle = await createPythPriceFeed(
+      new Program(
+        PseudoPythIdl,
+        new PublicKey('FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH'),
+        new AnchorProvider(takerCvg.connection, new CvgWallet(takerCvg), {})
+      ),
+      17_000,
+      quoteMint.decimals * -1
+    );
   });
 
   it('european covered call [sell]', async () => {
-    const { rfq, responses } = await createEuropeanCoveredCallRfq(
+    const { rfq, response } = await createEuropeanCoveredCallRfq(
       takerCvg,
       'sell',
       baseMint,
-      quoteMint
+      quoteMint,
+      oracle
     );
 
     expect(rfq).toHaveProperty('address');
-    expect(responses[0].signature).toBeDefined();
+    expect(response.signature).toBeDefined();
 
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.0);
     await takerCvg.rfqs().confirmResponse({
@@ -53,7 +70,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'buy',
       baseMint,
-      quoteMint
+      quoteMint,
+      oracle
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -94,7 +112,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'buy',
       baseMint,
-      quoteMint
+      quoteMint,
+      oracle
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -138,7 +157,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint
+      quoteMint,
+      oracle
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -179,7 +199,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'two-way',
       baseMint,
-      quoteMint
+      quoteMint,
+      oracle
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -223,7 +244,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'two-way',
       baseMint,
-      quoteMint
+      quoteMint,
+      oracle
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(makerCvg, rfq, 61_222, 60_123);
@@ -259,7 +281,8 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint
+      quoteMint,
+      oracle
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -281,6 +304,43 @@ describe('integration.psyoptionsEuropean', () => {
       });
     expect(confirmResponse).toHaveProperty('signature');
 
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
+  });
+
+  it('fixed-size european iron Condor [buy]', async () => {
+    const { rfq } = await createEuropeanIronCondor(
+      takerCvg,
+      'sell',
+      baseMint,
+      quoteMint,
+      oracle
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 61_222);
+    expect(rfqResponse).toHaveProperty('address');
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'bid',
+      });
+    expect(confirmResponse).toHaveProperty('signature');
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,

@@ -47,7 +47,7 @@ export class SpotLegInstrument implements LegInstrument {
   getAmount = () => this.amount;
   getBaseAssetIndex = () => this.baseAssetIndex;
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
-    return null;
+    return [];
   }
 
   static async create(
@@ -84,7 +84,7 @@ export class SpotLegInstrument implements LegInstrument {
   }
 
   /** Helper method to get validation accounts for a spot instrument. */
-  async getValidationAccounts() {
+  getValidationAccounts() {
     const mintInfo = this.convergence
       .rfqs()
       .pdas()
