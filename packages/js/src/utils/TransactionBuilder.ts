@@ -196,7 +196,7 @@ export class TransactionBuilder<C extends object = object> {
   ): Promise<{ response: SendAndConfirmTransactionResponse } & C> {
     const response = await convergence
       .rpc()
-      .sendAndConfirmTransaction(this, confirmOptions);
+      .sendAndConfirmTransaction(this, [], confirmOptions);
 
     return {
       response,

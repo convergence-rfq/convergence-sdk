@@ -136,24 +136,9 @@ export const addLegsToRfqBuilder = async (
   const legs = instrumentsToLegs(instruments);
   const legAccounts = await instrumentsToLegAccounts(instruments);
 
-  const baseAssetAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = [];
-
-  for (const leg of legs) {
-    baseAssetIndexValues.push(leg.baseAssetIndex.value);
-  }
-
-  for (const value of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index: value });
-
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-  }
+  const baseAssetAccounts = await Promise.all(
+    instruments.map((instrument) => instrument.getBaseAssetAccount())
+  );
 
   const rfqProgram = convergence.programs().getRfq(programs);
 

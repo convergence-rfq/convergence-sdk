@@ -24,10 +24,19 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { getOrCreateATA } from '../../../utils/ata';
+import { Rfq } from '../../rfqModule';
+import { getOrCreateATAtxBuilder } from '../../../utils/ata';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import {
+  prepareAmericanOptions,
+  psyoptionsAmericanInstrumentProgram,
+} from '@/plugins/psyoptionsAmericanInstrumentModule';
+import {
+  prepareEuropeanOptions,
+  psyoptionsEuropeanInstrumentProgram,
+} from '@/plugins/psyoptionsEuropeanInstrumentModule';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -112,8 +121,25 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
+      const {
+        response,
+        rfq,
+        caller = convergence.identity(),
+      } = operation.input;
+
+      const rfqModel = await convergence
+        .rfqs()
+        .findRfqByAddress({ address: rfq });
+
+      if (doesRfqLegContainsPsyoptionsAmerican(rfqModel)) {
+        await prepareAmericanOptions(convergence, response, caller?.publicKey);
+      }
+      if (doesRfqLegContainsPsyoptionsEuropean(rfqModel)) {
+        await prepareEuropeanOptions(convergence, response, caller?.publicKey);
+      }
       const builder = await prepareSettlementBuilder(
         convergence,
+        rfqModel,
         {
           ...operation.input,
         },
@@ -153,6 +179,7 @@ export type PrepareSettlementBuilderParams = PrepareSettlementInput;
  */
 export const prepareSettlementBuilder = async (
   convergence: Convergence,
+  rfqModel: Rfq,
   params: PrepareSettlementBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
@@ -166,7 +193,7 @@ export const prepareSettlementBuilder = async (
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  // const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
@@ -227,6 +254,7 @@ export const prepareSettlementBuilder = async (
 
   anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
 
+  const ataTxBuilderArray: TransactionBuilder[] = [];
   for (let legIndex = 0; legIndex < legAmountToPrepare; legIndex++) {
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[legIndex].getProgramId(),
@@ -242,6 +270,16 @@ export const prepareSettlementBuilder = async (
       rfqModel,
     });
 
+    const { ataPubKey, txBuilder } = await getOrCreateATAtxBuilder(
+      convergence,
+      baseAssetMints[legIndex].address,
+      caller.publicKey,
+      programs
+    );
+    if (txBuilder) {
+      ataTxBuilderArray.push(txBuilder);
+    }
+
     const legAccounts: AccountMeta[] = [
       // `caller`
       {
@@ -251,12 +289,7 @@ export const prepareSettlementBuilder = async (
       },
       // `caller_token_account`
       {
-        pubkey: await getOrCreateATA(
-          convergence,
-          baseAssetMints[legIndex].address,
-          caller.publicKey,
-          programs
-        ),
+        pubkey: ataPubKey,
         isSigner: false,
         isWritable: true,
       },
@@ -277,6 +310,22 @@ export const prepareSettlementBuilder = async (
       { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
     ];
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
+  }
+
+  if (ataTxBuilderArray.length > 0) {
+    const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+    const signedTxs = await convergence
+      .identity()
+      .signAllTransactions(
+        ataTxBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
+      );
+    await Promise.all(
+      signedTxs.map((signedTx) =>
+        convergence
+          .rpc()
+          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+      )
+    );
   }
 
   return TransactionBuilder.make()
@@ -307,4 +356,16 @@ export const prepareSettlementBuilder = async (
         key: 'prepareSettlement',
       }
     );
+};
+
+const doesRfqLegContainsPsyoptionsAmerican = (rfq: Rfq) => {
+  return rfq.legs.some((leg) =>
+    leg.getProgramId().equals(psyoptionsAmericanInstrumentProgram.address)
+  );
+};
+
+const doesRfqLegContainsPsyoptionsEuropean = (rfq: Rfq) => {
+  return rfq.legs.some((leg) =>
+    leg.getProgramId().equals(psyoptionsEuropeanInstrumentProgram.address)
+  );
 };

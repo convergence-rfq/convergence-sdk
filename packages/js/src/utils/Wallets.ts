@@ -15,17 +15,19 @@ export class CvgWallet implements Wallet {
   constructor(convergence: Convergence) {
     this.convergence = convergence;
     this.payer = convergence.rpc().getDefaultFeePayer() as Keypair;
-    this.publicKey = convergence.rpc().getDefaultFeePayer().publicKey;
+    this.publicKey = convergence.identity().publicKey;
   }
 
   signTransaction = (tx: Transaction): Promise<Transaction> => {
-    return this.convergence.rpc().signTransaction(tx, [this.payer as Signer]);
+    return this.convergence
+      .rpc()
+      .signTransaction(tx, [this.convergence.identity() as Signer]);
   };
 
   signAllTransactions = (txs: Transaction[]): Promise<Transaction[]> => {
     return this.convergence
       .rpc()
-      .signAllTransactions(txs, [this.payer as Signer]);
+      .signAllTransactions(txs, [this.convergence.identity() as Signer]);
   };
 }
 

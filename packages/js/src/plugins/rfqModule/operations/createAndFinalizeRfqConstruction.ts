@@ -5,7 +5,11 @@ import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, FixedSize, Rfq } from '../models';
 
-import { calculateExpectedLegsHash } from '../helpers';
+import {
+  calculateExpectedLegsHash,
+  getRfqLegstoAdd,
+  isOptionLegInstrument,
+} from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -27,6 +31,8 @@ import {
 import { OrderType } from '../models/OrderType';
 import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
+import { addLegsToRfqBuilder } from './addLegsToRfq';
+import { InstructionUniquenessTracker } from '@/utils/classes';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -156,16 +162,35 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
     ): Promise<CreateAndFinalizeRfqConstructionOutput> => {
       const {
         taker = convergence.identity(),
-        instruments,
         orderType,
+        instruments,
         fixedSize,
         quoteAsset,
         activeWindow = 5_000,
         settlingWindow = 1_000,
       } = operation.input;
-
+      const payer = convergence.rpc().getDefaultFeePayer();
       const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
-
+      const optionMarketTxBuilderArray: TransactionBuilder[] = [];
+      const ixTracker = new InstructionUniquenessTracker([]);
+      for (const ins of instruments) {
+        if (!isOptionLegInstrument(ins)) continue;
+        const optionMarketIxs = await ins.getPreparationsBeforeRfqCreation();
+        const optionMarketTxBuilder =
+          TransactionBuilder.make().setFeePayer(payer);
+        if (optionMarketIxs.length > 0) {
+          optionMarketIxs.forEach((ix) => {
+            if (ixTracker.checkedAdd(ix)) {
+              optionMarketTxBuilder.add({
+                instruction: ix,
+                signers: [convergence.identity()],
+              });
+            }
+          });
+        }
+        if (optionMarketTxBuilder.getInstructionCount() > 0)
+          optionMarketTxBuilderArray.push(optionMarketTxBuilder);
+      }
       const expectedLegsHash = calculateExpectedLegsHash(instruments);
 
       const rfqPda = convergence
@@ -182,14 +207,13 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           recentTimestamp,
         });
 
-      const builder = await createAndFinalizeRfqConstructionBuilder(
+      const txBuilderArray = await createAndFinalizeRfqConstructionBuilder(
         convergence,
         {
           ...operation.input,
           taker,
           rfq: rfqPda,
           fixedSize,
-          instruments,
           expectedLegsHash,
           recentTimestamp,
         },
@@ -201,7 +225,65 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         convergence,
         scope.confirmOptions
       );
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      const builders = [...optionMarketTxBuilderArray, ...txBuilderArray];
+      const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+      const signedTxs = await convergence
+        .identity()
+        .signAllTransactions(
+          builders.map((b) => b.toTransaction(lastValidBlockHeight))
+        );
+
+      const optionMarketSignedTxs = signedTxs.slice(
+        0,
+        optionMarketTxBuilderArray.length
+      );
+      const createRfqSignedTx = signedTxs[optionMarketTxBuilderArray.length];
+
+      const addLegsSignedTxs = signedTxs.slice(
+        optionMarketSignedTxs.length + 1,
+        signedTxs.length - 1
+      );
+
+      const finalizedrfqSignedTx = signedTxs[signedTxs.length - 1];
+
+      for (const signedTx of optionMarketSignedTxs) {
+        await convergence
+          .rpc()
+          .serializeAndSendTransaction(
+            signedTx,
+            lastValidBlockHeight,
+            confirmOptions
+          );
+      }
+
+      await convergence
+        .rpc()
+        .serializeAndSendTransaction(
+          createRfqSignedTx,
+          lastValidBlockHeight,
+          confirmOptions
+        );
+
+      await Promise.all(
+        addLegsSignedTxs.map((signedTx) =>
+          convergence
+            .rpc()
+            .serializeAndSendTransaction(
+              signedTx,
+              lastValidBlockHeight,
+              confirmOptions
+            )
+        )
+      );
+
+      const response = await convergence
+        .rpc()
+        .serializeAndSendTransaction(
+          finalizedrfqSignedTx,
+          lastValidBlockHeight,
+          confirmOptions
+        );
+
       scope.throwIfCanceled();
 
       const rfq = await convergence
@@ -209,7 +291,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         .findRfqByAddress({ address: rfqPda });
       assertRfq(rfq);
 
-      return { ...output, rfq };
+      return { response, rfq };
     },
   };
 
@@ -228,28 +310,41 @@ export const createAndFinalizeRfqConstructionBuilder = async (
   convergence: Convergence,
   params: CreateAndFinalizeRfqConstructionBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
-  const { payer = convergence.rpc().getDefaultFeePayer() } = options;
+): Promise<TransactionBuilder[]> => {
   const { rfq } = params;
-
+  const { initialLegsToAdd, postLegsToAdd } = getRfqLegstoAdd(
+    params.instruments.length
+  );
+  const txBuilderArray: TransactionBuilder[] = [];
   const rfqBuilder = await createRfqBuilder(
     convergence,
     { ...params },
     options
   );
+
+  txBuilderArray.push(rfqBuilder);
+
+  if (postLegsToAdd) {
+    for (let l = initialLegsToAdd; l < initialLegsToAdd + postLegsToAdd; l++) {
+      const addLegsTxBuilder = await addLegsToRfqBuilder(
+        convergence,
+        {
+          rfq,
+          taker: params.taker,
+          instruments: [params.instruments[l]],
+        },
+        options
+      );
+      txBuilderArray.push(addLegsTxBuilder);
+    }
+  }
+
   const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(
     convergence,
     { ...params, legs: params.instruments },
     options
   );
 
-  return TransactionBuilder.make()
-    .setContext({
-      rfq,
-    })
-    .setFeePayer(payer)
-    .add(
-      ...rfqBuilder.getInstructionsWithSigners(),
-      ...finalizeConstructionBuilder.getInstructionsWithSigners()
-    );
+  txBuilderArray.push(finalizeConstructionBuilder);
+  return txBuilderArray;
 };

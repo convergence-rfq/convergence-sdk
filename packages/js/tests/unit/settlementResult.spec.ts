@@ -1,12 +1,11 @@
 import expect from 'expect';
-import { Mint } from '@solana/spl-token';
 import {
   createAmericanCoveredCallRfq,
-  createEuropeanCoveredCallRfq,
   createRfq,
   createUserCvg,
   respondToRfq,
 } from '../helpers';
+import { Mint } from '../../src';
 import {
   BASE_MINT_BTC_PK,
   QUOTE_MINT_DECIMALS,
@@ -366,8 +365,8 @@ describe('unit.settlementResult', () => {
       ],
     });
   });
-  it('fixed-base european covered call', async () => {
-    const { rfq, response } = await createEuropeanCoveredCallRfq(
+  it('fixed-base american covered call', async () => {
+    const { response, rfq } = await createAmericanCoveredCallRfq(
       takerCvg,
       'sell',
       baseMint,

@@ -12,3 +12,4 @@ export * from './Wallets';
 export * from './cache';
 export * from './conversions';
 export * from './ata';
+export * from './classes';
