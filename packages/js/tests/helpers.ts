@@ -3,6 +3,7 @@ import { PROGRAM_ID } from '@convergence-rfq/rfq';
 import { v4 as uuidv4 } from 'uuid';
 import { Program, web3 } from '@project-serum/anchor';
 import * as anchor from '@project-serum/anchor';
+import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import {
   Convergence,
   OrderType,
@@ -10,23 +11,20 @@ import {
   PsyoptionsAmericanInstrument,
   initializeNewAmericanOption,
   toBigNumber,
-  createAmericanProgram,
   Rfq,
   Response,
-  getOrCreateAmericanOptionATAs,
-  mintAmericanOptions,
+  prepareAmericanOptions,
   SpotQuoteInstrument,
   SpotLegInstrument,
   keypairIdentity,
   PublicKey,
   removeDecimals,
   useCache,
-  createEuropeanProgram,
   CvgWallet,
   PsyoptionsEuropeanInstrument,
   initializeNewEuropeanOption,
-  getOrCreateEuropeanOptionATAs,
-  mintEuropeanOptions,
+  prepareEuropeanOptions,
+  InstructionUniquenessTracker,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { IDL as PseudoPythIdl } from '../../validator/fixtures/programs/pseudo_pyth_idl';
@@ -120,9 +118,9 @@ export const createAmericanCoveredCallRfq = async (
     cvg,
     baseMint,
     quoteMint,
-    27_000,
+    44_000 + Math.random() * 100,
     1,
-    3_600 + Math.random()
+    3_600 + Math.random() * 100
   );
 
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
@@ -151,9 +149,10 @@ export const createEuropeanCoveredCallRfq = async (
   cvg: Convergence,
   orderType: OrderType,
   baseMint: any,
-  quoteMint: any
+  quoteMint: any,
+  ixTracker: InstructionUniquenessTracker,
+  europeanProgram: Program<EuroPrimitive>
 ) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
     new anchor.Program(
       PseudoPythIdl,
@@ -164,10 +163,10 @@ export const createEuropeanCoveredCallRfq = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random();
-
+  const randomExpiry = min + Math.random() * 1000;
   const { euroMeta, euroMetaKey } = await initializeNewEuropeanOption(
     cvg,
+    ixTracker,
     oracle,
     europeanProgram,
     baseMint,
@@ -202,9 +201,10 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
   cvg: Convergence,
   orderType: OrderType,
   baseMint: any,
-  quoteMint: any
+  quoteMint: any,
+  ixTracker: InstructionUniquenessTracker,
+  europeanProgram: Program<EuroPrimitive>
 ) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
     new anchor.Program(
       PseudoPythIdl,
@@ -215,15 +215,16 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random();
+  const randomExpiry = min + Math.random() * 1000;
   const { euroMeta: euroMeta1, euroMetaKey: euroMetaKey1 } =
     await initializeNewEuropeanOption(
       cvg,
+      ixTracker,
       oracle,
       europeanProgram,
       baseMint,
       quoteMint,
-      23_354,
+      23_822,
       1,
       randomExpiry,
       0
@@ -231,11 +232,12 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
   const { euroMeta: euroMeta2, euroMetaKey: euroMetaKey2 } =
     await initializeNewEuropeanOption(
       cvg,
+      ixTracker,
       oracle,
       europeanProgram,
       baseMint,
       quoteMint,
-      25_354,
+      28_822,
       1,
       randomExpiry,
       0
@@ -275,12 +277,12 @@ export const createAmericanFixedBaseStraddle = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const expiration = 3_600 + Math.random();
+  const expiration = 3_600 + Math.random() * 1000;
   const { optionMarketKey, optionMarket } = await initializeNewAmericanOption(
     cvg,
     baseMint,
     quoteMint,
-    27_000,
+    29_210,
     1,
     expiration
   );
@@ -305,7 +307,7 @@ export const createAmericanFixedBaseStraddle = async (
         optionMarket,
         optionMarketKey,
         1,
-        'long'
+        'short'
       ),
     ],
     orderType,
@@ -320,9 +322,10 @@ export const createEuropeanFixedBaseStraddle = async (
   cvg: Convergence,
   orderType: OrderType,
   baseMint: any,
-  quoteMint: any
+  quoteMint: any,
+  ixTracker: InstructionUniquenessTracker,
+  europeanProgram: Program<EuroPrimitive>
 ) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
   const oracle = await createPythPriceFeed(
     new anchor.Program(
       PseudoPythIdl,
@@ -333,10 +336,12 @@ export const createEuropeanFixedBaseStraddle = async (
     quoteMint.decimals * -1
   );
   const min = 3_600;
-  const randomExpiry = min + Math.random();
+  const randomExpiry = min + Math.random() * 1000;
+
   const { euroMeta: euroMeta, euroMetaKey: euroMetaKey } =
     await initializeNewEuropeanOption(
       cvg,
+      ixTracker,
       oracle,
       europeanProgram,
       baseMint,
@@ -365,7 +370,7 @@ export const createEuropeanFixedBaseStraddle = async (
         euroMeta,
         euroMetaKey,
         1,
-        'long'
+        'short'
       ),
     ],
     orderType,
@@ -382,7 +387,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
   baseMint: any,
   quoteMint: any
 ) => {
-  const expiration = 3_600 + Math.random();
+  const expiration = 3_600 + Math.random() * 1000;
   const { optionMarketKey: optionMarketKey1, optionMarket: optionMarket1 } =
     await initializeNewAmericanOption(
       cvg,
@@ -593,7 +598,7 @@ export const prepareRfqSettlement = async (
   response: Response
 ) => {
   return await cvg.rfqs().prepareSettlement({
-    caller: cvg.rpc().getDefaultFeePayer(),
+    caller: cvg.identity(),
     rfq: rfq.address,
     response: response.address,
     legAmountToPrepare: rfq.legs.length,
@@ -652,33 +657,13 @@ export const createPythPriceFeed = async (
 };
 
 export const setupAmerican = async (cvg: Convergence, response: Response) => {
-  const americanProgram = createAmericanProgram(cvg);
-  await getOrCreateAmericanOptionATAs(
-    cvg,
-    response.address,
-    cvg.identity().publicKey,
-    americanProgram
-  );
-  await mintAmericanOptions(
-    cvg,
-    response.address,
-    cvg.identity().publicKey,
-    americanProgram
-  );
+  await prepareAmericanOptions(cvg, response.address, cvg.identity().publicKey);
 };
 
 export const setupEuropean = async (cvg: Convergence, response: Response) => {
-  const europeanProgram = await createEuropeanProgram(cvg);
-
-  await getOrCreateEuropeanOptionATAs(
+  await prepareEuropeanOptions(
     cvg,
     response.address,
     cvg.rpc().getDefaultFeePayer().publicKey
-  );
-  await mintEuropeanOptions(
-    cvg,
-    response.address,
-    cvg.rpc().getDefaultFeePayer().publicKey,
-    europeanProgram
   );
 };

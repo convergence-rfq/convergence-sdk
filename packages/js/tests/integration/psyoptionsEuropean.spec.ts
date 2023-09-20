@@ -1,6 +1,8 @@
 import { expect } from 'expect';
 
 import { Mint } from '@solana/spl-token';
+import { Program } from '@project-serum/anchor';
+import { EuroPrimitive } from '@mithraic-labs/tokenized-euros';
 import {
   prepareRfqSettlement,
   respondToRfq,
@@ -8,17 +10,19 @@ import {
   createUserCvg,
   createEuropeanCoveredCallRfq,
   createEuropeanOpenSizeCallSpdOptionRfq,
-  setupEuropean,
   createEuropeanFixedBaseStraddle,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
+import { InstructionUniquenessTracker } from '../../src/utils/';
+import { createEuropeanProgram } from '../../src';
 
 describe('integration.psyoptionsEuropean', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
   let baseMint: Mint;
   let quoteMint: Mint;
-
+  let europeanProgram: Program<EuroPrimitive>;
+  const ixTracker = new InstructionUniquenessTracker([]);
   before(async () => {
     baseMint = await takerCvg
       .tokens()
@@ -26,14 +30,17 @@ describe('integration.psyoptionsEuropean', () => {
     quoteMint = await takerCvg
       .tokens()
       .findMintByAddress({ address: QUOTE_MINT_PK });
+    europeanProgram = await createEuropeanProgram(takerCvg);
   });
 
-  it('covered call [sell]', async () => {
+  it('european covered call [sell]', async () => {
     const { rfq, response } = await createEuropeanCoveredCallRfq(
       takerCvg,
       'sell',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker,
+      europeanProgram
     );
 
     expect(rfq).toHaveProperty('address');
@@ -45,20 +52,20 @@ describe('integration.psyoptionsEuropean', () => {
       response: rfqResponse.address,
       side: 'bid',
     });
-
-    await setupEuropean(takerCvg, rfqResponse);
-
     await prepareRfqSettlement(makerCvg, rfq, rfqResponse);
     await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
 
     await settleRfq(takerCvg, rfq, rfqResponse);
   });
+
   it('fixed-size european straddle [buy]', async () => {
     const { rfq } = await createEuropeanFixedBaseStraddle(
       takerCvg,
       'buy',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker,
+      europeanProgram
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -76,89 +83,6 @@ describe('integration.psyoptionsEuropean', () => {
         side: 'ask',
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
-    const takerResponse = await prepareRfqSettlement(
-      takerCvg,
-      rfq,
-      rfqResponse
-    );
-    expect(takerResponse.response).toHaveProperty('signature');
-
-    const makerResponse = await prepareRfqSettlement(
-      makerCvg,
-      rfq,
-      rfqResponse
-    );
-    expect(makerResponse.response).toHaveProperty('signature');
-
-    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
-    expect(settlementResponse.response).toHaveProperty('signature');
-  });
-
-  it('fixed-size european straddle [sell]', async () => {
-    const { rfq } = await createEuropeanFixedBaseStraddle(
-      takerCvg,
-      'sell',
-      baseMint,
-      quoteMint
-    );
-    expect(rfq).toHaveProperty('address');
-    const { rfqResponse } = await respondToRfq(
-      makerCvg,
-      rfq,
-      55_133,
-      undefined
-    );
-    expect(rfqResponse).toHaveProperty('address');
-    const { response: confirmResponse } = await takerCvg
-      .rfqs()
-      .confirmResponse({
-        rfq: rfq.address,
-        response: rfqResponse.address,
-        side: 'bid',
-      });
-    expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
-    const takerResponse = await prepareRfqSettlement(
-      takerCvg,
-      rfq,
-      rfqResponse
-    );
-    expect(takerResponse.response).toHaveProperty('signature');
-
-    const makerResponse = await prepareRfqSettlement(
-      makerCvg,
-      rfq,
-      rfqResponse
-    );
-    expect(makerResponse.response).toHaveProperty('signature');
-
-    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
-    expect(settlementResponse.response).toHaveProperty('signature');
-  });
-
-  it('fixed-size european straddle [2-way]', async () => {
-    const { rfq } = await createEuropeanFixedBaseStraddle(
-      takerCvg,
-      'two-way',
-      baseMint,
-      quoteMint
-    );
-    expect(rfq).toHaveProperty('address');
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 61_222, 60_123);
-    expect(rfqResponse).toHaveProperty('address');
-    const { response: confirmResponse } = await takerCvg
-      .rfqs()
-      .confirmResponse({
-        rfq: rfq.address,
-        response: rfqResponse.address,
-        side: 'ask',
-      });
-    expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -182,7 +106,9 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'buy',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker,
+      europeanProgram
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -203,8 +129,49 @@ describe('integration.psyoptionsEuropean', () => {
         overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
+  });
+
+  it('fixed-size european straddle [sell]', async () => {
+    const { rfq } = await createEuropeanFixedBaseStraddle(
+      takerCvg,
+      'sell',
+      baseMint,
+      quoteMint,
+      ixTracker,
+      europeanProgram
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      55_133,
+      undefined
+    );
+    expect(rfqResponse).toHaveProperty('address');
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'bid',
+      });
+    expect(confirmResponse).toHaveProperty('signature');
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -228,7 +195,9 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'two-way',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker,
+      europeanProgram
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -249,8 +218,44 @@ describe('integration.psyoptionsEuropean', () => {
         overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
+  });
+
+  it('fixed-size european straddle [2-way]', async () => {
+    const { rfq } = await createEuropeanFixedBaseStraddle(
+      takerCvg,
+      'two-way',
+      baseMint,
+      quoteMint,
+      ixTracker,
+      europeanProgram
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 61_222, 60_123);
+    expect(rfqResponse).toHaveProperty('address');
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'ask',
+      });
+    expect(confirmResponse).toHaveProperty('signature');
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
       rfq,
@@ -274,7 +279,9 @@ describe('integration.psyoptionsEuropean', () => {
       takerCvg,
       'sell',
       baseMint,
-      quoteMint
+      quoteMint,
+      ixTracker,
+      europeanProgram
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -295,8 +302,6 @@ describe('integration.psyoptionsEuropean', () => {
         overrideLegMultiplier: 4,
       });
     expect(confirmResponse).toHaveProperty('signature');
-    await setupEuropean(takerCvg, rfqResponse);
-    await setupEuropean(makerCvg, rfqResponse);
 
     const takerResponse = await prepareRfqSettlement(
       takerCvg,
