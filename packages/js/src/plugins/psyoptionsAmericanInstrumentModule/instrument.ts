@@ -60,7 +60,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     private readonly underlyingAmountPerContractDecimals: number,
     readonly strikePrice: number, // without decimals
     private readonly strikePriceDecimals: number,
-    readonly expiration: number, // timestamp in seconds
+    readonly expirationTimestamp: number, // timestamp in seconds
     readonly optionMint: PublicKey,
     readonly optionMetaPubKey: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
@@ -90,7 +90,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       this.stableAssetMint,
       this.strikePriceDecimals,
       this.strikePrice,
-      this.expiration
+      this.expirationTimestamp
     );
     return optionMarketIxs;
   }
@@ -104,7 +104,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     side: LegSide,
     underlyingAmountPerContract: number,
     strike: number,
-    expiresIn: number
+    expirationTimestamp: number
   ) {
     const mintInfoAddress = convergence
       .rfqs()
@@ -118,15 +118,13 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
-    const expirationUnixTimestamp = Date.now() / 1_000 + expiresIn;
-
     const cvgWallet = new CvgWallet(convergence);
     const americanProgram = await createAmericanProgram(convergence, cvgWallet);
     const { optionMint, metaKey } = await getAmericanOptionkeys(
       americanProgram,
       underlyingMint,
       stableMint,
-      expiresIn,
+      expirationTimestamp,
       strike,
       underlyingAmountPerContract
     );
@@ -138,7 +136,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       underlyingMint.decimals,
       strike,
       stableMint.decimals,
-      expirationUnixTimestamp,
+      expirationTimestamp,
       optionMint,
       metaKey,
       mintInfo.mintType.baseAssetIndex,
@@ -221,7 +219,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
         this.underlyingAmountPerContractDecimals,
       strikePrice: addDecimals(this.strikePrice, this.strikePriceDecimals),
       strikePriceDecimals: this.strikePriceDecimals,
-      expiration: new BN(this.expiration),
+      expiration: new BN(this.expirationTimestamp),
       optionMint: this.optionMint,
       metaKey: this.optionMetaPubKey,
     };
@@ -305,14 +303,14 @@ export const getPsyAmericanMarketIxs = async (
   stableMint: PublicKey,
   stableMintDecimals: number,
   strike: number,
-  expiresIn: number
+  expirationTimestamp: number
 ): Promise<CreateOptionInstrumentsResult> => {
   const cvgWallet = new CvgWallet(cvg);
   const americanProgram = createAmericanProgram(cvg, cvgWallet);
 
   const optionMarketIxs: TransactionInstruction[] = [];
 
-  const expirationUnixTimestamp = new BN(expiresIn);
+  const expirationTimestampBN = new BN(expirationTimestamp);
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMintDecimals)
   );
@@ -322,7 +320,7 @@ export const getPsyAmericanMarketIxs = async (
 
   let optionMarket: psyoptionsAmerican.OptionMarketWithKey | null = null;
   const [optionMarketKey] = await psyoptionsAmerican.deriveOptionKeyFromParams({
-    expirationUnixTimestamp,
+    expirationUnixTimestamp: expirationTimestampBN,
     programId: americanProgram.programId,
     quoteAmountPerContract: quoteAmountPerContractBN,
     quoteMint: stableMint,
@@ -335,27 +333,28 @@ export const getPsyAmericanMarketIxs = async (
   );
 
   // If there is no existing market, derive the optionMarket from inputs
-  if (!optionMarket) {
-    const { optionMarketIx, mintFeeAccount, exerciseFeeAccount } =
-      await getPsyAmericanOptionMarketAccounts(
-        cvg,
-        americanProgram,
-        expirationUnixTimestamp,
-        quoteAmountPerContractBN,
-        stableMint,
-        underlyingAmountPerContractBN,
-        underlyingMint
-      );
-    if (mintFeeAccount.txBuilder) {
-      optionMarketIxs.push(...mintFeeAccount.txBuilder.getInstructions());
-    }
-
-    if (exerciseFeeAccount.txBuilder) {
-      optionMarketIxs.push(...exerciseFeeAccount.txBuilder.getInstructions());
-    }
-
-    optionMarketIxs.push(optionMarketIx.tx);
+  if (optionMarket) {
+    return optionMarketIxs;
   }
+  const { optionMarketIx, mintFeeAccount, exerciseFeeAccount } =
+    await getPsyAmericanOptionMarketAccounts(
+      cvg,
+      americanProgram,
+      expirationTimestampBN,
+      quoteAmountPerContractBN,
+      stableMint,
+      underlyingAmountPerContractBN,
+      underlyingMint
+    );
+  if (mintFeeAccount.txBuilder) {
+    optionMarketIxs.push(...mintFeeAccount.txBuilder.getInstructions());
+  }
+
+  if (exerciseFeeAccount.txBuilder) {
+    optionMarketIxs.push(...exerciseFeeAccount.txBuilder.getInstructions());
+  }
+
+  optionMarketIxs.push(optionMarketIx.tx);
 
   return optionMarketIxs;
 };
@@ -368,11 +367,10 @@ export const getAmericanOptionkeys = async (
   americanProgram: any,
   underlyingMint: Mint,
   stableMint: Mint,
-  expiresIn: number,
+  expirationUnixTimestamp: number,
   strike: number,
   underlyingAmountPerContract: number
 ): Promise<GetAmericanOptionMetaResult> => {
-  const expirationUnixTimestamp = new BN(Date.now() / 1_000 + expiresIn);
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMint.decimals)
   );
@@ -381,7 +379,7 @@ export const getAmericanOptionkeys = async (
   );
 
   const [metaKey] = await psyoptionsAmerican.deriveOptionKeyFromParams({
-    expirationUnixTimestamp,
+    expirationUnixTimestamp: new BN(expirationUnixTimestamp),
     programId: americanProgram.programId,
     quoteAmountPerContract: quoteAmountPerContractBN,
     quoteMint: stableMint.address,

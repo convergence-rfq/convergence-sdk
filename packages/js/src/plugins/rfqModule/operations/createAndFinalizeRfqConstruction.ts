@@ -174,22 +174,19 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const optionMarketTxBuilderArray: TransactionBuilder[] = [];
       const ixTracker = new InstructionUniquenessTracker([]);
       for (const ins of instruments) {
-        if (!isOptionLegInstrument(ins)) continue;
         const optionMarketIxs = await ins.getPreparationsBeforeRfqCreation();
+        if (optionMarketIxs.length === 0) continue;
         const optionMarketTxBuilder =
           TransactionBuilder.make().setFeePayer(payer);
-        if (optionMarketIxs.length > 0) {
-          optionMarketIxs.forEach((ix) => {
-            if (ixTracker.checkedAdd(ix)) {
-              optionMarketTxBuilder.add({
-                instruction: ix,
-                signers: [convergence.identity()],
-              });
-            }
-          });
-        }
-        if (optionMarketTxBuilder.getInstructionCount() > 0)
-          optionMarketTxBuilderArray.push(optionMarketTxBuilder);
+        optionMarketIxs.forEach((ix) => {
+          if (ixTracker.checkedAdd(ix)) {
+            optionMarketTxBuilder.add({
+              instruction: ix,
+              signers: [convergence.identity()],
+            });
+          }
+        });
+        optionMarketTxBuilderArray.push(optionMarketTxBuilder);
       }
       const expectedLegsHash = calculateExpectedLegsHash(instruments);
 
@@ -244,7 +241,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         signedTxs.length - 1
       );
 
-      const finalizedrfqSignedTx = signedTxs[signedTxs.length - 1];
+      const finalizedRfqSignedTx = signedTxs[signedTxs.length - 1];
 
       for (const signedTx of optionMarketSignedTxs) {
         await convergence
@@ -279,7 +276,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const response = await convergence
         .rpc()
         .serializeAndSendTransaction(
-          finalizedrfqSignedTx,
+          finalizedRfqSignedTx,
           lastValidBlockHeight,
           confirmOptions
         );
