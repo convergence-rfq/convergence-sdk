@@ -12,7 +12,6 @@ import {
   getRfqLegstoAdd,
   instrumentsToLegs,
   calculateExpectedLegsSize,
-  // convertInstrumentsDataToInstrmentsWithTnx,
 } from '../helpers';
 import {
   TransactionBuilder,
@@ -363,7 +362,10 @@ export const createRfqBuilder = async (
     },
   ];
 
-  const baseAssetAccounts = legsToBaseAssetAccounts(convergence, legs);
+  const baseAssetAccounts = legsToBaseAssetAccounts(
+    convergence,
+    instrumentsToAdd
+  );
   const legAccounts = await instrumentsToLegAccounts(instrumentsToAdd);
 
   return TransactionBuilder.make()

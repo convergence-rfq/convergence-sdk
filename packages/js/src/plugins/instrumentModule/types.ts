@@ -18,9 +18,9 @@ export interface LegInstrument {
   getDecimals: () => number;
   getSide: () => LegSide;
   serializeInstrumentData: () => Buffer;
-  getBaseAssetMint(): Promise<PublicKey>;
-  getBaseAssetAccount(): Promise<AccountMeta>;
-  getOracleAccount(baseAssetIndex: number): Promise<AccountMeta>;
+  getBaseAssetMint(): PublicKey;
+  getBaseAssetAccount(): AccountMeta;
+  getOracleAccount(): Promise<AccountMeta>;
   getValidationAccounts(): AccountMeta[];
   getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult>;
 }

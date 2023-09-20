@@ -152,7 +152,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     return optionMarketIxs;
   }
 
-  async getBaseAssetAccount(): Promise<AccountMeta> {
+  getBaseAssetAccount(): AccountMeta {
     const baseAsset = this.convergence
       .protocol()
       .pdas()
@@ -166,18 +166,18 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
     return baseAssetAccount;
   }
-  async getBaseAssetMint(): Promise<PublicKey> {
+  getBaseAssetMint(): PublicKey {
     if (!this.underlyingAssetMint) {
       throw new Error('Missing underlying asset mint');
     }
     return this.underlyingAssetMint;
   }
 
-  async getOracleAccount(baseAssetIndex: number): Promise<AccountMeta> {
+  async getOracleAccount(): Promise<AccountMeta> {
     const baseAsset = this.convergence
       .protocol()
       .pdas()
-      .baseAsset({ index: baseAssetIndex });
+      .baseAsset({ index: this.baseAssetIndex.value });
 
     const baseAssetModel = await this.convergence
       .protocol()

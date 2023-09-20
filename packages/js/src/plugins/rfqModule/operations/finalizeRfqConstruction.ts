@@ -16,6 +16,7 @@ import {
   Signer,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
+import { removeDuplicateAccountMeta } from '../helpers';
 import { LegInstrument } from '@/plugins/instrumentModule';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
@@ -211,39 +212,17 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
-  const oracleAccounts: AccountMeta[] = [];
+  const baseAssetAccounts = await Promise.all(
+    legs.map((leg) => leg.getBaseAssetAccount())
+  );
 
-  const baseAssetAccounts: AccountMeta[] = [];
-  const baseAssetIndexValuesSet: Set<number> = new Set();
+  // baseAssetAccounts = removeDuplicateAccountMeta(baseAssetAccounts);
 
-  for (const leg of legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
+  const oracleAccounts = await Promise.all(
+    legs.map((leg) => leg.getOracleAccount())
+  );
 
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
+  // oracleAccounts = removeDuplicateAccountMeta(oracleAccounts);
 
   anchorRemainingAccounts.push(
     configAccount,

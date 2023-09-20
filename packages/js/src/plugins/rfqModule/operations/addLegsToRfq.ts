@@ -1,5 +1,5 @@
 import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { instrumentsToLegAccounts, instrumentsToLegs } from '../helpers';

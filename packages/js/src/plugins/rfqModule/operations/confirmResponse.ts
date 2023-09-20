@@ -1,5 +1,5 @@
 import { createConfirmResponseInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -16,6 +16,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
+import { removeDuplicateAccountMeta } from '../helpers';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -193,36 +194,19 @@ export const confirmResponseBuilder = async (
     programs,
   });
 
-  const baseAssetIndexValuesSet: Set<number> = new Set();
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
 
-  const baseAssetAccounts: AccountMeta[] = [];
-  const oracleAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    baseAssetAccounts.push({
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    });
+  const baseAssetAccounts = await Promise.all(
+    rfqModel.legs.map((leg) => leg.getBaseAssetAccount())
+  );
 
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
+  // baseAssetAccounts = removeDuplicateAccountMeta(baseAssetAccounts);
 
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
+  const oracleAccounts = await Promise.all(
+    rfqModel.legs.map((leg) => leg.getOracleAccount())
+  );
 
+  // oracleAccounts = removeDuplicateAccountMeta(oracleAccounts);
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add(

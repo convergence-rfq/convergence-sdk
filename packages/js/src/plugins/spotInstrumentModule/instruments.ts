@@ -49,7 +49,7 @@ export class SpotLegInstrument implements LegInstrument {
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
     return [];
   }
-  async getBaseAssetAccount(): Promise<AccountMeta> {
+  getBaseAssetAccount(): AccountMeta {
     const baseAsset = this.convergence
       .protocol()
       .pdas()
@@ -63,15 +63,15 @@ export class SpotLegInstrument implements LegInstrument {
 
     return baseAssetAccount;
   }
-  async getBaseAssetMint(): Promise<PublicKey> {
+  getBaseAssetMint(): PublicKey {
     return this.mintAddress;
   }
 
-  async getOracleAccount(baseAssetIndex: number): Promise<AccountMeta> {
+  async getOracleAccount(): Promise<AccountMeta> {
     const baseAsset = this.convergence
       .protocol()
       .pdas()
-      .baseAsset({ index: baseAssetIndex });
+      .baseAsset({ index: this.baseAssetIndex.value });
 
     const baseAssetModel = await this.convergence
       .protocol()

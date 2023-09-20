@@ -9,7 +9,6 @@ import {
   isQuoteStandard,
 } from '../rfqModule/models';
 import { UnparsedAccount } from '../../types';
-import { Convergence } from '../../Convergence';
 import {
   LegInstrument,
   getSerializedLegLength,
@@ -21,6 +20,7 @@ import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentMod
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { LEG_MULTIPLIER_DECIMALS } from './constants';
 import { Rfq, Response, isFixedSizeOpen } from './models';
+import { Convergence } from '@/Convergence';
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
@@ -109,26 +109,9 @@ export const instrumentsToLegsAndExpectedLegsHash = (
 
 export const legsToBaseAssetAccounts = (
   convergence: Convergence,
-  legs: Leg[]
+  legs: LegInstrument[]
 ): AccountMeta[] => {
-  const baseAssetAccounts: AccountMeta[] = [];
-
-  for (const leg of legs) {
-    const baseAsset = convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: leg.baseAssetIndex.value });
-
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-  }
-
-  return baseAssetAccounts;
+  return legs.map((leg) => leg.getBaseAssetAccount());
 };
 
 // TODO remove async part after option instruments refactoring
@@ -221,4 +204,21 @@ export const isOptionLegInstrument = (instrument: LegInstrument): boolean => {
     instrument instanceof PsyoptionsAmericanInstrument ||
     instrument instanceof PsyoptionsEuropeanInstrument
   );
+};
+
+export const removeDuplicateAccountMeta = (
+  accountMeta: AccountMeta[]
+): AccountMeta[] => {
+  const uniqueAccountMeta: AccountMeta[] = [];
+  for (let i = 0; i < accountMeta.length; i++) {
+    let unique = true;
+    for (let j = 0; j < accountMeta.length; j++) {
+      if (i !== j && accountMeta[i].pubkey.equals(accountMeta[j].pubkey)) {
+        unique = false;
+        break;
+      }
+    }
+    if (unique) uniqueAccountMeta.push(accountMeta[i]);
+  }
+  return uniqueAccountMeta;
 };
