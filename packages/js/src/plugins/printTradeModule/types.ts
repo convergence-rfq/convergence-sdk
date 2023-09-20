@@ -28,6 +28,10 @@ export interface PrintTrade {
     rfq: PrintTradeRfq,
     response: PrintTradeResponse
   ) => Promise<AccountMeta[]>;
+  getCleanUpAccounts: (
+    rfq: PrintTradeRfq,
+    response: PrintTradeResponse
+  ) => Promise<AccountMeta[]>;
 }
 
 export interface PrintTradeLeg {

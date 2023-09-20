@@ -241,6 +241,9 @@ export class HxroPrintTrade implements PrintTrade {
   getSettlementAccounts = async () => {
     return [];
   };
+  getCleanUpAccounts = async () => {
+    return [];
+  };
 
   // after an rfq is parsed from an on-chain data, as much data is possible is parsed from there
   // but some product info is missing in the rfq on-chain data

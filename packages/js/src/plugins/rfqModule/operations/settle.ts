@@ -322,7 +322,7 @@ export const settlePrintTradeBuilder = async (
     responseModel.model !== 'printTradeResponse' ||
     rfqModel.model !== 'printTradeRfq'
   ) {
-    throw new Error('Response is not settled as an escrow!');
+    throw new Error('Response is not settled as a print trade!');
   }
 
   const rfqProgram = convergence.programs().getRfq(programs);

@@ -140,5 +140,12 @@ describe('unit.hxro', () => {
     await cvgTaker.rfqs().settle({
       response: rfqResponse.address,
     });
+
+    await cvgTaker
+      .rfqs()
+      .unlockResponseCollateral({ response: rfqResponse.address });
+
+    await cvgTaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
+    // await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
 });
