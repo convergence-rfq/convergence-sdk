@@ -107,9 +107,9 @@ export const initializeOperatorTraderRiskGroupBuilder = async (
   } = await fetchValidHxroMpg(cvg, manifest);
   const [traderFeeStateAcct] = PublicKey.findProgramAddressSync(
     [
-      Buffer.from('trader_fee_acct'),
-      trgAccount.publicKey.toBuffer(),
       mpgAddress.toBuffer(),
+      trgAccount.publicKey.toBuffer(),
+      feeModelConfigurationAcct.toBuffer(),
     ],
     feeModelProgramId
   );
