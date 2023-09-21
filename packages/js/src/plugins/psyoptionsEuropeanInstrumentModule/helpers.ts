@@ -1,5 +1,5 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
@@ -113,32 +113,30 @@ export const prepareEuropeanOptions = async (
     mintTxBuilderArray.push(mintTxBuilder);
   }
 
-  let signedTxs: Transaction[] = [];
   const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-  if (ataTxBuilderArray.length > 0 || mintTxBuilderArray.length > 0) {
-    const mergedTxBuilderArray = ataTxBuilderArray.concat(mintTxBuilderArray);
-    signedTxs = await convergence
-      .identity()
-      .signAllTransactions(
-        mergedTxBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
-      );
-  }
+  const ataTxs = ataTxBuilderArray.map((b) =>
+    b.toTransaction(lastValidBlockHeight)
+  );
+  const mintTxs = mintTxBuilderArray.map((b) =>
+    b.toTransaction(lastValidBlockHeight)
+  );
 
-  const ataSignedTx = signedTxs.slice(0, ataTxBuilderArray.length);
-  const mintSignedTx = signedTxs.slice(ataTxBuilderArray.length);
+  const [ataSignedTxs, mintSignedTxs] = await convergence
+    .rpc()
+    .signTransactionMatrix([ataTxs, mintTxs], [convergence.identity()]);
 
-  if (ataSignedTx.length > 0) {
+  if (ataSignedTxs.length > 0) {
     await Promise.all(
-      ataSignedTx.map((signedTx) =>
+      ataSignedTxs.map((signedTx) =>
         convergence
           .rpc()
           .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
       )
     );
   }
-  if (mintSignedTx.length > 0) {
+  if (mintSignedTxs.length > 0) {
     await Promise.all(
-      mintSignedTx.map((signedTx) =>
+      mintSignedTxs.map((signedTx) =>
         convergence
           .rpc()
           .serializeAndSendTransaction(signedTx, lastValidBlockHeight)

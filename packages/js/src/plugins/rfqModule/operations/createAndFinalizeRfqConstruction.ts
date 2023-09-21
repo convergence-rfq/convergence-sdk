@@ -5,11 +5,7 @@ import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, FixedSize, Rfq } from '../models';
 
-import {
-  calculateExpectedLegsHash,
-  getRfqLegstoAdd,
-  isOptionLegInstrument,
-} from '../helpers';
+import { calculateExpectedLegsHash } from '../helpers';
 import {
   Operation,
   OperationHandler,
@@ -186,7 +182,8 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
             });
           }
         });
-        optionMarketTxBuilderArray.push(optionMarketTxBuilder);
+        if (optionMarketTxBuilder.getInstructionCount() > 0)
+          optionMarketTxBuilderArray.push(optionMarketTxBuilder);
       }
       const expectedLegsHash = calculateExpectedLegsHash(instruments);
 
@@ -204,7 +201,11 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           recentTimestamp,
         });
 
-      const txBuilderArray = await createAndFinalizeRfqConstructionBuilder(
+      const {
+        createRfqTxBuilder,
+        addLegsTxBuilderArray,
+        finalizeConstructionTxBuilder,
+      } = await createAndFinalizeRfqConstructionBuilder(
         convergence,
         {
           ...operation.input,
@@ -222,26 +223,31 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         convergence,
         scope.confirmOptions
       );
-      const builders = [...optionMarketTxBuilderArray, ...txBuilderArray];
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-      const signedTxs = await convergence
-        .identity()
-        .signAllTransactions(
-          builders.map((b) => b.toTransaction(lastValidBlockHeight))
+      const optionMarketTxs = optionMarketTxBuilderArray.map((b) =>
+        b.toTransaction(lastValidBlockHeight)
+      );
+
+      const createRfqTx =
+        createRfqTxBuilder.toTransaction(lastValidBlockHeight);
+
+      const addLegsTxs = addLegsTxBuilderArray.map((b) =>
+        b.toTransaction(lastValidBlockHeight)
+      );
+
+      const finalizeRfqTxs =
+        finalizeConstructionTxBuilder.toTransaction(lastValidBlockHeight);
+      const [
+        optionMarketSignedTxs,
+        [createRfqSignedTx],
+        addLegsSignedTxs,
+        [finalizeRfqSignedTx],
+      ] = await convergence
+        .rpc()
+        .signTransactionMatrix(
+          [optionMarketTxs, [createRfqTx], addLegsTxs, [finalizeRfqTxs]],
+          [convergence.identity()]
         );
-
-      const optionMarketSignedTxs = signedTxs.slice(
-        0,
-        optionMarketTxBuilderArray.length
-      );
-      const createRfqSignedTx = signedTxs[optionMarketTxBuilderArray.length];
-
-      const addLegsSignedTxs = signedTxs.slice(
-        optionMarketSignedTxs.length + 1,
-        signedTxs.length - 1
-      );
-
-      const finalizedRfqSignedTx = signedTxs[signedTxs.length - 1];
 
       for (const signedTx of optionMarketSignedTxs) {
         await convergence
@@ -276,7 +282,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const response = await convergence
         .rpc()
         .serializeAndSendTransaction(
-          finalizedRfqSignedTx,
+          finalizeRfqSignedTx,
           lastValidBlockHeight,
           confirmOptions
         );
@@ -303,45 +309,58 @@ export type CreateAndFinalizeRfqConstructionBuilderParams =
     rfq: PublicKey;
   };
 
+export type CreateAndFinalizeRfqConstructionBuilderResult = {
+  createRfqTxBuilder: TransactionBuilder;
+  addLegsTxBuilderArray: TransactionBuilder[];
+  finalizeConstructionTxBuilder: TransactionBuilder;
+};
+
 export const createAndFinalizeRfqConstructionBuilder = async (
   convergence: Convergence,
   params: CreateAndFinalizeRfqConstructionBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder[]> => {
-  const { rfq } = params;
-  const { initialLegsToAdd, postLegsToAdd } = getRfqLegstoAdd(
-    params.instruments.length
-  );
-  const txBuilderArray: TransactionBuilder[] = [];
-  const rfqBuilder = await createRfqBuilder(
+): Promise<CreateAndFinalizeRfqConstructionBuilderResult> => {
+  const { rfq, instruments } = params;
+
+  const { createRfqTxBuilder, remainingLegsToAdd } = await createRfqBuilder(
     convergence,
     { ...params },
     options
   );
 
-  txBuilderArray.push(rfqBuilder);
-
-  if (postLegsToAdd) {
-    for (let l = initialLegsToAdd; l < initialLegsToAdd + postLegsToAdd; l++) {
+  const addLegsTxBuilderArray: TransactionBuilder[] = [];
+  if (remainingLegsToAdd.length > 0) {
+    let legsToAddCount = remainingLegsToAdd.length;
+    let legsAddedCount = 0;
+    while (legsAddedCount !== remainingLegsToAdd.length) {
       const addLegsTxBuilder = await addLegsToRfqBuilder(
         convergence,
         {
           rfq,
           taker: params.taker,
-          instruments: [params.instruments[l]],
+          instruments: remainingLegsToAdd.slice(legsAddedCount, legsToAddCount),
         },
         options
       );
-      txBuilderArray.push(addLegsTxBuilder);
+      if (addLegsTxBuilder.checkTransactionFits()) {
+        legsAddedCount = legsToAddCount;
+        legsToAddCount = remainingLegsToAdd.length;
+        addLegsTxBuilderArray.push(addLegsTxBuilder);
+      } else {
+        legsToAddCount--;
+      }
     }
   }
 
-  const finalizeConstructionBuilder = await finalizeRfqConstructionBuilder(
+  const finalizeConstructionTxBuilder = await finalizeRfqConstructionBuilder(
     convergence,
-    { ...params, legs: params.instruments },
+    { ...params, legs: instruments },
     options
   );
 
-  txBuilderArray.push(finalizeConstructionBuilder);
-  return txBuilderArray;
+  return {
+    createRfqTxBuilder,
+    addLegsTxBuilderArray,
+    finalizeConstructionTxBuilder,
+  };
 };

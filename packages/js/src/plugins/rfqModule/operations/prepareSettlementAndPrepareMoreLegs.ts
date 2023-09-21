@@ -96,13 +96,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementAndPrepareMoreLegsOutput> => {
-      const {
-        caller = convergence.identity(),
-        legAmountToPrepare,
-        rfq,
-      } = operation.input;
-
-      const MAX_TX_SIZE = 1232;
+      const { legAmountToPrepare, rfq } = operation.input;
       const rfqModel = await convergence.rfqs().findRfqByAddress({
         address: rfq,
       });
@@ -117,16 +111,9 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       );
       scope.throwIfCanceled();
 
-      let prepareSettlementTxSize = await convergence
-        .rpc()
-        .getTransactionSize(prepareBuilder, [caller]);
-
       let slicedLegAmount = legAmountToPrepare;
 
-      while (
-        prepareSettlementTxSize == -1 ||
-        prepareSettlementTxSize + 193 > MAX_TX_SIZE
-      ) {
+      while (!prepareBuilder.checkTransactionFits()) {
         const halvedLegAmount = Math.trunc(slicedLegAmount / 2);
 
         prepareBuilder = await prepareSettlementBuilder(
@@ -138,10 +125,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
           },
           scope
         );
-
-        prepareSettlementTxSize = await convergence
-          .rpc()
-          .getTransactionSize(prepareBuilder, [caller]);
 
         slicedLegAmount = halvedLegAmount;
       }
@@ -157,8 +140,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       );
       scope.throwIfCanceled();
 
-      let prepareMoreTxSize = 0;
-
       if (slicedLegAmount < legAmountToPrepare) {
         let prepareMoreLegsSlicedLegAmount =
           legAmountToPrepare - slicedLegAmount;
@@ -173,14 +154,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
           scope
         );
 
-        prepareMoreTxSize = await convergence
-          .rpc()
-          .getTransactionSize(prepareMoreBuilder, [caller]);
-
-        while (
-          prepareMoreTxSize == -1 ||
-          prepareMoreTxSize + 193 > MAX_TX_SIZE
-        ) {
+        while (!prepareMoreBuilder.checkTransactionFits()) {
           const halvedLegAmount = Math.trunc(
             prepareMoreLegsSlicedLegAmount / 2
           );
@@ -194,11 +168,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
             },
             scope
           );
-
-          prepareMoreTxSize = await convergence
-            .rpc()
-            .getTransactionSize(prepareMoreBuilder, [caller]);
-
           prepareMoreLegsSlicedLegAmount = halvedLegAmount;
         }
 
