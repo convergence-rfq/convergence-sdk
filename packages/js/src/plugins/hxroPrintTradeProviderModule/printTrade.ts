@@ -241,6 +241,9 @@ export class HxroPrintTrade implements PrintTrade {
   getSettlementAccounts = async () => {
     return [];
   };
+  getRevertPreparationAccounts = async () => {
+    return [];
+  };
   getCleanUpAccounts = async () => {
     return [];
   };

@@ -1,5 +1,8 @@
 import { PublicKey, AccountMeta } from '@solana/web3.js';
-import { createRevertEscrowSettlementPreparationInstruction } from '@convergence-rfq/rfq';
+import {
+  createRevertEscrowSettlementPreparationInstruction,
+  createRevertPrintTradeSettlementPreparationPreparationInstruction,
+} from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -17,7 +20,14 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { AuthoritySide, toSolitaAuthoritySide } from '../models/AuthoritySide';
+import {
+  EscrowResponse,
+  EscrowRfq,
+  PrintTradeResponse,
+  PrintTradeRfq,
+} from '../models';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { prependWithProviderProgram } from '@/plugins/printTradeModule';
 
 const Key = 'RevertSettlementPreparationOperation' as const;
 
@@ -51,22 +61,8 @@ export type RevertSettlementPreparationOperation = Operation<
  * @category Inputs
  */
 export type RevertSettlementPreparationInput = {
-  /**
-   * The protocol address.
-   *
-   * @defaultValue `convergence.protocol().pdas().protocol()`
-   */
-  protocol?: PublicKey;
-
-  /** The Rfq address. */
-  rfq: PublicKey;
-
   /** The Response address. */
   response: PublicKey;
-
-  /*
-   * Args
-   */
 
   /**
    * The side (Maker or Taker) that is reverting
@@ -137,17 +133,64 @@ export const revertSettlementPreparationBuilder = async (
   params: RevertSettlementPreparationBuilderParams,
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const rfqProgram = convergence.programs().getRfq(programs);
-
-  const { rfq, response, side } = params;
-
-  const anchorRemainingAccounts: AccountMeta[] = [];
-
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence
     .rfqs()
-    .findResponseByAddress({ address: response });
+    .findResponseByAddress({ address: params.response });
+  const rfqModel = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: responseModel.rfq });
+
+  if (
+    responseModel.model === 'escrowResponse' &&
+    rfqModel.model === 'escrowRfq'
+  ) {
+    return revertEscrowSettlementPreparationBuilder(
+      convergence,
+      {
+        response: responseModel,
+        rfq: rfqModel,
+        side: params.side,
+      },
+      options
+    );
+  } else if (
+    responseModel.model === 'printTradeResponse' &&
+    rfqModel.model === 'printTradeRfq'
+  ) {
+    return revertPrintTradeSettlementPreparationBuilder(
+      convergence,
+      {
+        response: responseModel,
+        rfq: rfqModel,
+        side: params.side,
+      },
+      options
+    );
+  }
+
+  throw new Error('Rfq type does not match with response type!');
+};
+
+export type RevertEscrowSettlementPreparationBuilderParams = {
+  response: PublicKey | EscrowResponse;
+  rfq?: EscrowRfq;
+  side: AuthoritySide;
+};
+
+export const revertEscrowSettlementPreparationBuilder = async (
+  cvg: Convergence,
+  params: RevertEscrowSettlementPreparationBuilderParams,
+  options: TransactionBuilderOptions = {}
+): Promise<TransactionBuilder> => {
+  const { programs, payer = cvg.rpc().getDefaultFeePayer() } = options;
+  const { response, rfq, side } = params;
+
+  const responseModel =
+    response instanceof PublicKey
+      ? await cvg.rfqs().findResponseByAddress({ address: response })
+      : response;
+  const rfqModel =
+    rfq ?? (await cvg.rfqs().findRfqByAddress({ address: responseModel.rfq }));
 
   if (
     responseModel.model !== 'escrowResponse' ||
@@ -156,7 +199,9 @@ export const revertSettlementPreparationBuilder = async (
     throw new Error('Response is not settled as an escrow!');
   }
 
-  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const rfqProgram = cvg.programs().getRfq(programs);
+  const anchorRemainingAccounts: AccountMeta[] = [];
+  const spotInstrumentProgram = cvg.programs().getSpotInstrument();
 
   const sidePreparedLegs: number =
     side === 'taker'
@@ -164,10 +209,8 @@ export const revertSettlementPreparationBuilder = async (
       : parseInt(responseModel.makerPreparedLegs.toString());
 
   for (let i = 0; i < sidePreparedLegs; i++) {
-    const instrumentEscrowPda = new InstrumentPdasClient(
-      convergence
-    ).instrumentEscrow({
-      response,
+    const instrumentEscrowPda = new InstrumentPdasClient(cvg).instrumentEscrow({
+      response: responseModel.address,
       index: i,
       rfqModel,
     });
@@ -180,7 +223,7 @@ export const revertSettlementPreparationBuilder = async (
 
     const leg = rfqModel.legs[i];
 
-    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
+    const baseAssetMint = await legToBaseAssetMint(cvg, leg);
 
     const legAccounts: AccountMeta[] = [
       //`escrow`
@@ -191,7 +234,7 @@ export const revertSettlementPreparationBuilder = async (
       },
       // `receiver_tokens`
       {
-        pubkey: convergence
+        pubkey: cvg
           .tokens()
           .pdas()
           .associatedTokenAccount({
@@ -214,8 +257,8 @@ export const revertSettlementPreparationBuilder = async (
     isWritable: false,
   };
 
-  const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
-    response,
+  const quoteEscrowPda = new InstrumentPdasClient(cvg).quoteEscrow({
+    response: responseModel.address,
     program: spotInstrumentProgram.address,
   });
 
@@ -228,7 +271,7 @@ export const revertSettlementPreparationBuilder = async (
     },
     // `receiver_tokens`
     {
-      pubkey: convergence
+      pubkey: cvg
         .tokens()
         .pdas()
         .associatedTokenAccount({
@@ -249,9 +292,9 @@ export const revertSettlementPreparationBuilder = async (
     .add({
       instruction: createRevertEscrowSettlementPreparationInstruction(
         {
-          protocol: convergence.protocol().pdas().protocol(),
-          rfq,
-          response,
+          protocol: cvg.protocol().pdas().protocol(),
+          rfq: rfqModel.address,
+          response: responseModel.address,
           anchorRemainingAccounts,
         },
         {
@@ -259,6 +302,66 @@ export const revertSettlementPreparationBuilder = async (
         },
         rfqProgram.address
       ),
+      signers: [],
+      key: 'revertSettlementPreparation',
+    });
+};
+
+export type RevertPrintTradeSettlementPreparationBuilderParams = {
+  response: PublicKey | PrintTradeResponse;
+  rfq?: PrintTradeRfq;
+  side: AuthoritySide;
+};
+
+export const revertPrintTradeSettlementPreparationBuilder = async (
+  cvg: Convergence,
+  params: RevertPrintTradeSettlementPreparationBuilderParams,
+  options: TransactionBuilderOptions = {}
+): Promise<TransactionBuilder> => {
+  const { programs, payer = cvg.rpc().getDefaultFeePayer() } = options;
+  const { response, rfq, side } = params;
+
+  const responseModel =
+    response instanceof PublicKey
+      ? await cvg.rfqs().findResponseByAddress({ address: response })
+      : response;
+  const rfqModel =
+    rfq ?? (await cvg.rfqs().findRfqByAddress({ address: responseModel.rfq }));
+
+  if (
+    responseModel.model !== 'printTradeResponse' ||
+    rfqModel.model !== 'printTradeRfq'
+  ) {
+    throw new Error('Response is not settled as a print trade!');
+  }
+
+  const remainingAccounts = prependWithProviderProgram(
+    rfqModel.printTrade,
+    await rfqModel.printTrade.getRevertPreparationAccounts(
+      rfqModel,
+      responseModel,
+      side
+    )
+  );
+
+  const rfqProgram = cvg.programs().getRfq(programs);
+
+  return TransactionBuilder.make()
+    .setFeePayer(payer)
+    .add({
+      instruction:
+        createRevertPrintTradeSettlementPreparationPreparationInstruction(
+          {
+            protocol: cvg.protocol().pdas().protocol(),
+            rfq: rfqModel.address,
+            response: responseModel.address,
+            anchorRemainingAccounts: remainingAccounts,
+          },
+          {
+            side: toSolitaAuthoritySide(side),
+          },
+          rfqProgram.address
+        ),
       signers: [],
       key: 'revertSettlementPreparation',
     });
