@@ -1,5 +1,5 @@
 import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
-import { Convergence, Signer } from '..';
+import { Convergence } from '..';
 
 interface Wallet {
   signTransaction(tx: Transaction): Promise<Transaction>;
