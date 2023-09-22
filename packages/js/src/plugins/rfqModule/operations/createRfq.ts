@@ -227,11 +227,8 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const createRfqTx = createRfqTxBuilder.toTransaction(lastValidBlockHeight);
 
     const [optionMarketSignedTxs, [createRfqSignedTx]] = await convergence
-      .rpc()
-      .signTransactionMatrix(
-        [optionMarketTxs, [createRfqTx]],
-        [convergence.identity()]
-      );
+      .identity()
+      .signTransactionMatrix(optionMarketTxs, [createRfqTx]);
     for (const signedTx of optionMarketSignedTxs) {
       await convergence
         .rpc()

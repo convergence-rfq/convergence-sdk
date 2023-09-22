@@ -105,8 +105,8 @@ export const prepareAmericanOptions = async (
   );
 
   const [ataSignedTxs, mintSignedTxs] = await convergence
-    .rpc()
-    .signTransactionMatrix([ataTxs, mintTxs], [convergence.identity()]);
+    .identity()
+    .signTransactionMatrix(ataTxs, mintTxs);
 
   if (ataSignedTxs.length > 0) {
     await Promise.all(
