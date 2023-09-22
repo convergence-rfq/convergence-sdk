@@ -211,14 +211,11 @@ export const removeDuplicateAccountMeta = (
 ): AccountMeta[] => {
   const uniqueAccountMeta: AccountMeta[] = [];
   for (let i = 0; i < accountMeta.length; i++) {
-    let unique = true;
-    for (let j = 0; j < accountMeta.length; j++) {
-      if (i !== j && accountMeta[i].pubkey.equals(accountMeta[j].pubkey)) {
-        unique = false;
-        break;
-      }
+    if (
+      !uniqueAccountMeta.find((x) => x.pubkey.equals(accountMeta[i].pubkey))
+    ) {
+      uniqueAccountMeta.push(accountMeta[i]);
     }
-    if (unique) uniqueAccountMeta.push(accountMeta[i]);
   }
   return uniqueAccountMeta;
 };
