@@ -258,17 +258,12 @@ export const respondToRfqBuilder = async (
       rfqModel
     );
 
-  const baseAssetAccounts = await Promise.all(
-    rfqModel.legs.map((leg) => leg.getBaseAssetAccount())
-  );
-
-  // baseAssetAccounts = removeDuplicateAccountMeta(baseAssetAccounts);
-
-  const oracleAccounts = await Promise.all(
+  let baseAssetAccounts = rfqModel.legs.map((leg) => leg.getBaseAssetAccount());
+  let oracleAccounts = await Promise.all(
     rfqModel.legs.map((leg) => leg.getOracleAccount())
   );
-
-  // oracleAccounts = removeDuplicateAccountMeta(oracleAccounts);
+  baseAssetAccounts = removeDuplicateAccountMeta(baseAssetAccounts);
+  oracleAccounts = removeDuplicateAccountMeta(oracleAccounts);
 
   return TransactionBuilder.make<RespondToRfqBuilderContext>()
     .setFeePayer(maker)

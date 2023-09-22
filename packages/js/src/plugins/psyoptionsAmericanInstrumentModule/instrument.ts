@@ -16,6 +16,7 @@ import { Mint } from '../tokenModule';
 import {
   CreateOptionInstrumentsResult,
   LegInstrument,
+  toLeg,
 } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
@@ -75,10 +76,14 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     readonly stableAssetMint?: PublicKey
   ) {}
 
-  getBaseAssetIndex = () => this.baseAssetIndex;
   getAmount = () => this.amount;
+  getBaseAssetIndex = () => this.baseAssetIndex;
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
+  toLeg(): Leg {
+    return toLeg(this);
+  }
+
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
     if (!this.underlyingAssetMint) {
       throw new Error('Missing underlying asset mint');
@@ -232,6 +237,11 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       .pdas()
       .mintInfo({ mint: this.stableAssetMint });
     return [
+      {
+        pubkey: this.getProgramId(),
+        isSigner: false,
+        isWritable: false,
+      },
       { pubkey: this.optionMetaPubKey, isSigner: false, isWritable: false },
       {
         pubkey: mintInfoPda,

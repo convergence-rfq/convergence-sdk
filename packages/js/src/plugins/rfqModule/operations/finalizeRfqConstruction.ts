@@ -196,7 +196,6 @@ export const finalizeRfqConstructionBuilder = async (
 
   collateralInfo = collateralInfo ?? collateralInfoPda;
   collateralToken = collateralToken ?? collateralTokenPda;
-  console.log('legsLength', legs.length);
   const anchorRemainingAccounts: AccountMeta[] = [];
 
   const protocol = convergence.protocol().pdas().protocol();
@@ -212,25 +211,19 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
-  let baseAssetAccounts = await Promise.all(
-    legs.map((leg) => leg.getBaseAssetAccount())
-  );
-
-  baseAssetAccounts = removeDuplicateAccountMeta(baseAssetAccounts);
-  console.log('baseAssetAccounts', baseAssetAccounts);
+  let baseAssetAccounts = legs.map((leg) => leg.getBaseAssetAccount());
   let oracleAccounts = await Promise.all(
     legs.map((leg) => leg.getOracleAccount())
   );
 
+  baseAssetAccounts = removeDuplicateAccountMeta(baseAssetAccounts);
   oracleAccounts = removeDuplicateAccountMeta(oracleAccounts);
-  console.log('oracleAccounts', oracleAccounts);
 
   anchorRemainingAccounts.push(
     configAccount,
     ...baseAssetAccounts,
     ...oracleAccounts
   );
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({

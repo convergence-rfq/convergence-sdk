@@ -7,9 +7,6 @@ import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, FixedSize, Rfq, toSolitaFixedSize } from '../models';
 import {
   calculateExpectedLegsHash,
-  instrumentsToLegAccounts,
-  legsToBaseAssetAccounts,
-  instrumentsToLegs,
   calculateExpectedLegsSize,
 } from '../helpers';
 import {
@@ -311,8 +308,7 @@ export const createRfqBuilder = async (
   } = params;
   let { expectedLegsSize } = params;
 
-  const legs = instrumentsToLegs(instruments);
-
+  const legs = instruments.map((ins) => ins.toLeg());
   const expectedLegsSizeValue = calculateExpectedLegsSize(instruments);
   expectedLegsSize = expectedLegsSize ?? expectedLegsSizeValue;
 
@@ -338,11 +334,10 @@ export const createRfqBuilder = async (
     },
   ];
 
-  const baseAssetAccounts = legsToBaseAssetAccounts(
-    convergence,
-    instrumentsToAdd
-  );
-  const legAccounts = await instrumentsToLegAccounts(instrumentsToAdd);
+  let baseAssetAccounts = instruments.map((ins) => ins.getBaseAssetAccount());
+  let legAccounts = instruments
+    .map((ins) => ins.getValidationAccounts())
+    .flat();
 
   let rfqBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
@@ -385,8 +380,10 @@ export const createRfqBuilder = async (
   while (!rfqBuilder.checkTransactionFits()) {
     instrumentsToAdd = instrumentsToAdd.slice(0, instrumentsToAdd.length - 1);
     legsToAdd = legsToAdd.slice(0, instrumentsToAdd.length);
-    legAccounts = await instrumentsToLegAccounts(instrumentsToAdd);
-    baseAssetAccounts = legsToBaseAssetAccounts(convergence, legsToAdd);
+    legAccounts = instrumentsToAdd
+      .map((ins) => ins.getValidationAccounts())
+      .flat();
+    baseAssetAccounts = instrumentsToAdd.map((i) => i.getBaseAssetAccount());
     rfqBuilder = TransactionBuilder.make()
       .setFeePayer(payer)
       .setContext({
@@ -423,8 +420,10 @@ export const createRfqBuilder = async (
       });
   }
 
+  console.log('baseAccoo', baseAssetAccounts.length);
+  console.log('len', legsToAdd.length);
   const remainingLegsToAdd = instruments.slice(legsToAdd.length, legs.length);
-
+  console.log('remaining', remainingLegsToAdd.length);
   return {
     createRfqTxBuilder: rfqBuilder,
     remainingLegsToAdd,

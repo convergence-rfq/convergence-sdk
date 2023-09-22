@@ -16,7 +16,6 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'SettleOperation' as const;
 
@@ -162,7 +161,7 @@ export const settleBuilder = async (
     const leg = rfqModel.legs[legIndex];
     const { receiver } = legs[legIndex];
 
-    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
+    const baseAssetMint = leg.getBaseAssetMint();
 
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[legIndex].getProgramId(),
@@ -191,7 +190,7 @@ export const settleBuilder = async (
           .tokens()
           .pdas()
           .associatedTokenAccount({
-            mint: baseAssetMint!.address,
+            mint: baseAssetMint,
             owner: receiver === 'maker' ? maker : taker,
             programs,
           }),

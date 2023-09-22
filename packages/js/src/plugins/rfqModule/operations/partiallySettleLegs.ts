@@ -16,7 +16,6 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 
@@ -178,7 +177,7 @@ export const partiallySettleLegsBuilder = async (
       rfqModel,
     });
 
-    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
+    const baseAssetMint = leg.getBaseAssetMint();
 
     const legAccounts: AccountMeta[] = [
       //`escrow`
@@ -193,7 +192,7 @@ export const partiallySettleLegsBuilder = async (
           .tokens()
           .pdas()
           .associatedTokenAccount({
-            mint: baseAssetMint!.address,
+            mint: baseAssetMint,
             owner: receiver === 'maker' ? maker : taker,
             programs,
           }),

@@ -17,7 +17,6 @@ import {
 import { getOrCreateATA } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { protocolCache } from '../../protocolModule/cache';
-import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
@@ -176,7 +175,7 @@ export const cleanUpResponseLegsBuilder = async (
     });
 
     const leg = rfqModel.legs[i];
-    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
+    const baseAssetMint = leg.getBaseAssetMint();
 
     const legAccounts: AccountMeta[] = [
       {
@@ -192,7 +191,7 @@ export const cleanUpResponseLegsBuilder = async (
       {
         pubkey: await getOrCreateATA(
           convergence,
-          baseAssetMint!.address,
+          baseAssetMint,
           protocol.authority
         ),
         isSigner: false,

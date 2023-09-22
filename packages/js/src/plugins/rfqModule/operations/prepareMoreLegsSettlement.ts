@@ -26,7 +26,6 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { getOrCreateATA } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 
@@ -208,7 +207,7 @@ export const prepareMoreLegsSettlementBuilder = async (
     });
 
     const leg = rfqModel.legs[i];
-    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
+    const baseAssetMint = leg.getBaseAssetMint();
 
     const legAccounts: AccountMeta[] = [
       // `caller
@@ -226,7 +225,7 @@ export const prepareMoreLegsSettlementBuilder = async (
         // }),
         pubkey: await getOrCreateATA(
           convergence,
-          baseAssetMint!.address,
+          baseAssetMint,
           caller.publicKey,
           programs
         ),
@@ -235,7 +234,7 @@ export const prepareMoreLegsSettlementBuilder = async (
       },
       // `mint`
       {
-        pubkey: baseAssetMint!.address,
+        pubkey: baseAssetMint,
         isSigner: false,
         isWritable: false,
       },

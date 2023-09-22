@@ -2,7 +2,6 @@ import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { instrumentsToLegAccounts, instrumentsToLegs } from '../helpers';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -133,8 +132,10 @@ export const addLegsToRfqBuilder = async (
   const protocol = protocolPdaClient.protocol();
   const { taker = convergence.identity(), instruments, rfq } = params;
 
-  const legs = instrumentsToLegs(instruments);
-  const legAccounts = await instrumentsToLegAccounts(instruments);
+  const legs = instruments.map((ins) => ins.toLeg());
+  const legAccounts = instruments
+    .map((ins) => ins.getValidationAccounts())
+    .flat();
 
   const baseAssetAccounts = await Promise.all(
     instruments.map((instrument) => instrument.getBaseAssetAccount())

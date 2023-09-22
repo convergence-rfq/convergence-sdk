@@ -23,6 +23,7 @@ export interface LegInstrument {
   getOracleAccount(): Promise<AccountMeta>;
   getValidationAccounts(): AccountMeta[];
   getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult>;
+  toLeg(): Leg;
 }
 
 // TODO add registration of quote instruments

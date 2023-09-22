@@ -22,6 +22,7 @@ import { Mint } from '../tokenModule';
 import {
   CreateOptionInstrumentsResult,
   LegInstrument,
+  toLeg,
 } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { assert } from '../../utils/assert';
@@ -151,6 +152,9 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
     return optionMarketIxs;
   }
+  toLeg(): Leg {
+    return toLeg(this);
+  }
 
   getBaseAssetAccount(): AccountMeta {
     const baseAsset = this.convergence
@@ -263,6 +267,11 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       throw new Error('Missing underlying asset mint');
     }
     return [
+      {
+        pubkey: this.getProgramId(),
+        isSigner: false,
+        isWritable: false,
+      },
       { pubkey: this.optionMetaPubKey, isSigner: false, isWritable: false },
       {
         pubkey: this.convergence

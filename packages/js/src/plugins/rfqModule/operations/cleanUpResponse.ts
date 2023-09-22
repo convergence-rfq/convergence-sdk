@@ -11,7 +11,6 @@ import {
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
-import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import { SendAndConfirmTransactionResponse } from '@/plugins';
 
 const Key = 'cleanUpResponseOperation' as const;
@@ -163,7 +162,7 @@ export const cleanUpResponseBuilder = async (
       index: i,
     });
 
-    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
+    const baseAssetMint = leg.getBaseAssetMint();
     const legAccounts: AccountMeta[] = [
       {
         pubkey: firstToPrepare,
@@ -177,7 +176,7 @@ export const cleanUpResponseBuilder = async (
       },
       {
         pubkey: convergence.tokens().pdas().associatedTokenAccount({
-          mint: baseAssetMint!.address,
+          mint: baseAssetMint,
           owner: dao,
           programs,
         }),

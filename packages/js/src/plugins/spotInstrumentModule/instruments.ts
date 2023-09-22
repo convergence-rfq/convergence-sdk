@@ -8,6 +8,7 @@ import {
   CreateOptionInstrumentsResult,
   LegInstrument,
   QuoteInstrument,
+  toLeg,
 } from '../instrumentModule';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
@@ -87,7 +88,9 @@ export class SpotLegInstrument implements LegInstrument {
     };
     return oracleAccount;
   }
-
+  toLeg(): Leg {
+    return toLeg(this);
+  }
   static async create(
     convergence: Convergence,
     mint: Mint,
@@ -127,7 +130,14 @@ export class SpotLegInstrument implements LegInstrument {
       .rfqs()
       .pdas()
       .mintInfo({ mint: this.mintAddress });
-    return [{ pubkey: mintInfo, isSigner: false, isWritable: false }];
+    return [
+      {
+        pubkey: this.getProgramId(),
+        isSigner: false,
+        isWritable: false,
+      },
+      { pubkey: mintInfo, isSigner: false, isWritable: false },
+    ];
   }
 
   /** Helper method to serialize the instrument data for this instrument. */

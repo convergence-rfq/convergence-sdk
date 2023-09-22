@@ -17,7 +17,6 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { AuthoritySide, toSolitaAuthoritySide } from '../models/AuthoritySide';
-import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 
@@ -179,7 +178,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
     };
 
     const leg = rfqModel.legs[i];
-    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
+    const baseAssetMint = leg.getBaseAssetMint();
 
     const legAccounts: AccountMeta[] = [
       //`escrow`
@@ -194,7 +193,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
           .tokens()
           .pdas()
           .associatedTokenAccount({
-            mint: baseAssetMint!.address,
+            mint: baseAssetMint,
             owner: side === 'maker' ? responseModel.maker : rfqModel.taker,
             programs,
           }),

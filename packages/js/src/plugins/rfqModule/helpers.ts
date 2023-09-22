@@ -1,6 +1,5 @@
 import { AccountMeta } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { Leg } from '@convergence-rfq/rfq';
 import {
   Confirmation,
   Quote,
@@ -12,15 +11,12 @@ import { UnparsedAccount } from '../../types';
 import {
   LegInstrument,
   getSerializedLegLength,
-  getValidationAccounts,
   serializeAsLeg,
-  toLeg,
 } from '../instrumentModule';
 import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
 import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { LEG_MULTIPLIER_DECIMALS } from './constants';
 import { Rfq, Response, isFixedSizeOpen } from './models';
-import { Convergence } from '@/Convergence';
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
@@ -81,48 +77,6 @@ export const calculateExpectedLegsSize = (
     4 +
     instruments.map((i) => getSerializedLegLength(i)).reduce((x, y) => x + y, 0)
   );
-};
-
-// TODO remove
-export const instrumentsToLegsAndLegsSize = (
-  instruments: LegInstrument[]
-): [Leg[], number] => {
-  return [
-    instrumentsToLegs(instruments),
-    calculateExpectedLegsSize(instruments),
-  ];
-};
-
-export const instrumentsToLegs = (instruments: LegInstrument[]): Leg[] => {
-  return instruments.map((i) => toLeg(i));
-};
-
-// TODO remove
-export const instrumentsToLegsAndExpectedLegsHash = (
-  instruments: LegInstrument[]
-): [Leg[], Uint8Array] => {
-  return [
-    instrumentsToLegs(instruments),
-    calculateExpectedLegsHash(instruments),
-  ];
-};
-
-export const legsToBaseAssetAccounts = (
-  convergence: Convergence,
-  legs: LegInstrument[]
-): AccountMeta[] => {
-  return legs.map((leg) => leg.getBaseAssetAccount());
-};
-
-// TODO remove async part after option instruments refactoring
-export const instrumentsToLegAccounts = async (
-  instruments: LegInstrument[]
-): Promise<AccountMeta[]> => {
-  const accounts = await Promise.all(
-    instruments.map((i) => getValidationAccounts(i))
-  );
-
-  return accounts.flat();
 };
 
 export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {

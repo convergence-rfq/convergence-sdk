@@ -26,9 +26,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { Rfq } from '../../rfqModule';
 import { getOrCreateATAtxBuilder } from '../../../utils/ata';
-import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import {
   prepareAmericanOptions,
   psyoptionsAmericanInstrumentProgram,
@@ -205,11 +203,15 @@ export const prepareSettlementBuilder = async (
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
-  const baseAssetMints: Mint[] = [];
+  const baseAssetMintPubkeys = rfqModel.legs.map((leg) =>
+    leg.getBaseAssetMint()
+  );
 
-  for (const leg of rfqModel.legs) {
-    baseAssetMints.push(await legToBaseAssetMint(convergence, leg));
-  }
+  const baseAssetMints = await Promise.all(
+    baseAssetMintPubkeys.map((baseAssetMintPubkey) =>
+      convergence.tokens().findMintByAddress({ address: baseAssetMintPubkey })
+    )
+  );
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
