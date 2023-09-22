@@ -80,6 +80,14 @@ export const sleep = (seconds: number) => {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 };
 
+export async function runInParallelWithWait<T>(
+  promiseGetter: () => Promise<T>,
+  waitInSeconds: number
+): Promise<T> {
+  const [result] = await Promise.all([promiseGetter(), sleep(waitInSeconds)]);
+  return result;
+}
+
 export const fetchTokenAmount = async (
   cvg: Convergence,
   mintAddress: PublicKey

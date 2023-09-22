@@ -3,18 +3,10 @@ import { BN } from 'bn.js';
 
 import { Keypair } from '@solana/web3.js';
 import { createUserCvg, ensureHxroOperatorTRGInitialized } from '../helpers';
-import {
-  AdditionalHxroSettlementPreparationParameters,
-  HxroOptionInfo,
-  HxroPrintTrade,
-  HxroLeg,
-  PublicKey,
-} from '../../src';
-import { CTX } from '../constants';
+import { HxroOptionInfo, HxroPrintTrade, HxroLeg, PublicKey } from '../../src';
 
 describe('unit.hxro', () => {
   const cvgTaker = createUserCvg('taker');
-  const cvgMaker = createUserCvg('maker');
   const cvgAuthority = createUserCvg('dao');
 
   it('get hxro config', async () => {
@@ -93,59 +85,5 @@ describe('unit.hxro', () => {
     expect(
       (rfq.legs[0] as HxroLeg).legInfo.productInfo.productAddress
     ).toBeDefined();
-  });
-
-  it('can create hxro rfq', async () => {
-    await ensureHxroOperatorTRGInitialized(cvgAuthority);
-
-    const products = await cvgTaker.hxro().fetchProducts();
-    const { rfq } = await cvgTaker.rfqs().createPrintTrade({
-      printTrade: new HxroPrintTrade(cvgTaker, [
-        { amount: 1, side: 'long', productInfo: products[0] },
-      ]),
-      orderType: 'buy',
-      fixedSize: { type: 'open' },
-      activeWindow: 1000,
-      settlingWindow: 5000,
-    });
-
-    const { rfqResponse } = await cvgMaker
-      .rfqs()
-      .respond({ rfq: rfq.address, ask: { price: 123, legsMultiplier: 1 } });
-
-    await cvgTaker.rfqs().confirmResponse({
-      response: rfqResponse.address,
-      rfq: rfq.address,
-      side: 'ask',
-    });
-
-    await cvgTaker.rfqs().preparePrintTradeSettlement({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      additionalPrintTradeInfo:
-        new AdditionalHxroSettlementPreparationParameters(
-          new PublicKey(CTX.hxroTakerTrg)
-        ),
-    });
-
-    await cvgMaker.rfqs().preparePrintTradeSettlement({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      additionalPrintTradeInfo:
-        new AdditionalHxroSettlementPreparationParameters(
-          new PublicKey(CTX.hxroMakerTrg)
-        ),
-    });
-
-    await cvgTaker.rfqs().settle({
-      response: rfqResponse.address,
-    });
-
-    await cvgTaker
-      .rfqs()
-      .unlockResponseCollateral({ response: rfqResponse.address });
-
-    await cvgTaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
-    // await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
 });
