@@ -108,6 +108,7 @@ export const createAmericanCoveredCallRfq = async (
   quoteMint: Mint
 ) => {
   const randomExpiry = 3_600 + Math.random() * 1000;
+  const expirationTimestamp = Date.now() / 1000 + randomExpiry;
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, 1.0, 'long'),
@@ -120,7 +121,7 @@ export const createAmericanCoveredCallRfq = async (
         'long',
         1,
         24_534,
-        randomExpiry
+        expirationTimestamp
       ),
     ],
     orderType,
@@ -140,7 +141,7 @@ export const createEuropeanCoveredCallRfq = async (
 ) => {
   const min = 3_600;
   const randomExpiry = min + Math.random();
-
+  const expirationTimestamp = Date.now() / 1000 + randomExpiry;
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, 1.0, 'long'),
@@ -154,7 +155,7 @@ export const createEuropeanCoveredCallRfq = async (
         24_534,
         1,
         oracle,
-        randomExpiry
+        expirationTimestamp
       ),
     ],
     orderType,
@@ -173,7 +174,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
 ) => {
   const min = 3_600;
   const randomExpiry = min + Math.random() * 1000;
-
+  const expirationTimestamp = Date.now() / 1000 + randomExpiry;
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
@@ -186,7 +187,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
         29_000,
         1,
         oracle,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
         cvg,
@@ -198,7 +199,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
         31_000,
         1,
         oracle,
-        randomExpiry
+        expirationTimestamp
       ),
     ],
     orderType,
@@ -215,7 +216,7 @@ export const createAmericanFixedBaseStraddle = async (
   quoteMint: Mint
 ) => {
   const randomExpiry = 3_600 + Math.random() * 1000;
-
+  const expirationTimestamp = Date.now() / 1000 + randomExpiry;
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
@@ -227,7 +228,7 @@ export const createAmericanFixedBaseStraddle = async (
         'long',
         1,
         27_000,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
@@ -238,7 +239,7 @@ export const createAmericanFixedBaseStraddle = async (
         'long',
         1,
         29_000,
-        randomExpiry
+        expirationTimestamp
       ),
     ],
     orderType,
@@ -258,7 +259,7 @@ export const createEuropeanFixedBaseStraddle = async (
 ) => {
   const min = 3_600;
   const randomExpiry = min + Math.random() * 1000;
-
+  const expirationTimestamp = Date.now() / 1000 + randomExpiry;
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
@@ -271,7 +272,7 @@ export const createEuropeanFixedBaseStraddle = async (
         26_334,
         1,
         oracle,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
         cvg,
@@ -283,7 +284,7 @@ export const createEuropeanFixedBaseStraddle = async (
         26_334,
         1,
         oracle,
-        randomExpiry
+        expirationTimestamp
       ),
     ],
     orderType,
@@ -301,7 +302,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
   quoteMint: Mint
 ) => {
   const randomExpiry = 3_600 + Math.random() * 1000;
-
+  const expirationTimestamp = Date.now() / 1000 + randomExpiry;
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
@@ -313,7 +314,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
         'long',
         1,
         33_000,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
@@ -324,7 +325,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
         'short',
         1,
         31_000,
-        randomExpiry
+        expirationTimestamp
       ),
     ],
     orderType,
@@ -348,6 +349,7 @@ export const createCFlyRfq = async (
     .findMintByAddress({ address: QUOTE_MINT_PK });
 
   const randomExpiry = 3_600 + Math.random() * 1000;
+  const expirationTimestamp = Date.now() / 1000 + randomExpiry;
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
@@ -359,7 +361,7 @@ export const createCFlyRfq = async (
         reversed ? 'short' : 'long',
         1,
         33_000,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
@@ -370,7 +372,7 @@ export const createCFlyRfq = async (
         reversed ? 'long' : 'short',
         1,
         35_000,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
@@ -381,7 +383,7 @@ export const createCFlyRfq = async (
         reversed ? 'short' : 'long',
         1,
         37_000,
-        randomExpiry
+        expirationTimestamp
       ),
     ],
     orderType,
@@ -527,6 +529,7 @@ export const createAmericanIronCondor = async (
   quoteMint: Mint
 ) => {
   const randomExpiry = 3_600 + Math.random() * 1000;
+  const expirationTimestamp = Date.now() / 1000 + randomExpiry;
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
@@ -538,7 +541,7 @@ export const createAmericanIronCondor = async (
         'long',
         1,
         34_000,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
@@ -549,7 +552,7 @@ export const createAmericanIronCondor = async (
         'short',
         1,
         35_000,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
@@ -560,7 +563,7 @@ export const createAmericanIronCondor = async (
         'long',
         1,
         37_000,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
         cvg,
@@ -571,7 +574,7 @@ export const createAmericanIronCondor = async (
         'short',
         1,
         36_000,
-        randomExpiry
+        expirationTimestamp
       ),
     ],
     orderType,
@@ -591,7 +594,7 @@ export const createEuropeanIronCondor = async (
   oracle: PublicKey
 ) => {
   const randomExpiry = 3_600 + Math.random() * 1000;
-
+  const expirationTimestamp = Date.now() / 1000 + randomExpiry;
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
@@ -604,7 +607,7 @@ export const createEuropeanIronCondor = async (
         27_000,
         1,
         oracle,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
         cvg,
@@ -616,7 +619,7 @@ export const createEuropeanIronCondor = async (
         28_000,
         1,
         oracle,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
         cvg,
@@ -628,7 +631,7 @@ export const createEuropeanIronCondor = async (
         30_000,
         1,
         oracle,
-        randomExpiry
+        expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
         cvg,
@@ -640,7 +643,7 @@ export const createEuropeanIronCondor = async (
         29_000,
         1,
         oracle,
-        randomExpiry
+        expirationTimestamp
       ),
     ],
     orderType,

@@ -274,7 +274,7 @@ export const createRfq = async (opts: Opts) => {
 
   try {
     const quoteAsset = await SpotQuoteInstrument.create(cvg, quoteMint);
-    const { rfq, responses } = await cvg.rfqs().createAndFinalize({
+    const { rfq, response } = await cvg.rfqs().createAndFinalize({
       instruments: [
         await SpotLegInstrument.create(cvg, baseMint, opts.amount, 'long'),
       ],
@@ -288,7 +288,7 @@ export const createRfq = async (opts: Opts) => {
       collateralToken: new PublicKey(opts.collateralToken),
     });
     logPk(rfq.address);
-    logResponse(responses[0]);
+    logResponse(response);
   } catch (e) {
     logError(e);
   }

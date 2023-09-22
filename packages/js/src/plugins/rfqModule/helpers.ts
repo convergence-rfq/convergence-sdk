@@ -179,26 +179,6 @@ export type GetRfqLegstoAddResult = {
   postLegsToAdd?: number;
 };
 
-export function getRfqLegstoAdd(legsLength: number): GetRfqLegstoAddResult {
-  switch (legsLength) {
-    case 0:
-      throw new Error('No legs provided');
-    case 1:
-      return { initialLegsToAdd: 1 };
-    case 2:
-      return { initialLegsToAdd: 2 };
-    case 3:
-    case 4:
-    case 5:
-      return {
-        initialLegsToAdd: 2,
-        postLegsToAdd: legsLength - 2,
-      };
-  }
-
-  throw new Error('Invalid number of legs');
-}
-
 export const isOptionLegInstrument = (instrument: LegInstrument): boolean => {
   return (
     instrument instanceof PsyoptionsAmericanInstrument ||

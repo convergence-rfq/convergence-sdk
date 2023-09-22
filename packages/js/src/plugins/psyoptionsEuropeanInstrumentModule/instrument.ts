@@ -112,7 +112,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     private readonly underlyingAmountPerContractDecimals: number,
     readonly strikePrice: number, // without decimals
     private readonly strikePriceDecimals: number,
-    readonly expiration: number, // timestamp in seconds
+    readonly expirationTimestamp: number, // timestamp in seconds
     readonly optionMint: PublicKey,
     readonly optionMetaPubKey: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
@@ -145,7 +145,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       this.stableAssetMint,
       this.strikePriceDecimals,
       this.strikePrice,
-      this.expiration,
+      this.expirationTimestamp,
       this.oracleAddress
     );
 
@@ -204,7 +204,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     strike: number,
     underlyingAmountPerContract: number,
     oracleAddress: PublicKey,
-    expiresIn: number
+    expirationTimestamp: number
   ) {
     const mintInfoAddress = convergence
       .rfqs()
@@ -218,13 +218,12 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
-    const expirationUnixTimestamp = Date.now() / 1_000 + expiresIn;
     const europeanProgram = await createEuropeanProgram(convergence);
     const { metaKey, optionMint } = await getEuropeanOptionKeys(
       europeanProgram,
       underlyingMint,
       stableMint,
-      expiresIn,
+      expirationTimestamp,
       strike,
       underlyingAmountPerContract,
       optionType
@@ -237,7 +236,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       underlyingMint.decimals,
       strike,
       stableMint.decimals,
-      expirationUnixTimestamp,
+      expirationTimestamp,
       optionMint,
       metaKey,
       mintInfo.mintType.baseAssetIndex,
@@ -304,7 +303,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
         this.underlyingAmountPerContractDecimals,
       strikePrice: addDecimals(this.strikePrice, this.strikePriceDecimals),
       strikePriceDecimals: this.strikePriceDecimals,
-      expiration: this.expiration,
+      expiration: this.expirationTimestamp,
       optionMint: this.optionMint,
       metaKey: this.optionMetaPubKey,
     };
@@ -432,12 +431,11 @@ export const getEuropeanOptionKeys = async (
   europeanProgram: Program<psyoptionsEuropean.EuroPrimitive>,
   underlyingMint: Mint,
   stableMint: Mint,
-  expiresIn: number,
+  expirationTimestamp: number,
   strike: number,
   underlyingAmountPerContract: number,
   optionType: OptionType
 ): Promise<GetEuropeanOptionMetaResult> => {
-  const expirationTimestamp = new BN(Date.now() / 1_000 + expiresIn);
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMint.decimals)
   );
@@ -449,7 +447,7 @@ export const getEuropeanOptionKeys = async (
     europeanProgram,
     underlyingMint.address,
     stableMint.address,
-    expirationTimestamp,
+    new BN(expirationTimestamp),
     underlyingAmountPerContractBN,
     quoteAmountPerContractBN,
     stableMint.decimals
