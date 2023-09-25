@@ -196,12 +196,12 @@ export const confirmResponseBuilder = async (
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
-  let baseAssetAccounts = rfqModel.legs.map((leg) => leg.getBaseAssetAccount());
-  let oracleAccounts = await Promise.all(
-    rfqModel.legs.map((leg) => leg.getOracleAccount())
+  const baseAssetAccounts = removeDuplicateAccountMeta(
+    rfqModel.legs.map((leg) => leg.getBaseAssetAccount())
   );
-  baseAssetAccounts = removeDuplicateAccountMeta(baseAssetAccounts);
-  oracleAccounts = removeDuplicateAccountMeta(oracleAccounts);
+  const oracleAccounts = removeDuplicateAccountMeta(
+    await Promise.all(rfqModel.legs.map((leg) => leg.getOracleAccount()))
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)

@@ -211,13 +211,12 @@ export const finalizeRfqConstructionBuilder = async (
     isWritable: false,
   };
 
-  let baseAssetAccounts = legs.map((leg) => leg.getBaseAssetAccount());
-  let oracleAccounts = await Promise.all(
-    legs.map((leg) => leg.getOracleAccount())
+  const baseAssetAccounts = removeDuplicateAccountMeta(
+    legs.map((leg) => leg.getBaseAssetAccount())
   );
-
-  baseAssetAccounts = removeDuplicateAccountMeta(baseAssetAccounts);
-  oracleAccounts = removeDuplicateAccountMeta(oracleAccounts);
+  const oracleAccounts = removeDuplicateAccountMeta(
+    await Promise.all(legs.map((leg) => leg.getOracleAccount()))
+  );
 
   anchorRemainingAccounts.push(
     configAccount,
