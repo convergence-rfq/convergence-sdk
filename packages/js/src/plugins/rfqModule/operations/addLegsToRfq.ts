@@ -137,8 +137,8 @@ export const addLegsToRfqBuilder = async (
     .map((ins) => ins.getValidationAccounts())
     .flat();
 
-  const baseAssetAccounts = await Promise.all(
-    instruments.map((instrument) => instrument.getBaseAssetAccount())
+  const baseAssetAccounts = instruments.map((instrument) =>
+    instrument.getBaseAssetAccount()
   );
 
   const rfqProgram = convergence.programs().getRfq(programs);
