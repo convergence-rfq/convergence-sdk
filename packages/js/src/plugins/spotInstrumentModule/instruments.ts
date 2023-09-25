@@ -161,7 +161,10 @@ export class SpotLegInstrument implements LegInstrument {
 }
 
 export const spotLegInstrumentParser = {
-  parseFromLeg(convergence: Convergence, leg: Leg): SpotLegInstrument {
+  async parseFromLeg(
+    convergence: Convergence,
+    leg: Leg
+  ): Promise<SpotLegInstrument> {
     const {
       side,
       instrumentAmount,
