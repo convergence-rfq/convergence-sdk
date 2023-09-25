@@ -15,6 +15,7 @@ import { collateralMintCache } from '../../../plugins/collateralModule';
 import { FixedSize, fromSolitaFixedSize } from './FixedSize';
 import { OrderType, fromSolitaOrderType } from './OrderType';
 import { StoredRfqState, fromSolitaStoredRfqState } from './StoredRfqState';
+import { psyoptionsAmericanInstrumentDataSerializer } from '@/plugins/psyoptionsAmericanInstrumentModule';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -104,6 +105,14 @@ export const toRfq = async (
   );
   const collateralMint = await collateralMintCache.get(convergence);
   const collateralDecimals = collateralMint.decimals;
+
+  const legs: LegInstrument[] = [];
+
+  for (const leg of account.data.legs) {
+    const legInstrument = await convergence.parseLegInstrument(leg);
+    legs.push(legInstrument);
+  }
+
   return {
     model: 'rfq',
     address: account.publicKey,
@@ -130,6 +139,6 @@ export const toRfq = async (
     totalResponses: account.data.totalResponses,
     clearedResponses: account.data.clearedResponses,
     confirmedResponses: account.data.confirmedResponses,
-    legs: account.data.legs.map((leg) => convergence.parseLegInstrument(leg)),
+    legs,
   };
 };

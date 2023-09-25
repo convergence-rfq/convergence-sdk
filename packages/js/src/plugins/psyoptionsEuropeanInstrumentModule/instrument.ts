@@ -119,9 +119,9 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
     readonly side: LegSide,
-    readonly underlyingAssetMint?: PublicKey,
-    readonly stableAssetMint?: PublicKey,
-    readonly oracleAddress?: PublicKey
+    readonly underlyingAssetMint: PublicKey,
+    readonly stableAssetMint: PublicKey,
+    readonly oracleAddress: PublicKey
   ) {}
 
   getBaseAssetIndex = () => this.baseAssetIndex;
@@ -171,9 +171,10 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     return baseAssetAccount;
   }
   getBaseAssetMint(): PublicKey {
-    if (!this.underlyingAssetMint) {
-      throw new Error('Missing underlying asset mint');
-    }
+    return this.optionMint;
+  }
+
+  getUnderlyingBaseAssetMint(): PublicKey {
     return this.underlyingAssetMint;
   }
 
@@ -329,10 +330,10 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 }
 
 export const psyoptionsEuropeanInstrumentParser = {
-  parseFromLeg(
+  async parseFromLeg(
     convergence: Convergence,
     leg: Leg
-  ): PsyoptionsEuropeanInstrument {
+  ): Promise<PsyoptionsEuropeanInstrument> {
     const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
     const [
       {
@@ -347,6 +348,11 @@ export const psyoptionsEuropeanInstrumentParser = {
       },
     ] = psyoptionsEuropeanInstrumentDataSerializer.deserialize(
       Buffer.from(instrumentData)
+    );
+
+    const optionMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
+      convergence,
+      metaKey
     );
 
     return new PsyoptionsEuropeanInstrument(
@@ -364,7 +370,10 @@ export const psyoptionsEuropeanInstrumentParser = {
       metaKey,
       baseAssetIndex,
       removeDecimals(instrumentAmount, PsyoptionsEuropeanInstrument.decimals),
-      fromSolitaLegSide(side)
+      fromSolitaLegSide(side),
+      optionMeta.underlyingMint,
+      optionMeta.stableMint,
+      optionMeta.oracle
     );
   },
 };

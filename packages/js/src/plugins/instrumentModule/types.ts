@@ -24,6 +24,7 @@ export interface LegInstrument {
   getValidationAccounts(): AccountMeta[];
   getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult>;
   toLeg(): Leg;
+  getUnderlyingBaseAssetMint(): PublicKey;
 }
 
 // TODO add registration of quote instruments

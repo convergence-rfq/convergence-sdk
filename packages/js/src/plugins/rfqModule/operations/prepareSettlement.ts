@@ -29,12 +29,14 @@ import { getOrCreateATAtxBuilder } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import {
   prepareAmericanOptions,
+  psyoptionsAmericanInstrumentDataSerializer,
   psyoptionsAmericanInstrumentProgram,
 } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import {
   prepareEuropeanOptions,
   psyoptionsEuropeanInstrumentProgram,
 } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { Mint } from '@/plugins/tokenModule/models';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -203,15 +205,14 @@ export const prepareSettlementBuilder = async (
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
-  const baseAssetMintPubkeys = rfqModel.legs.map((leg) =>
-    leg.getBaseAssetMint()
-  );
-
-  const baseAssetMints = await Promise.all(
-    baseAssetMintPubkeys.map((baseAssetMintPubkey) =>
-      convergence.tokens().findMintByAddress({ address: baseAssetMintPubkey })
-    )
-  );
+  const baseAssetMints: Mint[] = [];
+  for (const leg of rfqModel.legs) {
+    const baseAssetMintPubkey = leg.getBaseAssetMint();
+    const baseAssetMint = await convergence
+      .tokens()
+      .findMintByAddress({ address: baseAssetMintPubkey });
+    baseAssetMints.push(baseAssetMint);
+  }
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 

@@ -420,10 +420,7 @@ export const createRfqBuilder = async (
       });
   }
 
-  console.log('baseAccoo', baseAssetAccounts.length);
-  console.log('len', legsToAdd.length);
   const remainingLegsToAdd = instruments.slice(legsToAdd.length, legs.length);
-  console.log('remaining', remainingLegsToAdd.length);
   return {
     createRfqTxBuilder: rfqBuilder,
     remainingLegsToAdd,

@@ -19,6 +19,7 @@ import {
   PsyoptionsAmericanInstrument,
   SpotLegInstrument,
   Mint,
+  psyoptionsAmericanInstrumentDataSerializer,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
@@ -128,7 +129,6 @@ export const createAmericanCoveredCallRfq = async (
     fixedSize: { type: 'fixed-base', amount: 1 },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
   });
-
   return { rfq, response };
 };
 

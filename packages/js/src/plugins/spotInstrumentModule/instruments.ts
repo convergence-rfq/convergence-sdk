@@ -68,6 +68,10 @@ export class SpotLegInstrument implements LegInstrument {
     return this.mintAddress;
   }
 
+  getUnderlyingBaseAssetMint(): PublicKey {
+    return this.mintAddress;
+  }
+
   async getOracleAccount(): Promise<AccountMeta> {
     const baseAsset = this.convergence
       .protocol()
