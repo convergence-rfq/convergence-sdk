@@ -86,6 +86,18 @@ export const prepareEuropeanOptions = async (
     ) {
       ataTxBuilderArray.push(writerDestination.txBuilder);
     }
+
+    const { tokenBalance } = await convergence.tokens().getTokenBalance({
+      mintAddress:
+        leg.optionType == psyoptionsEuropean.OptionType.PUT
+          ? euroMeta.putOptionMint
+          : euroMeta.callOptionMint,
+      owner: caller,
+      mintDecimals: PsyoptionsEuropeanInstrument.decimals,
+    });
+
+    const tokensToMint = amount - tokenBalance;
+
     const { instruction: ix } = psyoptionsEuropean.instructions.mintOptions(
       europeanProgram,
       leg.optionMetaPubKey,
@@ -93,7 +105,7 @@ export const prepareEuropeanOptions = async (
       minterCollateralKey,
       optionDestination.ataPubKey,
       writerDestination.ataPubKey,
-      addDecimals(amount, PsyoptionsEuropeanInstrument.decimals),
+      addDecimals(tokensToMint, PsyoptionsEuropeanInstrument.decimals),
       leg.optionType
     );
 

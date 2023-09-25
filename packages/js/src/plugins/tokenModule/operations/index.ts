@@ -11,3 +11,4 @@ export * from './mintTokens';
 export * from './revokeTokenDelegateAuthority';
 export * from './sendTokens';
 export * from './thawTokens';
+export * from './getTokenBalance';

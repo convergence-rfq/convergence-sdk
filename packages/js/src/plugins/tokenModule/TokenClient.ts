@@ -17,6 +17,8 @@ import {
   findTokenWithMintByMintOperation,
   FreezeTokensInput,
   freezeTokensOperation,
+  GetTokenBalanceInput,
+  getTokenBalanceOperation,
   MintTokensInput,
   mintTokensOperation,
   RevokeTokenDelegateAuthorityInput,
@@ -232,5 +234,12 @@ export class TokenClient {
     return this.convergence
       .operations()
       .execute(revokeTokenDelegateAuthorityOperation(input), options);
+  }
+
+  /** {@inheritDoc getTokenBalanceOperation } */
+  getTokenBalance(input: GetTokenBalanceInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(getTokenBalanceOperation(input), options);
   }
 }
