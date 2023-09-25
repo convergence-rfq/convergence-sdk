@@ -243,11 +243,10 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         addLegsSignedTxs,
         [finalizeRfqSignedTx],
       ] = await convergence
-        .rpc()
-        .signTransactionMatrix(
-          [optionMarketTxs, [createRfqTx], addLegsTxs, [finalizeRfqTxs]],
-          [convergence.identity()]
-        );
+        .identity()
+        .signTransactionMatrix(optionMarketTxs, [createRfqTx], addLegsTxs, [
+          finalizeRfqTxs,
+        ]);
 
       for (const signedTx of optionMarketSignedTxs) {
         await convergence

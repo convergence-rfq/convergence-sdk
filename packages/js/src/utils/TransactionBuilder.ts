@@ -51,13 +51,14 @@ export class TransactionBuilder<C extends object = object> {
     });
     const message = transaction.compileMessage();
     const maxTransactionSize = 1232;
+
     try {
       const serializedMessage = message.serialize();
-      if (serializedMessage.length + 100 > maxTransactionSize) {
-        return false;
-      }
-      const wireTransaction = transaction.serializeMessage();
-      if (wireTransaction.length + 100 > maxTransactionSize) {
+      const txSize =
+        1 +
+        64 * message.header.numRequiredSignatures +
+        serializedMessage.length;
+      if (txSize > maxTransactionSize) {
         return false;
       }
     } catch (e) {
