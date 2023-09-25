@@ -8,12 +8,15 @@ import {
   CreateOptionInstrumentsResult,
   LegInstrument,
   QuoteInstrument,
-  toLeg,
 } from '../instrumentModule';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import { removeDecimals } from '../../utils/conversions';
-import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
+import { addDecimals, removeDecimals } from '../../utils/conversions';
+import {
+  LegSide,
+  fromSolitaLegSide,
+  toSolitaLegSide,
+} from '../rfqModule/models/LegSide';
 
 type InstrumentData = {
   mintAddress: PublicKey;
@@ -93,7 +96,14 @@ export class SpotLegInstrument implements LegInstrument {
     return oracleAccount;
   }
   toLeg(): Leg {
-    return toLeg(this);
+    return {
+      instrumentProgram: this.getProgramId(),
+      baseAssetIndex: this.getBaseAssetIndex(),
+      instrumentData: this.serializeInstrumentData(),
+      instrumentAmount: addDecimals(this.getAmount(), this.getDecimals()),
+      instrumentDecimals: this.getDecimals(),
+      side: toSolitaLegSide(this.getSide()),
+    };
   }
   static async create(
     convergence: Convergence,

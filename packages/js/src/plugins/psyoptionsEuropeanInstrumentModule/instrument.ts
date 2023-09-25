@@ -22,13 +22,16 @@ import { Mint } from '../tokenModule';
 import {
   CreateOptionInstrumentsResult,
   LegInstrument,
-  toLeg,
 } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
+import {
+  LegSide,
+  fromSolitaLegSide,
+  toSolitaLegSide,
+} from '../rfqModule/models/LegSide';
 import { CvgWallet } from '@/utils';
 
 export const createEuropeanProgram = async (convergence: Convergence) => {
@@ -153,7 +156,14 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     return optionMarketIxs;
   }
   toLeg(): Leg {
-    return toLeg(this);
+    return {
+      instrumentProgram: this.getProgramId(),
+      baseAssetIndex: this.getBaseAssetIndex(),
+      instrumentData: this.serializeInstrumentData(),
+      instrumentAmount: addDecimals(this.getAmount(), this.getDecimals()),
+      instrumentDecimals: this.getDecimals(),
+      side: toSolitaLegSide(this.getSide()),
+    };
   }
 
   getBaseAssetAccount(): AccountMeta {

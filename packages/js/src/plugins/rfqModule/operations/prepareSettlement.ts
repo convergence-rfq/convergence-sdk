@@ -29,7 +29,6 @@ import { getOrCreateATAtxBuilder } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import {
   prepareAmericanOptions,
-  psyoptionsAmericanInstrumentDataSerializer,
   psyoptionsAmericanInstrumentProgram,
 } from '@/plugins/psyoptionsAmericanInstrumentModule';
 import {

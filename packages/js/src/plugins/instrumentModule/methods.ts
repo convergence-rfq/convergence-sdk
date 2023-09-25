@@ -1,28 +1,12 @@
-import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
+import { QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 
 import { AccountMeta } from '@solana/web3.js';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import { addDecimals } from '../../utils/conversions';
-import { toSolitaLegSide } from '../rfqModule/models/LegSide';
 import { LegInstrument, QuoteInstrument } from './types';
-
-export function toLeg(legInstrument: LegInstrument): Leg {
-  return {
-    instrumentProgram: legInstrument.getProgramId(),
-    baseAssetIndex: legInstrument.getBaseAssetIndex(),
-    instrumentData: legInstrument.serializeInstrumentData(),
-    instrumentAmount: addDecimals(
-      legInstrument.getAmount(),
-      legInstrument.getDecimals()
-    ),
-    instrumentDecimals: legInstrument.getDecimals(),
-    side: toSolitaLegSide(legInstrument.getSide()),
-  };
-}
 
 export function serializeAsLeg(legInstrument: LegInstrument) {
   const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
-  return legSerializer.serialize(toLeg(legInstrument));
+  return legSerializer.serialize(legInstrument.toLeg());
 }
 
 export function getSerializedLegLength(legInstrument: LegInstrument) {

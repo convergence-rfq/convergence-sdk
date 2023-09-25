@@ -16,12 +16,15 @@ import { Mint } from '../tokenModule';
 import {
   CreateOptionInstrumentsResult,
   LegInstrument,
-  toLeg,
 } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
+import {
+  LegSide,
+  fromSolitaLegSide,
+  toSolitaLegSide,
+} from '../rfqModule/models/LegSide';
 import { CvgWallet, NoopWallet } from '../../utils/Wallets';
 import {
   GetOrCreateATAtxBuilderReturnType,
@@ -81,7 +84,14 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
   toLeg(): Leg {
-    return toLeg(this);
+    return {
+      instrumentProgram: this.getProgramId(),
+      baseAssetIndex: this.getBaseAssetIndex(),
+      instrumentData: this.serializeInstrumentData(),
+      instrumentAmount: addDecimals(this.getAmount(), this.getDecimals()),
+      instrumentDecimals: this.getDecimals(),
+      side: toSolitaLegSide(this.getSide()),
+    };
   }
 
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {

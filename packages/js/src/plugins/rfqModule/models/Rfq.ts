@@ -15,7 +15,6 @@ import { collateralMintCache } from '../../../plugins/collateralModule';
 import { FixedSize, fromSolitaFixedSize } from './FixedSize';
 import { OrderType, fromSolitaOrderType } from './OrderType';
 import { StoredRfqState, fromSolitaStoredRfqState } from './StoredRfqState';
-import { psyoptionsAmericanInstrumentDataSerializer } from '@/plugins/psyoptionsAmericanInstrumentModule';
 
 /**
  * This model captures all the relevant information about an RFQ
