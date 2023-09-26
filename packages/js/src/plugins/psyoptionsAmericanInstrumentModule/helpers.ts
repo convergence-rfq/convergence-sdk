@@ -1,6 +1,10 @@
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { BN } from 'bn.js';
-import { PublicKey } from '@solana/web3.js';
+import {
+  BlockhashWithExpiryBlockHeight,
+  PublicKey,
+  Transaction,
+} from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
@@ -10,12 +14,17 @@ import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
 import { TransactionBuilder } from '@/utils/TransactionBuilder';
 
+export type PrepareAmericanOptionsResult = {
+  ataTxs: Transaction[];
+  mintTxs: Transaction[];
+  lastValidBlockHeight: BlockhashWithExpiryBlockHeight;
+};
 //create American Options ATAs and mint Options
 export const prepareAmericanOptions = async (
   convergence: Convergence,
   responseAddress: PublicKey,
   caller: PublicKey
-) => {
+): Promise<PrepareAmericanOptionsResult> => {
   const ixTracker = new InstructionUniquenessTracker([]);
   const cvgWallet = new CvgWallet(convergence);
   const americanProgram = createAmericanProgram(convergence, cvgWallet);
@@ -111,26 +120,32 @@ export const prepareAmericanOptions = async (
     b.toTransaction(lastValidBlockHeight)
   );
 
-  const [ataSignedTxs, mintSignedTxs] = await convergence
-    .identity()
-    .signTransactionMatrix(ataTxs, mintTxs);
+  return {
+    ataTxs,
+    mintTxs,
+    lastValidBlockHeight,
+  };
 
-  if (ataSignedTxs.length > 0) {
-    await Promise.all(
-      ataSignedTxs.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
-    );
-  }
-  if (mintSignedTxs.length > 0) {
-    await Promise.all(
-      mintSignedTxs.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
-    );
-  }
+  // const [ataSignedTxs, mintSignedTxs] = await convergence
+  //   .identity()
+  //   .signTransactionMatrix(ataTxs, mintTxs);
+
+  // if (ataSignedTxs.length > 0) {
+  //   await Promise.all(
+  //     ataSignedTxs.map((signedTx) =>
+  //       convergence
+  //         .rpc()
+  //         .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+  //     )
+  //   );
+  // }
+  // if (mintSignedTxs.length > 0) {
+  //   await Promise.all(
+  //     mintSignedTxs.map((signedTx) =>
+  //       convergence
+  //         .rpc()
+  //         .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+  //     )
+  //   );
+  // }
 };

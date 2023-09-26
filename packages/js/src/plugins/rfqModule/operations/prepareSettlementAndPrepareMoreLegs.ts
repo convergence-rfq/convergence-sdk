@@ -101,14 +101,15 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
         address: rfq,
       });
 
-      let prepareBuilder = await prepareSettlementBuilder(
-        convergence,
-        rfqModel,
-        {
-          ...operation.input,
-        },
-        scope
-      );
+      let { ataTxBuilderArray, prepareSettlementTxBuilder: prepareBuilder } =
+        await prepareSettlementBuilder(
+          convergence,
+          rfqModel,
+          {
+            ...operation.input,
+          },
+          scope
+        );
       scope.throwIfCanceled();
 
       let slicedLegAmount = legAmountToPrepare;
@@ -116,7 +117,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
       while (!prepareBuilder.checkTransactionFits()) {
         const halvedLegAmount = Math.trunc(slicedLegAmount / 2);
 
-        prepareBuilder = await prepareSettlementBuilder(
+        const result = await prepareSettlementBuilder(
           convergence,
           rfqModel,
           {
@@ -125,6 +126,7 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
           },
           scope
         );
+        prepareBuilder = result.prepareSettlementTxBuilder;
 
         slicedLegAmount = halvedLegAmount;
       }
@@ -134,10 +136,35 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
         scope.confirmOptions
       );
 
-      const output = await prepareBuilder.sendAndConfirm(
-        convergence,
-        confirmOptions
+      const latestValidBlockHeight = await convergence
+        .rpc()
+        .getLatestBlockhash();
+      const ataTxs = ataTxBuilderArray.map((builder) =>
+        builder.toTransaction(latestValidBlockHeight)
       );
+
+      const prepareSettlementTx = prepareBuilder.toTransaction(
+        latestValidBlockHeight
+      );
+      const [signedAtaTxs, [signedPrepareSettlementTx]] = await convergence
+        .identity()
+        .signTransactionMatrix(ataTxs, [prepareSettlementTx]);
+
+      await Promise.all(
+        signedAtaTxs.map((signedTx) =>
+          convergence
+            .rpc()
+            .serializeAndSendTransaction(signedTx, latestValidBlockHeight)
+        )
+      );
+
+      const output = await convergence
+        .rpc()
+        .serializeAndSendTransaction(
+          signedPrepareSettlementTx,
+          latestValidBlockHeight
+        );
+
       scope.throwIfCanceled();
 
       if (slicedLegAmount < legAmountToPrepare) {
@@ -219,6 +246,6 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
         }
       }
 
-      return { ...output };
+      return { response: output };
     },
   };

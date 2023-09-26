@@ -7,6 +7,7 @@ import {
   AccountMeta,
   ComputeBudgetProgram,
   SYSVAR_RENT_PUBKEY,
+  Transaction,
 } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -131,31 +132,103 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         .rfqs()
         .findRfqByAddress({ address: rfq });
 
+      let ataTxs: Transaction[] = [];
+      let mintTxs: Transaction[] = [];
+      let lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+
       if (doesRfqLegContainsPsyoptionsAmerican(rfqModel)) {
-        await prepareAmericanOptions(convergence, response, caller?.publicKey);
+        const result = await prepareAmericanOptions(
+          convergence,
+          response,
+          caller?.publicKey
+        );
+        ataTxs = result.ataTxs;
+        mintTxs = result.mintTxs;
+        lastValidBlockHeight = result.lastValidBlockHeight;
       }
       if (doesRfqLegContainsPsyoptionsEuropean(rfqModel)) {
-        await prepareEuropeanOptions(convergence, response, caller?.publicKey);
-      }
-      const { ataTxBuilderArray, prepareSettlementTxBuilder } =
-        await prepareSettlementBuilder(
+        const result = await prepareEuropeanOptions(
           convergence,
-          rfqModel,
-          {
-            ...operation.input,
-          },
-          scope
+          response,
+          caller?.publicKey
         );
+        ataTxs = result.ataTxs;
+        mintTxs = result.mintTxs;
+        lastValidBlockHeight = result.lastValidBlockHeight;
+      }
 
+      const {
+        ataTxBuilderArray: additionalAtaTxBuilderArray,
+        prepareSettlementTxBuilder,
+      } = await prepareSettlementBuilder(
+        convergence,
+        rfqModel,
+        {
+          ...operation.input,
+        },
+        scope
+      );
+
+      const prepareSettlementTx =
+        prepareSettlementTxBuilder.toTransaction(lastValidBlockHeight);
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
         scope.confirmOptions
       );
+      const additionAtatxs = additionalAtaTxBuilderArray.map((txBuilder) =>
+        txBuilder.toTransaction(lastValidBlockHeight)
+      );
+      const [
+        ataSignedTxs,
+        mintSignedTxs,
+        signedAdditionalAtaTxs,
+        [signedPrepareSettlementTx],
+      ] = await convergence
+        .identity()
+        .signTransactionMatrix(ataTxs, mintTxs, additionAtatxs, [
+          prepareSettlementTx,
+        ]);
 
-      const { signedAtaTxBuilderArray, signedPrepareSettlementTxBuilder } =
-        scope.throwIfCanceled();
+      if (ataSignedTxs.length > 0) {
+        await Promise.all(
+          ataSignedTxs.map((signedTx) =>
+            convergence
+              .rpc()
+              .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+          )
+        );
+      }
+      if (mintSignedTxs.length > 0) {
+        await Promise.all(
+          mintSignedTxs.map((signedTx) =>
+            convergence
+              .rpc()
+              .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+          )
+        );
+      }
 
-      return { ...output };
+      if (signedAdditionalAtaTxs.length > 0) {
+        await Promise.all(
+          signedAdditionalAtaTxs.map((signedTx) =>
+            convergence
+              .rpc()
+              .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+          )
+        );
+      }
+
+      const output = await convergence
+        .rpc()
+        .serializeAndSendTransaction(
+          signedPrepareSettlementTx,
+          lastValidBlockHeight,
+          confirmOptions
+        );
+
+      return {
+        response: output,
+      };
     },
   };
 
@@ -199,7 +272,6 @@ export const prepareSettlementBuilder = async (
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  // const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
@@ -282,6 +354,7 @@ export const prepareSettlementBuilder = async (
       caller.publicKey,
       programs
     );
+
     if (txBuilder) {
       ataTxBuilderArray.push(txBuilder);
     }
@@ -346,7 +419,6 @@ export const prepareSettlementBuilder = async (
         key: 'prepareSettlement',
       }
     );
-
   return {
     ataTxBuilderArray,
     prepareSettlementTxBuilder,
