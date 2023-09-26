@@ -137,22 +137,23 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       if (doesRfqLegContainsPsyoptionsEuropean(rfqModel)) {
         await prepareEuropeanOptions(convergence, response, caller?.publicKey);
       }
-      const builder = await prepareSettlementBuilder(
-        convergence,
-        rfqModel,
-        {
-          ...operation.input,
-        },
-        scope
-      );
+      const { ataTxBuilderArray, prepareSettlementTxBuilder } =
+        await prepareSettlementBuilder(
+          convergence,
+          rfqModel,
+          {
+            ...operation.input,
+          },
+          scope
+        );
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
         scope.confirmOptions
       );
 
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
-      scope.throwIfCanceled();
+      const { signedAtaTxBuilderArray, signedPrepareSettlementTxBuilder } =
+        scope.throwIfCanceled();
 
       return { ...output };
     },
@@ -177,12 +178,17 @@ export type PrepareSettlementBuilderParams = PrepareSettlementInput;
  * @group Transaction Builders
  * @category Constructors
  */
+
+export type PrepareSettlementBuilderResult = {
+  ataTxBuilderArray: TransactionBuilder[];
+  prepareSettlementTxBuilder: TransactionBuilder;
+};
 export const prepareSettlementBuilder = async (
   convergence: Convergence,
   rfqModel: Rfq,
   params: PrepareSettlementBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
+): Promise<PrepareSettlementBuilderResult> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     caller = convergence.identity(),
@@ -312,23 +318,7 @@ export const prepareSettlementBuilder = async (
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
 
-  if (ataTxBuilderArray.length > 0) {
-    const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-    const signedTxs = await convergence
-      .identity()
-      .signAllTransactions(
-        ataTxBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
-      );
-    await Promise.all(
-      signedTxs.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
-    );
-  }
-
-  return TransactionBuilder.make()
+  const prepareSettlementTxBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
     .add(
       {
@@ -356,6 +346,11 @@ export const prepareSettlementBuilder = async (
         key: 'prepareSettlement',
       }
     );
+
+  return {
+    ataTxBuilderArray,
+    prepareSettlementTxBuilder,
+  };
 };
 
 const doesRfqLegContainsPsyoptionsAmerican = (rfq: Rfq) => {
