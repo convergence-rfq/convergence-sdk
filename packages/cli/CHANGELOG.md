@@ -1,5 +1,17 @@
 # @convergence-rfq/cli
 
+## 4.5.10
+
+### Patch Changes
+
+- refactor prepareSettlement logic to handle creation of atas and minting option tokens if required
+  add getTokenBalance operation to token module
+  add getRfqStateAndAction
+  add getResponseStateAndAction
+  fix cli-tests
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.10
+
 ## 4.5.9
 
 ### Patch Changes
