@@ -51,6 +51,26 @@ export class IdentityClient
     return this.driver().signAllTransactions(transactions);
   }
 
+  async signTransactionMatrix(
+    ...transactionMatrix: Transaction[][]
+  ): Promise<Transaction[][]> {
+    const txLengths: number[] = [];
+    for (const txArray of transactionMatrix) {
+      txLengths.push(txArray.length);
+    }
+    const flattendedTransactions = transactionMatrix.flat();
+    const flattendedSignedTransactions = await this.signAllTransactions(
+      flattendedTransactions
+    );
+    const constructedTxMatrix: Transaction[][] = [];
+
+    for (const len of txLengths) {
+      constructedTxMatrix.push(flattendedSignedTransactions.splice(0, len));
+    }
+
+    return constructedTxMatrix;
+  }
+
   verifyMessage(message: Uint8Array, signature: Uint8Array): boolean {
     return ed25519.sync.verify(message, signature, this.publicKey.toBytes());
   }

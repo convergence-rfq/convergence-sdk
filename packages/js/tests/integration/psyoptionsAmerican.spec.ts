@@ -1,6 +1,6 @@
 import { expect } from 'expect';
 
-import { Mint } from '@solana/spl-token';
+import { Mint } from '../../src/plugins/tokenModule';
 import {
   createAmericanCoveredCallRfq,
   respondToRfq,
@@ -9,6 +9,7 @@ import {
   createUserCvg,
   createAmericanOpenSizeCallSpdOptionRfq,
   createAmericanFixedBaseStraddle,
+  createAmericanIronCondor,
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
@@ -255,6 +256,42 @@ describe('integration.psyoptionsAmerican', () => {
         rfq: rfq.address,
         response: rfqResponse.address,
         side: 'ask',
+      });
+    expect(confirmResponse).toHaveProperty('signature');
+    const takerResponse = await prepareRfqSettlement(
+      takerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(takerResponse.response).toHaveProperty('signature');
+
+    const makerResponse = await prepareRfqSettlement(
+      makerCvg,
+      rfq,
+      rfqResponse
+    );
+    expect(makerResponse.response).toHaveProperty('signature');
+
+    const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
+    expect(settlementResponse.response).toHaveProperty('signature');
+  });
+
+  it('fixed-size american iron Condor [buy]', async () => {
+    const { rfq } = await createAmericanIronCondor(
+      takerCvg,
+      'sell',
+      baseMint,
+      quoteMint
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 61_222);
+    expect(rfqResponse).toHaveProperty('address');
+    const { response: confirmResponse } = await takerCvg
+      .rfqs()
+      .confirmResponse({
+        rfq: rfq.address,
+        response: rfqResponse.address,
+        side: 'bid',
       });
     expect(confirmResponse).toHaveProperty('signature');
     const takerResponse = await prepareRfqSettlement(

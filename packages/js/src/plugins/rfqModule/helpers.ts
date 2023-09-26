@@ -17,8 +17,10 @@ import {
   serializeAsLeg,
   toLeg,
 } from '../instrumentModule';
-import { Rfq, Response, isFixedSizeOpen } from './models';
+import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
+import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { LEG_MULTIPLIER_DECIMALS } from './constants';
+import { Rfq, Response, isFixedSizeOpen } from './models';
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
@@ -188,3 +190,15 @@ export function extractLegsMultiplier(
   }
   throw new Error('Invalid fixed size');
 }
+
+export type GetRfqLegstoAddResult = {
+  initialLegsToAdd: number;
+  postLegsToAdd?: number;
+};
+
+export const isOptionLegInstrument = (instrument: LegInstrument): boolean => {
+  return (
+    instrument instanceof PsyoptionsAmericanInstrument ||
+    instrument instanceof PsyoptionsEuropeanInstrument
+  );
+};

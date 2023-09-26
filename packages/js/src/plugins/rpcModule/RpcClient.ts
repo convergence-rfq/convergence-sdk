@@ -442,25 +442,6 @@ export class RpcClient {
     };
   }
 
-  async signAllTransactions(
-    transactions: Transaction[],
-    signers: Signer[]
-  ): Promise<Transaction[]> {
-    const { keypairs, identities } = getSignerHistogram(signers);
-
-    for (let transaction of transactions) {
-      if (keypairs.length > 0) {
-        transaction.partialSign(...keypairs);
-      }
-
-      for (let i = 0; i < identities.length; i++) {
-        transaction = await identities[i].signTransaction(transaction);
-      }
-    }
-
-    return transactions;
-  }
-
   protected parseProgramError(
     error: unknown,
     transaction: Transaction
