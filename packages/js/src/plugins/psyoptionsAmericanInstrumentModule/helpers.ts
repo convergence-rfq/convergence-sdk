@@ -1,69 +1,25 @@
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
-
 import { BN } from 'bn.js';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
-import { Mint } from '../tokenModule/models';
-import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { CvgWallet } from '../../utils/Wallets';
 import { InstructionUniquenessTracker } from '../../utils/classes';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
+import { TransactionBuilder } from '@/utils/TransactionBuilder';
 
-export const initializeNewAmericanOption = async (
-  convergence: Convergence,
-  underlyingMint: Mint,
-  quoteMint: Mint,
-  quoteAmountPerContract: number,
-  underlyingAmountPerContract: number,
-  expiration: number
-) => {
-  const expirationUnixTimestamp = new BN(Date.now() / 1_000 + expiration);
-
-  const quoteAmountPerContractBN = new BN(
-    Number(quoteAmountPerContract) * Math.pow(10, quoteMint.decimals)
-  );
-  const underlyingAmountPerContractBN = new BN(
-    Number(underlyingAmountPerContract) * Math.pow(10, underlyingMint.decimals)
-  );
-
-  const cvgWallet = new CvgWallet(convergence);
-  const americanProgram = createAmericanProgram(convergence, cvgWallet);
-
-  const { optionMarketKey, optionMintKey, writerMintKey } =
-    await psyoptionsAmerican.instructions.initializeMarket(americanProgram, {
-      expirationUnixTimestamp,
-      quoteAmountPerContract: quoteAmountPerContractBN,
-      quoteMint: quoteMint.address,
-      underlyingAmountPerContract: underlyingAmountPerContractBN,
-      underlyingMint: underlyingMint.address,
-    });
-
-  const optionMarket = (await psyoptionsAmerican.getOptionByKey(
-    americanProgram,
-    optionMarketKey
-  )) as psyoptionsAmerican.OptionMarketWithKey;
-
-  const optionMint = await convergence
-    .tokens()
-    .findMintByAddress({ address: optionMintKey });
-
-  return {
-    optionMarketKey,
-    optionMarket,
-    optionMintKey,
-    writerMintKey,
-    optionMint,
-  };
+export type PrepareAmericanOptionsResult = {
+  ataTxs: Transaction[];
+  mintTxs: Transaction[];
 };
 //create American Options ATAs and mint Options
 export const prepareAmericanOptions = async (
   convergence: Convergence,
   responseAddress: PublicKey,
   caller: PublicKey
-) => {
+): Promise<PrepareAmericanOptionsResult> => {
   const ixTracker = new InstructionUniquenessTracker([]);
   const cvgWallet = new CvgWallet(convergence);
   const americanProgram = createAmericanProgram(convergence, cvgWallet);
@@ -150,36 +106,17 @@ export const prepareAmericanOptions = async (
     });
     mintTxBuilderArray.push(mintTxBuilder);
   }
-  let signedTxs: Transaction[] = [];
   const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-  if (ataTxBuilderArray.length > 0 || mintTxBuilderArray.length > 0) {
-    const mergedTxBuilderArray = ataTxBuilderArray.concat(mintTxBuilderArray);
-    signedTxs = await convergence
-      .identity()
-      .signAllTransactions(
-        mergedTxBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
-      );
-  }
 
-  const ataSignedTx = signedTxs.slice(0, ataTxBuilderArray.length);
-  const mintSignedTx = signedTxs.slice(ataTxBuilderArray.length);
+  const ataTxs = ataTxBuilderArray.map((b) =>
+    b.toTransaction(lastValidBlockHeight)
+  );
+  const mintTxs = mintTxBuilderArray.map((b) =>
+    b.toTransaction(lastValidBlockHeight)
+  );
 
-  if (ataSignedTx.length > 0) {
-    await Promise.all(
-      ataSignedTx.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
-    );
-  }
-  if (mintSignedTx.length > 0) {
-    await Promise.all(
-      mintSignedTx.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
-    );
-  }
+  return {
+    ataTxs,
+    mintTxs,
+  };
 };

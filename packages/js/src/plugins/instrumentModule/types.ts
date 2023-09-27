@@ -1,4 +1,4 @@
-import { AccountMeta } from '@solana/web3.js';
+import { AccountMeta, TransactionInstruction } from '@solana/web3.js';
 
 import { BaseAssetIndex, Leg } from '@convergence-rfq/rfq';
 import { PublicKey } from '../../types';
@@ -9,6 +9,8 @@ export interface LegInstrumentParser {
   parseFromLeg(convergence: Convergence, leg: Leg): LegInstrument;
 }
 
+export type CreateOptionInstrumentsResult = TransactionInstruction[];
+
 export interface LegInstrument {
   getProgramId: () => PublicKey;
   getBaseAssetIndex: () => BaseAssetIndex;
@@ -16,7 +18,8 @@ export interface LegInstrument {
   getDecimals: () => number;
   getSide: () => LegSide;
   serializeInstrumentData: () => Buffer;
-  getValidationAccounts(): Promise<AccountMeta[]>;
+  getValidationAccounts(): AccountMeta[];
+  getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult>;
 }
 
 // TODO add registration of quote instruments

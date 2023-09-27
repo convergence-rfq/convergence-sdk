@@ -1,6 +1,7 @@
 import {
   BlockhashWithExpiryBlockHeight,
   ConfirmOptions,
+  PACKET_DATA_SIZE,
   SignaturePubkeyPair,
   Transaction,
   TransactionInstruction,
@@ -8,6 +9,8 @@ import {
 import { SendAndConfirmTransactionResponse } from '../plugins/rpcModule';
 import type { Convergence } from '../Convergence';
 import type { OperationOptions, Signer } from '../types';
+
+export const DUMMY_BLOCKHASH = 'H9cCgV1suCbdxMGDGUecdgJPZzdCe4CbNYa6ijP1uBLS';
 
 export type InstructionWithSigners = {
   instruction: TransactionInstruction;
@@ -41,6 +44,23 @@ export class TransactionBuilder<C extends object = object> {
   constructor(transactionOptions: TransactionOptions = {}) {
     this.transactionOptions = transactionOptions;
   }
+
+  checkTransactionFits = () => {
+    const transaction = this.toTransaction({
+      blockhash: DUMMY_BLOCKHASH,
+      lastValidBlockHeight: 0,
+    });
+    const message = transaction.compileMessage();
+
+    const serializedMessage = message.serialize();
+    const txSize =
+      1 + 64 * message.header.numRequiredSignatures + serializedMessage.length;
+    if (txSize > PACKET_DATA_SIZE) {
+      return false;
+    }
+
+    return true;
+  };
 
   static make<C extends object = object>(
     transactionOptions?: TransactionOptions

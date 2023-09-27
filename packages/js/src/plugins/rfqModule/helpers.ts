@@ -17,8 +17,8 @@ import {
   serializeAsLeg,
   toLeg,
 } from '../instrumentModule';
-import { Rfq, Response, isFixedSizeOpen } from './models';
 import { LEG_MULTIPLIER_DECIMALS } from './constants';
+import { Rfq, Response, isFixedSizeOpen } from './models';
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],

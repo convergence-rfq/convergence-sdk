@@ -1,113 +1,19 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
-import * as anchor from '@project-serum/anchor';
 import { PublicKey, Transaction } from '@solana/web3.js';
-import { BN } from 'bn.js';
-import { Mint } from '../tokenModule';
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
 import { Convergence } from '../../Convergence';
 import { InstructionUniquenessTracker } from '../../utils/classes';
-import { CvgWallet } from '../../utils/Wallets';
-import { PsyoptionsEuropeanInstrument } from './instrument';
-import { toBigNumber } from '@/types/BigNumber';
+import {
+  PsyoptionsEuropeanInstrument,
+  createEuropeanProgram,
+} from './instrument';
 
-export const initializeNewEuropeanOption = async (
-  convergence: Convergence,
-  ixTracker: InstructionUniquenessTracker,
-  oracle: PublicKey,
-  europeanProgram: anchor.Program<psyoptionsEuropean.EuroPrimitive>,
-  underlyingMint: Mint,
-  stableMint: Mint,
-  strikePrice: number,
-  underlyingAmountPerContract: number,
-  expiration: number,
-  oracleProviderId = 1
-) => {
-  const expirationTimestamp = new BN(Date.now() / 1_000 + expiration);
-
-  const { instructions: initializeIxs } =
-    await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
-      europeanProgram,
-      underlyingMint.address,
-      stableMint.address,
-      oracle,
-      expirationTimestamp,
-      stableMint.decimals,
-      oracleProviderId
-    );
-
-  const inititalizeTxBuilder = TransactionBuilder.make().setFeePayer(
-    convergence.rpc().getDefaultFeePayer()
-  );
-
-  initializeIxs.forEach((ix) => {
-    if (ixTracker.checkedAdd(ix))
-      inititalizeTxBuilder.add({
-        instruction: ix,
-        signers: [convergence.identity()],
-      });
-  });
-
-  if (inititalizeTxBuilder.getInstructions().length > 0) {
-    await inititalizeTxBuilder.sendAndConfirm(convergence);
-  }
-
-  const strikePriceSize = addDecimals(strikePrice, stableMint.decimals);
-  const underlyingAmountPerContractSize = addDecimals(
-    underlyingAmountPerContract,
-    underlyingMint.decimals
-  );
-
-  const {
-    instruction: createIx,
-    euroMeta,
-    euroMetaKey,
-    expirationData,
-  } = await psyoptionsEuropean.instructions.createEuroMetaInstruction(
-    europeanProgram,
-    underlyingMint.address,
-    underlyingMint.decimals,
-    stableMint.address,
-    stableMint.decimals,
-    expirationTimestamp,
-    toBigNumber(underlyingAmountPerContractSize),
-    toBigNumber(strikePriceSize),
-    stableMint.decimals,
-    oracle,
-    oracleProviderId
-  );
-
-  if (ixTracker.checkedAdd(createIx)) {
-    const createTxBuilder = TransactionBuilder.make().setFeePayer(
-      convergence.rpc().getDefaultFeePayer()
-    );
-    createTxBuilder.add({
-      instruction: createIx,
-      signers: [convergence.identity()],
-    });
-    await createTxBuilder.sendAndConfirm(convergence);
-  }
-
-  return {
-    euroMeta,
-    euroMetaKey,
-    expirationData,
-  };
+export type PrepareEuropeanOptionsResult = {
+  ataTxs: Transaction[];
+  mintTxs: Transaction[];
 };
-
-export const createEuropeanProgram = async (convergence: Convergence) => {
-  const cvgWallet = new CvgWallet(convergence);
-  return psyoptionsEuropean.createProgramFromProvider(
-    new anchor.AnchorProvider(
-      convergence.connection,
-      cvgWallet,
-      anchor.AnchorProvider.defaultOptions()
-    ),
-    new PublicKey(psyoptionsEuropean.programId)
-  );
-};
-
 // create European Option ATAs and mint options
 export const prepareEuropeanOptions = async (
   convergence: Convergence,
@@ -223,36 +129,16 @@ export const prepareEuropeanOptions = async (
     mintTxBuilderArray.push(mintTxBuilder);
   }
 
-  let signedTxs: Transaction[] = [];
   const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-  if (ataTxBuilderArray.length > 0 || mintTxBuilderArray.length > 0) {
-    const mergedTxBuilderArray = ataTxBuilderArray.concat(mintTxBuilderArray);
-    signedTxs = await convergence
-      .identity()
-      .signAllTransactions(
-        mergedTxBuilderArray.map((b) => b.toTransaction(lastValidBlockHeight))
-      );
-  }
+  const ataTxs = ataTxBuilderArray.map((b) =>
+    b.toTransaction(lastValidBlockHeight)
+  );
+  const mintTxs = mintTxBuilderArray.map((b) =>
+    b.toTransaction(lastValidBlockHeight)
+  );
 
-  const ataSignedTx = signedTxs.slice(0, ataTxBuilderArray.length);
-  const mintSignedTx = signedTxs.slice(ataTxBuilderArray.length);
-
-  if (ataSignedTx.length > 0) {
-    await Promise.all(
-      ataSignedTx.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
-    );
-  }
-  if (mintSignedTx.length > 0) {
-    await Promise.all(
-      mintSignedTx.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
-    );
-  }
+  return {
+    ataTxs,
+    mintTxs,
+  };
 };

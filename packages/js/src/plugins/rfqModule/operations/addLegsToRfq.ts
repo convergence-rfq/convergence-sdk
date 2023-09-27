@@ -138,7 +138,6 @@ export const addLegsToRfqBuilder = async (
 
   const baseAssetAccounts: AccountMeta[] = [];
   const baseAssetIndexValues = [];
-
   for (const leg of legs) {
     baseAssetIndexValues.push(leg.baseAssetIndex.value);
   }

@@ -41,12 +41,11 @@ export function getProgramAccount(legInstrument: LegInstrument): AccountMeta {
   };
 }
 
-// TODO remove async part after option instruments refactoring
-export async function getValidationAccounts(
+export function getValidationAccounts(
   legInstrument: LegInstrument
-): Promise<AccountMeta[]> {
+): AccountMeta[] {
   return [getProgramAccount(legInstrument)].concat(
-    await legInstrument.getValidationAccounts()
+    legInstrument.getValidationAccounts()
   );
 }
 
