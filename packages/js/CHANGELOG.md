@@ -1,5 +1,12 @@
 # @convergence-rfq/sdk
 
+## 4.5.11
+
+### Patch Changes
+
+- handle option market creation in createRfq logic
+  optimize prepareSettlement logic for single tx confirmation
+
 ## 4.5.10
 
 ### Patch Changes
