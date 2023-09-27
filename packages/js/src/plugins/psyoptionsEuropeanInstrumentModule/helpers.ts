@@ -1,5 +1,5 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
@@ -10,6 +10,10 @@ import {
   createEuropeanProgram,
 } from './instrument';
 
+export type PrepareEuropeanOptionsResult = {
+  ataTxs: Transaction[];
+  mintTxs: Transaction[];
+};
 // create European Option ATAs and mint options
 export const prepareEuropeanOptions = async (
   convergence: Convergence,
@@ -133,26 +137,8 @@ export const prepareEuropeanOptions = async (
     b.toTransaction(lastValidBlockHeight)
   );
 
-  const [ataSignedTxs, mintSignedTxs] = await convergence
-    .identity()
-    .signTransactionMatrix(ataTxs, mintTxs);
-
-  if (ataSignedTxs.length > 0) {
-    await Promise.all(
-      ataSignedTxs.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
-    );
-  }
-  if (mintSignedTxs.length > 0) {
-    await Promise.all(
-      mintSignedTxs.map((signedTx) =>
-        convergence
-          .rpc()
-          .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-      )
-    );
-  }
+  return {
+    ataTxs,
+    mintTxs,
+  };
 };
