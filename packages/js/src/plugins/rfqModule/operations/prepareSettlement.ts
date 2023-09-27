@@ -134,7 +134,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
 
       let ataTxs: Transaction[] = [];
       let mintTxs: Transaction[] = [];
-      let lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+      const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
 
       if (doesRfqLegContainsPsyoptionsAmerican(rfqModel)) {
         const result = await prepareAmericanOptions(
@@ -144,7 +144,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         );
         ataTxs = result.ataTxs;
         mintTxs = result.mintTxs;
-        lastValidBlockHeight = result.lastValidBlockHeight;
       }
       if (doesRfqLegContainsPsyoptionsEuropean(rfqModel)) {
         const result = await prepareEuropeanOptions(
@@ -154,7 +153,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         );
         ataTxs = result.ataTxs;
         mintTxs = result.mintTxs;
-        lastValidBlockHeight = result.lastValidBlockHeight;
       }
 
       const {

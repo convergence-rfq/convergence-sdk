@@ -1,10 +1,6 @@
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { BN } from 'bn.js';
-import {
-  BlockhashWithExpiryBlockHeight,
-  PublicKey,
-  Transaction,
-} from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
@@ -17,7 +13,6 @@ import { TransactionBuilder } from '@/utils/TransactionBuilder';
 export type PrepareAmericanOptionsResult = {
   ataTxs: Transaction[];
   mintTxs: Transaction[];
-  lastValidBlockHeight: BlockhashWithExpiryBlockHeight;
 };
 //create American Options ATAs and mint Options
 export const prepareAmericanOptions = async (
@@ -123,29 +118,5 @@ export const prepareAmericanOptions = async (
   return {
     ataTxs,
     mintTxs,
-    lastValidBlockHeight,
   };
-
-  // const [ataSignedTxs, mintSignedTxs] = await convergence
-  //   .identity()
-  //   .signTransactionMatrix(ataTxs, mintTxs);
-
-  // if (ataSignedTxs.length > 0) {
-  //   await Promise.all(
-  //     ataSignedTxs.map((signedTx) =>
-  //       convergence
-  //         .rpc()
-  //         .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-  //     )
-  //   );
-  // }
-  // if (mintSignedTxs.length > 0) {
-  //   await Promise.all(
-  //     mintSignedTxs.map((signedTx) =>
-  //       convergence
-  //         .rpc()
-  //         .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-  //     )
-  //   );
-  // }
 };

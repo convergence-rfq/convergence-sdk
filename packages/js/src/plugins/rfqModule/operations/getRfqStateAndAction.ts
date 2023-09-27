@@ -145,8 +145,6 @@ const getRfqAction = (
       if (caller === 'taker') return 'FinalizeConstruction';
       break;
     case 'Expired':
-      if (caller === 'maker') return null;
-      if (caller === 'taker' && pendingResponses > 0) return 'ViewResponses';
       if (
         caller === 'taker' &&
         pendingResponses === 0 &&
