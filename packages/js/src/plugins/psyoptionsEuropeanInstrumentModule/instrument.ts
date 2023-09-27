@@ -1,4 +1,4 @@
-import { PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { EuroMeta } from '@convergence-rfq/psyoptions-european-instrument';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
@@ -326,7 +326,6 @@ export const getPsyEuropeanMarketIxs = async (
   oracleAddress: PublicKey
 ): Promise<CreateOptionInstrumentsResult> => {
   const europeanProgram = await createEuropeanProgram(cvg);
-  const optionMarketIxs: TransactionInstruction[] = [];
   const expirationTimestamp = new BN(expiresIn);
   const oracleProviderId = 0; // Switchboard = 1, Pyth = 0
   const quoteAmountPerContractBN = new BN(
@@ -335,22 +334,6 @@ export const getPsyEuropeanMarketIxs = async (
   const underlyingAmountPerContractBN = new BN(
     addDecimals(underlyingAmountPerContract, underlyingMintDecimals)
   );
-
-  // Initialize all accounts for European program
-  const { instructions: initializeIxs } =
-    await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
-      europeanProgram,
-      underlyingMint,
-      stableMint,
-      oracleAddress,
-      expirationTimestamp,
-      stableMintDecimals,
-      oracleProviderId
-    );
-
-  initializeIxs.forEach((ix) => {
-    optionMarketIxs.push(ix);
-  });
 
   // Retrieve the euro meta account and a creation instruction (may or may not be required)
   const { instruction: createIx, euroMetaKey } =
@@ -369,11 +352,23 @@ export const getPsyEuropeanMarketIxs = async (
     );
 
   const euroMetaKeyAccount = await cvg.rpc().getAccount(euroMetaKey);
-  if (!euroMetaKeyAccount.exists) {
-    optionMarketIxs.push(createIx);
+  if (euroMetaKeyAccount.exists) {
+    return [];
   }
 
-  return optionMarketIxs;
+  // Initialize all accounts for European program
+  const { instructions: initializeIxs } =
+    await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
+      europeanProgram,
+      underlyingMint,
+      stableMint,
+      oracleAddress,
+      expirationTimestamp,
+      stableMintDecimals,
+      oracleProviderId
+    );
+
+  return [...initializeIxs, createIx];
 };
 
 export type GetEuropeanOptionMetaResult = {

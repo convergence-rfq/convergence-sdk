@@ -17,8 +17,6 @@ import {
   serializeAsLeg,
   toLeg,
 } from '../instrumentModule';
-import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { LEG_MULTIPLIER_DECIMALS } from './constants';
 import { Rfq, Response, isFixedSizeOpen } from './models';
 
@@ -190,15 +188,3 @@ export function extractLegsMultiplier(
   }
   throw new Error('Invalid fixed size');
 }
-
-export type GetRfqLegstoAddResult = {
-  initialLegsToAdd: number;
-  postLegsToAdd?: number;
-};
-
-export const isOptionLegInstrument = (instrument: LegInstrument): boolean => {
-  return (
-    instrument instanceof PsyoptionsAmericanInstrument ||
-    instrument instanceof PsyoptionsEuropeanInstrument
-  );
-};

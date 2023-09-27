@@ -136,9 +136,9 @@ const getRfqAction = (
 
   switch (rfqState) {
     case 'Active':
+      if (caller === 'maker') return 'Respond';
       if (caller === 'taker' && pendingResponses > 0) return 'ViewResponses';
       if (caller === 'taker' && pendingResponses === 0) return 'Cancel';
-      if (caller === 'maker') return 'Respond';
       break;
     case 'Constructed':
       if (caller === 'maker') return null;
