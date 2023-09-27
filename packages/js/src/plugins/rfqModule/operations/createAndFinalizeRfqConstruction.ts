@@ -167,23 +167,23 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       } = operation.input;
       const payer = convergence.rpc().getDefaultFeePayer();
       const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
-      const rfqpreparationTxBuilderArray: TransactionBuilder[] = [];
+      const rfqPreparationTxBuilderArray: TransactionBuilder[] = [];
       const ixTracker = new InstructionUniquenessTracker([]);
       for (const ins of instruments) {
-        const rfqPrepareationIxs = await ins.getPreparationsBeforeRfqCreation();
-        if (rfqPrepareationIxs.length === 0) continue;
-        const rfqpreparationTxBuilder =
+        const rfqPreparationIxs = await ins.getPreparationsBeforeRfqCreation();
+        if (rfqPreparationIxs.length === 0) continue;
+        const rfqPreparationTxBuilder =
           TransactionBuilder.make().setFeePayer(payer);
-        rfqPrepareationIxs.forEach((ix) => {
+        rfqPreparationIxs.forEach((ix) => {
           if (ixTracker.checkedAdd(ix)) {
-            rfqpreparationTxBuilder.add({
+            rfqPreparationTxBuilder.add({
               instruction: ix,
               signers: [convergence.identity()],
             });
           }
         });
-        if (rfqpreparationTxBuilder.getInstructionCount() > 0)
-          rfqpreparationTxBuilderArray.push(rfqpreparationTxBuilder);
+        if (rfqPreparationTxBuilder.getInstructionCount() > 0)
+          rfqPreparationTxBuilderArray.push(rfqPreparationTxBuilder);
       }
       const expectedLegsHash = calculateExpectedLegsHash(instruments);
 
@@ -224,7 +224,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         scope.confirmOptions
       );
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-      const rfqpreparationTxs = rfqpreparationTxBuilderArray.map((b) =>
+      const rfqPreparationTxs = rfqPreparationTxBuilderArray.map((b) =>
         b.toTransaction(lastValidBlockHeight)
       );
 
@@ -238,17 +238,17 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const finalizeRfqTxs =
         finalizeConstructionTxBuilder.toTransaction(lastValidBlockHeight);
       const [
-        rfqpreparationSignedTxs,
+        rfqPreparationSignedTxs,
         [createRfqSignedTx],
         addLegsSignedTxs,
         [finalizeRfqSignedTx],
       ] = await convergence
         .identity()
-        .signTransactionMatrix(rfqpreparationTxs, [createRfqTx], addLegsTxs, [
+        .signTransactionMatrix(rfqPreparationTxs, [createRfqTx], addLegsTxs, [
           finalizeRfqTxs,
         ]);
 
-      for (const signedTx of rfqpreparationSignedTxs) {
+      for (const signedTx of rfqPreparationSignedTxs) {
         await convergence
           .rpc()
           .serializeAndSendTransaction(
