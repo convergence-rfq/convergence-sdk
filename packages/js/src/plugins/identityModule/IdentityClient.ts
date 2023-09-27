@@ -54,19 +54,14 @@ export class IdentityClient
   async signTransactionMatrix(
     ...transactionMatrix: Transaction[][]
   ): Promise<Transaction[][]> {
-    const txLengths: number[] = [];
-    for (const txArray of transactionMatrix) {
-      txLengths.push(txArray.length);
-    }
+    const txLengths = transactionMatrix.map((txs) => txs.length);
     const flattendedTransactions = transactionMatrix.flat();
     const flattendedSignedTransactions = await this.signAllTransactions(
       flattendedTransactions
     );
-    const constructedTxMatrix: Transaction[][] = [];
-
-    for (const len of txLengths) {
-      constructedTxMatrix.push(flattendedSignedTransactions.splice(0, len));
-    }
+    const constructedTxMatrix = txLengths.map((len) =>
+      flattendedSignedTransactions.splice(0, len)
+    );
 
     return constructedTxMatrix;
   }

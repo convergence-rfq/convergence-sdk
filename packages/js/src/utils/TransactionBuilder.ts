@@ -1,6 +1,7 @@
 import {
   BlockhashWithExpiryBlockHeight,
   ConfirmOptions,
+  PACKET_DATA_SIZE,
   SignaturePubkeyPair,
   Transaction,
   TransactionInstruction,
@@ -50,18 +51,11 @@ export class TransactionBuilder<C extends object = object> {
       lastValidBlockHeight: 0,
     });
     const message = transaction.compileMessage();
-    const maxTransactionSize = 1232;
 
-    try {
-      const serializedMessage = message.serialize();
-      const txSize =
-        1 +
-        64 * message.header.numRequiredSignatures +
-        serializedMessage.length;
-      if (txSize > maxTransactionSize) {
-        return false;
-      }
-    } catch (e) {
+    const serializedMessage = message.serialize();
+    const txSize =
+      1 + 64 * message.header.numRequiredSignatures + serializedMessage.length;
+    if (txSize > PACKET_DATA_SIZE) {
       return false;
     }
 
