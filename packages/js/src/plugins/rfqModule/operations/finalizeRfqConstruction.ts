@@ -17,7 +17,11 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { removeDuplicateAccountMeta } from '../helpers';
-import { LegInstrument } from '@/plugins/instrumentModule';
+import {
+  getBaseAssetAccount,
+  getOracleAccount,
+  LegInstrument,
+} from '@/plugins/instrumentModule';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
@@ -212,10 +216,14 @@ export const finalizeRfqConstructionBuilder = async (
   };
 
   const baseAssetAccounts = removeDuplicateAccountMeta(
-    legs.map((leg) => leg.getBaseAssetAccount())
+    legs.map((leg) => getBaseAssetAccount(leg, convergence))
   );
   const oracleAccounts = removeDuplicateAccountMeta(
-    await Promise.all(legs.map((leg) => leg.getOracleAccount()))
+    await Promise.all(
+      baseAssetAccounts.map((baseAsset) =>
+        getOracleAccount(baseAsset.pubkey, convergence)
+      )
+    )
   );
 
   anchorRemainingAccounts.push(

@@ -1,4 +1,4 @@
-import { AccountMeta, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { Leg, BaseAssetIndex, QuoteAsset } from '@convergence-rfq/rfq';
 import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
@@ -11,12 +11,8 @@ import {
 } from '../instrumentModule';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import { addDecimals, removeDecimals } from '../../utils/conversions';
-import {
-  LegSide,
-  fromSolitaLegSide,
-  toSolitaLegSide,
-} from '../rfqModule/models/LegSide';
+import { removeDecimals } from '../../utils/conversions';
+import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 
 type InstrumentData = {
   mintAddress: PublicKey;
@@ -53,58 +49,14 @@ export class SpotLegInstrument implements LegInstrument {
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
     return [];
   }
-  getBaseAssetAccount(): AccountMeta {
-    const baseAsset = this.convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: this.baseAssetIndex.value });
-
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    return baseAssetAccount;
-  }
   getBaseAssetMint(): PublicKey {
     return this.mintAddress;
   }
 
-  getUnderlyingBaseAssetMint(): PublicKey {
+  getExchangeAssetMint(): PublicKey {
     return this.mintAddress;
   }
 
-  async getOracleAccount(): Promise<AccountMeta> {
-    const baseAsset = this.convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: this.baseAssetIndex.value });
-
-    const baseAssetModel = await this.convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-
-    if (!baseAssetModel.priceOracle.address) {
-      throw Error('Base asset does not have a price oracle!');
-    }
-    const oracleAccount = {
-      pubkey: baseAssetModel.priceOracle.address,
-      isSigner: false,
-      isWritable: false,
-    };
-    return oracleAccount;
-  }
-  toLeg(): Leg {
-    return {
-      instrumentProgram: this.getProgramId(),
-      baseAssetIndex: this.getBaseAssetIndex(),
-      instrumentData: this.serializeInstrumentData(),
-      instrumentAmount: addDecimals(this.getAmount(), this.getDecimals()),
-      instrumentDecimals: this.getDecimals(),
-      side: toSolitaLegSide(this.getSide()),
-    };
-  }
   static async create(
     convergence: Convergence,
     mint: Mint,
@@ -161,10 +113,7 @@ export class SpotLegInstrument implements LegInstrument {
 }
 
 export const spotLegInstrumentParser = {
-  async parseFromLeg(
-    convergence: Convergence,
-    leg: Leg
-  ): Promise<SpotLegInstrument> {
+  parseFromLeg(convergence: Convergence, leg: Leg): SpotLegInstrument {
     const {
       side,
       instrumentAmount,
@@ -197,10 +146,10 @@ export class SpotQuoteInstrument implements QuoteInstrument {
   getProgramId = () => this.convergence.programs().getSpotInstrument().address;
   getDecimals = () => this.decimals;
 
-  static async parseFromQuote(
+  static parseFromQuote(
     convergence: Convergence,
     quote: QuoteAsset
-  ): Promise<QuoteInstrument> {
+  ): QuoteInstrument {
     const { instrumentData, instrumentDecimals } = quote;
     const { mintAddress } = SpotLegInstrument.deserializeInstrumentData(
       Buffer.from(instrumentData)

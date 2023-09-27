@@ -14,7 +14,11 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { LegInstrument } from '../../../plugins/instrumentModule';
+import {
+  LegInstrument,
+  getBaseAssetAccount,
+  toLeg,
+} from '@/plugins/instrumentModule';
 
 const Key = 'AddLegsToRfqOperation' as const;
 
@@ -132,13 +136,13 @@ export const addLegsToRfqBuilder = async (
   const protocol = protocolPdaClient.protocol();
   const { taker = convergence.identity(), instruments, rfq } = params;
 
-  const legs = instruments.map((ins) => ins.toLeg());
+  const legs = instruments.map((ins) => toLeg(ins));
   const legAccounts = instruments
     .map((ins) => ins.getValidationAccounts())
     .flat();
 
   const baseAssetAccounts = instruments.map((instrument) =>
-    instrument.getBaseAssetAccount()
+    getBaseAssetAccount(instrument, convergence)
   );
 
   const rfqProgram = convergence.programs().getRfq(programs);

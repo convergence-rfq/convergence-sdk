@@ -1,9 +1,4 @@
-import {
-  AccountMeta,
-  Keypair,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
@@ -20,11 +15,7 @@ import {
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import {
-  LegSide,
-  fromSolitaLegSide,
-  toSolitaLegSide,
-} from '../rfqModule/models/LegSide';
+import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import { CvgWallet, NoopWallet } from '../../utils/Wallets';
 import {
   GetOrCreateATAtxBuilderReturnType,
@@ -83,25 +74,8 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   getBaseAssetIndex = () => this.baseAssetIndex;
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
-  toLeg(): Leg {
-    return {
-      instrumentProgram: this.getProgramId(),
-      baseAssetIndex: this.getBaseAssetIndex(),
-      instrumentData: this.serializeInstrumentData(),
-      instrumentAmount: addDecimals(this.getAmount(), this.getDecimals()),
-      instrumentDecimals: this.getDecimals(),
-      side: toSolitaLegSide(this.getSide()),
-    };
-  }
 
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
-    if (!this.underlyingAssetMint) {
-      throw new Error('Missing underlying asset mint');
-    }
-    if (!this.stableAssetMint) {
-      throw new Error('Missing stable asset mint');
-    }
-
     const optionMarketIxs = await getPsyAmericanMarketIxs(
       this.convergence,
       this.underlyingAssetMint,
@@ -114,47 +88,13 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     );
     return optionMarketIxs;
   }
-  getBaseAssetAccount(): AccountMeta {
-    const baseAsset = this.convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: this.baseAssetIndex.value });
 
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    return baseAssetAccount;
-  }
   getBaseAssetMint(): PublicKey {
-    return this.optionMint;
-  }
-
-  getUnderlyingBaseAssetMint(): PublicKey {
     return this.underlyingAssetMint;
   }
 
-  async getOracleAccount(): Promise<AccountMeta> {
-    const baseAsset = this.convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: this.baseAssetIndex.value });
-
-    const baseAssetModel = await this.convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-
-    if (!baseAssetModel.priceOracle.address) {
-      throw Error('Base asset does not have a price oracle!');
-    }
-    const oracleAccount = {
-      pubkey: baseAssetModel.priceOracle.address,
-      isSigner: false,
-      isWritable: false,
-    };
-    return oracleAccount;
+  getExchangeAssetMint(): PublicKey {
+    return this.optionMint;
   }
 
   static async create(
@@ -233,12 +173,6 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   }
 
   getValidationAccounts() {
-    if (!this.underlyingAssetMint) {
-      throw new Error('Missing underlying asset mint');
-    }
-    if (!this.stableAssetMint) {
-      throw new Error('Missing stable asset mint');
-    }
     const mintInfoPda = this.convergence
       .rfqs()
       .pdas()

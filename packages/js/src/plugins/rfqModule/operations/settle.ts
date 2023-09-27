@@ -161,7 +161,7 @@ export const settleBuilder = async (
     const leg = rfqModel.legs[legIndex];
     const { receiver } = legs[legIndex];
 
-    const baseAssetMint = leg.getBaseAssetMint();
+    const baseAssetMint = leg.getExchangeAssetMint();
 
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[legIndex].getProgramId(),

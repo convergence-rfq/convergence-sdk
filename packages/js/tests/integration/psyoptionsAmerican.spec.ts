@@ -66,7 +66,6 @@ describe('integration.psyoptionsAmerican', () => {
 
     const settlementResponse = await settleRfq(takerCvg, rfq, rfqResponse);
     expect(settlementResponse.response).toHaveProperty('signature');
-
     // TODO: Check balances
   });
 

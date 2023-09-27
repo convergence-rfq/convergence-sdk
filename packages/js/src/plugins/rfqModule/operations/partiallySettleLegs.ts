@@ -177,7 +177,7 @@ export const partiallySettleLegsBuilder = async (
       rfqModel,
     });
 
-    const baseAssetMint = leg.getBaseAssetMint();
+    const baseAssetMint = leg.getExchangeAssetMint();
 
     const legAccounts: AccountMeta[] = [
       //`escrow`

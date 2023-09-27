@@ -23,11 +23,7 @@ import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
-import {
-  LegSide,
-  fromSolitaLegSide,
-  toSolitaLegSide,
-} from '../rfqModule/models/LegSide';
+import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import { CvgWallet } from '@/utils';
 
 export const createEuropeanProgram = async (convergence: Convergence) => {
@@ -128,15 +124,6 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
   getDecimals = () => PsyoptionsEuropeanInstrument.decimals;
   getSide = () => this.side;
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
-    if (!this.underlyingAssetMint) {
-      throw new Error('Missing underlying asset mint');
-    }
-    if (!this.stableAssetMint) {
-      throw new Error('Missing stable asset mint');
-    }
-    if (!this.oracleAddress) {
-      throw new Error('Missing oracle address');
-    }
     const optionMarketIxs = await getPsyEuropeanMarketIxs(
       this.convergence,
       this.underlyingAssetMint,
@@ -151,58 +138,12 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
     return optionMarketIxs;
   }
-  toLeg(): Leg {
-    return {
-      instrumentProgram: this.getProgramId(),
-      baseAssetIndex: this.getBaseAssetIndex(),
-      instrumentData: this.serializeInstrumentData(),
-      instrumentAmount: addDecimals(this.getAmount(), this.getDecimals()),
-      instrumentDecimals: this.getDecimals(),
-      side: toSolitaLegSide(this.getSide()),
-    };
-  }
 
-  getBaseAssetAccount(): AccountMeta {
-    const baseAsset = this.convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: this.baseAssetIndex.value });
-
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    return baseAssetAccount;
-  }
-  getBaseAssetMint(): PublicKey {
+  getExchangeAssetMint(): PublicKey {
     return this.optionMint;
   }
-
-  getUnderlyingBaseAssetMint(): PublicKey {
+  getBaseAssetMint(): PublicKey {
     return this.underlyingAssetMint;
-  }
-
-  async getOracleAccount(): Promise<AccountMeta> {
-    const baseAsset = this.convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: this.baseAssetIndex.value });
-
-    const baseAssetModel = await this.convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-
-    if (!baseAssetModel.priceOracle.address) {
-      throw Error('Base asset does not have a price oracle!');
-    }
-    const oracleAccount = {
-      pubkey: baseAssetModel.priceOracle.address,
-      isSigner: false,
-      isWritable: false,
-    };
-    return oracleAccount;
   }
 
   static async create(
@@ -270,9 +211,6 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
   /** Helper method to get validation accounts for a Psyoptions European instrument. */
   getValidationAccounts() {
-    if (!this.underlyingAssetMint) {
-      throw new Error('Missing underlying asset mint');
-    }
     return [
       {
         pubkey: this.getProgramId(),

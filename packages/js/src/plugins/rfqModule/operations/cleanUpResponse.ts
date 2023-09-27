@@ -162,7 +162,7 @@ export const cleanUpResponseBuilder = async (
       index: i,
     });
 
-    const baseAssetMint = leg.getBaseAssetMint();
+    const baseAssetMint = leg.getExchangeAssetMint();
     const legAccounts: AccountMeta[] = [
       {
         pubkey: firstToPrepare,

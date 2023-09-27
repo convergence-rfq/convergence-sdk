@@ -1,5 +1,5 @@
-import { AccountMeta } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
+import { AccountMeta } from '@solana/web3.js';
 import {
   Confirmation,
   Quote,
@@ -125,3 +125,17 @@ export function extractLegsMultiplier(
   }
   throw new Error('Invalid fixed size');
 }
+
+export const removeDuplicateAccountMeta = (
+  accountMeta: AccountMeta[]
+): AccountMeta[] => {
+  const uniqueAccountMeta: AccountMeta[] = [];
+  for (let i = 0; i < accountMeta.length; i++) {
+    if (
+      !uniqueAccountMeta.find((x) => x.pubkey.equals(accountMeta[i].pubkey))
+    ) {
+      uniqueAccountMeta.push(accountMeta[i]);
+    }
+  }
+  return uniqueAccountMeta;
+};

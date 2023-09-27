@@ -18,6 +18,10 @@ import {
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
 import { removeDuplicateAccountMeta } from '../helpers';
+import {
+  getBaseAssetAccount,
+  getOracleAccount,
+} from '@/plugins/instrumentModule';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -259,10 +263,14 @@ export const respondToRfqBuilder = async (
     );
 
   const baseAssetAccounts = removeDuplicateAccountMeta(
-    rfqModel.legs.map((leg) => leg.getBaseAssetAccount())
+    rfqModel.legs.map((leg) => getBaseAssetAccount(leg, convergence))
   );
   const oracleAccounts = removeDuplicateAccountMeta(
-    await Promise.all(rfqModel.legs.map((leg) => leg.getOracleAccount()))
+    await Promise.all(
+      baseAssetAccounts.map((baseAsset) =>
+        getOracleAccount(baseAsset.pubkey, convergence)
+      )
+    )
   );
 
   return TransactionBuilder.make<RespondToRfqBuilderContext>()

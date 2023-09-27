@@ -207,7 +207,7 @@ export const prepareMoreLegsSettlementBuilder = async (
     });
 
     const leg = rfqModel.legs[i];
-    const baseAssetMint = leg.getBaseAssetMint();
+    const baseAssetMint = leg.getExchangeAssetMint();
 
     const legAccounts: AccountMeta[] = [
       // `caller
@@ -218,11 +218,6 @@ export const prepareMoreLegsSettlementBuilder = async (
       },
       // `caller_token_account`
       {
-        // pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        //   mint: baseAssetMint!.address,
-        //   owner: caller.publicKey,
-        //   programs,
-        // }),
         pubkey: await getOrCreateATA(
           convergence,
           baseAssetMint,

@@ -178,7 +178,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
     };
 
     const leg = rfqModel.legs[i];
-    const baseAssetMint = leg.getBaseAssetMint();
+    const baseAssetMint = leg.getExchangeAssetMint();
 
     const legAccounts: AccountMeta[] = [
       //`escrow`

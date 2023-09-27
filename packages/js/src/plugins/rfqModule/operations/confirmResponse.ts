@@ -17,6 +17,10 @@ import {
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
 import { removeDuplicateAccountMeta } from '../helpers';
+import {
+  getBaseAssetAccount,
+  getOracleAccount,
+} from '@/plugins/instrumentModule';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -197,10 +201,14 @@ export const confirmResponseBuilder = async (
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
   const baseAssetAccounts = removeDuplicateAccountMeta(
-    rfqModel.legs.map((leg) => leg.getBaseAssetAccount())
+    rfqModel.legs.map((leg) => getBaseAssetAccount(leg, convergence))
   );
   const oracleAccounts = removeDuplicateAccountMeta(
-    await Promise.all(rfqModel.legs.map((leg) => leg.getOracleAccount()))
+    await Promise.all(
+      baseAssetAccounts.map((baseAsset) =>
+        getOracleAccount(baseAsset.pubkey, convergence)
+      )
+    )
   );
 
   return TransactionBuilder.make()

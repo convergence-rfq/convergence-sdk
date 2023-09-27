@@ -23,9 +23,11 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import {
+  getBaseAssetAccount,
   LegInstrument,
   // LegInstrumentInputData,
   QuoteInstrument,
+  toLeg,
   toQuote,
 } from '../../../plugins/instrumentModule';
 import { OrderType, toSolitaOrderType } from '../models/OrderType';
@@ -305,7 +307,7 @@ export const createRfqBuilder = async (
   } = params;
   let { expectedLegsSize } = params;
 
-  const legs = instruments.map((ins) => ins.toLeg());
+  const legs = instruments.map((ins) => toLeg(ins));
   const expectedLegsSizeValue = calculateExpectedLegsSize(instruments);
   expectedLegsSize = expectedLegsSize ?? expectedLegsSizeValue;
 
@@ -331,7 +333,9 @@ export const createRfqBuilder = async (
     },
   ];
 
-  let baseAssetAccounts = instruments.map((ins) => ins.getBaseAssetAccount());
+  let baseAssetAccounts = instruments.map((ins) =>
+    getBaseAssetAccount(ins, convergence)
+  );
   let legAccounts = instruments
     .map((ins) => ins.getValidationAccounts())
     .flat();
@@ -380,7 +384,9 @@ export const createRfqBuilder = async (
     legAccounts = instrumentsToAdd
       .map((ins) => ins.getValidationAccounts())
       .flat();
-    baseAssetAccounts = instrumentsToAdd.map((i) => i.getBaseAssetAccount());
+    baseAssetAccounts = instrumentsToAdd.map((i) =>
+      getBaseAssetAccount(i, convergence)
+    );
     rfqBuilder = TransactionBuilder.make()
       .setFeePayer(payer)
       .setContext({

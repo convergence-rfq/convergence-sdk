@@ -98,7 +98,7 @@ export const toRfq = async (
   convergence: Convergence,
   account: RfqAccount
 ): Promise<Rfq> => {
-  const quoteAsset = await SpotQuoteInstrument.parseFromQuote(
+  const quoteAsset = SpotQuoteInstrument.parseFromQuote(
     convergence,
     account.data.quoteAsset
   );

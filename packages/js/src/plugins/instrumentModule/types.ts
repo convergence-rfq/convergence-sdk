@@ -18,13 +18,10 @@ export interface LegInstrument {
   getDecimals: () => number;
   getSide: () => LegSide;
   serializeInstrumentData: () => Buffer;
-  getBaseAssetMint(): PublicKey;
-  getBaseAssetAccount(): AccountMeta;
-  getOracleAccount(): Promise<AccountMeta>;
+  getExchangeAssetMint(): PublicKey;
   getValidationAccounts(): AccountMeta[];
   getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult>;
-  getUnderlyingBaseAssetMint(): PublicKey;
-  toLeg(): Leg;
+  getBaseAssetMint(): PublicKey;
 }
 
 // TODO add registration of quote instruments

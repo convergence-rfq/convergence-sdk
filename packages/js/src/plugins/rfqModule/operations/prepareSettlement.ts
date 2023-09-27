@@ -204,13 +204,13 @@ export const prepareSettlementBuilder = async (
 
   const spotInstrumentProgram = convergence.programs().getSpotInstrument();
 
-  const baseAssetMints: Mint[] = [];
+  const exchangeAssetMints: Mint[] = [];
   for (const leg of rfqModel.legs) {
-    const baseAssetMintPubkey = leg.getBaseAssetMint();
-    const baseAssetMint = await convergence
+    const exchangeAssetMintPubkey = leg.getExchangeAssetMint();
+    const exchangeAssetMint = await convergence
       .tokens()
-      .findMintByAddress({ address: baseAssetMintPubkey });
-    baseAssetMints.push(baseAssetMint);
+      .findMintByAddress({ address: exchangeAssetMintPubkey });
+    exchangeAssetMints.push(exchangeAssetMint);
   }
 
   const anchorRemainingAccounts: AccountMeta[] = [];
@@ -274,7 +274,7 @@ export const prepareSettlementBuilder = async (
 
     const { ataPubKey, txBuilder } = await getOrCreateATAtxBuilder(
       convergence,
-      baseAssetMints[legIndex].address,
+      exchangeAssetMints[legIndex].address,
       caller.publicKey,
       programs
     );
@@ -297,7 +297,7 @@ export const prepareSettlementBuilder = async (
       },
       // `mint`
       {
-        pubkey: baseAssetMints[legIndex].address,
+        pubkey: exchangeAssetMints[legIndex].address,
         isSigner: false,
         isWritable: false,
       },
