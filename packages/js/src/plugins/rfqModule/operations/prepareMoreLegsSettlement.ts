@@ -207,7 +207,7 @@ export const prepareMoreLegsSettlementBuilder = async (
     });
 
     const leg = rfqModel.legs[i];
-    const baseAssetMint = leg.getExchangeAssetMint();
+    const exchangeAssetMint = leg.getExchangeAssetMint();
 
     const legAccounts: AccountMeta[] = [
       // `caller
@@ -220,7 +220,7 @@ export const prepareMoreLegsSettlementBuilder = async (
       {
         pubkey: await getOrCreateATA(
           convergence,
-          baseAssetMint,
+          exchangeAssetMint,
           caller.publicKey,
           programs
         ),
@@ -229,7 +229,7 @@ export const prepareMoreLegsSettlementBuilder = async (
       },
       // `mint`
       {
-        pubkey: baseAssetMint,
+        pubkey: exchangeAssetMint,
         isSigner: false,
         isWritable: false,
       },

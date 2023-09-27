@@ -162,7 +162,7 @@ export const cleanUpResponseBuilder = async (
       index: i,
     });
 
-    const baseAssetMint = leg.getExchangeAssetMint();
+    const exchangeAssetMint = leg.getExchangeAssetMint();
     const legAccounts: AccountMeta[] = [
       {
         pubkey: firstToPrepare,
@@ -176,7 +176,7 @@ export const cleanUpResponseBuilder = async (
       },
       {
         pubkey: convergence.tokens().pdas().associatedTokenAccount({
-          mint: baseAssetMint,
+          mint: exchangeAssetMint,
           owner: dao,
           programs,
         }),

@@ -161,7 +161,7 @@ export const settleBuilder = async (
     const leg = rfqModel.legs[legIndex];
     const { receiver } = legs[legIndex];
 
-    const baseAssetMint = leg.getExchangeAssetMint();
+    const exchangeAssetMint = leg.getExchangeAssetMint();
 
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[legIndex].getProgramId(),
@@ -190,7 +190,7 @@ export const settleBuilder = async (
           .tokens()
           .pdas()
           .associatedTokenAccount({
-            mint: baseAssetMint,
+            mint: exchangeAssetMint,
             owner: receiver === 'maker' ? maker : taker,
             programs,
           }),

@@ -178,7 +178,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
     };
 
     const leg = rfqModel.legs[i];
-    const baseAssetMint = leg.getExchangeAssetMint();
+    const exchangeAssetMint = leg.getExchangeAssetMint();
 
     const legAccounts: AccountMeta[] = [
       //`escrow`
@@ -193,7 +193,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
           .tokens()
           .pdas()
           .associatedTokenAccount({
-            mint: baseAssetMint,
+            mint: exchangeAssetMint,
             owner: side === 'maker' ? responseModel.maker : rfqModel.taker,
             programs,
           }),

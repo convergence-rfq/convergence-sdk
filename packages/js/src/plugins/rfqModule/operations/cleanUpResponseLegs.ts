@@ -175,7 +175,7 @@ export const cleanUpResponseLegsBuilder = async (
     });
 
     const leg = rfqModel.legs[i];
-    const baseAssetMint = leg.getExchangeAssetMint();
+    const exchangeAssetMint = leg.getExchangeAssetMint();
 
     const legAccounts: AccountMeta[] = [
       {
@@ -191,7 +191,7 @@ export const cleanUpResponseLegsBuilder = async (
       {
         pubkey: await getOrCreateATA(
           convergence,
-          baseAssetMint,
+          exchangeAssetMint,
           protocol.authority
         ),
         isSigner: false,

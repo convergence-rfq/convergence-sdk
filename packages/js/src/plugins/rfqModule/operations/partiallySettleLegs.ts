@@ -177,7 +177,7 @@ export const partiallySettleLegsBuilder = async (
       rfqModel,
     });
 
-    const baseAssetMint = leg.getExchangeAssetMint();
+    const exchangeAssetMint = leg.getExchangeAssetMint();
 
     const legAccounts: AccountMeta[] = [
       //`escrow`
@@ -192,7 +192,7 @@ export const partiallySettleLegsBuilder = async (
           .tokens()
           .pdas()
           .associatedTokenAccount({
-            mint: baseAssetMint,
+            mint: exchangeAssetMint,
             owner: receiver === 'maker' ? maker : taker,
             programs,
           }),
