@@ -13,8 +13,6 @@ import {
   getSerializedLegLength,
   serializeAsLeg,
 } from '../instrumentModule';
-import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
-import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
 import { LEG_MULTIPLIER_DECIMALS } from './constants';
 import { Rfq, Response, isFixedSizeOpen } from './models';
 
@@ -127,29 +125,3 @@ export function extractLegsMultiplier(
   }
   throw new Error('Invalid fixed size');
 }
-
-export type GetRfqLegstoAddResult = {
-  initialLegsToAdd: number;
-  postLegsToAdd?: number;
-};
-
-export const isOptionLegInstrument = (instrument: LegInstrument): boolean => {
-  return (
-    instrument instanceof PsyoptionsAmericanInstrument ||
-    instrument instanceof PsyoptionsEuropeanInstrument
-  );
-};
-
-export const removeDuplicateAccountMeta = (
-  accountMeta: AccountMeta[]
-): AccountMeta[] => {
-  const uniqueAccountMeta: AccountMeta[] = [];
-  for (let i = 0; i < accountMeta.length; i++) {
-    if (
-      !uniqueAccountMeta.find((x) => x.pubkey.equals(accountMeta[i].pubkey))
-    ) {
-      uniqueAccountMeta.push(accountMeta[i]);
-    }
-  }
-  return uniqueAccountMeta;
-};

@@ -167,23 +167,23 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       } = operation.input;
       const payer = convergence.rpc().getDefaultFeePayer();
       const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
-      const optionMarketTxBuilderArray: TransactionBuilder[] = [];
+      const rfqPreparationTxBuilderArray: TransactionBuilder[] = [];
       const ixTracker = new InstructionUniquenessTracker([]);
       for (const ins of instruments) {
-        const optionMarketIxs = await ins.getPreparationsBeforeRfqCreation();
-        if (optionMarketIxs.length === 0) continue;
-        const optionMarketTxBuilder =
+        const rfqPreparationIxs = await ins.getPreparationsBeforeRfqCreation();
+        if (rfqPreparationIxs.length === 0) continue;
+        const rfqPreparationTxBuilder =
           TransactionBuilder.make().setFeePayer(payer);
-        optionMarketIxs.forEach((ix) => {
+        rfqPreparationIxs.forEach((ix) => {
           if (ixTracker.checkedAdd(ix)) {
-            optionMarketTxBuilder.add({
+            rfqPreparationTxBuilder.add({
               instruction: ix,
               signers: [convergence.identity()],
             });
           }
         });
-        if (optionMarketTxBuilder.getInstructionCount() > 0)
-          optionMarketTxBuilderArray.push(optionMarketTxBuilder);
+        if (rfqPreparationTxBuilder.getInstructionCount() > 0)
+          rfqPreparationTxBuilderArray.push(rfqPreparationTxBuilder);
       }
       const expectedLegsHash = calculateExpectedLegsHash(instruments);
 
@@ -224,7 +224,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         scope.confirmOptions
       );
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-      const optionMarketTxs = optionMarketTxBuilderArray.map((b) =>
+      const rfqPreparationTxs = rfqPreparationTxBuilderArray.map((b) =>
         b.toTransaction(lastValidBlockHeight)
       );
 
@@ -238,17 +238,17 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const finalizeRfqTxs =
         finalizeConstructionTxBuilder.toTransaction(lastValidBlockHeight);
       const [
-        optionMarketSignedTxs,
+        rfqPreparationSignedTxs,
         [createRfqSignedTx],
         addLegsSignedTxs,
         [finalizeRfqSignedTx],
       ] = await convergence
         .identity()
-        .signTransactionMatrix(optionMarketTxs, [createRfqTx], addLegsTxs, [
+        .signTransactionMatrix(rfqPreparationTxs, [createRfqTx], addLegsTxs, [
           finalizeRfqTxs,
         ]);
 
-      for (const signedTx of optionMarketSignedTxs) {
+      for (const signedTx of rfqPreparationSignedTxs) {
         await convergence
           .rpc()
           .serializeAndSendTransaction(

@@ -382,8 +382,6 @@ export const getPsyAmericanMarketIxs = async (
   const cvgWallet = new CvgWallet(cvg);
   const americanProgram = createAmericanProgram(cvg, cvgWallet);
 
-  const optionMarketIxs: TransactionInstruction[] = [];
-
   const expirationTimestampBN = new BN(expirationTimestamp);
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMintDecimals)
@@ -406,10 +404,11 @@ export const getPsyAmericanMarketIxs = async (
     optionMarketKey
   );
 
-  // If there is no existing market, derive the optionMarket from inputs
   if (optionMarket) {
-    return optionMarketIxs;
+    return [];
   }
+  // If there is no existing market, derive the optionMarket from inputs
+  const optionMarketIxs: TransactionInstruction[] = [];
   const { optionMarketIx, mintFeeAccount, exerciseFeeAccount } =
     await getPsyAmericanOptionMarketAccounts(
       cvg,
