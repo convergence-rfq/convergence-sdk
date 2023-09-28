@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.12
+
+### Patch Changes
+
+- fix BN error import
+
 ## 4.5.11
 
 ### Patch Changes
