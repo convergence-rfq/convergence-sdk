@@ -10,8 +10,8 @@ import {
   bignum,
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
-
-import { BN, Program } from '@project-serum/anchor';
+import BN from 'bn.js';
+import { Program } from '@project-serum/anchor';
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
 import { Mint } from '../tokenModule';
@@ -25,7 +25,6 @@ import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import { CvgWallet } from '@/utils';
-
 export const createEuropeanProgram = async (convergence: Convergence) => {
   const cvgWallet = new CvgWallet(convergence);
   return psyoptionsEuropean.createProgramFromProvider(
