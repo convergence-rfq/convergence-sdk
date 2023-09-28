@@ -321,12 +321,12 @@ export const getPsyEuropeanMarketIxs = async (
   stableMint: PublicKey,
   stableMintDecimals: number,
   strike: number,
-  expiresIn: number,
+  expirationTimeStamp: number,
   oracleAddress: PublicKey
 ): Promise<CreateOptionInstrumentsResult> => {
   const europeanProgram = await createEuropeanProgram(cvg);
-  const expirationTimestamp = new BN(expiresIn);
-  const oracleProviderId = 0; // Switchboard = 1, Pyth = 0
+  const expirationTimestamp = new BN(expirationTimeStamp);
+  const oracleProviderId = 1; // Switchboard = 1, Pyth = 0
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMintDecimals)
   );

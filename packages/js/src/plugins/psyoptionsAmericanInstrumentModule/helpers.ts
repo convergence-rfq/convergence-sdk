@@ -83,6 +83,7 @@ export const prepareAmericanOptions = async (
     });
 
     const tokensToMint = amount - tokenBalance;
+    if (tokensToMint! <= 0) continue;
     const ixWithSigners =
       await psyoptionsAmerican.instructions.mintOptionInstruction(
         americanProgram,

@@ -101,7 +101,7 @@ export const prepareEuropeanOptions = async (
     });
 
     const tokensToMint = amount - tokenBalance;
-
+    if (tokensToMint! <= 0) continue;
     const { instruction: ix } = psyoptionsEuropean.instructions.mintOptions(
       europeanProgram,
       leg.optionMetaPubKey,

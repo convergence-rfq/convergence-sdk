@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.13
+
+### Patch Changes
+
+- handle blockheight issue popping in browser
+
 ## 4.5.12
 
 ### Patch Changes
