@@ -31,6 +31,7 @@ import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import {
+  PrepareAmericanOptionsResult,
   prepareAmericanOptions,
   psyoptionsAmericanInstrumentProgram,
 } from '@/plugins/psyoptionsAmericanInstrumentModule';
@@ -132,29 +133,6 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         .rfqs()
         .findRfqByAddress({ address: rfq });
 
-      let ataTxs: Transaction[] = [];
-      let mintTxs: Transaction[] = [];
-      const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-
-      if (doesRfqLegContainsPsyoptionsAmerican(rfqModel)) {
-        const result = await prepareAmericanOptions(
-          convergence,
-          response,
-          caller?.publicKey
-        );
-        ataTxs = result.ataTxs;
-        mintTxs = result.mintTxs;
-      }
-      if (doesRfqLegContainsPsyoptionsEuropean(rfqModel)) {
-        const result = await prepareEuropeanOptions(
-          convergence,
-          response,
-          caller?.publicKey
-        );
-        ataTxs = result.ataTxs;
-        mintTxs = result.mintTxs;
-      }
-
       const {
         ataTxBuilderArray: additionalAtaTxBuilderArray,
         prepareSettlementTxBuilder,
@@ -167,38 +145,51 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         scope
       );
 
+      let ataTxs: Transaction[] = [];
+      let mintTxs: Transaction[] = [];
+      let prepareOptionsResult: PrepareAmericanOptionsResult = {
+        ataTxBuilders: [],
+        mintTxBuilders: [],
+      };
+
+      if (doesRfqLegContainsPsyoptionsAmerican(rfqModel)) {
+        prepareOptionsResult = await prepareAmericanOptions(
+          convergence,
+          response,
+          caller?.publicKey
+        );
+      }
+      if (doesRfqLegContainsPsyoptionsEuropean(rfqModel)) {
+        prepareOptionsResult = await prepareEuropeanOptions(
+          convergence,
+          response,
+          caller?.publicKey
+        );
+      }
+      const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+      ataTxs = prepareOptionsResult.ataTxBuilders.map((txBuilder) =>
+        txBuilder.toTransaction(lastValidBlockHeight)
+      );
+      mintTxs = prepareOptionsResult.mintTxBuilders.map((txBuilder) =>
+        txBuilder.toTransaction(lastValidBlockHeight)
+      );
+      const additionAtatxs = additionalAtaTxBuilderArray.map((txBuilder) =>
+        txBuilder.toTransaction(lastValidBlockHeight)
+      );
       const prepareSettlementTx =
         prepareSettlementTxBuilder.toTransaction(lastValidBlockHeight);
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
         scope.confirmOptions
       );
-      const additionAtatxs = additionalAtaTxBuilderArray.map((txBuilder) =>
-        txBuilder.toTransaction(lastValidBlockHeight)
-      );
-      const [
-        ataSignedTxs,
-        mintSignedTxs,
-        signedAdditionalAtaTxs,
-        [signedPrepareSettlementTx],
-      ] = await convergence
-        .identity()
-        .signTransactionMatrix(ataTxs, mintTxs, additionAtatxs, [
-          prepareSettlementTx,
-        ]);
+      const [ataSignedTxs, mintSignedTxs, signedAdditionalAtaTxs] =
+        await convergence
+          .identity()
+          .signTransactionMatrix(ataTxs, mintTxs, additionAtatxs);
 
       if (ataSignedTxs.length > 0) {
         await Promise.all(
           ataSignedTxs.map((signedTx) =>
-            convergence
-              .rpc()
-              .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
-          )
-        );
-      }
-      if (mintSignedTxs.length > 0) {
-        await Promise.all(
-          mintSignedTxs.map((signedTx) =>
             convergence
               .rpc()
               .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
@@ -215,6 +206,20 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
           )
         );
       }
+
+      if (mintSignedTxs.length > 0) {
+        await Promise.all(
+          mintSignedTxs.map((signedTx) =>
+            convergence
+              .rpc()
+              .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
+          )
+        );
+      }
+
+      const signedPrepareSettlementTx = await convergence
+        .identity()
+        .signTransaction(prepareSettlementTx);
 
       const output = await convergence
         .rpc()
