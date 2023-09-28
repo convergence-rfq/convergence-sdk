@@ -39,6 +39,7 @@ import {
   prepareEuropeanOptions,
   psyoptionsEuropeanInstrumentProgram,
 } from '@/plugins/psyoptionsEuropeanInstrumentModule';
+import { InstructionUniquenessTracker } from '@/utils/classes';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -123,6 +124,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PrepareSettlementOutput> => {
+      const ixTracker = new InstructionUniquenessTracker([]);
       const {
         response,
         rfq,
@@ -134,7 +136,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         .findRfqByAddress({ address: rfq });
 
       const {
-        ataTxBuilderArray: additionalAtaTxBuilderArray,
+        ataTxBuilderArray: remainingAtaTxBuilders,
         prepareSettlementTxBuilder,
       } = await prepareSettlementBuilder(
         convergence,
@@ -166,6 +168,10 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
           caller?.publicKey
         );
       }
+
+      prepareOptionsResult.ataTxBuilders.forEach((txBuilder) => {
+        ixTracker.checkedAdd(txBuilder);
+      });
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
       ataTxs = prepareOptionsResult.ataTxBuilders.map((txBuilder) =>
         txBuilder.toTransaction(lastValidBlockHeight)
@@ -173,9 +179,17 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       mintTxs = prepareOptionsResult.mintTxBuilders.map((txBuilder) =>
         txBuilder.toTransaction(lastValidBlockHeight)
       );
-      const additionAtatxs = additionalAtaTxBuilderArray.map((txBuilder) =>
+      const uniqueRemainingAtaTxBuilders: TransactionBuilder[] = [];
+      remainingAtaTxBuilders.forEach((txBuilder) => {
+        if (ixTracker.checkedAdd(txBuilder)) {
+          uniqueRemainingAtaTxBuilders.push(txBuilder);
+        }
+      });
+
+      const additionAtaTxs = uniqueRemainingAtaTxBuilders.map((txBuilder) =>
         txBuilder.toTransaction(lastValidBlockHeight)
       );
+
       const prepareSettlementTx =
         prepareSettlementTxBuilder.toTransaction(lastValidBlockHeight);
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
@@ -185,7 +199,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       const [ataSignedTxs, mintSignedTxs, signedAdditionalAtaTxs] =
         await convergence
           .identity()
-          .signTransactionMatrix(ataTxs, mintTxs, additionAtatxs);
+          .signTransactionMatrix(ataTxs, mintTxs, additionAtaTxs);
 
       if (ataSignedTxs.length > 0) {
         await Promise.all(

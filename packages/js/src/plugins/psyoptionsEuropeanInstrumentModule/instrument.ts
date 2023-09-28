@@ -115,7 +115,8 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     readonly side: LegSide,
     readonly underlyingAssetMint?: PublicKey,
     readonly stableAssetMint?: PublicKey,
-    readonly oracleAddress?: PublicKey
+    readonly oracleAddress?: PublicKey,
+    readonly oracleProviderId?: number
   ) {}
 
   getBaseAssetIndex = () => this.baseAssetIndex;
@@ -132,6 +133,9 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     if (!this.oracleAddress) {
       throw new Error('Missing oracle address');
     }
+    if (this.oracleProviderId === undefined) {
+      throw new Error('Missing oracle provider id');
+    }
     const optionMarketIxs = await getPsyEuropeanMarketIxs(
       this.convergence,
       this.underlyingAssetMint,
@@ -141,7 +145,8 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       this.strikePriceDecimals,
       this.strikePrice,
       this.expirationTimestamp,
-      this.oracleAddress
+      this.oracleAddress,
+      this.oracleProviderId
     );
 
     return optionMarketIxs;
@@ -157,6 +162,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     strike: number,
     underlyingAmountPerContract: number,
     oracleAddress: PublicKey,
+    oracleProviderId: number,
     expirationTimestamp: number
   ) {
     const mintInfoAddress = convergence
@@ -197,7 +203,8 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       side,
       underlyingMint.address,
       stableMint.address,
-      oracleAddress
+      oracleAddress,
+      oracleProviderId
     );
   }
 
@@ -322,11 +329,11 @@ export const getPsyEuropeanMarketIxs = async (
   stableMintDecimals: number,
   strike: number,
   expirationTimeStamp: number,
-  oracleAddress: PublicKey
+  oracleAddress: PublicKey,
+  oracleProviderId: number // Switchboard = 1, Pyth = 0
 ): Promise<CreateOptionInstrumentsResult> => {
   const europeanProgram = await createEuropeanProgram(cvg);
   const expirationTimestamp = new BN(expirationTimeStamp);
-  const oracleProviderId = 1; // Switchboard = 1, Pyth = 0
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMintDecimals)
   );
