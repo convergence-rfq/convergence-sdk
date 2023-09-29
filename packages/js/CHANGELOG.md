@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.14
+
+### Patch Changes
+
+- fix prepareSettlementLogic to handle transaction already processed error
+
 ## 4.5.13
 
 ### Patch Changes
