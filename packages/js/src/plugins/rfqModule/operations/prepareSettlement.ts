@@ -186,7 +186,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         }
       });
 
-      const remaininglAtaTxs = uniqueRemainingAtaTxBuilders.map((txBuilder) =>
+      const remainingAtaTxs = uniqueRemainingAtaTxBuilders.map((txBuilder) =>
         txBuilder.toTransaction(lastValidBlockHeight)
       );
 
@@ -196,10 +196,10 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         convergence,
         scope.confirmOptions
       );
-      const [ataSignedTxs, mintSignedTxs, signedremaininglAtaTxs] =
+      const [ataSignedTxs, mintSignedTxs, signedRemainingAtaTxs] =
         await convergence
           .identity()
-          .signTransactionMatrix(ataTxs, mintTxs, remaininglAtaTxs);
+          .signTransactionMatrix(ataTxs, mintTxs, remainingAtaTxs);
 
       if (ataSignedTxs.length > 0) {
         await Promise.all(
@@ -211,9 +211,9 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         );
       }
 
-      if (signedremaininglAtaTxs.length > 0) {
+      if (signedRemainingAtaTxs.length > 0) {
         await Promise.all(
-          signedremaininglAtaTxs.map((signedTx) =>
+          signedRemainingAtaTxs.map((signedTx) =>
             convergence
               .rpc()
               .serializeAndSendTransaction(signedTx, lastValidBlockHeight)
