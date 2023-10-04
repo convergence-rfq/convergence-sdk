@@ -31,14 +31,14 @@ export const prepareEuropeanOptions = async (
 
   const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
 
-  const { legs } = convergence.rfqs().getSettlementResult({
+  const { legs: legExchangeResult } = convergence.rfqs().getSettlementResult({
     response,
     rfq,
   });
   const mintTxBuilderArray: TransactionBuilder[] = [];
   const ataTxBuilderArray: TransactionBuilder[] = [];
   for (const [index, leg] of rfq.legs.entries()) {
-    const { receiver, amount } = legs[index];
+    const { receiver, amount } = legExchangeResult[index];
     if (
       !(leg instanceof PsyoptionsEuropeanInstrument) ||
       receiver === callerSide
@@ -63,7 +63,7 @@ export const prepareEuropeanOptions = async (
         ? stableMintToken
         : underlyingMintToken;
 
-    const optionDestination = await getOrCreateATAtxBuilder(
+    const optionToken = await getOrCreateATAtxBuilder(
       convergence,
       leg.optionType == psyoptionsEuropean.OptionType.PUT
         ? euroMeta.putOptionMint
@@ -71,24 +71,18 @@ export const prepareEuropeanOptions = async (
       caller
     );
 
-    if (
-      optionDestination.txBuilder &&
-      ixTracker.checkedAdd(optionDestination.txBuilder)
-    ) {
-      ataTxBuilderArray.push(optionDestination.txBuilder);
+    if (optionToken.txBuilder && ixTracker.checkedAdd(optionToken.txBuilder)) {
+      ataTxBuilderArray.push(optionToken.txBuilder);
     }
-    const writerDestination = await getOrCreateATAtxBuilder(
+    const writerToken = await getOrCreateATAtxBuilder(
       convergence,
       leg.optionType == psyoptionsEuropean.OptionType.PUT
         ? euroMeta.putWriterMint
         : euroMeta.callWriterMint,
       caller
     );
-    if (
-      writerDestination.txBuilder &&
-      ixTracker.checkedAdd(writerDestination.txBuilder)
-    ) {
-      ataTxBuilderArray.push(writerDestination.txBuilder);
+    if (writerToken.txBuilder && ixTracker.checkedAdd(writerToken.txBuilder)) {
+      ataTxBuilderArray.push(writerToken.txBuilder);
     }
 
     const { tokenBalance } = await convergence.tokens().getTokenBalance({
@@ -107,8 +101,8 @@ export const prepareEuropeanOptions = async (
       leg.optionMetaPubKey,
       euroMeta as psyoptionsEuropean.EuroMeta,
       minterCollateralKey,
-      optionDestination.ataPubKey,
-      writerDestination.ataPubKey,
+      optionToken.ataPubKey,
+      writerToken.ataPubKey,
       addDecimals(tokensToMint, PsyoptionsEuropeanInstrument.decimals),
       leg.optionType
     );

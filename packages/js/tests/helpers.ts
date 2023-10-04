@@ -237,11 +237,11 @@ export const createAmericanFixedBaseStraddle = async (
         cvg,
         baseMint,
         quoteMint,
-        OptionType.CALL,
+        OptionType.PUT,
         1,
         'long',
         1,
-        29_000,
+        27_000,
         expirationTimestamp
       ),
     ],

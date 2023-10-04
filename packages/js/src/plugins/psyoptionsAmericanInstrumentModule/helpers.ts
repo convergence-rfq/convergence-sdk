@@ -32,7 +32,7 @@ export const prepareAmericanOptions = async (
 
   const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
 
-  const { legs } = convergence.rfqs().getSettlementResult({
+  const { legs: legExchangeResult } = convergence.rfqs().getSettlementResult({
     response,
     rfq,
   });
@@ -40,7 +40,7 @@ export const prepareAmericanOptions = async (
   const ataTxBuilderArray: TransactionBuilder[] = [];
   const mintTxBuilderArray: TransactionBuilder[] = [];
   for (const [index, leg] of rfq.legs.entries()) {
-    const { receiver, amount } = legs[index];
+    const { receiver, amount } = legExchangeResult[index];
     if (
       !(leg instanceof PsyoptionsAmericanInstrument) ||
       receiver === callerSide
@@ -83,14 +83,14 @@ export const prepareAmericanOptions = async (
     });
 
     const tokensToMint = amount - tokenBalance;
-    if (tokensToMint! <= 0) continue;
+    if (tokensToMint <= 0) continue;
     const ixWithSigners =
-      await psyoptionsAmerican.instructions.mintOptionInstruction(
+      await psyoptionsAmerican.instructions.mintOptionV2Instruction(
         americanProgram,
         optionToken.ataPubKey,
         writerToken.ataPubKey,
         underlyingToken.ataPubKey,
-        new BN(tokensToMint!),
+        new BN(tokensToMint),
         optionMarket as psyoptionsAmerican.OptionMarketWithKey
       );
     ixWithSigners.ix.keys[0] = {

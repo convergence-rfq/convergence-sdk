@@ -90,7 +90,8 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       this.stableAssetMint,
       this.strikePriceDecimals,
       this.strikePrice,
-      this.expirationTimestamp
+      this.expirationTimestamp,
+      this.optionType
     );
     return optionMarketIxs;
   }
@@ -126,9 +127,9 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       stableMint,
       expirationTimestamp,
       strike,
-      underlyingAmountPerContract
+      underlyingAmountPerContract,
+      optionType
     );
-
     return new PsyoptionsAmericanInstrument(
       convergence,
       optionType,
@@ -303,7 +304,8 @@ export const getPsyAmericanMarketIxs = async (
   stableMint: PublicKey,
   stableMintDecimals: number,
   strike: number,
-  expirationTimestamp: number
+  expirationTimestamp: number,
+  optionType: OptionType
 ): Promise<CreateOptionInstrumentsResult> => {
   const cvgWallet = new CvgWallet(cvg);
   const americanProgram = createAmericanProgram(cvg, cvgWallet);
@@ -317,19 +319,35 @@ export const getPsyAmericanMarketIxs = async (
   );
 
   let optionMarket: psyoptionsAmerican.OptionMarketWithKey | null = null;
-  const [optionMarketKey] = await psyoptionsAmerican.deriveOptionKeyFromParams({
-    expirationUnixTimestamp: expirationTimestampBN,
-    programId: americanProgram.programId,
-    quoteAmountPerContract: quoteAmountPerContractBN,
-    quoteMint: stableMint,
-    underlyingAmountPerContract: underlyingAmountPerContractBN,
-    underlyingMint,
-  });
-  optionMarket = await psyoptionsAmerican.getOptionByKey(
-    americanProgram,
-    optionMarketKey
-  );
-
+  if (optionType === OptionType.CALL) {
+    const [optionMarketKey] =
+      await psyoptionsAmerican.deriveOptionKeyFromParams({
+        expirationUnixTimestamp: expirationTimestampBN,
+        programId: americanProgram.programId,
+        quoteAmountPerContract: quoteAmountPerContractBN,
+        quoteMint: stableMint,
+        underlyingAmountPerContract: underlyingAmountPerContractBN,
+        underlyingMint,
+      });
+    optionMarket = await psyoptionsAmerican.getOptionByKey(
+      americanProgram,
+      optionMarketKey
+    );
+  } else if (optionType === OptionType.PUT) {
+    const [optionMarketKey] =
+      await psyoptionsAmerican.deriveOptionKeyFromParams({
+        expirationUnixTimestamp: expirationTimestampBN,
+        programId: americanProgram.programId,
+        quoteAmountPerContract: underlyingAmountPerContractBN,
+        quoteMint: underlyingMint,
+        underlyingAmountPerContract: quoteAmountPerContractBN,
+        underlyingMint: stableMint,
+      });
+    optionMarket = await psyoptionsAmerican.getOptionByKey(
+      americanProgram,
+      optionMarketKey
+    );
+  }
   if (optionMarket) {
     return [];
   }
@@ -343,7 +361,8 @@ export const getPsyAmericanMarketIxs = async (
       quoteAmountPerContractBN,
       stableMint,
       underlyingAmountPerContractBN,
-      underlyingMint
+      underlyingMint,
+      optionType
     );
   if (mintFeeAccount.txBuilder) {
     optionMarketIxs.push(...mintFeeAccount.txBuilder.getInstructions());
@@ -354,7 +373,6 @@ export const getPsyAmericanMarketIxs = async (
   }
 
   optionMarketIxs.push(optionMarketIx.tx);
-
   return optionMarketIxs;
 };
 
@@ -368,7 +386,8 @@ export const getAmericanOptionkeys = async (
   stableMint: Mint,
   expirationUnixTimestamp: number,
   strike: number,
-  underlyingAmountPerContract: number
+  underlyingAmountPerContract: number,
+  optionType: OptionType
 ): Promise<GetAmericanOptionMetaResult> => {
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMint.decimals)
@@ -377,21 +396,38 @@ export const getAmericanOptionkeys = async (
     addDecimals(underlyingAmountPerContract, underlyingMint.decimals)
   );
 
+  if (optionType === OptionType.CALL) {
+    const [metaKey] = await psyoptionsAmerican.deriveOptionKeyFromParams({
+      expirationUnixTimestamp: new BN(expirationUnixTimestamp),
+      programId: americanProgram.programId,
+      quoteAmountPerContract: quoteAmountPerContractBN,
+      quoteMint: stableMint.address,
+      underlyingAmountPerContract: underlyingAmountPerContractBN,
+      underlyingMint: underlyingMint.address,
+    });
+
+    const [callOptionMint] = PublicKey.findProgramAddressSync(
+      [metaKey.toBuffer(), Buffer.from('optionToken')],
+      americanProgram.programId
+    );
+
+    return { optionMint: callOptionMint, metaKey };
+  }
   const [metaKey] = await psyoptionsAmerican.deriveOptionKeyFromParams({
     expirationUnixTimestamp: new BN(expirationUnixTimestamp),
     programId: americanProgram.programId,
-    quoteAmountPerContract: quoteAmountPerContractBN,
-    quoteMint: stableMint.address,
-    underlyingAmountPerContract: underlyingAmountPerContractBN,
-    underlyingMint: underlyingMint.address,
+    quoteAmountPerContract: underlyingAmountPerContractBN,
+    quoteMint: underlyingMint.address,
+    underlyingAmountPerContract: quoteAmountPerContractBN,
+    underlyingMint: stableMint.address,
   });
 
-  const [optionMint] = PublicKey.findProgramAddressSync(
+  const [putOptionMint] = PublicKey.findProgramAddressSync(
     [metaKey.toBuffer(), Buffer.from('optionToken')],
     americanProgram.programId
   );
 
-  return { optionMint, metaKey };
+  return { optionMint: putOptionMint, metaKey };
 };
 
 export type GetPsyAmericanOptionMarketAccounts = {
@@ -414,30 +450,63 @@ const getPsyAmericanOptionMarketAccounts = async (
   quoteAmountPerContract: BN,
   stableMint: PublicKey,
   underlyingAmountPerContract: BN,
-  underlyingMint: PublicKey
+  underlyingMint: PublicKey,
+  optionType: OptionType
 ): Promise<GetPsyAmericanOptionMarketAccounts> => {
+  if (optionType === OptionType.CALL) {
+    const optionMarketIx =
+      await psyoptionsAmerican.instructions.initializeOptionInstruction(
+        americanProgram,
+        {
+          /** The option market expiration timestamp in seconds */
+          expirationUnixTimestamp,
+          quoteAmountPerContract,
+          quoteMint: stableMint,
+          underlyingAmountPerContract,
+          underlyingMint,
+        }
+      );
+    const feeOwner = psyoptionsAmerican.FEE_OWNER_KEY;
+    const mintFeeAccount = await getOrCreateATAtxBuilder(
+      cvg,
+      underlyingMint,
+      feeOwner
+    );
+
+    const exerciseFeeAccount = await getOrCreateATAtxBuilder(
+      cvg,
+      stableMint,
+      feeOwner
+    );
+
+    return {
+      optionMarketIx,
+      mintFeeAccount,
+      exerciseFeeAccount,
+    };
+  }
   const optionMarketIx =
     await psyoptionsAmerican.instructions.initializeOptionInstruction(
       americanProgram,
       {
         /** The option market expiration timestamp in seconds */
         expirationUnixTimestamp,
-        quoteAmountPerContract,
-        quoteMint: stableMint,
-        underlyingAmountPerContract,
-        underlyingMint,
+        quoteAmountPerContract: underlyingAmountPerContract,
+        quoteMint: underlyingMint,
+        underlyingAmountPerContract: quoteAmountPerContract,
+        underlyingMint: stableMint,
       }
     );
   const feeOwner = psyoptionsAmerican.FEE_OWNER_KEY;
   const mintFeeAccount = await getOrCreateATAtxBuilder(
     cvg,
-    underlyingMint,
+    stableMint,
     feeOwner
   );
 
   const exerciseFeeAccount = await getOrCreateATAtxBuilder(
     cvg,
-    stableMint,
+    underlyingMint,
     feeOwner
   );
 
