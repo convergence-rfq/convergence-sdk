@@ -1,5 +1,38 @@
 # @convergence-rfq/sdk
 
+## 4.5.15
+
+### Patch Changes
+
+- fix technical debt
+  handle american put options
+  handle duplicate atas creation
+
+## 4.5.14
+
+### Patch Changes
+
+- fix prepareSettlementLogic to handle transaction already processed error
+
+## 4.5.13
+
+### Patch Changes
+
+- handle blockheight issue popping in browser
+
+## 4.5.12
+
+### Patch Changes
+
+- fix BN error import
+
+## 4.5.11
+
+### Patch Changes
+
+- handle option market creation in createRfq logic
+  optimize prepareSettlement logic for single tx confirmation
+
 ## 4.5.10
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { BN } from 'bn.js';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
@@ -11,8 +11,8 @@ import { createAmericanProgram } from './instrument';
 import { TransactionBuilder } from '@/utils/TransactionBuilder';
 
 export type PrepareAmericanOptionsResult = {
-  ataTxs: Transaction[];
-  mintTxs: Transaction[];
+  ataTxBuilders: TransactionBuilder[];
+  mintTxBuilders: TransactionBuilder[];
 };
 //create American Options ATAs and mint Options
 export const prepareAmericanOptions = async (
@@ -32,7 +32,7 @@ export const prepareAmericanOptions = async (
 
   const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
 
-  const { legs } = convergence.rfqs().getSettlementResult({
+  const { legs: legExchangeResult } = convergence.rfqs().getSettlementResult({
     response,
     rfq,
   });
@@ -40,7 +40,7 @@ export const prepareAmericanOptions = async (
   const ataTxBuilderArray: TransactionBuilder[] = [];
   const mintTxBuilderArray: TransactionBuilder[] = [];
   for (const [index, leg] of rfq.legs.entries()) {
-    const { receiver, amount } = legs[index];
+    const { receiver, amount } = legExchangeResult[index];
     if (
       !(leg instanceof PsyoptionsAmericanInstrument) ||
       receiver === callerSide
@@ -83,13 +83,14 @@ export const prepareAmericanOptions = async (
     });
 
     const tokensToMint = amount - tokenBalance;
+    if (tokensToMint <= 0) continue;
     const ixWithSigners =
-      await psyoptionsAmerican.instructions.mintOptionInstruction(
+      await psyoptionsAmerican.instructions.mintOptionV2Instruction(
         americanProgram,
         optionToken.ataPubKey,
         writerToken.ataPubKey,
         underlyingToken.ataPubKey,
-        new BN(tokensToMint!),
+        new BN(tokensToMint),
         optionMarket as psyoptionsAmerican.OptionMarketWithKey
       );
     ixWithSigners.ix.keys[0] = {
@@ -106,17 +107,8 @@ export const prepareAmericanOptions = async (
     });
     mintTxBuilderArray.push(mintTxBuilder);
   }
-  const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-
-  const ataTxs = ataTxBuilderArray.map((b) =>
-    b.toTransaction(lastValidBlockHeight)
-  );
-  const mintTxs = mintTxBuilderArray.map((b) =>
-    b.toTransaction(lastValidBlockHeight)
-  );
-
   return {
-    ataTxs,
-    mintTxs,
+    ataTxBuilders: ataTxBuilderArray,
+    mintTxBuilders: mintTxBuilderArray,
   };
 };

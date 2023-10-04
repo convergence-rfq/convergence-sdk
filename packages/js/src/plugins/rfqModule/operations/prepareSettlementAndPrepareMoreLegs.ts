@@ -101,18 +101,19 @@ export const prepareSettlementAndPrepareMoreLegsOperationHandler: OperationHandl
         address: rfq,
       });
 
-      let { ataTxBuilderArray, prepareSettlementTxBuilder: prepareBuilder } =
-        await prepareSettlementBuilder(
-          convergence,
-          rfqModel,
-          {
-            ...operation.input,
-          },
-          scope
-        );
+      const result = await prepareSettlementBuilder(
+        convergence,
+        rfqModel,
+        {
+          ...operation.input,
+        },
+        scope
+      );
       scope.throwIfCanceled();
 
       let slicedLegAmount = legAmountToPrepare;
+      const { ataTxBuilderArray } = result;
+      let prepareBuilder = result.prepareSettlementTxBuilder;
 
       while (!prepareBuilder.checkTransactionFits()) {
         const halvedLegAmount = Math.trunc(slicedLegAmount / 2);

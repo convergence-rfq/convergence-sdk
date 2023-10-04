@@ -155,6 +155,7 @@ export const createEuropeanCoveredCallRfq = async (
         24_534,
         1,
         oracle,
+        0,
         expirationTimestamp
       ),
     ],
@@ -187,6 +188,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
         29_000,
         1,
         oracle,
+        0,
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
@@ -199,6 +201,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
         31_000,
         1,
         oracle,
+        0,
         expirationTimestamp
       ),
     ],
@@ -234,11 +237,11 @@ export const createAmericanFixedBaseStraddle = async (
         cvg,
         baseMint,
         quoteMint,
-        OptionType.CALL,
+        OptionType.PUT,
         1,
         'long',
         1,
-        29_000,
+        27_000,
         expirationTimestamp
       ),
     ],
@@ -272,6 +275,7 @@ export const createEuropeanFixedBaseStraddle = async (
         26_334,
         1,
         oracle,
+        0,
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
@@ -284,6 +288,7 @@ export const createEuropeanFixedBaseStraddle = async (
         26_334,
         1,
         oracle,
+        0,
         expirationTimestamp
       ),
     ],
@@ -607,6 +612,7 @@ export const createEuropeanIronCondor = async (
         27_000,
         1,
         oracle,
+        0,
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
@@ -619,6 +625,7 @@ export const createEuropeanIronCondor = async (
         28_000,
         1,
         oracle,
+        0,
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
@@ -631,6 +638,7 @@ export const createEuropeanIronCondor = async (
         30_000,
         1,
         oracle,
+        0,
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
@@ -643,6 +651,7 @@ export const createEuropeanIronCondor = async (
         29_000,
         1,
         oracle,
+        0,
         expirationTimestamp
       ),
     ],

@@ -10,8 +10,8 @@ import {
   bignum,
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
-
-import { BN, Program } from '@project-serum/anchor';
+import BN from 'bn.js';
+import { Program } from '@project-serum/anchor';
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
 import { Mint } from '../tokenModule';
@@ -25,7 +25,6 @@ import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import { CvgWallet } from '@/utils';
-
 export const createEuropeanProgram = async (convergence: Convergence) => {
   const cvgWallet = new CvgWallet(convergence);
   return psyoptionsEuropean.createProgramFromProvider(
@@ -116,7 +115,8 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     readonly side: LegSide,
     readonly underlyingAssetMint?: PublicKey,
     readonly stableAssetMint?: PublicKey,
-    readonly oracleAddress?: PublicKey
+    readonly oracleAddress?: PublicKey,
+    readonly oracleProviderId?: number
   ) {}
 
   getBaseAssetIndex = () => this.baseAssetIndex;
@@ -133,6 +133,9 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     if (!this.oracleAddress) {
       throw new Error('Missing oracle address');
     }
+    if (this.oracleProviderId === undefined) {
+      throw new Error('Missing oracle provider id');
+    }
     const optionMarketIxs = await getPsyEuropeanMarketIxs(
       this.convergence,
       this.underlyingAssetMint,
@@ -142,7 +145,8 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       this.strikePriceDecimals,
       this.strikePrice,
       this.expirationTimestamp,
-      this.oracleAddress
+      this.oracleAddress,
+      this.oracleProviderId
     );
 
     return optionMarketIxs;
@@ -158,6 +162,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     strike: number,
     underlyingAmountPerContract: number,
     oracleAddress: PublicKey,
+    oracleProviderId: number,
     expirationTimestamp: number
   ) {
     const mintInfoAddress = convergence
@@ -198,7 +203,8 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       side,
       underlyingMint.address,
       stableMint.address,
-      oracleAddress
+      oracleAddress,
+      oracleProviderId
     );
   }
 
@@ -322,12 +328,12 @@ export const getPsyEuropeanMarketIxs = async (
   stableMint: PublicKey,
   stableMintDecimals: number,
   strike: number,
-  expiresIn: number,
-  oracleAddress: PublicKey
+  expirationTimeStamp: number,
+  oracleAddress: PublicKey,
+  oracleProviderId: number // Switchboard = 1, Pyth = 0
 ): Promise<CreateOptionInstrumentsResult> => {
   const europeanProgram = await createEuropeanProgram(cvg);
-  const expirationTimestamp = new BN(expiresIn);
-  const oracleProviderId = 0; // Switchboard = 1, Pyth = 0
+  const expirationTimestamp = new BN(expirationTimeStamp);
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMintDecimals)
   );

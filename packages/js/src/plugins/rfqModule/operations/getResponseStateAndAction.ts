@@ -184,8 +184,16 @@ const getResponseAction = (
         case 'Expired':
         case 'Cancelled':
         case 'Settled':
-          if (response.makerCollateralLocked > 0) return 'UnlockCollateral';
-          if (response.makerCollateralLocked === 0) return 'Cleanup';
+          if (
+            response.makerCollateralLocked > 0 ||
+            response.takerCollateralLocked > 0
+          )
+            return 'UnlockCollateral';
+          if (
+            response.makerCollateralLocked === 0 &&
+            response.takerCollateralLocked === 0
+          )
+            return 'Cleanup';
         case 'SettlingPreparations':
         case 'OnlyMakerPrepared':
         case 'OnlyTakerPrepared':
@@ -220,8 +228,16 @@ const getResponseAction = (
         case 'Settled':
         case 'Expired':
         case 'Cancelled':
-          if (response.takerCollateralLocked > 0) return 'UnlockCollateral';
-          if (response.takerCollateralLocked === 0) return 'Cleanup';
+          if (
+            response.takerCollateralLocked > 0 ||
+            response.makerCollateralLocked > 0
+          )
+            return 'UnlockCollateral';
+          if (
+            response.takerCollateralLocked === 0 &&
+            response.makerCollateralLocked === 0
+          )
+            return 'Cleanup';
         case 'Rejected':
           return null;
       }

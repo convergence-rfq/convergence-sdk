@@ -1,5 +1,5 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
@@ -11,8 +11,8 @@ import {
 } from './instrument';
 
 export type PrepareEuropeanOptionsResult = {
-  ataTxs: Transaction[];
-  mintTxs: Transaction[];
+  ataTxBuilders: TransactionBuilder[];
+  mintTxBuilders: TransactionBuilder[];
 };
 // create European Option ATAs and mint options
 export const prepareEuropeanOptions = async (
@@ -31,14 +31,14 @@ export const prepareEuropeanOptions = async (
 
   const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
 
-  const { legs } = convergence.rfqs().getSettlementResult({
+  const { legs: legExchangeResult } = convergence.rfqs().getSettlementResult({
     response,
     rfq,
   });
   const mintTxBuilderArray: TransactionBuilder[] = [];
   const ataTxBuilderArray: TransactionBuilder[] = [];
   for (const [index, leg] of rfq.legs.entries()) {
-    const { receiver, amount } = legs[index];
+    const { receiver, amount } = legExchangeResult[index];
     if (
       !(leg instanceof PsyoptionsEuropeanInstrument) ||
       receiver === callerSide
@@ -63,7 +63,7 @@ export const prepareEuropeanOptions = async (
         ? stableMintToken
         : underlyingMintToken;
 
-    const optionDestination = await getOrCreateATAtxBuilder(
+    const optionToken = await getOrCreateATAtxBuilder(
       convergence,
       leg.optionType == psyoptionsEuropean.OptionType.PUT
         ? euroMeta.putOptionMint
@@ -71,24 +71,18 @@ export const prepareEuropeanOptions = async (
       caller
     );
 
-    if (
-      optionDestination.txBuilder &&
-      ixTracker.checkedAdd(optionDestination.txBuilder)
-    ) {
-      ataTxBuilderArray.push(optionDestination.txBuilder);
+    if (optionToken.txBuilder && ixTracker.checkedAdd(optionToken.txBuilder)) {
+      ataTxBuilderArray.push(optionToken.txBuilder);
     }
-    const writerDestination = await getOrCreateATAtxBuilder(
+    const writerToken = await getOrCreateATAtxBuilder(
       convergence,
       leg.optionType == psyoptionsEuropean.OptionType.PUT
         ? euroMeta.putWriterMint
         : euroMeta.callWriterMint,
       caller
     );
-    if (
-      writerDestination.txBuilder &&
-      ixTracker.checkedAdd(writerDestination.txBuilder)
-    ) {
-      ataTxBuilderArray.push(writerDestination.txBuilder);
+    if (writerToken.txBuilder && ixTracker.checkedAdd(writerToken.txBuilder)) {
+      ataTxBuilderArray.push(writerToken.txBuilder);
     }
 
     const { tokenBalance } = await convergence.tokens().getTokenBalance({
@@ -101,14 +95,14 @@ export const prepareEuropeanOptions = async (
     });
 
     const tokensToMint = amount - tokenBalance;
-
+    if (tokensToMint! <= 0) continue;
     const { instruction: ix } = psyoptionsEuropean.instructions.mintOptions(
       europeanProgram,
       leg.optionMetaPubKey,
       euroMeta as psyoptionsEuropean.EuroMeta,
       minterCollateralKey,
-      optionDestination.ataPubKey,
-      writerDestination.ataPubKey,
+      optionToken.ataPubKey,
+      writerToken.ataPubKey,
       addDecimals(tokensToMint, PsyoptionsEuropeanInstrument.decimals),
       leg.optionType
     );
@@ -129,16 +123,8 @@ export const prepareEuropeanOptions = async (
     mintTxBuilderArray.push(mintTxBuilder);
   }
 
-  const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
-  const ataTxs = ataTxBuilderArray.map((b) =>
-    b.toTransaction(lastValidBlockHeight)
-  );
-  const mintTxs = mintTxBuilderArray.map((b) =>
-    b.toTransaction(lastValidBlockHeight)
-  );
-
   return {
-    ataTxs,
-    mintTxs,
+    ataTxBuilders: ataTxBuilderArray,
+    mintTxBuilders: mintTxBuilderArray,
   };
 };
