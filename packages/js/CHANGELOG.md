@@ -1,5 +1,13 @@
 # @convergence-rfq/sdk
 
+## 4.5.15
+
+### Patch Changes
+
+- fix technical debt
+  handle american put options
+  handle duplicate atas creation
+
 ## 4.5.14
 
 ### Patch Changes
