@@ -2,7 +2,7 @@ import {
   Quote as SolitaQuote,
   createRespondToRfqInstruction,
 } from '@convergence-rfq/rfq';
-import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
