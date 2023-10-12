@@ -12,7 +12,6 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { protocolCache } from '../../protocolModule/cache';
 import { SendAndConfirmTransactionResponse } from '@/plugins';
 
 const Key = 'unlockResponseCollateralOperation' as const;
@@ -53,13 +52,6 @@ export type UnlockResponseCollateralInput = {
    * The response address.
    */
   response: PublicKey;
-
-  /**
-   * The protocol address.
-   *
-   * @defaultValue `convergence.protocol().pdas().protocol()`
-   */
-  protocol?: PublicKey;
 };
 
 /**
@@ -123,13 +115,10 @@ export const unlockResponseCollateralBuilder = async (
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { response } = params;
 
-  const protocol = await protocolCache.get(convergence);
-
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
-
-  const { taker } = await convergence
+  const rfqModel = await convergence
     .rfqs()
     .findRfqByAddress({ address: responseModel.rfq });
 
@@ -138,38 +127,24 @@ export const unlockResponseCollateralBuilder = async (
     .add({
       instruction: createUnlockResponseCollateralInstruction(
         {
+          taker: rfqModel.taker,
           rfq: responseModel.rfq,
           response: responseModel.address,
-          protocol: convergence.protocol().pdas().protocol(),
-          takerCollateralInfo: convergence.collateral().pdas().collateralInfo({
-            user: taker,
+          takerLegTokens: convergence.tokens().pdas().associatedTokenAccount({
+            mint: rfqModel.legAsset,
+            owner: rfqModel.taker,
             programs,
           }),
-          makerCollateralInfo: convergence.collateral().pdas().collateralInfo({
-            user: responseModel.maker,
+          legEscrow: convergence.rfqs().pdas().legEscrow(responseModel.address),
+          takerQuoteTokens: convergence.tokens().pdas().associatedTokenAccount({
+            mint: rfqModel.quoteAsset,
+            owner: rfqModel.taker,
             programs,
           }),
-          takerCollateralTokens: convergence
-            .collateral()
+          quoteEscrow: convergence
+            .rfqs()
             .pdas()
-            .collateralToken({
-              user: taker,
-              programs,
-            }),
-          makerCollateralTokens: convergence
-            .collateral()
-            .pdas()
-            .collateralToken({
-              user: responseModel.maker,
-              programs,
-            }),
-          protocolCollateralTokens: convergence
-            .collateral()
-            .pdas()
-            .collateralToken({
-              user: protocol.authority,
-              programs,
-            }),
+            .quoteEscrow(responseModel.address),
         },
         convergence.programs().getRfq(programs).address
       ),

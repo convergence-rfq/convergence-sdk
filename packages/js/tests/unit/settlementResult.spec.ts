@@ -1,35 +1,16 @@
 import expect from 'expect';
-import {
-  createAmericanCoveredCallRfq,
-  createRfq,
-  createUserCvg,
-  respondToRfq,
-} from '../helpers';
-import { Mint } from '../../src';
-import {
-  BASE_MINT_BTC_PK,
-  QUOTE_MINT_DECIMALS,
-  QUOTE_MINT_PK,
-} from '../constants';
+import { createRfq, createUserCvg, respondToRfq } from '../helpers';
+import { QUOTE_MINT_DECIMALS } from '../constants';
 
 describe('unit.settlementResult', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
-  let baseMint: Mint;
-  let quoteMint: Mint;
 
-  before(async () => {
-    baseMint = await takerCvg
-      .tokens()
-      .findMintByAddress({ address: BASE_MINT_BTC_PK });
-    quoteMint = await takerCvg
-      .tokens()
-      .findMintByAddress({ address: QUOTE_MINT_PK });
-  });
+  before(async () => {});
 
   it('fixed-base buy', async () => {
     const baseAmount = 2.556;
-    const quoteAmount = Number((24_300.75 * baseAmount).toFixed(6));
+    const quoteAmount = Number((24_300.75).toFixed(6));
 
     const { rfq } = await createRfq(takerCvg, baseAmount, 'buy');
     expect(rfq).toHaveProperty('address');
@@ -52,11 +33,10 @@ describe('unit.settlementResult', () => {
 
     expect(responseResult).toEqual({
       quote: { receiver: 'maker', amount: 62112.717 },
-      legs: [{ receiver: 'taker', amount: 2.556 }],
+      leg: { receiver: 'taker', amount: 2.556 },
     });
 
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
       response: rfqResponse.address,
       side: 'ask',
     });
@@ -73,7 +53,7 @@ describe('unit.settlementResult', () => {
 
     expect(confimedResponseResult).toEqual({
       quote: { receiver: 'maker', amount: 62112.717 },
-      legs: [{ receiver: 'taker', amount: 2.556 }],
+      leg: { receiver: 'taker', amount: 2.556 },
     });
   });
 
@@ -108,11 +88,10 @@ describe('unit.settlementResult', () => {
 
     expect(responseResult).toEqual({
       quote: { receiver: 'maker', amount: 2341.892 },
-      legs: [{ receiver: 'taker', amount: 3.456 }],
+      leg: { receiver: 'taker', amount: 3.456 },
     });
     expect(rfqResponse).toHaveProperty('address');
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
       response: rfqResponse.address,
       side: 'ask',
     });
@@ -127,13 +106,13 @@ describe('unit.settlementResult', () => {
 
     expect(confimedResponseResult).toEqual({
       quote: { receiver: 'maker', amount: 2341.892 },
-      legs: [{ receiver: 'taker', amount: 3.456 }],
+      leg: { receiver: 'taker', amount: 3.456 },
     });
   });
 
   it('open-size buy', async () => {
     const baseAmount = 1;
-    const quoteAmount = 12_300.9783;
+    const price = 12_300.9783;
 
     const { rfq } = await createRfq(takerCvg, baseAmount, 'buy', 'open');
     expect(rfq).toHaveProperty('address');
@@ -141,7 +120,7 @@ describe('unit.settlementResult', () => {
       makerCvg,
       rfq,
       undefined,
-      quoteAmount,
+      price,
       7.456
     );
     expect(rfqResponse).toHaveProperty('address');
@@ -154,11 +133,10 @@ describe('unit.settlementResult', () => {
     });
 
     expect(responseResult).toEqual({
-      quote: { receiver: 'maker', amount: 91716.094204801 },
-      legs: [{ receiver: 'taker', amount: 7.456 }],
+      quote: { receiver: 'maker', amount: 91716.094204 },
+      leg: { receiver: 'taker', amount: 7.456 },
     });
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
       response: rfqResponse.address,
       side: 'ask',
     });
@@ -172,8 +150,8 @@ describe('unit.settlementResult', () => {
     });
 
     expect(confimedResponseResult).toEqual({
-      quote: { receiver: 'maker', amount: 91716.094204801 },
-      legs: [{ receiver: 'taker', amount: 7.456 }],
+      quote: { receiver: 'maker', amount: 91716.094204 },
+      leg: { receiver: 'taker', amount: 7.456 },
     });
   });
 
@@ -188,7 +166,7 @@ describe('unit.settlementResult', () => {
       rfq,
       quoteAmount,
       undefined,
-      8.456123456
+      8.45612346
     );
     const responseResult = takerCvg.rfqs().getSettlementResult({
       rfq,
@@ -199,15 +177,14 @@ describe('unit.settlementResult', () => {
     });
 
     expect(responseResult).toEqual({
-      quote: { receiver: 'taker', amount: 600384.511692296 },
-      legs: [{ receiver: 'maker', amount: 8.456123456 }],
+      quote: { receiver: 'taker', amount: 600384.511976 },
+      leg: { receiver: 'maker', amount: 8.45612346 },
     });
     expect(rfqResponse).toHaveProperty('address');
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
       response: rfqResponse.address,
       side: 'bid',
-      overrideLegMultiplier: 5.487245678,
+      overrideLegAmount: 5.48724568,
     });
     expect(confirmResponse.response).toHaveProperty('signature');
     const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
@@ -219,13 +196,13 @@ describe('unit.settlementResult', () => {
     });
 
     expect(confimedResponseResult).toEqual({
-      quote: { receiver: 'taker', amount: 389594.278520629 },
-      legs: [{ receiver: 'maker', amount: 5.487245678 }],
+      quote: { receiver: 'taker', amount: 389594.278662 },
+      leg: { receiver: 'maker', amount: 5.48724568 },
     });
   });
 
   it('two way rfq , confirming ask side', async () => {
-    const baseAmount = 5.632123779;
+    const baseAmount = 5.63212378;
     const quoteAmount1 = 24_300.75;
     const quoteAmount2 = 28_899.75;
     const responseSide = 'bid';
@@ -248,11 +225,10 @@ describe('unit.settlementResult', () => {
     });
 
     expect(responseResult).toEqual({
-      quote: { receiver: 'taker', amount: 24300.75 },
-      legs: [{ receiver: 'maker', amount: 5.632123779 }],
+      quote: { receiver: 'taker', amount: 136864.831946 },
+      leg: { receiver: 'maker', amount: 5.63212378 },
     });
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
       response: rfqResponse.address,
       side: 'ask',
     });
@@ -265,13 +241,13 @@ describe('unit.settlementResult', () => {
       response: refreshedResponse,
     });
     expect(confimedResponseResult).toEqual({
-      quote: { receiver: 'maker', amount: 28899.75 },
-      legs: [{ receiver: 'taker', amount: 5.632123779 }],
+      quote: { receiver: 'maker', amount: 162766.969211 },
+      leg: { receiver: 'taker', amount: 5.63212378 },
     });
   });
 
   it('two way rfq , confirming bid side', async () => {
-    const baseAmount = 9.632123779;
+    const baseAmount = 9.63212378;
     const quoteAmount1 = 14_300.75;
     const quoteAmount2 = 18_899.75;
     const responseSide = 'bid';
@@ -294,11 +270,10 @@ describe('unit.settlementResult', () => {
     });
 
     expect(responseResult).toEqual({
-      quote: { receiver: 'taker', amount: 14300.75 },
-      legs: [{ receiver: 'maker', amount: 9.632123779 }],
+      quote: { receiver: 'taker', amount: 137746.594146 },
+      leg: { receiver: 'maker', amount: 9.63212378 },
     });
     const confirmResponse = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
       response: rfqResponse.address,
       side: 'bid',
     });
@@ -311,105 +286,8 @@ describe('unit.settlementResult', () => {
       response: refreshedResponse,
     });
     expect(confimedResponseResult).toEqual({
-      quote: { receiver: 'taker', amount: 14300.75 },
-      legs: [{ receiver: 'maker', amount: 9.632123779 }],
-    });
-  });
-
-  it('fixed-base american covered call', async () => {
-    const { rfq } = await createAmericanCoveredCallRfq(
-      takerCvg,
-      'sell',
-      baseMint,
-      quoteMint
-    );
-    expect(rfq).toHaveProperty('address');
-
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.1);
-    expect(rfqResponse).toHaveProperty('address');
-    const responseResult = takerCvg.rfqs().getSettlementResult({
-      rfq,
-      response: rfqResponse,
-      confirmation: {
-        side: rfqResponse?.ask ? 'ask' : 'bid',
-      },
-    });
-
-    expect(responseResult).toEqual({
-      quote: { receiver: 'taker', amount: 12.1 },
-      legs: [
-        { receiver: 'maker', amount: 1 },
-        { receiver: 'maker', amount: 1 },
-      ],
-    });
-    const { response: confirmResponse } = await takerCvg
-      .rfqs()
-      .confirmResponse({
-        rfq: rfq.address,
-        response: rfqResponse.address,
-        side: 'bid',
-      });
-    expect(confirmResponse).toHaveProperty('signature');
-    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
-      rfq,
-      response: refreshedResponse,
-    });
-    expect(confimedResponseResult).toEqual({
-      quote: { receiver: 'taker', amount: 12.1 },
-      legs: [
-        { receiver: 'maker', amount: 1 },
-        { receiver: 'maker', amount: 1 },
-      ],
-    });
-  });
-  it('fixed-base american covered call', async () => {
-    const { response, rfq } = await createAmericanCoveredCallRfq(
-      takerCvg,
-      'sell',
-      baseMint,
-      quoteMint
-    );
-    expect(rfq).toHaveProperty('address');
-    expect(response.signature).toBeDefined();
-
-    const { rfqResponse } = await respondToRfq(makerCvg, rfq, 12.34);
-    const responseResult = takerCvg.rfqs().getSettlementResult({
-      rfq,
-      response: rfqResponse,
-      confirmation: {
-        side: rfqResponse?.ask ? 'ask' : 'bid',
-      },
-    });
-
-    expect(responseResult).toEqual({
-      quote: { receiver: 'taker', amount: 12.34 },
-      legs: [
-        { receiver: 'maker', amount: 1 },
-        { receiver: 'maker', amount: 1 },
-      ],
-    });
-    await takerCvg.rfqs().confirmResponse({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-      side: 'bid',
-    });
-
-    const refreshedResponse = await takerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    const confimedResponseResult = takerCvg.rfqs().getSettlementResult({
-      rfq,
-      response: refreshedResponse,
-    });
-    expect(confimedResponseResult).toEqual({
-      quote: { receiver: 'taker', amount: 12.34 },
-      legs: [
-        { receiver: 'maker', amount: 1 },
-        { receiver: 'maker', amount: 1 },
-      ],
+      quote: { receiver: 'taker', amount: 137746.594146 },
+      leg: { receiver: 'maker', amount: 9.63212378 },
     });
   });
 });

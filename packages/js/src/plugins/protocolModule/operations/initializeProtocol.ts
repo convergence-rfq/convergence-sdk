@@ -1,7 +1,4 @@
-import {
-  createInitializeProtocolInstruction,
-  FeeParameters,
-} from '@convergence-rfq/rfq';
+import { createInitializeProtocolInstruction } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -17,7 +14,6 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { addDecimals } from '../../../utils/conversions';
 
 const Key = 'InitializeProtocolOperation' as const;
 
@@ -58,31 +54,6 @@ export type InitializeProtocolInput = {
    * @defaultValue `convergence.identity().publicKey`
    */
   owner?: PublicKey;
-
-  /**
-   * The protocol collateral token mint.
-   */
-  collateralMint: PublicKey;
-
-  /**
-   * The protocol maker fee.
-   */
-  protocolMakerFee?: number;
-
-  /**
-   * The protocol taker fee.
-   */
-  protocolTakerFee?: number;
-
-  /**
-   * The protocol settlement maker fee.
-   */
-  settlementMakerFee?: number;
-
-  /**
-   * The protocol settlement taker fee.
-   */
-  settlementTakerFee?: number;
 };
 
 /**
@@ -177,43 +148,11 @@ export const createProtocolBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder<InitializeProtocolBuilderContext>> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const {
-    collateralMint,
-    protocolMakerFee = 0,
-    protocolTakerFee = 0,
-    settlementTakerFee = 0,
-    settlementMakerFee = 0,
-  } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq();
-  const riskEngineProgram = convergence.programs().getRiskEngine();
 
   const protocol = convergence.protocol().pdas().protocol();
-  const collateralMintTokenAccount = await convergence
-    .tokens()
-    .findMintByAddress({ address: collateralMint });
-
-  const settleFees: FeeParameters = {
-    takerBps: addDecimals(
-      settlementTakerFee,
-      collateralMintTokenAccount.decimals
-    ),
-    makerBps: addDecimals(
-      settlementMakerFee,
-      collateralMintTokenAccount.decimals
-    ),
-  };
-  const defaultFees: FeeParameters = {
-    takerBps: addDecimals(
-      protocolTakerFee,
-      collateralMintTokenAccount.decimals
-    ),
-    makerBps: addDecimals(
-      protocolMakerFee,
-      collateralMintTokenAccount.decimals
-    ),
-  };
 
   return TransactionBuilder.make<InitializeProtocolBuilderContext>()
     .setFeePayer(payer)
@@ -222,13 +161,7 @@ export const createProtocolBuilder = async (
         {
           protocol,
           signer: payer.publicKey,
-          riskEngine: riskEngineProgram.address,
-          collateralMint,
           systemProgram: systemProgram.address,
-        },
-        {
-          settleFees,
-          defaultFees,
         },
         rfqProgram.address
       ),

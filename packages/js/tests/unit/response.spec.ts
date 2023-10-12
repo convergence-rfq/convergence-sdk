@@ -91,7 +91,6 @@ describe('unit.response', () => {
       address: rfq1.address,
     });
     const res = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq1.address,
       response: responses[0].address,
       side: 'bid',
     });
@@ -108,7 +107,6 @@ describe('unit.response', () => {
       address: rfq0.address,
     });
     const res = await takerCvg.rfqs().confirmResponse({
-      rfq: rfq0.address,
       response: responses[0].address,
       side: 'ask',
     });
@@ -157,28 +155,12 @@ describe('unit.response', () => {
     responsesAfter.map((r) => expect(r.state).toBe('canceled'));
   });
 
-  it('unlock collateral', async () => {
-    const responsesBefore = await makerCvg.rfqs().findResponsesByRfq({
-      address: rfq2.address,
-    });
-
-    await makerCvg.rfqs().unlockResponsesCollateral({
-      responses: responsesBefore.map((r) => r.address),
-    });
-
-    const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
-      address: rfq2.address,
-    });
-    responsesAfter.map((r) => expect(r.makerCollateralLocked).toBe(0));
-  });
-
   it('clean up response', async () => {
     const responses = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
     await makerCvg.rfqs().cleanUpResponse({
       response: responses[0].address,
-      maker: makerCvg.identity().publicKey,
     });
   });
 

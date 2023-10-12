@@ -1,21 +1,22 @@
 import { Quote as SolitaQuote } from '@convergence-rfq/rfq';
 import { BN } from 'bn.js';
 
-import { ABSOLUTE_PRICE_DECIMALS, LEG_MULTIPLIER_DECIMALS } from '../constants';
+import { ABSOLUTE_PRICE_DECIMALS } from '../constants';
 import { addDecimals, removeDecimals } from '@/utils';
 
 export interface Quote {
   readonly price: number;
-  readonly legsMultiplier?: number;
+  readonly legAmount?: number;
 }
 
 export function fromSolitaQuote(
   quote: SolitaQuote,
-  quoteDecimals: number
+  legAssetDecimals: number,
+  quoteAssetDecimals: number
 ): Quote {
   const priceQuoteWithoutDecimals = removeDecimals(
     quote.priceQuote.amountBps,
-    quoteDecimals
+    quoteAssetDecimals
   );
 
   /**
@@ -32,13 +33,10 @@ export function fromSolitaQuote(
   );
 
   if (quote.__kind === 'Standard') {
-    const legsMultiplier = removeDecimals(
-      quote.legsMultiplierBps,
-      LEG_MULTIPLIER_DECIMALS
-    );
+    const legAmount = removeDecimals(quote.legAmount, legAssetDecimals);
     return {
       price,
-      legsMultiplier,
+      legAmount,
     };
   }
   return {
@@ -48,9 +46,10 @@ export function fromSolitaQuote(
 
 export function toSolitaQuote(
   quote: Quote,
-  quoteDecimals: number
+  legAssetDecimals: number,
+  quoteAssetDecimals: number
 ): SolitaQuote {
-  const priceQuoteWithDecimals = addDecimals(quote.price, quoteDecimals);
+  const priceQuoteWithDecimals = addDecimals(quote.price, quoteAssetDecimals);
 
   /**
    * TODO: Investigate why we are truncating here, without it we get "Error: Invalid character" from BN.
@@ -65,14 +64,11 @@ export function toSolitaQuote(
     new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS))
   );
 
-  if (quote.legsMultiplier) {
-    const legsMultiplierBps = addDecimals(
-      Number(quote.legsMultiplier),
-      LEG_MULTIPLIER_DECIMALS
-    );
+  if (quote.legAmount) {
+    const legAmount = addDecimals(Number(quote.legAmount), legAssetDecimals);
     return {
       __kind: 'Standard',
-      legsMultiplierBps,
+      legAmount,
       priceQuote: {
         __kind: 'AbsolutePrice',
         amountBps,
@@ -90,12 +86,12 @@ export function toSolitaQuote(
 
 export function isQuoteStandard(
   value: Quote
-): value is Quote & { legsMultiplier: number } {
-  return typeof value.legsMultiplier !== 'undefined';
+): value is Quote & { legAmount: number } {
+  return typeof value.legAmount !== 'undefined';
 }
 
 export function isQuoteFixedSize(
   value: Quote
-): value is Quote & { legsMultiplier: undefined } {
-  return typeof value.legsMultiplier === 'undefined';
+): value is Quote & { legAmount: undefined } {
+  return typeof value.legAmount === 'undefined';
 }

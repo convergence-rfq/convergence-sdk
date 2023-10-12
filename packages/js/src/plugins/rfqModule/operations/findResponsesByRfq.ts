@@ -10,7 +10,6 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindResponsesByRfqOperation' as const;
 
@@ -74,10 +73,9 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
       const responseAddresses = unparsedAccounts.map((acc) => acc.publicKey);
 
       const rfq = await convergence.rfqs().findRfqByAddress({ address });
-      const collateralMint = await collateralMintCache.get(convergence);
 
       const responses: Response[] = [];
-      
+
       for (let i = 0; i < Math.ceil(responseAddresses.length / 100); i++) {
         const accounts = await convergence
           .rpc()
@@ -87,13 +85,7 @@ export const findResponsesByRfqOperationHandler: OperationHandler<FindResponsesB
           );
 
         for (const account of accounts) {
-          responses.push(
-            toResponse(
-              toResponseAccount(account),
-              collateralMint.decimals,
-              rfq.quoteAsset.getDecimals()
-            )
-          );
+          responses.push(toResponse(toResponseAccount(account), rfq));
         }
       }
 

@@ -1,5 +1,5 @@
 import { createConfirmResponseInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -8,14 +8,13 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  Signer,
 } from '../../../types';
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
-import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
+import { toSolitaOverrideLegAmount } from '../models';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -53,54 +52,13 @@ export type ConfirmResponseOperation = Operation<
  * @category Inputs
  */
 export type ConfirmResponseInput = {
-  /** The address of the RFQ account. */
-  rfq: PublicKey;
-
   /** The address of the response account. */
   response: PublicKey;
-
-  /**
-   * The taker of the Rfq as a Signer.
-   *
-   * @defaultValue `convergence.identity()`
-   */
-  taker?: Signer;
-
-  /**
-   * Optional address of the taker collateral info account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: taker.publicKey })`
-   */
-  collateralInfo?: PublicKey;
-
-  /**
-   * Optional address of the maker collateral info account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
-   */
-  makerCollateralInfo?: PublicKey;
-
-  /** The address of the collateral token. */
-  collateralToken?: PublicKey;
-
-  /**
-   * The protocol address.
-   *
-   * @defaultValue `convergence.protocol().pdas().protocol()`
-   */
-  protocol?: PublicKey;
-
-  /** The address of the risk engine program. */
-  riskEngine?: PublicKey;
 
   /** The Side of the Response to confirm. */
   side: ResponseSide;
 
-  /**
-   * Optional basis points multiplier to override the legsMultiplierBps of the
-   * Rfq's fixedSize property.
-   */
-  overrideLegMultiplier?: number;
+  overrideLegAmount?: number;
 };
 
 /**
@@ -166,101 +124,54 @@ export const confirmResponseBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const {
-    rfq,
-    response,
-    side,
-    taker = convergence.identity(),
-    collateralInfo = convergence.collateral().pdas().collateralInfo({
-      user: taker.publicKey,
-      programs,
-    }),
-    collateralToken = convergence.collateral().pdas().collateralToken({
-      user: taker.publicKey,
-      programs,
-    }),
-  } = params;
+  const { response, side, overrideLegAmount } = params;
+  const taker = convergence.identity();
 
-  const { overrideLegMultiplier = null } = params;
-  const overrideLegMultiplierBps =
-    overrideLegMultiplier &&
-    toSolitaOverrideLegMultiplierBps(overrideLegMultiplier);
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
-  const makerCollateralInfo = convergence.collateral().pdas().collateralInfo({
-    user: responseModel.maker,
-    programs,
-  });
+  const rfqModel = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: responseModel.rfq });
 
-  const baseAssetIndexValuesSet: Set<number> = new Set();
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
-
-  const baseAssetAccounts: AccountMeta[] = [];
-  const oracleAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    baseAssetAccounts.push({
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    });
-
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
+  const solitaOverrideLegAmount =
+    overrideLegAmount !== undefined
+      ? toSolitaOverrideLegAmount(overrideLegAmount, rfqModel.legAssetDecimals)
+      : null;
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createConfirmResponseInstruction(
-          {
-            rfq,
-            response,
-            collateralInfo,
-            makerCollateralInfo,
-            collateralToken,
-            taker: taker.publicKey,
-            protocol: convergence.protocol().pdas().protocol(),
-            riskEngine: convergence.programs().getRiskEngine(programs).address,
-            anchorRemainingAccounts: [
-              {
-                pubkey: convergence.riskEngine().pdas().config(),
-                isSigner: false,
-                isWritable: false,
-              },
-              ...baseAssetAccounts,
-              ...oracleAccounts,
-            ],
-          },
-          {
-            side: toSolitaQuoteSide(side),
-            overrideLegMultiplierBps,
-          },
-          convergence.programs().getRfq(programs).address
-        ),
-        signers: [taker],
-        key: 'confirmResponse',
-      }
-    );
+    .add({
+      instruction: createConfirmResponseInstruction(
+        {
+          rfq: rfqModel.address,
+          response,
+          taker: taker.publicKey,
+          legTokens: convergence.tokens().pdas().associatedTokenAccount({
+            mint: rfqModel.legAsset,
+            owner: taker.publicKey,
+            programs,
+          }),
+          legEscrow: convergence.rfqs().pdas().legEscrow(responseModel.address),
+          legMint: rfqModel.legAsset,
+          quoteTokens: convergence.tokens().pdas().associatedTokenAccount({
+            mint: rfqModel.quoteAsset,
+            owner: taker.publicKey,
+            programs,
+          }),
+          quoteEscrow: convergence
+            .rfqs()
+            .pdas()
+            .quoteEscrow(responseModel.address),
+          quoteMint: rfqModel.quoteAsset,
+        },
+        {
+          side: toSolitaQuoteSide(side),
+          overrideLegAmount: solitaOverrideLegAmount,
+        },
+        convergence.programs().getRfq(programs).address
+      ),
+      signers: [taker],
+      key: 'confirmResponse',
+    });
 };

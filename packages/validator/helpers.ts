@@ -4,10 +4,6 @@ import path from 'path';
 import { Keypair } from '@solana/web3.js';
 
 import * as rfq from '@convergence-rfq/rfq';
-import * as riskEngine from '@convergence-rfq/risk-engine';
-import * as spotInstrument from '@convergence-rfq/spot-instrument';
-import * as psyoptionsEuropeanInstrument from '@convergence-rfq/psyoptions-european-instrument';
-import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-american-instrument';
 
 export type ChildProccess = ChildProcessWithoutNullStreams;
 
@@ -44,18 +40,6 @@ const getBaseArgs = () => [
   '--bpf-program',
   rfq.PROGRAM_ADDRESS,
   path.join(FIXTURES, 'programs/rfq.so'),
-  '--bpf-program',
-  spotInstrument.PROGRAM_ADDRESS,
-  path.join(FIXTURES, 'programs/spot_instrument.so'),
-  '--bpf-program',
-  psyoptionsEuropeanInstrument.PROGRAM_ADDRESS,
-  path.join(FIXTURES, 'programs/psyoptions_european_instrument.so'),
-  '--bpf-program',
-  psyoptionsAmericanInstrument.PROGRAM_ADDRESS,
-  path.join(FIXTURES, 'programs/psyoptions_american_instrument.so'),
-  '--bpf-program',
-  riskEngine.PROGRAM_ADDRESS,
-  path.join(FIXTURES, 'programs/risk_engine.so'),
 
   '--ledger',
   './test-ledger',
@@ -72,7 +56,6 @@ export class Ctx {
   baseMintBTC = getKeypairPk('mint-btc');
   baseMintSOL = getKeypairPk('mint-sol');
   quoteMint = getKeypairPk('mint-usd-quote');
-  collateralMint = getKeypairPk('mint-usd-collateral');
 
   // Wallets
   takerQuoteWallet = getAccountPk('token-account-usd-quote-taker');
@@ -82,20 +65,6 @@ export class Ctx {
 
   // Protocol
   protocol = getAccountPk('rfq-protocol');
-  riskEngine = getAccountPk('risk-engine-config');
-  baseAsset = getAccountPk('rfq-base-asset-btc');
-  quoteRegisteredMint = getAccountPk('rfq-mint-info-usd-quote');
-  baseRegisteredMint = getAccountPk('rfq-mint-info-btc');
-  makerCollateralInfo = getAccountPk('rfq-collateral-info-maker');
-  takerCollateralInfo = getAccountPk('rfq-collateral-info-taker');
-  makerCollateralToken = getAccountPk('rfq-collateral-token-maker');
-  takerCollateralToken = getAccountPk('rfq-collateral-token-taker');
-
-  // Switchboard
-  switchboardBTCOracle = getDepAccountPk('btc_20000_oracle_switchboard');
-
-  // Pyth
-  pythSOLOracle = getDepAccountPk('sol_30_oracle_pyth');
 }
 
 export const getAccountPk = (user: string): string => {

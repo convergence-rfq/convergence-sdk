@@ -1240,54 +1240,10 @@
     bn.js "^5.2.0"
     debug "^4.3.3"
 
-"@convergence-rfq/psyoptions-american-instrument@2.2.13":
-  version "2.2.13"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-american-instrument/-/psyoptions-american-instrument-2.2.13.tgz#c4d0ab251ecc325a382e0e75ca743711a49fc7c7"
-  integrity sha512-DAsERQdjTxPhayB3GElWKlKsFPrd42XnG+CLg6+7Q1SZGDQFB19G7UafcwJJmik5wwrxcWJHLCONhmPZEmLCAg==
-  dependencies:
-    "@convergence-rfq/beet" "^0.7.10"
-    "@convergence-rfq/beet-solana" "^0.4.11"
-    "@solana/spl-token" "^0.3.5"
-    "@solana/web3.js" "^1.56.2"
-    bn.js "^5.2.0"
-
-"@convergence-rfq/psyoptions-european-instrument@2.2.13":
-  version "2.2.13"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-european-instrument/-/psyoptions-european-instrument-2.2.13.tgz#1915a640040011eb193d6b96dc26ca3ed992941e"
-  integrity sha512-S7jM0mrhjx3QiT62fJAKVWSBlqcXCpk+KESNvy7mdSnJZGgpVTnyQeLWSqwO2cDElDOLn4Z40yfRTRgxssuPnw==
-  dependencies:
-    "@convergence-rfq/beet" "^0.7.10"
-    "@convergence-rfq/beet-solana" "^0.4.11"
-    "@solana/spl-token" "^0.3.5"
-    "@solana/web3.js" "^1.56.2"
-    bn.js "^5.2.0"
-
-"@convergence-rfq/rfq@2.2.13":
-  version "2.2.13"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.2.13.tgz#d78cd575ee176935c42ee178a51d6ee8e7637d89"
-  integrity sha512-0/QzK8roBoc/oCKVj/Z0gHeBYxjLvxlb1SqvmVlqlQPWjpoZfAojse04+g5c1LnUO9X0STU0Cn5tKDFbt0Jerg==
-  dependencies:
-    "@convergence-rfq/beet" "^0.7.10"
-    "@convergence-rfq/beet-solana" "^0.4.11"
-    "@solana/spl-token" "^0.3.5"
-    "@solana/web3.js" "^1.56.2"
-    bn.js "^5.2.0"
-
-"@convergence-rfq/risk-engine@2.2.13":
-  version "2.2.13"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.2.13.tgz#0449366fe33f31711f1c484e7e95d9871ffb9b23"
-  integrity sha512-koUzlOGm20/sH42IYkiM34NCL4lsNX7YO93rILgdmm68I31njx7gNxLneLvyebfMcvJiSF3NKdmbu3dpn/U8Qg==
-  dependencies:
-    "@convergence-rfq/beet" "^0.7.10"
-    "@convergence-rfq/beet-solana" "^0.4.11"
-    "@solana/spl-token" "^0.3.5"
-    "@solana/web3.js" "^1.56.2"
-    bn.js "^5.2.0"
-
-"@convergence-rfq/spot-instrument@2.2.13":
-  version "2.2.13"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.2.13.tgz#06550c962f0f4e68ed277c551586b138fec5b329"
-  integrity sha512-C2l0/vALFR7SxPrVu0GvzlyYrLH/Uy2wZ5IyDHnn74Xt/SBUOx4VdB2F2mHyLl/KG+yLaMREfcmBB7ZV2FHEyQ==
+"@convergence-rfq/rfq@0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-0.3.1.tgz#1c0e0b92642525deb73574d90c100a514fa74abb"
+  integrity sha512-Cp7BBRPg4VH70RHekQ6mMOdLQH6j2/j/QbsPP4kx3lBRwDfssxysasmgQ/UDCLMvIUFhbYAzKYySCP9wQRnzVQ==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"

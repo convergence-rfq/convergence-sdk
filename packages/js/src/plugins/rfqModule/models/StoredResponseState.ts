@@ -3,13 +3,12 @@ import { StoredResponseState as SolitaStoredResponseState } from '@convergence-r
 export type StoredResponseState =
   | 'active'
   | 'canceled'
-  | 'defaulted'
-  | 'ready-for-settling'
-  | 'settled'
-  | 'settling-preparations'
-  | 'waiting-for-last-look'
+  | 'confirmed'
+  | 'settled';
 
-export function fromSolitaStoredResponseState(StoredResponseState: SolitaStoredResponseState): StoredResponseState {
+export function fromSolitaStoredResponseState(
+  StoredResponseState: SolitaStoredResponseState
+): StoredResponseState {
   switch (StoredResponseState) {
     case SolitaStoredResponseState.Active: {
       return 'active';
@@ -17,25 +16,18 @@ export function fromSolitaStoredResponseState(StoredResponseState: SolitaStoredR
     case SolitaStoredResponseState.Canceled: {
       return 'canceled';
     }
-    case SolitaStoredResponseState.Defaulted: {
-      return 'defaulted';
-    }
-    case SolitaStoredResponseState.ReadyForSettling: {
-      return 'ready-for-settling';
+    case SolitaStoredResponseState.Confirmed: {
+      return 'confirmed';
     }
     case SolitaStoredResponseState.Settled: {
       return 'settled';
     }
-    case SolitaStoredResponseState.SettlingPreparations: {
-      return 'settling-preparations';
-    }
-    case SolitaStoredResponseState.WaitingForLastLook: {
-      return 'waiting-for-last-look';
-    }
   }
 }
 
-export function toSolitaStoredResponseState(StoredResponseState: StoredResponseState): SolitaStoredResponseState {
+export function toSolitaStoredResponseState(
+  StoredResponseState: StoredResponseState
+): SolitaStoredResponseState {
   switch (StoredResponseState) {
     case 'active': {
       return SolitaStoredResponseState.Active;
@@ -43,20 +35,11 @@ export function toSolitaStoredResponseState(StoredResponseState: StoredResponseS
     case 'canceled': {
       return SolitaStoredResponseState.Canceled;
     }
-    case 'defaulted': {
-      return SolitaStoredResponseState.Defaulted;
-    }
-    case 'ready-for-settling': {
-      return SolitaStoredResponseState.ReadyForSettling;
+    case 'confirmed': {
+      return SolitaStoredResponseState.Confirmed;
     }
     case 'settled': {
       return SolitaStoredResponseState.Settled;
-    }
-    case 'settling-preparations': {
-      return SolitaStoredResponseState.SettlingPreparations;
-    }
-    case 'waiting-for-last-look': {
-      return SolitaStoredResponseState.WaitingForLastLook;
     }
   }
 }

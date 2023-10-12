@@ -98,7 +98,7 @@ export const findRfqsOperationHandler: OperationHandler<FindRfqsOperation> = {
         .rpc()
         .getMultipleAccounts(chunk, commitment);
       yield await Promise.all(
-        accounts.map((account) => toRfq(convergence, toRfqAccount(account)))
+        accounts.map((account) => toRfq(toRfqAccount(account)))
       );
     }
   },

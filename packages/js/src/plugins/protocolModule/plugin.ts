@@ -4,20 +4,6 @@ import {
   initializeProtocolOperationHandler,
   getProtocolOperation,
   getProtocolOperationHandler,
-  addInstrumentOperation,
-  addInstrumentOperationHandler,
-  addBaseAssetOperation,
-  addBaseAssetOperationHandler,
-  registerMintOperation,
-  registerMintOperationHandler,
-  getBaseAssetsOperation,
-  getBaseAssetsOperationHandler,
-  getRegisteredMintsOperation,
-  getRegisteredMintsOperationHandler,
-  findRegisteredMintByAddressOperation,
-  findRegisteredMintByAddressOperationHandler,
-  findBaseAssetByAddressOperation,
-  findBaseAssetByAddressOperationHandler,
   closeProtocolOperation,
   closeProtocolOperationHandler,
 } from './operations';
@@ -34,22 +20,6 @@ export const protocolModule = (): ConvergencePlugin => ({
       initializeProtocolOperationHandler
     );
     op.register(getProtocolOperation, getProtocolOperationHandler);
-    op.register(addInstrumentOperation, addInstrumentOperationHandler);
-    op.register(addBaseAssetOperation, addBaseAssetOperationHandler);
-    op.register(registerMintOperation, registerMintOperationHandler);
-    op.register(getBaseAssetsOperation, getBaseAssetsOperationHandler);
-    op.register(
-      getRegisteredMintsOperation,
-      getRegisteredMintsOperationHandler
-    );
-    op.register(
-      findRegisteredMintByAddressOperation,
-      findRegisteredMintByAddressOperationHandler
-    );
-    op.register(
-      findBaseAssetByAddressOperation,
-      findBaseAssetByAddressOperationHandler
-    );
     op.register(closeProtocolOperation, closeProtocolOperationHandler);
 
     convergence.protocol = function () {

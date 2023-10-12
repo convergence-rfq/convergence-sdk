@@ -1,7 +1,6 @@
 import { FixedSize as SolitaFixedSize } from '@convergence-rfq/rfq';
 
 import { addDecimals, removeDecimals } from '../../../utils/conversions';
-import { LEG_MULTIPLIER_DECIMALS } from '../constants';
 
 interface None {
   type: 'open';
@@ -21,6 +20,7 @@ export type FixedSize = Readonly<None | BaseAsset | QuoteAsset>;
 
 export function fromSolitaFixedSize(
   fixedSize: SolitaFixedSize,
+  legAssetDecimals: number,
   quoteAssetDecimals: number
 ): FixedSize {
   switch (fixedSize.__kind) {
@@ -32,10 +32,7 @@ export function fromSolitaFixedSize(
     case 'BaseAsset': {
       return {
         type: 'fixed-base',
-        amount: removeDecimals(
-          fixedSize.legsMultiplierBps,
-          LEG_MULTIPLIER_DECIMALS
-        ),
+        amount: removeDecimals(fixedSize.legAmount, legAssetDecimals),
       };
     }
     case 'QuoteAsset': {
@@ -49,6 +46,7 @@ export function fromSolitaFixedSize(
 
 export function toSolitaFixedSize(
   fixedSize: FixedSize,
+  legAssetDecimals: number,
   quoteAssetDecimals: number
 ): SolitaFixedSize {
   switch (fixedSize.type) {
@@ -61,10 +59,7 @@ export function toSolitaFixedSize(
     case 'fixed-base': {
       return {
         __kind: 'BaseAsset',
-        legsMultiplierBps: addDecimals(
-          fixedSize.amount,
-          LEG_MULTIPLIER_DECIMALS
-        ),
+        legAmount: addDecimals(fixedSize.amount, legAssetDecimals),
       };
     }
     case 'fixed-quote': {

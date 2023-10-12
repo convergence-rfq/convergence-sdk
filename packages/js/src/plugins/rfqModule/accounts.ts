@@ -1,5 +1,4 @@
 import {
-  CollateralInfo as SolitaCollateralInfo,
   ProtocolState as SolitaProtocolState,
   Response,
   Rfq,
@@ -10,17 +9,6 @@ import {
   getAccountParsingAndAssertingFunction,
   getAccountParsingFunction,
 } from '../../types';
-
-/** @group Accounts */
-export type CollateralInfoAccount = Account<SolitaCollateralInfo>;
-
-/** @group Account Helpers */
-export const parseCollateralInfoAccount =
-  getAccountParsingFunction(SolitaCollateralInfo);
-
-/** @group Account Helpers */
-export const toCollateralInfoAccount =
-  getAccountParsingAndAssertingFunction(SolitaCollateralInfo);
 
 /** @group Accounts */
 export type ProtocolStateAccount = Account<SolitaProtocolState>;

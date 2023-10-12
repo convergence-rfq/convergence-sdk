@@ -1,6 +1,3 @@
-import { AccountMeta } from '@solana/web3.js';
-import { Sha256 } from '@aws-crypto/sha256-js';
-import { Leg } from '@convergence-rfq/rfq';
 import {
   Confirmation,
   Quote,
@@ -9,15 +6,6 @@ import {
   isQuoteStandard,
 } from '../rfqModule/models';
 import { UnparsedAccount } from '../../types';
-import { Convergence } from '../../Convergence';
-import {
-  LegInstrument,
-  getSerializedLegLength,
-  getValidationAccounts,
-  serializeAsLeg,
-  toLeg,
-} from '../instrumentModule';
-import { LEG_MULTIPLIER_DECIMALS } from './constants';
 import { Rfq, Response, isFixedSizeOpen } from './models';
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
@@ -51,95 +39,6 @@ export function getPages<T extends UnparsedAccount | Rfq | Response>(
   return pages as T[][];
 }
 
-export const calculateExpectedLegsHash = (
-  instruments: LegInstrument[]
-): Uint8Array => {
-  const serializedLegsData: Buffer[] = instruments.map((i) =>
-    serializeAsLeg(i)
-  );
-
-  const lengthBuffer = Buffer.alloc(4);
-  lengthBuffer.writeInt32LE(instruments.length);
-  const fullLegDataBuffer = Buffer.concat([
-    lengthBuffer,
-    ...serializedLegsData,
-  ]);
-
-  const hash = new Sha256();
-  hash.update(fullLegDataBuffer);
-  const expectedLegsHash = hash.digestSync();
-
-  return expectedLegsHash;
-};
-
-export const calculateExpectedLegsSize = (
-  instruments: LegInstrument[]
-): number => {
-  return (
-    4 +
-    instruments.map((i) => getSerializedLegLength(i)).reduce((x, y) => x + y, 0)
-  );
-};
-
-// TODO remove
-export const instrumentsToLegsAndLegsSize = (
-  instruments: LegInstrument[]
-): [Leg[], number] => {
-  return [
-    instrumentsToLegs(instruments),
-    calculateExpectedLegsSize(instruments),
-  ];
-};
-
-export const instrumentsToLegs = (instruments: LegInstrument[]): Leg[] => {
-  return instruments.map((i) => toLeg(i));
-};
-
-// TODO remove
-export const instrumentsToLegsAndExpectedLegsHash = (
-  instruments: LegInstrument[]
-): [Leg[], Uint8Array] => {
-  return [
-    instrumentsToLegs(instruments),
-    calculateExpectedLegsHash(instruments),
-  ];
-};
-
-export const legsToBaseAssetAccounts = (
-  convergence: Convergence,
-  legs: Leg[]
-): AccountMeta[] => {
-  const baseAssetAccounts: AccountMeta[] = [];
-
-  for (const leg of legs) {
-    const baseAsset = convergence
-      .protocol()
-      .pdas()
-      .baseAsset({ index: leg.baseAssetIndex.value });
-
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-  }
-
-  return baseAssetAccounts;
-};
-
-// TODO remove async part after option instruments refactoring
-export const instrumentsToLegAccounts = async (
-  instruments: LegInstrument[]
-): Promise<AccountMeta[]> => {
-  const accounts = await Promise.all(
-    instruments.map((i) => getValidationAccounts(i))
-  );
-
-  return accounts.flat();
-};
-
 export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
   return rfqs
     .sort((a, b) => {
@@ -155,18 +54,18 @@ export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
     });
 };
 
-export function extractLegsMultiplier(
+export function extractLegAmount(
   rfq: Rfq,
   quote: Quote,
   confirmation?: Confirmation
 ) {
   const fixedSize = rfq.size;
-  if (confirmation?.overrideLegMultiplier) {
-    return confirmation.overrideLegMultiplier;
+  if (confirmation?.overrideLegAmount) {
+    return confirmation.overrideLegAmount;
   }
   if (isFixedSizeOpen(fixedSize)) {
     if (isQuoteStandard(quote)) {
-      return quote.legsMultiplier;
+      return quote.legAmount;
     }
     throw Error('Fixed size quote cannot be provided to non-fixed size rfq');
   } else if (isFixedSizeBaseAsset(fixedSize)) {
@@ -183,8 +82,8 @@ export function extractLegsMultiplier(
       throw Error('Negative prices are not allowed for fixed quote amount rfq');
     }
     const amount = fixedSize.amount / quote.price;
-    const legsMultiplier = Number(amount.toFixed(LEG_MULTIPLIER_DECIMALS));
-    return legsMultiplier;
+    const legAmount = Number(amount.toFixed(rfq.legAssetDecimals));
+    return legAmount;
   }
   throw new Error('Invalid fixed size');
 }

@@ -10,7 +10,6 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindResponsesByOwnerOperation' as const;
 
@@ -84,8 +83,6 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
         .get();
       const unparsedAddresses = unparsedAccounts.map((acc) => acc.publicKey);
 
-      const collateralMint = await collateralMintCache.get(convergence);
-
       const responses = [];
 
       const callCount = Math.ceil(unparsedAddresses.length / 100);
@@ -97,23 +94,19 @@ export const findResponsesByOwnerOperationHandler: OperationHandler<FindResponse
             unparsedAddresses.slice(i * 100, (i + 1) * 100),
             commitment
           );
-        
+
         for (const account of accounts) {
           const responseAccount = toResponseAccount(account);
 
           if (responseAccount.data.maker.toBase58() !== owner.toBase58()) {
             continue;
           }
-          
+
           responses.push(
             convergence
               .rfqs()
               .findRfqByAddress({ address: responseAccount.data.rfq })
-              .then(rfq => toResponse(
-                responseAccount,
-                collateralMint.decimals,
-                rfq.quoteAsset.getDecimals()
-              ))
+              .then((rfq) => toResponse(responseAccount, rfq))
           );
         }
       }

@@ -1,5 +1,8 @@
-import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import {
+  Quote as SolitaQuote,
+  createRespondToRfqInstruction,
+} from '@convergence-rfq/rfq';
+import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
@@ -9,22 +12,17 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  Signer,
 } from '../../../types';
-import {
-  TransactionBuilder,
-  TransactionBuilderOptions,
-} from '../../../utils/TransactionBuilder';
-import { Quote, Rfq } from '../models';
+import { TransactionBuilder } from '../../../utils/TransactionBuilder';
+import { Quote } from '../models';
 import { toSolitaQuote } from '../models/Quote';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
   rfq: PublicKey,
   maker: PublicKey,
-  bid: Quote | null,
-  ask: Quote | null,
-  rfqModel: Rfq
+  bid: SolitaQuote | null,
+  ask: SolitaQuote | null
 ): Promise<{
   pdaDistinguisher: number;
   response: PublicKey;
@@ -32,16 +30,13 @@ const getNextResponsePdaAndDistinguisher = async (
   let response: PublicKey;
   let pdaDistinguisher = 0;
   while (true) {
-    response = cvg
-      .rfqs()
-      .pdas()
-      .response({
-        rfq,
-        maker,
-        bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
-        ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
-        pdaDistinguisher,
-      });
+    response = cvg.rfqs().pdas().response({
+      rfq,
+      maker,
+      bid,
+      ask,
+      pdaDistinguisher,
+    });
 
     const account = await cvg.rpc().getAccount(response);
     if (!account.exists) {
@@ -103,41 +98,6 @@ export type RespondToRfqInput = {
    * The address of the RFQ account.
    */
   rfq: PublicKey;
-
-  /**
-   * The maker of the Response as a Signer.
-   *
-   * @defaultValue `convergence.identity()`
-   */
-  maker?: Signer;
-
-  /**
-   * The protocol address.
-   *
-   * @defaultValue `convergence.protocol().pdas().protocol()`
-   */
-  protocol?: PublicKey;
-
-  /**
-   * Optional address of the taker collateral info account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
-   */
-  collateralInfo?: PublicKey;
-
-  /**
-   * Optional address of the maker collateral tokens account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralTokens({ user: maker.publicKey })`
-   */
-  collateralToken?: PublicKey;
-
-  /**
-   * Optional address of the risk engine account.
-   *
-   * @defaultValue `convergence.programs().getRiskEngine(programs)`
-   */
-  riskEngine?: PublicKey;
 };
 
 /**
@@ -167,13 +127,9 @@ export const respondToRfqOperationHandler: OperationHandler<RespondToRfqOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<RespondToRfqOutput> => {
-      const builder = await respondToRfqBuilder(
-        convergence,
-        {
-          ...operation.input,
-        },
-        scope
-      );
+      const builder = await respondToRfqBuilder(convergence, {
+        ...operation.input,
+      });
       scope.throwIfCanceled();
 
       const output = await builder.sendAndConfirm(
@@ -220,113 +176,51 @@ export type RespondToRfqBuilderContext = {
  */
 export const respondToRfqBuilder = async (
   convergence: Convergence,
-  params: RespondToRfqBuilderParams,
-  options: TransactionBuilderOptions = {}
+  params: RespondToRfqBuilderParams
 ): Promise<TransactionBuilder<RespondToRfqBuilderContext>> => {
-  const { programs } = options;
-  const {
-    rfq,
-    bid = null,
-    ask = null,
-    maker = convergence.identity(),
-    protocol = convergence.protocol().pdas().protocol(),
-    riskEngine = convergence.programs().getRiskEngine(programs).address,
-    collateralInfo = convergence.collateral().pdas().collateralInfo({
-      user: maker.publicKey,
-      programs,
-    }),
-    collateralToken = convergence.collateral().pdas().collateralToken({
-      user: maker.publicKey,
-      programs,
-    }),
-  } = params;
+  const { rfq, bid = null, ask = null } = params;
+  const maker = convergence.identity();
 
   if (!bid && !ask) {
     throw new Error('Must provide either a bid and/or ask');
   }
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+  const solitaBid =
+    bid &&
+    toSolitaQuote(bid, rfqModel.legAssetDecimals, rfqModel.quoteAssetDecimals);
+  const solitaAsk =
+    ask &&
+    toSolitaQuote(ask, rfqModel.legAssetDecimals, rfqModel.quoteAssetDecimals);
 
   const { response, pdaDistinguisher } =
     await getNextResponsePdaAndDistinguisher(
       convergence,
       rfq,
       maker.publicKey,
-      bid,
-      ask,
-      rfqModel
+      solitaBid,
+      solitaAsk
     );
-
-  // TODO: DRY
-  const baseAssetIndexValuesSet: Set<number> = new Set();
-  for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
-  const baseAssetAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-  const oracleAccounts: AccountMeta[] = [];
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
 
   return TransactionBuilder.make<RespondToRfqBuilderContext>()
     .setFeePayer(maker)
     .setContext({
       response,
     })
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createRespondToRfqInstruction(
-          {
-            rfq,
-            response,
-            collateralInfo,
-            collateralToken,
-            protocol,
-            riskEngine,
-            maker: maker.publicKey,
-            anchorRemainingAccounts: [
-              {
-                pubkey: convergence.riskEngine().pdas().config(),
-                isSigner: false,
-                isWritable: false,
-              },
-              ...baseAssetAccounts,
-              ...oracleAccounts,
-            ],
-          },
-          {
-            bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
-            ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
-            pdaDistinguisher,
-          }
-        ),
-        signers: [maker],
-        key: 'respondToRfq',
-      }
-    );
+    .add({
+      instruction: createRespondToRfqInstruction(
+        {
+          rfq,
+          response,
+          maker: maker.publicKey,
+        },
+        {
+          bid: solitaBid,
+          ask: solitaAsk,
+          pdaDistinguisher,
+        }
+      ),
+      signers: [maker],
+      key: 'respondToRfq',
+    });
 };

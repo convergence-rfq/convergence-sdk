@@ -1,6 +1,5 @@
 import { createSettleInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -15,8 +14,6 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'SettleOperation' as const;
 
@@ -45,32 +42,8 @@ export type SettleOperation = Operation<typeof Key, SettleInput, SettleOutput>;
  * @category Inputs
  */
 export type SettleInput = {
-  /**
-   * The protocol address.
-   *
-   * @defaultValue `convergence.protocol().pdas().protocol()`
-   */
-  protocol?: PublicKey;
-
-  /** The address of the RFQ account. */
-  rfq: PublicKey;
-
   /** The address of the response account. */
   response: PublicKey;
-
-  /** The maker public key address. */
-  maker: PublicKey;
-
-  /** The taker public key address. */
-  taker: PublicKey;
-
-  /**
-   * Optional start index to corresponding to the first leg to settle. Used internally by
-   * Convergence SDK and does not need to be passed manually.
-   *
-   * @defaultValue `0`
-   * */
-  startIndex?: number;
 };
 
 /**
@@ -138,129 +111,60 @@ export const settleBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { rfq, response, maker, taker } = params;
+  const { response } = params;
 
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
+  const rfqModel = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: responseModel.rfq });
 
-  const { startIndex = parseInt(responseModel.settledLegs.toString()) } =
-    params;
+  const maker = convergence.identity();
+  if (!maker.publicKey.equals(responseModel.maker)) {
+    throw new Error('Only maker can settle a response!');
+  }
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  const anchorRemainingAccounts: AccountMeta[] = [];
-
-  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-  const { legs, quote } = await convergence.rfqs().getSettlementResult({
-    response: responseModel,
-    rfq: rfqModel,
-  });
-
-  for (let legIndex = startIndex; legIndex < rfqModel.legs.length; legIndex++) {
-    const leg = rfqModel.legs[legIndex];
-    const { receiver } = legs[legIndex];
-
-    const baseAssetMint = await legToBaseAssetMint(convergence, leg);
-
-    const instrumentProgramAccount: AccountMeta = {
-      pubkey: rfqModel.legs[legIndex].getProgramId(),
-      isSigner: false,
-      isWritable: false,
-    };
-
-    const instrumentEscrowPda = new InstrumentPdasClient(
-      convergence
-    ).instrumentEscrow({
-      response,
-      index: legIndex,
-      rfqModel,
-    });
-
-    const legAccounts: AccountMeta[] = [
-      //`escrow`
-      {
-        pubkey: instrumentEscrowPda,
-        isSigner: false,
-        isWritable: true,
-      },
-      // `receiver_tokens`
-      {
-        pubkey: convergence
-          .tokens()
-          .pdas()
-          .associatedTokenAccount({
-            mint: baseAssetMint!.address,
-            owner: receiver === 'maker' ? maker : taker,
-            programs,
-          }),
-        isSigner: false,
-        isWritable: true,
-      },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    ];
-
-    anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
-  }
-
-  const spotInstrumentProgramAccount: AccountMeta = {
-    pubkey: spotInstrumentProgram.address,
-    isSigner: false,
-    isWritable: false,
-  };
-
-  const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
-    response,
-    program: spotInstrumentProgram.address,
-  });
-
-  const quoteAccounts: AccountMeta[] = [
-    //`escrow`
-    {
-      pubkey: quoteEscrowPda,
-      isSigner: false,
-      isWritable: true,
-    },
-    // `receiver_tokens`
-    {
-      pubkey: convergence
-        .tokens()
-        .pdas()
-        .associatedTokenAccount({
-          mint: rfqModel.quoteMint,
-          owner: quote.receiver === 'maker' ? maker : taker,
-          programs,
-        }),
-      isSigner: false,
-      isWritable: true,
-    },
-    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-  ];
-
-  anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createSettleInstruction(
-          {
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq,
-            response,
-            anchorRemainingAccounts,
-          },
-          rfqProgram.address
-        ),
-        signers: [],
-        key: 'settle',
-      }
-    );
+    .add({
+      instruction: createSettleInstruction(
+        {
+          maker: responseModel.maker,
+          taker: rfqModel.taker,
+          rfq: rfqModel.address,
+          response,
+          takerLegTokens: convergence.tokens().pdas().associatedTokenAccount({
+            mint: rfqModel.legAsset,
+            owner: rfqModel.taker,
+            programs,
+          }),
+          makerLegTokens: convergence.tokens().pdas().associatedTokenAccount({
+            mint: rfqModel.legAsset,
+            owner: maker.publicKey,
+            programs,
+          }),
+          legEscrow: convergence.rfqs().pdas().legEscrow(responseModel.address),
+          takerQuoteTokens: convergence.tokens().pdas().associatedTokenAccount({
+            mint: rfqModel.quoteAsset,
+            owner: rfqModel.taker,
+            programs,
+          }),
+          makerQuoteTokens: convergence.tokens().pdas().associatedTokenAccount({
+            mint: rfqModel.quoteAsset,
+            owner: maker.publicKey,
+            programs,
+          }),
+          quoteEscrow: convergence
+            .rfqs()
+            .pdas()
+            .quoteEscrow(responseModel.address),
+        },
+        rfqProgram.address
+      ),
+      signers: [maker],
+      key: 'settle',
+    });
 };

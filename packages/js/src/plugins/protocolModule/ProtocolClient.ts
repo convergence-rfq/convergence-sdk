@@ -1,22 +1,8 @@
 import {
-  AddInstrumentInput,
-  addInstrumentOperation,
   InitializeProtocolInput,
   initializeProtocolOperation,
   GetProtocolInput,
   getProtocolOperation,
-  RegisterMintInput,
-  registerMintOperation,
-  AddBaseAssetInput,
-  addBaseAssetOperation,
-  getBaseAssetsOperation,
-  GetBaseAssetsInput,
-  findRegisteredMintByAddressOperation,
-  FindRegisteredMintByAddressInput,
-  findBaseAssetByAddressOperation,
-  FindBaseAssetByAddressInput,
-  GetRegisteredMintsInput,
-  getRegisteredMintsOperation,
   closeProtocolOperation,
   CloseProtocolInput,
 } from './operations';
@@ -65,67 +51,10 @@ export class ProtocolClient {
       .execute(closeProtocolOperation(input), options);
   }
 
-  /** {@inheritDoc addInstrumentOperation} */
-  addInstrument(input: AddInstrumentInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(addInstrumentOperation(input), options);
-  }
-
   /** {@inheritDoc getProtocolOperation} */
   get(input?: GetProtocolInput, options?: OperationOptions) {
     return this.convergence
       .operations()
       .execute(getProtocolOperation(input), options);
-  }
-  /** {@inheritDoc getBaseAssetsOperation} */
-  getBaseAssets(input?: GetBaseAssetsInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(getBaseAssetsOperation(input), options);
-  }
-
-  /** {@inheritDoc addBaseAssetOperation} */
-  addBaseAsset(input: AddBaseAssetInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(addBaseAssetOperation(input), options);
-  }
-
-  /** {@inheritDoc registerMintOperation} */
-  registerMint(input: RegisterMintInput, options?: OperationOptions) {
-    return this.convergence
-      .operations()
-      .execute(registerMintOperation(input), options);
-  }
-
-  /** {@inheritDoc getRegisteredMintsOperation} */
-  getRegisteredMints(
-    input?: GetRegisteredMintsInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(getRegisteredMintsOperation(input), options);
-  }
-
-  /** {@inheritDoc findRegisteredMintByAddressOperation} */
-  findRegisteredMintByAddress(
-    input: FindRegisteredMintByAddressInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(findRegisteredMintByAddressOperation(input), options);
-  }
-
-  /** {@inheritDoc findBaseAssetByAddressOperation} */
-  findBaseAssetByAddress(
-    input: FindBaseAssetByAddressInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(findBaseAssetByAddressOperation(input), options);
   }
 }

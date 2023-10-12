@@ -4,17 +4,11 @@ import { rpcModule } from '../rpcModule';
 import { operationModule } from '../operationModule';
 import { programModule } from '../programModule';
 import { guestIdentity } from '../guestIdentity';
-import { collateralModule } from '../collateralModule';
 import { systemModule } from '../systemModule';
 import { tokenModule } from '../tokenModule';
 import { rfqModule } from '../rfqModule';
 import { protocolModule } from '../protocolModule';
-import { riskEngineModule } from '../riskEngineModule';
 import { accountModule } from '../accountModule';
-import { instrumentModule } from '../instrumentModule';
-import { psyoptionsEuropeanInstrumentModule } from '../psyoptionsEuropeanInstrumentModule';
-import { psyoptionsAmericanInstrumentModule } from '../psyoptionsAmericanInstrumentModule';
-import { spotInstrumentModule } from '../spotInstrumentModule';
 
 export const corePlugins = () => ({
   install(convergence: Convergence) {
@@ -31,16 +25,7 @@ export const corePlugins = () => ({
     convergence.use(systemModule());
     convergence.use(tokenModule());
     convergence.use(protocolModule());
-    convergence.use(collateralModule());
     convergence.use(rfqModule());
-    convergence.use(collateralModule());
-    convergence.use(riskEngineModule());
     convergence.use(accountModule());
-
-    // Integrations
-    convergence.use(instrumentModule());
-    convergence.use(spotInstrumentModule());
-    convergence.use(psyoptionsEuropeanInstrumentModule());
-    convergence.use(psyoptionsAmericanInstrumentModule());
   },
 });

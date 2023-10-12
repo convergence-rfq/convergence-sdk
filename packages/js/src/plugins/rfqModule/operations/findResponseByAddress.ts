@@ -9,7 +9,6 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { collateralMintCache } from '../../collateralModule';
 
 const Key = 'FindResponseByAddressOperation' as const;
 
@@ -71,12 +70,7 @@ export const findResponseByAddressOperationHandler: OperationHandler<FindRespons
         .rfqs()
         .findRfqByAddress({ address: responseAccount.data.rfq });
 
-      const collateralMint = await collateralMintCache.get(convergence);
-      const response = toResponse(
-        responseAccount,
-        collateralMint.decimals,
-        rfq.quoteAsset.getDecimals()
-      );
+      const response = toResponse(responseAccount, rfq);
       assertResponse(response);
 
       scope.throwIfCanceled();

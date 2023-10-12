@@ -1,6 +1,5 @@
 import { Confirmation as SolitaConfirmation } from '@convergence-rfq/rfq';
 import { COption, bignum } from '@convergence-rfq/beet';
-import { LEG_MULTIPLIER_DECIMALS } from '../constants';
 import {
   ResponseSide,
   fromSolitaQuoteSide,
@@ -10,20 +9,21 @@ import { addDecimals, removeDecimals } from '@/utils/conversions';
 
 export interface Confirmation {
   readonly side: ResponseSide;
-  readonly overrideLegMultiplier?: number;
+  readonly overrideLegAmount?: number;
 }
 
 export function fromSolitaConfirmation(
-  confirmation: SolitaConfirmation
+  confirmation: SolitaConfirmation,
+  legAmountDecimals: number
 ): Confirmation {
-  if (confirmation.overrideLegMultiplierBps) {
-    const overrideLegMultiplier = removeDecimals(
-      confirmation.overrideLegMultiplierBps,
-      LEG_MULTIPLIER_DECIMALS
+  if (confirmation.overrideLegAmount) {
+    const overrideLegAmount = removeDecimals(
+      confirmation.overrideLegAmount,
+      legAmountDecimals
     );
     return {
       side: fromSolitaQuoteSide(confirmation.side),
-      overrideLegMultiplier,
+      overrideLegAmount,
     };
   }
   return {
@@ -31,14 +31,18 @@ export function fromSolitaConfirmation(
   };
 }
 
-export function toSolitaConfirmation(confirmation: Confirmation) {
-  if (confirmation.overrideLegMultiplier) {
-    const overrideLegMultiplierBps = toSolitaOverrideLegMultiplierBps(
-      confirmation.overrideLegMultiplier
+export function toSolitaConfirmation(
+  confirmation: Confirmation,
+  legAmountDecimals: number
+) {
+  if (confirmation.overrideLegAmount) {
+    const overrideLegAmount = toSolitaOverrideLegAmount(
+      confirmation.overrideLegAmount,
+      legAmountDecimals
     );
     return {
       side: toSolitaQuoteSide(confirmation.side),
-      overrideLegMultiplierBps,
+      overrideLegAmount,
     };
   }
   return {
@@ -46,8 +50,9 @@ export function toSolitaConfirmation(confirmation: Confirmation) {
   };
 }
 
-export function toSolitaOverrideLegMultiplierBps(
-  oveerideLegMultiplier: number
+export function toSolitaOverrideLegAmount(
+  oveerideLegMultiplier: number,
+  legAmountDecimals: number
 ): COption<bignum> {
-  return addDecimals(oveerideLegMultiplier, LEG_MULTIPLIER_DECIMALS);
+  return addDecimals(oveerideLegMultiplier, legAmountDecimals);
 }

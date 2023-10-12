@@ -2,18 +2,16 @@ import { expect } from 'expect';
 import { PublicKey } from '@solana/web3.js';
 
 import { createUserCvg, generatePk } from '../helpers';
-import { CTX, BASE_MINT_DECIMALS, BASE_MINT_BTC_PK } from '../constants';
+import { CTX, BASE_MINT_BTC_PK } from '../constants';
 import { token } from '../../src';
 
 describe('unit.token', () => {
   const cvg = createUserCvg('dao');
 
   it('create mint', async () => {
-    const { mint } = await cvg
-      .tokens()
-      .createMint({ decimals: BASE_MINT_DECIMALS });
+    const { mint } = await cvg.tokens().createMint({ decimals: 3 });
     expect(mint.mintAuthorityAddress).toEqual(cvg.identity().publicKey);
-    expect(mint.decimals).toEqual(BASE_MINT_DECIMALS);
+    expect(mint.decimals).toEqual(3);
   });
 
   it('find mint', async () => {
@@ -21,7 +19,7 @@ describe('unit.token', () => {
       .tokens()
       .findMintByAddress({ address: BASE_MINT_BTC_PK });
     expect(mint.address.toBase58()).toEqual(CTX.baseMintBTC);
-    expect(mint.decimals.toString()).toEqual(BASE_MINT_DECIMALS.toString());
+    expect(mint.decimals.toString()).toEqual('8');
   });
 
   it('mint', async () => {

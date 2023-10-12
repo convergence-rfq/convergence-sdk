@@ -1,9 +1,7 @@
 import { Buffer } from 'buffer';
-import { Sha256 } from '@aws-crypto/sha256-js';
 import {
   FixedSize as SolitaFixedSize,
   OrderType as SolitaOrderType,
-  QuoteAsset,
   QuoteRecord,
   FixedSizeRecord,
   Quote,
@@ -11,10 +9,8 @@ import {
 } from '@convergence-rfq/rfq';
 import * as anchor from '@project-serum/anchor';
 import * as beet from '@convergence-rfq/beet';
-import * as beetSolana from '@convergence-rfq/beet-solana';
 
 import {
-  createSerializerFromFixableBeetArgsStruct,
   createSerializerFromFixableBeet,
   createSerializerFromFixedSizeBeet,
   Pda,
@@ -40,52 +36,31 @@ function toLittleEndian(value: number, bytes: number) {
  */
 export class RfqPdasClient {
   constructor(protected readonly convergence: Convergence) {}
-  /** Finds the PDA of a given mint. */
-  mintInfo({ mint }: MintInfoInput): Pda {
-    const programId = this.programId();
-    return Pda.find(programId, [
-      Buffer.from('mint_info', 'utf8'),
-      mint.toBuffer(),
-    ]);
-  }
-
-  /** Finds the PDA of a given quote asset. */
-  quote({ quoteAsset }: QuoteInput): Pda {
-    const programId = this.programId();
-    return Pda.find(programId, [
-      Buffer.from('mint_info', 'utf8'),
-      quoteAsset.instrumentData,
-    ]);
-  }
 
   /** Finds the PDA of an RFQ. */
   rfq({
     taker,
-    legsHash,
-    orderType,
+    legAsset,
+    legAssetDecimals,
     quoteAsset,
+    quoteAssetDecimals,
+    orderType,
     fixedSize,
     activeWindow,
-    settlingWindow,
     recentTimestamp,
   }: RfqInput): Pda {
     const programId = this.programId();
 
-    const hash = new Sha256();
-    hash.update(serializeQuoteAssetData(quoteAsset));
-    const quoteHash = hash.digestSync();
-
     return Pda.find(programId, [
       Buffer.from('rfq', 'utf8'),
       taker.toBuffer(),
-      legsHash,
       serializeOrderTypeData(toSolitaOrderType(orderType)),
-      quoteHash,
       serializeFixedSizeData(
-        toSolitaFixedSize(fixedSize, quoteAsset.instrumentDecimals)
+        toSolitaFixedSize(fixedSize, legAssetDecimals, quoteAssetDecimals)
       ),
+      legAsset.toBuffer(),
+      quoteAsset.toBuffer(),
       toLittleEndian(activeWindow, 4),
-      toLittleEndian(settlingWindow, 4),
       recentTimestamp.toArrayLike(Buffer, 'le', 8),
     ]);
   }
@@ -100,6 +75,22 @@ export class RfqPdasClient {
       serializeOptionQuote(bid),
       serializeOptionQuote(ask),
       toLittleEndian(pdaDistinguisher, 2),
+    ]);
+  }
+
+  legEscrow(response: PublicKey): Pda {
+    const programId = this.programId();
+    return Pda.find(programId, [
+      Buffer.from('leg_escrow', 'utf8'),
+      response.toBuffer(),
+    ]);
+  }
+
+  quoteEscrow(response: PublicKey): Pda {
+    const programId = this.programId();
+    return Pda.find(programId, [
+      Buffer.from('quote_escrow', 'utf8'),
+      response.toBuffer(),
     ]);
   }
 
@@ -133,7 +124,7 @@ const serializeQuoteData = (quote: Quote): Buffer => {
       new beet.FixableBeetArgsStruct<QuoteRecord['Standard']>(
         [
           ['priceQuote', priceQuoteBeet],
-          ['legsMultiplierBps', beet.u64],
+          ['legAmount', beet.u64],
         ],
         'QuoteRecord["Standard"]'
       ),
@@ -153,22 +144,6 @@ const serializeQuoteData = (quote: Quote): Buffer => {
   return quoteSerializer.serialize(quote);
 };
 
-const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
-  const quoteAssetBeet = new beet.FixableBeetArgsStruct<QuoteAsset>(
-    [
-      ['instrumentProgram', beetSolana.publicKey],
-      ['instrumentData', beet.bytes],
-      ['instrumentDecimals', beet.u8],
-    ],
-    'QuoteAsset'
-  );
-
-  const quoteAssetSerializer =
-    createSerializerFromFixableBeetArgsStruct(quoteAssetBeet);
-
-  return quoteAssetSerializer.serialize(quoteAsset);
-};
-
 const serializeFixedSizeData = (fixedSize: SolitaFixedSize): Buffer => {
   const fixedSizeBeet = beet.dataEnum<FixedSizeRecord>([
     [
@@ -182,7 +157,7 @@ const serializeFixedSizeData = (fixedSize: SolitaFixedSize): Buffer => {
     [
       'BaseAsset',
       new beet.BeetArgsStruct<FixedSizeRecord['BaseAsset']>(
-        [['legsMultiplierBps', beet.u64]],
+        [['legAmount', beet.u64]],
         'FixedSizeRecord["BaseAsset"]'
       ),
     ],
@@ -201,34 +176,22 @@ const serializeFixedSizeData = (fixedSize: SolitaFixedSize): Buffer => {
   return fixedSizeSerializer.serialize(fixedSize);
 };
 
-type MintInfoInput = {
-  /** The address of the mint account. */
-  mint: PublicKey;
-
-  /** An optional set of programs that override the registered ones. */
-  programs?: Program[];
-};
-
-type QuoteInput = {
-  /** The quote asset. */
-  quoteAsset: QuoteAsset;
-
-  /** An optional set of programs that override the registered ones. */
-  programs?: Program[];
-};
-
 type RfqInput = {
   /** The taker's public key address. */
   taker: PublicKey;
 
-  /** The SHA256 hash of the serialized legs of the RFQ. */
-  legsHash: Buffer;
+  /** Mint address for leg asset */
+  legAsset: PublicKey;
+
+  legAssetDecimals: number;
+
+  /** Mint address for quote asset */
+  quoteAsset: PublicKey;
+
+  quoteAssetDecimals: number;
 
   /** The order type of the Rfq. */
   orderType: OrderType;
-
-  /** The quote asset of the Rfq. */
-  quoteAsset: QuoteAsset;
 
   /**
    * The type of the Rfq, specifying whether we fix the number of
@@ -240,15 +203,8 @@ type RfqInput = {
   /** The number of seconds during which this Rfq can be responded to. */
   activeWindow: number;
 
-  /**
-   * The number of seconds within which this Rfq must be settled
-   *  after starting the settlement process.
-   * */
-  settlingWindow: number;
-
   /** A recent timestamp. */
   recentTimestamp: anchor.BN;
-  // recentTimestamp: number;
 };
 
 type ResponseInput = {

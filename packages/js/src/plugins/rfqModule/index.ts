@@ -8,7 +8,6 @@ export * from './RfqBuildersClient';
 export * from './RfqClient';
 export * from './RfqPdasClient';
 export * from './operations';
-export * from './pdas';
 export * from './plugin';
 export * from './program';
 export * from './constants';
