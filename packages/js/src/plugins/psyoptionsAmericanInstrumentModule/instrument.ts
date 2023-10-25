@@ -66,8 +66,8 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
     readonly side: LegSide,
-    readonly underlyingAssetMint: PublicKey,
-    readonly stableAssetMint: PublicKey
+    readonly underlyingAssetMint?: PublicKey,
+    readonly stableAssetMint?: PublicKey
   ) {}
 
   getAmount = () => this.amount;
@@ -76,6 +76,11 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   getSide = () => this.side;
 
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
+    if (!this.underlyingAssetMint)
+      throw Error('Underlying asset mint is not defined');
+
+    if (!this.stableAssetMint) throw Error('Stable asset mint is not defined');
+
     const optionMarketIxs = await getPsyAmericanMarketIxs(
       this.convergence,
       this.underlyingAssetMint,
@@ -87,10 +92,6 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       this.expirationTimestamp
     );
     return optionMarketIxs;
-  }
-
-  getBaseAssetMint(): PublicKey {
-    return this.underlyingAssetMint;
   }
 
   getExchangeAssetMint(): PublicKey {
@@ -173,6 +174,10 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   }
 
   getValidationAccounts() {
+    if (!this.underlyingAssetMint)
+      throw Error('Underlying asset mint is not defined');
+    if (!this.stableAssetMint) throw Error('Stable asset mint is not defined');
+
     const mintInfoPda = this.convergence
       .rfqs()
       .pdas()
@@ -238,10 +243,10 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 }
 
 export const psyoptionsAmericanInstrumentParser = {
-  async parseFromLeg(
+  parseFromLeg(
     convergence: Convergence,
     leg: Leg
-  ): Promise<PsyoptionsAmericanInstrument> {
+  ): PsyoptionsAmericanInstrument {
     const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
     const [
       {
@@ -256,11 +261,6 @@ export const psyoptionsAmericanInstrumentParser = {
       },
     ] = psyoptionsAmericanInstrumentDataSerializer.deserialize(
       Buffer.from(instrumentData)
-    );
-
-    const optionMeta = await PsyoptionsAmericanInstrument.fetchMeta(
-      convergence,
-      metaKey
     );
 
     return new PsyoptionsAmericanInstrument(
@@ -278,9 +278,7 @@ export const psyoptionsAmericanInstrumentParser = {
       metaKey,
       baseAssetIndex,
       removeDecimals(instrumentAmount, PsyoptionsAmericanInstrument.decimals),
-      fromSolitaLegSide(side),
-      optionMeta.underlyingAssetMint,
-      optionMeta.quoteAssetMint
+      fromSolitaLegSide(side)
     );
   },
 };

@@ -6,7 +6,7 @@ import { Convergence } from '../../Convergence';
 import { LegSide } from '../rfqModule/models/LegSide';
 
 export interface LegInstrumentParser {
-  parseFromLeg(convergence: Convergence, leg: Leg): Promise<LegInstrument>;
+  parseFromLeg(convergence: Convergence, leg: Leg): LegInstrument;
 }
 
 export type CreateOptionInstrumentsResult = TransactionInstruction[];
@@ -21,7 +21,6 @@ export interface LegInstrument {
   getExchangeAssetMint(): PublicKey;
   getValidationAccounts(): AccountMeta[];
   getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult>;
-  getBaseAssetMint(): PublicKey;
 }
 
 // TODO add registration of quote instruments

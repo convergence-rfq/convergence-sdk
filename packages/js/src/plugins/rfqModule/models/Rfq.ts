@@ -104,13 +104,9 @@ export const toRfq = async (
   );
   const collateralMint = await collateralMintCache.get(convergence);
   const collateralDecimals = collateralMint.decimals;
-
-  const legs: LegInstrument[] = [];
-
-  for (const leg of account.data.legs) {
-    const legInstrument = await convergence.parseLegInstrument(leg);
-    legs.push(legInstrument);
-  }
+  const legs = account.data.legs.map((leg) =>
+    convergence.parseLegInstrument(leg)
+  );
 
   return {
     model: 'rfq',

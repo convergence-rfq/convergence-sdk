@@ -26,7 +26,7 @@ export const instrumentModule = (): ConvergencePlugin => ({
       legInstrumentParsers.push([programAddress, factory]);
     };
 
-    convergence.parseLegInstrument = async function (leg: SolitaLeg) {
+    convergence.parseLegInstrument = function (leg: SolitaLeg) {
       const factory = legInstrumentParsers.find(([key]) =>
         leg.instrumentProgram.equals(key)
       )?.[1];
@@ -48,7 +48,7 @@ declare module '../../Convergence' {
       programAddress: PublicKey,
       factory: LegInstrumentParser
     ): void;
-    parseLegInstrument(leg: SolitaLeg): Promise<LegInstrument>;
+    parseLegInstrument(leg: SolitaLeg): LegInstrument;
   }
 }
 

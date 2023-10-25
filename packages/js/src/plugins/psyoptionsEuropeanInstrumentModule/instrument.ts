@@ -114,9 +114,9 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
     readonly side: LegSide,
-    readonly underlyingAssetMint: PublicKey,
-    readonly stableAssetMint: PublicKey,
-    readonly oracleAddress: PublicKey
+    readonly underlyingAssetMint?: PublicKey,
+    readonly stableAssetMint?: PublicKey,
+    readonly oracleAddress?: PublicKey
   ) {}
 
   getBaseAssetIndex = () => this.baseAssetIndex;
@@ -124,6 +124,15 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
   getDecimals = () => PsyoptionsEuropeanInstrument.decimals;
   getSide = () => this.side;
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
+    if (!this.underlyingAssetMint) {
+      throw Error('Underlying asset mint is undefined');
+    }
+    if (!this.stableAssetMint) {
+      throw Error('Stable asset mint is undefined');
+    }
+    if (!this.oracleAddress) {
+      throw Error('Oracle address is undefined');
+    }
     const optionMarketIxs = await getPsyEuropeanMarketIxs(
       this.convergence,
       this.underlyingAssetMint,
@@ -141,9 +150,6 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
   getExchangeAssetMint(): PublicKey {
     return this.optionMint;
-  }
-  getBaseAssetMint(): PublicKey {
-    return this.underlyingAssetMint;
   }
 
   static async create(
@@ -211,6 +217,8 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 
   /** Helper method to get validation accounts for a Psyoptions European instrument. */
   getValidationAccounts() {
+    if (!this.underlyingAssetMint)
+      throw Error('Underlying asset mint is undefined');
     return [
       {
         pubkey: this.getProgramId(),
@@ -274,10 +282,10 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
 }
 
 export const psyoptionsEuropeanInstrumentParser = {
-  async parseFromLeg(
+  parseFromLeg(
     convergence: Convergence,
     leg: Leg
-  ): Promise<PsyoptionsEuropeanInstrument> {
+  ): PsyoptionsEuropeanInstrument {
     const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
     const [
       {
@@ -292,11 +300,6 @@ export const psyoptionsEuropeanInstrumentParser = {
       },
     ] = psyoptionsEuropeanInstrumentDataSerializer.deserialize(
       Buffer.from(instrumentData)
-    );
-
-    const optionMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
-      convergence,
-      metaKey
     );
 
     return new PsyoptionsEuropeanInstrument(
@@ -314,10 +317,7 @@ export const psyoptionsEuropeanInstrumentParser = {
       metaKey,
       baseAssetIndex,
       removeDecimals(instrumentAmount, PsyoptionsEuropeanInstrument.decimals),
-      fromSolitaLegSide(side),
-      optionMeta.underlyingMint,
-      optionMeta.stableMint,
-      optionMeta.oracle
+      fromSolitaLegSide(side)
     );
   },
 };

@@ -49,9 +49,6 @@ export class SpotLegInstrument implements LegInstrument {
   async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
     return [];
   }
-  getBaseAssetMint(): PublicKey {
-    return this.mintAddress;
-  }
 
   getExchangeAssetMint(): PublicKey {
     return this.mintAddress;
