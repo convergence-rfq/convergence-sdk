@@ -404,9 +404,11 @@ export const createRfq = async (
   cvg: Convergence,
   amount: number,
   orderType: OrderType,
+  activeWindow?: number,
   rfqType: 'open' | 'fixed-base' | 'fixed-quote' = 'fixed-base',
   quoteMintPk = QUOTE_MINT_PK,
   baseMintPk = BASE_MINT_BTC_PK
+  // 10 minutes
 ) => {
   let instrumentAmount = 1;
   let fixedSizeAmount = 1;
@@ -429,6 +431,7 @@ export const createRfq = async (
     orderType,
     fixedSize: { type: rfqType, amount: fixedSizeAmount },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
+    activeWindow,
   });
   return { rfq, response };
 };
@@ -438,6 +441,7 @@ export const respondToRfq = async (
   rfq: Rfq,
   bid?: number,
   ask?: number,
+  responseExpirationTimestamp?: number,
   legsMultiplier?: number
 ) => {
   if (!bid && !ask) {
@@ -448,6 +452,7 @@ export const respondToRfq = async (
     rfq: rfq.address,
     bid: bid ? { price: bid, legsMultiplier } : undefined,
     ask: ask ? { price: ask, legsMultiplier } : undefined,
+    expirationTimestamp: responseExpirationTimestamp,
   });
 };
 

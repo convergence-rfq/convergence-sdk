@@ -1,6 +1,7 @@
 import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 
+import BN from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
 import { Convergence } from '../../../Convergence';
@@ -98,6 +99,11 @@ export type RespondToRfqInput = {
    * The optional ask side of the response.
    */
   ask?: Quote;
+
+  /**
+   * The optional response expirationTimestamp in milliseconds.
+   */
+  expirationTimestamp?: number;
 
   /**
    * The address of the RFQ account.
@@ -239,6 +245,7 @@ export const respondToRfqBuilder = async (
       user: maker.publicKey,
       programs,
     }),
+    expirationTimestamp,
   } = params;
 
   if (!bid && !ask) {
@@ -246,6 +253,15 @@ export const respondToRfqBuilder = async (
   }
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+
+  let expirationTimestampBn: BN;
+  if (!expirationTimestamp) {
+    const rfqExpirationTimestamp =
+      rfqModel.creationTimestamp / 1_000 + rfqModel.activeWindow;
+    expirationTimestampBn = new BN(rfqExpirationTimestamp);
+  } else {
+    expirationTimestampBn = new BN(expirationTimestamp / 1_000);
+  }
 
   const { response, pdaDistinguisher } =
     await getNextResponsePdaAndDistinguisher(
@@ -323,6 +339,7 @@ export const respondToRfqBuilder = async (
             bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
             ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
             pdaDistinguisher,
+            expirationTimestamp: expirationTimestampBn,
           }
         ),
         signers: [maker],

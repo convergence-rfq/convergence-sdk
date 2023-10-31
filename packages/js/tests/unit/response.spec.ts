@@ -219,4 +219,24 @@ describe('unit.response', () => {
       expect(r.rfq.toBase58()).toEqual(rfq0.address.toBase58())
     );
   });
+
+  it('Cannot confirm Response if response is expired', async () => {
+    const rfq = await createRfq(takerCvg, amount0, 'buy', 3);
+
+    const res = await respondToRfq(
+      makerCvg,
+      rfq.rfq,
+      undefined,
+      amount1,
+      Date.now() / 1_000 + 2
+    );
+
+    expect(
+      await makerCvg.rfqs().confirmResponse({
+        response: res.rfqResponse.address,
+        rfq: rfq.rfq.address,
+        side: 'ask',
+      })
+    ).toThrowError('Response is expired');
+  });
 });
