@@ -101,7 +101,7 @@ export type RespondToRfqInput = {
   ask?: Quote;
 
   /**
-   * The optional response expirationTimestamp in milliseconds.
+   * The optional response expirationTimestamp in seconds.
    */
   expirationTimestamp?: number;
 
@@ -254,13 +254,22 @@ export const respondToRfqBuilder = async (
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
+  const rfqExpirationTimestampSeconds =
+    rfqModel.creationTimestamp / 1_000 + rfqModel.activeWindow;
+
   let expirationTimestampBn: BN;
+
   if (!expirationTimestamp) {
-    const rfqExpirationTimestamp =
-      rfqModel.creationTimestamp / 1_000 + rfqModel.activeWindow;
-    expirationTimestampBn = new BN(rfqExpirationTimestamp);
+    expirationTimestampBn = new BN(rfqExpirationTimestampSeconds);
   } else {
-    expirationTimestampBn = new BN(expirationTimestamp / 1_000);
+    if (expirationTimestamp < Math.floor(Date.now() / 1_000)) {
+      throw new Error('Expiration timestamp must be in the future');
+    }
+    if (expirationTimestamp > rfqExpirationTimestampSeconds) {
+      throw new Error('Response expiration must be less than RFQ expiration');
+    }
+
+    expirationTimestampBn = new BN(expirationTimestamp);
   }
 
   const { response, pdaDistinguisher } =

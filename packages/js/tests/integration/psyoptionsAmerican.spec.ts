@@ -124,6 +124,7 @@ describe('integration.psyoptionsAmerican', () => {
       rfq,
       undefined,
       150_123,
+      undefined,
       5
     );
     expect(rfqResponse).toHaveProperty('address');
@@ -209,6 +210,7 @@ describe('integration.psyoptionsAmerican', () => {
       rfq,
       220_111,
       150_123,
+      undefined,
       5
     );
     expect(rfqResponse).toHaveProperty('address');

@@ -121,6 +121,7 @@ describe('integration.psyoptionsEuropean', () => {
       rfq,
       undefined,
       150_123,
+      undefined,
       5
     );
     expect(rfqResponse).toHaveProperty('address');
@@ -208,6 +209,7 @@ describe('integration.psyoptionsEuropean', () => {
       rfq,
       220_111,
       150_123,
+      undefined,
       5
     );
     expect(rfqResponse).toHaveProperty('address');
@@ -289,6 +291,7 @@ describe('integration.psyoptionsEuropean', () => {
       makerCvg,
       rfq,
       150_123,
+      undefined,
       undefined,
       5
     );

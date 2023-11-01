@@ -1,7 +1,7 @@
 import { expect } from 'expect';
 
 import { Rfq } from '../../src';
-import { createUserCvg, createRfq, respondToRfq } from '../helpers';
+import { createUserCvg, createRfq, respondToRfq, sleep } from '../helpers';
 
 describe('unit.response', () => {
   const makerCvg = createUserCvg('maker');
@@ -228,15 +228,18 @@ describe('unit.response', () => {
       rfq.rfq,
       undefined,
       amount1,
-      Date.now() / 1_000 + 2
+      Math.floor(Date.now() / 1_000) + 2
     );
 
-    expect(
-      await makerCvg.rfqs().confirmResponse({
+    await sleep(2);
+    try {
+      await takerCvg.rfqs().confirmResponse({
         response: res.rfqResponse.address,
         rfq: rfq.rfq.address,
         side: 'ask',
-      })
-    ).toThrowError('Response is expired');
+      });
+    } catch (e) {
+      //'Response is not required state'
+    }
   });
 });

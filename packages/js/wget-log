@@ -1,0 +1,6 @@
+--2023-11-01 18:05:29--  https://gateway.test.vertexprotocol.com/v1/query?type=market_price
+Resolving gateway.test.vertexprotocol.com (gateway.test.vertexprotocol.com)... 2606:4700:3108::ac42:28fd, 2606:4700:3108::ac42:2b03, 172.66.43.3, ...
+Connecting to gateway.test.vertexprotocol.com (gateway.test.vertexprotocol.com)|2606:4700:3108::ac42:28fd|:443... connected.
+HTTP request sent, awaiting response... 400 Bad Request
+2023-11-01 18:05:29 ERROR 400: Bad Request.
+
