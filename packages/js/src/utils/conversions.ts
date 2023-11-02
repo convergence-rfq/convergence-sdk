@@ -50,8 +50,20 @@ export const addDecimals = (value: number, decimals: number = 0): BN => {
  * @param timestamp {bignum} Solita timestamp
  * @returns {number} timestamp in milliseconds
  */
-export function convertTimestamp(timestamp: bignum): number {
+export function convertTimestampToMilliSeconds(
+  timestamp: bignum | number
+): number {
+  if (typeof timestamp === 'number') {
+    return timestamp * 1_000;
+  }
   return Number(timestamp) * 1_000;
+}
+
+export function convertTimestampToSeconds(timestamp: bignum | number): number {
+  if (typeof timestamp === 'number') {
+    return Math.floor(timestamp / 1_000);
+  }
+  return Math.floor(Number(timestamp) / 1_000);
 }
 
 /**

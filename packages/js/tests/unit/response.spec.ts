@@ -1,6 +1,6 @@
 import { expect } from 'expect';
 
-import { Rfq } from '../../src';
+import { Rfq, convertTimestampToSeconds } from '../../src';
 import {
   createUserCvg,
   createRfq,
@@ -234,7 +234,7 @@ describe('unit.response', () => {
       rfq.rfq,
       undefined,
       amount1,
-      Math.floor(Date.now() / 1_000) + 2
+      convertTimestampToSeconds(Date.now()) + 2
     );
 
     await sleep(2);

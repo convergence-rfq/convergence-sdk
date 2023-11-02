@@ -18,6 +18,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
+import { convertTimestampToSeconds } from '@/utils';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -255,14 +256,17 @@ export const respondToRfqBuilder = async (
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
 
   const rfqExpirationTimestampSeconds =
-    rfqModel.creationTimestamp / 1_000 + rfqModel.activeWindow;
+    convertTimestampToSeconds(rfqModel.creationTimestamp) +
+    rfqModel.activeWindow;
+
+  const currentTimestampSeconds = convertTimestampToSeconds(Date.now());
 
   let expirationTimestampBn: BN;
 
   if (!expirationTimestamp) {
     expirationTimestampBn = new BN(rfqExpirationTimestampSeconds);
   } else {
-    if (expirationTimestamp < Math.floor(Date.now() / 1_000)) {
+    if (expirationTimestamp < currentTimestampSeconds) {
       throw new Error('Expiration timestamp must be in the future');
     }
     if (expirationTimestamp > rfqExpirationTimestampSeconds) {
