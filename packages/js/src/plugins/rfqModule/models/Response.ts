@@ -34,6 +34,9 @@ export type Response = {
   /** The timestamp at which this response was created. */
   readonly creationTimestamp: number;
 
+  /** The timestamp at which this response will expire. */
+  readonly expirationTimestamp: number;
+
   /** The bid required for sell and optionally two-way order types. */
   readonly bid: Quote | null;
 
@@ -90,6 +93,7 @@ export const toResponse = (
   maker: account.data.maker,
   rfq: account.data.rfq,
   creationTimestamp: Number(account.data.creationTimestamp) * 1_000,
+  expirationTimestamp: Number(account.data.expirationTimestamp) * 1_000,
   makerCollateralLocked: removeDecimals(
     account.data.makerCollateralLocked,
     collateralDecimals

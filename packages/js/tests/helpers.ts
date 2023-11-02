@@ -668,3 +668,17 @@ export const createEuropeanIronCondor = async (
 
   return { rfq };
 };
+
+export const expectError = async (promise: Promise<any>, errorText: string) => {
+  try {
+    await promise;
+    throw new Error('No error thrown!');
+  } catch (e) {
+    if (
+      !e?.message.includes(errorText) &&
+      !e?.logs?.some((e: string) => e.includes(errorText))
+    ) {
+      throw e;
+    }
+  }
+};

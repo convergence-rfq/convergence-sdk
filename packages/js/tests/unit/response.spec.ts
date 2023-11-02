@@ -1,7 +1,13 @@
 import { expect } from 'expect';
 
 import { Rfq } from '../../src';
-import { createUserCvg, createRfq, respondToRfq, sleep } from '../helpers';
+import {
+  createUserCvg,
+  createRfq,
+  respondToRfq,
+  sleep,
+  expectError,
+} from '../helpers';
 
 describe('unit.response', () => {
   const makerCvg = createUserCvg('maker');
@@ -232,14 +238,23 @@ describe('unit.response', () => {
     );
 
     await sleep(2);
-    try {
-      await takerCvg.rfqs().confirmResponse({
+
+    await expectError(
+      takerCvg.rfqs().confirmResponse({
         response: res.rfqResponse.address,
         rfq: rfq.rfq.address,
         side: 'ask',
-      });
-    } catch (e) {
-      //'Response is not required state'
-    }
+      }),
+      'Response is expired'
+    );
+
+    await makerCvg.rfqs().unlockResponseCollateral({
+      response: res.rfqResponse.address,
+    });
+
+    await makerCvg.rfqs().cleanUpResponse({
+      response: res.rfqResponse.address,
+      maker: makerCvg.identity().publicKey,
+    });
   });
 });
