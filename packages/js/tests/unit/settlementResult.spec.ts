@@ -89,6 +89,7 @@ describe('unit.settlementResult', () => {
       takerCvg,
       quoteAmount,
       'buy',
+      undefined,
       'fixed-quote'
     );
     expect(rfq).toHaveProperty('address');
@@ -135,13 +136,20 @@ describe('unit.settlementResult', () => {
     const baseAmount = 1;
     const quoteAmount = 12_300.9783;
 
-    const { rfq } = await createRfq(takerCvg, baseAmount, 'buy', 'open');
+    const { rfq } = await createRfq(
+      takerCvg,
+      baseAmount,
+      'buy',
+      undefined,
+      'open'
+    );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
       undefined,
       quoteAmount,
+      undefined,
       7.456
     );
     expect(rfqResponse).toHaveProperty('address');
@@ -181,12 +189,19 @@ describe('unit.settlementResult', () => {
     const baseAmount = 1;
     const quoteAmount = 70_999.97;
 
-    const { rfq } = await createRfq(takerCvg, baseAmount, 'sell', 'open');
+    const { rfq } = await createRfq(
+      takerCvg,
+      baseAmount,
+      'sell',
+      undefined,
+      'open'
+    );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
       quoteAmount,
+      undefined,
       undefined,
       8.456123456
     );

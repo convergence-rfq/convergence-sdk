@@ -1,5 +1,12 @@
 # @convergence-rfq/sdk
 
+## 4.5.17
+
+### Patch Changes
+
+- Add expirationTimestamp to Response Model
+  Update CPL solita packages to version 2.2.14
+
 ## 4.5.16
 
 ### Patch Changes
