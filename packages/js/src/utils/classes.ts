@@ -1,6 +1,6 @@
 import { AccountMeta, TransactionInstruction } from '@solana/web3.js';
 import { TransactionBuilder } from './TransactionBuilder';
-import { Rfq } from '@/plugins/rfqModule';
+import { Response, Rfq } from '@/plugins/rfqModule';
 
 export class InstructionUniquenessTracker {
   constructor(public readonly IxArray: TransactionInstruction[]) {
@@ -74,5 +74,17 @@ export class RfqTimers {
 
   isRfqSettlementWindowElapsed(): boolean {
     return Date.now() >= this.timeStampSettlement.getTime();
+  }
+}
+
+export class ResponseTimers {
+  public timestampExpiry: Date;
+
+  constructor(response: Response) {
+    this.timestampExpiry = new Date(response.expirationTimestamp);
+  }
+
+  isResponseExpired(): boolean {
+    return Date.now() >= this.timestampExpiry.getTime();
   }
 }

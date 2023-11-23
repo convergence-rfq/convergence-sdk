@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.18
+
+### Patch Changes
+
+- Update getResponseStateAndAction to account for responseExpiration
+
 ## 4.5.17
 
 ### Patch Changes
