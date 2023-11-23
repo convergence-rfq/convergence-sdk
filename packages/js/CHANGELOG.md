@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.19
+
+### Patch Changes
+
+- Fresh Deployment with new program Ids
+
 ## 4.5.18
 
 ### Patch Changes
