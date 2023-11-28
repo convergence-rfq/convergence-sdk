@@ -227,7 +227,7 @@ describe('unit.response', () => {
   });
 
   it('Cannot confirm Response if response is expired', async () => {
-    const rfq = await createRfq(takerCvg, amount0, 'buy', 3);
+    const rfq = await createRfq(takerCvg, amount0, 'buy', 10);
 
     const res = await respondToRfq(
       makerCvg,

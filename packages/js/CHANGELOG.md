@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.20
+
+### Patch Changes
+
+- Update CPL Solita packages to version - 2.3.0
+
 ## 4.5.19
 
 ### Patch Changes
