@@ -1,5 +1,85 @@
 # @convergence-rfq/sdk
 
+## 4.5.20
+
+### Patch Changes
+
+- Update CPL Solita packages to version - 2.3.0
+
+## 4.5.19
+
+### Patch Changes
+
+- Fresh Deployment with new program Ids
+
+## 4.5.18
+
+### Patch Changes
+
+- Update getResponseStateAndAction to account for responseExpiration
+
+## 4.5.17
+
+### Patch Changes
+
+- Add expirationTimestamp to Response Model
+  Update CPL solita packages to version 2.2.14
+
+## 4.5.16
+
+### Patch Changes
+
+- Update CPL solita packages to version 2.2.13
+
+## 4.5.15
+
+### Patch Changes
+
+- fix technical debt
+  handle american put options
+  handle duplicate atas creation
+
+## 4.5.14
+
+### Patch Changes
+
+- fix prepareSettlementLogic to handle transaction already processed error
+
+## 4.5.13
+
+### Patch Changes
+
+- handle blockheight issue popping in browser
+
+## 4.5.12
+
+### Patch Changes
+
+- fix BN error import
+
+## 4.5.11
+
+### Patch Changes
+
+- handle option market creation in createRfq logic
+  optimize prepareSettlement logic for single tx confirmation
+
+## 4.5.10
+
+### Patch Changes
+
+- refactor prepareSettlement logic to handle creation of atas and minting option tokens if required
+  add getTokenBalance operation to token module
+  add getRfqStateAndAction
+  add getResponseStateAndAction
+  fix cli-tests
+
+## 4.5.9
+
+### Patch Changes
+
+- CLI get-registered-mints now logs mint address and decimals
+
 ## 4.5.8
 
 ### Patch Changes

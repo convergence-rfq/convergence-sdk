@@ -1,5 +1,95 @@
 # @convergence-rfq/cli
 
+## 4.5.20
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.20
+
+## 4.5.19
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.19
+
+## 4.5.18
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.18
+
+## 4.5.17
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.17
+
+## 4.5.16
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.16
+
+## 4.5.15
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.15
+
+## 4.5.14
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.14
+
+## 4.5.13
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.13
+
+## 4.5.12
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.12
+
+## 4.5.11
+
+### Patch Changes
+
+- Updated dependencies [072f2ca1]
+  - @convergence-rfq/sdk@4.5.11
+
+## 4.5.10
+
+### Patch Changes
+
+- refactor prepareSettlement logic to handle creation of atas and minting option tokens if required
+  add getTokenBalance operation to token module
+  add getRfqStateAndAction
+  add getResponseStateAndAction
+  fix cli-tests
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.10
+
+## 4.5.9
+
+### Patch Changes
+
+- CLI get-registered-mints now logs mint address and decimals
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.9
+
 ## 4.5.8
 
 ### Patch Changes

@@ -1,6 +1,7 @@
 import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 
+import BN from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
 import { Convergence } from '../../../Convergence';
@@ -17,6 +18,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
+import { convertTimestampToSeconds } from '@/utils';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -98,6 +100,11 @@ export type RespondToRfqInput = {
    * The optional ask side of the response.
    */
   ask?: Quote;
+
+  /**
+   * The optional response expirationTimestamp in seconds.
+   */
+  expirationTimestamp?: number;
 
   /**
    * The address of the RFQ account.
@@ -239,6 +246,7 @@ export const respondToRfqBuilder = async (
       user: maker.publicKey,
       programs,
     }),
+    expirationTimestamp,
   } = params;
 
   if (!bid && !ask) {
@@ -246,6 +254,27 @@ export const respondToRfqBuilder = async (
   }
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+
+  const rfqExpirationTimestampSeconds =
+    convertTimestampToSeconds(rfqModel.creationTimestamp) +
+    rfqModel.activeWindow;
+
+  const currentTimestampSeconds = convertTimestampToSeconds(Date.now());
+
+  let expirationTimestampBn: BN;
+
+  if (!expirationTimestamp) {
+    expirationTimestampBn = new BN(rfqExpirationTimestampSeconds);
+  } else {
+    if (expirationTimestamp < currentTimestampSeconds) {
+      throw new Error('Expiration timestamp must be in the future');
+    }
+    if (expirationTimestamp > rfqExpirationTimestampSeconds) {
+      throw new Error('Response expiration must be less than RFQ expiration');
+    }
+
+    expirationTimestampBn = new BN(expirationTimestamp);
+  }
 
   const { response, pdaDistinguisher } =
     await getNextResponsePdaAndDistinguisher(
@@ -323,6 +352,7 @@ export const respondToRfqBuilder = async (
             bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
             ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
             pdaDistinguisher,
+            expirationTimestamp: expirationTimestampBn,
           }
         ),
         signers: [maker],

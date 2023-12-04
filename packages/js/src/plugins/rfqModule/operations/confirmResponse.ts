@@ -14,6 +14,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { Response } from '../models';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
 
@@ -181,13 +182,19 @@ export const confirmResponseBuilder = async (
     }),
   } = params;
 
+  const responseModel = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: response });
+
+  if (isResponseExpired(responseModel)) {
+    throw new Error('Response is expired');
+  }
+
   const { overrideLegMultiplier = null } = params;
   const overrideLegMultiplierBps =
     overrideLegMultiplier &&
     toSolitaOverrideLegMultiplierBps(overrideLegMultiplier);
-  const responseModel = await convergence
-    .rfqs()
-    .findResponseByAddress({ address: response });
+
   const makerCollateralInfo = convergence.collateral().pdas().collateralInfo({
     user: responseModel.maker,
     programs,
@@ -263,4 +270,8 @@ export const confirmResponseBuilder = async (
         key: 'confirmResponse',
       }
     );
+};
+
+const isResponseExpired = (response: Response): boolean => {
+  return Date.now() > response.expirationTimestamp;
 };
