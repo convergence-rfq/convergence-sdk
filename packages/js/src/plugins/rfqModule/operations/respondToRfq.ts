@@ -1,5 +1,5 @@
 import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, ComputeBudgetProgram, AccountMeta } from '@solana/web3.js';
 
 import BN from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -10,7 +10,6 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  Signer,
 } from '../../../types';
 import {
   TransactionBuilder,
@@ -20,6 +19,10 @@ import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
 import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 import { convertTimestampToSeconds } from '@/utils';
+import {
+  AdditionalResponseData,
+  prependWithProviderProgram,
+} from '@/plugins/printTradeModule';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -113,39 +116,9 @@ export type RespondToRfqInput = {
   rfq: PublicKey;
 
   /**
-   * The maker of the Response as a Signer.
-   *
-   * @defaultValue `convergence.identity()`
+   * Is sometimes required to pass for print trades
    */
-  maker?: Signer;
-
-  /**
-   * The protocol address.
-   *
-   * @defaultValue `convergence.protocol().pdas().protocol()`
-   */
-  protocol?: PublicKey;
-
-  /**
-   * Optional address of the taker collateral info account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
-   */
-  collateralInfo?: PublicKey;
-
-  /**
-   * Optional address of the maker collateral tokens account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralTokens({ user: maker.publicKey })`
-   */
-  collateralToken?: PublicKey;
-
-  /**
-   * Optional address of the risk engine account.
-   *
-   * @defaultValue `convergence.programs().getRiskEngine(programs)`
-   */
-  riskEngine?: PublicKey;
+  additionalData?: AdditionalResponseData;
 };
 
 /**
@@ -236,25 +209,39 @@ export const respondToRfqBuilder = async (
     rfq,
     bid = null,
     ask = null,
-    maker = convergence.identity(),
-    protocol = convergence.protocol().pdas().protocol(),
-    riskEngine = convergence.programs().getRiskEngine(programs).address,
-    collateralInfo = convergence.collateral().pdas().collateralInfo({
-      user: maker.publicKey,
-      programs,
-    }),
-    collateralToken = convergence.collateral().pdas().collateralToken({
-      user: maker.publicKey,
-      programs,
-    }),
     expirationTimestamp,
+    additionalData,
   } = params;
+  const maker = convergence.identity();
+  const protocol = convergence.protocol().pdas().protocol();
+  const riskEngine = convergence.programs().getRiskEngine(programs).address;
+  const collateralInfo = convergence.collateral().pdas().collateralInfo({
+    user: maker.publicKey,
+    programs,
+  });
+  const collateralToken = convergence.collateral().pdas().collateralToken({
+    user: maker.publicKey,
+    programs,
+  });
 
   if (!bid && !ask) {
     throw new Error('Must provide either a bid and/or ask');
   }
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+
+  let validateResponseAccounts: AccountMeta[] = [];
+  if (rfqModel.model === 'escrowRfq' && additionalData !== undefined) {
+    throw new Error(
+      'Escrow rfqs does not allow passing additional response data'
+    );
+  }
+  if (rfqModel.model === 'printTradeRfq') {
+    validateResponseAccounts = prependWithProviderProgram(
+      rfqModel.printTrade,
+      await rfqModel.printTrade.getValidateResponseAccounts(additionalData)
+    );
+  }
 
   const rfqExpirationTimestampSeconds =
     convertTimestampToSeconds(rfqModel.creationTimestamp) +
@@ -314,14 +301,17 @@ export const respondToRfqBuilder = async (
             protocol,
             riskEngine,
             maker: maker.publicKey,
-            anchorRemainingAccounts: riskEngineAccounts,
+            anchorRemainingAccounts: [
+              ...validateResponseAccounts,
+              ...riskEngineAccounts,
+            ],
           },
           {
             bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
             ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
             pdaDistinguisher,
             expirationTimestamp: expirationTimestampBn,
-            additionalData: Buffer.from([]),
+            additionalData: additionalData?.serialize() ?? Buffer.from([]),
           }
         ),
         signers: [maker],

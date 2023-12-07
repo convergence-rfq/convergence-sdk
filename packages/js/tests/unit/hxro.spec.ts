@@ -1,9 +1,9 @@
 import { expect } from 'expect';
-import { BN } from 'bn.js';
 
 import { Keypair } from '@solana/web3.js';
 import { createUserCvg, ensureHxroOperatorTRGInitialized } from '../helpers';
-import { HxroOptionInfo, HxroPrintTrade, HxroLeg, PublicKey } from '../../src';
+import { HxroPrintTrade, HxroLeg, PublicKey } from '../../src';
+import { CTX } from '../constants';
 
 describe('unit.hxro', () => {
   const cvgTaker = createUserCvg('taker');
@@ -21,10 +21,6 @@ describe('unit.hxro', () => {
   it('get hxro products', async () => {
     const results = await cvgTaker.hxro().fetchProducts();
 
-    // BN comparison fails without it
-    const optionProduct = results[1] as HxroOptionInfo;
-    optionProduct.strikePrice.exp = optionProduct.strikePrice.exp.toString();
-
     expect(results).toEqual([
       {
         productIndex: 0,
@@ -37,16 +33,10 @@ describe('unit.hxro', () => {
       {
         productIndex: 1,
         productAddress: new PublicKey(
-          '7a44aefJzrJ5t98s6vQqn53EobdCReaUiJoKSUVC77RK'
+          '8qBD1ZewtfoxNAy3E45f5fRtwQUhLku55cVVxT5cMPef'
         ),
         baseAssetIndex: 1,
-        instrumentType: 'option',
-        optionType: 1,
-        strikePrice: {
-          m: new BN(122345),
-          exp: '4',
-        },
-        expirationTimestamp: new BN(1748476800),
+        instrumentType: 'perp-future',
       },
     ]);
   });
@@ -67,7 +57,7 @@ describe('unit.hxro', () => {
 
     const products = await cvgTaker.hxro().fetchProducts();
     const { rfq } = await cvgTaker.rfqs().createPrintTrade({
-      printTrade: new HxroPrintTrade(cvgTaker, [
+      printTrade: new HxroPrintTrade(cvgTaker, CTX.hxroTakerTrg, [
         { amount: 1, side: 'long', productInfo: products[0] },
       ]),
       orderType: 'buy',

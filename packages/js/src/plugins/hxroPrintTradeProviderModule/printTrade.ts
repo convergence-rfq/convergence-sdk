@@ -3,9 +3,13 @@ import {
   optionCommonDataBeet,
 } from '@convergence-rfq/risk-engine';
 import BN from 'bn.js';
-import { Leg as SolitaLeg } from '@convergence-rfq/rfq';
+import {
+  Leg as SolitaLeg,
+  QuoteAsset as SolitaQuoteAsset,
+} from '@convergence-rfq/rfq';
 import dexterity from '@hxronetwork/dexterity-ts';
 import {
+  AdditionalResponseData,
   PrintTrade,
   PrintTradeLeg,
   PrintTradeParser,
@@ -30,12 +34,16 @@ import {
 import { removeDecimals } from '@/utils';
 
 export class HxroPrintTrade implements PrintTrade {
-  constructor(protected cvg: Convergence, protected legsInfo: HxroLegInput[]) {}
+  constructor(
+    protected cvg: Convergence,
+    protected takerTrg: PublicKey,
+    protected legsInfo: HxroLegInput[]
+  ) {}
 
   getPrintTradeProviderProgramId = () =>
     this.cvg.programs().getHxroPrintTradeProvider().address;
   getLegs = () => this.legsInfo.map((legInfo) => new HxroLeg(legInfo));
-  getQuote = () => new HxroQuote();
+  getQuote = () => new HxroQuote(this.takerTrg);
   getValidationAccounts = async () => {
     const { validMpg } = await this.cvg.hxro().fetchConfig();
 
@@ -73,6 +81,11 @@ export class HxroPrintTrade implements PrintTrade {
       },
       {
         pubkey: validMpg,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: this.takerTrg,
         isSigner: false,
         isWritable: false,
       },
@@ -266,10 +279,37 @@ export class HxroPrintTrade implements PrintTrade {
       legInfo.productInfo = fullProductData;
     }
   };
+
+  getValidateResponseAccounts = async (
+    additionalData: AdditionalResponseData | undefined
+  ) => {
+    if (!(additionalData instanceof HxroAdditionalRespondData)) {
+      throw new Error(
+        'This rfq requires hxro-specific HxroAdditionalRespondData type passed as an additional response data'
+      );
+    }
+
+    return [
+      {
+        pubkey: this.cvg.hxro().pdas().config(),
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: additionalData.makerTrg,
+        isSigner: false,
+        isWritable: false,
+      },
+    ];
+  };
 }
 
 export class HxroPrintTradeParser implements PrintTradeParser {
-  parsePrintTrade(cvg: Convergence, legs: SolitaLeg[]): PrintTrade {
+  parsePrintTrade(
+    cvg: Convergence,
+    legs: SolitaLeg[],
+    quote: SolitaQuoteAsset
+  ): PrintTrade {
     const parsedLegInfo = legs.map((leg): HxroLegInput => {
       if (leg.settlementTypeMetadata.__kind == 'Instrument') {
         throw new Error('Invalid settlement leg type');
@@ -322,14 +362,17 @@ export class HxroPrintTradeParser implements PrintTradeParser {
         productInfo,
       };
     });
+    const takerTrg = new PublicKey(quote.data);
 
-    return new HxroPrintTrade(cvg, parsedLegInfo);
+    return new HxroPrintTrade(cvg, takerTrg, parsedLegInfo);
   }
 }
 
 class HxroQuote implements PrintTradeQuote {
+  constructor(public takerTrg: PublicKey) {}
+
   getDecimals = () => HXRO_QUOTE_DECIMALS;
-  serializeInstrumentData = () => Buffer.from([]);
+  serializeInstrumentData = () => this.takerTrg.toBuffer();
 }
 
 export class HxroLeg implements PrintTradeLeg {
@@ -384,5 +427,15 @@ export class AdditionalHxroSettlementPreparationParameters {
     parameters: any
   ): parameters is AdditionalHxroSettlementPreparationParameters {
     return parameters instanceof AdditionalHxroSettlementPreparationParameters;
+  }
+}
+
+export class HxroAdditionalRespondData extends AdditionalResponseData {
+  constructor(public makerTrg: PublicKey) {
+    super();
+  }
+
+  serialize(): Buffer {
+    return this.makerTrg.toBuffer();
   }
 }

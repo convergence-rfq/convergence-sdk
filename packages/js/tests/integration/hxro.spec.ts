@@ -1,8 +1,8 @@
 import {
   AdditionalHxroSettlementPreparationParameters,
+  HxroAdditionalRespondData,
   HxroPrintTrade,
   PrintTrade,
-  PublicKey,
 } from '../../src';
 import {
   createUserCvg,
@@ -22,7 +22,7 @@ describe('integration.hxro', () => {
   before(async () => {
     await ensureHxroOperatorTRGInitialized(cvgAuthority);
     const products = await cvgTaker.hxro().fetchProducts();
-    commonPrintTrade = new HxroPrintTrade(cvgTaker, [
+    commonPrintTrade = new HxroPrintTrade(cvgTaker, CTX.hxroTakerTrg, [
       { amount: 1, side: 'long', productInfo: products[0] },
     ]);
   });
@@ -66,6 +66,7 @@ describe('integration.hxro', () => {
         cvgMaker.rfqs().respond({
           rfq: rfq.address,
           ask: { price: 100, legsMultiplier: 1 },
+          additionalData: new HxroAdditionalRespondData(CTX.hxroMakerTrg),
         }),
       2.5
     );
@@ -101,18 +102,14 @@ describe('integration.hxro', () => {
       rfq: rfq.address,
       response: rfqResponse.address,
       additionalPrintTradeInfo:
-        new AdditionalHxroSettlementPreparationParameters(
-          new PublicKey(CTX.hxroTakerTrg)
-        ),
+        new AdditionalHxroSettlementPreparationParameters(CTX.hxroTakerTrg),
     });
 
     await cvgMaker.rfqs().preparePrintTradeSettlement({
       rfq: rfq.address,
       response: rfqResponse.address,
       additionalPrintTradeInfo:
-        new AdditionalHxroSettlementPreparationParameters(
-          new PublicKey(CTX.hxroMakerTrg)
-        ),
+        new AdditionalHxroSettlementPreparationParameters(CTX.hxroMakerTrg),
     });
 
     await cvgTaker.rfqs().settle({
@@ -149,18 +146,14 @@ describe('integration.hxro', () => {
         rfq: rfq.address,
         response: rfqResponse.address,
         additionalPrintTradeInfo:
-          new AdditionalHxroSettlementPreparationParameters(
-            new PublicKey(CTX.hxroTakerTrg)
-          ),
+          new AdditionalHxroSettlementPreparationParameters(CTX.hxroTakerTrg),
       });
 
       await cvgMaker.rfqs().preparePrintTradeSettlement({
         rfq: rfq.address,
         response: rfqResponse.address,
         additionalPrintTradeInfo:
-          new AdditionalHxroSettlementPreparationParameters(
-            new PublicKey(CTX.hxroMakerTrg)
-          ),
+          new AdditionalHxroSettlementPreparationParameters(CTX.hxroMakerTrg),
       });
       return rfqResponse;
     }, 3.5);
@@ -199,9 +192,7 @@ describe('integration.hxro', () => {
         rfq: rfq.address,
         response: rfqResponse.address,
         additionalPrintTradeInfo:
-          new AdditionalHxroSettlementPreparationParameters(
-            new PublicKey(CTX.hxroMakerTrg)
-          ),
+          new AdditionalHxroSettlementPreparationParameters(CTX.hxroMakerTrg),
       });
 
       return rfqResponse;
@@ -244,9 +235,7 @@ describe('integration.hxro', () => {
         rfq: rfq.address,
         response: rfqResponse.address,
         additionalPrintTradeInfo:
-          new AdditionalHxroSettlementPreparationParameters(
-            new PublicKey(CTX.hxroTakerTrg)
-          ),
+          new AdditionalHxroSettlementPreparationParameters(CTX.hxroTakerTrg),
       });
 
       return rfqResponse;

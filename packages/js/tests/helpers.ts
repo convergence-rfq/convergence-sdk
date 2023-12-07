@@ -21,7 +21,6 @@ import {
   Mint,
 } from '../src';
 import { getUserKp, HXRO_RISK_ENGINE, RPC_ENDPOINT } from '../../validator';
-import { IDL as PseudoPythIdl } from '../../validator/dependencies/pseudo_pyth_idl';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
 const DEFAULT_COMMITMENT = 'confirmed';
 const DEFAULT_SKIP_PREFLIGHT = true;
@@ -484,10 +483,7 @@ export const settleRfq = async (
   response: Response
 ) => {
   return await cvg.rfqs().settle({
-    rfq: rfq.address,
     response: response.address,
-    maker: response.maker,
-    taker: rfq.taker,
   });
 };
 

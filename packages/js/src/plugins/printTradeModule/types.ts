@@ -37,6 +37,9 @@ export interface PrintTrade {
     rfq: PrintTradeRfq,
     response: PrintTradeResponse
   ) => Promise<AccountMeta[]>;
+  getValidateResponseAccounts: (
+    additionalData: AdditionalResponseData | undefined
+  ) => Promise<AccountMeta[]>;
 }
 
 export interface PrintTradeLeg {
@@ -61,4 +64,8 @@ export interface PrintTradeParser {
     legs: SolitaLeg[],
     quote: SolitaQuoteAsset
   ): PrintTrade;
+}
+
+export abstract class AdditionalResponseData {
+  abstract serialize(): Buffer;
 }

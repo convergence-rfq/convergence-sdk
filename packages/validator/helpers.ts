@@ -1,7 +1,7 @@
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { Keypair } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 
 import * as rfq from '@convergence-rfq/rfq';
 import * as riskEngine from '@convergence-rfq/risk-engine';
@@ -139,9 +139,9 @@ export class Ctx {
   pythSOLOracle = getDepAccountPk('sol_30_oracle_pyth');
 
   // Hxro
-  hxroMpg = getHxroAccountPk('mpg');
-  hxroTakerTrg = getHxroAccountPk('taker-trg');
-  hxroMakerTrg = getHxroAccountPk('maker-trg');
+  hxroMpg = new PublicKey(getHxroAccountPk('mpg'));
+  hxroTakerTrg = new PublicKey(getHxroAccountPk('taker-trg'));
+  hxroMakerTrg = new PublicKey(getHxroAccountPk('maker-trg'));
 }
 
 export const getAccountPk = (user: string): string => {
