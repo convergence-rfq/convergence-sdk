@@ -2,7 +2,10 @@ import { PublicKey } from '@solana/web3.js';
 import { DefaultingParty as SolitaDefaultingParty } from '@convergence-rfq/rfq';
 
 import { ResponseAccount } from '../accounts';
-import { removeDecimals } from '../../../utils/conversions';
+import {
+  convertTimestampToMilliSeconds,
+  removeDecimals,
+} from '../../../utils/conversions';
 import { assert } from '../../../utils/assert';
 import { Confirmation, fromSolitaConfirmation } from './Confirmation';
 import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
@@ -31,6 +34,9 @@ type CommonResponse = {
 
   /** The timestamp at which this response was created. */
   readonly creationTimestamp: number;
+
+  /** The timestamp at which this response will expire. */
+  readonly expirationTimestamp: number;
 
   /** The bid required for sell and optionally two-way order types. */
   readonly bid: Quote | null;
@@ -113,7 +119,12 @@ export const toResponse = (
     address: account.publicKey,
     maker: account.data.maker,
     rfq: account.data.rfq,
-    creationTimestamp: Number(account.data.creationTimestamp) * 1_000,
+    creationTimestamp: convertTimestampToMilliSeconds(
+      account.data.creationTimestamp
+    ),
+    expirationTimestamp: convertTimestampToMilliSeconds(
+      account.data.expirationTimestamp
+    ),
     makerCollateralLocked: removeDecimals(
       account.data.makerCollateralLocked,
       collateralDecimals

@@ -7,7 +7,7 @@ import {
   inverseResponseSide,
 } from '../models';
 import { Operation, SyncOperationHandler, useOperation } from '../../../types';
-import { RfqTimers } from '@/utils/classes';
+import { ResponseTimers, RfqTimers } from '@/utils/classes';
 const Key = 'GetResponseStateAndAction' as const;
 export type ResponseState =
   | 'Active'
@@ -95,11 +95,13 @@ export const getResponseStateAndActionHandler: SyncOperationHandler<GetResponseS
       if (!response.rfq.equals(rfq.address)) {
         throw new Error('Response does not match RFQ');
       }
+      const responseTimers = new ResponseTimers(response);
       const rfqTimers = new RfqTimers(rfq);
       const responseState = getResponseState(
         response,
         rfq,
         rfqTimers,
+        responseTimers,
         responseSide
       );
       const responseAction = getResponseAction(response, responseState, caller);
@@ -111,9 +113,10 @@ const getResponseState = (
   response: Response,
   rfq: Rfq,
   rfqTimers: RfqTimers,
+  responseTimers: ResponseTimers,
   responseSide: ResponseSide
 ): ResponseState => {
-  const rfqExpired = rfqTimers.isRfqExpired();
+  const responseExpired = responseTimers.isResponseExpired();
   const settlementWindowElapsed = rfqTimers.isRfqSettlementWindowElapsed();
   const confirmedInverseResponseSide =
     response?.confirmed?.side === inverseResponseSide(responseSide);
@@ -130,12 +133,12 @@ const getResponseState = (
   if (responseConfirmed && confirmedInverseResponseSide) return 'Rejected';
   switch (response.state) {
     case 'active':
-      if (!rfqExpired) return 'Active';
+      if (!responseExpired) return 'Active';
       return 'Expired';
     case 'canceled':
       return 'Cancelled';
     case 'waiting-for-last-look':
-      if (!rfqExpired) return 'WaitingForLastLook';
+      if (!responseExpired) return 'WaitingForLastLook';
       return 'Expired';
     case 'settling-preparations':
       if (!settlementWindowElapsed) {
@@ -184,8 +187,16 @@ const getResponseAction = (
         case 'Expired':
         case 'Cancelled':
         case 'Settled':
-          if (response.makerCollateralLocked > 0) return 'UnlockCollateral';
-          if (response.makerCollateralLocked === 0) return 'Cleanup';
+          if (
+            response.makerCollateralLocked > 0 ||
+            response.takerCollateralLocked > 0
+          )
+            return 'UnlockCollateral';
+          if (
+            response.makerCollateralLocked === 0 &&
+            response.takerCollateralLocked === 0
+          )
+            return 'Cleanup';
         case 'SettlingPreparations':
         case 'OnlyMakerPrepared':
         case 'OnlyTakerPrepared':
@@ -220,8 +231,16 @@ const getResponseAction = (
         case 'Settled':
         case 'Expired':
         case 'Cancelled':
-          if (response.takerCollateralLocked > 0) return 'UnlockCollateral';
-          if (response.takerCollateralLocked === 0) return 'Cleanup';
+          if (
+            response.takerCollateralLocked > 0 ||
+            response.makerCollateralLocked > 0
+          )
+            return 'UnlockCollateral';
+          if (
+            response.takerCollateralLocked === 0 &&
+            response.makerCollateralLocked === 0
+          )
+            return 'Cleanup';
         case 'Rejected':
           return null;
       }

@@ -1,6 +1,6 @@
 import { AccountMeta, PublicKey } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { Leg } from '@convergence-rfq/rfq';
+import { ApiLeg } from '@convergence-rfq/rfq';
 import {
   Confirmation,
   Quote,
@@ -67,13 +67,13 @@ export const calculateExpectedLegsSize = (serializedLegs: Buffer[]): number => {
   return 4 + serializedLegs.map((leg) => leg.length).reduce((x, y) => x + y, 0);
 };
 
-export const instrumentsToLegs = (instruments: LegInstrument[]): Leg[] => {
+export const instrumentsToLegs = (instruments: LegInstrument[]): ApiLeg[] => {
   return instruments.map((i) => instrumentToSolitaLeg(i));
 };
 
 export const legsToBaseAssetAccounts = (
   convergence: Convergence,
-  legs: Leg[]
+  legs: ApiLeg[]
 ): AccountMeta[] => {
   const baseAssetAccounts: AccountMeta[] = [];
 

@@ -1,5 +1,5 @@
 import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
-import { Convergence, Signer } from '..';
+import { Convergence } from '..';
 
 interface Wallet {
   signTransaction(tx: Transaction): Promise<Transaction>;
@@ -15,17 +15,15 @@ export class CvgWallet implements Wallet {
   constructor(convergence: Convergence) {
     this.convergence = convergence;
     this.payer = convergence.rpc().getDefaultFeePayer() as Keypair;
-    this.publicKey = convergence.rpc().getDefaultFeePayer().publicKey;
+    this.publicKey = convergence.identity().publicKey;
   }
 
   signTransaction = (tx: Transaction): Promise<Transaction> => {
-    return this.convergence.rpc().signTransaction(tx, [this.payer as Signer]);
+    return this.convergence.identity().signTransaction(tx);
   };
 
   signAllTransactions = (txs: Transaction[]): Promise<Transaction[]> => {
-    return this.convergence
-      .rpc()
-      .signAllTransactions(txs, [this.payer as Signer]);
+    return this.convergence.identity().signAllTransactions(txs);
   };
 }
 

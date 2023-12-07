@@ -1,4 +1,4 @@
-import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
+import { ApiLeg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 
 import { AccountMeta, PublicKey } from '@solana/web3.js';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
@@ -8,7 +8,7 @@ import { Protocol } from '../protocolModule';
 import { LegInstrument, QuoteInstrument } from './types';
 import { Convergence } from '@/Convergence';
 
-export function instrumentToSolitaLeg(legInstrument: LegInstrument): Leg {
+export function instrumentToSolitaLeg(legInstrument: LegInstrument): ApiLeg {
   return {
     settlementTypeMetadata: {
       __kind: 'Instrument',
@@ -24,7 +24,14 @@ export function instrumentToSolitaLeg(legInstrument: LegInstrument): Leg {
 
 export function serializeInstrumentAsSolitaLeg(legInstrument: LegInstrument) {
   const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
-  return legSerializer.serialize(instrumentToSolitaLeg(legInstrument));
+  return legSerializer.serialize({
+    ...instrumentToSolitaLeg(legInstrument),
+    reserved: new Array(64).fill(0),
+  });
+}
+
+export function getSerializedLegLength(legInstrument: LegInstrument) {
+  return serializeInstrumentAsSolitaLeg(legInstrument).length;
 }
 
 export function getProgramAccount(legInstrument: LegInstrument): AccountMeta {
@@ -35,12 +42,11 @@ export function getProgramAccount(legInstrument: LegInstrument): AccountMeta {
   };
 }
 
-// TODO remove async part after option instruments refactoring
-export async function getValidationAccounts(
+export function getValidationAccounts(
   legInstrument: LegInstrument
-): Promise<AccountMeta[]> {
+): AccountMeta[] {
   return [getProgramAccount(legInstrument)].concat(
-    await legInstrument.getValidationAccounts()
+    legInstrument.getValidationAccounts()
   );
 }
 

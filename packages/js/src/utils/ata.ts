@@ -1,14 +1,10 @@
-import * as Spl from '@solana/spl-token';
-import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { Convergence } from '../Convergence';
 import { token } from '../types/Amount';
 import { Program } from '../types';
+import { TransactionBuilder } from '../utils/TransactionBuilder';
 import { collateralMintCache } from '@/plugins/collateralModule/cache';
-
-export enum ATAExistence {
-  EXISTS,
-  NOTEXISTS,
-}
+import { createTokenBuilder } from '@/plugins/tokenModule/operations/createToken';
 
 export const getOrCreateATA = async (
   convergence: Convergence,
@@ -35,31 +31,31 @@ export const getOrCreateATA = async (
   return ata;
 };
 
-export const getOrCreateATAInx = async (
+export interface GetOrCreateATAtxBuilderReturnType {
+  ataPubKey: PublicKey;
+  txBuilder?: TransactionBuilder;
+}
+
+export const getOrCreateATAtxBuilder = async (
   convergence: Convergence,
   mint: PublicKey,
   owner: PublicKey,
   programs?: Program[]
-): Promise<TransactionInstruction | PublicKey> => {
+): Promise<GetOrCreateATAtxBuilderReturnType> => {
   const pda = convergence.tokens().pdas().associatedTokenAccount({
     mint,
     owner,
     programs,
   });
   const account = await convergence.rpc().getAccount(pda);
-  let ix: TransactionInstruction;
   if (!account.exists) {
-    ix = Spl.createAssociatedTokenAccountInstruction(
-      owner,
-      pda,
-      owner,
+    const txBuilder = await createTokenBuilder(convergence, {
       mint,
-      Spl.TOKEN_PROGRAM_ID,
-      Spl.ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-    return ix;
+      owner,
+    });
+    return { ataPubKey: pda, txBuilder };
   }
-  return pda;
+  return { ataPubKey: pda };
 };
 
 export const devnetAirdrops = async (

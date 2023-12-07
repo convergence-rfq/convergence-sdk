@@ -119,7 +119,7 @@ const getRfqState = (
       return 'Cancelled';
     case 'active': {
       if (!rfqExpired) return 'Active';
-      if (rfqExpired && rfq.confirmedResponses === 0) return 'Expired';
+      if (rfqExpired) return 'Expired';
       if (!settlementWindowElapsed) return 'Settling';
       if (settlementWindowElapsed) return 'SettlingEnded';
     }
@@ -136,15 +136,17 @@ const getRfqAction = (
 
   switch (rfqState) {
     case 'Active':
+      if (caller === 'maker') return 'Respond';
       if (caller === 'taker' && pendingResponses > 0) return 'ViewResponses';
       if (caller === 'taker' && pendingResponses === 0) return 'Cancel';
-      if (caller === 'maker') return 'Respond';
       break;
     case 'Constructed':
-      if (caller === 'taker') return 'FinalizeConstruction';
       if (caller === 'maker') return null;
+      if (caller === 'taker') return 'FinalizeConstruction';
       break;
     case 'Expired':
+      if (caller === 'maker') return null;
+      if (caller === 'taker' && pendingResponses > 0) return 'ViewResponses';
       if (
         caller === 'taker' &&
         pendingResponses === 0 &&
@@ -159,6 +161,7 @@ const getRfqAction = (
         return 'Cleanup';
       break;
     case 'Cancelled':
+      if (caller === 'maker') return null;
       if (
         caller === 'taker' &&
         pendingResponses === 0 &&

@@ -1,12 +1,11 @@
 import expect from 'expect';
-import { Mint } from '@solana/spl-token';
 import {
   createAmericanCoveredCallRfq,
-  createEuropeanCoveredCallRfq,
   createRfq,
   createUserCvg,
   respondToRfq,
 } from '../helpers';
+import { Mint } from '../../src';
 import {
   BASE_MINT_BTC_PK,
   QUOTE_MINT_DECIMALS,
@@ -90,6 +89,7 @@ describe('unit.settlementResult', () => {
       takerCvg,
       quoteAmount,
       'buy',
+      undefined,
       'fixed-quote'
     );
     expect(rfq).toHaveProperty('address');
@@ -136,13 +136,20 @@ describe('unit.settlementResult', () => {
     const baseAmount = 1;
     const quoteAmount = 12_300.9783;
 
-    const { rfq } = await createRfq(takerCvg, baseAmount, 'buy', 'open');
+    const { rfq } = await createRfq(
+      takerCvg,
+      baseAmount,
+      'buy',
+      undefined,
+      'open'
+    );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
       undefined,
       quoteAmount,
+      undefined,
       7.456
     );
     expect(rfqResponse).toHaveProperty('address');
@@ -182,12 +189,19 @@ describe('unit.settlementResult', () => {
     const baseAmount = 1;
     const quoteAmount = 70_999.97;
 
-    const { rfq } = await createRfq(takerCvg, baseAmount, 'sell', 'open');
+    const { rfq } = await createRfq(
+      takerCvg,
+      baseAmount,
+      'sell',
+      undefined,
+      'open'
+    );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
       makerCvg,
       rfq,
       quoteAmount,
+      undefined,
       undefined,
       8.456123456
     );
@@ -366,8 +380,8 @@ describe('unit.settlementResult', () => {
       ],
     });
   });
-  it('fixed-base european covered call', async () => {
-    const { rfq, response } = await createEuropeanCoveredCallRfq(
+  it('fixed-base american covered call', async () => {
+    const { response, rfq } = await createAmericanCoveredCallRfq(
       takerCvg,
       'sell',
       baseMint,

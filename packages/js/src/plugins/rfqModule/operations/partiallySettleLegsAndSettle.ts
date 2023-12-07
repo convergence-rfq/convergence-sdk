@@ -100,7 +100,6 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       scope: OperationScope
     ): Promise<PartiallySettleLegsAndSettleOutput> => {
       const { rfq } = operation.input;
-      const MAX_TX_SIZE = 1232;
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
@@ -125,13 +124,9 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
       );
       scope.throwIfCanceled();
 
-      let settleTxSize = await convergence
-        .rpc()
-        .getTransactionSize(settleRfqBuilder, []);
-
       let slicedIndex = rfqModel.legs.length;
 
-      while (settleTxSize == -1 || settleTxSize + 193 > MAX_TX_SIZE) {
+      while (settleRfqBuilder.checkTransactionFits()) {
         const index = Math.trunc(slicedIndex / 2);
         // const startIndex = rfqModel.legs.length - index;
         const startIndex = rfqModel.legs.length - index + 3;
@@ -145,10 +140,6 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
           },
           scope
         );
-
-        settleTxSize = await convergence
-          .rpc()
-          .getTransactionSize(settleRfqBuilder, []);
 
         slicedIndex = index;
       }
@@ -165,14 +156,7 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
           scope
         );
 
-        let partiallySettleTxSize = await convergence
-          .rpc()
-          .getTransactionSize(partiallySettleBuilder, []);
-
-        while (
-          partiallySettleTxSize == -1 ||
-          partiallySettleTxSize + 193 > MAX_TX_SIZE
-        ) {
+        while (partiallySettleBuilder.checkTransactionFits()) {
           const halvedLegAmount = Math.trunc(
             partiallySettleSlicedLegAmount / 2
           );
@@ -185,10 +169,6 @@ export const partiallySettleLegsAndSettleOperationHandler: OperationHandler<Part
             },
             scope
           );
-
-          partiallySettleTxSize = await convergence
-            .rpc()
-            .getTransactionSize(partiallySettleBuilder, []);
 
           partiallySettleSlicedLegAmount = halvedLegAmount;
         }

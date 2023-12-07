@@ -1,7 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
 import { RfqAccount } from '../accounts';
 import { assert } from '../../../utils/assert';
-import { convertTimestamp, removeDecimals } from '../../../utils/conversions';
+import {
+  convertTimestampToMilliSeconds,
+  removeDecimals,
+} from '../../../utils/conversions';
 import {
   SpotLegInstrument,
   SpotQuoteInstrument,
@@ -152,7 +155,9 @@ export const toRfq = async (
     taker: account.data.taker,
     orderType: fromSolitaOrderType(account.data.orderType),
     size: fromSolitaFixedSize(account.data.fixedSize, quoteAsset.getDecimals()),
-    creationTimestamp: convertTimestamp(account.data.creationTimestamp),
+    creationTimestamp: convertTimestampToMilliSeconds(
+      account.data.creationTimestamp
+    ),
     activeWindow: account.data.activeWindow,
     settlingWindow: account.data.settlingWindow,
     expectedLegsSize: account.data.expectedLegsSize,

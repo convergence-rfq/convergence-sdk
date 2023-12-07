@@ -226,11 +226,6 @@ export const prepareMoreLegsSettlementBuilder = async (
       },
       // `caller_token_account`
       {
-        // pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        //   mint: baseAssetMint!.address,
-        //   owner: caller.publicKey,
-        //   programs,
-        // }),
         pubkey: await getOrCreateATA(
           convergence,
           baseAssetMint!.address,

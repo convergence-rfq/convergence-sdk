@@ -1,6 +1,6 @@
 import { ProgramClient } from '../programModule';
 import { PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID } from './types';
-import { psyoptionsAmericanInstrumentParser } from './models';
+import { psyoptionsAmericanInstrumentParser } from './instrument';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
 

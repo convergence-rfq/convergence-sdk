@@ -8,6 +8,7 @@ import {
   LegInstrument,
   QuoteInstrument,
   getInstrumentProgramIndex,
+  CreateOptionInstrumentsResult,
 } from '../instrumentModule';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
@@ -55,6 +56,9 @@ export class SpotLegInstrument implements LegInstrument {
   getSide = () => this.side;
   getDecimals = () => this.decimals;
   getAmount = () => this.amount;
+  async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
+    return [];
+  }
 
   static async create(
     convergence: Convergence,
@@ -96,7 +100,7 @@ export class SpotLegInstrument implements LegInstrument {
   }
 
   /** Helper method to get validation accounts for a spot instrument. */
-  async getValidationAccounts() {
+  getValidationAccounts() {
     const mintInfo = this.convergence
       .rfqs()
       .pdas()
