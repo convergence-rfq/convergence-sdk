@@ -25,7 +25,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { Rfq } from '../../rfqModule';
+import { EscrowRfq, Rfq } from '../../rfqModule';
 import { getOrCreateATAtxBuilder } from '../../../utils/ata';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
@@ -146,6 +146,10 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         },
         scope
       );
+
+      if (rfqModel.model !== 'escrowRfq') {
+        throw new Error('Response is not settled as an escrow trade!');
+      }
 
       let ataTxs: Transaction[] = [];
       let mintTxs: Transaction[] = [];
@@ -449,13 +453,13 @@ export const prepareSettlementBuilder = async (
   };
 };
 
-const doesRfqLegContainsPsyoptionsAmerican = (rfq: Rfq) => {
+const doesRfqLegContainsPsyoptionsAmerican = (rfq: EscrowRfq) => {
   return rfq.legs.some((leg) =>
     leg.getProgramId().equals(psyoptionsAmericanInstrumentProgram.address)
   );
 };
 
-const doesRfqLegContainsPsyoptionsEuropean = (rfq: Rfq) => {
+const doesRfqLegContainsPsyoptionsEuropean = (rfq: EscrowRfq) => {
   return rfq.legs.some((leg) =>
     leg.getProgramId().equals(psyoptionsEuropeanInstrumentProgram.address)
   );

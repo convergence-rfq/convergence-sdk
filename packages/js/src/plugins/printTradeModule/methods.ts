@@ -1,4 +1,4 @@
-import { Leg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
+import { ApiLeg, QuoteAsset, apiLegBeet } from '@convergence-rfq/rfq';
 import { AccountMeta } from '@solana/web3.js';
 import { toSolitaLegSide } from '../rfqModule/models';
 import { toNumberInstrumentType } from '../riskEngineModule/models';
@@ -6,7 +6,7 @@ import { PrintTrade, PrintTradeLeg, PrintTradeQuote } from './types';
 import { addDecimals } from '@/utils';
 import { createSerializerFromFixableBeetArgsStruct } from '@/types';
 
-export function printTradeToSolitaLeg(printTradeLeg: PrintTradeLeg): Leg {
+export function printTradeToSolitaLeg(printTradeLeg: PrintTradeLeg): ApiLeg {
   return {
     settlementTypeMetadata: {
       __kind: 'PrintTrade',
@@ -21,7 +21,7 @@ export function printTradeToSolitaLeg(printTradeLeg: PrintTradeLeg): Leg {
 }
 
 export function serializePrintTradeAsSolitaLeg(printTradeLeg: PrintTradeLeg) {
-  const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
+  const legSerializer = createSerializerFromFixableBeetArgsStruct(apiLegBeet);
   return legSerializer.serialize(printTradeToSolitaLeg(printTradeLeg));
 }
 

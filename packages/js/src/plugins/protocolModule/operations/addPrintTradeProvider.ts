@@ -48,6 +48,8 @@ export type AddPrintTradeProviderInput = {
    * If true, settlement could expire and be cancelled if both parties have prepared but haven't settled
    */
   settlementCanExpire: boolean;
+
+  validateResponseAccountAmount: number;
 };
 
 /**
@@ -99,7 +101,11 @@ export const addPrintTradeProviderBuilder = (
 ): TransactionBuilder => {
   const { programs, payer = cvg.rpc().getDefaultFeePayer() } = options;
   const rfqProgram = cvg.programs().getRfq(programs);
-  const { printTradeProviderProgram, settlementCanExpire } = params;
+  const {
+    printTradeProviderProgram,
+    settlementCanExpire,
+    validateResponseAccountAmount,
+  } = params;
   const authority = cvg.identity();
 
   // Clear the protocol cache so that the protocol is reloaded
@@ -116,6 +122,7 @@ export const addPrintTradeProviderBuilder = (
         },
         {
           settlementCanExpire,
+          validateResponseAccountAmount,
         },
         rfqProgram.address
       ),

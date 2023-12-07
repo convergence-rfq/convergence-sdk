@@ -346,8 +346,8 @@ export const createRfqBuilder = async (
     },
   ];
 
-  const baseAssetAccounts = legsToBaseAssetAccounts(convergence, solitaLegs);
-  const legAccounts = await instrumentsToLegAccounts(instruments);
+  let baseAssetAccounts = legsToBaseAssetAccounts(convergence, solitaLegs);
+  let legAccounts = await instrumentsToLegAccounts(instruments);
 
   let rfqBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
@@ -412,11 +412,12 @@ export const createRfqBuilder = async (
             ],
           },
           {
+            printTradeProvider: null,
             expectedLegsSize,
             expectedLegsHash: Array.from(expectedLegsHash),
             legs: legsToAdd,
             orderType: toSolitaOrderType(orderType),
-            quoteAsset: toQuote(quoteAsset),
+            quoteAsset: instrumentToQuote(quoteAsset),
             fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
             activeWindow,
             settlingWindow,

@@ -321,6 +321,7 @@ export const respondToRfqBuilder = async (
             ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
             pdaDistinguisher,
             expirationTimestamp: expirationTimestampBn,
+            additionalData: Buffer.from([]),
           }
         ),
         signers: [maker],
