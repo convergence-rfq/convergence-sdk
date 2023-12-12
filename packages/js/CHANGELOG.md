@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.21
+
+### Patch Changes
+
+- Fix getResponseState to avoid conflict between enum DefaultingParty.Talker (0) and null
+
 ## 4.5.20
 
 ### Patch Changes
