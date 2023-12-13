@@ -328,7 +328,7 @@ export const cleanUpPrintTradeResponseBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
   const remainingAccounts = prependWithProviderProgram(
     rfqModel.printTrade,
-    await rfqModel.printTrade.getSettlementAccounts(rfqModel, responseModel)
+    await rfqModel.printTrade.getCleanUpAccounts(rfqModel, responseModel)
   );
 
   return TransactionBuilder.make()

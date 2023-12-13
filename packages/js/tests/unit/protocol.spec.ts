@@ -113,6 +113,16 @@ describe('unit.protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
+  it('add print trade provider [hxro]', async () => {
+    const { response } = await cvg.protocol().addPrintTradeProvider({
+      printTradeProviderProgram: cvg.programs().getHxroPrintTradeProvider()
+        .address,
+      settlementCanExpire: false,
+      validateResponseAccountAmount: 2,
+    });
+    expect(response).toHaveProperty('signature');
+  });
+
   it('add base asset [switchboard oracle]', async () => {
     const baseAssets = await cvg.protocol().getBaseAssets();
     const { response } = await cvg.protocol().addBaseAsset({

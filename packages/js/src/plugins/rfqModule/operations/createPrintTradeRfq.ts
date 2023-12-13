@@ -3,7 +3,7 @@ import {
   createValidateRfqByPrintTradeProviderInstruction,
 } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
-import * as anchor from '@project-serum/anchor';
+import * as anchor from '@coral-xyz/anchor';
 
 import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';

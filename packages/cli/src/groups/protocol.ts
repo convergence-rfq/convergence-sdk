@@ -97,6 +97,10 @@ const addPrintTradeProviderCmd = (c: Command) =>
         flags: '--settlement-can-expire <boolean>',
         description: 'settlement can expire',
       },
+      {
+        flags: '--validate_response_account_amount <number>',
+        description: 'amount of account passed to validate response CPI call',
+      },
     ]
   );
 

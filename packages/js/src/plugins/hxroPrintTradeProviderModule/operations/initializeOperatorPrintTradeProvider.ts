@@ -1,7 +1,8 @@
 import { createInitializeOperatorTraderRiskGroupInstruction } from '@convergence-rfq/hxro-print-trade-provider';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import dexterity from '@hxronetwork/dexterity-ts';
-import { fetchValidHxroMpg, getHxroManifest } from '../helpers';
+import { fetchValidHxroMpg } from '../helpers';
+import { hxroManifestCache } from '../cache';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -93,7 +94,7 @@ export const initializeOperatorTraderRiskGroupBuilder = async (
   } = params;
   const { programs, payer = cvg.rpc().getDefaultFeePayer() } = options;
 
-  const manifest = await getHxroManifest(cvg);
+  const manifest = await hxroManifestCache.get(cvg);
   const hxroPrintTradeProviderProgram = cvg
     .programs()
     .getHxroPrintTradeProvider();

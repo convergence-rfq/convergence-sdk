@@ -2,7 +2,8 @@ import dexterity from '@hxronetwork/dexterity-ts';
 import BN from 'bn.js';
 import { OptionType } from '@convergence-rfq/risk-engine';
 import { HxroProductInfo } from '../types';
-import { fetchValidHxroMpg, getHxroManifest } from '../helpers';
+import { fetchValidHxroMpg } from '../helpers';
+import { hxroManifestCache } from '../cache';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -56,7 +57,7 @@ export const fetchHxroProductsOperationHandler: OperationHandler<FetchHxroProduc
       cvg: Convergence,
       scope: OperationScope
     ): Promise<FetchHxroProductsOutput> => {
-      const manifest = await getHxroManifest(cvg);
+      const manifest = await hxroManifestCache.get(cvg);
       const baseProductData = await parseBaseProductData(cvg, manifest);
       scope.throwIfCanceled();
 

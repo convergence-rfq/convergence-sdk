@@ -456,7 +456,6 @@ export const respondToRfq = async (
     throw new Error('Must provide bid and/or ask');
   }
   return await cvg.rfqs().respond({
-    maker: cvg.identity(),
     rfq: rfq.address,
     bid: bid ? { price: bid, legsMultiplier } : undefined,
     ask: ask ? { price: ask, legsMultiplier } : undefined,

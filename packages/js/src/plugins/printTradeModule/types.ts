@@ -12,18 +12,19 @@ import {
   PrintTradeRfq,
 } from '../rfqModule';
 import { Convergence } from '@/Convergence';
+import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
 export interface PrintTrade {
   getPrintTradeProviderProgramId: () => PublicKey;
   getLegs: () => PrintTradeLeg[];
   getQuote: () => PrintTradeQuote;
   getValidationAccounts: () => Promise<AccountMeta[]>;
-  getSettlementPreparationAccounts: (
+  getSettlementPreparations: (
     rfq: PrintTradeRfq,
     response: PrintTradeResponse,
     side: AuthoritySide,
-    additionalParams: any
-  ) => Promise<AccountMeta[]>;
+    options: TransactionBuilderOptions
+  ) => Promise<{ accounts: AccountMeta[]; builders: TransactionBuilder[] }>;
   getSettlementAccounts: (
     rfq: PrintTradeRfq,
     response: PrintTradeResponse

@@ -91,6 +91,8 @@ export type PrintTradeResponse = CommonResponse & {
 
   /** Shows whether the maker or taker initialized the print trade. */
   readonly printTradeInitializedBy: AuthoritySide | null;
+
+  readonly additionalData: Uint8Array;
 };
 
 export type Response = EscrowResponse | PrintTradeResponse;
@@ -155,6 +157,7 @@ export const toResponse = (
         account.data.printTradeInitializedBy !== null
           ? fromSolitaAuthoritySide(account.data.printTradeInitializedBy)
           : null,
+      additionalData: account.data.additionalData,
     };
   }
 

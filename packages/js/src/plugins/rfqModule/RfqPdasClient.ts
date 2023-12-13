@@ -9,9 +9,9 @@ import {
   quoteAssetBeet,
   fixedSizeBeet,
 } from '@convergence-rfq/rfq';
-import * as anchor from '@project-serum/anchor';
 import * as beet from '@convergence-rfq/beet';
 
+import BN from 'bn.js';
 import {
   createSerializerFromFixableBeetArgsStruct,
   createSerializerFromFixableBeet,
@@ -192,7 +192,7 @@ type RfqInput = {
   settlingWindow: number;
 
   /** A recent timestamp. */
-  recentTimestamp: anchor.BN;
+  recentTimestamp: BN;
   // recentTimestamp: number;
 };
 

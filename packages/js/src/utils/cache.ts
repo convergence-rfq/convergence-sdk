@@ -3,10 +3,15 @@ interface CahcedValue<T> {
   time: number;
 }
 
+export type CvgCache<T, U extends any[]> = {
+  get: (...u: U) => Promise<T>;
+  clear: () => void;
+};
+
 export const useCache = <T, U extends any[]>(
   valueGetter: (...u: U) => Promise<T>,
   stalenessSeconds = 300
-) => {
+): CvgCache<T, U> => {
   const stalenessMs = stalenessSeconds * 1_000;
   let cache: CahcedValue<T> | null = null;
   let operation: Promise<T> | undefined;

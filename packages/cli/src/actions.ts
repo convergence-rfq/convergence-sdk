@@ -139,6 +139,7 @@ export const addPrintTradeProvider = async (opts: Opts) => {
     const { response } = await cvg.protocol().addPrintTradeProvider({
       printTradeProviderProgram: new PublicKey(opts.printTradeProviderProgram),
       settlementCanExpire: opts.settlementCanExpire,
+      validateResponseAccountAmount: opts.validateResponseAccountAmount,
     });
     logResponse(response);
   } catch (e) {

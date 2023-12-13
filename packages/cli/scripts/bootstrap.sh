@@ -31,10 +31,9 @@ convergence protocol initialize --collateral-mint=$USDC_MINT --rpc-endpoint=$RPC
 
 convergence risk-engine initialize --rpc-endpoint=$RPC_ENDPOINT
 
-convergence protocol add-print-trade-provider --print-trade-provider-program $HXRO_PRINT_TRADE_PROVIDER --settlement-can-expire false
+convergence protocol add-print-trade-provider --print-trade-provider-program $HXRO_PRINT_TRADE_PROVIDER --settlement-can-expire false --validate_response_account_amount 2
 convergence hxro initialize-config --valid-mpg $HXRO_MPG
 convergence hxro initialize-operator-trg
-
 
 convergence protocol add-instrument --instrument-program=$SPOT_INSTRUMENT                --can-be-used-as-quote=true  --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4 --rpc-endpoint=$RPC_ENDPOINT  
 convergence protocol add-instrument --instrument-program=$PSYOPTIONS_EUROPEAN_INSTRUMENT --can-be-used-as-quote=false --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4 --rpc-endpoint=$RPC_ENDPOINT

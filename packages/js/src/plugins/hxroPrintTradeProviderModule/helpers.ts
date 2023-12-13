@@ -1,29 +1,36 @@
-import dexterity from '@hxronetwork/dexterity-ts';
+import BigNumber from 'bignumber.js';
+import BN from 'bn.js';
+import { HXRO_LEG_DECIMALS } from './constants';
 import { Convergence } from '@/Convergence';
-import { CvgWallet } from '@/utils';
-
-export const getHxroManifest = async (cvg: Convergence) => {
-  // dexterity.getManifest adds a lot of clutter to logs, so we disable console.debug for this call
-  // TODO: remove this workaround when dexterity library is updated
-  const { debug } = console;
-  console.debug = () => {};
-  let manifest: any; // dexterity doesn't export a type for a manifest
-  try {
-    manifest = await dexterity.getManifest(
-      cvg.connection.rpcEndpoint,
-      true,
-      new CvgWallet(cvg)
-    );
-  } finally {
-    console.debug = debug;
-  }
-
-  return manifest;
-};
+import { PublicKey } from '@/types';
 
 export const fetchValidHxroMpg = async (cvg: Convergence, manifest: any) => {
   const { validMpg } = await cvg.hxro().fetchConfig();
 
   const mpg = await manifest.getMPG(validMpg);
   return { pubkey: validMpg, ...mpg };
+};
+
+export const numberToHxroFractional = (value: number, negate?: boolean) => {
+  let withDecimals = new BigNumber(value).times(
+    new BigNumber(10).pow(HXRO_LEG_DECIMALS)
+  );
+
+  if (negate) {
+    withDecimals = withDecimals.negated();
+  }
+
+  return { m: new BN(withDecimals.toString()), exp: new BN(HXRO_LEG_DECIMALS) };
+};
+
+export const getFirstHxroExecutionOutput = async (
+  cvg: Convergence,
+  dexProgramId: PublicKey
+) => {
+  const [{ pubkey }] = await cvg.connection.getProgramAccounts(dexProgramId, {
+    dataSlice: { length: 1, offset: 0 },
+    filters: [{ memcmp: { offset: 0, bytes: 'EdEf3SczfYR' } }],
+  });
+
+  return pubkey;
 };

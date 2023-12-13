@@ -1,5 +1,4 @@
 import {
-  AdditionalHxroSettlementPreparationParameters,
   HxroAdditionalRespondData,
   HxroPrintTrade,
   PrintTrade,
@@ -88,9 +87,11 @@ describe('integration.hxro', () => {
       settlingWindow: 5000,
     });
 
-    const { rfqResponse } = await cvgMaker
-      .rfqs()
-      .respond({ rfq: rfq.address, ask: { price: 123, legsMultiplier: 1 } });
+    const { rfqResponse } = await cvgMaker.rfqs().respond({
+      rfq: rfq.address,
+      ask: { price: 123, legsMultiplier: 1 },
+      additionalData: new HxroAdditionalRespondData(CTX.hxroMakerTrg),
+    });
 
     await cvgTaker.rfqs().confirmResponse({
       response: rfqResponse.address,
@@ -101,15 +102,11 @@ describe('integration.hxro', () => {
     await cvgTaker.rfqs().preparePrintTradeSettlement({
       rfq: rfq.address,
       response: rfqResponse.address,
-      additionalPrintTradeInfo:
-        new AdditionalHxroSettlementPreparationParameters(CTX.hxroTakerTrg),
     });
 
     await cvgMaker.rfqs().preparePrintTradeSettlement({
       rfq: rfq.address,
       response: rfqResponse.address,
-      additionalPrintTradeInfo:
-        new AdditionalHxroSettlementPreparationParameters(CTX.hxroMakerTrg),
     });
 
     await cvgTaker.rfqs().settle({
@@ -128,13 +125,14 @@ describe('integration.hxro', () => {
       printTrade: commonPrintTrade,
       orderType: 'buy',
       fixedSize: { type: 'open' },
-      activeWindow: 2,
+      activeWindow: 3,
       settlingWindow: 1,
     });
     const rfqResponse = await runInParallelWithWait(async () => {
       const { rfqResponse } = await cvgMaker.rfqs().respond({
         rfq: rfq.address,
         ask: { price: 100, legsMultiplier: 1 },
+        additionalData: new HxroAdditionalRespondData(CTX.hxroMakerTrg),
       });
       await cvgTaker.rfqs().confirmResponse({
         response: rfqResponse.address,
@@ -145,18 +143,14 @@ describe('integration.hxro', () => {
       await cvgTaker.rfqs().preparePrintTradeSettlement({
         rfq: rfq.address,
         response: rfqResponse.address,
-        additionalPrintTradeInfo:
-          new AdditionalHxroSettlementPreparationParameters(CTX.hxroTakerTrg),
       });
 
       await cvgMaker.rfqs().preparePrintTradeSettlement({
         rfq: rfq.address,
         response: rfqResponse.address,
-        additionalPrintTradeInfo:
-          new AdditionalHxroSettlementPreparationParameters(CTX.hxroMakerTrg),
       });
       return rfqResponse;
-    }, 3.5);
+    }, 4.5);
 
     await cvgTaker.rfqs().settle({
       response: rfqResponse.address,
@@ -173,7 +167,7 @@ describe('integration.hxro', () => {
       printTrade: commonPrintTrade,
       orderType: 'buy',
       fixedSize: { type: 'open' },
-      activeWindow: 2,
+      activeWindow: 3,
       settlingWindow: 1,
     });
 
@@ -181,6 +175,7 @@ describe('integration.hxro', () => {
       const { rfqResponse } = await cvgMaker.rfqs().respond({
         rfq: rfq.address,
         ask: { price: 100, legsMultiplier: 1 },
+        additionalData: new HxroAdditionalRespondData(CTX.hxroMakerTrg),
       });
       await cvgTaker.rfqs().confirmResponse({
         response: rfqResponse.address,
@@ -191,12 +186,10 @@ describe('integration.hxro', () => {
       await cvgMaker.rfqs().preparePrintTradeSettlement({
         rfq: rfq.address,
         response: rfqResponse.address,
-        additionalPrintTradeInfo:
-          new AdditionalHxroSettlementPreparationParameters(CTX.hxroMakerTrg),
       });
 
       return rfqResponse;
-    }, 3.5);
+    }, 4.5);
 
     await cvgMaker.rfqs().revertSettlementPreparation({
       response: rfqResponse.address,
@@ -216,7 +209,7 @@ describe('integration.hxro', () => {
       printTrade: commonPrintTrade,
       orderType: 'buy',
       fixedSize: { type: 'open' },
-      activeWindow: 2,
+      activeWindow: 3,
       settlingWindow: 1,
     });
 
@@ -224,6 +217,7 @@ describe('integration.hxro', () => {
       const { rfqResponse } = await cvgMaker.rfqs().respond({
         rfq: rfq.address,
         ask: { price: 100, legsMultiplier: 1 },
+        additionalData: new HxroAdditionalRespondData(CTX.hxroMakerTrg),
       });
       await cvgTaker.rfqs().confirmResponse({
         response: rfqResponse.address,
@@ -234,12 +228,10 @@ describe('integration.hxro', () => {
       await cvgTaker.rfqs().preparePrintTradeSettlement({
         rfq: rfq.address,
         response: rfqResponse.address,
-        additionalPrintTradeInfo:
-          new AdditionalHxroSettlementPreparationParameters(CTX.hxroTakerTrg),
       });
 
       return rfqResponse;
-    }, 3.5);
+    }, 4.5);
 
     await cvgTaker.rfqs().revertSettlementPreparation({
       response: rfqResponse.address,
@@ -259,7 +251,7 @@ describe('integration.hxro', () => {
       printTrade: commonPrintTrade,
       orderType: 'buy',
       fixedSize: { type: 'open' },
-      activeWindow: 2,
+      activeWindow: 3,
       settlingWindow: 1,
     });
 
@@ -267,6 +259,7 @@ describe('integration.hxro', () => {
       const { rfqResponse } = await cvgMaker.rfqs().respond({
         rfq: rfq.address,
         ask: { price: 100, legsMultiplier: 1 },
+        additionalData: new HxroAdditionalRespondData(CTX.hxroMakerTrg),
       });
       await cvgTaker.rfqs().confirmResponse({
         response: rfqResponse.address,
@@ -275,7 +268,7 @@ describe('integration.hxro', () => {
       });
 
       return rfqResponse;
-    }, 3.5);
+    }, 4.5);
 
     await cvgTaker.rfqs().settleTwoPartyDefault({
       response: rfqResponse.address,

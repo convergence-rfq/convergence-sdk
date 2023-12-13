@@ -1,5 +1,5 @@
 import { createPreparePrintTradeSettlementInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -47,9 +47,6 @@ export type PreparePrintTradeSettlementInput = {
 
   /** The address of the Response account. */
   response: PublicKey;
-
-  /** Additional parameters specific for each print trade provider can be passed as this parameter. */
-  additionalPrintTradeInfo: any;
 };
 
 /**
@@ -72,7 +69,7 @@ export const preparePrintTradeSettlementOperationHandler: OperationHandler<Prepa
       convergence: Convergence,
       scope: OperationScope
     ): Promise<PreparePrintTradeSettlementOutput> => {
-      const builder = await preparePrintTradeSettlementBuilder(
+      const builders = await preparePrintTradeSettlementBuilders(
         convergence,
         {
           ...operation.input,
@@ -85,10 +82,27 @@ export const preparePrintTradeSettlementOperationHandler: OperationHandler<Prepa
         scope.confirmOptions
       );
 
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
+      const txs = builders.map((x) => x.toTransaction(lastValidBlockHeight));
+
+      const signedTxs = await convergence.identity().signAllTransactions(txs);
+
+      const outputs = [];
+      for (const signedTx of signedTxs) {
+        const output = await convergence
+          .rpc()
+          .serializeAndSendTransaction(
+            signedTx,
+            lastValidBlockHeight,
+            confirmOptions
+          );
+
+        outputs.push(output);
+      }
+
       scope.throwIfCanceled();
 
-      return { ...output };
+      return { response: outputs[outputs.length - 1] };
     },
   };
 
@@ -112,13 +126,13 @@ export type PreparePrintTradeSettlementBuilderParams =
  * @group Transaction Builders
  * @category Constructors
  */
-export const preparePrintTradeSettlementBuilder = async (
+export const preparePrintTradeSettlementBuilders = async (
   cvg: Convergence,
   params: PreparePrintTradeSettlementBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
+): Promise<TransactionBuilder[]> => {
   const { programs, payer = cvg.rpc().getDefaultFeePayer() } = options;
-  const { rfq, response, additionalPrintTradeInfo } = params;
+  const { rfq, response } = params;
 
   const caller = cvg.identity();
   const rfqProgram = cvg.programs().getRfq(programs);
@@ -141,41 +155,56 @@ export const preparePrintTradeSettlementBuilder = async (
   }
 
   const { printTrade } = rfqModel;
-  const printTradeAccounts = prependWithProviderProgram(
-    printTrade,
-    await printTrade.getSettlementPreparationAccounts(
+
+  const { accounts: printTradeAccounts, builders } =
+    await printTrade.getSettlementPreparations(
       rfqModel,
       responseModel,
       side,
-      additionalPrintTradeInfo
-    )
+      options
+    );
+  const remainingAccounts = prependWithProviderProgram(
+    printTrade,
+    printTradeAccounts
   );
 
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
-    .add(
+  const preparePrintTradeIx = {
+    instruction: createPreparePrintTradeSettlementInstruction(
       {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1400000,
-        }),
-        signers: [],
+        caller: caller.publicKey,
+        protocol: cvg.protocol().pdas().protocol(),
+        rfq,
+        response,
+        anchorRemainingAccounts: remainingAccounts,
       },
       {
-        instruction: createPreparePrintTradeSettlementInstruction(
-          {
-            caller: caller.publicKey,
-            protocol: cvg.protocol().pdas().protocol(),
-            rfq,
-            response,
-            anchorRemainingAccounts: printTradeAccounts,
-          },
-          {
-            side: toSolitaAuthoritySide(side),
-          },
-          rfqProgram.address
-        ),
-        signers: [caller],
-        key: 'preparePrintTradeSettlement',
-      }
-    );
+        side: toSolitaAuthoritySide(side),
+      },
+      rfqProgram.address
+    ),
+    signers: [caller],
+    key: 'preparePrintTradeSettlement',
+  };
+
+  // TODO refactor to use transaction size measurements
+  if (builders.length === 2) {
+    return [
+      TransactionBuilder.make()
+        .setFeePayer(payer)
+        .add(...builders[0].getInstructionsWithSigners()),
+      TransactionBuilder.make()
+        .setFeePayer(payer)
+        .add(...builders[1].getInstructionsWithSigners()),
+      TransactionBuilder.make().setFeePayer(payer).add(preparePrintTradeIx),
+    ];
+  }
+
+  return [
+    TransactionBuilder.make()
+      .setFeePayer(payer)
+      .add(
+        ...builders.map((x) => x.getInstructionsWithSigners()).flat(),
+        preparePrintTradeIx
+      ),
+  ];
 };

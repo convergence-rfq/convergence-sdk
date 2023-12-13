@@ -2,12 +2,12 @@ import {
   futureCommonDataBeet,
   optionCommonDataBeet,
 } from '@convergence-rfq/risk-engine';
+import dexterity from '@hxronetwork/dexterity-ts';
 import BN from 'bn.js';
 import {
   Leg as SolitaLeg,
   QuoteAsset as SolitaQuoteAsset,
 } from '@convergence-rfq/rfq';
-import dexterity from '@hxronetwork/dexterity-ts';
 import {
   AdditionalResponseData,
   PrintTrade,
@@ -24,19 +24,29 @@ import {
 } from '../rfqModule';
 import { HXRO_LEG_DECIMALS, HXRO_QUOTE_DECIMALS } from './constants';
 import { HxroLegInput, HxroProductInfo } from './types';
-import { fetchValidHxroMpg, getHxroManifest } from './helpers';
+import { fetchValidHxroMpg, getFirstHxroExecutionOutput } from './helpers';
+import { hxroManifestCache } from './cache';
+import {
+  lockHxroCollateralBuilder,
+  signHxroPrintTradeBuilder,
+} from './operations';
 import { Convergence } from '@/Convergence';
 import {
   PublicKey,
   createSerializerFromFixedSizeBeet,
   toFractional,
 } from '@/types';
-import { removeDecimals } from '@/utils';
+import {
+  CvgCache,
+  TransactionBuilderOptions,
+  removeDecimals,
+  useCache,
+} from '@/utils';
 
 export class HxroPrintTrade implements PrintTrade {
   constructor(
     protected cvg: Convergence,
-    protected takerTrg: PublicKey,
+    public takerTrg: PublicKey,
     protected legsInfo: HxroLegInput[]
   ) {}
 
@@ -92,75 +102,52 @@ export class HxroPrintTrade implements PrintTrade {
       ...validationAccounts,
     ];
   };
-  getSettlementPreparationAccounts = async (
+
+  getSettlementPreparations = async (
     rfq: PrintTradeRfq,
     response: PrintTradeResponse,
     side: AuthoritySide,
-    additionalParams: any
+    options: TransactionBuilderOptions
   ) => {
-    if (
-      !AdditionalHxroSettlementPreparationParameters.verify(additionalParams)
-    ) {
-      throw new Error(
-        'Invalid type of additional params is passed to prepare print trade settlement!'
+    const user = side === 'taker' ? rfq.taker : response.maker;
+
+    const hxroContext = await HxroContextHelper.create(
+      this.cvg,
+      this,
+      response,
+      response.printTradeInitializedBy ?? side
+    );
+
+    const systemProgram = this.cvg.programs().getSystem();
+
+    const builders = [
+      await lockHxroCollateralBuilder(
+        this.cvg,
+        { rfq, response, side, hxroContext },
+        options
+      ),
+    ];
+    if (response.printTradeInitializedBy !== null) {
+      builders.push(
+        await signHxroPrintTradeBuilder(
+          this.cvg,
+          { rfq, response, side, hxroContext },
+          options
+        )
       );
     }
 
-    const [user, counterparty] =
-      side === 'taker'
-        ? [rfq.taker, response.maker]
-        : [response.maker, rfq.taker];
+    const operatorTrg = await hxroContext.operatorTrg.get();
 
-    const manifest = await getHxroManifest(this.cvg);
-    const [mpg, userTrgs, counterpartyTrgs, operatorTrgs] = await Promise.all([
-      fetchValidHxroMpg(this.cvg, manifest),
-      manifest.getTRGsOfOwner(user),
-      manifest.getTRGsOfOwner(counterparty),
-      manifest.getTRGsOfOwner(this.cvg.hxro().pdas().operator()),
-    ]);
-
-    const { pubkey: userTrgAddress, trg: userTrg } = userTrgs[0];
-    const { pubkey: counterpartyTrgAddress, trg: counterpartyTrg } =
-      counterpartyTrgs[0];
-    const { pubkey: operatorTrgAddress } = operatorTrgs[0];
-    if (!user?.equals(userTrg.owner)) {
-      throw new Error('Invalid user trg authority!');
-    }
-    if (!counterparty?.equals(counterpartyTrg.owner)) {
-      throw new Error('Invalid counterparty trg authority!');
-    }
-
-    const dexProgramId = manifest.fields.dexProgram.programId;
-    const [firstToPrepare, secondToPrepare] =
-      response.printTradeInitializedBy === null
-        ? [userTrgAddress, counterpartyTrgAddress]
-        : [counterpartyTrgAddress, userTrgAddress];
-    const [printTradeAddress] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('print_trade'),
-        firstToPrepare.toBuffer(),
-        secondToPrepare.toBuffer(),
-      ],
-      dexProgramId
-    );
-
-    const riskAndFeeSigner = dexterity.Manifest.GetRiskAndFeeSigner(mpg.pubkey);
-    const systemProgram = this.cvg.programs().getSystem();
-
-    const [covarianceAddress] = PublicKey.findProgramAddressSync(
-      [Buffer.from('s'), mpg.pubkey.toBuffer()],
-      mpg.riskEngineProgramId
-    );
-    const [correlationAddress] = PublicKey.findProgramAddressSync(
-      [Buffer.from('r'), mpg.pubkey.toBuffer()],
-      mpg.riskEngineProgramId
-    );
-    const [markPricesAddress] = PublicKey.findProgramAddressSync(
-      [Buffer.from('mark_prices'), mpg.pubkey.toBuffer()],
-      mpg.riskEngineProgramId
-    );
-
-    return [
+    const accounts = [
+      {
+        pubkey: this.cvg
+          .hxro()
+          .pdas()
+          .lockedCollateralRecord(user, response.address),
+        isSigner: false,
+        isWritable: true,
+      },
       {
         pubkey: this.cvg.hxro().pdas().operator(),
         isSigner: false,
@@ -172,12 +159,12 @@ export class HxroPrintTrade implements PrintTrade {
         isWritable: false,
       },
       {
-        pubkey: dexProgramId,
+        pubkey: hxroContext.getDexProgramId(),
         isSigner: false,
         isWritable: false,
       },
       {
-        pubkey: mpg.pubkey,
+        pubkey: hxroContext.mpg.pubkey,
         isSigner: false,
         isWritable: true,
       },
@@ -187,78 +174,198 @@ export class HxroPrintTrade implements PrintTrade {
         isWritable: false,
       },
       {
-        pubkey: userTrgAddress,
+        pubkey: hxroContext.getTakerTrg(),
         isSigner: false,
         isWritable: true,
       },
       {
-        pubkey: counterpartyTrgAddress,
+        pubkey: hxroContext.getMakerTrg(),
         isSigner: false,
         isWritable: true,
       },
       {
-        pubkey: operatorTrgAddress,
+        pubkey: operatorTrg,
         isSigner: false,
         isWritable: true,
       },
       {
-        pubkey: printTradeAddress,
-        isSigner: false,
-        isWritable: true,
-      },
-      { pubkey: mpg.feeModelProgramId, isSigner: false, isWritable: false },
-      {
-        pubkey: mpg.feeModelConfigurationAcct,
-        isSigner: false,
-        isWritable: false,
-      },
-      { pubkey: mpg.feeOutputRegister, isSigner: false, isWritable: true },
-      { pubkey: mpg.riskEngineProgramId, isSigner: false, isWritable: false },
-      {
-        pubkey: mpg.riskModelConfigurationAcct,
-        isSigner: false,
-        isWritable: false,
-      },
-      { pubkey: mpg.riskOutputRegister, isSigner: false, isWritable: true },
-      { pubkey: riskAndFeeSigner, isSigner: false, isWritable: false },
-      { pubkey: userTrg.feeStateAccount, isSigner: false, isWritable: true },
-      { pubkey: userTrg.riskStateAccount, isSigner: false, isWritable: true },
-      {
-        pubkey: counterpartyTrg.feeStateAccount,
-        isSigner: false,
-        isWritable: true,
-      },
-      {
-        pubkey: counterpartyTrg.riskStateAccount,
+        pubkey: hxroContext.getPrintTrade(),
         isSigner: false,
         isWritable: true,
       },
       { pubkey: systemProgram.address, isSigner: false, isWritable: false },
+    ];
+
+    return { accounts, builders };
+  };
+
+  getSettlementAccounts = async (
+    rfq: PrintTradeRfq,
+    response: PrintTradeResponse
+  ) => {
+    const hxroContext = await HxroContextHelper.create(
+      this.cvg,
+      this,
+      response,
+      response.printTradeInitializedBy!
+    );
+    const systemProgram = this.cvg.programs().getSystem();
+
+    const executionOutput = await getFirstHxroExecutionOutput(
+      this.cvg,
+      hxroContext.getDexProgramId()
+    );
+
+    const [creatorTrgData, counterpartyTrgData, operatorTrg] =
+      await Promise.all([
+        hxroContext.creatorTrgData.get(),
+        hxroContext.counterpartyTrgData.get(),
+        hxroContext.operatorTrg.get(),
+      ]);
+
+    return [
       {
-        pubkey: covarianceAddress,
+        pubkey: this.cvg.hxro().pdas().operator(),
         isSigner: false,
         isWritable: true,
       },
       {
-        pubkey: correlationAddress,
+        pubkey: this.cvg.hxro().pdas().config(),
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: hxroContext.getDexProgramId(),
+        isSigner: false,
+        isWritable: false,
+      },
+      { pubkey: hxroContext.mpg.pubkey, isSigner: false, isWritable: true },
+      { pubkey: hxroContext.getTakerTrg(), isSigner: false, isWritable: true },
+      { pubkey: hxroContext.getMakerTrg(), isSigner: false, isWritable: true },
+      {
+        pubkey: operatorTrg,
         isSigner: false,
         isWritable: true,
       },
       {
-        pubkey: markPricesAddress,
+        pubkey: hxroContext.getPrintTrade(),
         isSigner: false,
         isWritable: true,
       },
+      { pubkey: executionOutput, isSigner: false, isWritable: true },
+      {
+        pubkey: hxroContext.mpg.feeModelProgramId,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: hxroContext.mpg.feeModelConfigurationAcct,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: hxroContext.mpg.feeOutputRegister,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: hxroContext.mpg.riskEngineProgramId,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: hxroContext.mpg.riskModelConfigurationAcct,
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: hxroContext.mpg.riskOutputRegister,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: hxroContext.getRiskAndFeeSigner(),
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: creatorTrgData.feeStateAccount,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: creatorTrgData.riskStateAccount,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: counterpartyTrgData.feeStateAccount,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: counterpartyTrgData.riskStateAccount,
+        isSigner: false,
+        isWritable: true,
+      },
+      { pubkey: systemProgram.address, isSigner: false, isWritable: false },
     ];
   };
-  getSettlementAccounts = async () => {
-    return [];
-  };
+
   getRevertPreparationAccounts = async () => {
     return [];
   };
-  getCleanUpAccounts = async () => {
-    return [];
+
+  getCleanUpAccounts = async (
+    rfq: PrintTradeRfq,
+    response: PrintTradeResponse
+  ) => {
+    const hxroContext = await HxroContextHelper.create(
+      this.cvg,
+      this,
+      response,
+      response.printTradeInitializedBy!
+    );
+    const systemProgram = this.cvg.programs().getSystem();
+    const creator =
+      response.printTradeInitializedBy! === 'taker'
+        ? rfq.taker
+        : response.maker;
+
+    const operatorTrg = await hxroContext.operatorTrg.get();
+
+    return [
+      {
+        pubkey: this.cvg.hxro().pdas().operator(),
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: this.cvg.hxro().pdas().config(),
+        isSigner: false,
+        isWritable: false,
+      },
+      {
+        pubkey: hxroContext.getDexProgramId(),
+        isSigner: false,
+        isWritable: false,
+      },
+      { pubkey: hxroContext.mpg.pubkey, isSigner: false, isWritable: true },
+      { pubkey: hxroContext.getTakerTrg(), isSigner: false, isWritable: true },
+      { pubkey: hxroContext.getMakerTrg(), isSigner: false, isWritable: true },
+      {
+        pubkey: operatorTrg,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: hxroContext.getPrintTrade(),
+        isSigner: false,
+        isWritable: true,
+      },
+      { pubkey: creator, isSigner: false, isWritable: true },
+      { pubkey: systemProgram.address, isSigner: false, isWritable: false },
+    ];
   };
 
   // after an rfq is parsed from an on-chain data, as much data is possible is parsed from there
@@ -420,16 +527,6 @@ export class HxroLeg implements PrintTradeLeg {
   };
 }
 
-export class AdditionalHxroSettlementPreparationParameters {
-  constructor(public userTrgAddress: PublicKey) {}
-
-  static verify(
-    parameters: any
-  ): parameters is AdditionalHxroSettlementPreparationParameters {
-    return parameters instanceof AdditionalHxroSettlementPreparationParameters;
-  }
-}
-
 export class HxroAdditionalRespondData extends AdditionalResponseData {
   constructor(public makerTrg: PublicKey) {
     super();
@@ -437,5 +534,119 @@ export class HxroAdditionalRespondData extends AdditionalResponseData {
 
   serialize(): Buffer {
     return this.makerTrg.toBuffer();
+  }
+
+  static deserialize(data: Uint8Array): HxroAdditionalRespondData {
+    const makerTrg = new PublicKey(data);
+    return new HxroAdditionalRespondData(makerTrg);
+  }
+}
+
+export class HxroContextHelper {
+  public creatorTrgData: CvgCache<any, []>;
+  public counterpartyTrgData: CvgCache<any, []>;
+  public operatorTrg: CvgCache<PublicKey, []>;
+
+  private constructor(
+    private cvg: Convergence,
+    public manifest: any,
+    public mpg: any,
+    private printTrade: HxroPrintTrade,
+    private response: PrintTradeResponse,
+    private firstToPrepare: AuthoritySide
+  ) {
+    this.creatorTrgData = useCache(
+      async () => await this.manifest.getTRG(this.getCreatorTrg())
+    );
+    this.counterpartyTrgData = useCache(
+      async () => await this.manifest.getTRG(this.getCounterpartyTrg())
+    );
+    this.operatorTrg = useCache(async () => {
+      const operatorTrgs = await this.manifest.getTRGsOfOwner(
+        this.cvg.hxro().pdas().operator()
+      );
+      const { pubkey } = operatorTrgs[0];
+      return pubkey;
+    });
+  }
+
+  static async create(
+    cvg: Convergence,
+    printTrade: HxroPrintTrade,
+    response: PrintTradeResponse,
+    firstToPrepare: AuthoritySide
+  ) {
+    const manifest = await hxroManifestCache.get(cvg);
+    const mpg = await fetchValidHxroMpg(cvg, manifest);
+
+    return new HxroContextHelper(
+      cvg,
+      manifest,
+      mpg,
+      printTrade,
+      response,
+      firstToPrepare
+    );
+  }
+
+  getTakerTrg() {
+    return this.printTrade.takerTrg;
+  }
+
+  getMakerTrg() {
+    return HxroAdditionalRespondData.deserialize(this.response.additionalData)
+      .makerTrg;
+  }
+
+  getCreatorTrg() {
+    return this.firstToPrepare === 'taker'
+      ? this.getTakerTrg()
+      : this.getMakerTrg();
+  }
+
+  getCounterpartyTrg() {
+    return this.firstToPrepare === 'taker'
+      ? this.getMakerTrg()
+      : this.getTakerTrg();
+  }
+
+  getPrintTrade() {
+    const [result] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('print_trade'),
+        this.getCreatorTrg().toBuffer(),
+        this.getCounterpartyTrg().toBuffer(),
+        this.response.address.toBuffer(),
+      ],
+      this.getDexProgramId()
+    );
+
+    return result;
+  }
+
+  getDexProgramId() {
+    return this.manifest.fields.dexProgram.programId;
+  }
+
+  getRiskAndFeeSigner() {
+    return dexterity.Manifest.GetRiskAndFeeSigner(this.mpg.pubkey);
+  }
+
+  getTrgBySide(side: AuthoritySide) {
+    if (side === 'taker') {
+      return this.getTakerTrg();
+    }
+
+    return this.getMakerTrg();
+  }
+
+  getTrgDataBySide(side: AuthoritySide) {
+    const isFirstToPrepare = side === this.firstToPrepare;
+
+    if (isFirstToPrepare) {
+      return this.creatorTrgData;
+    }
+
+    return this.counterpartyTrgData;
   }
 }
