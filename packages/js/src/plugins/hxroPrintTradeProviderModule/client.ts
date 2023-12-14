@@ -13,6 +13,9 @@ import {
   fetchHxroProductsOperation,
   initializeHxroConfigOperation,
   initializeOperatorTraderRiskGroupOperation,
+  fetchUnusedCollateralLockRecordsOperation,
+  FetchUnusedCollateralLockRecordsInput,
+  FetchUnusedCollateralLockRecordsOutput,
   modifyHxroConfigOperation,
 } from './operations';
 import { HxroPdasClient } from './pdas';
@@ -69,5 +72,14 @@ export class HxroClient {
     return this.cvg
       .operations()
       .execute(initializeOperatorTraderRiskGroupOperation(input), options);
+  }
+
+  fetchUnusedCollateralLockRecordsOperation(
+    input: FetchUnusedCollateralLockRecordsInput,
+    options?: OperationOptions
+  ): Promise<FetchUnusedCollateralLockRecordsOutput> {
+    return this.cvg
+      .operations()
+      .execute(fetchUnusedCollateralLockRecordsOperation(input), options);
   }
 }

@@ -184,7 +184,6 @@ describe('unit.response', () => {
     });
     await makerCvg.rfqs().cleanUpResponse({
       response: responses[0].address,
-      maker: makerCvg.identity().publicKey,
     });
   });
 
@@ -237,7 +236,7 @@ describe('unit.response', () => {
       convertTimestampToSeconds(Date.now()) + 2
     );
 
-    await sleep(2);
+    await sleep(3);
 
     await expectError(
       takerCvg.rfqs().confirmResponse({
@@ -254,7 +253,6 @@ describe('unit.response', () => {
 
     await makerCvg.rfqs().cleanUpResponse({
       response: res.rfqResponse.address,
-      maker: makerCvg.identity().publicKey,
     });
   });
 });

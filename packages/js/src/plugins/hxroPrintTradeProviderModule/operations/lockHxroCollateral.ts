@@ -73,7 +73,7 @@ export const lockHxroCollateralBuilder = async (
   const idlProgram = await getHxroProgramFromIDL(cvg, manifest);
   const instruction = await idlProgram.methods
     .lockCollateral({
-      numProducts: new BN(1),
+      numProducts: new BN(rfq.legs.length),
       products,
     })
     .accounts({

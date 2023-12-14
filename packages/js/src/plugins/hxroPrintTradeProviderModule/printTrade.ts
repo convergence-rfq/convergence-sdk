@@ -225,6 +225,32 @@ export class HxroPrintTrade implements PrintTrade {
 
     return [
       {
+        pubkey: rfq.taker,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: response.maker,
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: this.cvg
+          .hxro()
+          .pdas()
+          .lockedCollateralRecord(rfq.taker, response.address),
+        isSigner: false,
+        isWritable: true,
+      },
+      {
+        pubkey: this.cvg
+          .hxro()
+          .pdas()
+          .lockedCollateralRecord(response.maker, response.address),
+        isSigner: false,
+        isWritable: true,
+      },
+      {
         pubkey: this.cvg.hxro().pdas().operator(),
         isSigner: false,
         isWritable: true,
@@ -312,8 +338,23 @@ export class HxroPrintTrade implements PrintTrade {
     ];
   };
 
-  getRevertPreparationAccounts = async () => {
-    return [];
+  getRevertPreparationAccounts = async (
+    rfq: PrintTradeRfq,
+    response: PrintTradeResponse,
+    side: AuthoritySide
+  ) => {
+    const user = side === 'taker' ? rfq.taker : response.maker;
+
+    return [
+      {
+        pubkey: this.cvg
+          .hxro()
+          .pdas()
+          .lockedCollateralRecord(user, response.address),
+        isSigner: false,
+        isWritable: true,
+      },
+    ];
   };
 
   getCleanUpAccounts = async (

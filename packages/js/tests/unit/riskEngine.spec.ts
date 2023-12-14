@@ -125,7 +125,6 @@ describe('unit.riskEngine', () => {
       .riskEngine()
       .calculateCollateralForRfq({
         legs: rfq.legs,
-        quoteAsset: rfq.quoteAsset,
         settlementPeriod: rfq.settlingWindow,
         size: rfq.size,
         orderType: rfq.orderType,
@@ -166,7 +165,6 @@ describe('unit.riskEngine', () => {
       .riskEngine()
       .calculateCollateralForRfq({
         legs: rfq.legs,
-        quoteAsset: rfq.quoteAsset,
         settlementPeriod: rfq.settlingWindow,
         size: rfq.size,
         orderType: rfq.orderType,
@@ -180,7 +178,6 @@ describe('unit.riskEngine', () => {
       .riskEngine()
       .calculateCollateralForRfq({
         legs: rfq.legs,
-        quoteAsset: rfq.quoteAsset,
         settlementPeriod: rfq.settlingWindow,
         size: rfq.size,
         orderType: rfq.orderType,

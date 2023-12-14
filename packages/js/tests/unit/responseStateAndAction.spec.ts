@@ -103,7 +103,6 @@ describe('unit.responseStateAndAction', () => {
 
     await makerCvg.rfqs().cleanUpResponse({
       response: rfqResponse.address,
-      maker: makerCvg.identity().publicKey,
     });
   });
 
@@ -182,9 +181,6 @@ describe('unit.responseStateAndAction', () => {
 
     await takerCvg.rfqs().settle({
       response: rfqResponse.address,
-      rfq: rfq.address,
-      maker: makerCvg.identity().publicKey,
-      taker: takerCvg.identity().publicKey,
     });
 
     //Settled for maker
@@ -249,7 +245,7 @@ describe('unit.responseStateAndAction', () => {
       ],
       orderType: 'two-way',
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-      activeWindow: 2,
+      activeWindow: 3,
       settlingWindow: 1,
       fixedSize,
     });
