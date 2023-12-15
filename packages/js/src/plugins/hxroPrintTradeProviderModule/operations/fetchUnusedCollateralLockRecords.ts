@@ -1,6 +1,10 @@
-import { LockedCollateralRecord } from '@convergence-rfq/hxro-print-trade-provider';
+import {
+  LockedCollateralRecord,
+  LockedCollateralRecordArgs,
+} from '@convergence-rfq/hxro-print-trade-provider';
 
 import { LockCollateralRecordGpaBuilder } from '../gpa';
+import { WithPubkey } from '../types';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -34,7 +38,8 @@ export type FetchUnusedCollateralLockRecordsInput = {} | undefined;
  * @group Operations
  * @category Outputs
  */
-export type FetchUnusedCollateralLockRecordsOutput = LockedCollateralRecord[];
+export type FetchUnusedCollateralLockRecordsOutput =
+  WithPubkey<LockedCollateralRecordArgs>[];
 
 /**
  * @group Operations
@@ -61,8 +66,9 @@ export const fetchUnusedCollateralLockRecordsOperationHandler: OperationHandler<
         .whereInUse(false)
         .get();
 
-      return unparsedAccounts.map(
-        (acc) => LockedCollateralRecord.deserialize(acc.data)[0]
-      );
+      return unparsedAccounts.map((acc) => ({
+        ...LockedCollateralRecord.deserialize(acc.data)[0],
+        publicKey: acc.publicKey,
+      }));
     },
   };

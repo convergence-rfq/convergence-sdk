@@ -43,6 +43,7 @@ export type FetchHxroProductsOutput = HxroProductInfo[];
 
 type BaseProductData = {
   productIndex: number;
+  productName: string;
   productAddress: PublicKey;
 };
 
@@ -82,11 +83,17 @@ const parseBaseProductData = async (
 
   return [...dexterity.Manifest.GetProductsOfMPG(mpg).values()]
     .filter((productInfo) => productInfo.product?.outright !== undefined)
-    .map((productInfo) => ({
-      productIndex: productInfo.index as number,
-      productAddress: productInfo.product.outright.outright.metadata
-        .productKey as PublicKey,
-    }));
+    .map((productInfo) => {
+      const byteName: number[] =
+        productInfo.product.outright.outright.metadata.name;
+      const name = byteName.map((char) => String.fromCharCode(char)).join('');
+      return {
+        productIndex: productInfo.index as number,
+        productName: name,
+        productAddress: productInfo.product.outright.outright.metadata
+          .productKey as PublicKey,
+      };
+    });
 };
 
 const expandProductData = async (
@@ -94,9 +101,9 @@ const expandProductData = async (
   baseAssets: BaseAsset[],
   baseData: BaseProductData
 ): Promise<HxroProductInfo | null> => {
-  const metadata = (await manifest.getDerivativeMetadata(
+  const metadata = await manifest.getDerivativeMetadata(
     baseData.productAddress
-  )) as any;
+  );
   const {
     instrumentType: rawInstrumentType,
     strike,

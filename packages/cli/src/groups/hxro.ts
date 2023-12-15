@@ -1,6 +1,9 @@
+/* eslint-disable no-console */
+
 import { Command } from 'commander';
 
 import { PublicKey } from '@solana/web3.js';
+import { HxroProductInfo } from '@convergence-rfq/sdk';
 import { addCmd } from '../helpers';
 import { createCvg, Opts } from '../cvg';
 import { logError, logHxroConfig, logResponse } from '../logger';
@@ -58,6 +61,22 @@ export const displayConfig = async (opts: Opts) => {
   }
 };
 
+const displayProductsCmd = (c: Command) =>
+  addCmd(c, 'display-products', 'displays hxro products', displayProducts, []);
+
+export const displayProducts = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const products: HxroProductInfo[] = await cvg.hxro().fetchProducts();
+    console.log(`Products amount: ${products.length}`);
+    products.forEach((product) => {
+      console.log(JSON.stringify(product));
+    });
+  } catch (e) {
+    logError(e);
+  }
+};
+
 const initializeOperatorTRGCmd = (c: Command) =>
   addCmd(
     c,
@@ -97,4 +116,5 @@ export const hxroGroup = (c: Command) => {
   modifyConfigCmd(group);
   displayConfigCmd(group);
   initializeOperatorTRGCmd(group);
+  displayProductsCmd(group);
 };

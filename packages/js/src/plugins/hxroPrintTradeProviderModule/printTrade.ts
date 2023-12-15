@@ -8,6 +8,7 @@ import {
   Leg as SolitaLeg,
   QuoteAsset as SolitaQuoteAsset,
 } from '@convergence-rfq/rfq';
+import { LockedCollateralRecord } from '@convergence-rfq/hxro-print-trade-provider';
 import {
   AdditionalResponseData,
   PrintTrade,
@@ -28,7 +29,9 @@ import { fetchValidHxroMpg, getFirstHxroExecutionOutput } from './helpers';
 import { hxroManifestCache } from './cache';
 import {
   lockHxroCollateralBuilder,
+  removeLockCollateralRecordBuilder,
   signHxroPrintTradeBuilder,
+  unlockHxroCollateralBuilder,
 } from './operations';
 import { Convergence } from '@/Convergence';
 import {
@@ -338,14 +341,40 @@ export class HxroPrintTrade implements PrintTrade {
     ];
   };
 
-  getRevertPreparationAccounts = async (
+  getRevertPreparations = async (
     rfq: PrintTradeRfq,
     response: PrintTradeResponse,
-    side: AuthoritySide
+    side: AuthoritySide,
+    options: TransactionBuilderOptions
   ) => {
     const user = side === 'taker' ? rfq.taker : response.maker;
 
-    return [
+    const postBuilders = [];
+    if (this.cvg.identity().publicKey.equals(user)) {
+      const lockRecordAddress = this.cvg
+        .hxro()
+        .pdas()
+        .lockedCollateralRecord(user, response.address);
+
+      const accountData = await LockedCollateralRecord.fromAccountAddress(
+        this.cvg.connection,
+        lockRecordAddress
+      );
+      const lockRecord = { ...accountData, publicKey: lockRecordAddress };
+
+      postBuilders.push(
+        await unlockHxroCollateralBuilder(this.cvg, { lockRecord }, options)
+      );
+      postBuilders.push(
+        await removeLockCollateralRecordBuilder(
+          this.cvg,
+          { lockRecord },
+          options
+        )
+      );
+    }
+
+    const accounts = [
       {
         pubkey: this.cvg
           .hxro()
@@ -355,6 +384,8 @@ export class HxroPrintTrade implements PrintTrade {
         isWritable: true,
       },
     ];
+
+    return { accounts, postBuilders };
   };
 
   getCleanUpAccounts = async (

@@ -34,3 +34,7 @@ export type HxroProductInfo =
   | HxroOptionInfo
   | HxroTermFutureInfo
   | HxroPerpFutureInfo;
+
+export type WithPubkey<T> = T & {
+  publicKey: PublicKey;
+};

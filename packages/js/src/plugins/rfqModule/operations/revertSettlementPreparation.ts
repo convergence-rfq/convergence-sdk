@@ -335,34 +335,41 @@ export const revertPrintTradeSettlementPreparationBuilder = async (
     throw new Error('Response is not settled as a print trade!');
   }
 
-  const remainingAccounts = prependWithProviderProgram(
-    rfqModel.printTrade,
-    await rfqModel.printTrade.getRevertPreparationAccounts(
+  const { accounts: remainingAccounts, postBuilders } =
+    await rfqModel.printTrade.getRevertPreparations(
       rfqModel,
       responseModel,
-      side
-    )
+      side,
+      options
+    );
+
+  const fullRemainingAccounts = prependWithProviderProgram(
+    rfqModel.printTrade,
+    remainingAccounts
   );
 
   const rfqProgram = cvg.programs().getRfq(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction:
-        createRevertPrintTradeSettlementPreparationPreparationInstruction(
-          {
-            protocol: cvg.protocol().pdas().protocol(),
-            rfq: rfqModel.address,
-            response: responseModel.address,
-            anchorRemainingAccounts: remainingAccounts,
-          },
-          {
-            side: toSolitaAuthoritySide(side),
-          },
-          rfqProgram.address
-        ),
-      signers: [],
-      key: 'revertSettlementPreparation',
-    });
+    .add(
+      {
+        instruction:
+          createRevertPrintTradeSettlementPreparationPreparationInstruction(
+            {
+              protocol: cvg.protocol().pdas().protocol(),
+              rfq: rfqModel.address,
+              response: responseModel.address,
+              anchorRemainingAccounts: fullRemainingAccounts,
+            },
+            {
+              side: toSolitaAuthoritySide(side),
+            },
+            rfqProgram.address
+          ),
+        signers: [],
+        key: 'revertSettlementPreparation',
+      },
+      ...postBuilders.map((b) => b.getInstructionsWithSigners()).flat()
+    );
 };

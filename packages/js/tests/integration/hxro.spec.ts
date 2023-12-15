@@ -277,4 +277,63 @@ describe('integration.hxro', () => {
     await cvgMaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
     await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
+
+  it('confirm, but taker unlocks collateral and defaults on settlement', async () => {
+    const { rfq } = await cvgTaker.rfqs().createPrintTrade({
+      printTrade: commonPrintTrade,
+      orderType: 'buy',
+      fixedSize: { type: 'fixed-base', amount: 100 },
+      activeWindow: 3600,
+      settlingWindow: 3600,
+    });
+
+    const { rfqResponse } = await cvgMaker.rfqs().respond({
+      rfq: rfq.address,
+      ask: { price: 100 },
+      additionalData: new HxroAdditionalRespondData(CTX.hxroMakerTrg),
+    });
+    await cvgTaker.rfqs().confirmResponse({
+      response: rfqResponse.address,
+      rfq: rfq.address,
+      side: 'ask',
+    });
+
+    await cvgTaker.rfqs().preparePrintTradeSettlement({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+    });
+    await cvgTaker.hxro().unlockCollateralByRecord({
+      lockRecord: cvgTaker
+        .hxro()
+        .pdas()
+        .lockedCollateralRecord(
+          cvgTaker.identity().publicKey,
+          rfqResponse.address
+        ),
+      action: 'unlock',
+    });
+    await cvgMaker.rfqs().preparePrintTradeSettlement({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+    });
+    await cvgMaker.rfqs().settle({
+      response: rfqResponse.address,
+    });
+
+    await cvgMaker.rfqs().settleOnePartyDefault({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+    });
+
+    await cvgMaker.rfqs().revertSettlementPreparation({
+      response: rfqResponse.address,
+      side: 'taker',
+    });
+    await cvgMaker.rfqs().revertSettlementPreparation({
+      response: rfqResponse.address,
+      side: 'maker',
+    });
+
+    await cvgMaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
+  });
 });

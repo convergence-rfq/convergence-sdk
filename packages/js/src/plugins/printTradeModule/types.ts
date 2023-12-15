@@ -29,11 +29,12 @@ export interface PrintTrade {
     rfq: PrintTradeRfq,
     response: PrintTradeResponse
   ) => Promise<AccountMeta[]>;
-  getRevertPreparationAccounts: (
+  getRevertPreparations: (
     rfq: PrintTradeRfq,
     response: PrintTradeResponse,
-    side: AuthoritySide
-  ) => Promise<AccountMeta[]>;
+    side: AuthoritySide,
+    options: TransactionBuilderOptions
+  ) => Promise<{ accounts: AccountMeta[]; postBuilders: TransactionBuilder[] }>;
   getCleanUpAccounts: (
     rfq: PrintTradeRfq,
     response: PrintTradeResponse

@@ -22,7 +22,7 @@ describe('unit.hxro', () => {
   });
 
   it('modify config', async () => {
-    await runCli(['hxro', 'modify-config', '--valid-mpg', HXRO_MPG]);
+    await runCli(['hxro', 'modify-config', '--valid-mpg', HXRO_MPG.toString()]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
