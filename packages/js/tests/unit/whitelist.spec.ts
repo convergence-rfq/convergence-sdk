@@ -93,6 +93,6 @@ describe('unit.whitelist', () => {
       creator: TAKER_PK,
     });
 
-    expect(whitelists.length).toBe(5);
+    expect(whitelists.length).toBe(7);
   });
 });
