@@ -249,7 +249,7 @@ describe('unit.responseStateAndAction', () => {
       ],
       orderType: 'two-way',
       quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-      activeWindow: 2,
+      activeWindow: 3,
       settlingWindow: 1,
       fixedSize,
     });
@@ -299,7 +299,7 @@ describe('unit.responseStateAndAction', () => {
       legAmountToPrepare: rfq.legs.length,
     });
 
-    await sleep(3);
+    await sleep(4);
 
     refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
