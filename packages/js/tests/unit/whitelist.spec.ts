@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
+import expect from 'expect';
 import { createUserCvg, expectError } from '../helpers';
 import { DAO_PK, MAKER_PK, TAKER_PK, TESTING_PK } from '../constants';
 
@@ -85,5 +86,13 @@ describe('unit.whitelist', () => {
     await cvg.whitelist().cleanUpWhitelist({
       whitelist: whitelist.address,
     });
+  });
+
+  it('find whitelists by creator', async () => {
+    const whitelists = await cvg.whitelist().findWhitelistsByCreator({
+      creator: TAKER_PK,
+    });
+
+    expect(whitelists.length).toBe(5);
   });
 });

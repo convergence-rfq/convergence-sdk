@@ -21,7 +21,7 @@ const Key = 'AddAddressToWhitelistOperation' as const;
  * Add new address to the whitelist.
  *
  * ```ts
- * const { whitelist} = await convergence
+ * await convergence
  *   .rfqs()
  *   .AddAddressToWhitelist({
  *      creator?: Signer;

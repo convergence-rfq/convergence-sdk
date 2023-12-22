@@ -24,8 +24,8 @@ const Key = 'CleanUpWhitelistOperation' as const;
  * await convergence
  *   .whitelist()
  *   .cleanUpWhitelist({
- *    creator?: Signer;
- *    whitelist: PublicKey;
+ *      creator?: Signer;
+ *      whitelist: PublicKey;
  *   });
  * ```
  *

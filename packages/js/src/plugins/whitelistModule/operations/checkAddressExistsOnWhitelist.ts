@@ -20,7 +20,7 @@ const Key = 'CheckAddressExistsOnWhitelistOperation' as const;
  * const doesExists = await convergence
  *   .whitelist()
  *   .checkAddressExistsOnWhitelist({
- *      whitelistAddress: PublicKey,
+ *       whitelistAddress: PublicKey,
  *       addressToSearch: PublicKey,
  *   });
  * ```

@@ -24,8 +24,8 @@ const Key = 'RemoveAddressFromWhitelistOperation' as const;
  * await convergence
  *   .whitelist()
  *   .removeAddressFromWhitelist({
- *      creator?: Signer;
- *      whitelist: PublicKey;
+ *       creator?: Signer;
+ *       whitelist: PublicKey;
  *       addressToRemove: PublicKey;
  *   });
  * ```
