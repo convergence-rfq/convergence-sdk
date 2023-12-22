@@ -11,7 +11,6 @@ import {
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 import BN from 'bn.js';
-import { Program } from '@project-serum/anchor';
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
 import * as anchor from '@project-serum/anchor';
 import { Mint } from '../tokenModule';
@@ -177,7 +176,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
-    const europeanProgram = await createEuropeanProgram(convergence);
+    const europeanProgram: any = await createEuropeanProgram(convergence);
     const { metaKey, optionMint } = await getEuropeanOptionKeys(
       europeanProgram,
       underlyingMint,
@@ -383,7 +382,7 @@ export type GetEuropeanOptionMetaResult = {
 };
 
 export const getEuropeanOptionKeys = async (
-  europeanProgram: Program<psyoptionsEuropean.EuroPrimitive>,
+  europeanProgram: any,
   underlyingMint: Mint,
   stableMint: Mint,
   expirationTimestamp: number,

@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.22
+
+### Patch Changes
+
+- update solana and anchor package versions amd add ixType to checkedAdd method
+
 ## 4.5.21
 
 ### Patch Changes
