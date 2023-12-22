@@ -8,8 +8,16 @@ import {
   settleRfq,
   createRfq,
   respondToRfq,
+  expectError,
 } from '../helpers';
-import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
+import {
+  BASE_MINT_BTC_PK,
+  DAO_PK,
+  MAKER_PK,
+  QUOTE_MINT_PK,
+  TAKER_PK,
+  TESTING_PK,
+} from '../constants';
 
 describe('integration.spot', () => {
   const takerCvg = createUserCvg('taker');
@@ -159,5 +167,64 @@ describe('integration.spot', () => {
     ]);
     expect(makerBtcAfter).toBe(makerBtcBefore - baseAmount);
     expect(takerBtcAfter).toBe(takerBtcBefore + baseAmount);
+  });
+
+  it('Create a Rfq with a whitelist and add makers address to that  ', async () => {
+    const baseAmount = 2.5;
+    const quoteAmount = 24_300.75 * baseAmount;
+
+    const { whitelist } = await takerCvg.whitelist().createWhitelist({
+      creator: TAKER_PK,
+      capacity: 10,
+      whitelist: [MAKER_PK, DAO_PK],
+    });
+
+    const { rfq } = await createRfq(
+      takerCvg,
+      baseAmount,
+      'two-way',
+      undefined,
+      whitelist.address
+    );
+    expect(rfq).toHaveProperty('address');
+    const { rfqResponse } = await respondToRfq(
+      makerCvg,
+      rfq,
+      undefined,
+      quoteAmount
+    );
+
+    expect(rfqResponse).toHaveProperty('address');
+    const confirmResponse = await takerCvg.rfqs().confirmResponse({
+      rfq: rfq.address,
+      response: rfqResponse.address,
+      side: 'ask',
+    });
+    expect(confirmResponse.response).toHaveProperty('signature');
+  });
+
+  it('Create a Rfq with a whitelist , maker is not whitelisted resulting in error in responding ', async () => {
+    const baseAmount = 2.5;
+    const quoteAmount = 24_300.75 * baseAmount;
+
+    const { whitelist } = await takerCvg.whitelist().createWhitelist({
+      creator: TAKER_PK,
+      capacity: 10,
+      whitelist: [DAO_PK, TESTING_PK],
+    });
+
+    const { rfq } = await createRfq(
+      takerCvg,
+      baseAmount,
+      'two-way',
+      undefined,
+      whitelist.address
+    );
+    expect(rfq).toHaveProperty('address');
+
+    await expectError(
+      respondToRfq(makerCvg, rfq, undefined, quoteAmount),
+      'MakerAddressNotWhitelisted'
+    );
   });
 });

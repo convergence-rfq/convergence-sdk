@@ -13,8 +13,8 @@ export class ResponseGpaBuilder extends GpaBuilder {
     this.where(0, Buffer.from(responseDiscriminator));
   }
 
-  whereMaker(taker: PublicKey) {
-    return this.where(MAKER, taker);
+  whereMaker(maker: PublicKey) {
+    return this.where(MAKER, maker);
   }
 
   whereRfq(address: PublicKey) {

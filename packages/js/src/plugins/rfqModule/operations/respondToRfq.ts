@@ -18,6 +18,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
+import { rfqProgram } from '../program';
 import { convertTimestampToSeconds } from '@/utils';
 
 const getNextResponsePdaAndDistinguisher = async (
@@ -316,6 +317,25 @@ export const respondToRfqBuilder = async (
     }
   }
 
+  const defaultPubkey = PublicKey.default;
+  const whitelist =
+    rfqModel.whitelist.toBase58() !== defaultPubkey.toBase58()
+      ? rfqModel.whitelist
+      : rfqProgram.address;
+
+  if (!rfqModel.whitelist.equals(defaultPubkey)) {
+    const addressAlreadyExists = await convergence
+      .whitelist()
+      .checkAddressExistsOnWhitelist({
+        whitelistAddress: whitelist,
+        addressToSearch: maker.publicKey,
+      });
+
+    if (!addressAlreadyExists) {
+      throw new Error('MakerAddressNotWhitelisted');
+    }
+  }
+
   return TransactionBuilder.make<RespondToRfqBuilderContext>()
     .setFeePayer(maker)
     .setContext({
@@ -337,6 +357,7 @@ export const respondToRfqBuilder = async (
             collateralToken,
             protocol,
             riskEngine,
+            whitelist,
             maker: maker.publicKey,
             anchorRemainingAccounts: [
               {

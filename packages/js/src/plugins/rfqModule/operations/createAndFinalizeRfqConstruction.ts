@@ -131,6 +131,9 @@ export type CreateAndFinalizeRfqConstructionInput = {
 
   /** Optional address of the risk engine program account. */
   riskEngine?: PublicKey;
+
+  /** Optional RFQ whitelist Address . */
+  whitelistAddress?: PublicKey;
 };
 
 /**
@@ -164,6 +167,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         quoteAsset,
         activeWindow = 5_000,
         settlingWindow = 1_000,
+        whitelistAddress,
       } = operation.input;
       const payer = convergence.rpc().getDefaultFeePayer();
       const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
@@ -214,6 +218,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           fixedSize,
           expectedLegsHash,
           recentTimestamp,
+          whitelistAddress,
         },
         scope
       );

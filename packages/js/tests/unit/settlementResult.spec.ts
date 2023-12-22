@@ -90,6 +90,7 @@ describe('unit.settlementResult', () => {
       quoteAmount,
       'buy',
       undefined,
+      undefined,
       'fixed-quote'
     );
     expect(rfq).toHaveProperty('address');
@@ -140,6 +141,7 @@ describe('unit.settlementResult', () => {
       takerCvg,
       baseAmount,
       'buy',
+      undefined,
       undefined,
       'open'
     );
@@ -193,6 +195,7 @@ describe('unit.settlementResult', () => {
       takerCvg,
       baseAmount,
       'sell',
+      undefined,
       undefined,
       'open'
     );
