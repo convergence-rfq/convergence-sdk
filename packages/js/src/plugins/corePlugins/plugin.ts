@@ -15,6 +15,7 @@ import { instrumentModule } from '../instrumentModule';
 import { psyoptionsEuropeanInstrumentModule } from '../psyoptionsEuropeanInstrumentModule';
 import { psyoptionsAmericanInstrumentModule } from '../psyoptionsAmericanInstrumentModule';
 import { spotInstrumentModule } from '../spotInstrumentModule';
+import { whitelistModule } from '../whitelistModule';
 
 export const corePlugins = () => ({
   install(convergence: Convergence) {
@@ -36,6 +37,7 @@ export const corePlugins = () => ({
     convergence.use(collateralModule());
     convergence.use(riskEngineModule());
     convergence.use(accountModule());
+    convergence.use(whitelistModule());
 
     // Integrations
     convergence.use(instrumentModule());

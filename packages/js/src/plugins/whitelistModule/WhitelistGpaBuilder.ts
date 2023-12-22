@@ -4,20 +4,15 @@ import { PROGRAM_ID, responseDiscriminator } from '@convergence-rfq/rfq';
 import { Convergence } from '../../Convergence';
 import { GpaBuilder } from '../../utils';
 
-const MAKER = 8;
-const RFQ = MAKER + 32;
+const CREATOR = 8;
 
-export class ResponseGpaBuilder extends GpaBuilder {
+export class WhitelistGpaBuilder extends GpaBuilder {
   constructor(convergence: Convergence, programId?: PublicKey) {
     super(convergence, programId ?? PROGRAM_ID);
     this.where(0, Buffer.from(responseDiscriminator));
   }
 
-  whereMaker(maker: PublicKey) {
-    return this.where(MAKER, maker);
-  }
-
-  whereRfq(address: PublicKey) {
-    return this.where(RFQ, address);
+  whereCreator(maker: PublicKey) {
+    return this.where(CREATOR, maker);
   }
 }

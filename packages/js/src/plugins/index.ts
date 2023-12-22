@@ -18,3 +18,4 @@ export * from './protocolModule';
 export * from './systemModule';
 export * from './tokenModule';
 export * from './accountModule';
+export * from './whitelistModule';

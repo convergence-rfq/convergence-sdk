@@ -83,6 +83,9 @@ export type Rfq = {
   /** The number of confirmed Responses to the Rfq. */
   readonly confirmedResponses: number;
 
+  /** The address of the Whitelist. */
+  readonly whitelist: PublicKey;
+
   /** The legs of the Rfq. */
   readonly legs: LegInstrument[];
 };
@@ -135,6 +138,7 @@ export const toRfq = async (
     totalResponses: account.data.totalResponses,
     clearedResponses: account.data.clearedResponses,
     confirmedResponses: account.data.confirmedResponses,
+    whitelist: account.data.whitelist,
     legs: account.data.legs.map((leg) => convergence.parseLegInstrument(leg)),
   };
 };
