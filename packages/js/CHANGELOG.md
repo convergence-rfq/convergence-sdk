@@ -1,10 +1,16 @@
 # @convergence-rfq/sdk
 
-## 4.5.22
+## 4.5.23
 
 ### Patch Changes
 
 - add Whitelist feature to SDK
+
+## 4.5.22
+
+### Patch Changes
+
+- refactor class IxUniquenessTracker to use variant txBuilder or txInstruction
 
 ## 4.5.21
 
