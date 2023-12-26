@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.22
+
+### Patch Changes
+
+- add Whitelist feature to SDK
+
 ## 4.5.21
 
 ### Patch Changes
