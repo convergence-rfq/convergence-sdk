@@ -10,7 +10,7 @@
 
 ### Patch Changes
 
-- refactor class IxUniquenessTracker to use variant txBuilder or txInstruction
+- update solana and anchor package versions amd add ixType to checkedAdd method
 
 ## 4.5.21
 
