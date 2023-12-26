@@ -174,7 +174,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       const rfqPreparationTxBuilder =
         TransactionBuilder.make().setFeePayer(payer);
       rfqPreparationIxs.forEach((ix) => {
-        if (ixTracker.checkedAdd(ix)) {
+        if (ixTracker.checkedAdd(ix, 'TransactionInstruction')) {
           rfqPreparationTxBuilder.add({
             instruction: ix,
             signers: [convergence.identity()],

@@ -2,6 +2,7 @@ import { AccountMeta, TransactionInstruction } from '@solana/web3.js';
 import { TransactionBuilder } from './TransactionBuilder';
 import { Response, Rfq } from '@/plugins/rfqModule';
 
+export type IxType = 'TransactionInstruction' | 'TransactionBuilder';
 export class InstructionUniquenessTracker {
   constructor(public readonly IxArray: TransactionInstruction[]) {
     this.IxArray = IxArray;
@@ -31,25 +32,30 @@ export class InstructionUniquenessTracker {
         )
     );
   };
-  checkedAdd(ix: TransactionInstruction | TransactionBuilder): boolean {
-    if (ix instanceof TransactionBuilder) {
-      const instructions = ix.getInstructions();
-      const areAllUnique = instructions.every(
-        (ix) => !this.matchInstruction(ix)
-      );
-      if (areAllUnique) {
-        this.IxArray.push(...instructions);
-        return true;
-      }
-      return false;
-    } else if (ix instanceof TransactionInstruction) {
-      if (!this.matchInstruction(ix)) {
-        this.IxArray.push(ix);
-        return true;
-      }
-      return false;
+  checkedAdd(
+    ix: TransactionInstruction | TransactionBuilder,
+    ixType: IxType
+  ): boolean {
+    switch (ixType) {
+      case 'TransactionInstruction':
+        if (!this.matchInstruction(ix as TransactionInstruction)) {
+          this.IxArray.push(ix as TransactionInstruction);
+          return true;
+        }
+        return false;
+      case 'TransactionBuilder':
+        const instructions = (ix as TransactionBuilder).getInstructions();
+        const areAllUnique = instructions.every(
+          (ix) => !this.matchInstruction(ix)
+        );
+        if (areAllUnique) {
+          this.IxArray.push(...instructions);
+          return true;
+        }
+        return false;
+      default:
+        throw new Error('Invalid Instruction type');
     }
-    throw new Error('Invalid Instruction type');
   }
 }
 

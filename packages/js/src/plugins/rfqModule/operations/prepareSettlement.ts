@@ -170,7 +170,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       }
 
       prepareOptionsResult.ataTxBuilders.forEach((txBuilder) => {
-        ixTracker.checkedAdd(txBuilder);
+        ixTracker.checkedAdd(txBuilder, 'TransactionBuilder');
       });
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
       ataTxs = prepareOptionsResult.ataTxBuilders.map((txBuilder) =>
@@ -181,7 +181,7 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
       );
       const uniqueRemainingAtaTxBuilders: TransactionBuilder[] = [];
       remainingAtaTxBuilders.forEach((txBuilder) => {
-        if (ixTracker.checkedAdd(txBuilder)) {
+        if (ixTracker.checkedAdd(txBuilder, 'TransactionBuilder')) {
           uniqueRemainingAtaTxBuilders.push(txBuilder);
         }
       });
