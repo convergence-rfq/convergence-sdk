@@ -10,9 +10,13 @@ import {
   useOperation,
   Signer,
 } from '../../../types';
-import { convertOverrideLegMultiplierBps } from '../helpers';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
+import { Response } from '../models';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
+import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -94,10 +98,10 @@ export type ConfirmResponseInput = {
   side: ResponseSide;
 
   /**
-   * Optional basis points multiplier to override the legMultiplierBps of the
+   * Optional basis points multiplier to override the legsMultiplierBps of the
    * Rfq's fixedSize property.
    */
-  overrideLegMultiplierBps?: number;
+  overrideLegMultiplier?: number;
 };
 
 /**
@@ -178,17 +182,19 @@ export const confirmResponseBuilder = async (
     }),
   } = params;
 
-  let { overrideLegMultiplierBps = null } = params;
-
-  if (overrideLegMultiplierBps) {
-    overrideLegMultiplierBps = convertOverrideLegMultiplierBps(
-      Number(overrideLegMultiplierBps)
-    );
-  }
-
   const responseModel = await convergence
     .rfqs()
     .findResponseByAddress({ address: response });
+
+  if (isResponseExpired(responseModel)) {
+    throw new Error('Response is expired');
+  }
+
+  const { overrideLegMultiplier = null } = params;
+  const overrideLegMultiplierBps =
+    overrideLegMultiplier &&
+    toSolitaOverrideLegMultiplierBps(overrideLegMultiplier);
+
   const makerCollateralInfo = convergence.collateral().pdas().collateralInfo({
     user: responseModel.maker,
     programs,
@@ -264,4 +270,8 @@ export const confirmResponseBuilder = async (
         key: 'confirmResponse',
       }
     );
+};
+
+const isResponseExpired = (response: Response): boolean => {
+  return Date.now() > response.expirationTimestamp;
 };

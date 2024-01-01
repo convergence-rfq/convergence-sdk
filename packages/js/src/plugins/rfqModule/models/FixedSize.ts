@@ -1,6 +1,6 @@
 import { FixedSize as SolitaFixedSize } from '@convergence-rfq/rfq';
 
-import { addDecimals, removeDecimals } from '../../../utils';
+import { addDecimals, removeDecimals } from '../../../utils/conversions';
 import { LEG_MULTIPLIER_DECIMALS } from '../constants';
 
 interface None {
@@ -75,3 +75,13 @@ export function toSolitaFixedSize(
     }
   }
 }
+
+export const isFixedSizeOpen = (
+  x: FixedSize
+): x is FixedSize & { amount: undefined } => x.type === 'open';
+export const isFixedSizeBaseAsset = (
+  x: FixedSize
+): x is FixedSize & { amount: number } => x.type === 'fixed-base';
+export const isFixedSizeQuoteAsset = (
+  x: FixedSize
+): x is FixedSize & { amount: number } => x.type === 'fixed-quote';

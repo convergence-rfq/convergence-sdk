@@ -98,9 +98,13 @@ export const mintTo = async (opts: Opts) => {
 export const initializeProtocol = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response, protocol } = await cvg
-      .protocol()
-      .initialize({ collateralMint: new PublicKey(opts.collateralMint) });
+    const { response, protocol } = await cvg.protocol().initialize({
+      collateralMint: new PublicKey(opts.collateralMint),
+      protocolTakerFee: opts.protocolTakerFee,
+      protocolMakerFee: opts.protocolMakerFee,
+      settlementTakerFee: opts.settlementTakerFee,
+      settlementMakerFee: opts.settlementMakerFee,
+    });
     logPk(protocol.address);
     logResponse(response);
   } catch (e) {
@@ -236,8 +240,8 @@ export const getActiveRfqs = async (opts: Opts) => {
     const pages = await cvg.rfqs().findRfqs({}).promise();
     const rfqs = pages.flat();
     rfqs
-      .filter((r) => r.state === 'active')
-      .sort((a, b) => {
+      .filter((r: any) => r.state === 'active')
+      .sort((a: any, b: any) => {
         const aTimeToExpiry = a.creationTimestamp + a.activeWindow;
         const bTimeToExpiry = b.creationTimestamp + b.activeWindow;
         return aTimeToExpiry - bTimeToExpiry;

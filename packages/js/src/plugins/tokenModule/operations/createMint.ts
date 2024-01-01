@@ -4,10 +4,10 @@ import { Keypair, PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Mint } from '../models/Mint';
 import {
-  Option,
   TransactionBuilder,
   TransactionBuilderOptions,
-} from '../../../utils';
+} from '../../../utils/TransactionBuilder';
+import { Option } from '../../../utils/types';
 import {
   makeConfirmOptionsFinalizedOnMainnet,
   Operation,

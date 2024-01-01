@@ -18,6 +18,8 @@ import {
   findTokenWithMintByMintOperationHandler,
   freezeTokensOperation,
   freezeTokensOperationHandler,
+  getTokenBalanceOperationHandler,
+  getTokenBalanceOperation,
   mintTokensOperation,
   mintTokensOperationHandler,
   revokeTokenDelegateAuthorityOperation,
@@ -93,6 +95,8 @@ export const tokenModule = (): ConvergencePlugin => ({
     );
     op.register(sendTokensOperation, sendTokensOperationHandler);
     op.register(thawTokensOperation, thawTokensOperationHandler);
+
+    op.register(getTokenBalanceOperation, getTokenBalanceOperationHandler);
 
     convergence.tokens = function () {
       return new TokenClient(this);

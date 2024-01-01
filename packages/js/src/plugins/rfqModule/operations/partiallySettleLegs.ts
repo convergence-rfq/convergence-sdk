@@ -1,8 +1,5 @@
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
-import {
-  createPartiallySettleLegsInstruction,
-  QuoteSide,
-} from '@convergence-rfq/rfq';
+import { createPartiallySettleLegsInstruction } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -14,9 +11,12 @@ import {
   makeConfirmOptionsFinalizedOnMainnet,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { InstrumentPdasClient } from '../../instrumentModule';
-import { legToBaseAssetMint } from '../helpers';
+import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 
@@ -158,17 +158,11 @@ export const partiallySettleLegsBuilder = async (
 
   for (let i = startIndex; i < startIndex + legAmountToSettle; i++) {
     const leg = rfqModel.legs[i];
-
-    const confirmationSide = responseModel.confirmed?.side;
-
-    let legTakerAmount = -1;
-
-    if (leg.getSide() == 'short') {
-      legTakerAmount *= -1;
-    }
-    if (confirmationSide == QuoteSide.Bid) {
-      legTakerAmount *= -1;
-    }
+    const { legs } = await convergence.rfqs().getSettlementResult({
+      rfq: rfqModel,
+      response: responseModel,
+    });
+    const { receiver } = legs[i];
 
     const instrumentProgramAccount: AccountMeta = {
       pubkey: rfqModel.legs[i].getProgramId(),
@@ -200,7 +194,7 @@ export const partiallySettleLegsBuilder = async (
           .pdas()
           .associatedTokenAccount({
             mint: baseAssetMint!.address,
-            owner: legTakerAmount > 0 ? maker : taker,
+            owner: receiver === 'maker' ? maker : taker,
             programs,
           }),
         isSigner: false,

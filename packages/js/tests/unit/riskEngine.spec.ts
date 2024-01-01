@@ -1,6 +1,4 @@
 import { expect } from 'expect';
-// TODO: Should not be using this
-import { QuoteSide } from '@convergence-rfq/rfq';
 
 import { InstrumentType, DEFAULT_RISK_CATEGORIES_INFO } from '../../src';
 import {
@@ -157,7 +155,7 @@ describe('unit.riskEngine', () => {
       .calculateCollateralForConfirmation({
         rfqAddress: rfq.address,
         responseAddress: rfqResponse.address,
-        confirmation: { side: QuoteSide.Ask, overrideLegMultiplierBps: 1 },
+        confirmation: { side: 'bid', overrideLegMultiplier: 1 },
       });
     expect(requiredCollateral).toBeCloseTo(rfqResponse.makerCollateralLocked);
   });

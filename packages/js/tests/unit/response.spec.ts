@@ -1,9 +1,13 @@
 import { expect } from 'expect';
-// TODO: Should not be using this
-import { QuoteSide } from '@convergence-rfq/rfq';
 
-import { Rfq } from '../../src';
-import { createUserCvg, createRfq, respondToRfq } from '../helpers';
+import { Rfq, convertTimestampToSeconds } from '../../src';
+import {
+  createUserCvg,
+  createRfq,
+  respondToRfq,
+  sleep,
+  expectError,
+} from '../helpers';
 
 describe('unit.response', () => {
   const makerCvg = createUserCvg('maker');
@@ -102,7 +106,7 @@ describe('unit.response', () => {
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: responses[0].address,
     });
-    expect(response.confirmed?.side).toBe(QuoteSide.Bid);
+    expect(response.confirmed?.side).toBe('bid');
   });
 
   it('confirm [ask]', async () => {
@@ -119,9 +123,10 @@ describe('unit.response', () => {
     const response = await makerCvg.rfqs().findResponseByAddress({
       address: responses[0].address,
     });
-    expect(response.confirmed?.side).toBe(QuoteSide.Ask);
+    expect(response.confirmed?.side).toBe('ask');
   });
 
+  // TODO ADD getResponseState function
   it('cancel response', async () => {
     const rfq = rfq0;
     const responsesBefore = await makerCvg.rfqs().findResponsesByRfq({
@@ -219,5 +224,37 @@ describe('unit.response', () => {
     responses.map((r) =>
       expect(r.rfq.toBase58()).toEqual(rfq0.address.toBase58())
     );
+  });
+
+  it('Cannot confirm Response if response is expired', async () => {
+    const rfq = await createRfq(takerCvg, amount0, 'buy', 10);
+
+    const res = await respondToRfq(
+      makerCvg,
+      rfq.rfq,
+      undefined,
+      amount1,
+      convertTimestampToSeconds(Date.now()) + 2
+    );
+
+    await sleep(2);
+
+    await expectError(
+      takerCvg.rfqs().confirmResponse({
+        response: res.rfqResponse.address,
+        rfq: rfq.rfq.address,
+        side: 'ask',
+      }),
+      'Response is expired'
+    );
+
+    await makerCvg.rfqs().unlockResponseCollateral({
+      response: res.rfqResponse.address,
+    });
+
+    await makerCvg.rfqs().cleanUpResponse({
+      response: res.rfqResponse.address,
+      maker: makerCvg.identity().publicKey,
+    });
   });
 });

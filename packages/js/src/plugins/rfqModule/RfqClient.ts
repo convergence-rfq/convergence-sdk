@@ -76,8 +76,19 @@ import {
   UnlockResponsesCollateralInput,
   UnlockRfqsCollateralInput,
   unlockRfqsCollateralOperation,
+  GetSettlementResultInput,
+  getSettlementResultOperation,
+  getSettlementResultHandler,
+  GetResponseStateAndActionInput,
+  getResponseStateAndActionOperation,
+  getResponseStateAndActionHandler,
 } from './operations';
 import { Response } from './models/Response';
+import {
+  GetRfqStateAndActionInput,
+  getRfqStateAndActionHandler,
+  getRfqStateAndActionOperation,
+} from './operations/getRfqStateAndAction';
 
 /**
  * This is a client for the Rfq module.
@@ -476,5 +487,29 @@ export class RfqClient {
     return this.convergence
       .tokens()
       .send({ ...input, amount: token(1) }, options);
+  }
+
+  /** {@inheritDoc getSettlementResultOperation} */
+  getSettlementResult(input: GetSettlementResultInput) {
+    return getSettlementResultHandler.handle(
+      getSettlementResultOperation(input),
+      this.convergence
+    );
+  }
+
+  /** {@inheritDoc getResponseStateAndAction} */
+  getResponseStateAndAction(input: GetResponseStateAndActionInput) {
+    return getResponseStateAndActionHandler.handle(
+      getResponseStateAndActionOperation(input),
+      this.convergence
+    );
+  }
+
+  /** {@inheritDoc getRFqStateAndAction} */
+  getRfqStateAndAction(input: GetRfqStateAndActionInput) {
+    return getRfqStateAndActionHandler.handle(
+      getRfqStateAndActionOperation(input),
+      this.convergence
+    );
   }
 }

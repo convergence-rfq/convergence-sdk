@@ -8,3 +8,4 @@ export * from './StoredResponseState';
 export * from './Quote';
 export * from './ResponseSide';
 export * from './LegSide';
+export * from './Confirmation';

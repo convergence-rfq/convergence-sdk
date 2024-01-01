@@ -1,5 +1,151 @@
 # @convergence-rfq/sdk
 
+## 4.5.22
+
+### Patch Changes
+
+- update solana and anchor package versions amd add ixType to checkedAdd method
+
+## 4.5.21
+
+### Patch Changes
+
+- Fix getResponseState to avoid conflict between enum DefaultingParty.Talker (0) and null
+
+## 4.5.20
+
+### Patch Changes
+
+- Update CPL Solita packages to version - 2.3.0
+
+## 4.5.19
+
+### Patch Changes
+
+- Fresh Deployment with new program Ids
+
+## 4.5.18
+
+### Patch Changes
+
+- Update getResponseStateAndAction to account for responseExpiration
+
+## 4.5.17
+
+### Patch Changes
+
+- Add expirationTimestamp to Response Model
+  Update CPL solita packages to version 2.2.14
+
+## 4.5.16
+
+### Patch Changes
+
+- Update CPL solita packages to version 2.2.13
+
+## 4.5.15
+
+### Patch Changes
+
+- fix technical debt
+  handle american put options
+  handle duplicate atas creation
+
+## 4.5.14
+
+### Patch Changes
+
+- fix prepareSettlementLogic to handle transaction already processed error
+
+## 4.5.13
+
+### Patch Changes
+
+- handle blockheight issue popping in browser
+
+## 4.5.12
+
+### Patch Changes
+
+- fix BN error import
+
+## 4.5.11
+
+### Patch Changes
+
+- handle option market creation in createRfq logic
+  optimize prepareSettlement logic for single tx confirmation
+
+## 4.5.10
+
+### Patch Changes
+
+- refactor prepareSettlement logic to handle creation of atas and minting option tokens if required
+  add getTokenBalance operation to token module
+  add getRfqStateAndAction
+  add getResponseStateAndAction
+  fix cli-tests
+
+## 4.5.9
+
+### Patch Changes
+
+- CLI get-registered-mints now logs mint address and decimals
+
+## 4.5.8
+
+### Patch Changes
+
+- Added min collateral requirement flag to CLI
+
+## 4.5.7
+
+### Patch Changes
+
+- Risk engine config default config is now 10 USDC
+
+## 4.5.6
+
+### Patch Changes
+
+- Fixed typo in CLI input parameters
+
+## 4.5.5
+
+### Patch Changes
+
+- Initialize protocol now takes and utilizes parameters for all fees
+
+## 4.5.4
+
+### Patch Changes
+
+- make getSettlementResult a synchronous operation & Refactor Client Risk Engine to remove unnecessary decimal conversions and add + replace new Api models from Solita"
+
+## 4.5.3
+
+### Patch Changes
+
+- Added fix for blockhash and incremented CPL Solita packages to 2.2.12
+
+## 4.5.2
+
+### Patch Changes
+
+- Remove decimals from override legMultiplier and remove Bps suffixes , also improve getSettlementResultOperation to work for non confirmed response
+
+## 4.5.1
+
+### Patch Changes
+
+- use getSettlementResult to mintOptions and getOrCreateOptionAtas to cover all cases
+
+## 4.5.0
+
+### Patch Changes
+
+- Added getSettlementResult Operation to Rfq Module
+
 ## 4.4.10
 
 ### Patch Changes

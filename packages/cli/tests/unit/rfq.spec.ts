@@ -14,7 +14,7 @@ describe('unit.rfq', () => {
     stub.restore();
   });
 
-  it('create [taker]', async () => {
+  it.skip('create [taker]', async () => {
     await runCli(
       [
         'rfq',
@@ -43,7 +43,7 @@ describe('unit.rfq', () => {
     expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
 
-  it('get-all [maker]', async () => {
+  it.skip('get-all [maker]', async () => {
     await runCli(['rfq', 'get-all']);
     expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });

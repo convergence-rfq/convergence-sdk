@@ -1,11 +1,13 @@
 import { PublicKey } from '@solana/web3.js';
-import {
-  Confirmation as SolitaConfirmation,
-  DefaultingParty as SolitaDefaultingParty,
-} from '@convergence-rfq/rfq';
+import { DefaultingParty as SolitaDefaultingParty } from '@convergence-rfq/rfq';
 
 import { ResponseAccount } from '../accounts';
-import { assert, removeDecimals } from '../../../utils';
+import {
+  convertTimestampToMilliSeconds,
+  removeDecimals,
+} from '../../../utils/conversions';
+import { assert } from '../../../utils/assert';
+import { Confirmation, fromSolitaConfirmation } from './Confirmation';
 import { AuthoritySide, fromSolitaAuthoritySide } from './AuthoritySide';
 import {
   StoredResponseState,
@@ -35,6 +37,9 @@ export type Response = {
   /** The timestamp at which this response was created. */
   readonly creationTimestamp: number;
 
+  /** The timestamp at which this response will expire. */
+  readonly expirationTimestamp: number;
+
   /** The bid required for sell and optionally two-way order types. */
   readonly bid: Quote | null;
 
@@ -61,7 +66,7 @@ export type Response = {
 
   // TODO: Should be a ResponseSide?
   /** The optional confirmation of this response. */
-  readonly confirmed: SolitaConfirmation | null;
+  readonly confirmed: Confirmation | null;
 
   //
   /** The optional defaulting party of this response. */
@@ -90,7 +95,12 @@ export const toResponse = (
   address: account.publicKey,
   maker: account.data.maker,
   rfq: account.data.rfq,
-  creationTimestamp: Number(account.data.creationTimestamp) * 1_000,
+  creationTimestamp: convertTimestampToMilliSeconds(
+    account.data.creationTimestamp
+  ),
+  expirationTimestamp: convertTimestampToMilliSeconds(
+    account.data.expirationTimestamp
+  ),
   makerCollateralLocked: removeDecimals(
     account.data.makerCollateralLocked,
     collateralDecimals
@@ -106,7 +116,8 @@ export const toResponse = (
   makerPreparedLegs: account.data.makerPreparedLegs,
   // TODO: Abstract with response model method
   settledLegs: account.data.settledLegs,
-  confirmed: account.data.confirmed,
+  confirmed:
+    account.data.confirmed && fromSolitaConfirmation(account.data.confirmed),
   defaultingParty: account.data.defaultingParty,
   legPreparationsInitializedBy: account.data.legPreparationsInitializedBy.map(
     fromSolitaAuthoritySide

@@ -1,20 +1,15 @@
 import { PublicKey } from '@solana/web3.js';
-import { Confirmation, QuoteSide } from '@convergence-rfq/rfq';
+import { Confirmation } from '../../rfqModule/models/Confirmation';
 
 import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
-import { extractLegsMultiplierBps } from '../helpers';
-import { Convergence } from '../../../Convergence';
+import { Convergence } from '@/Convergence';
 import {
   Operation,
   OperationHandler,
   OperationScope,
   useOperation,
-} from '../../../types';
-import { LEG_MULTIPLIER_DECIMALS } from '../../rfqModule/constants';
-import {
-  convertOverrideLegMultiplierBps,
-  toSolitaQuote,
-} from '../../rfqModule';
+} from '@/types';
+import { extractLegsMultiplier } from '@/plugins/rfqModule/helpers';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 
@@ -28,8 +23,8 @@ const Key = 'CalculateCollateralForConfirmationOperation' as const;
         rfqAddress: rfq.address,
         responseAddress: rfqResponse.address,
         confirmation: {
-          side: Side.Bid,
-          overrideLegMultiplierBps: 3,
+          side: 'buy',
+          overrideLegMultiplier: 3,
         },
       });
  * ```
@@ -88,12 +83,6 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
 
       const { rfqAddress, responseAddress, confirmation } = operation.input;
 
-      if (confirmation.overrideLegMultiplierBps) {
-        confirmation.overrideLegMultiplierBps = convertOverrideLegMultiplierBps(
-          Number(confirmation.overrideLegMultiplierBps)
-        );
-      }
-
       // fetching in parallel
       const [rfq, response, config] = await Promise.all([
         convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
@@ -103,27 +92,18 @@ export const calculateCollateralForConfirmationOperationHandler: OperationHandle
         convergence.riskEngine().fetchConfig(scope),
       ]);
 
-      let legMultiplierBps;
-      if (confirmation.overrideLegMultiplierBps === null) {
-        const confirmedQuote =
-          confirmation.side == QuoteSide.Bid ? response.bid : response.ask;
-
-        if (confirmedQuote === null) {
-          throw Error('Cannot confirm a missing quote!');
-        }
-
-        legMultiplierBps = extractLegsMultiplierBps(
-          rfq,
-          toSolitaQuote(confirmedQuote, rfq.quoteAsset.getDecimals())
-        );
-      } else {
-        legMultiplierBps = confirmation.overrideLegMultiplierBps;
+      const confirmedQuote =
+        confirmation.side == 'bid' ? response.bid : response.ask;
+      if (confirmedQuote === null) {
+        throw Error('Cannot confirm a missing quote!');
       }
-      const legMultiplier =
-        Number(legMultiplierBps) / 10 ** LEG_MULTIPLIER_DECIMALS;
-
+      const legsMultiplier = extractLegsMultiplier(
+        rfq,
+        confirmedQuote,
+        confirmation
+      );
       const calculationCase: CalculationCase = {
-        legMultiplier,
+        legsMultiplier,
         authoritySide: 'taker',
         quoteSide: confirmation.side,
       };

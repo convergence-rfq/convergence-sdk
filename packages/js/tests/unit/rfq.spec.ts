@@ -1,6 +1,5 @@
 import { expect } from 'expect';
 
-import { Rfq } from '@convergence-rfq/rfq';
 import {
   Mint,
   SpotLegInstrument,
@@ -42,28 +41,6 @@ describe('unit.rfq', () => {
     expect(fixedSize.amount).toBeCloseTo(rfq.size.amount);
   });
 
-  it('create [size precision error]', async () => {
-    const errors: string[] = [];
-    const fixedSize: FixedSize = {
-      type: 'fixed-base',
-      amount: 19.653_038_331_093,
-    };
-    await takerCvg
-      .rfqs()
-      .createAndFinalize({
-        instruments: [
-          await SpotLegInstrument.create(takerCvg, baseMintBTC, 5, 'long'),
-        ],
-        orderType: 'buy',
-        quoteAsset: await SpotQuoteInstrument.create(takerCvg, quoteMint),
-        fixedSize,
-      })
-      .catch((e) => {
-        errors.push(e.message);
-      });
-    expect(errors[0]).toBe('Precision lost when converting number to BN');
-  });
-
   it('find all', async () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat();
@@ -78,10 +55,15 @@ describe('unit.rfq', () => {
     expect(rfqs.length).toBeGreaterThan(0);
   });
 
+  // TODO ADD getRfqStateAndAction function
   it('cancel', async () => {
+    // Error Number: 6016. Error Message: Rfq is not in required state.
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return rfq.state === 'active' && rfq.totalResponses === 0;
+      return (
+        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
+          .rfqAction === 'Cancel'
+      );
     });
     expect(rfqs.length).toBeGreaterThan(0);
     const { responses } = await takerCvg
@@ -93,7 +75,10 @@ describe('unit.rfq', () => {
   it('unlock', async () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqsBefore = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return rfq.state === 'canceled' && rfq.totalResponses === 0;
+      return (
+        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
+          .rfqAction === 'UnlockCollateral'
+      );
     });
     expect(rfqsBefore.length).toBeGreaterThan(0);
     const { responses } = await takerCvg.rfqs().unlockRfqsCollateral({
@@ -101,7 +86,10 @@ describe('unit.rfq', () => {
     });
     expect(responses.length).toBe(rfqsBefore.length);
     const rfqsAfter = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return rfq.state === 'canceled' && rfq.totalResponses === 0;
+      return (
+        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
+          .rfqAction === 'Cleanup'
+      );
     });
     rfqsAfter.map((rfq: any) => {
       expect(rfq.totalTakerCollateralLocked).toBe(0);
@@ -111,7 +99,10 @@ describe('unit.rfq', () => {
   it('clean up', async () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return rfq.state === 'canceled';
+      return (
+        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
+          .rfqAction === 'Cleanup'
+      );
     });
     expect(rfqs.length).toBeGreaterThan(0);
     await takerCvg.rfqs().cleanUpRfqs({

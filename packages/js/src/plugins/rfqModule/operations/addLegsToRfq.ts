@@ -11,7 +11,10 @@ import {
   useOperation,
   Signer,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { LegInstrument } from '../../../plugins/instrumentModule';
 
 const Key = 'AddLegsToRfqOperation' as const;
@@ -135,7 +138,6 @@ export const addLegsToRfqBuilder = async (
 
   const baseAssetAccounts: AccountMeta[] = [];
   const baseAssetIndexValues = [];
-
   for (const leg of legs) {
     baseAssetIndexValues.push(leg.baseAssetIndex.value);
   }

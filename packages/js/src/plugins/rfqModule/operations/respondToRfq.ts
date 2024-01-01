@@ -1,6 +1,7 @@
 import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 
+import BN from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertResponse, Response } from '../models/Response';
 import { Convergence } from '../../../Convergence';
@@ -11,9 +12,14 @@ import {
   useOperation,
   Signer,
 } from '../../../types';
-import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
+import {
+  TransactionBuilder,
+  TransactionBuilderOptions,
+} from '../../../utils/TransactionBuilder';
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
+import { rfqProgram } from '../program';
+import { convertTimestampToSeconds } from '@/utils';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -29,13 +35,16 @@ const getNextResponsePdaAndDistinguisher = async (
   let response: PublicKey;
   let pdaDistinguisher = 0;
   while (true) {
-    response = cvg.rfqs().pdas().response({
-      rfq,
-      maker,
-      bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
-      ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
-      pdaDistinguisher,
-    });
+    response = cvg
+      .rfqs()
+      .pdas()
+      .response({
+        rfq,
+        maker,
+        bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
+        ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
+        pdaDistinguisher,
+      });
 
     const account = await cvg.rpc().getAccount(response);
     if (!account.exists) {
@@ -92,6 +101,11 @@ export type RespondToRfqInput = {
    * The optional ask side of the response.
    */
   ask?: Quote;
+
+  /**
+   * The optional response expirationTimestamp in seconds.
+   */
+  expirationTimestamp?: number;
 
   /**
    * The address of the RFQ account.
@@ -233,6 +247,7 @@ export const respondToRfqBuilder = async (
       user: maker.publicKey,
       programs,
     }),
+    expirationTimestamp,
   } = params;
 
   if (!bid && !ask) {
@@ -240,6 +255,27 @@ export const respondToRfqBuilder = async (
   }
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+
+  const rfqExpirationTimestampSeconds =
+    convertTimestampToSeconds(rfqModel.creationTimestamp) +
+    rfqModel.activeWindow;
+
+  const currentTimestampSeconds = convertTimestampToSeconds(Date.now());
+
+  let expirationTimestampBn: BN;
+
+  if (!expirationTimestamp) {
+    expirationTimestampBn = new BN(rfqExpirationTimestampSeconds);
+  } else {
+    if (expirationTimestamp < currentTimestampSeconds) {
+      throw new Error('Expiration timestamp must be in the future');
+    }
+    if (expirationTimestamp > rfqExpirationTimestampSeconds) {
+      throw new Error('Response expiration must be less than RFQ expiration');
+    }
+
+    expirationTimestampBn = new BN(expirationTimestamp);
+  }
 
   const { response, pdaDistinguisher } =
     await getNextResponsePdaAndDistinguisher(
@@ -281,6 +317,25 @@ export const respondToRfqBuilder = async (
     }
   }
 
+  const defaultPubkey = PublicKey.default;
+  const whitelist =
+    rfqModel.whitelist.toBase58() !== defaultPubkey.toBase58()
+      ? rfqModel.whitelist
+      : rfqProgram.address;
+
+  if (!rfqModel.whitelist.equals(defaultPubkey)) {
+    const addressAlreadyExists = await convergence
+      .whitelist()
+      .checkAddressExistsOnWhitelist({
+        whitelistAddress: whitelist,
+        addressToSearch: maker.publicKey,
+      });
+
+    if (!addressAlreadyExists) {
+      throw new Error('MakerAddressNotWhitelisted');
+    }
+  }
+
   return TransactionBuilder.make<RespondToRfqBuilderContext>()
     .setFeePayer(maker)
     .setContext({
@@ -302,6 +357,7 @@ export const respondToRfqBuilder = async (
             collateralToken,
             protocol,
             riskEngine,
+            whitelist,
             maker: maker.publicKey,
             anchorRemainingAccounts: [
               {
@@ -317,6 +373,7 @@ export const respondToRfqBuilder = async (
             bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
             ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
             pdaDistinguisher,
+            expirationTimestamp: expirationTimestampBn,
           }
         ),
         signers: [maker],

@@ -1,4 +1,4 @@
-import { RiskCategory, QuoteSide } from '@convergence-rfq/rfq';
+import { RiskCategory } from '@convergence-rfq/rfq';
 import {
   futureCommonDataBeet,
   InstrumentType,
@@ -15,6 +15,7 @@ import { Convergence } from '../../Convergence';
 import { toSolitaRiskCategory } from '../protocolModule';
 import { LegInstrument } from '../instrumentModule';
 import { AuthoritySide } from '../rfqModule/models/AuthoritySide';
+import { ResponseSide } from '../rfqModule';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
 import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
 import { Config } from './models';
@@ -26,9 +27,9 @@ import {
 import { removeDecimals } from '@/utils/conversions';
 
 export type CalculationCase = {
-  legMultiplier: number;
+  legsMultiplier: number;
   authoritySide: AuthoritySide;
-  quoteSide: QuoteSide;
+  quoteSide: ResponseSide;
 };
 
 type PortfolioStatistics = {
@@ -135,7 +136,7 @@ function calculateRiskInner(
   portfolioRisk = Math.max(portfolioRisk, 0); // risk can't be lower that 0
 
   return Math.max(
-    portfolioRisk * calculationCase.legMultiplier,
+    portfolioRisk * calculationCase.legsMultiplier,
     removeDecimals(
       config.minCollateralRequirement,
       Number(config.collateralMintDecimals)

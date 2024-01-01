@@ -10,14 +10,31 @@ import {
   bignum,
 } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
-
 import BN from 'bn.js';
+import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
+import * as anchor from '@project-serum/anchor';
 import { Mint } from '../tokenModule';
-import { LegInstrument } from '../instrumentModule';
-import { addDecimals, assert, removeDecimals } from '../../utils';
+import {
+  CreateOptionInstrumentsResult,
+  LegInstrument,
+} from '../instrumentModule';
+import { addDecimals, removeDecimals } from '../../utils/conversions';
+import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
+import { CvgWallet } from '@/utils';
+export const createEuropeanProgram = async (convergence: Convergence) => {
+  const cvgWallet = new CvgWallet(convergence);
+  return psyoptionsEuropean.createProgramFromProvider(
+    new anchor.AnchorProvider(
+      convergence.connection,
+      cvgWallet,
+      anchor.AnchorProvider.defaultOptions()
+    ),
+    new PublicKey(psyoptionsEuropean.programId)
+  );
+};
 
 type PsyoptionsEuropeanInstrumentData = {
   optionType: OptionType;
@@ -89,28 +106,63 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     private readonly underlyingAmountPerContractDecimals: number,
     readonly strikePrice: number, // without decimals
     private readonly strikePriceDecimals: number,
-    readonly expiration: number, // timestamp in seconds
+    readonly expirationTimestamp: number, // timestamp in seconds
     readonly optionMint: PublicKey,
     readonly optionMetaPubKey: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
     readonly amount: number,
     readonly side: LegSide,
-    private optionMeta?: EuroMeta
+    readonly underlyingAssetMint?: PublicKey,
+    readonly stableAssetMint?: PublicKey,
+    readonly oracleAddress?: PublicKey,
+    readonly oracleProviderId?: number
   ) {}
 
   getBaseAssetIndex = () => this.baseAssetIndex;
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsEuropeanInstrument.decimals;
   getSide = () => this.side;
+  async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
+    if (!this.underlyingAssetMint) {
+      throw new Error('Missing underlying asset mint');
+    }
+    if (!this.stableAssetMint) {
+      throw new Error('Missing stable asset mint');
+    }
+    if (!this.oracleAddress) {
+      throw new Error('Missing oracle address');
+    }
+    if (this.oracleProviderId === undefined) {
+      throw new Error('Missing oracle provider id');
+    }
+    const optionMarketIxs = await getPsyEuropeanMarketIxs(
+      this.convergence,
+      this.underlyingAssetMint,
+      this.underlyingAmountPerContractDecimals,
+      this.underlyingAmountPerContract,
+      this.stableAssetMint,
+      this.strikePriceDecimals,
+      this.strikePrice,
+      this.expirationTimestamp,
+      this.oracleAddress,
+      this.oracleProviderId
+    );
+
+    return optionMarketIxs;
+  }
 
   static async create(
     convergence: Convergence,
     underlyingMint: Mint,
+    stableMint: Mint,
     optionType: OptionType,
-    meta: EuroMeta,
-    metaKey: PublicKey,
     amount: number,
-    side: LegSide
+    side: LegSide,
+    strike: number,
+    underlyingAmountPerContract: number,
+    oracleAddress: PublicKey,
+    oracleProviderId: number,
+    expirationTimestamp: number
   ) {
     const mintInfoAddress = convergence
       .rfqs()
@@ -124,45 +176,58 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
+    const europeanProgram: any = await createEuropeanProgram(convergence);
+    const { metaKey, optionMint } = await getEuropeanOptionKeys(
+      europeanProgram,
+      underlyingMint,
+      stableMint,
+      expirationTimestamp,
+      strike,
+      underlyingAmountPerContract,
+      optionType
+    );
+
     return new PsyoptionsEuropeanInstrument(
       convergence,
       optionType,
-      removeDecimals(meta.underlyingAmountPerContract, meta.underlyingDecimals),
-      meta.underlyingDecimals,
-      removeDecimals(meta.strikePrice, meta.priceDecimals),
-      meta.priceDecimals,
-      Number(meta.expiration),
-      optionType == OptionType.CALL ? meta.callOptionMint : meta.putOptionMint,
+      underlyingAmountPerContract,
+      underlyingMint.decimals,
+      strike,
+      stableMint.decimals,
+      expirationTimestamp,
+      optionMint,
       metaKey,
       mintInfo.mintType.baseAssetIndex,
       amount,
       side,
-      meta
+      underlyingMint.address,
+      stableMint.address,
+      oracleAddress,
+      oracleProviderId
     );
   }
 
   async getOptionMeta() {
-    if (this.optionMeta === undefined) {
-      this.optionMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
-        this.convergence,
-        this.optionMetaPubKey
-      );
-    }
+    const optionMeta = await PsyoptionsEuropeanInstrument.fetchMeta(
+      this.convergence,
+      this.optionMetaPubKey
+    );
 
-    return this.optionMeta;
+    return optionMeta;
   }
 
   /** Helper method to get validation accounts for a Psyoptions European instrument. */
-  async getValidationAccounts() {
-    const optionMeta = await this.getOptionMeta();
-
+  getValidationAccounts() {
+    if (!this.underlyingAssetMint) {
+      throw new Error('Missing underlying asset mint');
+    }
     return [
       { pubkey: this.optionMetaPubKey, isSigner: false, isWritable: false },
       {
         pubkey: this.convergence
           .rfqs()
           .pdas()
-          .mintInfo({ mint: optionMeta.underlyingMint }),
+          .mintInfo({ mint: this.underlyingAssetMint }),
         isSigner: false,
         isWritable: false,
       },
@@ -187,30 +252,24 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
   }
 
   serializeInstrumentData(): Buffer {
-    const callMint = this.optionMint.toBytes();
-    const optionMarket = this.optionMetaPubKey.toBytes();
-    const underlyingamountPerContract = addDecimals(
-      this.underlyingAmountPerContract,
-      this.underlyingAmountPerContractDecimals
-    ).toArrayLike(Buffer, 'le', 8);
-    const expirationtime = new BN(this.expiration).toArrayLike(Buffer, 'le', 8);
-    const strikeprice = addDecimals(
-      this.strikePrice,
-      this.strikePriceDecimals
-    ).toArrayLike(Buffer, 'le', 8);
-
-    return Buffer.from(
-      new Uint8Array([
-        this.optionType == OptionType.CALL ? 0 : 1,
-        ...underlyingamountPerContract,
+    const data: PsyoptionsEuropeanInstrumentData = {
+      optionType: this.optionType,
+      underlyingAmountPerContract: addDecimals(
+        this.underlyingAmountPerContract,
+        this.underlyingAmountPerContractDecimals
+      ),
+      underlyingAmountPerContractDecimals:
         this.underlyingAmountPerContractDecimals,
-        ...strikeprice,
-        this.strikePriceDecimals,
-        ...expirationtime,
-        ...callMint,
-        ...optionMarket,
-      ])
-    );
+      strikePrice: addDecimals(this.strikePrice, this.strikePriceDecimals),
+      strikePriceDecimals: this.strikePriceDecimals,
+      expiration: this.expirationTimestamp,
+      optionMint: this.optionMint,
+      metaKey: this.optionMetaPubKey,
+    };
+    const serializedData =
+      psyoptionsEuropeanInstrumentDataSerializer.serialize(data);
+
+    return serializedData;
   }
 
   getProgramId(): PublicKey {
@@ -258,4 +317,106 @@ export const psyoptionsEuropeanInstrumentParser = {
       fromSolitaLegSide(side)
     );
   },
+};
+
+export const getPsyEuropeanMarketIxs = async (
+  cvg: Convergence,
+  underlyingMint: PublicKey,
+  underlyingMintDecimals: number,
+  underlyingAmountPerContract: number,
+  stableMint: PublicKey,
+  stableMintDecimals: number,
+  strike: number,
+  expirationTimeStamp: number,
+  oracleAddress: PublicKey,
+  oracleProviderId: number // Switchboard = 1, Pyth = 0
+): Promise<CreateOptionInstrumentsResult> => {
+  const europeanProgram = await createEuropeanProgram(cvg);
+  const expirationTimestamp = new BN(expirationTimeStamp);
+  const quoteAmountPerContractBN = new BN(
+    addDecimals(strike, stableMintDecimals)
+  );
+  const underlyingAmountPerContractBN = new BN(
+    addDecimals(underlyingAmountPerContract, underlyingMintDecimals)
+  );
+
+  // Retrieve the euro meta account and a creation instruction (may or may not be required)
+  const { instruction: createIx, euroMetaKey } =
+    await psyoptionsEuropean.instructions.createEuroMetaInstruction(
+      europeanProgram,
+      underlyingMint,
+      underlyingMintDecimals,
+      stableMint,
+      stableMintDecimals,
+      expirationTimestamp,
+      underlyingAmountPerContractBN,
+      quoteAmountPerContractBN,
+      stableMintDecimals,
+      oracleAddress,
+      oracleProviderId
+    );
+
+  const euroMetaKeyAccount = await cvg.rpc().getAccount(euroMetaKey);
+  if (euroMetaKeyAccount.exists) {
+    return [];
+  }
+
+  // Initialize all accounts for European program
+  const { instructions: initializeIxs } =
+    await psyoptionsEuropean.instructions.initializeAllAccountsInstructions(
+      europeanProgram,
+      underlyingMint,
+      stableMint,
+      oracleAddress,
+      expirationTimestamp,
+      stableMintDecimals,
+      oracleProviderId
+    );
+
+  return [...initializeIxs, createIx];
+};
+
+export type GetEuropeanOptionMetaResult = {
+  optionMint: PublicKey;
+  metaKey: PublicKey;
+};
+
+export const getEuropeanOptionKeys = async (
+  europeanProgram: any,
+  underlyingMint: Mint,
+  stableMint: Mint,
+  expirationTimestamp: number,
+  strike: number,
+  underlyingAmountPerContract: number,
+  optionType: OptionType
+): Promise<GetEuropeanOptionMetaResult> => {
+  const quoteAmountPerContractBN = new BN(
+    addDecimals(strike, stableMint.decimals)
+  );
+  const underlyingAmountPerContractBN = new BN(
+    addDecimals(underlyingAmountPerContract, underlyingMint.decimals)
+  );
+
+  const [metaKey] = await psyoptionsEuropean.pdas.deriveEuroMeta(
+    europeanProgram,
+    underlyingMint.address,
+    stableMint.address,
+    new BN(expirationTimestamp),
+    underlyingAmountPerContractBN,
+    quoteAmountPerContractBN,
+    stableMint.decimals
+  );
+
+  if (optionType == OptionType.CALL) {
+    const [optionMint] = await psyoptionsEuropean.pdas.deriveCallOptionMint(
+      europeanProgram,
+      metaKey
+    );
+    return { optionMint, metaKey };
+  }
+  const [optionMint] = await psyoptionsEuropean.pdas.derivePutOptionMint(
+    europeanProgram,
+    metaKey
+  );
+  return { optionMint, metaKey };
 };

@@ -1,42 +1,120 @@
-import * as anchor from '@project-serum/anchor';
-import { Transaction, PublicKey, Keypair } from '@solana/web3.js';
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
-
+import { BN } from 'bn.js';
+import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
-import { CvgWallet } from '@/index';
 
-export class NoopWallet {
-  public readonly publicKey: PublicKey;
+import { getOrCreateATAtxBuilder } from '../../utils/ata';
+import { CvgWallet } from '../../utils/Wallets';
+import { InstructionUniquenessTracker } from '../../utils/classes';
+import { PsyoptionsAmericanInstrument } from './types';
+import { createAmericanProgram } from './instrument';
+import { TransactionBuilder } from '@/utils/TransactionBuilder';
 
-  constructor(keypair: Keypair) {
-    this.publicKey = keypair.publicKey;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signTransaction(tx: Transaction): Promise<Transaction> {
-    throw new Error('Method not implemented.');
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
-    throw new Error('Method not implemented.');
-  }
-}
-
-export const createAmericanProgram = (
+export type PrepareAmericanOptionsResult = {
+  ataTxBuilders: TransactionBuilder[];
+  mintTxBuilders: TransactionBuilder[];
+};
+//create American Options ATAs and mint Options
+export const prepareAmericanOptions = async (
   convergence: Convergence,
-  wallet?: CvgWallet
-): any => {
-  const provider = new anchor.AnchorProvider(
-    convergence.connection,
-    wallet ?? new NoopWallet(Keypair.generate()),
-    {}
-  );
+  responseAddress: PublicKey,
+  caller: PublicKey
+): Promise<PrepareAmericanOptionsResult> => {
+  const ixTracker = new InstructionUniquenessTracker([]);
+  const cvgWallet = new CvgWallet(convergence);
+  const americanProgram = createAmericanProgram(convergence, cvgWallet);
+  const response = await convergence
+    .rfqs()
+    .findResponseByAddress({ address: responseAddress });
+  const rfq = await convergence
+    .rfqs()
+    .findRfqByAddress({ address: response.rfq });
 
-  const americanProgram = psyoptionsAmerican.createProgram(
-    new PublicKey('R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs'),
-    provider
-  );
+  const callerSide = caller.equals(rfq.taker) ? 'taker' : 'maker';
 
-  return americanProgram;
+  const { legs: legExchangeResult } = convergence.rfqs().getSettlementResult({
+    response,
+    rfq,
+  });
+
+  const ataTxBuilderArray: TransactionBuilder[] = [];
+  const mintTxBuilderArray: TransactionBuilder[] = [];
+  for (const [index, leg] of rfq.legs.entries()) {
+    const { receiver, amount } = legExchangeResult[index];
+    if (
+      !(leg instanceof PsyoptionsAmericanInstrument) ||
+      receiver === callerSide
+    ) {
+      continue;
+    }
+
+    const optionMarket = await leg.getOptionMeta();
+    const optionToken = await getOrCreateATAtxBuilder(
+      convergence,
+      optionMarket.optionMint,
+      caller
+    );
+    if (
+      optionToken.txBuilder &&
+      ixTracker.checkedAdd(optionToken.txBuilder, 'TransactionBuilder')
+    ) {
+      ataTxBuilderArray.push(optionToken.txBuilder);
+    }
+    const writerToken = await getOrCreateATAtxBuilder(
+      convergence,
+      optionMarket!.writerTokenMint,
+      caller
+    );
+    if (
+      writerToken.txBuilder &&
+      ixTracker.checkedAdd(writerToken.txBuilder, 'TransactionBuilder')
+    ) {
+      ataTxBuilderArray.push(writerToken.txBuilder);
+    }
+    const underlyingToken = await getOrCreateATAtxBuilder(
+      convergence,
+      optionMarket!.underlyingAssetMint,
+      caller
+    );
+    if (
+      underlyingToken.txBuilder &&
+      ixTracker.checkedAdd(underlyingToken.txBuilder, 'TransactionBuilder')
+    ) {
+      ataTxBuilderArray.push(underlyingToken.txBuilder);
+    }
+    const { tokenBalance } = await convergence.tokens().getTokenBalance({
+      mintAddress: optionMarket.optionMint,
+      owner: caller,
+      mintDecimals: PsyoptionsAmericanInstrument.decimals,
+    });
+
+    const tokensToMint = amount - tokenBalance;
+    if (tokensToMint <= 0) continue;
+    const ixWithSigners =
+      await psyoptionsAmerican.instructions.mintOptionV2Instruction(
+        americanProgram,
+        optionToken.ataPubKey,
+        writerToken.ataPubKey,
+        underlyingToken.ataPubKey,
+        new BN(tokensToMint),
+        optionMarket as psyoptionsAmerican.OptionMarketWithKey
+      );
+    ixWithSigners.ix.keys[0] = {
+      pubkey: caller,
+      isSigner: true,
+      isWritable: false,
+    };
+    const mintTxBuilder = TransactionBuilder.make().setFeePayer(
+      convergence.rpc().getDefaultFeePayer()
+    );
+    mintTxBuilder.add({
+      instruction: ixWithSigners.ix,
+      signers: [convergence.identity()],
+    });
+    mintTxBuilderArray.push(mintTxBuilder);
+  }
+  return {
+    ataTxBuilders: ataTxBuilderArray,
+    mintTxBuilders: mintTxBuilderArray,
+  };
 };

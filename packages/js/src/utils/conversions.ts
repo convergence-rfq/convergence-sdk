@@ -40,11 +40,8 @@ export const removeDecimals = (value: bignum, decimals: number = 0): number => {
  */
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
 export const addDecimals = (value: number, decimals: number = 0): BN => {
-  const number = value * Math.pow(10, decimals);
-  if (number !== Math.floor(number)) {
-    throw new Error('Precision lost when converting number to BN');
-  }
-  return new BN(number.toString());
+  const number = (value * Math.pow(10, decimals)).toFixed(0);
+  return new BN(number);
 };
 
 /**
@@ -53,6 +50,40 @@ export const addDecimals = (value: number, decimals: number = 0): BN => {
  * @param timestamp {bignum} Solita timestamp
  * @returns {number} timestamp in milliseconds
  */
-export function convertTimestamp(timestamp: bignum): number {
+export function convertTimestampToMilliSeconds(
+  timestamp: bignum | number
+): number {
+  if (typeof timestamp === 'number') {
+    return timestamp * 1_000;
+  }
   return Number(timestamp) * 1_000;
 }
+
+export function convertTimestampToSeconds(timestamp: bignum | number): number {
+  if (typeof timestamp === 'number') {
+    return Math.floor(timestamp / 1_000);
+  }
+  return Math.floor(Number(timestamp) / 1_000);
+}
+
+/**
+ * Used to roundUp values to a certain amount of decimals.
+ *
+ * @param amount {number} amount to round Up
+ * @param decimals {number} amount of decimals to round Up to
+ * @returns {number} rounded up amount
+ */
+export const roundUp = (amount: number, decimals: number) => {
+  return Math.ceil(amount * Math.pow(10, decimals)) / Math.pow(10, decimals);
+};
+
+/**
+ * Used to roundDown values to a certain amount of decimals.
+ *
+ * @param amount {number} amount to round down
+ * @param decimals {number} amount of decimals to round down to
+ * @returns {number} rounded down amount
+ */
+export const roundDown = (amount: number, decimals: number) => {
+  return Math.floor(amount * Math.pow(10, decimals)) / Math.pow(10, decimals);
+};

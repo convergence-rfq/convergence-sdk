@@ -6,7 +6,7 @@ import { addDecimals, removeDecimals } from '@/utils';
 
 export interface Quote {
   readonly price: number;
-  readonly legsMultiplierBps?: number;
+  readonly legsMultiplier?: number;
 }
 
 export function fromSolitaQuote(
@@ -32,13 +32,13 @@ export function fromSolitaQuote(
   );
 
   if (quote.__kind === 'Standard') {
-    const legsMultiplierBps = removeDecimals(
+    const legsMultiplier = removeDecimals(
       quote.legsMultiplierBps,
       LEG_MULTIPLIER_DECIMALS
     );
     return {
       price,
-      legsMultiplierBps,
+      legsMultiplier,
     };
   }
   return {
@@ -65,9 +65,9 @@ export function toSolitaQuote(
     new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS))
   );
 
-  if (quote.legsMultiplierBps) {
+  if (quote.legsMultiplier) {
     const legsMultiplierBps = addDecimals(
-      Number(quote.legsMultiplierBps),
+      Number(quote.legsMultiplier),
       LEG_MULTIPLIER_DECIMALS
     );
     return {
@@ -90,12 +90,12 @@ export function toSolitaQuote(
 
 export function isQuoteStandard(
   value: Quote
-): value is Quote & { legsMultiplierBps: number } {
-  return typeof value.legsMultiplierBps !== 'undefined';
+): value is Quote & { legsMultiplier: number } {
+  return typeof value.legsMultiplier !== 'undefined';
 }
 
 export function isQuoteFixedSize(
   value: Quote
-): value is Quote & { legsMultiplierBps: undefined } {
-  return typeof value.legsMultiplierBps === 'undefined';
+): value is Quote & { legsMultiplier: undefined } {
+  return typeof value.legsMultiplier === 'undefined';
 }

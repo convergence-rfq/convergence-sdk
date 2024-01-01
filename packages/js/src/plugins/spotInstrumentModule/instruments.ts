@@ -4,7 +4,11 @@ import { FixableBeetArgsStruct } from '@convergence-rfq/beet';
 import { publicKey } from '@convergence-rfq/beet-solana';
 
 import { Mint } from '../tokenModule';
-import { LegInstrument, QuoteInstrument } from '../instrumentModule';
+import {
+  CreateOptionInstrumentsResult,
+  LegInstrument,
+  QuoteInstrument,
+} from '../instrumentModule';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { removeDecimals } from '../../utils/conversions';
@@ -42,6 +46,9 @@ export class SpotLegInstrument implements LegInstrument {
   getDecimals = () => this.decimals;
   getAmount = () => this.amount;
   getBaseAssetIndex = () => this.baseAssetIndex;
+  async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
+    return [];
+  }
 
   static async create(
     convergence: Convergence,
@@ -77,7 +84,7 @@ export class SpotLegInstrument implements LegInstrument {
   }
 
   /** Helper method to get validation accounts for a spot instrument. */
-  async getValidationAccounts() {
+  getValidationAccounts() {
     const mintInfo = this.convergence
       .rfqs()
       .pdas()

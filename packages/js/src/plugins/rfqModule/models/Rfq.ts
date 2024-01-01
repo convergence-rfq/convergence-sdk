@@ -1,7 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
-
 import { RfqAccount } from '../accounts';
-import { assert, convertTimestamp, removeDecimals } from '../../../utils';
+import { assert } from '../../../utils/assert';
+import {
+  convertTimestampToMilliSeconds,
+  removeDecimals,
+} from '../../../utils/conversions';
 import {
   SpotLegInstrument,
   SpotQuoteInstrument,
@@ -80,6 +83,9 @@ export type Rfq = {
   /** The number of confirmed Responses to the Rfq. */
   readonly confirmedResponses: number;
 
+  /** The address of the Whitelist. */
+  readonly whitelist: PublicKey;
+
   /** The legs of the Rfq. */
   readonly legs: LegInstrument[];
 };
@@ -114,7 +120,9 @@ export const toRfq = async (
     quoteMint: SpotLegInstrument.deserializeInstrumentData(
       Buffer.from(account.data.quoteAsset.instrumentData)
     ).mintAddress,
-    creationTimestamp: convertTimestamp(account.data.creationTimestamp),
+    creationTimestamp: convertTimestampToMilliSeconds(
+      account.data.creationTimestamp
+    ),
     activeWindow: account.data.activeWindow,
     settlingWindow: account.data.settlingWindow,
     expectedLegsSize: account.data.expectedLegsSize,
@@ -130,6 +138,7 @@ export const toRfq = async (
     totalResponses: account.data.totalResponses,
     clearedResponses: account.data.clearedResponses,
     confirmedResponses: account.data.confirmedResponses,
+    whitelist: account.data.whitelist,
     legs: account.data.legs.map((leg) => convergence.parseLegInstrument(leg)),
   };
 };

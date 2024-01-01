@@ -1,5 +1,177 @@
 # @convergence-rfq/cli
 
+## 4.5.22
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.22
+
+## 4.5.21
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.21
+
+## 4.5.20
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.20
+
+## 4.5.19
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.19
+
+## 4.5.18
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.18
+
+## 4.5.17
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.17
+
+## 4.5.16
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.16
+
+## 4.5.15
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.15
+
+## 4.5.14
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.14
+
+## 4.5.13
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.13
+
+## 4.5.12
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.12
+
+## 4.5.11
+
+### Patch Changes
+
+- Updated dependencies [072f2ca1]
+  - @convergence-rfq/sdk@4.5.11
+
+## 4.5.10
+
+### Patch Changes
+
+- refactor prepareSettlement logic to handle creation of atas and minting option tokens if required
+  add getTokenBalance operation to token module
+  add getRfqStateAndAction
+  add getResponseStateAndAction
+  fix cli-tests
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.10
+
+## 4.5.9
+
+### Patch Changes
+
+- CLI get-registered-mints now logs mint address and decimals
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.9
+
+## 4.5.8
+
+### Patch Changes
+
+- Added min collateral requirement flag to CLI
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.8
+
+## 4.5.7
+
+### Patch Changes
+
+- Risk engine config default config is now 10 USDC
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.7
+
+## 4.5.6
+
+### Patch Changes
+
+- Fixed typo in CLI input parameters
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.6
+
+## 4.5.5
+
+### Patch Changes
+
+- Initialize protocol now takes and utilizes parameters for all fees
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.5
+
+## 4.5.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.4
+
+## 4.5.3
+
+### Patch Changes
+
+- Added fix for blockhash and incremented CPL Solita packages to 2.2.12
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.3
+
+## 4.5.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.2
+
+## 4.5.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.1
+
+## 4.5.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.0
+
 ## 4.4.10
 
 ### Patch Changes
