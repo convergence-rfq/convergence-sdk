@@ -109,7 +109,14 @@ export const logProtocol = (p: Protocol): void => {
   l(`Maker fee: ${p.settleFees.makerBps.toString()} bps`);
   l(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
   l(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
+  l('Registered instruments:', p.instruments.length);
   p.instruments.map(logProtocolInstrument);
+  l('Registered print trade providers:', p.printTradeProviders.length);
+  p.printTradeProviders.map((x) => {
+    l('Print trade provider address:', x.programKey.toString());
+    l('Settlement can expire:', x.settlementCanExpire);
+    l('Validate response account amount:', x.validateResponseAccountAmount);
+  });
 };
 
 export const logRiskEngineConfig = (r: any): void => {
@@ -166,6 +173,12 @@ export const logRfq = (r: Rfq) => {
   l('Total responses:', r.totalResponses);
   l('Confirmed responses:', r.confirmedResponses);
   l('Cleared responses:', r.clearedResponses);
+  if (r.model === 'printTradeRfq') {
+    l(
+      'Print trade provider:',
+      r.printTrade.getPrintTradeProviderProgramId().toString()
+    );
+  }
 };
 
 export const logHxroConfig = (d: HxroPrintTradeProviderConfig) => {

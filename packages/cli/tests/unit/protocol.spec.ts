@@ -130,7 +130,7 @@ describe('unit.protocol', () => {
       HXRO_PRINT_TRADE_PROVIDER_PROGRAM_ADDRESS,
       '--settlement-can-expire',
       'false',
-      '--validate_response_account_amount',
+      '--validate-response-account-amount',
       '2',
     ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);

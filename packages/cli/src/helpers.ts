@@ -9,6 +9,7 @@ import { Command } from 'commander';
 
 import { Instrument } from './types';
 import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
+import { Opts } from './cvg';
 
 export const getSize = (size: string, amount: number): FixedSize => {
   switch (size) {
@@ -85,4 +86,15 @@ export const addCmd = (
   addDefaultArgs(cmd);
 
   return cmd;
+};
+
+export const extractBooleanString = (opts: Opts, name: string): boolean => {
+  const value = opts[name];
+  if (value !== 'true' && value !== 'false') {
+    throw new Error(
+      `${name} parameter value should be either 'true' or 'false'`
+    );
+  }
+
+  return value === 'true' ? true : false;
 };

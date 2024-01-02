@@ -1,5 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
-import { FeeParameters, Instrument } from '@convergence-rfq/rfq';
+import {
+  FeeParameters,
+  Instrument,
+  PrintTradeProvider,
+} from '@convergence-rfq/rfq';
 
 import { ProtocolAccount } from '../accounts';
 import { assert } from '../../../utils/assert';
@@ -37,6 +41,9 @@ export type Protocol = {
 
   /** The procotol instruments. */
   readonly instruments: Instrument[];
+
+  /** The procotol instruments. */
+  readonly printTradeProviders: PrintTradeProvider[];
 };
 
 /** @group Model Helpers */
@@ -59,4 +66,5 @@ export const toProtocol = (account: ProtocolAccount): Protocol => ({
   riskEngine: account.data.riskEngine,
   collateralMint: account.data.collateralMint,
   instruments: account.data.instruments,
+  printTradeProviders: account.data.printTradeProviders,
 });

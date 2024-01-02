@@ -12,7 +12,7 @@ import {
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import { getSize } from './helpers';
+import { extractBooleanString, getSize } from './helpers';
 import {
   logPk,
   logResponse,
@@ -120,7 +120,7 @@ export const addInstrument = async (opts: Opts) => {
     const { response } = await cvg.protocol().addInstrument({
       authority: cvg.rpc().getDefaultFeePayer(),
       instrumentProgram: new PublicKey(opts.instrumentProgram),
-      canBeUsedAsQuote: opts.canBeUsedAsQuote,
+      canBeUsedAsQuote: extractBooleanString(opts, 'canBeUsedAsQuote'),
       validateDataAccountAmount: opts.validateDataAccountAmount,
       prepareToSettleAccountAmount: opts.prepareToSettleAccountAmount,
       settleAccountAmount: opts.settleAccountAmount,
@@ -138,7 +138,7 @@ export const addPrintTradeProvider = async (opts: Opts) => {
   try {
     const { response } = await cvg.protocol().addPrintTradeProvider({
       printTradeProviderProgram: new PublicKey(opts.printTradeProviderProgram),
-      settlementCanExpire: opts.settlementCanExpire,
+      settlementCanExpire: extractBooleanString(opts, 'settlementCanExpire'),
       validateResponseAccountAmount: opts.validateResponseAccountAmount,
     });
     logResponse(response);
