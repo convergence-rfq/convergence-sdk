@@ -186,25 +186,8 @@ export const preparePrintTradeSettlementBuilders = async (
     key: 'preparePrintTradeSettlement',
   };
 
-  // TODO refactor to use transaction size measurements
-  if (builders.length === 2) {
-    return [
-      TransactionBuilder.make()
-        .setFeePayer(payer)
-        .add(...builders[0].getInstructionsWithSigners()),
-      TransactionBuilder.make()
-        .setFeePayer(payer)
-        .add(...builders[1].getInstructionsWithSigners()),
-      TransactionBuilder.make().setFeePayer(payer).add(preparePrintTradeIx),
-    ];
-  }
-
-  return [
-    TransactionBuilder.make()
-      .setFeePayer(payer)
-      .add(
-        ...builders.map((x) => x.getInstructionsWithSigners()).flat(),
-        preparePrintTradeIx
-      ),
-  ];
+  return TransactionBuilder.make()
+    .setFeePayer(payer)
+    .add(...builders, preparePrintTradeIx)
+    .divideToMultipleBuildersThatFit();
 };

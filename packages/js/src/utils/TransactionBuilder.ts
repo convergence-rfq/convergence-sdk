@@ -210,6 +210,57 @@ export class TransactionBuilder<C extends object = object> {
     return transaction;
   }
 
+  protected cloneWithoutRecords(): TransactionBuilder<C> {
+    const result = TransactionBuilder.make<C>(this.transactionOptions);
+    if (this.feePayer !== undefined) {
+      result.setFeePayer(this.feePayer);
+    }
+
+    result.setContext(this.context);
+
+    return result;
+  }
+
+  divideToMultipleBuildersThatFit(): TransactionBuilder<C>[] {
+    if (this.checkTransactionFits()) {
+      return [this];
+    }
+
+    if (this.records.length === 0) {
+      return [];
+    }
+
+    const builders: TransactionBuilder<C>[] = [];
+    let unprocessedRecords = [...this.records];
+
+    while (unprocessedRecords.length > 0) {
+      let builderAdded = false;
+      for (
+        let recordsToTake = unprocessedRecords.length;
+        recordsToTake > 0;
+        recordsToTake--
+      ) {
+        const records = unprocessedRecords.slice(0, recordsToTake);
+        const builder = this.cloneWithoutRecords().append(...records);
+
+        if (builder.checkTransactionFits()) {
+          builders.push(builder);
+          unprocessedRecords = unprocessedRecords.slice(recordsToTake);
+          builderAdded = true;
+          break;
+        }
+      }
+
+      if (!builderAdded) {
+        throw new Error(
+          `Instruction ${unprocessedRecords[0].key} is too big to fit into the transaction`
+        );
+      }
+    }
+
+    return builders;
+  }
+
   async sendAndConfirm(
     convergence: Convergence,
     confirmOptions?: ConfirmOptions

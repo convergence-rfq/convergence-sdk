@@ -370,6 +370,6 @@ export const revertPrintTradeSettlementPreparationBuilder = async (
         signers: [],
         key: 'revertSettlementPreparation',
       },
-      ...postBuilders.map((b) => b.getInstructionsWithSigners()).flat()
+      ...postBuilders
     );
 };

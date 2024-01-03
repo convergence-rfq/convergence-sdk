@@ -18,11 +18,7 @@ import {
   PublicKey,
   useOperation,
 } from '@/types';
-import {
-  InstructionWithSigners,
-  TransactionBuilder,
-  TransactionBuilderOptions,
-} from '@/utils';
+import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { SendAndConfirmTransactionResponse } from '@/plugins/rpcModule';
 
 const Key = 'unlockHxroCollateralByRecord' as const;
@@ -83,34 +79,30 @@ export const unlockHxroCollateralByRecordOperationHandler: OperationHandler<Unlo
         lockRecordData = { ...accountData, publicKey: lockRecord };
       }
 
-      let ixs: InstructionWithSigners[] = [];
+      const builder = TransactionBuilder.make().setFeePayer(cvg.identity());
       if (action == 'unlock' || action == 'unlock-and-remove-record') {
-        const builder = await unlockHxroCollateralBuilder(
-          cvg,
-          {
-            lockRecord: lockRecordData,
-          },
-          scope
+        builder.add(
+          await unlockHxroCollateralBuilder(
+            cvg,
+            {
+              lockRecord: lockRecordData,
+            },
+            scope
+          )
         );
-
-        ixs = [...ixs, ...builder.getInstructionsWithSigners()];
       }
 
       if (action == 'remove-record' || action == 'unlock-and-remove-record') {
-        const builder = await removeLockCollateralRecordBuilder(
-          cvg,
-          {
-            lockRecord: lockRecordData,
-          },
-          scope
+        builder.add(
+          await removeLockCollateralRecordBuilder(
+            cvg,
+            {
+              lockRecord: lockRecordData,
+            },
+            scope
+          )
         );
-
-        ixs = [...ixs, ...builder.getInstructionsWithSigners()];
       }
-
-      const builder = TransactionBuilder.make()
-        .setFeePayer(cvg.identity())
-        .add(...ixs);
 
       const output = await builder.sendAndConfirm(cvg, scope.confirmOptions);
       return output.response;

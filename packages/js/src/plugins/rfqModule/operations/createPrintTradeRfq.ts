@@ -213,11 +213,7 @@ export const createPrintTradeFullFlowRfqBuilder = async (
       rfq,
     })
     .setFeePayer(payer)
-    .add(
-      ...createRfqBuilder.getInstructionsWithSigners(),
-      ...validatePrintTradeBuilder.getInstructionsWithSigners(),
-      ...finalizeRfqConstruction.getInstructionsWithSigners()
-    );
+    .add(createRfqBuilder, validatePrintTradeBuilder, finalizeRfqConstruction);
 };
 
 /**
