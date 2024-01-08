@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -18,6 +18,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { protocolCache } from '../../protocolModule/cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'InitializeCollateralOperation' as const;
 
@@ -198,18 +199,28 @@ export const initializeCollateralBuilder = async (
 
   return TransactionBuilder.make<InitializeCollateralBuilderContext>()
     .setFeePayer(user)
-    .add({
-      instruction: createInitializeCollateralInstruction(
-        {
-          user: user.publicKey,
-          protocol,
-          collateralMint,
-          collateralToken,
-          collateralInfo,
-        },
-        rfqProgram.address
-      ),
-      signers: [user],
-      key: 'initializeCollateral',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createInitializeCollateralInstruction(
+          {
+            user: user.publicKey,
+            protocol,
+            collateralMint,
+            collateralToken,
+            collateralInfo,
+          },
+          rfqProgram.address
+        ),
+        signers: [user],
+        key: 'initializeCollateral',
+      }
+    );
 };

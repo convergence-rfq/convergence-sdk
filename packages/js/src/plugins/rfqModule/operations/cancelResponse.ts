@@ -1,5 +1,5 @@
 import { createCancelResponseInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { Convergence } from '../../../Convergence';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { SendAndConfirmTransactionResponse } from '@/plugins';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'cancelResponseOperation' as const;
 
@@ -137,17 +138,27 @@ export const cancelResponseBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createCancelResponseInstruction(
-        {
-          protocol,
-          response: responseModel.address,
-          rfq: responseModel.rfq,
-          maker: responseModel.maker,
-        },
-        convergence.programs().getRfq(programs).address
-      ),
-      signers: [maker],
-      key: 'cancelResponse',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createCancelResponseInstruction(
+          {
+            protocol,
+            response: responseModel.address,
+            rfq: responseModel.rfq,
+            maker: responseModel.maker,
+          },
+          convergence.programs().getRfq(programs).address
+        ),
+        signers: [maker],
+        key: 'cancelResponse',
+      }
+    );
 };

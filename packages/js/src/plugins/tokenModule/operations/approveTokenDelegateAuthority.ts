@@ -1,5 +1,5 @@
 import { createApproveInstruction } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -18,6 +18,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'ApproveTokenDelegateAuthorityOperation' as const;
 
@@ -184,16 +185,26 @@ export const approveTokenDelegateAuthorityBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createApproveInstruction(
-        tokenAddressOrAta,
-        delegateAuthority,
-        ownerPublicKey,
-        amount.basisPoints.toNumber(),
-        multiSigners,
-        tokenProgram.address
-      ),
-      signers,
-      key: params.instructionKey ?? 'approveDelegateAuthority',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createApproveInstruction(
+          tokenAddressOrAta,
+          delegateAuthority,
+          ownerPublicKey,
+          amount.basisPoints.toNumber(),
+          multiSigners,
+          tokenProgram.address
+        ),
+        signers,
+        key: params.instructionKey ?? 'approveDelegateAuthority',
+      }
+    );
 };

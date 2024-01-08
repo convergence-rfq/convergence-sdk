@@ -1,5 +1,5 @@
 import { createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, Keypair, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Mint } from '../models/Mint';
@@ -17,6 +17,7 @@ import {
   useOperation,
 } from '../../../types';
 import type { Convergence } from '../../../Convergence';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CreateMintOperation' as const;
 
@@ -190,6 +191,14 @@ export const createMintBuilder = async (
 
       // Create an empty account for the mint.
       .add(
+        {
+          instruction: ComputeBudgetProgram.setComputeUnitPrice({
+            microLamports:
+              TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+              TRANSACTION_PRIORITY_FEE_MAP['none'],
+          }),
+          signers: [],
+        },
         await convergence
           .system()
           .builders()

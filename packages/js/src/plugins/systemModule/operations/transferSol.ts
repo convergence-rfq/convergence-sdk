@@ -1,4 +1,8 @@
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+import {
+  ComputeBudgetProgram,
+  PublicKey,
+  SystemProgram,
+} from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import type { Convergence } from '../../../Convergence';
@@ -15,6 +19,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'TransferSolOperation' as const;
 
@@ -153,15 +158,25 @@ export const transferSolBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: SystemProgram.transfer({
-        fromPubkey: from.publicKey,
-        toPubkey: to,
-        lamports: amount.basisPoints.toNumber(),
-        ...(basePubkey ? { basePubkey, seed } : {}),
-        programId: convergence.programs().getSystem(programs).address,
-      }),
-      signers: [from],
-      key: params.instructionKey ?? 'transferSol',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: SystemProgram.transfer({
+          fromPubkey: from.publicKey,
+          toPubkey: to,
+          lamports: amount.basisPoints.toNumber(),
+          ...(basePubkey ? { basePubkey, seed } : {}),
+          programId: convergence.programs().getSystem(programs).address,
+        }),
+        signers: [from],
+        key: params.instructionKey ?? 'transferSol',
+      }
+    );
 };

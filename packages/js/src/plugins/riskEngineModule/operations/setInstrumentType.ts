@@ -1,5 +1,5 @@
 import { createSetInstrumentTypeInstruction } from '@convergence-rfq/risk-engine';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Config } from '../models';
@@ -17,6 +17,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { riskEngineConfigCache } from '../cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'SetInstrumentTypeOperation' as const;
 
@@ -141,20 +142,30 @@ export const setInstrumentTypeBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createSetInstrumentTypeInstruction(
-        {
-          authority: authority.publicKey,
-          protocol,
-          config,
-        },
-        {
-          instrumentProgram,
-          instrumentType,
-        },
-        riskEngineProgram.address
-      ),
-      signers: [authority],
-      key: 'setInstrumentType',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createSetInstrumentTypeInstruction(
+          {
+            authority: authority.publicKey,
+            protocol,
+            config,
+          },
+          {
+            instrumentProgram,
+            instrumentType,
+          },
+          riskEngineProgram.address
+        ),
+        signers: [authority],
+        key: 'setInstrumentType',
+      }
+    );
 };

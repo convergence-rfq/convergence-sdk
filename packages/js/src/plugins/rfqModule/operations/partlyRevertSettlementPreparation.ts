@@ -1,4 +1,4 @@
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { createPartlyRevertSettlementPreparationInstruction } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -18,6 +18,7 @@ import {
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { AuthoritySide, toSolitaAuthoritySide } from '../models/AuthoritySide';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 
@@ -209,21 +210,31 @@ export const partlyRevertSettlementPreparationBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createPartlyRevertSettlementPreparationInstruction(
-        {
-          protocol: convergence.protocol().pdas().protocol(),
-          rfq,
-          response,
-          anchorRemainingAccounts,
-        },
-        {
-          side: toSolitaAuthoritySide(side),
-          legAmountToRevert,
-        },
-        rfqProgram.address
-      ),
-      signers: [],
-      key: 'partlyRevertSettlementPreparation',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createPartlyRevertSettlementPreparationInstruction(
+          {
+            protocol: convergence.protocol().pdas().protocol(),
+            rfq,
+            response,
+            anchorRemainingAccounts,
+          },
+          {
+            side: toSolitaAuthoritySide(side),
+            legAmountToRevert,
+          },
+          rfqProgram.address
+        ),
+        signers: [],
+        key: 'partlyRevertSettlementPreparation',
+      }
+    );
 };

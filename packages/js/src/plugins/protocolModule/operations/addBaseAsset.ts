@@ -1,5 +1,5 @@
 import { createAddBaseAssetInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
@@ -21,6 +21,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { baseAssetsCache } from '../cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'AddBaseAssetOperation' as const;
 
@@ -150,25 +151,35 @@ export const addBaseAssetBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createAddBaseAssetInstruction(
-        {
-          authority: authority.publicKey,
-          protocol,
-          baseAsset,
-        },
-        {
-          index: { value: index },
-          ticker,
-          riskCategory: toSolitaRiskCategory(riskCategory),
-          oracleSource,
-          inPlacePrice,
-          pythOracle,
-          switchboardOracle,
-        },
-        rfqProgram.address
-      ),
-      signers: [authority],
-      key: 'addBaseAsset',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createAddBaseAssetInstruction(
+          {
+            authority: authority.publicKey,
+            protocol,
+            baseAsset,
+          },
+          {
+            index: { value: index },
+            ticker,
+            riskCategory: toSolitaRiskCategory(riskCategory),
+            oracleSource,
+            inPlacePrice,
+            pythOracle,
+            switchboardOracle,
+          },
+          rfqProgram.address
+        ),
+        signers: [authority],
+        key: 'addBaseAsset',
+      }
+    );
 };

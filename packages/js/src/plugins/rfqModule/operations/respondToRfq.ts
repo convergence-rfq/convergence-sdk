@@ -20,6 +20,7 @@ import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
 import { rfqProgram } from '../program';
 import { convertTimestampToSeconds } from '@/utils';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -345,6 +346,14 @@ export const respondToRfqBuilder = async (
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
           units: 1_400_000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
         }),
         signers: [],
       },

@@ -1,5 +1,5 @@
 import { createMintToInstruction } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import type { Convergence } from '../../../Convergence';
@@ -18,6 +18,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 // -----------------
 // Operation
@@ -233,6 +234,14 @@ export const mintTokensBuilder = async (
 
   return (
     TransactionBuilder.make()
+      .add({
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      })
 
       // Create token account if missing.
       .add(

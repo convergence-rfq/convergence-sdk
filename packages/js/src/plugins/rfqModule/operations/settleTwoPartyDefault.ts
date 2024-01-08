@@ -1,5 +1,5 @@
 import { createSettleTwoPartyDefaultInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -15,6 +15,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { protocolCache } from '../../protocolModule/cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'SettleTwoPartyDefaultOperation' as const;
 
@@ -239,22 +240,32 @@ export const settleTwoPartyDefaultBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createSettleTwoPartyDefaultInstruction(
-        {
-          protocol: protocol.address,
-          rfq,
-          response,
-          takerCollateralInfo,
-          makerCollateralInfo,
-          takerCollateralTokens,
-          makerCollateralTokens,
-          protocolCollateralTokens,
-          tokenProgram: tokenProgram.address,
-        },
-        rfqProgram.address
-      ),
-      signers: [],
-      key: 'settleTwoPartyDefault',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createSettleTwoPartyDefaultInstruction(
+          {
+            protocol: protocol.address,
+            rfq,
+            response,
+            takerCollateralInfo,
+            makerCollateralInfo,
+            takerCollateralTokens,
+            makerCollateralTokens,
+            protocolCollateralTokens,
+            tokenProgram: tokenProgram.address,
+          },
+          rfqProgram.address
+        ),
+        signers: [],
+        key: 'settleTwoPartyDefault',
+      }
+    );
 };

@@ -1,5 +1,5 @@
 import { createAddInstrumentInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -15,6 +15,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { protocolCache } from '../cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'AddInstrumentOperation' as const;
 
@@ -157,24 +158,34 @@ export const addInstrumentBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createAddInstrumentInstruction(
-        {
-          authority: authority.publicKey,
-          protocol,
-          instrumentProgram,
-        },
-        {
-          canBeUsedAsQuote,
-          validateDataAccountAmount,
-          prepareToSettleAccountAmount,
-          settleAccountAmount,
-          revertPreparationAccountAmount,
-          cleanUpAccountAmount,
-        },
-        rfqProgram.address
-      ),
-      signers: [authority],
-      key: 'addInstrument',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createAddInstrumentInstruction(
+          {
+            authority: authority.publicKey,
+            protocol,
+            instrumentProgram,
+          },
+          {
+            canBeUsedAsQuote,
+            validateDataAccountAmount,
+            prepareToSettleAccountAmount,
+            settleAccountAmount,
+            revertPreparationAccountAmount,
+            cleanUpAccountAmount,
+          },
+          rfqProgram.address
+        ),
+        signers: [authority],
+        key: 'addInstrument',
+      }
+    );
 };

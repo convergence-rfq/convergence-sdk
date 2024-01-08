@@ -1,5 +1,5 @@
 import { createCleanUpWhitelistInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, Signer } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey, Signer } from '@solana/web3.js';
 
 import {
   Operation,
@@ -14,6 +14,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '@/utils/TransactionBuilder';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CleanUpWhitelistOperation' as const;
 
@@ -125,17 +126,27 @@ export const cleanUpWhitelistBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createCleanUpWhitelistInstruction(
-        {
-          creator: creator.publicKey,
-          whitelistAccount: whitelist,
-          systemProgram: systemProgram.address,
-        },
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createCleanUpWhitelistInstruction(
+          {
+            creator: creator.publicKey,
+            whitelistAccount: whitelist,
+            systemProgram: systemProgram.address,
+          },
 
-        rfqProgram.address
-      ),
-      signers: [creator],
-      key: 'CleanUpWhitelist',
-    });
+          rfqProgram.address
+        ),
+        signers: [creator],
+        key: 'CleanUpWhitelist',
+      }
+    );
 };

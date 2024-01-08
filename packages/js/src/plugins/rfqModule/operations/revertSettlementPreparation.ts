@@ -1,4 +1,4 @@
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { createRevertSettlementPreparationInstruction } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -18,6 +18,7 @@ import {
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { AuthoritySide, toSolitaAuthoritySide } from '../models/AuthoritySide';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'RevertSettlementPreparationOperation' as const;
 
@@ -239,20 +240,30 @@ export const revertSettlementPreparationBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createRevertSettlementPreparationInstruction(
-        {
-          protocol: convergence.protocol().pdas().protocol(),
-          rfq,
-          response,
-          anchorRemainingAccounts,
-        },
-        {
-          side: toSolitaAuthoritySide(side),
-        },
-        rfqProgram.address
-      ),
-      signers: [],
-      key: 'revertSettlementPreparation',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createRevertSettlementPreparationInstruction(
+          {
+            protocol: convergence.protocol().pdas().protocol(),
+            rfq,
+            response,
+            anchorRemainingAccounts,
+          },
+          {
+            side: toSolitaAuthoritySide(side),
+          },
+          rfqProgram.address
+        ),
+        signers: [],
+        key: 'revertSettlementPreparation',
+      }
+    );
 };

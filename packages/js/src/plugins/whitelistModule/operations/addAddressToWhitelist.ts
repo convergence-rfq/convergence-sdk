@@ -1,5 +1,5 @@
 import { createAddAddressToWhitelistInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, Signer } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey, Signer } from '@solana/web3.js';
 
 import {
   Operation,
@@ -14,6 +14,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'AddAddressToWhitelistOperation' as const;
 
@@ -156,19 +157,29 @@ export const AddAddressToWhitelistBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createAddAddressToWhitelistInstruction(
-        {
-          creator: creator.publicKey,
-          whitelistAccount: whitelist,
-          systemProgram: systemProgram.address,
-        },
-        {
-          address: addressToAdd,
-        },
-        rfqProgram.address
-      ),
-      signers: [creator],
-      key: 'AddAddressToWhitelist',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createAddAddressToWhitelistInstruction(
+          {
+            creator: creator.publicKey,
+            whitelistAccount: whitelist,
+            systemProgram: systemProgram.address,
+          },
+          {
+            address: addressToAdd,
+          },
+          rfqProgram.address
+        ),
+        signers: [creator],
+        key: 'AddAddressToWhitelist',
+      }
+    );
 };

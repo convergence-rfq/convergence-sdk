@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 import { createWithdrawCollateralInstruction } from '@convergence-rfq/rfq';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -19,6 +19,7 @@ import {
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
 import { addDecimals } from '../../..//utils/conversions';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'WithdrawCollateralOperation' as const;
 
@@ -184,21 +185,31 @@ export const withdrawCollateralBuilder = async (
 
   return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)
-    .add({
-      instruction: createWithdrawCollateralInstruction(
-        {
-          user: user.publicKey,
-          userTokens,
-          protocol,
-          collateralInfo,
-          collateralToken,
-        },
-        {
-          amount: addDecimals(amount, collateralDecimals),
-        },
-        rfqProgram.address
-      ),
-      signers: [user],
-      key: 'withdrawCollateral',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createWithdrawCollateralInstruction(
+          {
+            user: user.publicKey,
+            userTokens,
+            protocol,
+            collateralInfo,
+            collateralToken,
+          },
+          {
+            amount: addDecimals(amount, collateralDecimals),
+          },
+          rfqProgram.address
+        ),
+        signers: [user],
+        key: 'withdrawCollateral',
+      }
+    );
 };

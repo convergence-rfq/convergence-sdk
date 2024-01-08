@@ -1,5 +1,5 @@
 import { createRegisterMintInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
@@ -16,6 +16,7 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { registeredMintsCache } from '../cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'RegisterMintOperation' as const;
 
@@ -170,19 +171,29 @@ export const registerMintBuilder = async (
 
   return TransactionBuilder.make<RegisterMintBuilderContext>()
     .setFeePayer(payer)
-    .add({
-      instruction: createRegisterMintInstruction(
-        {
-          authority: authority.publicKey,
-          protocol,
-          mintInfo,
-          baseAsset: baseAssetIndex >= 0 ? baseAsset : PublicKey.default,
-          mint,
-          systemProgram: systemProgram.address,
-        },
-        rfqProgram.address
-      ),
-      signers: [payer],
-      key: 'registerMint',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createRegisterMintInstruction(
+          {
+            authority: authority.publicKey,
+            protocol,
+            mintInfo,
+            baseAsset: baseAssetIndex >= 0 ? baseAsset : PublicKey.default,
+            mint,
+            systemProgram: systemProgram.address,
+          },
+          rfqProgram.address
+        ),
+        signers: [payer],
+        key: 'registerMint',
+      }
+    );
 };

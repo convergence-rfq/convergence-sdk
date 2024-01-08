@@ -1,5 +1,5 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
@@ -9,6 +9,7 @@ import {
   PsyoptionsEuropeanInstrument,
   createEuropeanProgram,
 } from './instrument';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 export type PrepareEuropeanOptionsResult = {
   ataTxBuilders: TransactionBuilder[];
@@ -122,10 +123,20 @@ export const prepareEuropeanOptions = async (
     const mintTxBuilder = TransactionBuilder.make().setFeePayer(
       convergence.rpc().getDefaultFeePayer()
     );
-    mintTxBuilder.add({
-      instruction: ix,
-      signers: [convergence.identity()],
-    });
+    mintTxBuilder.add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: ix,
+        signers: [convergence.identity()],
+      }
+    );
     mintTxBuilderArray.push(mintTxBuilder);
   }
 

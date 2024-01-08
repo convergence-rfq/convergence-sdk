@@ -1,4 +1,9 @@
-import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+import {
+  ComputeBudgetProgram,
+  Keypair,
+  PublicKey,
+  SystemProgram,
+} from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import type { Convergence } from '../../../Convergence';
@@ -15,6 +20,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CreateAccountOperation' as const;
 
@@ -167,15 +173,25 @@ export const createAccountBuilder = async (
       newAccount,
       lamports,
     })
-    .add({
-      instruction: SystemProgram.createAccount({
-        fromPubkey: payer.publicKey,
-        newAccountPubkey: newAccount.publicKey,
-        space,
-        lamports: lamports.basisPoints.toNumber(),
-        programId: program,
-      }),
-      signers: [payer, newAccount],
-      key: params.instructionKey ?? 'createAccount',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: SystemProgram.createAccount({
+          fromPubkey: payer.publicKey,
+          newAccountPubkey: newAccount.publicKey,
+          space,
+          lamports: lamports.basisPoints.toNumber(),
+          programId: program,
+        }),
+        signers: [payer, newAccount],
+        key: params.instructionKey ?? 'createAccount',
+      }
+    );
 };

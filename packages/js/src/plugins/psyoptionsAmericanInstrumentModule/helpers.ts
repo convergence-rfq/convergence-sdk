@@ -1,6 +1,6 @@
 import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import { BN } from 'bn.js';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
@@ -9,6 +9,7 @@ import { InstructionUniquenessTracker } from '../../utils/classes';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
 import { TransactionBuilder } from '@/utils/TransactionBuilder';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 export type PrepareAmericanOptionsResult = {
   ataTxBuilders: TransactionBuilder[];
@@ -107,10 +108,20 @@ export const prepareAmericanOptions = async (
     const mintTxBuilder = TransactionBuilder.make().setFeePayer(
       convergence.rpc().getDefaultFeePayer()
     );
-    mintTxBuilder.add({
-      instruction: ixWithSigners.ix,
-      signers: [convergence.identity()],
-    });
+    mintTxBuilder.add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: ixWithSigners.ix,
+        signers: [convergence.identity()],
+      }
+    );
     mintTxBuilderArray.push(mintTxBuilder);
   }
   return {

@@ -1,5 +1,5 @@
 import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { instrumentsToLegAccounts, instrumentsToLegs } from '../helpers';
@@ -16,6 +16,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { LegInstrument } from '../../../plugins/instrumentModule';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'AddLegsToRfqOperation' as const;
 
@@ -158,20 +159,30 @@ export const addLegsToRfqBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createAddLegsToRfqInstruction(
-        {
-          taker: taker.publicKey,
-          protocol,
-          rfq,
-          anchorRemainingAccounts: [...baseAssetAccounts, ...legAccounts],
-        },
-        {
-          legs,
-        },
-        rfqProgram.address
-      ),
-      signers: [taker],
-      key: 'addLegsToRfq',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createAddLegsToRfqInstruction(
+          {
+            taker: taker.publicKey,
+            protocol,
+            rfq,
+            anchorRemainingAccounts: [...baseAssetAccounts, ...legAccounts],
+          },
+          {
+            legs,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker],
+        key: 'addLegsToRfq',
+      }
+    );
 };

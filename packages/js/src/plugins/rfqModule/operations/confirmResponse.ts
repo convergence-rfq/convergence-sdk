@@ -17,6 +17,7 @@ import {
 import { Response } from '../models';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -236,6 +237,14 @@ export const confirmResponseBuilder = async (
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
           units: 1_400_000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
         }),
         signers: [],
       },

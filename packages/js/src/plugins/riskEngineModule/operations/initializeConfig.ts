@@ -1,5 +1,6 @@
 import { createInitializeConfigInstruction } from '@convergence-rfq/risk-engine';
 
+import { ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   DEFAULT_MINT_DECIMALS,
@@ -22,6 +23,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'InitalizeConfigOperation' as const;
 
@@ -159,26 +161,36 @@ export const initializeConfigBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createInitializeConfigInstruction(
-        {
-          authority: authority.publicKey,
-          protocol: convergence.protocol().pdas().protocol(),
-          config: convergence.riskEngine().pdas().config(),
-          systemProgram: systemProgram.address,
-        },
-        {
-          minCollateralRequirement,
-          collateralForFixedQuoteAmountRfqCreation,
-          collateralMintDecimals,
-          safetyPriceShiftFactor,
-          overallSafetyFactor,
-          acceptedOracleStaleness,
-          acceptedOracleConfidenceIntervalPortion,
-        },
-        riskEngineProgram.address
-      ),
-      signers: [authority],
-      key: 'initializeConfig',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createInitializeConfigInstruction(
+          {
+            authority: authority.publicKey,
+            protocol: convergence.protocol().pdas().protocol(),
+            config: convergence.riskEngine().pdas().config(),
+            systemProgram: systemProgram.address,
+          },
+          {
+            minCollateralRequirement,
+            collateralForFixedQuoteAmountRfqCreation,
+            collateralMintDecimals,
+            safetyPriceShiftFactor,
+            overallSafetyFactor,
+            acceptedOracleStaleness,
+            acceptedOracleConfidenceIntervalPortion,
+          },
+          riskEngineProgram.address
+        ),
+        signers: [authority],
+        key: 'initializeConfig',
+      }
+    );
 };

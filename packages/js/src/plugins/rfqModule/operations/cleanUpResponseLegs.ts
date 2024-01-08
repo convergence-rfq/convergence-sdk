@@ -1,5 +1,5 @@
 import { createCleanUpResponseLegsInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -18,6 +18,7 @@ import { getOrCreateATA } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { protocolCache } from '../../protocolModule/cache';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
@@ -206,20 +207,30 @@ export const cleanUpResponseLegsBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createCleanUpResponseLegsInstruction(
-        {
-          protocol: protocol.address,
-          rfq,
-          response,
-          anchorRemainingAccounts,
-        },
-        {
-          legAmountToClear,
-        },
-        convergence.programs().getRfq(programs).address
-      ),
-      signers: [],
-      key: 'cleanUpResponseLegs',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createCleanUpResponseLegsInstruction(
+          {
+            protocol: protocol.address,
+            rfq,
+            response,
+            anchorRemainingAccounts,
+          },
+          {
+            legAmountToClear,
+          },
+          convergence.programs().getRfq(programs).address
+        ),
+        signers: [],
+        key: 'cleanUpResponseLegs',
+      }
+    );
 };

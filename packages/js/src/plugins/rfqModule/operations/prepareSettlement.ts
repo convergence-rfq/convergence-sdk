@@ -40,6 +40,7 @@ import {
   psyoptionsEuropeanInstrumentProgram,
 } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { InstructionUniquenessTracker } from '@/utils/classes';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -414,6 +415,14 @@ export const prepareSettlementBuilder = async (
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
           units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
         }),
         signers: [],
       },

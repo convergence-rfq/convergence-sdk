@@ -2,7 +2,7 @@ import {
   createInitializeProtocolInstruction,
   FeeParameters,
 } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertProtocol, Protocol } from '../models';
@@ -18,6 +18,7 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { addDecimals } from '../../../utils/conversions';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'InitializeProtocolOperation' as const;
 
@@ -217,22 +218,32 @@ export const createProtocolBuilder = async (
 
   return TransactionBuilder.make<InitializeProtocolBuilderContext>()
     .setFeePayer(payer)
-    .add({
-      instruction: createInitializeProtocolInstruction(
-        {
-          protocol,
-          signer: payer.publicKey,
-          riskEngine: riskEngineProgram.address,
-          collateralMint,
-          systemProgram: systemProgram.address,
-        },
-        {
-          settleFees,
-          defaultFees,
-        },
-        rfqProgram.address
-      ),
-      signers: [payer],
-      key: 'initializeProtocol',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createInitializeProtocolInstruction(
+          {
+            protocol,
+            signer: payer.publicKey,
+            riskEngine: riskEngineProgram.address,
+            collateralMint,
+            systemProgram: systemProgram.address,
+          },
+          {
+            settleFees,
+            defaultFees,
+          },
+          rfqProgram.address
+        ),
+        signers: [payer],
+        key: 'initializeProtocol',
+      }
+    );
 };

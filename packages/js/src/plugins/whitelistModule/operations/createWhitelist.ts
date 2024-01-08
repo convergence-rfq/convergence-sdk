@@ -1,5 +1,5 @@
 import { createCreateWhitelistInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, Keypair } from '@solana/web3.js';
+import { PublicKey, Keypair, ComputeBudgetProgram } from '@solana/web3.js';
 import { calculateWhitelistSize } from '../helpers';
 import { Whitelist, assertWhitelist } from '../models/Whitelist';
 import {
@@ -15,6 +15,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '@/utils/TransactionBuilder';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CreateWhitelistOperation' as const;
 
@@ -141,20 +142,30 @@ export const createWhitelistBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createCreateWhitelistInstruction(
-        {
-          creator,
-          whitelistAccount: whitelistKeypair.publicKey,
-          systemProgram: systemProgram.address,
-        },
-        {
-          whitelist,
-          expectedWhitelistSize: calculateWhitelistSize(capacity),
-        },
-        rfqProgram.address
-      ),
-      signers: [whitelistKeypair, payer],
-      key: 'CreateWhitelist',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createCreateWhitelistInstruction(
+          {
+            creator,
+            whitelistAccount: whitelistKeypair.publicKey,
+            systemProgram: systemProgram.address,
+          },
+          {
+            whitelist,
+            expectedWhitelistSize: calculateWhitelistSize(capacity),
+          },
+          rfqProgram.address
+        ),
+        signers: [whitelistKeypair, payer],
+        key: 'CreateWhitelist',
+      }
+    );
 };

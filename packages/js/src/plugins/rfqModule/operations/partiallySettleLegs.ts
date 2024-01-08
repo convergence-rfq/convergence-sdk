@@ -17,6 +17,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'PartiallySettleLegsOperation' as const;
 
@@ -212,6 +213,14 @@ export const partiallySettleLegsBuilder = async (
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
           units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
         }),
         signers: [],
       },

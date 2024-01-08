@@ -27,6 +27,7 @@ import {
 import { getOrCreateATA } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 
@@ -253,6 +254,14 @@ export const prepareMoreLegsSettlementBuilder = async (
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
           units: 1400000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
         }),
         signers: [],
       },

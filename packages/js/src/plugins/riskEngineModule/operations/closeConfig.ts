@@ -1,5 +1,6 @@
 import { createCloseConfigInstruction } from '@convergence-rfq/risk-engine';
 
+import { ComputeBudgetProgram } from '@solana/web3.js';
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
@@ -14,6 +15,7 @@ import {
 } from '../../../types';
 import { SendAndConfirmTransactionResponse } from '../../../plugins';
 import { riskEngineConfigCache } from '../cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CloseConfigOperation' as const;
 
@@ -114,16 +116,26 @@ export const closeConfigBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createCloseConfigInstruction(
-        {
-          authority: authority.publicKey,
-          protocol: convergence.protocol().pdas().protocol(),
-          config: convergence.riskEngine().pdas().config(),
-        },
-        riskEngineProgram.address
-      ),
-      signers: [authority],
-      key: 'closeConfig',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createCloseConfigInstruction(
+          {
+            authority: authority.publicKey,
+            protocol: convergence.protocol().pdas().protocol(),
+            config: convergence.riskEngine().pdas().config(),
+          },
+          riskEngineProgram.address
+        ),
+        signers: [authority],
+        key: 'closeConfig',
+      }
+    );
 };

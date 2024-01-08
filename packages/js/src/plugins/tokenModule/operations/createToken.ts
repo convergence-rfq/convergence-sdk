@@ -3,7 +3,7 @@ import {
   createAssociatedTokenAccountInstruction,
   createInitializeAccountInstruction,
 } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Token } from '../models/Token';
@@ -23,6 +23,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CreateTokenOperation' as const;
 
@@ -191,20 +192,30 @@ export const createTokenBuilder = async (
         .setContext({ tokenAddress: associatedTokenAddress })
 
         // Create an associated token account.
-        .add({
-          instruction: createAssociatedTokenAccountInstruction(
-            payer.publicKey,
-            associatedTokenAddress,
-            owner,
-            mint,
-            tokenProgram.address,
-            associatedTokenProgram.address
-          ),
-          signers: [payer],
-          key:
-            params.createAssociatedTokenAccountInstructionKey ??
-            'createAssociatedTokenAccount',
-        })
+        .add(
+          {
+            instruction: ComputeBudgetProgram.setComputeUnitPrice({
+              microLamports:
+                TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+                TRANSACTION_PRIORITY_FEE_MAP['none'],
+            }),
+            signers: [],
+          },
+          {
+            instruction: createAssociatedTokenAccountInstruction(
+              payer.publicKey,
+              associatedTokenAddress,
+              owner,
+              mint,
+              tokenProgram.address,
+              associatedTokenProgram.address
+            ),
+            signers: [payer],
+            key:
+              params.createAssociatedTokenAccountInstructionKey ??
+              'createAssociatedTokenAccount',
+          }
+        )
     );
   }
 

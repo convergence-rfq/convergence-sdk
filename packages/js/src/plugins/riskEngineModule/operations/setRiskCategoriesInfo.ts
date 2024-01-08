@@ -1,5 +1,6 @@
 import { createSetRiskCategoriesInfoInstruction } from '@convergence-rfq/risk-engine';
 
+import { ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
   Config,
@@ -19,6 +20,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { riskEngineConfigCache } from '../cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'SetRiskCategoriesInfoOperation' as const;
 
@@ -135,17 +137,27 @@ export const setRiskCategoriesInfoBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createSetRiskCategoriesInfoInstruction(
-        {
-          authority: authority.publicKey,
-          protocol,
-          config,
-        },
-        { changes: changes.map(toSolitaRiskCategoryChange) },
-        riskEngineProgram.address
-      ),
-      signers: [authority],
-      key: 'setRiskCategoriesInfo',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createSetRiskCategoriesInfoInstruction(
+          {
+            authority: authority.publicKey,
+            protocol,
+            config,
+          },
+          { changes: changes.map(toSolitaRiskCategoryChange) },
+          riskEngineProgram.address
+        ),
+        signers: [authority],
+        key: 'setRiskCategoriesInfo',
+      }
+    );
 };

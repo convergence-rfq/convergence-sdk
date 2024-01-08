@@ -1,4 +1,4 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, Keypair, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { MintAuthorityMustBeSignerToMintInitialSupplyError } from '../errors';
@@ -20,6 +20,7 @@ import {
   useOperation,
 } from '../../../types';
 import type { Convergence } from '../../../Convergence';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CreateTokenWithMintOperation' as const;
 
@@ -276,6 +277,14 @@ export const createTokenWithMintBuilder = async (
   const builder = TransactionBuilder.make<CreateTokenWithMintBuilderContext>()
     .setFeePayer(payer)
     .setContext({ mintSigner: mint, tokenAddress })
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports:
+          TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+          TRANSACTION_PRIORITY_FEE_MAP['none'],
+      }),
+      signers: [],
+    })
 
     // Create the Mint account.
     .add(createMintBuilder)

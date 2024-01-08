@@ -1,5 +1,5 @@
 import { createCloseProtocolStateInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -15,6 +15,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { protocolCache } from '../cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CloseProtocolOperation' as const;
 
@@ -128,15 +129,25 @@ export const closeProtocolBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createCloseProtocolStateInstruction(
-        {
-          authority: authority.publicKey,
-          protocol,
-        },
-        rfqProgram.address
-      ),
-      signers: [authority],
-      key: 'closeProtocolState',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createCloseProtocolStateInstruction(
+          {
+            authority: authority.publicKey,
+            protocol,
+          },
+          rfqProgram.address
+        ),
+        signers: [authority],
+        key: 'closeProtocolState',
+      }
+    );
 };

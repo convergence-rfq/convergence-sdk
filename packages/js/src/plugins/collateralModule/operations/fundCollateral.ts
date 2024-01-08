@@ -1,5 +1,5 @@
 import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
@@ -18,6 +18,7 @@ import { addDecimals } from '../../../utils/conversions';
 import { Convergence } from '../../../Convergence';
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'FundCollateralOperation' as const;
 
@@ -161,21 +162,31 @@ export const fundCollateralBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: createFundCollateralInstruction(
-        {
-          user: user.publicKey,
-          userTokens,
-          protocol,
-          collateralInfo,
-          collateralToken,
-        },
-        {
-          amount: addDecimals(amount, collateralDecimals),
-        },
-        convergence.programs().getRfq(programs).address
-      ),
-      signers: [user],
-      key: 'fundCollateral',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports:
+            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+            TRANSACTION_PRIORITY_FEE_MAP['none'],
+        }),
+        signers: [],
+      },
+      {
+        instruction: createFundCollateralInstruction(
+          {
+            user: user.publicKey,
+            userTokens,
+            protocol,
+            collateralInfo,
+            collateralToken,
+          },
+          {
+            amount: addDecimals(amount, collateralDecimals),
+          },
+          convergence.programs().getRfq(programs).address
+        ),
+        signers: [user],
+        key: 'fundCollateral',
+      }
+    );
 };
