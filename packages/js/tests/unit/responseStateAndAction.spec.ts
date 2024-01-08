@@ -295,7 +295,7 @@ describe('unit.responseStateAndAction', () => {
       legAmountToPrepare: rfq.legs.length,
     });
 
-    await sleep(3);
+    await sleep(4);
 
     refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,

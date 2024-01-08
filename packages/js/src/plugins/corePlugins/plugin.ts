@@ -17,6 +17,7 @@ import { psyoptionsAmericanInstrumentModule } from '../psyoptionsAmericanInstrum
 import { spotInstrumentModule } from '../spotInstrumentModule';
 import { hxroModule } from '../hxroPrintTradeProviderModule';
 import { printTradeModule } from '../printTradeModule';
+import { whitelistModule } from '../whitelistModule';
 
 export const corePlugins = () => ({
   install(convergence: Convergence) {
@@ -38,6 +39,7 @@ export const corePlugins = () => ({
     convergence.use(collateralModule());
     convergence.use(riskEngineModule());
     convergence.use(accountModule());
+    convergence.use(whitelistModule());
 
     // Integrations
     convergence.use(instrumentModule());

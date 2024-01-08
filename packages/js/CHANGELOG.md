@@ -1,5 +1,30 @@
 # @convergence-rfq/sdk
 
+## 4.5.25
+
+### Patch Changes
+
+- Update CPL packages and add updated programs in fixtures
+  (cpl ref : adding validation for whitelst in respond_to_rfq ix)
+
+## 4.5.24
+
+### Patch Changes
+
+- add Whitelist feature to SDK
+
+## 4.5.22
+
+### Patch Changes
+
+- update solana and anchor package versions amd add ixType to checkedAdd method
+
+## 4.5.21
+
+### Patch Changes
+
+- Fix getResponseState to avoid conflict between enum DefaultingParty.Talker (0) and null
+
 ## 4.5.20
 
 ### Patch Changes

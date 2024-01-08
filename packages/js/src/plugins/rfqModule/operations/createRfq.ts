@@ -128,6 +128,9 @@ export type CreateRfqInput = {
    * additional legs will not be added in the future.
    */
   expectedLegsHash?: Uint8Array;
+
+  /** Optional RFQ whitelist Address . */
+  whitelistAddress?: PublicKey;
 };
 
 /**
@@ -162,6 +165,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       settlingWindow = 1_000,
     } = operation.input;
     let { expectedLegsHash } = operation.input;
+    const { whitelistAddress } = operation.input;
     const payer = convergence.rpc().getDefaultFeePayer();
     const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
     const serializedLegs = instruments.map((instrument) =>
@@ -175,7 +179,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       const rfqPreparationTxBuilder =
         TransactionBuilder.make().setFeePayer(payer);
       rfqPreparationIxs.forEach((ix) => {
-        if (ixTracker.checkedAdd(ix)) {
+        if (ixTracker.checkedAdd(ix, 'TransactionInstruction')) {
           rfqPreparationTxBuilder.add({
             instruction: ix,
             signers: [convergence.identity()],
@@ -214,6 +218,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         settlingWindow,
         expectedLegsHash,
         recentTimestamp,
+        whitelistAddress,
       },
       scope
     );
@@ -313,6 +318,7 @@ export const createRfqBuilder = async (
     instruments,
   } = params;
   let { expectedLegsSize } = params;
+  const { whitelistAddress = null } = params;
 
   const solitaLegs = instruments.map((instrument) =>
     instrumentToSolitaLeg(instrument)
@@ -378,6 +384,7 @@ export const createRfqBuilder = async (
           activeWindow,
           settlingWindow,
           recentTimestamp,
+          whitelist: whitelistAddress,
         },
         rfqProgram.address
       ),
@@ -422,6 +429,7 @@ export const createRfqBuilder = async (
             activeWindow,
             settlingWindow,
             recentTimestamp,
+            whitelist: whitelistAddress,
           },
           rfqProgram.address
         ),

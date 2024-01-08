@@ -20,3 +20,4 @@ export * from './tokenModule';
 export * from './accountModule';
 export * from './printTradeModule';
 export * from './hxroPrintTradeProviderModule';
+export * from './whitelistModule';

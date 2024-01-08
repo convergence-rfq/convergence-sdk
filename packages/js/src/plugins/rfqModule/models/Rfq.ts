@@ -78,6 +78,9 @@ type CommonRfq = {
 
   /** The number of confirmed Responses to the Rfq. */
   readonly confirmedResponses: number;
+
+  /** The address of the Whitelist. */
+  readonly whitelist: PublicKey;
 };
 
 export type EscrowRfq = CommonRfq & {
@@ -173,6 +176,7 @@ export const toRfq = async (
     totalResponses: account.data.totalResponses,
     clearedResponses: account.data.clearedResponses,
     confirmedResponses: account.data.confirmedResponses,
+    whitelist: account.data.whitelist,
   };
 
   if (account.data.printTradeProvider === null) {

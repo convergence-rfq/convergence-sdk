@@ -256,7 +256,7 @@ const getDefautingParty = (
   takerPrepared: boolean
 ): DefaultingParty | null => {
   const { defaultingParty } = response;
-  if (defaultingParty) return defaultingParty;
+  if (defaultingParty !== null) return defaultingParty;
   const defaulted =
     settlementWindowElapsed && (!makerPrepared || !takerPrepared);
 

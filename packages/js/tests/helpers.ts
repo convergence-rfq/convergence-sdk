@@ -413,6 +413,7 @@ export const createRfq = async (
   amount: number,
   orderType: OrderType,
   activeWindow?: number,
+  whitelist?: PublicKey,
   rfqType: 'open' | 'fixed-base' | 'fixed-quote' = 'fixed-base',
   quoteMintPk = QUOTE_MINT_PK,
   baseMintPk = BASE_MINT_BTC_PK
@@ -440,6 +441,7 @@ export const createRfq = async (
     fixedSize: { type: rfqType, amount: fixedSizeAmount },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
     activeWindow,
+    whitelistAddress: whitelist,
   });
   return { rfq, response };
 };

@@ -56,7 +56,10 @@ export const prepareAmericanOptions = async (
       optionMarket.optionMint,
       caller
     );
-    if (optionToken.txBuilder && ixTracker.checkedAdd(optionToken.txBuilder)) {
+    if (
+      optionToken.txBuilder &&
+      ixTracker.checkedAdd(optionToken.txBuilder, 'TransactionBuilder')
+    ) {
       ataTxBuilderArray.push(optionToken.txBuilder);
     }
     const writerToken = await getOrCreateATAtxBuilder(
@@ -64,7 +67,10 @@ export const prepareAmericanOptions = async (
       optionMarket!.writerTokenMint,
       caller
     );
-    if (writerToken.txBuilder && ixTracker.checkedAdd(writerToken.txBuilder)) {
+    if (
+      writerToken.txBuilder &&
+      ixTracker.checkedAdd(writerToken.txBuilder, 'TransactionBuilder')
+    ) {
       ataTxBuilderArray.push(writerToken.txBuilder);
     }
     const underlyingToken = await getOrCreateATAtxBuilder(
@@ -74,7 +80,7 @@ export const prepareAmericanOptions = async (
     );
     if (
       underlyingToken.txBuilder &&
-      ixTracker.checkedAdd(underlyingToken.txBuilder)
+      ixTracker.checkedAdd(underlyingToken.txBuilder, 'TransactionBuilder')
     ) {
       ataTxBuilderArray.push(underlyingToken.txBuilder);
     }
