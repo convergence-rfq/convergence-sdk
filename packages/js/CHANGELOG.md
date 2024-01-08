@@ -1,10 +1,17 @@
 # @convergence-rfq/sdk
 
+## 4.5.25
+
+### Patch Changes
+
+- Update CPL packages and add updated programs in fixtures
+  (cpl ref : adding validation for whitelst in respond_to_rfq ix)
+
 ## 4.5.24
 
 ### Patch Changes
 
-- Added whitelist
+- add Whitelist feature to SDK
 
 ## 4.5.22
 

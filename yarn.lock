@@ -1247,10 +1247,10 @@
     bn.js "^5.2.0"
     debug "^4.3.3"
 
-"@convergence-rfq/psyoptions-american-instrument@2.3.1":
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-american-instrument/-/psyoptions-american-instrument-2.3.1.tgz#24c24675c3341f85b37693e80eab1fe732c93b34"
-  integrity sha512-Faml7py1HDKXAImBRwOq+iYsMsZbrcZS4GritvmC4EMHIbLCjKvWv2LyHmQPQ8MtR9VxT3Y2RQFEZ9UrGhniNg==
+"@convergence-rfq/psyoptions-american-instrument@2.3.2":
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-american-instrument/-/psyoptions-american-instrument-2.3.2.tgz#b28b86e36f583b5a1302f8d7333fb565a1ac548f"
+  integrity sha512-ZXli5iCq6DxIl5RYVGJjSLKnB2PoD5VlTkL5c/IPO90Pllhwiv0plkcPkbIUikb+UG068wpkF0Hx+N8jBExyfA==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
@@ -1258,10 +1258,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/psyoptions-european-instrument@2.3.1":
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-european-instrument/-/psyoptions-european-instrument-2.3.1.tgz#2a4350673a9635cc69cebd05a6d22cd66f190f5a"
-  integrity sha512-SABqvaSOsofhnABh/sjFnP4fmS093hypRfDyOuT/H3TUVDB76yho74D2W6+GBu/KoIF3eraYTwyTj6HvPK2osw==
+"@convergence-rfq/psyoptions-european-instrument@2.3.2":
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-european-instrument/-/psyoptions-european-instrument-2.3.2.tgz#ee8589bd5f2e0b246bd13d849933b2f401fbe35d"
+  integrity sha512-lKfQW2E2HMnzG1boqSNZvCkqNrQ7/dv8wPfcAfh+3V+Qesdl/ELkvmwgr5Z6QR+J7SZ0a42NEQpKE1/Ez9+Okw==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
@@ -1269,10 +1269,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/rfq@2.3.1":
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.3.1.tgz#cc474fdd354e85993c19b848cefd9990de1a4441"
-  integrity sha512-X+ZKP5fIbolaTChwmesTkQXCVPMeaDvP2YDBjdoj3lOqNRaEjfQT7s/Hc8WKPiTAoC/jsqCfHXL+D+/SSdzmCQ==
+"@convergence-rfq/rfq@2.3.2":
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-2.3.2.tgz#a3e1e44c5336766ef5df646e13632d808f3d8b2b"
+  integrity sha512-5Dy8c2DqdbxFdjFLKEKDfpHm2ji9re1kHC5hESdMCamoaCfkQnIJunv3r+ubAaW73/lFprVcEypUX4wDxVXwxA==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
@@ -1280,10 +1280,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/risk-engine@2.3.1":
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.3.1.tgz#f71f334274f62873b0ea712e934cdb3391215374"
-  integrity sha512-5iVohA0EYKZhQq+Vm52R7LDrv8gyt+hrVy9+FiOguYfuPYQ8KRa+Y5DzRngUzZCo7ZoMozYil6FOTeZBSbWTvw==
+"@convergence-rfq/risk-engine@2.3.2":
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-2.3.2.tgz#b64a26e2d989ddeae1b1c787f2e38f38181b2019"
+  integrity sha512-Ym15cNxP2o6DZkYZELjWlM80axILg+9OhZGOJ8zD42myaCwWVFUNvMPXLY7o0iPVow+hJgOiSC+Ja3OsGQwD+A==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
@@ -1291,10 +1291,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/spot-instrument@2.3.1":
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.3.1.tgz#3bf05026de79b33fb02c5e0d8be837879b296519"
-  integrity sha512-QTwR54ojJzuHuteD99AiUUsn8QTmFFiG5/I9ZNLjh1o0Tv2Yajh/tXmF/Txzzb9clDIYY2rU1FG51VBZVHA0yw==
+"@convergence-rfq/spot-instrument@2.3.2":
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-2.3.2.tgz#92af9fa2144e66bc2682d774f3c4b396e7904e2a"
+  integrity sha512-nbzJGZJTLNAasRF9iLcPuFjOcIRRQIZw8Fx1ny1gsfHkdJAvOJEC/D4io4dpwpIVdVj+z8HAd08uXVB2QeYMIA==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
