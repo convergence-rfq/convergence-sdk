@@ -89,6 +89,9 @@ export type CreatePrintTradeRfqInput = {
    * Settling window (in seconds).
    */
   settlingWindow: number;
+
+  /** Optional RFQ whitelist Address . */
+  whitelistAddress?: PublicKey;
 };
 
 /**
@@ -246,6 +249,7 @@ export const createPrintTradeRfqBuilder = async (
     settlingWindow,
     recentTimestamp,
     expectedLegsHash,
+    whitelistAddress = null,
   } = params;
 
   const legs = printTrade.getLegs();
@@ -284,6 +288,7 @@ export const createPrintTradeRfqBuilder = async (
           activeWindow,
           settlingWindow,
           recentTimestamp,
+          whitelist: whitelistAddress,
         },
         rfqProgram.address
       ),
