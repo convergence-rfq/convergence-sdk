@@ -19,6 +19,7 @@ import {
   PsyoptionsAmericanInstrument,
   SpotLegInstrument,
   Mint,
+  TRANSACTION_PRIORITY_FEE_MAP,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
@@ -40,7 +41,10 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
     commitment: options.commitment ?? DEFAULT_COMMITMENT,
     wsEndpoint: options.wsEndpoint,
   });
-  return Convergence.make(connection, { skipPreflight: options.skipPreflight });
+  return Convergence.make(connection, {
+    skipPreflight: options.skipPreflight,
+    transactionPriority: 'normal',
+  });
 };
 
 // Default user is dao but could be maker or taker
