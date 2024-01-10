@@ -1,5 +1,5 @@
 import { createInitializeMintInstruction, MINT_SIZE } from '@solana/spl-token';
-import { ComputeBudgetProgram, Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Mint } from '../models/Mint';
@@ -17,7 +17,6 @@ import {
   useOperation,
 } from '../../../types';
 import type { Convergence } from '../../../Convergence';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CreateMintOperation' as const;
 

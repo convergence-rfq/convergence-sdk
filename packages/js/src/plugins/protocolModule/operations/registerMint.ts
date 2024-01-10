@@ -1,5 +1,5 @@
 import { createRegisterMintInstruction } from '@convergence-rfq/rfq';
-import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
@@ -16,7 +16,6 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { registeredMintsCache } from '../cache';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'RegisterMintOperation' as const;
 
