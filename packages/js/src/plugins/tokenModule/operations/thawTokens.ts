@@ -164,25 +164,16 @@ export const thawTokensBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createThawAccountInstruction(
-          tokenAddressOrAta,
-          mintAddress,
-          authorityPublicKey,
-          multiSigners,
-          tokenProgram.address
-        ),
-        signers,
-        key: params.instructionKey ?? 'thawTokens',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createThawAccountInstruction(
+        tokenAddressOrAta,
+        mintAddress,
+        authorityPublicKey,
+        multiSigners,
+        tokenProgram.address
+      ),
+      signers,
+      key: params.instructionKey ?? 'thawTokens',
+    });
 };

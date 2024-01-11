@@ -151,35 +151,26 @@ export const addBaseAssetBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createAddBaseAssetInstruction(
-          {
-            authority: authority.publicKey,
-            protocol,
-            baseAsset,
-          },
-          {
-            index: { value: index },
-            ticker,
-            riskCategory: toSolitaRiskCategory(riskCategory),
-            oracleSource,
-            inPlacePrice,
-            pythOracle,
-            switchboardOracle,
-          },
-          rfqProgram.address
-        ),
-        signers: [authority],
-        key: 'addBaseAsset',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createAddBaseAssetInstruction(
+        {
+          authority: authority.publicKey,
+          protocol,
+          baseAsset,
+        },
+        {
+          index: { value: index },
+          ticker,
+          riskCategory: toSolitaRiskCategory(riskCategory),
+          oracleSource,
+          inPlacePrice,
+          pythOracle,
+          switchboardOracle,
+        },
+        rfqProgram.address
+      ),
+      signers: [authority],
+      key: 'addBaseAsset',
+    });
 };

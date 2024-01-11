@@ -163,24 +163,15 @@ export const revokeTokenDelegateAuthorityBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createRevokeInstruction(
-          tokenAccount,
-          ownerPublicKey,
-          multiSigners,
-          tokenProgram.address
-        ),
-        signers,
-        key: params.instructionKey ?? 'revokeDelegateAuthority',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createRevokeInstruction(
+        tokenAccount,
+        ownerPublicKey,
+        multiSigners,
+        tokenProgram.address
+      ),
+      signers,
+      key: params.instructionKey ?? 'revokeDelegateAuthority',
+    });
 };

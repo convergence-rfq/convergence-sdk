@@ -350,46 +350,37 @@ export const createRfqBuilder = async (
     .setContext({
       rfq,
     })
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createCreateRfqInstruction(
-          {
-            taker: taker.publicKey,
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq,
-            systemProgram: systemProgram.address,
-            anchorRemainingAccounts: [
-              ...quoteAccounts,
-              ...baseAssetAccounts,
-              ...legAccounts,
-            ],
-          },
-          {
-            expectedLegsSize,
-            expectedLegsHash: Array.from(expectedLegsHash),
-            legs,
-            orderType: toSolitaOrderType(orderType),
-            quoteAsset: toQuote(quoteAsset),
-            fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
-            activeWindow,
-            settlingWindow,
-            recentTimestamp,
-            whitelist: whitelistAddress,
-          },
-          rfqProgram.address
-        ),
-        signers: [taker],
-        key: 'createRfq',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createCreateRfqInstruction(
+        {
+          taker: taker.publicKey,
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq,
+          systemProgram: systemProgram.address,
+          anchorRemainingAccounts: [
+            ...quoteAccounts,
+            ...baseAssetAccounts,
+            ...legAccounts,
+          ],
+        },
+        {
+          expectedLegsSize,
+          expectedLegsHash: Array.from(expectedLegsHash),
+          legs,
+          orderType: toSolitaOrderType(orderType),
+          quoteAsset: toQuote(quoteAsset),
+          fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
+          activeWindow,
+          settlingWindow,
+          recentTimestamp,
+          whitelist: whitelistAddress,
+        },
+        rfqProgram.address
+      ),
+      signers: [taker],
+      key: 'createRfq',
+    });
 
   let legsToAdd = [...legs];
   let instrumentsToAdd = [...instruments];

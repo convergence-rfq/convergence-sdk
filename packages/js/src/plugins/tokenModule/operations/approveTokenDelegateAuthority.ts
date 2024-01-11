@@ -185,26 +185,17 @@ export const approveTokenDelegateAuthorityBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createApproveInstruction(
-          tokenAddressOrAta,
-          delegateAuthority,
-          ownerPublicKey,
-          amount.basisPoints.toNumber(),
-          multiSigners,
-          tokenProgram.address
-        ),
-        signers,
-        key: params.instructionKey ?? 'approveDelegateAuthority',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createApproveInstruction(
+        tokenAddressOrAta,
+        delegateAuthority,
+        ownerPublicKey,
+        amount.basisPoints.toNumber(),
+        multiSigners,
+        tokenProgram.address
+      ),
+      signers,
+      key: params.instructionKey ?? 'approveDelegateAuthority',
+    });
 };

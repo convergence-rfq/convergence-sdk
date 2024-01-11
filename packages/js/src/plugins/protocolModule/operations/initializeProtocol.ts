@@ -218,32 +218,22 @@ export const createProtocolBuilder = async (
 
   return TransactionBuilder.make<InitializeProtocolBuilderContext>()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createInitializeProtocolInstruction(
-          {
-            protocol,
-            signer: payer.publicKey,
-            riskEngine: riskEngineProgram.address,
-            collateralMint,
-            systemProgram: systemProgram.address,
-          },
-          {
-            settleFees,
-            defaultFees,
-          },
-          rfqProgram.address
-        ),
-        signers: [payer],
-        key: 'initializeProtocol',
-      }
-    );
+    .add({
+      instruction: createInitializeProtocolInstruction(
+        {
+          protocol,
+          signer: payer.publicKey,
+          riskEngine: riskEngineProgram.address,
+          collateralMint,
+          systemProgram: systemProgram.address,
+        },
+        {
+          settleFees,
+          defaultFees,
+        },
+        rfqProgram.address
+      ),
+      signers: [payer],
+      key: 'initializeProtocol',
+    });
 };

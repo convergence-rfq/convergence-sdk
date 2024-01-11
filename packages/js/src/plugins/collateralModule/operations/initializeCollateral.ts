@@ -199,28 +199,19 @@ export const initializeCollateralBuilder = async (
 
   return TransactionBuilder.make<InitializeCollateralBuilderContext>()
     .setFeePayer(user)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createInitializeCollateralInstruction(
-          {
-            user: user.publicKey,
-            protocol,
-            collateralMint,
-            collateralToken,
-            collateralInfo,
-          },
-          rfqProgram.address
-        ),
-        signers: [user],
-        key: 'initializeCollateral',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createInitializeCollateralInstruction(
+        {
+          user: user.publicKey,
+          protocol,
+          collateralMint,
+          collateralToken,
+          collateralInfo,
+        },
+        rfqProgram.address
+      ),
+      signers: [user],
+      key: 'initializeCollateral',
+    });
 };

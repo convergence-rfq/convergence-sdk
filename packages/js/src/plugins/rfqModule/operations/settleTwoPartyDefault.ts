@@ -240,32 +240,23 @@ export const settleTwoPartyDefaultBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createSettleTwoPartyDefaultInstruction(
-          {
-            protocol: protocol.address,
-            rfq,
-            response,
-            takerCollateralInfo,
-            makerCollateralInfo,
-            takerCollateralTokens,
-            makerCollateralTokens,
-            protocolCollateralTokens,
-            tokenProgram: tokenProgram.address,
-          },
-          rfqProgram.address
-        ),
-        signers: [],
-        key: 'settleTwoPartyDefault',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createSettleTwoPartyDefaultInstruction(
+        {
+          protocol: protocol.address,
+          rfq,
+          response,
+          takerCollateralInfo,
+          makerCollateralInfo,
+          takerCollateralTokens,
+          makerCollateralTokens,
+          protocolCollateralTokens,
+          tokenProgram: tokenProgram.address,
+        },
+        rfqProgram.address
+      ),
+      signers: [],
+      key: 'settleTwoPartyDefault',
+    });
 };

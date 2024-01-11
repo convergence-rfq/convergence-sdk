@@ -209,36 +209,27 @@ export const partiallySettleLegsBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1400000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createPartiallySettleLegsInstruction(
-          {
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq,
-            response,
-            anchorRemainingAccounts,
-          },
-          {
-            legAmountToSettle,
-          },
-          rfqProgram.address
-        ),
-        signers: [],
-        key: 'partiallySettleLegs',
-      }
-    );
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 1400000,
+      }),
+      signers: [],
+    })
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createPartiallySettleLegsInstruction(
+        {
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq,
+          response,
+          anchorRemainingAccounts,
+        },
+        {
+          legAmountToSettle,
+        },
+        rfqProgram.address
+      ),
+      signers: [],
+      key: 'partiallySettleLegs',
+    });
 };

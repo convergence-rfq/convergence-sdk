@@ -129,25 +129,15 @@ export const closeProtocolBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createCloseProtocolStateInstruction(
-          {
-            authority: authority.publicKey,
-            protocol,
-          },
-          rfqProgram.address
-        ),
-        signers: [authority],
-        key: 'closeProtocolState',
-      }
-    );
+    .add({
+      instruction: createCloseProtocolStateInstruction(
+        {
+          authority: authority.publicKey,
+          protocol,
+        },
+        rfqProgram.address
+      ),
+      signers: [authority],
+      key: 'closeProtocolState',
+    });
 };

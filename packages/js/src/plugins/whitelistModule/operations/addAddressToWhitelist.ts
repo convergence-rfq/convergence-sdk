@@ -157,29 +157,20 @@ export const AddAddressToWhitelistBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createAddAddressToWhitelistInstruction(
-          {
-            creator: creator.publicKey,
-            whitelistAccount: whitelist,
-            systemProgram: systemProgram.address,
-          },
-          {
-            address: addressToAdd,
-          },
-          rfqProgram.address
-        ),
-        signers: [creator],
-        key: 'AddAddressToWhitelist',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createAddAddressToWhitelistInstruction(
+        {
+          creator: creator.publicKey,
+          whitelistAccount: whitelist,
+          systemProgram: systemProgram.address,
+        },
+        {
+          address: addressToAdd,
+        },
+        rfqProgram.address
+      ),
+      signers: [creator],
+      key: 'AddAddressToWhitelist',
+    });
 };

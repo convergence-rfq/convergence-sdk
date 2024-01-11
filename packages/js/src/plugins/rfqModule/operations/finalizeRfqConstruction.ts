@@ -257,36 +257,27 @@ export const finalizeRfqConstructionBuilder = async (
     .setContext({
       rfq,
     })
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1400000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createFinalizeRfqConstructionInstruction(
-          {
-            taker: taker.publicKey,
-            protocol,
-            rfq,
-            collateralInfo,
-            collateralToken,
-            riskEngine,
-            anchorRemainingAccounts,
-          },
-          rfqProgram.address
-        ),
-        signers: [taker],
-        key: 'finalizeRfqConstruction',
-      }
-    );
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 1400000,
+      }),
+      signers: [],
+    })
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createFinalizeRfqConstructionInstruction(
+        {
+          taker: taker.publicKey,
+          protocol,
+          rfq,
+          collateralInfo,
+          collateralToken,
+          riskEngine,
+          anchorRemainingAccounts,
+        },
+        rfqProgram.address
+      ),
+      signers: [taker],
+      key: 'finalizeRfqConstruction',
+    });
 };

@@ -173,25 +173,16 @@ export const createAccountBuilder = async (
       newAccount,
       lamports,
     })
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: SystemProgram.createAccount({
-          fromPubkey: payer.publicKey,
-          newAccountPubkey: newAccount.publicKey,
-          space,
-          lamports: lamports.basisPoints.toNumber(),
-          programId: program,
-        }),
-        signers: [payer, newAccount],
-        key: params.instructionKey ?? 'createAccount',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: SystemProgram.createAccount({
+        fromPubkey: payer.publicKey,
+        newAccountPubkey: newAccount.publicKey,
+        space,
+        lamports: lamports.basisPoints.toNumber(),
+        programId: program,
+      }),
+      signers: [payer, newAccount],
+      key: params.instructionKey ?? 'createAccount',
+    });
 };

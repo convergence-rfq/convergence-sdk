@@ -142,30 +142,21 @@ export const setInstrumentTypeBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createSetInstrumentTypeInstruction(
-          {
-            authority: authority.publicKey,
-            protocol,
-            config,
-          },
-          {
-            instrumentProgram,
-            instrumentType,
-          },
-          riskEngineProgram.address
-        ),
-        signers: [authority],
-        key: 'setInstrumentType',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createSetInstrumentTypeInstruction(
+        {
+          authority: authority.publicKey,
+          protocol,
+          config,
+        },
+        {
+          instrumentProgram,
+          instrumentType,
+        },
+        riskEngineProgram.address
+      ),
+      signers: [authority],
+      key: 'setInstrumentType',
+    });
 };

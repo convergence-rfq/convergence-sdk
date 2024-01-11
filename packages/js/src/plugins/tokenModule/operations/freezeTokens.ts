@@ -164,25 +164,16 @@ export const freezeTokensBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createFreezeAccountInstruction(
-          tokenAddressOrAta,
-          mintAddress,
-          authorityPublicKey,
-          multiSigners,
-          tokenProgram.address
-        ),
-        signers,
-        key: params.instructionKey ?? 'freezeTokens',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createFreezeAccountInstruction(
+        tokenAddressOrAta,
+        mintAddress,
+        authorityPublicKey,
+        multiSigners,
+        tokenProgram.address
+      ),
+      signers,
+      key: params.instructionKey ?? 'freezeTokens',
+    });
 };

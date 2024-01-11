@@ -158,34 +158,24 @@ export const addInstrumentBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createAddInstrumentInstruction(
-          {
-            authority: authority.publicKey,
-            protocol,
-            instrumentProgram,
-          },
-          {
-            canBeUsedAsQuote,
-            validateDataAccountAmount,
-            prepareToSettleAccountAmount,
-            settleAccountAmount,
-            revertPreparationAccountAmount,
-            cleanUpAccountAmount,
-          },
-          rfqProgram.address
-        ),
-        signers: [authority],
-        key: 'addInstrument',
-      }
-    );
+    .add({
+      instruction: createAddInstrumentInstruction(
+        {
+          authority: authority.publicKey,
+          protocol,
+          instrumentProgram,
+        },
+        {
+          canBeUsedAsQuote,
+          validateDataAccountAmount,
+          prepareToSettleAccountAmount,
+          settleAccountAmount,
+          revertPreparationAccountAmount,
+          cleanUpAccountAmount,
+        },
+        rfqProgram.address
+      ),
+      signers: [authority],
+      key: 'addInstrument',
+    });
 };

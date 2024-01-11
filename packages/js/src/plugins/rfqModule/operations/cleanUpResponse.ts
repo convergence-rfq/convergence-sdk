@@ -234,28 +234,19 @@ export const cleanUpResponseBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createCleanUpResponseInstruction(
-          {
-            maker,
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq: responseModel.rfq,
-            response: responseModel.address,
-            anchorRemainingAccounts,
-          },
-          rfqProgram.address
-        ),
-        signers: [],
-        key: 'cleanUpResponses',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createCleanUpResponseInstruction(
+        {
+          maker,
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq: responseModel.rfq,
+          response: responseModel.address,
+          anchorRemainingAccounts,
+        },
+        rfqProgram.address
+      ),
+      signers: [],
+      key: 'cleanUpResponses',
+    });
 };

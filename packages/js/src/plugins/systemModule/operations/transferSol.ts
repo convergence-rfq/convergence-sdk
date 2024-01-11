@@ -158,25 +158,16 @@ export const transferSolBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: SystemProgram.transfer({
-          fromPubkey: from.publicKey,
-          toPubkey: to,
-          lamports: amount.basisPoints.toNumber(),
-          ...(basePubkey ? { basePubkey, seed } : {}),
-          programId: convergence.programs().getSystem(programs).address,
-        }),
-        signers: [from],
-        key: params.instructionKey ?? 'transferSol',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: SystemProgram.transfer({
+        fromPubkey: from.publicKey,
+        toPubkey: to,
+        lamports: amount.basisPoints.toNumber(),
+        ...(basePubkey ? { basePubkey, seed } : {}),
+        programId: convergence.programs().getSystem(programs).address,
+      }),
+      signers: [from],
+      key: params.instructionKey ?? 'transferSol',
+    });
 };

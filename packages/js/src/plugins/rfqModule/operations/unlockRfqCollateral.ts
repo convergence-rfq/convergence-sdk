@@ -148,26 +148,17 @@ export const unlockRfqCollateralBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createUnlockRfqCollateralInstruction(
-          {
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq,
-            collateralInfo,
-          },
-          rfqProgram.address
-        ),
-        signers: [],
-        key: 'unlockRfqCollateral',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createUnlockRfqCollateralInstruction(
+        {
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq,
+          collateralInfo,
+        },
+        rfqProgram.address
+      ),
+      signers: [],
+      key: 'unlockRfqCollateral',
+    });
 };

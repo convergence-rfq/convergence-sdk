@@ -127,26 +127,17 @@ export const cancelRfqBuilder = async (
   } = params;
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createCancelRfqInstruction(
-          {
-            protocol,
-            rfq,
-            taker: taker.publicKey,
-          },
-          convergence.programs().getRfq(programs).address
-        ),
-        signers: [taker],
-        key: 'cancelRfq',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createCancelRfqInstruction(
+        {
+          protocol,
+          rfq,
+          taker: taker.publicKey,
+        },
+        convergence.programs().getRfq(programs).address
+      ),
+      signers: [taker],
+      key: 'cancelRfq',
+    });
 };

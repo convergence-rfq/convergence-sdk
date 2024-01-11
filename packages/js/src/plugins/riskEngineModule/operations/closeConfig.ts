@@ -116,26 +116,17 @@ export const closeConfigBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createCloseConfigInstruction(
-          {
-            authority: authority.publicKey,
-            protocol: convergence.protocol().pdas().protocol(),
-            config: convergence.riskEngine().pdas().config(),
-          },
-          riskEngineProgram.address
-        ),
-        signers: [authority],
-        key: 'closeConfig',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createCloseConfigInstruction(
+        {
+          authority: authority.publicKey,
+          protocol: convergence.protocol().pdas().protocol(),
+          config: convergence.riskEngine().pdas().config(),
+        },
+        riskEngineProgram.address
+      ),
+      signers: [authority],
+      key: 'closeConfig',
+    });
 };

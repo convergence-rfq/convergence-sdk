@@ -134,26 +134,17 @@ export const cleanUpRfqBuilder = async (
   const { taker = convergence.identity().publicKey, rfq } = params;
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createCleanUpRfqInstruction(
-          {
-            taker,
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq,
-          },
-          convergence.programs().getRfq(programs).address
-        ),
-        signers: [],
-        key: 'cleanUpRfq',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createCleanUpRfqInstruction(
+        {
+          taker,
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq,
+        },
+        convergence.programs().getRfq(programs).address
+      ),
+      signers: [],
+      key: 'cleanUpRfq',
+    });
 };

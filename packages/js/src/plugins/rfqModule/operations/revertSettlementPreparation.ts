@@ -240,30 +240,21 @@ export const revertSettlementPreparationBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createRevertSettlementPreparationInstruction(
-          {
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq,
-            response,
-            anchorRemainingAccounts,
-          },
-          {
-            side: toSolitaAuthoritySide(side),
-          },
-          rfqProgram.address
-        ),
-        signers: [],
-        key: 'revertSettlementPreparation',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createRevertSettlementPreparationInstruction(
+        {
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq,
+          response,
+          anchorRemainingAccounts,
+        },
+        {
+          side: toSolitaAuthoritySide(side),
+        },
+        rfqProgram.address
+      ),
+      signers: [],
+      key: 'revertSettlementPreparation',
+    });
 };

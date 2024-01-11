@@ -1,5 +1,6 @@
 import {
   BlockhashWithExpiryBlockHeight,
+  ComputeBudgetProgram,
   ConfirmOptions,
   PACKET_DATA_SIZE,
   SignaturePubkeyPair,
@@ -9,6 +10,7 @@ import {
 import { SendAndConfirmTransactionResponse } from '../plugins/rpcModule';
 import type { Convergence } from '../Convergence';
 import type { OperationOptions, Signer } from '../types';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '..';
 
 export const DUMMY_BLOCKHASH = 'H9cCgV1suCbdxMGDGUecdgJPZzdCe4CbNYa6ijP1uBLS';
 
@@ -222,5 +224,16 @@ export class TransactionBuilder<C extends object = object> {
       response,
       ...this.getContext(),
     };
+  }
+
+  addTxPriorityFeeIx(convergence: Convergence) {
+    return this.add({
+      instruction: ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports:
+          TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
+          TRANSACTION_PRIORITY_FEE_MAP['none'],
+      }),
+      signers: [],
+    });
   }
 }

@@ -240,32 +240,23 @@ export const settleOnePartyDefaultBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      },
-      {
-        instruction: createSettleOnePartyDefaultInstruction(
-          {
-            protocol: protocol.address,
-            rfq,
-            response,
-            takerCollateralInfo,
-            makerCollateralInfo,
-            takerCollateralTokens,
-            makerCollateralTokens,
-            protocolCollateralTokens,
-            tokenProgram: tokenProgram.address,
-          },
-          rfqProgram.address
-        ),
-        signers: [],
-        key: 'settleOnePartyDefault',
-      }
-    );
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createSettleOnePartyDefaultInstruction(
+        {
+          protocol: protocol.address,
+          rfq,
+          response,
+          takerCollateralInfo,
+          makerCollateralInfo,
+          takerCollateralTokens,
+          makerCollateralTokens,
+          protocolCollateralTokens,
+          tokenProgram: tokenProgram.address,
+        },
+        rfqProgram.address
+      ),
+      signers: [],
+      key: 'settleOnePartyDefault',
+    });
 };
