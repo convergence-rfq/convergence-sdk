@@ -1,4 +1,4 @@
-import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { createInitializeCollateralInstruction } from '@convergence-rfq/rfq';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -18,7 +18,6 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { protocolCache } from '../../protocolModule/cache';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'InitializeCollateralOperation' as const;
 

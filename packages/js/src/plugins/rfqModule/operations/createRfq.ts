@@ -1,5 +1,5 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { BN } from 'bn.js';
@@ -27,13 +27,11 @@ import {
 import { Convergence } from '../../../Convergence';
 import {
   LegInstrument,
-  // LegInstrumentInputData,
   QuoteInstrument,
   toQuote,
 } from '../../../plugins/instrumentModule';
 import { OrderType, toSolitaOrderType } from '../models/OrderType';
 import { InstructionUniquenessTracker } from '@/utils/classes';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -395,46 +393,37 @@ export const createRfqBuilder = async (
       .setContext({
         rfq,
       })
-      .add(
-        {
-          instruction: ComputeBudgetProgram.setComputeUnitPrice({
-            microLamports:
-              TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-              TRANSACTION_PRIORITY_FEE_MAP['none'],
-          }),
-          signers: [],
-        },
-        {
-          instruction: createCreateRfqInstruction(
-            {
-              taker: taker.publicKey,
-              protocol: convergence.protocol().pdas().protocol(),
-              rfq,
-              systemProgram: systemProgram.address,
-              anchorRemainingAccounts: [
-                ...quoteAccounts,
-                ...baseAssetAccounts,
-                ...legAccounts,
-              ],
-            },
-            {
-              expectedLegsSize,
-              expectedLegsHash: Array.from(expectedLegsHash),
-              legs: legsToAdd,
-              orderType: toSolitaOrderType(orderType),
-              quoteAsset: toQuote(quoteAsset),
-              fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
-              activeWindow,
-              settlingWindow,
-              recentTimestamp,
-              whitelist: whitelistAddress,
-            },
-            rfqProgram.address
-          ),
-          signers: [taker],
-          key: 'createRfq',
-        }
-      );
+      .addTxPriorityFeeIx(convergence)
+      .add({
+        instruction: createCreateRfqInstruction(
+          {
+            taker: taker.publicKey,
+            protocol: convergence.protocol().pdas().protocol(),
+            rfq,
+            systemProgram: systemProgram.address,
+            anchorRemainingAccounts: [
+              ...quoteAccounts,
+              ...baseAssetAccounts,
+              ...legAccounts,
+            ],
+          },
+          {
+            expectedLegsSize,
+            expectedLegsHash: Array.from(expectedLegsHash),
+            legs: legsToAdd,
+            orderType: toSolitaOrderType(orderType),
+            quoteAsset: toQuote(quoteAsset),
+            fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
+            activeWindow,
+            settlingWindow,
+            recentTimestamp,
+            whitelist: whitelistAddress,
+          },
+          rfqProgram.address
+        ),
+        signers: [taker],
+        key: 'createRfq',
+      });
   }
 
   const remainingLegsToAdd = instruments.slice(legsToAdd.length, legs.length);

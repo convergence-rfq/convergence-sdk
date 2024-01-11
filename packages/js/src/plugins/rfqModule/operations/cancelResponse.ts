@@ -1,5 +1,5 @@
 import { createCancelResponseInstruction } from '@convergence-rfq/rfq';
-import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { Convergence } from '../../../Convergence';
 import {
@@ -11,7 +11,6 @@ import {
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { SendAndConfirmTransactionResponse } from '@/plugins';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'cancelResponseOperation' as const;
 

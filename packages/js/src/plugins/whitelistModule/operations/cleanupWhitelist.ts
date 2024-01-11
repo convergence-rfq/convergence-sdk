@@ -1,5 +1,5 @@
 import { createCleanUpWhitelistInstruction } from '@convergence-rfq/rfq';
-import { ComputeBudgetProgram, PublicKey, Signer } from '@solana/web3.js';
+import { PublicKey, Signer } from '@solana/web3.js';
 
 import {
   Operation,
@@ -14,7 +14,6 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '@/utils/TransactionBuilder';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CleanUpWhitelistOperation' as const;
 

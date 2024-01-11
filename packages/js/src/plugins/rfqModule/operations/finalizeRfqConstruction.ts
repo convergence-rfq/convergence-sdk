@@ -17,7 +17,6 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { LegInstrument } from '@/plugins/instrumentModule';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 

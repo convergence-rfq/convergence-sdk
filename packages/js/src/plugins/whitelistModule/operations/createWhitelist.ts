@@ -1,5 +1,5 @@
 import { createCreateWhitelistInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, Keypair, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import { calculateWhitelistSize } from '../helpers';
 import { Whitelist, assertWhitelist } from '../models/Whitelist';
 import {
@@ -15,7 +15,6 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '@/utils/TransactionBuilder';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CreateWhitelistOperation' as const;
 

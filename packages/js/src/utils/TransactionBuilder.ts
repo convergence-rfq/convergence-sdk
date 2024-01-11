@@ -10,7 +10,7 @@ import {
 import { SendAndConfirmTransactionResponse } from '../plugins/rpcModule';
 import type { Convergence } from '../Convergence';
 import type { OperationOptions, Signer } from '../types';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '..';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '../constants';
 
 export const DUMMY_BLOCKHASH = 'H9cCgV1suCbdxMGDGUecdgJPZzdCe4CbNYa6ijP1uBLS';
 

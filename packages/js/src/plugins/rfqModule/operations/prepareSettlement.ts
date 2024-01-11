@@ -40,7 +40,6 @@ import {
   psyoptionsEuropeanInstrumentProgram,
 } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { InstructionUniquenessTracker } from '@/utils/classes';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'PrepareSettlementOperation' as const;
 

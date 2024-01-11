@@ -19,7 +19,6 @@ import {
   PsyoptionsAmericanInstrument,
   SpotLegInstrument,
   Mint,
-  TRANSACTION_PRIORITY_FEE_MAP,
 } from '../src';
 import { getUserKp, RPC_ENDPOINT } from '../../validator';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';

@@ -1,4 +1,4 @@
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { createPartlyRevertSettlementPreparationInstruction } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -18,7 +18,6 @@ import {
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { AuthoritySide, toSolitaAuthoritySide } from '../models/AuthoritySide';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 

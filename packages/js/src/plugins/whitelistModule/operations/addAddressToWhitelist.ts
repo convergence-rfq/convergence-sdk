@@ -1,5 +1,5 @@
 import { createAddAddressToWhitelistInstruction } from '@convergence-rfq/rfq';
-import { ComputeBudgetProgram, PublicKey, Signer } from '@solana/web3.js';
+import { PublicKey, Signer } from '@solana/web3.js';
 
 import {
   Operation,
@@ -14,7 +14,6 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'AddAddressToWhitelistOperation' as const;
 

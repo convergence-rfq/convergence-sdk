@@ -1,5 +1,5 @@
 import { createTransferInstruction } from '@solana/spl-token';
-import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import type { Convergence } from '../../../Convergence';
@@ -18,7 +18,6 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'SendTokensOperation' as const;
 
@@ -261,15 +260,7 @@ export const sendTokensBuilder = async (
   return (
     TransactionBuilder.make()
       .setFeePayer(payer)
-      .add({
-        instruction: ComputeBudgetProgram.setComputeUnitPrice({
-          microLamports:
-            TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority] ??
-            TRANSACTION_PRIORITY_FEE_MAP['none'],
-        }),
-        signers: [],
-      })
-
+      .addTxPriorityFeeIx(convergence)
       // Create token account if missing.
       .add(
         await convergence

@@ -1,5 +1,5 @@
 import { createFundCollateralInstruction } from '@convergence-rfq/rfq';
-import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
@@ -18,8 +18,6 @@ import { addDecimals } from '../../../utils/conversions';
 import { Convergence } from '../../../Convergence';
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
-
 const Key = 'FundCollateralOperation' as const;
 
 /**

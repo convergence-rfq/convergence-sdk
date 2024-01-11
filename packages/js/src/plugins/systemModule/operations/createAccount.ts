@@ -1,9 +1,4 @@
-import {
-  ComputeBudgetProgram,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-} from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import type { Convergence } from '../../../Convergence';
@@ -20,7 +15,6 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CreateAccountOperation' as const;
 

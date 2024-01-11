@@ -20,7 +20,6 @@ import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
 import { rfqProgram } from '../program';
 import { convertTimestampToSeconds } from '@/utils';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,

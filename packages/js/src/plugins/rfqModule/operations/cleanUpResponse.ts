@@ -1,5 +1,5 @@
 import { createCleanUpResponseInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { Convergence } from '../../../Convergence';
@@ -13,7 +13,6 @@ import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import { SendAndConfirmTransactionResponse } from '@/plugins';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'cleanUpResponseOperation' as const;
 

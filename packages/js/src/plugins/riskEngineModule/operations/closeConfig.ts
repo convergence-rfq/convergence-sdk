@@ -1,6 +1,5 @@
 import { createCloseConfigInstruction } from '@convergence-rfq/risk-engine';
 
-import { ComputeBudgetProgram } from '@solana/web3.js';
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
@@ -15,7 +14,6 @@ import {
 } from '../../../types';
 import { SendAndConfirmTransactionResponse } from '../../../plugins';
 import { riskEngineConfigCache } from '../cache';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'CloseConfigOperation' as const;
 

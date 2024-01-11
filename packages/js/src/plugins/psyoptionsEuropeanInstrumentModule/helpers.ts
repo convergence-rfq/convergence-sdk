@@ -1,5 +1,5 @@
 import * as psyoptionsEuropean from '@mithraic-labs/tokenized-euros';
-import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { addDecimals } from '../../utils/conversions';
 import { TransactionBuilder } from '../../utils/TransactionBuilder';
@@ -9,7 +9,6 @@ import {
   PsyoptionsEuropeanInstrument,
   createEuropeanProgram,
 } from './instrument';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 export type PrepareEuropeanOptionsResult = {
   ataTxBuilders: TransactionBuilder[];

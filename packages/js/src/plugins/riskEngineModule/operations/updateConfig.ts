@@ -1,6 +1,5 @@
 import { createUpdateConfigInstruction } from '@convergence-rfq/risk-engine';
 
-import { ComputeBudgetProgram } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Config } from '../models';
 import {
@@ -25,7 +24,6 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { riskEngineConfigCache } from '../cache';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'UpdateConfigOperation' as const;
 

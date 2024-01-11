@@ -1,8 +1,4 @@
-import {
-  ComputeBudgetProgram,
-  PublicKey,
-  SystemProgram,
-} from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import type { Convergence } from '../../../Convergence';
@@ -19,7 +15,6 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '@/constants';
 
 const Key = 'TransferSolOperation' as const;
 
