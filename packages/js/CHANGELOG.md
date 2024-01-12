@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.26
+
+### Patch Changes
+
+- Add Priority Fees to sdk
+
 ## 4.5.25
 
 ### Patch Changes
