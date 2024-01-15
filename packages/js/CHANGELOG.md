@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.26
+
+### Patch Changes
+
+- Revoke NoopWallet logic and use NoopWallet instead of cvgWallet for american and european program creation
+
 ## 4.5.25
 
 ### Patch Changes
