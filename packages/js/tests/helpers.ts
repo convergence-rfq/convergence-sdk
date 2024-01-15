@@ -40,7 +40,10 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
     commitment: options.commitment ?? DEFAULT_COMMITMENT,
     wsEndpoint: options.wsEndpoint,
   });
-  return Convergence.make(connection, { skipPreflight: options.skipPreflight });
+  return Convergence.make(connection, {
+    skipPreflight: options.skipPreflight,
+    transactionPriority: 'normal',
+  });
 };
 
 // Default user is dao but could be maker or taker

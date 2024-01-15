@@ -135,6 +135,7 @@ export const unlockResponseCollateralBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createUnlockResponseCollateralInstruction(
         {

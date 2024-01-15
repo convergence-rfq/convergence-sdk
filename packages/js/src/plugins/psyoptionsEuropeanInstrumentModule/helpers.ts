@@ -122,7 +122,7 @@ export const prepareEuropeanOptions = async (
     const mintTxBuilder = TransactionBuilder.make().setFeePayer(
       convergence.rpc().getDefaultFeePayer()
     );
-    mintTxBuilder.add({
+    mintTxBuilder.addTxPriorityFeeIx(convergence).add({
       instruction: ix,
       signers: [convergence.identity()],
     });

@@ -260,7 +260,7 @@ export const sendTokensBuilder = async (
   return (
     TransactionBuilder.make()
       .setFeePayer(payer)
-
+      .addTxPriorityFeeIx(convergence)
       // Create token account if missing.
       .add(
         await convergence

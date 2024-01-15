@@ -341,43 +341,42 @@ export const respondToRfqBuilder = async (
     .setContext({
       response,
     })
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createRespondToRfqInstruction(
-          {
-            rfq,
-            response,
-            collateralInfo,
-            collateralToken,
-            protocol,
-            riskEngine,
-            whitelist,
-            maker: maker.publicKey,
-            anchorRemainingAccounts: [
-              {
-                pubkey: convergence.riskEngine().pdas().config(),
-                isSigner: false,
-                isWritable: false,
-              },
-              ...baseAssetAccounts,
-              ...oracleAccounts,
-            ],
-          },
-          {
-            bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
-            ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
-            pdaDistinguisher,
-            expirationTimestamp: expirationTimestampBn,
-          }
-        ),
-        signers: [maker],
-        key: 'respondToRfq',
-      }
-    );
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 1_400_000,
+      }),
+      signers: [],
+    })
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createRespondToRfqInstruction(
+        {
+          rfq,
+          response,
+          collateralInfo,
+          collateralToken,
+          protocol,
+          riskEngine,
+          whitelist,
+          maker: maker.publicKey,
+          anchorRemainingAccounts: [
+            {
+              pubkey: convergence.riskEngine().pdas().config(),
+              isSigner: false,
+              isWritable: false,
+            },
+            ...baseAssetAccounts,
+            ...oracleAccounts,
+          ],
+        },
+        {
+          bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
+          ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
+          pdaDistinguisher,
+          expirationTimestamp: expirationTimestampBn,
+        }
+      ),
+      signers: [maker],
+      key: 'respondToRfq',
+    });
 };

@@ -233,7 +233,7 @@ export const mintTokensBuilder = async (
 
   return (
     TransactionBuilder.make()
-
+      .addTxPriorityFeeIx(convergence)
       // Create token account if missing.
       .add(
         await convergence

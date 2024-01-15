@@ -133,6 +133,7 @@ export const cleanUpRfqBuilder = async (
   const { taker = convergence.identity().publicKey, rfq } = params;
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCleanUpRfqInstruction(
         {

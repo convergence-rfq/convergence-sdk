@@ -27,7 +27,6 @@ import {
 import { Convergence } from '../../../Convergence';
 import {
   LegInstrument,
-  // LegInstrumentInputData,
   QuoteInstrument,
   toQuote,
 } from '../../../plugins/instrumentModule';
@@ -349,6 +348,7 @@ export const createRfqBuilder = async (
     .setContext({
       rfq,
     })
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCreateRfqInstruction(
         {
@@ -393,6 +393,7 @@ export const createRfqBuilder = async (
       .setContext({
         rfq,
       })
+      .addTxPriorityFeeIx(convergence)
       .add({
         instruction: createCreateRfqInstruction(
           {

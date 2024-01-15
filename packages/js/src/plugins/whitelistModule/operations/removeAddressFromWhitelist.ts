@@ -146,6 +146,7 @@ export const RemoveAddressFromWhitelistBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createRemoveAddressFromWhitelistInstruction(
         {

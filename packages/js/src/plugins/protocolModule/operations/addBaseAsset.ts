@@ -150,6 +150,7 @@ export const addBaseAssetBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createAddBaseAssetInstruction(
         {
