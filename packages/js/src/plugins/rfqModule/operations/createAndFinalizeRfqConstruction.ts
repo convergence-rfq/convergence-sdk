@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { BN } from 'bn.js';
