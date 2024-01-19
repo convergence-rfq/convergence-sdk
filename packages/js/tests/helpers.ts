@@ -404,11 +404,12 @@ export const createRfq = async (
   cvg: Convergence,
   amount: number,
   orderType: OrderType,
+  counterParties: PublicKey[] = [],
   activeWindow?: number,
-  whitelist?: PublicKey,
   rfqType: 'open' | 'fixed-base' | 'fixed-quote' = 'fixed-base',
   quoteMintPk = QUOTE_MINT_PK,
   baseMintPk = BASE_MINT_BTC_PK
+
   // 10 minutes
 ) => {
   let instrumentAmount = 1;
@@ -433,7 +434,7 @@ export const createRfq = async (
     fixedSize: { type: rfqType, amount: fixedSizeAmount },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
     activeWindow,
-    whitelistAddress: whitelist,
+    counterParties: counterParties.length > 0 ? counterParties : undefined,
   });
   return { rfq, response };
 };

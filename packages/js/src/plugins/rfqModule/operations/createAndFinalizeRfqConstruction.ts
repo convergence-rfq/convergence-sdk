@@ -1,4 +1,4 @@
-import { PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import * as anchor from '@project-serum/anchor';
 
 import { BN } from 'bn.js';
@@ -29,6 +29,7 @@ import { createRfqBuilder } from './createRfq';
 import { finalizeRfqConstructionBuilder } from './finalizeRfqConstruction';
 import { addLegsToRfqBuilder } from './addLegsToRfq';
 import { InstructionUniquenessTracker } from '@/utils/classes';
+import { createWhitelistBuilder } from '@/plugins/whitelistModule';
 
 const Key = 'CreateAndFinalizeRfqConstructionOperation' as const;
 
@@ -132,8 +133,8 @@ export type CreateAndFinalizeRfqConstructionInput = {
   /** Optional address of the risk engine program account. */
   riskEngine?: PublicKey;
 
-  /** Optional RFQ whitelist Address . */
-  whitelistAddress?: PublicKey;
+  /** Optional counterparties PubkeyList to create a whitelist. */
+  counterParties?: PublicKey[];
 };
 
 /**
@@ -167,8 +168,22 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         quoteAsset,
         activeWindow = 5_000,
         settlingWindow = 1_000,
-        whitelistAddress,
+        counterParties = [],
       } = operation.input;
+      let whitelistAccount = null;
+      let createWhitelistTxBuilder: TransactionBuilder | null = null;
+      if (counterParties.length > 0) {
+        whitelistAccount = Keypair.generate();
+        createWhitelistTxBuilder = await createWhitelistBuilder(
+          convergence,
+          {
+            creator: taker.publicKey,
+            whitelist: counterParties,
+            whitelistKeypair: whitelistAccount,
+          },
+          scope
+        );
+      }
       const payer = convergence.rpc().getDefaultFeePayer();
       const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
       const rfqPreparationTxBuilderArray: TransactionBuilder[] = [];
@@ -218,7 +233,9 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           fixedSize,
           expectedLegsHash,
           recentTimestamp,
-          whitelistAddress,
+          whitelistAccount: whitelistAccount
+            ? whitelistAccount.publicKey
+            : null,
         },
         scope
       );
@@ -252,6 +269,21 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         .signTransactionMatrix(rfqPreparationTxs, [createRfqTx], addLegsTxs, [
           finalizeRfqTxs,
         ]);
+
+      let signedCreateWhitelistTx: Transaction | null = null;
+      if (createWhitelistTxBuilder && whitelistAccount) {
+        const createWhitelistTx =
+          createWhitelistTxBuilder.toTransaction(lastValidBlockHeight);
+        signedCreateWhitelistTx = await convergence
+          .rpc()
+          .signTransaction(createWhitelistTx, [
+            whitelistAccount as Signer,
+            taker,
+          ]);
+      }
+      if (signedCreateWhitelistTx) {
+        rfqPreparationSignedTxs.push(signedCreateWhitelistTx);
+      }
 
       for (const signedTx of rfqPreparationSignedTxs) {
         await convergence
@@ -311,6 +343,7 @@ export type CreateAndFinalizeRfqConstructionBuilderParams =
     expectedLegsHash: Uint8Array;
     recentTimestamp: anchor.BN;
     rfq: PublicKey;
+    whitelistAccount: PublicKey | null;
   };
 
 export type CreateAndFinalizeRfqConstructionBuilderResult = {
@@ -328,7 +361,9 @@ export const createAndFinalizeRfqConstructionBuilder = async (
 
   const { createRfqTxBuilder, remainingLegsToAdd } = await createRfqBuilder(
     convergence,
-    { ...params },
+    {
+      ...params,
+    },
     options
   );
 
