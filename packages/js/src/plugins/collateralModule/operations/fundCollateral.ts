@@ -18,7 +18,6 @@ import { addDecimals } from '../../../utils/conversions';
 import { Convergence } from '../../../Convergence';
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
-
 const Key = 'FundCollateralOperation' as const;
 
 /**
@@ -161,6 +160,7 @@ export const fundCollateralBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createFundCollateralInstruction(
         {

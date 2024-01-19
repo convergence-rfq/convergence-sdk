@@ -239,6 +239,7 @@ export const settleTwoPartyDefaultBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createSettleTwoPartyDefaultInstruction(
         {

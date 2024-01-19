@@ -209,6 +209,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createPartlyRevertSettlementPreparationInstruction(
         {

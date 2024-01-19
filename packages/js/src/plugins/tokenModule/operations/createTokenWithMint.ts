@@ -276,6 +276,7 @@ export const createTokenWithMintBuilder = async (
   const builder = TransactionBuilder.make<CreateTokenWithMintBuilderContext>()
     .setFeePayer(payer)
     .setContext({ mintSigner: mint, tokenAddress })
+    .addTxPriorityFeeIx(convergence)
 
     // Create the Mint account.
     .add(createMintBuilder)

@@ -142,6 +142,7 @@ export const cleanUpRfqBuilder = async (
       : rfqProgram.address;
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCleanUpRfqInstruction(
         {

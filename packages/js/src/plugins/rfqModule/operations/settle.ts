@@ -242,25 +242,24 @@ export const settleBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createSettleInstruction(
-          {
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq,
-            response,
-            anchorRemainingAccounts,
-          },
-          rfqProgram.address
-        ),
-        signers: [],
-        key: 'settle',
-      }
-    );
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 1_400_000,
+      }),
+      signers: [],
+    })
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createSettleInstruction(
+        {
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq,
+          response,
+          anchorRemainingAccounts,
+        },
+        rfqProgram.address
+      ),
+      signers: [],
+      key: 'settle',
+    });
 };

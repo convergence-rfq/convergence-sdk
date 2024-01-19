@@ -167,6 +167,7 @@ export const createAccountBuilder = async (
       newAccount,
       lamports,
     })
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: SystemProgram.createAccount({
         fromPubkey: payer.publicKey,
