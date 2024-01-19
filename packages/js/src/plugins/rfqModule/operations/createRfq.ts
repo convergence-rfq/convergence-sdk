@@ -167,10 +167,10 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const payer = convergence.rpc().getDefaultFeePayer();
     const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
     let whitelistAccount = null;
-    let createWhitelistTx: TransactionBuilder | null = null;
+    let createWhitelistTxBuilder: TransactionBuilder | null = null;
     if (counterParties.length > 0) {
       whitelistAccount = Keypair.generate();
-      createWhitelistTx = await createWhitelistBuilder(
+      createWhitelistTxBuilder = await createWhitelistBuilder(
         convergence,
         {
           creator: taker.publicKey,
@@ -244,17 +244,30 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const rfqPreparationTxs = rfqPreparationTxBuilderArray.map((b) =>
       b.toTransaction(lastValidBlockHeight)
     );
-    if (createWhitelistTx) {
-      rfqPreparationTxs.push(
-        createWhitelistTx.toTransaction(lastValidBlockHeight)
-      );
-    }
 
+    if (whitelistAccount && createWhitelistTxBuilder) {
+      const createWhitelistTx =
+        createWhitelistTxBuilder.toTransaction(lastValidBlockHeight);
+      rfqPreparationTxs.push(createWhitelistTx);
+    }
     const createRfqTx = createRfqTxBuilder.toTransaction(lastValidBlockHeight);
 
     const [rfqPreparationSignedTxs, [createRfqSignedTx]] = await convergence
       .identity()
       .signTransactionMatrix(rfqPreparationTxs, [createRfqTx]);
+
+    if (whitelistAccount) {
+      const userSignedCreateWhitelistTx = rfqPreparationSignedTxs.pop();
+      if (userSignedCreateWhitelistTx) {
+        const whitelistkeypairSignedCreateWhitelistTx = await convergence
+          .rpc()
+          .signTransaction(userSignedCreateWhitelistTx, [
+            whitelistAccount as Signer,
+          ]);
+        rfqPreparationSignedTxs.push(whitelistkeypairSignedCreateWhitelistTx);
+      }
+    }
+
     for (const signedTx of rfqPreparationSignedTxs) {
       await convergence
         .rpc()

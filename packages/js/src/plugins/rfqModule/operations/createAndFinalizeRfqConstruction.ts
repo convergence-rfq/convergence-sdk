@@ -251,7 +251,11 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const rfqPreparationTxs = rfqPreparationTxBuilderArray.map((b) =>
         b.toTransaction(lastValidBlockHeight)
       );
-
+      if (whitelistAccount && createWhitelistTxBuilder) {
+        const createWhitelistTx =
+          createWhitelistTxBuilder.toTransaction(lastValidBlockHeight);
+        rfqPreparationTxs.push(createWhitelistTx);
+      }
       const createRfqTx =
         createRfqTxBuilder.toTransaction(lastValidBlockHeight);
 
@@ -272,19 +276,16 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
           finalizeRfqTxs,
         ]);
 
-      let signedCreateWhitelistTx: Transaction | null = null;
-      if (createWhitelistTxBuilder && whitelistAccount) {
-        const createWhitelistTx =
-          createWhitelistTxBuilder.toTransaction(lastValidBlockHeight);
-        signedCreateWhitelistTx = await convergence
-          .rpc()
-          .signTransaction(createWhitelistTx, [
-            whitelistAccount as Signer,
-            taker,
-          ]);
-      }
-      if (signedCreateWhitelistTx) {
-        rfqPreparationSignedTxs.push(signedCreateWhitelistTx);
+      if (whitelistAccount) {
+        const userSignedCreateWhitelistTx = rfqPreparationSignedTxs.pop();
+        if (userSignedCreateWhitelistTx) {
+          const whitelistkeypairSignedCreateWhitelistTx = await convergence
+            .rpc()
+            .signTransaction(userSignedCreateWhitelistTx, [
+              whitelistAccount as Signer,
+            ]);
+          rfqPreparationSignedTxs.push(whitelistkeypairSignedCreateWhitelistTx);
+        }
       }
 
       for (const signedTx of rfqPreparationSignedTxs) {
