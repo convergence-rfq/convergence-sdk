@@ -23,9 +23,13 @@ import { assert } from '../../utils/assert';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
-import { CvgWallet } from '@/utils';
-export const createEuropeanProgram = async (convergence: Convergence) => {
-  const cvgWallet = new CvgWallet(convergence);
+import { NoopWallet } from '@/utils';
+
+export const createEuropeanProgram = async (
+  convergence: Convergence,
+  taker: PublicKey
+) => {
+  const cvgWallet = new NoopWallet(taker);
   return psyoptionsEuropean.createProgramFromProvider(
     new anchor.AnchorProvider(
       convergence.connection,
@@ -122,7 +126,9 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsEuropeanInstrument.decimals;
   getSide = () => this.side;
-  async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
+  async getPreparationsBeforeRfqCreation(
+    taker: PublicKey
+  ): Promise<CreateOptionInstrumentsResult> {
     if (!this.underlyingAssetMint) {
       throw new Error('Missing underlying asset mint');
     }
@@ -137,6 +143,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     }
     const optionMarketIxs = await getPsyEuropeanMarketIxs(
       this.convergence,
+      taker,
       this.underlyingAssetMint,
       this.underlyingAmountPerContractDecimals,
       this.underlyingAmountPerContract,
@@ -152,6 +159,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
   }
 
   static async create(
+    taker: PublicKey,
     convergence: Convergence,
     underlyingMint: Mint,
     stableMint: Mint,
@@ -176,7 +184,10 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
-    const europeanProgram: any = await createEuropeanProgram(convergence);
+    const europeanProgram: any = await createEuropeanProgram(
+      convergence,
+      taker
+    );
     const { metaKey, optionMint } = await getEuropeanOptionKeys(
       europeanProgram,
       underlyingMint,
@@ -321,6 +332,7 @@ export const psyoptionsEuropeanInstrumentParser = {
 
 export const getPsyEuropeanMarketIxs = async (
   cvg: Convergence,
+  taker: PublicKey,
   underlyingMint: PublicKey,
   underlyingMintDecimals: number,
   underlyingAmountPerContract: number,
@@ -331,7 +343,7 @@ export const getPsyEuropeanMarketIxs = async (
   oracleAddress: PublicKey,
   oracleProviderId: number // Switchboard = 1, Pyth = 0
 ): Promise<CreateOptionInstrumentsResult> => {
-  const europeanProgram = await createEuropeanProgram(cvg);
+  const europeanProgram = await createEuropeanProgram(cvg, taker);
   const expirationTimestamp = new BN(expirationTimeStamp);
   const quoteAmountPerContractBN = new BN(
     addDecimals(strike, stableMintDecimals)

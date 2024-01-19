@@ -1,10 +1,16 @@
 # @convergence-rfq/cli
 
+## 4.5.27
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.27
+
 ## 4.5.26
 
 ### Patch Changes
 
-- Add Priority Fees to sdk
 - Updated dependencies
   - @convergence-rfq/sdk@4.5.26
 

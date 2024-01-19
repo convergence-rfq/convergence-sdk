@@ -4,7 +4,7 @@ import { PublicKey } from '@solana/web3.js';
 import { Convergence } from '../../Convergence';
 
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
-import { CvgWallet } from '../../utils/Wallets';
+import { NoopWallet } from '../../utils/Wallets';
 import { InstructionUniquenessTracker } from '../../utils/classes';
 import { PsyoptionsAmericanInstrument } from './types';
 import { createAmericanProgram } from './instrument';
@@ -21,7 +21,7 @@ export const prepareAmericanOptions = async (
   caller: PublicKey
 ): Promise<PrepareAmericanOptionsResult> => {
   const ixTracker = new InstructionUniquenessTracker([]);
-  const cvgWallet = new CvgWallet(convergence);
+  const cvgWallet = new NoopWallet(caller);
   const americanProgram = createAmericanProgram(convergence, cvgWallet);
   const response = await convergence
     .rfqs()
@@ -48,7 +48,7 @@ export const prepareAmericanOptions = async (
       continue;
     }
 
-    const optionMarket = await leg.getOptionMeta();
+    const optionMarket = await leg.getOptionMeta(caller);
     const optionToken = await getOrCreateATAtxBuilder(
       convergence,
       optionMarket.optionMint,
