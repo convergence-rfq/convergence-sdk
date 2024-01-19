@@ -153,6 +153,7 @@ export const transferSolBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: SystemProgram.transfer({
         fromPubkey: from.publicKey,

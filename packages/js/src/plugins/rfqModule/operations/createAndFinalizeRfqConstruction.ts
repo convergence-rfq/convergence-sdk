@@ -174,7 +174,9 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       const rfqPreparationTxBuilderArray: TransactionBuilder[] = [];
       const ixTracker = new InstructionUniquenessTracker([]);
       for (const ins of instruments) {
-        const rfqPreparationIxs = await ins.getPreparationsBeforeRfqCreation();
+        const rfqPreparationIxs = await ins.getPreparationsBeforeRfqCreation(
+          taker.publicKey
+        );
         if (rfqPreparationIxs.length === 0) continue;
         const rfqPreparationTxBuilder =
           TransactionBuilder.make().setFeePayer(payer);

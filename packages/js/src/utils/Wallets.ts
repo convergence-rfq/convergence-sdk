@@ -30,8 +30,8 @@ export class CvgWallet implements Wallet {
 export class NoopWallet {
   public readonly publicKey: PublicKey;
 
-  constructor(keypair: Keypair) {
-    this.publicKey = keypair.publicKey;
+  constructor(publicKey: PublicKey) {
+    this.publicKey = publicKey;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

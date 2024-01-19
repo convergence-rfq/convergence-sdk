@@ -161,6 +161,7 @@ export const updateConfigBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createUpdateConfigInstruction(
         {

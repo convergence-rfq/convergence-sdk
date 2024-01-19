@@ -5,6 +5,7 @@ packages/js/.turbo
 packages/cli/node_modules
 packages/cli/dist
 packages/cli/tests/ctx.json
+packages/cli/src/customScript.ts
 packages/cli/.turbo
 packages/js/.nyc_output
 packages/cli/.nyc_output

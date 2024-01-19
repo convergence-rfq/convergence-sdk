@@ -232,44 +232,43 @@ export const confirmResponseBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createConfirmResponseInstruction(
-          {
-            rfq,
-            response,
-            collateralInfo,
-            makerCollateralInfo,
-            collateralToken,
-            taker: taker.publicKey,
-            protocol: convergence.protocol().pdas().protocol(),
-            riskEngine: convergence.programs().getRiskEngine(programs).address,
-            anchorRemainingAccounts: [
-              {
-                pubkey: convergence.riskEngine().pdas().config(),
-                isSigner: false,
-                isWritable: false,
-              },
-              ...baseAssetAccounts,
-              ...oracleAccounts,
-            ],
-          },
-          {
-            side: toSolitaQuoteSide(side),
-            overrideLegMultiplierBps,
-          },
-          convergence.programs().getRfq(programs).address
-        ),
-        signers: [taker],
-        key: 'confirmResponse',
-      }
-    );
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 1_400_000,
+      }),
+      signers: [],
+    })
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createConfirmResponseInstruction(
+        {
+          rfq,
+          response,
+          collateralInfo,
+          makerCollateralInfo,
+          collateralToken,
+          taker: taker.publicKey,
+          protocol: convergence.protocol().pdas().protocol(),
+          riskEngine: convergence.programs().getRiskEngine(programs).address,
+          anchorRemainingAccounts: [
+            {
+              pubkey: convergence.riskEngine().pdas().config(),
+              isSigner: false,
+              isWritable: false,
+            },
+            ...baseAssetAccounts,
+            ...oracleAccounts,
+          ],
+        },
+        {
+          side: toSolitaQuoteSide(side),
+          overrideLegMultiplierBps,
+        },
+        convergence.programs().getRfq(programs).address
+      ),
+      signers: [taker],
+      key: 'confirmResponse',
+    });
 };
 
 const isResponseExpired = (response: Response): boolean => {

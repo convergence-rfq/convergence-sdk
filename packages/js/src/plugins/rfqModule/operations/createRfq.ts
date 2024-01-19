@@ -27,7 +27,6 @@ import {
 import { Convergence } from '../../../Convergence';
 import {
   LegInstrument,
-  // LegInstrumentInputData,
   QuoteInstrument,
   toQuote,
 } from '../../../plugins/instrumentModule';
@@ -169,7 +168,9 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const rfqPreparationTxBuilderArray: TransactionBuilder[] = [];
     const ixTracker = new InstructionUniquenessTracker([]);
     for (const ins of instruments) {
-      const rfqPreparationIxs = await ins.getPreparationsBeforeRfqCreation();
+      const rfqPreparationIxs = await ins.getPreparationsBeforeRfqCreation(
+        taker.publicKey
+      );
       if (rfqPreparationIxs.length === 0) continue;
       const rfqPreparationTxBuilder =
         TransactionBuilder.make().setFeePayer(payer);
@@ -349,6 +350,7 @@ export const createRfqBuilder = async (
     .setContext({
       rfq,
     })
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCreateRfqInstruction(
         {
@@ -393,6 +395,7 @@ export const createRfqBuilder = async (
       .setContext({
         rfq,
       })
+      .addTxPriorityFeeIx(convergence)
       .add({
         instruction: createCreateRfqInstruction(
           {

@@ -147,6 +147,7 @@ export const unlockRfqCollateralBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createUnlockRfqCollateralInstruction(
         {

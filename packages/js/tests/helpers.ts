@@ -40,7 +40,10 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
     commitment: options.commitment ?? DEFAULT_COMMITMENT,
     wsEndpoint: options.wsEndpoint,
   });
-  return Convergence.make(connection, { skipPreflight: options.skipPreflight });
+  return Convergence.make(connection, {
+    skipPreflight: options.skipPreflight,
+    transactionPriority: 'normal',
+  });
 };
 
 // Default user is dao but could be maker or taker
@@ -113,6 +116,7 @@ export const createAmericanCoveredCallRfq = async (
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, 1.0, 'long'),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -146,6 +150,7 @@ export const createEuropeanCoveredCallRfq = async (
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, 1.0, 'long'),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -179,6 +184,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -192,6 +198,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -223,6 +230,7 @@ export const createAmericanFixedBaseStraddle = async (
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -234,6 +242,7 @@ export const createAmericanFixedBaseStraddle = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -266,6 +275,7 @@ export const createEuropeanFixedBaseStraddle = async (
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -279,6 +289,7 @@ export const createEuropeanFixedBaseStraddle = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -311,6 +322,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -322,6 +334,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -358,6 +371,7 @@ export const createCFlyRfq = async (
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -369,6 +383,7 @@ export const createCFlyRfq = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -380,6 +395,7 @@ export const createCFlyRfq = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -545,6 +561,7 @@ export const createAmericanIronCondor = async (
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -556,6 +573,7 @@ export const createAmericanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -567,6 +585,7 @@ export const createAmericanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -578,6 +597,7 @@ export const createAmericanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -610,6 +630,7 @@ export const createEuropeanIronCondor = async (
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -623,6 +644,7 @@ export const createEuropeanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -636,6 +658,7 @@ export const createEuropeanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -649,6 +672,7 @@ export const createEuropeanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,

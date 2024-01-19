@@ -126,6 +126,7 @@ export const cancelRfqBuilder = async (
   } = params;
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCancelRfqInstruction(
         {

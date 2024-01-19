@@ -141,6 +141,7 @@ export const setInstrumentTypeBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createSetInstrumentTypeInstruction(
         {

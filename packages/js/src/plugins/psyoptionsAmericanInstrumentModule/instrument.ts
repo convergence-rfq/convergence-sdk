@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { Leg, BaseAssetIndex } from '@convergence-rfq/rfq';
 import { OptionMarketWithKey } from '@mithraic-labs/psy-american';
 import { OptionType } from '@mithraic-labs/tokenized-euros';
@@ -16,7 +16,7 @@ import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
-import { CvgWallet, NoopWallet } from '../../utils/Wallets';
+import { NoopWallet } from '../../utils/Wallets';
 import {
   GetOrCreateATAtxBuilderReturnType,
   getOrCreateATAtxBuilder,
@@ -74,7 +74,9 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
-  async getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult> {
+  async getPreparationsBeforeRfqCreation(
+    taker: PublicKey
+  ): Promise<CreateOptionInstrumentsResult> {
     if (!this.underlyingAssetMint) {
       throw new Error('Missing underlying asset mint');
     }
@@ -84,6 +86,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 
     const optionMarketIxs = await getPsyAmericanMarketIxs(
       this.convergence,
+      taker,
       this.underlyingAssetMint,
       this.underlyingAmountPerContractDecimals,
       this.underlyingAmountPerContract,
@@ -97,6 +100,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   }
 
   static async create(
+    taker: PublicKey,
     convergence: Convergence,
     underlyingMint: Mint,
     stableMint: Mint,
@@ -119,7 +123,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
-    const cvgWallet = new CvgWallet(convergence);
+    const cvgWallet = new NoopWallet(taker);
     const americanProgram = await createAmericanProgram(convergence, cvgWallet);
     const { optionMint, metaKey } = await getAmericanOptionkeys(
       americanProgram,
@@ -149,10 +153,11 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
   }
 
   static async fetchMeta(
+    taker: PublicKey,
     convergence: Convergence,
     metaKey: PublicKey
   ): Promise<OptionMarketWithKey> {
-    const cvgWallet = new CvgWallet(convergence);
+    const cvgWallet = new NoopWallet(taker);
     const americanProgram = createAmericanProgram(convergence, cvgWallet);
     const optionMarket = (await psyoptionsAmerican.getOptionByKey(
       americanProgram,
@@ -162,8 +167,9 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     return optionMarket;
   }
 
-  async getOptionMeta() {
+  async getOptionMeta(taker: PublicKey) {
     const optionMeta = await PsyoptionsAmericanInstrument.fetchMeta(
+      taker,
       this.convergence,
       this.optionMetaPubKey
     );
@@ -280,11 +286,11 @@ export const psyoptionsAmericanInstrumentParser = {
 
 export const createAmericanProgram = (
   convergence: Convergence,
-  wallet?: CvgWallet
+  wallet: NoopWallet
 ): any => {
   const provider = new anchor.AnchorProvider(
     convergence.connection,
-    wallet ?? new NoopWallet(Keypair.generate()),
+    wallet,
     {}
   );
 
@@ -298,6 +304,7 @@ export const createAmericanProgram = (
 
 export const getPsyAmericanMarketIxs = async (
   cvg: Convergence,
+  taker: PublicKey,
   underlyingMint: PublicKey,
   underlyingMintDecimals: number,
   underlyingAmountPerContract: number,
@@ -307,7 +314,7 @@ export const getPsyAmericanMarketIxs = async (
   expirationTimestamp: number,
   optionType: OptionType
 ): Promise<CreateOptionInstrumentsResult> => {
-  const cvgWallet = new CvgWallet(cvg);
+  const cvgWallet = new NoopWallet(taker);
   const americanProgram = createAmericanProgram(cvg, cvgWallet);
 
   const expirationTimestampBN = new BN(expirationTimestamp);
