@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 4.5.28
+
+### Patch Changes
+
+- Update SDK with CPL whitelist changes
+
 ## 4.5.27
 
 ### Patch Changes
