@@ -1,5 +1,17 @@
 # @convergence-rfq/sdk
 
+## 4.5.29
+
+### Patch Changes
+
+- Optimize Whitelist creation logic for sigle signature on user side
+
+## 4.5.28
+
+### Patch Changes
+
+- Update SDK with CPL whitelist changes
+
 ## 4.5.27
 
 ### Patch Changes
