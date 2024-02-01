@@ -274,27 +274,26 @@ export const settleEscrowBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createSettleEscrowInstruction(
-          {
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq: rfqModel.address,
-            response: responseModel.address,
-            anchorRemainingAccounts,
-          },
-          rfqProgram.address
-        ),
-        signers: [],
-        key: 'settle',
-      }
-    );
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 1_400_000,
+      }),
+      signers: [],
+    })
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createSettleEscrowInstruction(
+        {
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq: rfqModel.address,
+          response: responseModel.address,
+          anchorRemainingAccounts,
+        },
+        rfqProgram.address
+      ),
+      signers: [],
+      key: 'settle',
+    });
 };
 
 export type SettlePrintTradeBuilderParams = {

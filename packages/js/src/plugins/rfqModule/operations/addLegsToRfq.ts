@@ -146,6 +146,7 @@ export const addLegsToRfqBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createAddLegsToRfqInstruction(
         {

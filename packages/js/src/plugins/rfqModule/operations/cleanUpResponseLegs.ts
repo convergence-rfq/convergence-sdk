@@ -213,6 +213,7 @@ export const cleanUpResponseLegsBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCleanUpResponseEscrowLegsInstruction(
         {

@@ -163,6 +163,7 @@ export const thawTokensBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createThawAccountInstruction(
         tokenAddressOrAta,

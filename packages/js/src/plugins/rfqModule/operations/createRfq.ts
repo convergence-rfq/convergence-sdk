@@ -1,5 +1,5 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
 import * as anchor from '@coral-xyz/anchor';
 
 import { BN } from 'bn.js';
@@ -27,7 +27,6 @@ import {
 import { Convergence } from '../../../Convergence';
 import {
   LegInstrument,
-  // LegInstrumentInputData,
   QuoteInstrument,
   serializeInstrumentAsSolitaLeg,
   instrumentToQuote,
@@ -35,6 +34,7 @@ import {
 } from '../../../plugins/instrumentModule';
 import { OrderType, toSolitaOrderType } from '../models/OrderType';
 import { InstructionUniquenessTracker } from '@/utils/classes';
+import { createWhitelistBuilder } from '@/plugins/whitelistModule';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -129,8 +129,8 @@ export type CreateRfqInput = {
    */
   expectedLegsHash?: Uint8Array;
 
-  /** Optional RFQ whitelist Address . */
-  whitelistAddress?: PublicKey;
+  /** Optional counterparties PubkeyList to create a whitelist. */
+  counterParties?: PublicKey[];
 };
 
 /**
@@ -163,18 +163,34 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       fixedSize,
       activeWindow = 5_000,
       settlingWindow = 1_000,
+      counterParties = [],
     } = operation.input;
     let { expectedLegsHash } = operation.input;
-    const { whitelistAddress } = operation.input;
     const payer = convergence.rpc().getDefaultFeePayer();
     const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
+    let whitelistAccount = null;
     const serializedLegs = instruments.map((instrument) =>
       serializeInstrumentAsSolitaLeg(instrument)
     );
+    let createWhitelistTxBuilder: TransactionBuilder | null = null;
+    if (counterParties.length > 0) {
+      whitelistAccount = Keypair.generate();
+      createWhitelistTxBuilder = await createWhitelistBuilder(
+        convergence,
+        {
+          creator: taker.publicKey,
+          whitelist: counterParties,
+          whitelistKeypair: whitelistAccount,
+        },
+        scope
+      );
+    }
     const rfqPreparationTxBuilderArray: TransactionBuilder[] = [];
     const ixTracker = new InstructionUniquenessTracker([]);
     for (const ins of instruments) {
-      const rfqPreparationIxs = await ins.getPreparationsBeforeRfqCreation();
+      const rfqPreparationIxs = await ins.getPreparationsBeforeRfqCreation(
+        taker.publicKey
+      );
       if (rfqPreparationIxs.length === 0) continue;
       const rfqPreparationTxBuilder =
         TransactionBuilder.make().setFeePayer(payer);
@@ -218,7 +234,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         settlingWindow,
         expectedLegsHash,
         recentTimestamp,
-        whitelistAddress,
+        whitelistAccount: whitelistAccount ? whitelistAccount.publicKey : null,
       },
       scope
     );
@@ -235,11 +251,29 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       b.toTransaction(lastValidBlockHeight)
     );
 
+    if (whitelistAccount && createWhitelistTxBuilder) {
+      const createWhitelistTx =
+        createWhitelistTxBuilder.toTransaction(lastValidBlockHeight);
+      rfqPreparationTxs.push(createWhitelistTx);
+    }
     const createRfqTx = createRfqTxBuilder.toTransaction(lastValidBlockHeight);
 
     const [rfqPreparationSignedTxs, [createRfqSignedTx]] = await convergence
       .identity()
       .signTransactionMatrix(rfqPreparationTxs, [createRfqTx]);
+
+    if (whitelistAccount) {
+      const userSignedCreateWhitelistTx = rfqPreparationSignedTxs.pop();
+      if (userSignedCreateWhitelistTx) {
+        const whitelistkeypairSignedCreateWhitelistTx = await convergence
+          .rpc()
+          .signTransaction(userSignedCreateWhitelistTx, [
+            whitelistAccount as Signer,
+          ]);
+        rfqPreparationSignedTxs.push(whitelistkeypairSignedCreateWhitelistTx);
+      }
+    }
+
     for (const signedTx of rfqPreparationSignedTxs) {
       await convergence
         .rpc()
@@ -277,6 +311,8 @@ export type CreateRfqBuilderParams = CreateRfqInput & {
   expectedLegsHash: Uint8Array;
 
   recentTimestamp: anchor.BN;
+
+  whitelistAccount: PublicKey | null;
 };
 
 /**
@@ -316,9 +352,9 @@ export const createRfqBuilder = async (
     recentTimestamp,
     expectedLegsHash,
     instruments,
+    whitelistAccount,
   } = params;
   let { expectedLegsSize } = params;
-  const { whitelistAddress = null } = params;
 
   const solitaLegs = instruments.map((instrument) =>
     instrumentToSolitaLeg(instrument)
@@ -354,18 +390,23 @@ export const createRfqBuilder = async (
 
   let baseAssetAccounts = legsToBaseAssetAccounts(convergence, solitaLegs);
   let legAccounts = await instrumentsToLegAccounts(instruments);
-
+  let whitelistAccountToPass = rfqProgram.address;
+  if (whitelistAccount) {
+    whitelistAccountToPass = whitelistAccount;
+  }
   let rfqBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({
       rfq,
     })
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCreateRfqInstruction(
         {
           taker: taker.publicKey,
           protocol: convergence.protocol().pdas().protocol(),
           rfq,
+          whitelist: whitelistAccountToPass,
           systemProgram: systemProgram.address,
           anchorRemainingAccounts: [
             ...quoteAccounts,
@@ -384,7 +425,6 @@ export const createRfqBuilder = async (
           activeWindow,
           settlingWindow,
           recentTimestamp,
-          whitelist: whitelistAddress,
         },
         rfqProgram.address
       ),
@@ -405,12 +445,14 @@ export const createRfqBuilder = async (
       .setContext({
         rfq,
       })
+      .addTxPriorityFeeIx(convergence)
       .add({
         instruction: createCreateRfqInstruction(
           {
             taker: taker.publicKey,
             protocol: convergence.protocol().pdas().protocol(),
             rfq,
+            whitelist: whitelistAccountToPass,
             systemProgram: systemProgram.address,
             anchorRemainingAccounts: [
               ...quoteAccounts,
@@ -429,7 +471,6 @@ export const createRfqBuilder = async (
             activeWindow,
             settlingWindow,
             recentTimestamp,
-            whitelist: whitelistAddress,
           },
           rfqProgram.address
         ),

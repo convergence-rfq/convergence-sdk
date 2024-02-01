@@ -198,6 +198,7 @@ export const initializeCollateralBuilder = async (
 
   return TransactionBuilder.make<InitializeCollateralBuilderContext>()
     .setFeePayer(user)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createInitializeCollateralInstruction(
         {

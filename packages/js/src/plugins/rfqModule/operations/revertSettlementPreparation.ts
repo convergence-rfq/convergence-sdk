@@ -289,6 +289,7 @@ export const revertEscrowSettlementPreparationBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createRevertEscrowSettlementPreparationInstruction(
         {

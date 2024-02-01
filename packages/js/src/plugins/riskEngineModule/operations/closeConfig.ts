@@ -114,6 +114,7 @@ export const closeConfigBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCloseConfigInstruction(
         {

@@ -421,32 +421,32 @@ export const prepareSettlementBuilder = async (
 
   const prepareSettlementTxBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1400000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createPrepareEscrowSettlementInstruction(
-          {
-            caller: caller.publicKey,
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq,
-            response,
-            anchorRemainingAccounts,
-          },
-          {
-            side,
-            legAmountToPrepare,
-          },
-          rfqProgram.address
-        ),
-        signers: [caller],
-        key: 'prepareSettlement',
-      }
-    );
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 1400000,
+      }),
+      signers: [],
+    })
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createPrepareEscrowSettlementInstruction(
+        {
+          caller: caller.publicKey,
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq,
+          response,
+          anchorRemainingAccounts,
+        },
+        {
+          side,
+          legAmountToPrepare,
+        },
+        rfqProgram.address
+      ),
+      signers: [caller],
+      key: 'prepareSettlement',
+    });
+
   return {
     ataTxBuilderArray,
     prepareSettlementTxBuilder,

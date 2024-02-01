@@ -163,6 +163,7 @@ export const freezeTokensBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createFreezeAccountInstruction(
         tokenAddressOrAta,

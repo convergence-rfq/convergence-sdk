@@ -27,7 +27,9 @@ export interface LegInstrument {
   getSide: () => LegSide;
   serializeInstrumentData: () => Buffer;
   getValidationAccounts(): AccountMeta[];
-  getPreparationsBeforeRfqCreation(): Promise<CreateOptionInstrumentsResult>;
+  getPreparationsBeforeRfqCreation(
+    taker: PublicKey
+  ): Promise<CreateOptionInstrumentsResult>;
 }
 
 // TODO add registration of quote instruments

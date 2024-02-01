@@ -135,6 +135,7 @@ export const setRiskCategoriesInfoBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createSetRiskCategoriesInfoInstruction(
         {

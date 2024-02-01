@@ -304,39 +304,38 @@ export const respondToRfqBuilder = async (
     .setContext({
       response,
     })
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createRespondToRfqInstruction(
-          {
-            rfq,
-            response,
-            collateralInfo,
-            collateralToken,
-            protocol,
-            riskEngine,
-            whitelist,
-            maker: maker.publicKey,
-            anchorRemainingAccounts: [
-              ...validateResponseAccounts,
-              ...riskEngineAccounts,
-            ],
-          },
-          {
-            bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
-            ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
-            pdaDistinguisher,
-            expirationTimestamp: expirationTimestampBn,
-            additionalData: additionalData?.serialize() ?? Buffer.from([]),
-          }
-        ),
-        signers: [maker],
-        key: 'respondToRfq',
-      }
-    );
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 1_400_000,
+      }),
+      signers: [],
+    })
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createRespondToRfqInstruction(
+        {
+          rfq,
+          response,
+          collateralInfo,
+          collateralToken,
+          protocol,
+          riskEngine,
+          whitelist,
+          maker: maker.publicKey,
+          anchorRemainingAccounts: [
+            ...validateResponseAccounts,
+            ...riskEngineAccounts,
+          ],
+        },
+        {
+          bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),
+          ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
+          pdaDistinguisher,
+          expirationTimestamp: expirationTimestampBn,
+          additionalData: additionalData?.serialize() ?? Buffer.from([]),
+        }
+      ),
+      signers: [maker],
+      key: 'respondToRfq',
+    });
 };

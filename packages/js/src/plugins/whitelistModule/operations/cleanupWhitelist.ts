@@ -125,6 +125,7 @@ export const cleanUpWhitelistBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCleanUpWhitelistInstruction(
         {

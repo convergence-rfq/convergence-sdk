@@ -1,6 +1,5 @@
 import { createCreateWhitelistInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, Keypair } from '@solana/web3.js';
-import { calculateWhitelistSize } from '../helpers';
 import { Whitelist, assertWhitelist } from '../models/Whitelist';
 import {
   Operation,
@@ -53,7 +52,6 @@ export type CreateWhitelistOperation = Operation<
  */
 export type CreateWhitelistInput = {
   creator: PublicKey;
-  capacity: number;
   whitelist: PublicKey[];
 };
 
@@ -80,13 +78,12 @@ export const createWhitelistOperationHandler: OperationHandler<CreateWhitelistOp
       convergence: Convergence,
       scope: OperationScope
     ): Promise<CreateWhitelistOutput> => {
-      const { creator, capacity, whitelist } = operation.input;
+      const { creator, whitelist } = operation.input;
       const whitelistKeypair = Keypair.generate();
       const builder = await createWhitelistBuilder(
         convergence,
         {
           creator,
-          capacity,
           whitelist,
           whitelistKeypair,
         },
@@ -134,13 +131,14 @@ export const createWhitelistBuilder = async (
 ): Promise<CreateWhitelistBuilderResult> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
 
-  const { creator, capacity, whitelist, whitelistKeypair } = params;
+  const { creator, whitelist, whitelistKeypair } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCreateWhitelistInstruction(
         {
@@ -150,7 +148,6 @@ export const createWhitelistBuilder = async (
         },
         {
           whitelist,
-          expectedWhitelistSize: calculateWhitelistSize(capacity),
         },
         rfqProgram.address
       ),

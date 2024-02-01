@@ -281,6 +281,7 @@ export const cleanUpEscrowResponseBuilder = async (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCleanUpResponseInstruction(
         {

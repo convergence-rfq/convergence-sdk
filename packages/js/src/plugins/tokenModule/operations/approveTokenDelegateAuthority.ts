@@ -184,6 +184,7 @@ export const approveTokenDelegateAuthorityBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createApproveInstruction(
         tokenAddressOrAta,

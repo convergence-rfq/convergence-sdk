@@ -184,6 +184,7 @@ export const withdrawCollateralBuilder = async (
 
   return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createWithdrawCollateralInstruction(
         {
