@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.0.0
+
+### Minor Changes
+
+- Hxro integration
+
 ## 4.5.29
 
 ### Patch Changes
