@@ -9,7 +9,7 @@ import {
   runInParallelWithWait,
   sleep,
 } from '../helpers';
-import { CTX } from '../constants';
+import { CTX, DAO_PK, MAKER_PK } from '../constants';
 
 describe('integration.hxro', () => {
   const cvgTaker = createUserCvg('taker');
@@ -335,5 +335,28 @@ describe('integration.hxro', () => {
     });
 
     await cvgMaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
+  });
+
+  it('Create a future rfq with counterparties', async () => {
+    const { rfq } = await cvgTaker.rfqs().createPrintTrade({
+      printTrade: commonPrintTrade,
+      orderType: 'buy',
+      fixedSize: { type: 'fixed-base', amount: 100 },
+      activeWindow: 3600,
+      settlingWindow: 3600,
+      counterParties: [MAKER_PK, DAO_PK],
+    });
+
+    const { rfqResponse } = await cvgMaker.rfqs().respond({
+      rfq: rfq.address,
+      ask: { price: 100 },
+      additionalData: new HxroAdditionalRespondData(CTX.hxroMakerTrg),
+    });
+
+    await cvgTaker.rfqs().confirmResponse({
+      response: rfqResponse.address,
+      rfq: rfq.address,
+      side: 'ask',
+    });
   });
 });

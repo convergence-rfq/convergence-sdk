@@ -27,7 +27,7 @@ export const getHxroProgramFromIDL = async (
 
   const provider = new AnchorProvider(
     cvg.connection,
-    new NoopWallet(Keypair.generate()) as Wallet,
+    new NoopWallet(Keypair.generate().publicKey) as Wallet,
     {}
   );
   return new AnchorProgram(

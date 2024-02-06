@@ -2,7 +2,7 @@ import {
   createCreateRfqInstruction,
   createValidateRfqByPrintTradeProviderInstruction,
 } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import * as anchor from '@coral-xyz/anchor';
 
 import { BN } from 'bn.js';
@@ -40,6 +40,7 @@ import {
   printTradetoSolitaQuote,
   prependWithProviderProgram,
 } from '@/plugins/printTradeModule';
+import { createWhitelistBuilder } from '@/plugins/whitelistModule';
 
 const Key = 'CreatePrintTradeRfqOperation' as const;
 
@@ -90,8 +91,8 @@ export type CreatePrintTradeRfqInput = {
    */
   settlingWindow: number;
 
-  /** Optional RFQ whitelist Address . */
-  whitelistAddress?: PublicKey;
+  /** Optional counterparties PubkeyList to create a whitelist. */
+  counterParties?: PublicKey[];
 };
 
 /**
@@ -124,13 +125,27 @@ export const createPrintTradeRfqOperationHandler: OperationHandler<CreatePrintTr
         fixedSize,
         activeWindow,
         settlingWindow,
+        counterParties = [],
       } = operation.input;
       const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
       const serializedLegs = printTrade
         .getLegs()
         .map((leg) => serializePrintTradeAsSolitaLeg(leg));
       const expectedLegsHash = calculateExpectedLegsHash(serializedLegs);
-
+      let createWhitelistTxBuilder: TransactionBuilder | null = null;
+      let whitelistAccount = null;
+      if (counterParties.length > 0) {
+        whitelistAccount = Keypair.generate();
+        createWhitelistTxBuilder = await createWhitelistBuilder(
+          convergence,
+          {
+            creator: taker.publicKey,
+            whitelist: counterParties,
+            whitelistKeypair: whitelistAccount,
+          },
+          scope
+        );
+      }
       const rfqPda = convergence
         .rfqs()
         .pdas()
@@ -146,27 +161,79 @@ export const createPrintTradeRfqOperationHandler: OperationHandler<CreatePrintTr
           recentTimestamp,
         });
 
-      const builder = await createPrintTradeFullFlowRfqBuilder(
-        convergence,
-        {
-          ...operation.input,
-          rfq: rfqPda,
-          fixedSize,
-          activeWindow,
-          settlingWindow,
-          expectedLegsHash,
-          recentTimestamp,
-        },
-        scope
-      );
+      const createPrintTradeRfqBuilder =
+        await createPrintTradeFullFlowRfqBuilder(
+          convergence,
+          {
+            ...operation.input,
+            rfq: rfqPda,
+            fixedSize,
+            activeWindow,
+            settlingWindow,
+            expectedLegsHash,
+            recentTimestamp,
+            whitelistAccount: whitelistAccount
+              ? whitelistAccount.publicKey
+              : null,
+          },
+          scope
+        );
       scope.throwIfCanceled();
 
       const confirmOptions = makeConfirmOptionsFinalizedOnMainnet(
         convergence,
         scope.confirmOptions
       );
+      const txs: Transaction[] = [];
+      const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
 
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
+      if (whitelistAccount && createWhitelistTxBuilder) {
+        const createWhitelistTx =
+          createWhitelistTxBuilder.toTransaction(lastValidBlockHeight);
+        txs.push(createWhitelistTx);
+      }
+      txs.push(createPrintTradeRfqBuilder.toTransaction(lastValidBlockHeight));
+
+      const signedTxs = await convergence.identity().signAllTransactions(txs);
+      if (whitelistAccount) {
+        if (signedTxs.length === 2) {
+          const whitelistkeypairSignedCreateWhitelistTx = await convergence
+            .rpc()
+            .signTransaction(signedTxs[0], [whitelistAccount as Signer]);
+          signedTxs[0] = whitelistkeypairSignedCreateWhitelistTx;
+        }
+      }
+      let response: SendAndConfirmTransactionResponse;
+      switch (signedTxs.length) {
+        case 1:
+          response = await convergence
+            .rpc()
+            .serializeAndSendTransaction(
+              signedTxs[0],
+              lastValidBlockHeight,
+              confirmOptions
+            );
+          break;
+        case 2:
+          await convergence
+            .rpc()
+            .serializeAndSendTransaction(
+              signedTxs[0],
+              lastValidBlockHeight,
+              confirmOptions
+            );
+          response = await convergence
+            .rpc()
+            .serializeAndSendTransaction(
+              signedTxs[1],
+              lastValidBlockHeight,
+              confirmOptions
+            );
+          break;
+        default:
+          throw new Error('Unexpected number of transactions');
+      }
+
       scope.throwIfCanceled();
 
       const rfq = await convergence
@@ -174,7 +241,7 @@ export const createPrintTradeRfqOperationHandler: OperationHandler<CreatePrintTr
         .findRfqByAddress({ address: rfqPda });
       assertPrintTradeRfq(rfq);
 
-      return { ...output, rfq };
+      return { response, rfq };
     },
   };
 
@@ -188,6 +255,8 @@ export type CreatePrintTradeRfqBuilderParams = CreatePrintTradeRfqInput & {
   expectedLegsHash: Uint8Array;
 
   recentTimestamp: anchor.BN;
+
+  whitelistAccount: PublicKey | null;
 };
 
 export const createPrintTradeFullFlowRfqBuilder = async (
@@ -249,7 +318,7 @@ export const createPrintTradeRfqBuilder = async (
     settlingWindow,
     recentTimestamp,
     expectedLegsHash,
-    whitelistAddress = null,
+    whitelistAccount,
   } = params;
 
   const legs = printTrade.getLegs();
@@ -262,7 +331,10 @@ export const createPrintTradeRfqBuilder = async (
   const rfqProgram = convergence.programs().getRfq(programs);
 
   const baseAssetAccounts = legsToBaseAssetAccounts(convergence, solitaLegs);
-
+  let whitelistAccountToPass = rfqProgram.address;
+  if (whitelistAccount) {
+    whitelistAccountToPass = whitelistAccount;
+  }
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({
@@ -275,6 +347,7 @@ export const createPrintTradeRfqBuilder = async (
           protocol: convergence.protocol().pdas().protocol(),
           rfq,
           systemProgram: systemProgram.address,
+          whitelist: whitelistAccountToPass,
           anchorRemainingAccounts: [...baseAssetAccounts],
         },
         {
@@ -288,7 +361,6 @@ export const createPrintTradeRfqBuilder = async (
           activeWindow,
           settlingWindow,
           recentTimestamp,
-          whitelist: whitelistAddress,
         },
         rfqProgram.address
       ),
