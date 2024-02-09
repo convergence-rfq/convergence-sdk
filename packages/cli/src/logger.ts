@@ -51,11 +51,11 @@ export const logBaseAsset = (b: BaseAsset): void => {
   l('Enabled:', b.enabled);
   l('Index:', b.index);
   l('Risk category:', b.riskCategory);
-  l('Oracle source:', b.oracleSource);
-  if (b.address) {
-    l('Oracle address:', b.address.toString());
-  } else if (b.inPlacePrice) {
-    l('Oracle price:', b.inPlacePrice.toString());
+  l('Oracle source:', b.priceOracle.source);
+  if (b.priceOracle.address) {
+    l('Oracle address:', b.priceOracle.address.toString());
+  } else if (b.priceOracle.price) {
+    l('Oracle price:', b.priceOracle.price.toString());
   }
 };
 

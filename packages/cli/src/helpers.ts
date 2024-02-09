@@ -15,9 +15,9 @@ import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
 export const getInstrumentType = (type: string): InstrumentType => {
   switch (type) {
     case 'spot':
-      return 'spot';
+      return InstrumentType.Spot;
     case 'option':
-      return 'option';
+      return InstrumentType.Option;
     default:
       throw new Error('Invalid instrument type');
   }
