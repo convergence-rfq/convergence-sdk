@@ -50,7 +50,8 @@
     "@convergence-rfq/sdk": "4.5.29",
     "@solana/web3.js": "^1.87.6",
     "@types/cookie": "^0.5.1",
-    "commander": "^10.0.0"
+    "commander": "^10.0.0",
+    "dotenv": "^16.4.1"
   },
   "devDependencies": {
     "@types/commander": "^2.12.2",

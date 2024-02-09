@@ -51,11 +51,11 @@ export const logBaseAsset = (b: BaseAsset): void => {
   l('Enabled:', b.enabled);
   l('Index:', b.index);
   l('Risk category:', b.riskCategory);
-  l('Oracle source:', b.priceOracle.source);
-  if (b.priceOracle.address) {
-    l('Oracle address:', b.priceOracle.address.toString());
-  } else if (b.priceOracle.price) {
-    l('Oracle price:', b.priceOracle.price.toString());
+  l('Oracle source:', b.oracleSource);
+  if (b.address) {
+    l('Oracle address:', b.address.toString());
+  } else if (b.inPlacePrice) {
+    l('Oracle price:', b.inPlacePrice.toString());
   }
 };
 
@@ -148,7 +148,6 @@ export const logRfq = (r: Rfq) => {
   l('Taker:', r.taker.toString());
   l('Order type:', r.orderType);
   l('Size:', r.size.type === 'open' ? 'open' : 'fixed');
-  l('Quote asset:', r.quoteMint.toString());
   l('Created:', new Date(created).toString());
   l(`Active window: ${r.activeWindow} seconds`);
   l(`Settlement window: ${r.settlingWindow} seconds`);

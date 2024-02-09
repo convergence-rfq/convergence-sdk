@@ -8,15 +8,16 @@ import {
 } from '@convergence-rfq/sdk';
 import { Command } from 'commander';
 
+import { Connection } from '@solana/web3.js';
 import { Instrument } from './types';
 import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
 
 export const getInstrumentType = (type: string): InstrumentType => {
   switch (type) {
     case 'spot':
-      return InstrumentType.Spot;
+      return 'spot';
     case 'option':
-      return InstrumentType.Option;
+      return 'option';
     default:
       throw new Error('Invalid instrument type');
   }
@@ -96,4 +97,14 @@ export const addCmd = (
   addDefaultArgs(cmd);
 
   return cmd;
+};
+
+export const getSigConfirmation = async (
+  connection: Connection,
+  tx: string
+) => {
+  const result = await connection.getSignatureStatus(tx, {
+    searchTransactionHistory: true,
+  });
+  return result?.value?.confirmationStatus;
 };

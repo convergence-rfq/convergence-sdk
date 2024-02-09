@@ -1,4 +1,4 @@
-import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL, Keypair } from '@solana/web3.js';
 import {
   token,
   toRiskCategoryInfo,
@@ -7,17 +7,20 @@ import {
   PriceOracle,
   SpotLegInstrument,
   SpotQuoteInstrument,
+  addBaseAssetBuilder,
+  registerMintBuilder,
+  TransactionBuilder,
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import { getInstrumentType, getSize } from './helpers';
+import { getInstrumentType, getSigConfirmation, getSize } from './helpers';
 import {
   logPk,
   logResponse,
   logBaseAsset,
   logRfq,
   logProtocol,
-  logInstrument,
+  // logInstrument,
   logTx,
   logError,
   logTokenAccount,
@@ -27,6 +30,7 @@ import {
   logToken,
   logMint,
 } from './logger';
+import { CoinGeckoResponse, JupTokenList } from './types';
 
 export const createMint = async (opts: Opts) => {
   const cvg = await createCvg(opts);
@@ -259,7 +263,7 @@ export const getRfq = async (opts: Opts) => {
       .rfqs()
       .findRfqByAddress({ address: new PublicKey(opts.address) });
     logRfq(rfq);
-    rfq.legs.map(logInstrument);
+    // rfq.legs.map(logInstrument);
   } catch (e) {
     logError(e);
   }
@@ -456,6 +460,93 @@ export const airdropDevnetTokens = async (opts: Opts) => {
     );
     logPk(collateralWallet.address);
     registeredMintWallets.map((wallet: any) => logPk(wallet.address));
+  } catch (e) {
+    logError(e);
+  }
+};
+
+export const addBaseAssetsFromJupiter = async (opts: Opts) => {
+  try {
+    const cvg = await createCvg(opts);
+
+    const baseAssets = await cvg.protocol().getBaseAssets();
+    console.log('Base assets:', baseAssets);
+    const baseAssetsSymbols = baseAssets.map((b) => b.ticker);
+    const res = await fetch('https://token.jup.ag/all');
+    const jupTokens: JupTokenList[] = await res.json();
+    const jupTokensToAdd = jupTokens.filter(
+      (t) => !baseAssetsSymbols.includes(t.symbol)
+    );
+    let baseAssetIndexToStart = Math.max(...baseAssets.map((b) => b.index)) + 1;
+    console.log('last baseAssetIndex', baseAssetIndexToStart - 1);
+    for (const token of jupTokensToAdd) {
+      try {
+        const coingeckoId = token?.extensions?.coingeckoId;
+        if (!coingeckoId || coingeckoId === '') {
+          console.log(
+            'skipping token: because missing coingecko id',
+            token.symbol
+          );
+          continue;
+        }
+        const coinGeckoAPIKey = process.env.COIN_GECKO_API_KEY as string;
+        const tokenPriceResponse = await fetch(
+          `https://pro-api.coingecko.com/api/v3/simple/price?ids=${coingeckoId}&vs_currencies=usd&x_cg_pro_api_key=${coinGeckoAPIKey}`
+        );
+        const tokenPriceJson: CoinGeckoResponse =
+          await tokenPriceResponse.json();
+
+        const tokenPrice = tokenPriceJson[coingeckoId]?.usd;
+        if (!tokenPrice) {
+          console.log(
+            'skipping token: because missing price',
+            token.symbol,
+            tokenPrice
+          );
+          continue;
+        }
+        console.log('Adding token:', token.symbol, 'with price:', tokenPrice);
+        //mint should already exists on mainnet
+
+        const addBaseAssetTxBuilder = addBaseAssetBuilder(cvg, {
+          authority: cvg.rpc().getDefaultFeePayer(),
+          ticker: token.symbol,
+          riskCategory: 'high',
+          index: baseAssetIndexToStart,
+          priceOracle: {
+            source: 'in-place',
+            price: tokenPrice,
+          },
+        });
+
+        console.log('Adding base asset:', token.symbol);
+        console.log(' current baseAssetIndex:', baseAssetIndexToStart);
+        const registerMintTxBuilder = await registerMintBuilder(cvg, {
+          mint: new PublicKey(token.address),
+          baseAssetIndex: baseAssetIndexToStart,
+        });
+
+        const mergedTxBuiler = TransactionBuilder.make()
+          .setFeePayer(cvg.rpc().getDefaultFeePayer())
+          .add(addBaseAssetTxBuilder)
+          .add(registerMintTxBuilder);
+        const output = await mergedTxBuiler.sendAndConfirm(cvg);
+        logResponse(output.response);
+
+        const signatureStatus = await getSigConfirmation(
+          cvg.connection,
+          output.response.signature
+        );
+        const { commitment } = cvg.connection;
+        if (signatureStatus && signatureStatus === commitment) {
+          console.log('Transaction confirmed');
+          baseAssetIndexToStart++;
+        }
+      } catch (e) {
+        console.log('error:', e);
+        continue;
+      }
+    }
   } catch (e) {
     logError(e);
   }

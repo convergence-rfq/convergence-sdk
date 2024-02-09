@@ -8,6 +8,7 @@ import {
   getProtocol,
   getBaseAssets,
   closeProtocol,
+  addBaseAssetsFromJupiter,
 } from '../actions';
 
 import { addCmd } from '../helpers';
@@ -136,6 +137,14 @@ const getCmd = (c: Command) =>
 const getBaseAssetsCmd = (c: Command) =>
   addCmd(c, 'get-base-assets', 'gets protocol base assets', getBaseAssets);
 
+const addBaseAssetsFromJupiterCmd = (c: Command) =>
+  addCmd(
+    c,
+    'add-base-asset-from-jupiter',
+    'adds baseAssets from jupiter',
+    addBaseAssetsFromJupiter
+  );
+
 export const protocolGroup = (c: Command) => {
   const group = c.command('protocol');
   initializeProtocolCmd(group);
@@ -146,4 +155,5 @@ export const protocolGroup = (c: Command) => {
   getCmd(group);
   getBaseAssetsCmd(group);
   closeCmd(group);
+  addBaseAssetsFromJupiterCmd(group);
 };
