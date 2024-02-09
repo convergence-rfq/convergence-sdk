@@ -1,4 +1,4 @@
-import { PublicKey, LAMPORTS_PER_SOL, Keypair } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   token,
   toRiskCategoryInfo,
@@ -470,6 +470,7 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
     const cvg = await createCvg(opts);
 
     const baseAssets = await cvg.protocol().getBaseAssets();
+    // eslint-disable-next-line no-console
     console.log('Base assets:', baseAssets);
     const baseAssetsSymbols = baseAssets.map((b) => b.ticker);
     const res = await fetch('https://token.jup.ag/all');
@@ -478,11 +479,13 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
       (t) => !baseAssetsSymbols.includes(t.symbol)
     );
     let baseAssetIndexToStart = Math.max(...baseAssets.map((b) => b.index)) + 1;
+    // eslint-disable-next-line no-console
     console.log('last baseAssetIndex', baseAssetIndexToStart - 1);
     for (const token of jupTokensToAdd) {
       try {
         const coingeckoId = token?.extensions?.coingeckoId;
         if (!coingeckoId || coingeckoId === '') {
+          // eslint-disable-next-line no-console
           console.log(
             'skipping token: because missing coingecko id',
             token.symbol
@@ -498,6 +501,7 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
 
         const tokenPrice = tokenPriceJson[coingeckoId]?.usd;
         if (!tokenPrice) {
+          // eslint-disable-next-line no-console
           console.log(
             'skipping token: because missing price',
             token.symbol,
@@ -505,9 +509,10 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
           );
           continue;
         }
+        // eslint-disable-next-line no-console
         console.log('Adding token:', token.symbol, 'with price:', tokenPrice);
-        //mint should already exists on mainnet
 
+        //mint should already exists on mainnet
         const addBaseAssetTxBuilder = addBaseAssetBuilder(cvg, {
           authority: cvg.rpc().getDefaultFeePayer(),
           ticker: token.symbol,
@@ -518,8 +523,9 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
             price: tokenPrice,
           },
         });
-
+        // eslint-disable-next-line no-console
         console.log('Adding base asset:', token.symbol);
+        // eslint-disable-next-line no-console
         console.log(' current baseAssetIndex:', baseAssetIndexToStart);
         const registerMintTxBuilder = await registerMintBuilder(cvg, {
           mint: new PublicKey(token.address),
@@ -539,10 +545,12 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
         );
         const { commitment } = cvg.connection;
         if (signatureStatus && signatureStatus === commitment) {
+          // eslint-disable-next-line no-console
           console.log('Transaction confirmed');
           baseAssetIndexToStart++;
         }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.log('error:', e);
         continue;
       }
