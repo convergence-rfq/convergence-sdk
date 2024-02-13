@@ -167,6 +167,40 @@ export const addBaseAsset = async (opts: Opts) => {
   }
 };
 
+export const updateBaseAsset = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const {
+    enabled,
+    index,
+    oracleSource,
+    oraclePrice,
+    oracleAddress,
+    riskCategory,
+  } = opts;
+  if (!oraclePrice && !oracleAddress) {
+    throw new Error('Either oraclePrice or oracleAddress must be provided');
+  }
+  if (!riskCategory) {
+    throw new Error('riskCategory must be provided');
+  }
+  try {
+    const { response } = await cvg.protocol().updateBaseAsset({
+      authority: cvg.rpc().getDefaultFeePayer(),
+      enabled,
+      index,
+      priceOracle: {
+        source: oracleSource,
+        price: oraclePrice,
+        address: oracleAddress ? new PublicKey(opts.oracleAddress) : undefined,
+      },
+      riskCategory,
+    });
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
 export const registerMint = async (opts: Opts) => {
   const getMintArgs = () => {
     const mint = new PublicKey(opts.mint);
@@ -492,7 +526,7 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
           );
           continue;
         }
-        const coinGeckoAPIKey = process.env.COIN_GECKO_API_KEY as string;
+        const coinGeckoAPIKey = opts.coinGeckoApiKey;
         const tokenPriceResponse = await fetch(
           `https://pro-api.coingecko.com/api/v3/simple/price?ids=${coingeckoId}&vs_currencies=usd&x_cg_pro_api_key=${coinGeckoAPIKey}`
         );
