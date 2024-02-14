@@ -160,7 +160,7 @@ const updateBaseAssetCmd = (c: Command) =>
     },
     {
       flags: '--oracle-source <string>',
-      description: 'oracle source',
+      description: 'oracle source - in-place | switchboard | pyth,',
     },
     {
       flags: '--oracle-price <number>',
@@ -174,7 +174,8 @@ const updateBaseAssetCmd = (c: Command) =>
     },
     {
       flags: '--risk-category <string>',
-      description: 'risk category',
+      description:
+        'risk category - "very-low" | "low" | "medium" | "high" | "very-high" | "custom-1" | "custom-2" | "custom-3"',
     },
   ]);
 
