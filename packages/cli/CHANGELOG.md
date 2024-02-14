@@ -1,5 +1,12 @@
 # @convergence-rfq/cli
 
+## 6.0.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.0.1
+
 ## 6.0.0
 
 ### Patch Changes

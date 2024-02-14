@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.0.1
+
+### Patch Changes
+
+- update cpl packages
+
 ## 6.0.0
 
 ### Minor Changes
