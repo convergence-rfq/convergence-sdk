@@ -20,7 +20,7 @@ import {
   logBaseAsset,
   logRfq,
   logProtocol,
-  // logInstrument,
+  logInstrument,
   logTx,
   logError,
   logTokenAccount,
@@ -297,7 +297,7 @@ export const getRfq = async (opts: Opts) => {
       .rfqs()
       .findRfqByAddress({ address: new PublicKey(opts.address) });
     logRfq(rfq);
-    // rfq.legs.map(logInstrument);
+    rfq.legs.map(logInstrument);
   } catch (e) {
     logError(e);
   }

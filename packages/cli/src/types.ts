@@ -2,12 +2,14 @@ import {
   SpotLegInstrument,
   PsyoptionsAmericanInstrument,
   PsyoptionsEuropeanInstrument,
+  HxroLeg,
 } from '@convergence-rfq/sdk';
 
 export type Instrument =
   | SpotLegInstrument
   | PsyoptionsAmericanInstrument
-  | PsyoptionsEuropeanInstrument;
+  | PsyoptionsEuropeanInstrument
+  | HxroLeg;
 
 export type JupTokenList = {
   address: string;

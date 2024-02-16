@@ -5,6 +5,8 @@ import {
   LegInstrument,
   FixedSize,
   InstrumentType,
+  PrintTradeLeg,
+  HxroLeg,
 } from '@convergence-rfq/sdk';
 import { Command } from 'commander';
 
@@ -15,9 +17,11 @@ import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
 export const getInstrumentType = (type: string): InstrumentType => {
   switch (type) {
     case 'spot':
-      return InstrumentType.Spot;
+      return 'spot';
     case 'option':
-      return InstrumentType.Option;
+      return 'option';
+    case 'futures':
+      return 'perp-future';
     default:
       throw new Error('Invalid instrument type');
   }
@@ -37,12 +41,15 @@ export const getSize = (size: string, amount: number): FixedSize => {
 };
 
 export function assertInstrument(
-  instrument: LegInstrument
+  instrument: LegInstrument | PrintTradeLeg
 ): asserts instrument is Instrument {
   if (
-    !(instrument instanceof SpotLegInstrument) ||
-    !(instrument instanceof PsyoptionsAmericanInstrument) ||
-    !(instrument instanceof PsyoptionsEuropeanInstrument)
+    !(
+      instrument instanceof SpotLegInstrument ||
+      instrument instanceof PsyoptionsAmericanInstrument ||
+      instrument instanceof PsyoptionsEuropeanInstrument ||
+      instrument instanceof HxroLeg
+    )
   ) {
     throw new Error('Invalid instrument');
   }
