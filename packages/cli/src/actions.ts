@@ -7,10 +7,13 @@ import {
   PriceOracle,
   SpotLegInstrument,
   SpotQuoteInstrument,
+  addBaseAssetBuilder,
+  registerMintBuilder,
+  TransactionBuilder,
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import { getInstrumentType, getSize } from './helpers';
+import { getInstrumentType, getSigConfirmation, getSize } from './helpers';
 import {
   logPk,
   logResponse,
@@ -27,6 +30,7 @@ import {
   logToken,
   logMint,
 } from './logger';
+import { CoinGeckoResponse, JupTokenList } from './types';
 
 export const createMint = async (opts: Opts) => {
   const cvg = await createCvg(opts);
@@ -156,6 +160,40 @@ export const addBaseAsset = async (opts: Opts) => {
       ticker: opts.ticker,
       riskCategory: opts.riskCategory,
       priceOracle,
+    });
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
+export const updateBaseAsset = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  const {
+    enabled,
+    index,
+    oracleSource,
+    oraclePrice,
+    oracleAddress,
+    riskCategory,
+  } = opts;
+  if (!oraclePrice && !oracleAddress) {
+    throw new Error('Either oraclePrice or oracleAddress must be provided');
+  }
+  if (!riskCategory) {
+    throw new Error('riskCategory must be provided');
+  }
+  try {
+    const { response } = await cvg.protocol().updateBaseAsset({
+      authority: cvg.rpc().getDefaultFeePayer(),
+      enabled,
+      index,
+      priceOracle: {
+        source: oracleSource,
+        price: oraclePrice,
+        address: oracleAddress ? new PublicKey(opts.oracleAddress) : undefined,
+      },
+      riskCategory,
     });
     logResponse(response);
   } catch (e) {
@@ -456,6 +494,101 @@ export const airdropDevnetTokens = async (opts: Opts) => {
     );
     logPk(collateralWallet.address);
     registeredMintWallets.map((wallet: any) => logPk(wallet.address));
+  } catch (e) {
+    logError(e);
+  }
+};
+
+export const addBaseAssetsFromJupiter = async (opts: Opts) => {
+  try {
+    const cvg = await createCvg(opts);
+
+    const baseAssets = await cvg.protocol().getBaseAssets();
+    // eslint-disable-next-line no-console
+    console.log('Base assets:', baseAssets);
+    const baseAssetsSymbols = baseAssets.map((b) => b.ticker);
+    const res = await fetch('https://token.jup.ag/all');
+    const jupTokens: JupTokenList[] = await res.json();
+    const jupTokensToAdd = jupTokens.filter(
+      (t) => !baseAssetsSymbols.includes(t.symbol)
+    );
+    let baseAssetIndexToStart = Math.max(...baseAssets.map((b) => b.index)) + 1;
+    // eslint-disable-next-line no-console
+    console.log('last baseAssetIndex', baseAssetIndexToStart - 1);
+    for (const token of jupTokensToAdd) {
+      try {
+        const coingeckoId = token?.extensions?.coingeckoId;
+        if (!coingeckoId || coingeckoId === '') {
+          // eslint-disable-next-line no-console
+          console.log(
+            'skipping token: because missing coingecko id',
+            token.symbol
+          );
+          continue;
+        }
+        const coinGeckoAPIKey = opts.coinGeckoApiKey;
+        const tokenPriceResponse = await fetch(
+          `https://pro-api.coingecko.com/api/v3/simple/price?ids=${coingeckoId}&vs_currencies=usd&x_cg_pro_api_key=${coinGeckoAPIKey}`
+        );
+        const tokenPriceJson: CoinGeckoResponse =
+          await tokenPriceResponse.json();
+
+        const tokenPrice = tokenPriceJson[coingeckoId]?.usd;
+        if (!tokenPrice) {
+          // eslint-disable-next-line no-console
+          console.log(
+            'skipping token: because missing price',
+            token.symbol,
+            tokenPrice
+          );
+          continue;
+        }
+        // eslint-disable-next-line no-console
+        console.log('Adding token:', token.symbol, 'with price:', tokenPrice);
+
+        //mint should already exists on mainnet
+        const addBaseAssetTxBuilder = addBaseAssetBuilder(cvg, {
+          authority: cvg.rpc().getDefaultFeePayer(),
+          ticker: token.symbol,
+          riskCategory: 'high',
+          index: baseAssetIndexToStart,
+          priceOracle: {
+            source: 'in-place',
+            price: tokenPrice,
+          },
+        });
+        // eslint-disable-next-line no-console
+        console.log('Adding base asset:', token.symbol);
+        // eslint-disable-next-line no-console
+        console.log(' current baseAssetIndex:', baseAssetIndexToStart);
+        const registerMintTxBuilder = await registerMintBuilder(cvg, {
+          mint: new PublicKey(token.address),
+          baseAssetIndex: baseAssetIndexToStart,
+        });
+
+        const mergedTxBuiler = TransactionBuilder.make()
+          .setFeePayer(cvg.rpc().getDefaultFeePayer())
+          .add(addBaseAssetTxBuilder)
+          .add(registerMintTxBuilder);
+        const output = await mergedTxBuiler.sendAndConfirm(cvg);
+        logResponse(output.response);
+
+        const signatureStatus = await getSigConfirmation(
+          cvg.connection,
+          output.response.signature
+        );
+        const { commitment } = cvg.connection;
+        if (signatureStatus && signatureStatus === commitment) {
+          // eslint-disable-next-line no-console
+          console.log('Transaction confirmed');
+          baseAssetIndexToStart++;
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log('error:', e);
+        continue;
+      }
+    }
   } catch (e) {
     logError(e);
   }

@@ -148,7 +148,6 @@ export const logRfq = (r: Rfq) => {
   l('Taker:', r.taker.toString());
   l('Order type:', r.orderType);
   l('Size:', r.size.type === 'open' ? 'open' : 'fixed');
-  l('Quote asset:', r.quoteMint.toString());
   l('Created:', new Date(created).toString());
   l(`Active window: ${r.activeWindow} seconds`);
   l(`Settlement window: ${r.settlingWindow} seconds`);
