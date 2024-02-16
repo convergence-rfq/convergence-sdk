@@ -13,7 +13,6 @@ import {
   SpotLegInstrument,
   PsyoptionsAmericanInstrument,
   PsyoptionsEuropeanInstrument,
-  PrintTradeLeg,
 } from '@convergence-rfq/sdk';
 
 import { formatInstrument, assertInstrument } from './helpers';
@@ -28,7 +27,7 @@ export const logPk = (p: PublicKey): void => l('Address:', p.toString());
 
 export const logTx = (t: string): void => l('Tx:', t);
 
-export const logInstrument = (i: LegInstrument | PrintTradeLeg): void => {
+export const logInstrument = (i: LegInstrument): void => {
   assertInstrument(i);
   l('Instrument:', formatInstrument(i));
   l('Amount:', N(i?.getAmount().toString()));
@@ -52,15 +51,11 @@ export const logBaseAsset = (b: BaseAsset): void => {
   l('Enabled:', b.enabled);
   l('Index:', b.index);
   l('Risk category:', b.riskCategory);
-  l('Oracle source:', b.oracleSource.toString());
-  if (b.inPlacePrice === null) {
-    if (b.switchboardOracle) {
-      l('Switchboard Oracle address:', b.switchboardOracle.toString());
-    } else if (b.pythOracle) {
-      l('Pyth Oracle address:', b.pythOracle.toString());
-    }
-  } else if (b.inPlacePrice) {
-    l('In Place Oracle price:', b.inPlacePrice.toString());
+  l('Oracle source:', b.priceOracle.source);
+  if (b.priceOracle.address) {
+    l('Oracle address:', b.priceOracle.address.toString());
+  } else if (b.priceOracle.price) {
+    l('Oracle price:', b.priceOracle.price.toString());
   }
 };
 
