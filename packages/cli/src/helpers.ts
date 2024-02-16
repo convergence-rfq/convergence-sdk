@@ -40,11 +40,9 @@ export function assertInstrument(
   instrument: LegInstrument
 ): asserts instrument is Instrument {
   if (
-    !(
-      instrument instanceof SpotLegInstrument ||
-      instrument instanceof PsyoptionsAmericanInstrument ||
-      instrument instanceof PsyoptionsEuropeanInstrument
-    )
+    !(instrument instanceof SpotLegInstrument) ||
+    !(instrument instanceof PsyoptionsAmericanInstrument) ||
+    !(instrument instanceof PsyoptionsEuropeanInstrument)
   ) {
     throw new Error('Invalid instrument');
   }
