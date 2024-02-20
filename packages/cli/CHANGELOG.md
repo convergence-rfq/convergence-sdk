@@ -1,5 +1,11 @@
 # @convergence-rfq/cli
 
+## 4.5.31
+
+### Patch Changes
+
+- add update base assets command
+
 ## 4.5.30
 
 ### Patch Changes
