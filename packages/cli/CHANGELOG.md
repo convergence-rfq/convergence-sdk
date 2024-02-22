@@ -1,5 +1,11 @@
 # @convergence-rfq/cli
 
+## 4.5.32
+
+### Patch Changes
+
+- add additional mint address check for addJupiterTokens check
+
 ## 4.5.31
 
 ### Patch Changes
