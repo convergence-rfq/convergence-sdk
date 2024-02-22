@@ -507,11 +507,15 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
     // eslint-disable-next-line no-console
     console.log('Base assets:', baseAssets);
     const baseAssetsSymbols = baseAssets.map((b) => b.ticker);
+    const baseAssetAddresses = baseAssets.map((b) => b.address.toBase58());
     const res = await fetch('https://token.jup.ag/all');
     const jupTokens: JupTokenList[] = await res.json();
     const jupTokensToAdd = jupTokens.filter(
-      (t) => !baseAssetsSymbols.includes(t.symbol)
+      (t) =>
+        !baseAssetsSymbols.includes(t.symbol) &&
+        !baseAssetAddresses.includes(t.address)
     );
+
     let baseAssetIndexToStart = Math.max(...baseAssets.map((b) => b.index)) + 1;
     // eslint-disable-next-line no-console
     console.log('last baseAssetIndex', baseAssetIndexToStart - 1);
