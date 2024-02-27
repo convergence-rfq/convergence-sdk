@@ -163,7 +163,6 @@ export const logRfq = (r: Rfq) => {
   l('Order type:', r.orderType);
   l('Size:', r.size.type === 'open' ? 'open' : 'fixed');
   if (r.model === 'escrowRfq') {
-    l('Quote asset:', r.quoteMint.toString());
   }
   l('Created:', new Date(created).toString());
   l(`Active window: ${r.activeWindow} seconds`);

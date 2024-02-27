@@ -10,6 +10,8 @@ import {
   closeProtocol,
   addPrintTradeProvider,
   changeBaseAssetParameters,
+  addBaseAssetsFromJupiter,
+  updateBaseAsset,
 } from '../actions';
 
 import { addCmd } from '../helpers';
@@ -205,6 +207,47 @@ const getCmd = (c: Command) =>
 const getBaseAssetsCmd = (c: Command) =>
   addCmd(c, 'get-base-assets', 'gets protocol base assets', getBaseAssets);
 
+const addBaseAssetsFromJupiterCmd = (c: Command) =>
+  addCmd(
+    c,
+    'add-base-asset-from-jupiter',
+    'adds baseAssets from jupiter',
+    addBaseAssetsFromJupiter,
+    [
+      {
+        flags: '--coin-gecko-api-key <string>',
+        description: 'coin gecko api key',
+      },
+    ]
+  );
+
+const updateBaseAssetCmd = (c: Command) =>
+  addCmd(c, 'update-base-asset', 'updates base asset', updateBaseAsset, [
+    {
+      flags: '--index <number>',
+      description: 'index',
+    },
+    {
+      flags: '--oracle-source <string>',
+      description: 'oracle source - in-place | switchboard | pyth,',
+    },
+    {
+      flags: '--oracle-price <number>',
+      description: 'oracle price',
+      defaultValue: null,
+    },
+    {
+      flags: '--oracle-address <string>',
+      description: 'oracle address',
+      defaultValue: null,
+    },
+    {
+      flags: '--risk-category <string>',
+      description:
+        'risk category - "very-low" | "low" | "medium" | "high" | "very-high" | "custom-1" | "custom-2" | "custom-3"',
+    },
+  ]);
+
 export const protocolGroup = (c: Command) => {
   const group = c.command('protocol');
   initializeProtocolCmd(group);
@@ -217,4 +260,6 @@ export const protocolGroup = (c: Command) => {
   getCmd(group);
   getBaseAssetsCmd(group);
   closeCmd(group);
+  addBaseAssetsFromJupiterCmd(group);
+  updateBaseAssetCmd(group);
 };

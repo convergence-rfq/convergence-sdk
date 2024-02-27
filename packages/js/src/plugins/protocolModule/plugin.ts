@@ -24,6 +24,8 @@ import {
   addPrintTradeProviderOperationHandler,
   changeBaseAssetParametersOperation,
   changeBaseAssetParametersOperationHandler,
+  updateBaseAssetOperation,
+  updateBaseAssetOperationHandler,
 } from './operations';
 import { Protocol } from './models';
 import { ConvergencePlugin } from '@/types';
@@ -63,7 +65,7 @@ export const protocolModule = (): ConvergencePlugin => ({
       findBaseAssetByAddressOperationHandler
     );
     op.register(closeProtocolOperation, closeProtocolOperationHandler);
-
+    op.register(updateBaseAssetOperation, updateBaseAssetOperationHandler);
     convergence.protocol = function () {
       return new ProtocolClient(this);
     };

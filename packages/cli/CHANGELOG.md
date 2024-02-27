@@ -14,6 +14,25 @@
 - Updated dependencies
   - @convergence-rfq/sdk@6.0.0
 
+## 4.5.32
+
+### Patch Changes
+
+- add additional mint address check for addJupiterTokens check
+
+## 4.5.31
+
+### Patch Changes
+
+- add update base assets command
+
+## 4.5.30
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.30
+
 ## 4.5.29
 
 ### Patch Changes
