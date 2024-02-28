@@ -13,7 +13,13 @@ import {
 } from '@convergence-rfq/sdk';
 
 import { createCvg, Opts } from './cvg';
-import { getInstrumentType, getSigConfirmation, getSize } from './helpers';
+import {
+  fetchBirdeyeTokenPrice,
+  fetchCoinGeckoTokenPrice,
+  getInstrumentType,
+  getSigConfirmation,
+  getSize,
+} from './helpers';
 import {
   logPk,
   logResponse,
@@ -30,7 +36,7 @@ import {
   logToken,
   logMint,
 } from './logger';
-import { CoinGeckoResponse, JupTokenList } from './types';
+import { JupTokenList } from './types';
 
 export const createMint = async (opts: Opts) => {
   const cvg = await createCvg(opts);
@@ -502,18 +508,23 @@ export const airdropDevnetTokens = async (opts: Opts) => {
 export const addBaseAssetsFromJupiter = async (opts: Opts) => {
   try {
     const cvg = await createCvg(opts);
-
+    const { birdeyeApiKey, coinGeckoApiKey } = opts;
     const baseAssets = await cvg.protocol().getBaseAssets();
+    const registerMints = await cvg.protocol().getRegisteredMints();
     // eslint-disable-next-line no-console
     console.log('Base assets:', baseAssets);
     const baseAssetsSymbols = baseAssets.map((b) => b.ticker);
+    const registerMintAddresses = registerMints.map((r) =>
+      r.mintAddress.toBase58()
+    );
     const baseAssetAddresses = baseAssets.map((b) => b.address.toBase58());
     const res = await fetch('https://token.jup.ag/all');
     const jupTokens: JupTokenList[] = await res.json();
     const jupTokensToAdd = jupTokens.filter(
       (t) =>
         !baseAssetsSymbols.includes(t.symbol) &&
-        !baseAssetAddresses.includes(t.address)
+        !baseAssetAddresses.includes(t.address) &&
+        !registerMintAddresses.includes(t.address.toString())
     );
 
     let baseAssetIndexToStart = Math.max(...baseAssets.map((b) => b.index)) + 1;
@@ -522,23 +533,26 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
     for (const token of jupTokensToAdd) {
       try {
         const coingeckoId = token?.extensions?.coingeckoId;
-        if (!coingeckoId || coingeckoId === '') {
-          // eslint-disable-next-line no-console
-          console.log(
-            'skipping token: because missing coingecko id',
-            token.symbol
+        let tokenPrice: number | undefined = undefined;
+        if (coingeckoId && coingeckoId !== '') {
+          tokenPrice = await fetchCoinGeckoTokenPrice(
+            coinGeckoApiKey,
+            coingeckoId
           );
-          continue;
+          if (!tokenPrice) {
+            tokenPrice = await fetchBirdeyeTokenPrice(
+              opts.birdeyeAPIKey,
+              token.address
+            );
+          }
+        } else {
+          tokenPrice = await fetchBirdeyeTokenPrice(
+            birdeyeApiKey,
+            token.address
+          );
         }
-        const coinGeckoAPIKey = opts.coinGeckoApiKey;
-        const tokenPriceResponse = await fetch(
-          `https://pro-api.coingecko.com/api/v3/simple/price?ids=${coingeckoId}&vs_currencies=usd&x_cg_pro_api_key=${coinGeckoAPIKey}`
-        );
-        const tokenPriceJson: CoinGeckoResponse =
-          await tokenPriceResponse.json();
 
-        const tokenPrice = tokenPriceJson[coingeckoId]?.usd;
-        if (!tokenPrice) {
+        if (tokenPrice === undefined) {
           // eslint-disable-next-line no-console
           console.log(
             'skipping token: because missing price',
@@ -564,7 +578,7 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
         // eslint-disable-next-line no-console
         console.log('Adding base asset:', token.symbol);
         // eslint-disable-next-line no-console
-        console.log(' current baseAssetIndex:', baseAssetIndexToStart);
+        console.log('current baseAssetIndex:', baseAssetIndexToStart);
         const registerMintTxBuilder = await registerMintBuilder(cvg, {
           mint: new PublicKey(token.address),
           baseAssetIndex: baseAssetIndexToStart,
