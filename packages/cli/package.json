@@ -1,7 +1,7 @@
 {
   "name": "@convergence-rfq/cli",
   "description": "Official Convergence CLI",
-  "version": "4.5.32",
+  "version": "4.5.33",
   "license": "MIT",
   "publishConfig": {
     "access": "public"

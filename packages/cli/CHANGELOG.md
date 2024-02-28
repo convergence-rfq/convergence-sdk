@@ -1,5 +1,11 @@
 # @convergence-rfq/cli
 
+## 4.5.33
+
+### Patch Changes
+
+- Add Birdeye support to fetch token prices for adding jup base assets
+
 ## 4.5.32
 
 ### Patch Changes
