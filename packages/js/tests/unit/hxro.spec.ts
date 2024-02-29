@@ -21,7 +21,6 @@ describe('unit.hxro', () => {
 
   it('get hxro config', async () => {
     const result = await cvgTaker.hxro().fetchConfig();
-    console.log(result);
     expect(result).toEqual({
       model: 'hxroPrintTradeProviderConfig',
       address: cvgTaker.hxro().pdas().config(),
