@@ -218,6 +218,10 @@ const addBaseAssetsFromJupiterCmd = (c: Command) =>
         flags: '--coin-gecko-api-key <string>',
         description: 'coin gecko api key',
       },
+      {
+        flags: '--birdeye-api-key <string>',
+        description: 'birdeye api key',
+      },
     ]
   );
 

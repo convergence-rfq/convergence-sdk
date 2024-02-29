@@ -8,7 +8,7 @@ import {
 import { Command } from 'commander';
 
 import { Connection } from '@solana/web3.js';
-import { Instrument } from './types';
+import { CoinGeckoResponse, Instrument } from './types';
 import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
 import { Opts } from './cvg';
 
@@ -108,4 +108,39 @@ export const getSigConfirmation = async (
     searchTransactionHistory: true,
   });
   return result?.value?.confirmationStatus;
+};
+
+export const fetchCoinGeckoTokenPrice = async (
+  coinGeckoApiKey: string,
+  coingeckoId: string
+) => {
+  const tokenPriceResponse = await fetch(
+    `https://pro-api.coingecko.com/api/v3/simple/price?ids=${coingeckoId}&vs_currencies=usd&x_cg_pro_api_key=${coinGeckoApiKey}`
+  );
+  const tokenPriceJson: CoinGeckoResponse = await tokenPriceResponse.json();
+
+  if (tokenPriceJson[coingeckoId]?.usd) {
+    return Number(tokenPriceJson[coingeckoId]?.usd);
+  }
+  return undefined;
+};
+
+export const fetchBirdeyeTokenPrice = async (
+  birdeyeApiKey: string,
+  tokenAddress: string
+) => {
+  const options = {
+    method: 'GET',
+    headers: { 'X-API-KEY': birdeyeApiKey },
+  };
+
+  const tokenPriceResponse = await fetch(
+    `https://public-api.birdeye.so/defi/price?address=${tokenAddress}`,
+    options
+  );
+  const tokenPriceJson: any = await tokenPriceResponse.json();
+  if (tokenPriceJson?.success === true) {
+    return Number(tokenPriceJson?.data?.value);
+  }
+  return undefined;
 };
