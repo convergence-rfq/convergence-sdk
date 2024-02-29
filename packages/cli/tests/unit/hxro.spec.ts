@@ -25,7 +25,7 @@ describe('unit.hxro', () => {
     await runCli(['hxro', 'modify-config', '--valid-mpg', HXRO_MPG.toString()]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
-
+  //test
   it('initialize operator TRG', async () => {
     await runCli([
       'hxro',
