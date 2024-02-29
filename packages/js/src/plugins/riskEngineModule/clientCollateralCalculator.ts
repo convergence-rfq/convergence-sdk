@@ -165,17 +165,22 @@ async function fetchBaseAssetInfo(
   const baseAsset = await convergence
     .protocol()
     .findBaseAssetByAddress({ address });
-  const oracleAddress = toPriceOracle(baseAsset).address;
+  const priceOracle = toPriceOracle(baseAsset);
 
-  if (!oracleAddress) {
-    throw new Error('Price oracle address is missing');
+  let price: number;
+
+  if (priceOracle.price !== undefined) {
+    price = priceOracle.price;
+  } else {
+    if (priceOracle.address === undefined) {
+      throw Error('Price oracle address is missing');
+    }
+    price = await fetchLatestOraclePrice(
+      convergence,
+      priceOracle.address,
+      commitment
+    );
   }
-
-  const price = await fetchLatestOraclePrice(
-    convergence,
-    oracleAddress,
-    commitment
-  );
 
   return {
     index: baseAssetIndex,
