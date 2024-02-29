@@ -163,6 +163,11 @@ const updateBaseAssetCmd = (c: Command) =>
       description: 'index',
     },
     {
+      flags: '--enabled <boolean>',
+      description: 'enabled',
+      defaultValue: true,
+    },
+    {
       flags: '--oracle-source <string>',
       description: 'oracle source - in-place | switchboard | pyth,',
     },

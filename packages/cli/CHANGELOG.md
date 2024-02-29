@@ -1,5 +1,11 @@
 # @convergence-rfq/cli
 
+## 4.5.34
+
+### Patch Changes
+
+- fix updateBaseAsset cmd
+
 ## 4.5.33
 
 ### Patch Changes
