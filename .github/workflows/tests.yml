@@ -51,10 +51,5 @@ jobs:
       shell: bash
       run: yarn validator & sleep 3
 
-    - name: Logs
-      continue-on-error: false
-      shell: bash
-      run: yarn validator:logs &
-
     - name: Test
-      run: yarn test
+      run: yarn validator:logs & yarn test
