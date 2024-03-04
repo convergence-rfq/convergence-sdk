@@ -165,7 +165,7 @@ const updateBaseAssetCmd = (c: Command) =>
     {
       flags: '--enabled <boolean>',
       description: 'enabled',
-      defaultValue: true,
+      defaultValue: 'true',
     },
     {
       flags: '--oracle-source <string>',
