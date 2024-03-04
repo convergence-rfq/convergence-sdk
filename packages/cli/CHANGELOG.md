@@ -2,7 +2,7 @@
 
 ## 4.5.35
 
-### Major Changes
+### Patch Changes
 
 - fix inputs for updateBaseAsset command
 
