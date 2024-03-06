@@ -35,7 +35,6 @@ describe('integration.hxro', () => {
       settlingWindow: 5000,
     });
     await cvgTaker.rfqs().cancelRfq({ rfq: rfq.address });
-    await cvgTaker.rfqs().unlockRfqCollateral({ rfq: rfq.address });
     await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
 
@@ -48,7 +47,6 @@ describe('integration.hxro', () => {
       settlingWindow: 5000,
     });
     await sleep(1.5);
-    await cvgTaker.rfqs().unlockRfqCollateral({ rfq: rfq.address });
     await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
 
@@ -70,11 +68,7 @@ describe('integration.hxro', () => {
       2.5
     );
 
-    await cvgMaker
-      .rfqs()
-      .unlockResponseCollateral({ response: rfqResponse.address });
     await cvgMaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
-    await cvgTaker.rfqs().unlockRfqCollateral({ rfq: rfq.address });
     await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
 
@@ -112,9 +106,6 @@ describe('integration.hxro', () => {
     await cvgTaker.rfqs().settle({
       response: rfqResponse.address,
     });
-    await cvgTaker
-      .rfqs()
-      .unlockResponseCollateral({ response: rfqResponse.address });
     await cvgTaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
     await cvgTaker.rfqs().cancelRfq({ rfq: rfq.address });
     await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
@@ -155,9 +146,6 @@ describe('integration.hxro', () => {
     await cvgTaker.rfqs().settle({
       response: rfqResponse.address,
     });
-    await cvgTaker
-      .rfqs()
-      .unlockResponseCollateral({ response: rfqResponse.address });
     await cvgTaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
     await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
@@ -196,10 +184,6 @@ describe('integration.hxro', () => {
       side: 'maker',
     });
 
-    await cvgMaker.rfqs().settleOnePartyDefault({
-      response: rfqResponse.address,
-      rfq: rfq.address,
-    });
     await cvgMaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
     await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
@@ -238,10 +222,6 @@ describe('integration.hxro', () => {
       side: 'taker',
     });
 
-    await cvgTaker.rfqs().settleOnePartyDefault({
-      response: rfqResponse.address,
-      rfq: rfq.address,
-    });
     await cvgMaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
     await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
@@ -270,10 +250,6 @@ describe('integration.hxro', () => {
       return rfqResponse;
     }, 4.5);
 
-    await cvgTaker.rfqs().settleTwoPartyDefault({
-      response: rfqResponse.address,
-      rfq: rfq.address,
-    });
     await cvgMaker.rfqs().cleanUpResponse({ response: rfqResponse.address });
     await cvgTaker.rfqs().cleanUpRfq({ rfq: rfq.address });
   });
@@ -317,11 +293,6 @@ describe('integration.hxro', () => {
       response: rfqResponse.address,
     });
     await cvgMaker.rfqs().settle({
-      response: rfqResponse.address,
-    });
-
-    await cvgMaker.rfqs().settleOnePartyDefault({
-      rfq: rfq.address,
       response: rfqResponse.address,
     });
 

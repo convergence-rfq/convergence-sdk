@@ -61,29 +61,6 @@ describe('unit.rfqStateAndAction', () => {
       address: rfq.address,
     });
 
-    //UnlockCollateral for taker
-    expect(
-      takerCvg.rfqs().getRfqStateAndAction({
-        rfq: refreshedRfq,
-        caller: 'taker',
-      }).rfqAction
-    ).toBe('UnlockCollateral');
-
-    //null for maker
-    expect(
-      takerCvg.rfqs().getRfqStateAndAction({
-        rfq: refreshedRfq,
-        caller: 'maker',
-      }).rfqAction
-    ).toBe(null);
-
-    await takerCvg.rfqs().unlockRfqCollateral({
-      rfq: rfq.address,
-    });
-    refreshedRfq = await makerCvg.rfqs().findRfqByAddress({
-      address: rfq.address,
-    });
-
     //Cleanup for taker
     expect(
       takerCvg.rfqs().getRfqStateAndAction({
@@ -169,34 +146,10 @@ describe('unit.rfqStateAndAction', () => {
 
     await sleep(4);
 
-    //UnlockCollateral for taker
-    expect(
-      takerCvg.rfqs().getRfqStateAndAction({
-        rfq,
-        caller: 'taker',
-      }).rfqAction
-    ).toBe('UnlockCollateral');
-
-    //null for maker
-    expect(
-      takerCvg.rfqs().getRfqStateAndAction({
-        rfq,
-        caller: 'maker',
-      }).rfqAction
-    ).toBe(null);
-
-    await takerCvg.rfqs().unlockRfqCollateral({
-      rfq: rfq.address,
-    });
-
-    const refreshedRfq = await makerCvg.rfqs().findRfqByAddress({
-      address: rfq.address,
-    });
-
     //Cleanup for taker
     expect(
       takerCvg.rfqs().getRfqStateAndAction({
-        rfq: refreshedRfq,
+        rfq,
         caller: 'taker',
       }).rfqAction
     ).toBe('Cleanup');

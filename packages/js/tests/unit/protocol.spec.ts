@@ -76,7 +76,7 @@ describe('unit.protocol', () => {
       canBeUsedAsQuote: true,
       validateDataAccountAmount: 1,
       prepareToSettleAccountAmount: 7,
-      settleAccountAmount: 3,
+      settleAccountAmount: 5,
       revertPreparationAccountAmount: 3,
       cleanUpAccountAmount: 4,
     });

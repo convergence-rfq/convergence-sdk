@@ -2,21 +2,21 @@ import { RiskCategoryInfo, Scenario } from '@convergence-rfq/risk-engine';
 
 import { toBigNumber as tbn } from '../../types';
 
-export const DEFAULT_MIN_COLLATERAL_REQUIREMENT = tbn(1_000_000_000);
+export const DEFAULT_MIN_COLLATERAL_REQUIREMENT = tbn(0);
 
-export const DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ = tbn(2_000_000_000);
+export const DEFAULT_COLLATERAL_FOR_FIXED_QUOTE_AMOUNT_RFQ = tbn(0);
 
 export const DEFAULT_MINT_DECIMALS = 9;
 
-export const DEFAULT_SAFETY_PRICE_SHIFT_FACTOR = 0.01;
+export const DEFAULT_SAFETY_PRICE_SHIFT_FACTOR = 0;
 
-export const DEFAULT_OVERALL_SAFETY_FACTOR = 0.1;
+export const DEFAULT_OVERALL_SAFETY_FACTOR = 0;
 
-export const DEFAULT_ORACLE_STALENESS = 300;
+export const DEFAULT_ORACLE_STALENESS = 60 * 60 * 24 * 365 * 10;
 
 export const DEFAULT_ACCEPTED_ORACLE_CONFIDENCE_INTERVAL_POSITION = 0.1;
 
-export const DEFAULT_ACCEPTED_ORACLE_STALENESS = 300;
+export const DEFAULT_ACCEPTED_ORACLE_STALENESS = 60 * 60 * 24 * 365 * 10;
 export const DEFAULT_ACCEPTED_ORACLE_CONFIDENCE_INTERVAL_PORTION = 0.01;
 
 export const SETTLEMENT_WINDOW_PEDIODS = 6;
@@ -33,45 +33,45 @@ export const OPTION_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS = 9;
 export const OPTION_STRIKE_PRICE_DECIMALS = 9;
 
 export const DEFAULT_RISK_CATEGORIES_INFO = {
-  veryLow: toRiskCategoryInfo(0.05, 0.5, [
-    toScenario(0.02, 0.2),
-    toScenario(0.04, 0.3),
-    toScenario(0.08, 0.4),
-    toScenario(0.12, 0.5),
-    toScenario(0.2, 0.6),
-    toScenario(0.3, 0.7),
+  veryLow: toRiskCategoryInfo(0, 0, [
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
   ]),
-  low: toRiskCategoryInfo(0.05, 0.8, [
-    toScenario(0.04, 0.4),
-    toScenario(0.08, 0.6),
-    toScenario(0.16, 0.8),
-    toScenario(0.24, 1),
-    toScenario(0.4, 1.2),
-    toScenario(0.6, 1.4),
+  low: toRiskCategoryInfo(0, 0, [
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
   ]),
-  medium: toRiskCategoryInfo(0.05, 1.2, [
-    toScenario(0.06, 0.6),
-    toScenario(0.12, 0.9),
-    toScenario(0.24, 1.2),
-    toScenario(0.36, 1.5),
-    toScenario(0.6, 1.8),
-    toScenario(0.9, 2.1),
+  medium: toRiskCategoryInfo(0, 0, [
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
   ]),
-  high: toRiskCategoryInfo(0.05, 2.4, [
-    toScenario(0.08, 0.8),
-    toScenario(0.16, 1.2),
-    toScenario(0.32, 1.6),
-    toScenario(0.48, 2),
-    toScenario(0.8, 2.4),
-    toScenario(1.2, 2.8),
+  high: toRiskCategoryInfo(0, 0, [
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
   ]),
-  veryHigh: toRiskCategoryInfo(0.05, 5, [
-    toScenario(0.1, 1),
-    toScenario(0.2, 1.5),
-    toScenario(0.4, 2),
-    toScenario(0.6, 2.5),
-    toScenario(1, 3),
-    toScenario(1.5, 3.5),
+  veryHigh: toRiskCategoryInfo(0, 0, [
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
+    toScenario(0, 0),
   ]),
 };
 

@@ -69,7 +69,7 @@ describe('unit.protocol', () => {
       '--prepare-to-settle-account-amount',
       '7',
       '--settle-account-amount',
-      '3',
+      '5',
       '--revert-preparation-account-amount',
       '3',
       '--clean-up-account-amount',

@@ -7,8 +7,9 @@ import {
   airdropGroup,
   rfqGroup,
   tokenGroup,
+  hxroGroup,
+  spotInstrumentGroup,
 } from './groups';
-import { hxroGroup } from './groups/hxro';
 
 export const makeCli = (): Command => {
   const cmds = [
@@ -19,6 +20,7 @@ export const makeCli = (): Command => {
     collateralGroup,
     rfqGroup,
     hxroGroup,
+    spotInstrumentGroup,
   ];
 
   const cli = new Command();

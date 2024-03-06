@@ -72,30 +72,6 @@ describe('unit.rfq', () => {
     expect(responses.length).toBe(rfqs.length);
   });
 
-  it('unlock', async () => {
-    const iterator: any = takerCvg.rfqs().findRfqs({});
-    const rfqsBefore = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return (
-        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
-          .rfqAction === 'UnlockCollateral'
-      );
-    });
-    expect(rfqsBefore.length).toBeGreaterThan(0);
-    const { responses } = await takerCvg.rfqs().unlockRfqsCollateral({
-      rfqs: rfqsBefore.map((rfq: any) => rfq.address),
-    });
-    expect(responses.length).toBe(rfqsBefore.length);
-    const rfqsAfter = (await getAll(iterator)).flat().filter((rfq: any) => {
-      return (
-        takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
-          .rfqAction === 'Cleanup'
-      );
-    });
-    rfqsAfter.map((rfq: any) => {
-      expect(rfq.totalTakerCollateralLocked).toBe(0);
-    });
-  });
-
   it('clean up', async () => {
     const iterator: any = takerCvg.rfqs().findRfqs({});
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
