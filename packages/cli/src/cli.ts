@@ -7,6 +7,8 @@ import {
   airdropGroup,
   rfqGroup,
   tokenGroup,
+  hxroGroup,
+  spotInstrumentGroup,
 } from './groups';
 
 export const makeCli = (): Command => {
@@ -17,6 +19,8 @@ export const makeCli = (): Command => {
     riskEngineGroup,
     collateralGroup,
     rfqGroup,
+    hxroGroup,
+    spotInstrumentGroup,
   ];
 
   const cli = new Command();

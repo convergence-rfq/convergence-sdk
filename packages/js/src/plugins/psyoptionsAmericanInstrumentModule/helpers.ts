@@ -6,8 +6,10 @@ import { Convergence } from '../../Convergence';
 import { getOrCreateATAtxBuilder } from '../../utils/ata';
 import { NoopWallet } from '../../utils/Wallets';
 import { InstructionUniquenessTracker } from '../../utils/classes';
-import { PsyoptionsAmericanInstrument } from './types';
-import { createAmericanProgram } from './instrument';
+import {
+  PsyoptionsAmericanInstrument,
+  createAmericanProgram,
+} from './instrument';
 import { TransactionBuilder } from '@/utils/TransactionBuilder';
 
 export type PrepareAmericanOptionsResult = {

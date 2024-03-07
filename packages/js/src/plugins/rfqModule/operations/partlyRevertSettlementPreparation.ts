@@ -1,5 +1,5 @@
 import { PublicKey, AccountMeta } from '@solana/web3.js';
-import { createPartlyRevertSettlementPreparationInstruction } from '@convergence-rfq/rfq';
+import { createPartlyRevertEscrowSettlementPreparationInstruction } from '@convergence-rfq/rfq';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -156,6 +156,13 @@ export const partlyRevertSettlementPreparationBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  if (
+    responseModel.model !== 'escrowResponse' ||
+    rfqModel.model !== 'escrowRfq'
+  ) {
+    throw new Error('Response is not settled as an escrow!');
+  }
+
   const sidePreparedLegs: number =
     side === 'taker'
       ? parseInt(responseModel.takerPreparedLegs.toString())
@@ -211,7 +218,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
     .setFeePayer(payer)
     .addTxPriorityFeeIx(convergence)
     .add({
-      instruction: createPartlyRevertSettlementPreparationInstruction(
+      instruction: createPartlyRevertEscrowSettlementPreparationInstruction(
         {
           protocol: convergence.protocol().pdas().protocol(),
           rfq,

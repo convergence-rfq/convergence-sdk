@@ -1,5 +1,23 @@
 # @convergence-rfq/sdk
 
+## 6.1.0
+
+### Minor Changes
+
+- Remove collateral requirements, add quote spot fees, add spot instrument config, remove operations to unlock collateral or settle defaults
+
+## 6.0.1
+
+### Patch Changes
+
+- update cpl packages
+
+## 6.0.0
+
+### Minor Changes
+
+- Hxro integration
+
 ## 4.5.35
 
 ### Patch Changes

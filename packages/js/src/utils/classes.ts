@@ -32,6 +32,7 @@ export class InstructionUniquenessTracker {
         )
     );
   };
+
   checkedAdd(
     ix: TransactionInstruction | TransactionBuilder,
     ixType: IxType
@@ -56,6 +57,19 @@ export class InstructionUniquenessTracker {
       default:
         throw new Error('Invalid Instruction type');
     }
+  }
+
+  static dedup(builders: TransactionBuilder[]): TransactionBuilder[] {
+    const tracker = new InstructionUniquenessTracker([]);
+    const result = [];
+    for (const builder of builders) {
+      const isUnique = tracker.checkedAdd(builder, 'TransactionBuilder');
+      if (isUnique) {
+        result.push(builder);
+      }
+    }
+
+    return result;
   }
 }
 

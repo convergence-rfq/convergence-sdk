@@ -1,6 +1,6 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/rfq';
 import { PublicKey, AccountMeta, Keypair } from '@solana/web3.js';
-import * as anchor from '@project-serum/anchor';
+import * as anchor from '@coral-xyz/anchor';
 
 import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -28,7 +28,9 @@ import { Convergence } from '../../../Convergence';
 import {
   LegInstrument,
   QuoteInstrument,
-  toQuote,
+  serializeInstrumentAsSolitaLeg,
+  instrumentToQuote,
+  instrumentToSolitaLeg,
 } from '../../../plugins/instrumentModule';
 import { OrderType, toSolitaOrderType } from '../models/OrderType';
 import { InstructionUniquenessTracker } from '@/utils/classes';
@@ -167,6 +169,9 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
     const payer = convergence.rpc().getDefaultFeePayer();
     const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
     let whitelistAccount = null;
+    const serializedLegs = instruments.map((instrument) =>
+      serializeInstrumentAsSolitaLeg(instrument)
+    );
     let createWhitelistTxBuilder: TransactionBuilder | null = null;
     if (counterParties.length > 0) {
       whitelistAccount = Keypair.generate();
@@ -201,7 +206,7 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
         rfqPreparationTxBuilderArray.push(rfqPreparationTxBuilder);
     }
     expectedLegsHash =
-      expectedLegsHash ?? calculateExpectedLegsHash(instruments);
+      expectedLegsHash ?? calculateExpectedLegsHash(serializedLegs);
 
     const rfqPda = convergence
       .rfqs()
@@ -209,8 +214,9 @@ export const createRfqOperationHandler: OperationHandler<CreateRfqOperation> = {
       .rfq({
         taker: taker.publicKey,
         legsHash: Buffer.from(expectedLegsHash),
+        printTradeProvider: null,
         orderType,
-        quoteAsset: toQuote(quoteAsset),
+        quoteAsset: instrumentToQuote(quoteAsset),
         fixedSize,
         activeWindow,
         settlingWindow,
@@ -350,10 +356,15 @@ export const createRfqBuilder = async (
   } = params;
   let { expectedLegsSize } = params;
 
+  const solitaLegs = instruments.map((instrument) =>
+    instrumentToSolitaLeg(instrument)
+  );
+  const serializedLegs = instruments.map((instrument) =>
+    serializeInstrumentAsSolitaLeg(instrument)
+  );
+  expectedLegsSize =
+    expectedLegsSize ?? calculateExpectedLegsSize(serializedLegs);
   const legs = instrumentsToLegs(instruments);
-
-  const expectedLegsSizeValue = calculateExpectedLegsSize(instruments);
-  expectedLegsSize = expectedLegsSize ?? expectedLegsSizeValue;
 
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
@@ -371,13 +382,13 @@ export const createRfqBuilder = async (
       pubkey: convergence
         .rfqs()
         .pdas()
-        .quote({ quoteAsset: toQuote(quoteAsset) }),
+        .quote({ quoteAsset: instrumentToQuote(quoteAsset) }),
       isSigner: false,
       isWritable: false,
     },
   ];
 
-  let baseAssetAccounts = legsToBaseAssetAccounts(convergence, legs);
+  let baseAssetAccounts = legsToBaseAssetAccounts(convergence, solitaLegs);
   let legAccounts = await instrumentsToLegAccounts(instruments);
   let whitelistAccountToPass = rfqProgram.address;
   if (whitelistAccount) {
@@ -404,11 +415,12 @@ export const createRfqBuilder = async (
           ],
         },
         {
+          printTradeProvider: null,
           expectedLegsSize,
           expectedLegsHash: Array.from(expectedLegsHash),
-          legs,
+          legs: solitaLegs,
           orderType: toSolitaOrderType(orderType),
-          quoteAsset: toQuote(quoteAsset),
+          quoteAsset: instrumentToQuote(quoteAsset),
           fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
           activeWindow,
           settlingWindow,
@@ -449,11 +461,12 @@ export const createRfqBuilder = async (
             ],
           },
           {
+            printTradeProvider: null,
             expectedLegsSize,
             expectedLegsHash: Array.from(expectedLegsHash),
             legs: legsToAdd,
             orderType: toSolitaOrderType(orderType),
-            quoteAsset: toQuote(quoteAsset),
+            quoteAsset: instrumentToQuote(quoteAsset),
             fixedSize: toSolitaFixedSize(fixedSize, quoteAsset.getDecimals()),
             activeWindow,
             settlingWindow,

@@ -19,8 +19,27 @@ export type RiskCategory =
   | 'custom-2'
   | 'custom-3';
 
+export const isRiskCategory = (value: string): value is RiskCategory => {
+  return [
+    'very-low',
+    'low',
+    'medium',
+    'high',
+    'very-high',
+    'custom-1',
+    'custom-2',
+    'custom-3',
+  ].includes(value);
+};
+
+export type OracleSource = 'switchboard' | 'pyth' | 'in-place';
+
+export const isOracleSource = (value: string): value is OracleSource => {
+  return ['switchboard', 'pyth', 'in-place'].includes(value);
+};
+
 export type PriceOracle = {
-  source: 'switchboard' | 'pyth' | 'in-place';
+  source: OracleSource;
   address?: PublicKey;
   price?: number;
 };
@@ -50,8 +69,17 @@ export type BaseAsset = {
   /** Is base asset enabled or disabled. */
   readonly enabled: boolean;
 
-  /** The price oracle for the base asset. */
-  readonly priceOracle: PriceOracle;
+  /** The price oracle source for the base asset. */
+  readonly oracleSource: OracleSource;
+
+  /** The switchboard oracle. */
+  readonly switchboardOracle?: PublicKey;
+
+  /** The pyth oracle. */
+  readonly pythOracle?: PublicKey;
+
+  /** The in-place price. */
+  readonly inPlacePrice?: number;
 
   /** The ticker for the base asset. */
   readonly ticker: string;
@@ -97,31 +125,56 @@ export const toRiskCategory = (
   }
 };
 
-/** @group Model Helpers */
-export const toPriceOracle = (
-  solitaOracleSource: SolitaOracleSource,
-  switchboardOracle: PublicKey,
-  pythOracle: PublicKey,
-  inPlacePrice: number
-): PriceOracle => {
-  switch (solitaOracleSource) {
+export const toOracleSource = (
+  oracleSource: SolitaOracleSource
+): OracleSource => {
+  switch (oracleSource) {
     case SolitaOracleSource.Switchboard:
+      return 'switchboard';
+    case SolitaOracleSource.Pyth:
+      return 'pyth';
+    case SolitaOracleSource.InPlace:
+      return 'in-place';
+    default:
+      throw new Error(`Unsupported oracle source: ${oracleSource}`);
+  }
+};
+
+export const toSolitaOracleSource = (
+  oracleSource: OracleSource
+): SolitaOracleSource => {
+  switch (oracleSource) {
+    case 'switchboard':
+      return SolitaOracleSource.Switchboard;
+    case 'pyth':
+      return SolitaOracleSource.Pyth;
+    case 'in-place':
+      return SolitaOracleSource.InPlace;
+    default:
+      throw new Error(`Unsupported oracle source: ${oracleSource}`);
+  }
+};
+
+/** @group Model Helpers */
+export const toPriceOracle = (baseAsset: BaseAsset): PriceOracle => {
+  switch (baseAsset.oracleSource) {
+    case 'switchboard':
       return {
         source: 'switchboard',
-        address: switchboardOracle,
+        address: baseAsset.switchboardOracle,
       };
-    case SolitaOracleSource.Pyth:
+    case 'pyth':
       return {
         source: 'pyth',
-        address: pythOracle,
+        address: baseAsset.pythOracle,
       };
-    case SolitaOracleSource.InPlace:
+    case 'in-place':
       return {
         source: 'in-place',
-        price: inPlacePrice,
+        price: baseAsset.inPlacePrice,
       };
     default:
-      throw new Error(`Unsupported price oracle: ${solitaOracleSource}`);
+      throw new Error(`Unsupported price oracle: ${baseAsset.oracleSource}`);
   }
 };
 
@@ -195,11 +248,14 @@ export const toBaseAsset = (account: BaseAssetAccount): BaseAsset => ({
   index: toBaseAssetIndex(account.data.index),
   enabled: account.data.enabled,
   riskCategory: toRiskCategory(account.data.riskCategory),
-  priceOracle: toPriceOracle(
-    account.data.oracleSource,
-    account.data.switchboardOracle,
-    account.data.pythOracle,
-    account.data.inPlacePrice
-  ),
+  oracleSource: toOracleSource(account.data.oracleSource),
+  switchboardOracle: !account.data.switchboardOracle.equals(PublicKey.default)
+    ? account.data.switchboardOracle
+    : undefined,
+  pythOracle: !account.data.pythOracle.equals(PublicKey.default)
+    ? account.data.pythOracle
+    : undefined,
+  inPlacePrice:
+    account.data.inPlacePrice !== 0 ? account.data.inPlacePrice : undefined,
   ticker: account.data.ticker,
 });

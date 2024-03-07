@@ -9,6 +9,7 @@ export const CTX = new Ctx();
 export const COLLATERAL_MINT = CTX.collateralMint;
 export const SWITCHBOARD_BTC_ORACLE = CTX.switchboardBTCOracle;
 export const PYTH_SOL_ORACLE = CTX.pythSOLOracle;
+export const HXRO_MPG = CTX.hxroMpg;
 
 export const runCli = async (args: string[], user = 'dao') => {
   return await makeCli().parseAsync(

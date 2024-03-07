@@ -20,7 +20,7 @@ import {
   SpotLegInstrument,
   Mint,
 } from '../src';
-import { getUserKp, RPC_ENDPOINT } from '../../validator';
+import { getUserKp, HXRO_RISK_ENGINE, RPC_ENDPOINT } from '../../validator';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
 const DEFAULT_COMMITMENT = 'confirmed';
 const DEFAULT_SKIP_PREFLIGHT = true;
@@ -73,6 +73,14 @@ export const generatePk = async (): Promise<PublicKey> => {
 export const sleep = (seconds: number) => {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 };
+
+export async function runInParallelWithWait<T>(
+  promiseGetter: () => Promise<T>,
+  waitInSeconds: number
+): Promise<T> {
+  const [result] = await Promise.all([promiseGetter(), sleep(waitInSeconds)]);
+  return result;
+}
 
 export const fetchTokenAmount = async (
   cvg: Convergence,
@@ -467,7 +475,6 @@ export const respondToRfq = async (
     throw new Error('Must provide bid and/or ask');
   }
   return await cvg.rfqs().respond({
-    maker: cvg.identity(),
     rfq: rfq.address,
     bid: bid ? { price: bid, legsMultiplier } : undefined,
     ask: ask ? { price: ask, legsMultiplier } : undefined,
@@ -494,10 +501,7 @@ export const settleRfq = async (
   response: Response
 ) => {
   return await cvg.rfqs().settle({
-    rfq: rfq.address,
     response: response.address,
-    maker: response.maker,
-    taker: rfq.taker,
   });
 };
 
@@ -708,4 +712,20 @@ export const expectError = async (promise: Promise<any>, errorText: string) => {
       throw e;
     }
   }
+};
+
+let hxroOperatorTRGInitialized = false;
+
+export const ensureHxroOperatorTRGInitialized = async (
+  cvgAuthority: Convergence
+) => {
+  if (hxroOperatorTRGInitialized) {
+    return;
+  }
+
+  await cvgAuthority.hxro().initializeOperatorTraderRiskGroup({
+    hxroRiskEngineAddress: new PublicKey(HXRO_RISK_ENGINE),
+  });
+
+  hxroOperatorTRGInitialized = true;
 };

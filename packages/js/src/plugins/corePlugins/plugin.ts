@@ -15,6 +15,8 @@ import { instrumentModule } from '../instrumentModule';
 import { psyoptionsEuropeanInstrumentModule } from '../psyoptionsEuropeanInstrumentModule';
 import { psyoptionsAmericanInstrumentModule } from '../psyoptionsAmericanInstrumentModule';
 import { spotInstrumentModule } from '../spotInstrumentModule';
+import { hxroModule } from '../hxroPrintTradeProviderModule';
+import { printTradeModule } from '../printTradeModule';
 import { whitelistModule } from '../whitelistModule';
 
 export const corePlugins = () => ({
@@ -41,8 +43,10 @@ export const corePlugins = () => ({
 
     // Integrations
     convergence.use(instrumentModule());
+    convergence.use(printTradeModule());
     convergence.use(spotInstrumentModule());
     convergence.use(psyoptionsEuropeanInstrumentModule());
     convergence.use(psyoptionsAmericanInstrumentModule());
+    convergence.use(hxroModule());
   },
 });

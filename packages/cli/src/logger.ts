@@ -13,6 +13,10 @@ import {
   SpotLegInstrument,
   PsyoptionsAmericanInstrument,
   PsyoptionsEuropeanInstrument,
+  toPriceOracle,
+  PrintTradeLeg,
+  HxroPrintTradeProviderConfig,
+  SpotInstrumentConfig,
 } from '@convergence-rfq/sdk';
 
 import { formatInstrument, assertInstrument } from './helpers';
@@ -27,18 +31,21 @@ export const logPk = (p: PublicKey): void => l('Address:', p.toString());
 
 export const logTx = (t: string): void => l('Tx:', t);
 
-export const logInstrument = (i: LegInstrument): void => {
-  assertInstrument(i);
-  l('Instrument:', formatInstrument(i));
+export const logInstrument = (i: LegInstrument | PrintTradeLeg): void => {
   l('Amount:', N(i?.getAmount().toString()));
   l('Side:', i.getSide());
-  if (i instanceof SpotLegInstrument) {
-    l('Decimals:', N(i?.decimals.toString()));
-    l('Mint:', i.mintAddress.toString());
-  } else if (i instanceof PsyoptionsAmericanInstrument) {
-    l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
-  } else if (i instanceof PsyoptionsEuropeanInstrument) {
-    l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
+
+  if (i.legType == 'escrow') {
+    assertInstrument(i);
+    l('Instrument:', formatInstrument(i));
+    if (i instanceof SpotLegInstrument) {
+      l('Decimals:', N(i?.decimals.toString()));
+      l('Mint:', i.mintAddress.toString());
+    } else if (i instanceof PsyoptionsAmericanInstrument) {
+      l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
+    } else if (i instanceof PsyoptionsEuropeanInstrument) {
+      l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
+    }
   }
 };
 
@@ -46,16 +53,17 @@ export const logResponse = (r: SendAndConfirmTransactionResponse): void =>
   l('Tx:', r.signature);
 
 export const logBaseAsset = (b: BaseAsset): void => {
+  const priceOracle = toPriceOracle(b);
   l('Address:', b.address.toString());
   l('Ticker:', b.ticker.toString());
   l('Enabled:', b.enabled);
   l('Index:', b.index);
   l('Risk category:', b.riskCategory);
-  l('Oracle source:', b.priceOracle.source);
-  if (b.priceOracle.address) {
-    l('Oracle address:', b.priceOracle.address.toString());
-  } else if (b.priceOracle.price) {
-    l('Oracle price:', b.priceOracle.price.toString());
+  l('Oracle source:', priceOracle.source);
+  if (priceOracle.address) {
+    l('Oracle address:', priceOracle.address.toString());
+  } else if (priceOracle.price) {
+    l('Oracle price:', priceOracle.price.toString());
   }
 };
 
@@ -102,7 +110,14 @@ export const logProtocol = (p: Protocol): void => {
   l(`Maker fee: ${p.settleFees.makerBps.toString()} bps`);
   l(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
   l(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
+  l('Registered instruments:', p.instruments.length);
   p.instruments.map(logProtocolInstrument);
+  l('Registered print trade providers:', p.printTradeProviders.length);
+  p.printTradeProviders.map((x) => {
+    l('Print trade provider address:', x.programKey.toString());
+    l('Settlement can expire:', x.settlementCanExpire);
+    l('Validate response account amount:', x.validateResponseAccountAmount);
+  });
 };
 
 export const logRiskEngineConfig = (r: any): void => {
@@ -148,6 +163,8 @@ export const logRfq = (r: Rfq) => {
   l('Taker:', r.taker.toString());
   l('Order type:', r.orderType);
   l('Size:', r.size.type === 'open' ? 'open' : 'fixed');
+  if (r.model === 'escrowRfq') {
+  }
   l('Created:', new Date(created).toString());
   l(`Active window: ${r.activeWindow} seconds`);
   l(`Settlement window: ${r.settlingWindow} seconds`);
@@ -156,4 +173,20 @@ export const logRfq = (r: Rfq) => {
   l('Total responses:', r.totalResponses);
   l('Confirmed responses:', r.confirmedResponses);
   l('Cleared responses:', r.clearedResponses);
+  if (r.model === 'printTradeRfq') {
+    l(
+      'Print trade provider:',
+      r.printTrade.getPrintTradeProviderProgramId().toString()
+    );
+  }
+};
+
+export const logHxroConfig = (d: HxroPrintTradeProviderConfig) => {
+  l('Address:', d.address.toString());
+  l('Valid Hxro market product group:', d.validMpg.toString());
+};
+
+export const logSpotInstrumentConfig = (d: SpotInstrumentConfig) => {
+  l('Address:', d.address.toString());
+  l('Quote fees:', d.feeBps.toString());
 };

@@ -4,6 +4,7 @@ import sinon, { SinonStub } from 'sinon';
 import { PROGRAM_ADDRESS as SPOT_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/spot-instrument';
 import { PROGRAM_ADDRESS as PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-american-instrument';
 import { PROGRAM_ADDRESS as PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ADDRESS } from '@convergence-rfq/psyoptions-european-instrument';
+import { PROGRAM_ADDRESS as HXRO_PRINT_TRADE_PROVIDER_PROGRAM_ADDRESS } from '@convergence-rfq/hxro-print-trade-provider';
 
 import {
   ADDRESS_LABEL,
@@ -68,7 +69,7 @@ describe('unit.protocol', () => {
       '--prepare-to-settle-account-amount',
       '7',
       '--settle-account-amount',
-      '3',
+      '5',
       '--revert-preparation-account-amount',
       '3',
       '--clean-up-account-amount',
@@ -121,6 +122,20 @@ describe('unit.protocol', () => {
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
 
+  it('add-print-trade-provider [hxro]', async () => {
+    await runCli([
+      'protocol',
+      'add-print-trade-provider',
+      '--print-trade-provider-program',
+      HXRO_PRINT_TRADE_PROVIDER_PROGRAM_ADDRESS,
+      '--settlement-can-expire',
+      'false',
+      '--validate-response-account-amount',
+      '2',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
   it('add-base-asset [switchboard]', async () => {
     // TODO: Add Pyth and In Place Price Oracle
     await runCli([
@@ -146,6 +161,20 @@ describe('unit.protocol', () => {
       'in-place',
       '--oracle-price',
       '101',
+    ]);
+    expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('change-base-asset [switchboard]', async () => {
+    await runCli([
+      'protocol',
+      'change-base-asset-parameters',
+      '--index',
+      '0',
+      '--enabled',
+      'true',
+      '--in-place-price',
+      '42',
     ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });

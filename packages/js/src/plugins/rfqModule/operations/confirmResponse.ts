@@ -1,5 +1,5 @@
 import { createConfirmResponseInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { Convergence } from '../../../Convergence';
@@ -17,6 +17,7 @@ import {
 import { Response } from '../models';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
+import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -200,75 +201,44 @@ export const confirmResponseBuilder = async (
     programs,
   });
 
-  const baseAssetIndexValuesSet: Set<number> = new Set();
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
-
-  const baseAssetAccounts: AccountMeta[] = [];
-  const oracleAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    baseAssetAccounts.push({
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    });
-
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
+  const riskEngineAccounts = await getRiskEngineAccounts(
+    convergence,
+    rfqModel.legs
+  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1_400_000,
-      }),
-      signers: [],
-    })
-    .addTxPriorityFeeIx(convergence)
-    .add({
-      instruction: createConfirmResponseInstruction(
-        {
-          rfq,
-          response,
-          collateralInfo,
-          makerCollateralInfo,
-          collateralToken,
-          taker: taker.publicKey,
-          protocol: convergence.protocol().pdas().protocol(),
-          riskEngine: convergence.programs().getRiskEngine(programs).address,
-          anchorRemainingAccounts: [
-            {
-              pubkey: convergence.riskEngine().pdas().config(),
-              isSigner: false,
-              isWritable: false,
-            },
-            ...baseAssetAccounts,
-            ...oracleAccounts,
-          ],
-        },
-        {
-          side: toSolitaQuoteSide(side),
-          overrideLegMultiplierBps,
-        },
-        convergence.programs().getRfq(programs).address
-      ),
-      signers: [taker],
-      key: 'confirmResponse',
-    });
+    .add(
+      {
+        instruction: ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1_400_000,
+        }),
+        signers: [],
+      },
+      {
+        instruction: createConfirmResponseInstruction(
+          {
+            rfq,
+            response,
+            collateralInfo,
+            makerCollateralInfo,
+            collateralToken,
+            taker: taker.publicKey,
+            protocol: convergence.protocol().pdas().protocol(),
+            riskEngine: convergence.programs().getRiskEngine(programs).address,
+            anchorRemainingAccounts: riskEngineAccounts,
+          },
+          {
+            side: toSolitaQuoteSide(side),
+            overrideLegMultiplierBps,
+          },
+          convergence.programs().getRfq(programs).address
+        ),
+        signers: [taker],
+        key: 'confirmResponse',
+      }
+    );
 };
 
 const isResponseExpired = (response: Response): boolean => {

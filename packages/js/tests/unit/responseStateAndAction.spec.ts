@@ -72,22 +72,6 @@ describe('unit.responseStateAndAction', () => {
       }).responseState
     ).toBe('Cancelled');
 
-    //Unlock Response Collateral for maker
-    refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    expect(
-      takerCvg.rfqs().getResponseStateAndAction({
-        response: refreshedResponse,
-        rfq,
-        caller: 'maker',
-        responseSide: 'bid',
-      }).responseAction
-    ).toBe('UnlockCollateral');
-    await makerCvg.rfqs().unlockResponseCollateral({
-      response: refreshedResponse.address,
-    });
-
     //Cleanup for maker
     refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,
@@ -103,7 +87,6 @@ describe('unit.responseStateAndAction', () => {
 
     await makerCvg.rfqs().cleanUpResponse({
       response: rfqResponse.address,
-      maker: makerCvg.identity().publicKey,
     });
   });
 
@@ -182,9 +165,6 @@ describe('unit.responseStateAndAction', () => {
 
     await takerCvg.rfqs().settle({
       response: rfqResponse.address,
-      rfq: rfq.address,
-      maker: makerCvg.identity().publicKey,
-      taker: takerCvg.identity().publicKey,
     });
 
     //Settled for maker

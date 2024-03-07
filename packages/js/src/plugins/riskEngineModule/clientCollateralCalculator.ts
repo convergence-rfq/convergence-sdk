@@ -1,7 +1,6 @@
 import { RiskCategory } from '@convergence-rfq/rfq';
 import {
   futureCommonDataBeet,
-  InstrumentType,
   optionCommonDataBeet,
   OptionType,
   RiskCategoryInfo,
@@ -12,13 +11,14 @@ import { Commitment, PublicKey } from '@solana/web3.js';
 import { blackScholes } from 'black-scholes';
 
 import { Convergence } from '../../Convergence';
-import { toSolitaRiskCategory } from '../protocolModule';
+import { toPriceOracle, toSolitaRiskCategory } from '../protocolModule';
 import { LegInstrument } from '../instrumentModule';
 import { AuthoritySide } from '../rfqModule/models/AuthoritySide';
+import { PrintTradeLeg } from '../printTradeModule';
 import { ResponseSide } from '../rfqModule';
 import { AggregatorAccount } from './switchboard/aggregatorAccount';
 import { AggregatorAccountData } from './switchboard/types/aggregatorAccountData';
-import { Config } from './models';
+import { Config, InstrumentType } from './models';
 import {
   FUTURE_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS,
   SETTLEMENT_WINDOW_BREAKPOINS,
@@ -59,7 +59,7 @@ type LegInfo = {
 export async function calculateRisk(
   convergence: Convergence,
   config: Config,
-  legs: LegInstrument[],
+  legs: LegInstrument[] | PrintTradeLeg[],
   cases: CalculationCase[],
   settlementPeriod: number,
   commitment?: Commitment
@@ -72,24 +72,33 @@ export async function calculateRisk(
       fetchBaseAssetInfo(convergence, id, commitment)
     )
   );
-  const instrumentTypesMapping = config.instrumentTypes;
 
-  const legInfos = legs.map((leg) => {
+  const legInfos: LegInfo[] = legs.map((leg) => {
     let amount = leg.getAmount();
     if (leg.getSide() == 'long') {
       amount = -amount;
     }
 
-    const assetType = instrumentTypesMapping.find((entry) =>
-      entry.program.equals(leg.getProgramId())
-    )?.rType;
+    let assetType: InstrumentType;
+    if (leg.legType === 'printTrade') {
+      assetType = leg.getInstrumentType();
+    } else {
+      const escrowAssetType = config.instrumentTypes[leg.getInstrumentIndex()];
+      if (escrowAssetType === null) {
+        throw new Error(
+          `Instrument index ${leg.getInstrumentIndex()} is not registered in the risk engine`
+        );
+      }
 
-    if (assetType === undefined) {
-      throw Error(
-        `Instrument ${leg
-          .getProgramId()
-          .toString()} is missing from risk engine config!`
-      );
+      if (escrowAssetType === undefined) {
+        throw Error(
+          `Instrument ${leg
+            .getProgramId()
+            .toString()} is missing from risk engine config!`
+        );
+      }
+
+      assetType = escrowAssetType;
     }
 
     return {
@@ -156,16 +165,22 @@ async function fetchBaseAssetInfo(
   const baseAsset = await convergence
     .protocol()
     .findBaseAssetByAddress({ address });
+  const priceOracle = toPriceOracle(baseAsset);
 
-  if (!baseAsset.priceOracle.address) {
-    throw new Error('Price oracle address is missing');
+  let price: number;
+
+  if (priceOracle.price !== undefined) {
+    price = priceOracle.price;
+  } else {
+    if (priceOracle.address === undefined) {
+      throw Error('Price oracle address is missing');
+    }
+    price = await fetchLatestOraclePrice(
+      convergence,
+      priceOracle.address,
+      commitment
+    );
   }
-
-  const price = await fetchLatestOraclePrice(
-    convergence,
-    baseAsset.priceOracle.address,
-    commitment
-  );
 
   return {
     index: baseAssetIndex,
@@ -323,23 +338,23 @@ function calculateAssetUnitValue(
   interestRate: number
 ): number {
   switch (leg.instrumentType) {
-    case InstrumentType.Spot:
+    case 'spot':
       return price;
-    case InstrumentType.TermFuture:
-    case InstrumentType.PerpFuture:
+    case 'term-future':
+    case 'perp-future':
       const [futureCommonData] = futureCommonDataBeet.deserialize(leg.data);
       const amountPerContract =
         Number(futureCommonData.underlyingAmountPerContract) /
         10 ** FUTURE_UNDERLYING_AMOUNT_PER_CONTRACT_DECIMALS;
       return price * amountPerContract;
-    case InstrumentType.Option:
+    case 'option':
       const [optionCommonData] = optionCommonDataBeet.deserialize(leg.data);
       const optionType =
         optionCommonData.optionType == OptionType.Call ? 'call' : 'put';
 
       const underlyingAmountPerContract =
         Number(optionCommonData.underlyingAmountPerContract) /
-        10 ** optionCommonData.underlyingAmoundPerContractDecimals;
+        10 ** optionCommonData.underlyingAmountPerContractDecimals;
 
       const strikePrice =
         Number(optionCommonData.strikePrice) /
@@ -374,8 +389,7 @@ function selectScenarios(
   settlementPeriod: number
 ): Scenario[] {
   const haveOptionLegs =
-    legs.filter((leg) => leg.instrumentType == InstrumentType.Option).length >
-    0;
+    legs.filter((leg) => leg.instrumentType === 'option').length > 0;
 
   const getScenarioIndex = (settlementPeriod: number) => {
     for (let i = 0; i < SETTLEMENT_WINDOW_BREAKPOINS.length; i++) {

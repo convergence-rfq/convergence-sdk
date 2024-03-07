@@ -1,39 +1,37 @@
 import { ApiLeg, QuoteAsset, legBeet } from '@convergence-rfq/rfq';
 
-import { AccountMeta } from '@solana/web3.js';
+import { AccountMeta, PublicKey } from '@solana/web3.js';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { addDecimals } from '../../utils/conversions';
 import { toSolitaLegSide } from '../rfqModule/models/LegSide';
-import { PsyoptionsEuropeanInstrument } from '../psyoptionsEuropeanInstrumentModule';
-import { PsyoptionsAmericanInstrument } from '../psyoptionsAmericanInstrumentModule';
-import { SpotLegInstrument } from '../spotInstrumentModule';
+import { Protocol } from '../protocolModule';
 import { LegInstrument, QuoteInstrument } from './types';
 import { Convergence } from '@/Convergence';
 
-export function toLeg(legInstrument: LegInstrument): ApiLeg {
+export function instrumentToSolitaLeg(legInstrument: LegInstrument): ApiLeg {
   return {
-    instrumentProgram: legInstrument.getProgramId(),
+    settlementTypeMetadata: {
+      __kind: 'Instrument',
+      instrumentIndex: legInstrument.getInstrumentIndex(),
+    },
     baseAssetIndex: legInstrument.getBaseAssetIndex(),
-    instrumentData: legInstrument.serializeInstrumentData(),
-    instrumentAmount: addDecimals(
-      legInstrument.getAmount(),
-      legInstrument.getDecimals()
-    ),
-    instrumentDecimals: legInstrument.getDecimals(),
+    data: legInstrument.serializeInstrumentData(),
+    amount: addDecimals(legInstrument.getAmount(), legInstrument.getDecimals()),
+    amountDecimals: legInstrument.getDecimals(),
     side: toSolitaLegSide(legInstrument.getSide()),
   };
 }
 
-export function serializeAsLeg(legInstrument: LegInstrument) {
+export function serializeInstrumentAsSolitaLeg(legInstrument: LegInstrument) {
   const legSerializer = createSerializerFromFixableBeetArgsStruct(legBeet);
   return legSerializer.serialize({
-    ...toLeg(legInstrument),
+    ...instrumentToSolitaLeg(legInstrument),
     reserved: new Array(64).fill(0),
   });
 }
 
 export function getSerializedLegLength(legInstrument: LegInstrument) {
-  return serializeAsLeg(legInstrument).length;
+  return serializeInstrumentAsSolitaLeg(legInstrument).length;
 }
 
 export function getProgramAccount(legInstrument: LegInstrument): AccountMeta {
@@ -52,38 +50,37 @@ export function getValidationAccounts(
   );
 }
 
-export function toQuote(legInstrument: QuoteInstrument): QuoteAsset {
+export function instrumentToQuote(legInstrument: QuoteInstrument): QuoteAsset {
   return {
-    instrumentProgram: legInstrument.getProgramId(),
-    instrumentData: legInstrument.serializeInstrumentData(),
-    instrumentDecimals: legInstrument.getDecimals(),
+    settlementTypeMetadata: {
+      __kind: 'Instrument',
+      instrumentIndex: legInstrument.getInstrumentIndex(),
+    },
+    data: legInstrument.serializeInstrumentData(),
+    decimals: legInstrument.getDecimals(),
   };
 }
 
-//TODO: refactor this method to use instrument interface in the future
-export const legToBaseAssetMint = async (
+export const legToBaseAssetMint = (
   convergence: Convergence,
   leg: LegInstrument
 ) => {
-  if (leg instanceof PsyoptionsEuropeanInstrument) {
-    const euroMetaOptionMint = await convergence.tokens().findMintByAddress({
-      address: leg.optionMint,
-    });
+  return convergence.tokens().findMintByAddress({
+    address: leg.getAssetMint(),
+  });
+};
 
-    return euroMetaOptionMint;
-  } else if (leg instanceof PsyoptionsAmericanInstrument) {
-    const americanOptionMint = await convergence.tokens().findMintByAddress({
-      address: leg.optionMint,
-    });
+export const getInstrumentProgramIndex = (
+  protocol: Protocol,
+  programAddress: PublicKey
+) => {
+  const instrumentIndex = protocol.instruments.findIndex((instrument) =>
+    instrument.programKey.equals(programAddress)
+  );
 
-    return americanOptionMint;
-  } else if (leg instanceof SpotLegInstrument) {
-    const mint = await convergence.tokens().findMintByAddress({
-      address: leg.mintAddress,
-    });
-
-    return mint;
+  if (instrumentIndex === -1) {
+    throw Error('Cannot find spot instrument program in protocol!');
   }
 
-  throw Error('Unsupported instrument!');
+  return instrumentIndex;
 };

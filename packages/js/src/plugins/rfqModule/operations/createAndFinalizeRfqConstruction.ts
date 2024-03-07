@@ -1,5 +1,5 @@
 import { Keypair, PublicKey } from '@solana/web3.js';
-import * as anchor from '@project-serum/anchor';
+import * as anchor from '@coral-xyz/anchor';
 
 import { BN } from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -22,7 +22,8 @@ import {
 import {
   LegInstrument,
   QuoteInstrument,
-  toQuote,
+  serializeInstrumentAsSolitaLeg,
+  instrumentToQuote,
 } from '../../../plugins/instrumentModule';
 import { OrderType } from '../models/OrderType';
 import { createRfqBuilder } from './createRfq';
@@ -186,6 +187,7 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
       }
       const payer = convergence.rpc().getDefaultFeePayer();
       const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
+
       const rfqPreparationTxBuilderArray: TransactionBuilder[] = [];
       const ixTracker = new InstructionUniquenessTracker([]);
       for (const ins of instruments) {
@@ -206,7 +208,10 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         if (rfqPreparationTxBuilder.getInstructionCount() > 0)
           rfqPreparationTxBuilderArray.push(rfqPreparationTxBuilder);
       }
-      const expectedLegsHash = calculateExpectedLegsHash(instruments);
+      const serializedLegs = instruments.map((instruments) =>
+        serializeInstrumentAsSolitaLeg(instruments)
+      );
+      const expectedLegsHash = calculateExpectedLegsHash(serializedLegs);
 
       const rfqPda = convergence
         .rfqs()
@@ -214,8 +219,9 @@ export const createAndFinalizeRfqConstructionOperationHandler: OperationHandler<
         .rfq({
           taker: taker.publicKey,
           legsHash: Buffer.from(expectedLegsHash),
+          printTradeProvider: null,
           orderType,
-          quoteAsset: toQuote(quoteAsset),
+          quoteAsset: instrumentToQuote(quoteAsset),
           fixedSize,
           activeWindow,
           settlingWindow,

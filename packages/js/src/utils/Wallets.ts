@@ -1,4 +1,9 @@
-import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  Keypair,
+  PublicKey,
+  Transaction,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import { Convergence } from '..';
 
 interface Wallet {
@@ -18,12 +23,26 @@ export class CvgWallet implements Wallet {
     this.publicKey = convergence.identity().publicKey;
   }
 
-  signTransaction = (tx: Transaction): Promise<Transaction> => {
-    return this.convergence.identity().signTransaction(tx);
+  signTransaction = <T extends Transaction | VersionedTransaction>(
+    tx: T
+  ): Promise<T> => {
+    if (tx instanceof VersionedTransaction) {
+      throw new Error('Versioned transactions are not supported yet');
+    }
+
+    return this.convergence.identity().signTransaction(tx) as Promise<T>;
   };
 
-  signAllTransactions = (txs: Transaction[]): Promise<Transaction[]> => {
-    return this.convergence.identity().signAllTransactions(txs);
+  signAllTransactions = <T extends Transaction | VersionedTransaction>(
+    txs: T[]
+  ): Promise<T[]> => {
+    if (txs.find((tx) => tx instanceof VersionedTransaction) !== undefined) {
+      throw new Error('Versioned transactions are not supported yet');
+    }
+
+    return this.convergence
+      .identity()
+      .signAllTransactions(txs as Transaction[]) as Promise<T[]>;
   };
 }
 

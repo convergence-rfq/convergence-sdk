@@ -38,6 +38,7 @@ describe('integration.spot', () => {
   it('sell', async () => {
     const baseAmount = 1.536_421;
     const quoteAmount = 22_000.86;
+    const feeAmount = quoteAmount * 0.01; // 1% is specified in fixtures
 
     const { rfq } = await createRfq(takerCvg, baseAmount, 'sell');
     expect(rfq).toHaveProperty('address');
@@ -74,7 +75,9 @@ describe('integration.spot', () => {
     ]);
 
     // TODO: This does not seem right in terms of handling precision
-    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore + quoteAmount);
+    expect(takerQuoteAfter).toBeCloseTo(
+      takerQuoteBefore + quoteAmount - feeAmount
+    );
     expect(takerBtcAfter).toBeCloseTo(takerBtcBefore - baseAmount);
   });
 

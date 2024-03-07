@@ -1,5 +1,5 @@
 import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
@@ -17,6 +17,8 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { LegInstrument } from '@/plugins/instrumentModule';
+import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
+import { PrintTradeLeg } from '@/plugins/printTradeModule';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
@@ -86,7 +88,7 @@ export type FinalizeRfqConstructionInput = {
    * Is passed automatically when `createAndFinalize`
    * is called. Else the legs are extracted from the rfq account.
    */
-  legs?: LegInstrument[];
+  legs?: LegInstrument[] | PrintTradeLeg[];
 };
 
 /**
@@ -196,60 +198,9 @@ export const finalizeRfqConstructionBuilder = async (
   collateralInfo = collateralInfo ?? collateralInfoPda;
   collateralToken = collateralToken ?? collateralTokenPda;
 
-  const anchorRemainingAccounts: AccountMeta[] = [];
+  const riskEngineAccounts = await getRiskEngineAccounts(convergence, legs);
 
   const protocol = convergence.protocol().pdas().protocol();
-
-  const [config] = PublicKey.findProgramAddressSync(
-    [Buffer.from('config')],
-    riskEngineProgram.address
-  );
-
-  const configAccount: AccountMeta = {
-    pubkey: config,
-    isSigner: false,
-    isWritable: false,
-  };
-
-  const oracleAccounts: AccountMeta[] = [];
-
-  const baseAssetAccounts: AccountMeta[] = [];
-  const baseAssetIndexValuesSet: Set<number> = new Set();
-
-  for (const leg of legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
-
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
-
-  anchorRemainingAccounts.push(
-    configAccount,
-    ...baseAssetAccounts,
-    ...oracleAccounts
-  );
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
@@ -272,7 +223,7 @@ export const finalizeRfqConstructionBuilder = async (
           collateralInfo,
           collateralToken,
           riskEngine,
-          anchorRemainingAccounts,
+          anchorRemainingAccounts: riskEngineAccounts,
         },
         rfqProgram.address
       ),

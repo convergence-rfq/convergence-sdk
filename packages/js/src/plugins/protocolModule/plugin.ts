@@ -20,6 +20,10 @@ import {
   findBaseAssetByAddressOperationHandler,
   closeProtocolOperation,
   closeProtocolOperationHandler,
+  addPrintTradeProviderOperation,
+  addPrintTradeProviderOperationHandler,
+  changeBaseAssetParametersOperation,
+  changeBaseAssetParametersOperationHandler,
   updateBaseAssetOperation,
   updateBaseAssetOperationHandler,
 } from './operations';
@@ -37,7 +41,15 @@ export const protocolModule = (): ConvergencePlugin => ({
     );
     op.register(getProtocolOperation, getProtocolOperationHandler);
     op.register(addInstrumentOperation, addInstrumentOperationHandler);
+    op.register(
+      addPrintTradeProviderOperation,
+      addPrintTradeProviderOperationHandler
+    );
     op.register(addBaseAssetOperation, addBaseAssetOperationHandler);
+    op.register(
+      changeBaseAssetParametersOperation,
+      changeBaseAssetParametersOperationHandler
+    );
     op.register(registerMintOperation, registerMintOperationHandler);
     op.register(getBaseAssetsOperation, getBaseAssetsOperationHandler);
     op.register(
@@ -68,6 +80,7 @@ declare module '../../Convergence' {
 
 declare module '../protocolModule/ProtocolClient' {
   interface ProtocolClient {
+    // TODO this method actually does not exist
     getProtocol(): Protocol;
   }
 }

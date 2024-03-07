@@ -4,6 +4,8 @@ import {
   protocolCache,
   baseAssetsCache,
   registeredMintsCache,
+  toPriceOracle,
+  BaseAsset,
 } from '../../src';
 import { createUserCvg, generateTicker } from '../helpers';
 import {
@@ -74,7 +76,7 @@ describe('unit.protocol', () => {
       canBeUsedAsQuote: true,
       validateDataAccountAmount: 1,
       prepareToSettleAccountAmount: 7,
-      settleAccountAmount: 3,
+      settleAccountAmount: 5,
       revertPreparationAccountAmount: 3,
       cleanUpAccountAmount: 4,
     });
@@ -107,6 +109,16 @@ describe('unit.protocol', () => {
       settleAccountAmount: 3,
       revertPreparationAccountAmount: 3,
       cleanUpAccountAmount: 4,
+    });
+    expect(response).toHaveProperty('signature');
+  });
+
+  it('add print trade provider [hxro]', async () => {
+    const { response } = await cvg.protocol().addPrintTradeProvider({
+      printTradeProviderProgram: cvg.programs().getHxroPrintTradeProvider()
+        .address,
+      settlementCanExpire: false,
+      validateResponseAccountAmount: 2,
     });
     expect(response).toHaveProperty('signature');
   });
@@ -166,7 +178,20 @@ describe('unit.protocol', () => {
     const baseAsset = await cvg
       .protocol()
       .findBaseAssetByAddress({ address: baseAssetPda });
-    expect(baseAsset.priceOracle.price).toEqual(price);
+    expect(toPriceOracle(baseAsset).price).toEqual(price);
+  });
+
+  it('change base asset parameters', async () => {
+    const { response } = await cvg.protocol().changeBaseAssetParameters({
+      index: 0,
+      enabled: true,
+      inPlacePrice: 42,
+    });
+    expect(response).toHaveProperty('signature');
+
+    const baseAssets: BaseAsset[] = await cvg.protocol().getBaseAssets();
+    const baseAsset = baseAssets.find((x) => x.index === 0);
+    expect(baseAsset?.inPlacePrice).toBe(42);
   });
 
   it('register mint', async () => {

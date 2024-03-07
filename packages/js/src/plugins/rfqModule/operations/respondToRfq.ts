@@ -1,5 +1,5 @@
 import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey, ComputeBudgetProgram, AccountMeta } from '@solana/web3.js';
 
 import BN from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -10,7 +10,6 @@ import {
   OperationHandler,
   OperationScope,
   useOperation,
-  Signer,
 } from '../../../types';
 import {
   TransactionBuilder,
@@ -19,7 +18,12 @@ import {
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
 import { rfqProgram } from '../program';
+import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 import { convertTimestampToSeconds } from '@/utils';
+import {
+  AdditionalResponseData,
+  prependWithProviderProgram,
+} from '@/plugins/printTradeModule';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -113,39 +117,9 @@ export type RespondToRfqInput = {
   rfq: PublicKey;
 
   /**
-   * The maker of the Response as a Signer.
-   *
-   * @defaultValue `convergence.identity()`
+   * Is sometimes required to pass for print trades
    */
-  maker?: Signer;
-
-  /**
-   * The protocol address.
-   *
-   * @defaultValue `convergence.protocol().pdas().protocol()`
-   */
-  protocol?: PublicKey;
-
-  /**
-   * Optional address of the taker collateral info account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralInfo({ user: response.maker })`
-   */
-  collateralInfo?: PublicKey;
-
-  /**
-   * Optional address of the maker collateral tokens account.
-   *
-   * @defaultValue `convergence.collateral().pdas().collateralTokens({ user: maker.publicKey })`
-   */
-  collateralToken?: PublicKey;
-
-  /**
-   * Optional address of the risk engine account.
-   *
-   * @defaultValue `convergence.programs().getRiskEngine(programs)`
-   */
-  riskEngine?: PublicKey;
+  additionalData?: AdditionalResponseData;
 };
 
 /**
@@ -236,25 +210,39 @@ export const respondToRfqBuilder = async (
     rfq,
     bid = null,
     ask = null,
-    maker = convergence.identity(),
-    protocol = convergence.protocol().pdas().protocol(),
-    riskEngine = convergence.programs().getRiskEngine(programs).address,
-    collateralInfo = convergence.collateral().pdas().collateralInfo({
-      user: maker.publicKey,
-      programs,
-    }),
-    collateralToken = convergence.collateral().pdas().collateralToken({
-      user: maker.publicKey,
-      programs,
-    }),
     expirationTimestamp,
+    additionalData,
   } = params;
+  const maker = convergence.identity();
+  const protocol = convergence.protocol().pdas().protocol();
+  const riskEngine = convergence.programs().getRiskEngine(programs).address;
+  const collateralInfo = convergence.collateral().pdas().collateralInfo({
+    user: maker.publicKey,
+    programs,
+  });
+  const collateralToken = convergence.collateral().pdas().collateralToken({
+    user: maker.publicKey,
+    programs,
+  });
 
   if (!bid && !ask) {
     throw new Error('Must provide either a bid and/or ask');
   }
 
   const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
+
+  let validateResponseAccounts: AccountMeta[] = [];
+  if (rfqModel.model === 'escrowRfq' && additionalData !== undefined) {
+    throw new Error(
+      'Escrow rfqs does not allow passing additional response data'
+    );
+  }
+  if (rfqModel.model === 'printTradeRfq') {
+    validateResponseAccounts = prependWithProviderProgram(
+      rfqModel.printTrade,
+      await rfqModel.printTrade.getValidateResponseAccounts(additionalData)
+    );
+  }
 
   const rfqExpirationTimestampSeconds =
     convertTimestampToSeconds(rfqModel.creationTimestamp) +
@@ -287,35 +275,10 @@ export const respondToRfqBuilder = async (
       rfqModel
     );
 
-  // TODO: DRY
-  const baseAssetIndexValuesSet: Set<number> = new Set();
-  for (const leg of rfqModel.legs) {
-    baseAssetIndexValuesSet.add(leg.getBaseAssetIndex().value);
-  }
-  const baseAssetAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = Array.from(baseAssetIndexValuesSet);
-  const oracleAccounts: AccountMeta[] = [];
-  for (const index of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-
-    const baseAssetModel = await convergence
-      .protocol()
-      .findBaseAssetByAddress({ address: baseAsset });
-    if (baseAssetModel.priceOracle.address) {
-      oracleAccounts.push({
-        pubkey: baseAssetModel.priceOracle.address,
-        isSigner: false,
-        isWritable: false,
-      });
-    }
-  }
+  const riskEngineAccounts = await getRiskEngineAccounts(
+    convergence,
+    rfqModel.legs
+  );
 
   const defaultPubkey = PublicKey.default;
   const whitelist =
@@ -360,13 +323,8 @@ export const respondToRfqBuilder = async (
           whitelist,
           maker: maker.publicKey,
           anchorRemainingAccounts: [
-            {
-              pubkey: convergence.riskEngine().pdas().config(),
-              isSigner: false,
-              isWritable: false,
-            },
-            ...baseAssetAccounts,
-            ...oracleAccounts,
+            ...validateResponseAccounts,
+            ...riskEngineAccounts,
           ],
         },
         {
@@ -374,6 +332,7 @@ export const respondToRfqBuilder = async (
           ask: ask && toSolitaQuote(ask, rfqModel.quoteAsset.getDecimals()),
           pdaDistinguisher,
           expirationTimestamp: expirationTimestampBn,
+          additionalData: additionalData?.serialize() ?? Buffer.from([]),
         }
       ),
       signers: [maker],

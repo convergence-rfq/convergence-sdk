@@ -1,6 +1,6 @@
 import { Buffer } from 'buffer';
 
-import { Rfq } from '../rfqModule';
+import { EscrowRfq } from '../rfqModule';
 import type { Convergence } from '../../Convergence';
 import { Pda, PublicKey } from '../../types';
 
@@ -40,7 +40,7 @@ type InstrumentEscrowInput = {
   index: number;
 
   /** The Rfq Model. */
-  rfqModel: Rfq;
+  rfqModel: EscrowRfq;
 };
 
 type QuoteEscrowInput = {

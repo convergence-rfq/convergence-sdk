@@ -9,14 +9,16 @@ import * as psyoptionsAmerican from '@mithraic-labs/psy-american';
 import BN from 'bn.js';
 import { Mint } from '../tokenModule';
 import {
-  CreateOptionInstrumentsResult,
   LegInstrument,
+  getInstrumentProgramIndex,
+  CreateOptionInstrumentsResult,
 } from '../instrumentModule';
 import { addDecimals, removeDecimals } from '../../utils/conversions';
 import { Convergence } from '../../Convergence';
 import { createSerializerFromFixableBeetArgsStruct } from '../../types';
 import { LegSide, fromSolitaLegSide } from '../rfqModule/models/LegSide';
 import { NoopWallet } from '../../utils/Wallets';
+import { PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID } from './types';
 import {
   GetOrCreateATAtxBuilderReturnType,
   getOrCreateATAtxBuilder,
@@ -52,6 +54,7 @@ export const psyoptionsAmericanInstrumentDataSerializer =
 
 export class PsyoptionsAmericanInstrument implements LegInstrument {
   static readonly decimals = 0;
+  legType: 'escrow';
 
   constructor(
     readonly convergence: Convergence,
@@ -64,13 +67,18 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     readonly optionMint: PublicKey,
     readonly optionMetaPubKey: PublicKey,
     readonly baseAssetIndex: BaseAssetIndex,
+    readonly instrumentIndex: number,
     readonly amount: number,
     readonly side: LegSide,
     readonly underlyingAssetMint?: PublicKey,
     readonly stableAssetMint?: PublicKey
-  ) {}
+  ) {
+    this.legType = 'escrow';
+  }
 
   getBaseAssetIndex = () => this.baseAssetIndex;
+  getInstrumentIndex = () => this.instrumentIndex;
+  getAssetMint = () => this.optionMint;
   getAmount = () => this.amount;
   getDecimals = () => PsyoptionsAmericanInstrument.decimals;
   getSide = () => this.side;
@@ -123,6 +131,11 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       throw Error('Stablecoin mint cannot be used in a leg!');
     }
 
+    const instrumentIndex = getInstrumentProgramIndex(
+      await convergence.protocol().get(),
+      PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID
+    );
+
     const cvgWallet = new NoopWallet(taker);
     const americanProgram = await createAmericanProgram(convergence, cvgWallet);
     const { optionMint, metaKey } = await getAmericanOptionkeys(
@@ -145,6 +158,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       optionMint,
       metaKey,
       mintInfo.mintType.baseAssetIndex,
+      instrumentIndex,
       amount,
       side,
       underlyingMint.address,
@@ -246,9 +260,10 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
 export const psyoptionsAmericanInstrumentParser = {
   parseFromLeg(
     convergence: Convergence,
-    leg: Leg
+    leg: Leg,
+    instrumentIndex: number
   ): PsyoptionsAmericanInstrument {
-    const { side, instrumentAmount, instrumentData, baseAssetIndex } = leg;
+    const { side, amount, data, baseAssetIndex } = leg;
     const [
       {
         optionType,
@@ -261,7 +276,7 @@ export const psyoptionsAmericanInstrumentParser = {
         metaKey,
       },
     ] = psyoptionsAmericanInstrumentDataSerializer.deserialize(
-      Buffer.from(instrumentData)
+      Buffer.from(data)
     );
 
     return new PsyoptionsAmericanInstrument(
@@ -278,7 +293,8 @@ export const psyoptionsAmericanInstrumentParser = {
       optionMint,
       metaKey,
       baseAssetIndex,
-      removeDecimals(instrumentAmount, PsyoptionsAmericanInstrument.decimals),
+      instrumentIndex,
+      removeDecimals(amount, PsyoptionsAmericanInstrument.decimals),
       fromSolitaLegSide(side)
     );
   },

@@ -14,7 +14,7 @@ import {
 } from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 import { CvgWallet, PublicKey } from '../../src';
-import { IDL as PseudoPythIdl } from '../../../validator/fixtures/programs/pseudo_pyth_idl';
+import { IDL as PseudoPythIdl } from '../../../validator/dependencies/pseudo_pyth_idl';
 
 describe('integration.psyoptionsEuropean', () => {
   const takerCvg = createUserCvg('taker');

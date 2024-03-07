@@ -8,6 +8,8 @@ import {
   getProtocol,
   getBaseAssets,
   closeProtocol,
+  addPrintTradeProvider,
+  changeBaseAssetParameters,
   addBaseAssetsFromJupiter,
   updateBaseAsset,
 } from '../actions';
@@ -82,6 +84,28 @@ const addInstrumentCmd = (c: Command) =>
     commonOptions
   );
 
+const addPrintTradeProviderCmd = (c: Command) =>
+  addCmd(
+    c,
+    'add-print-trade-provider',
+    'adds print trade provider to the protocol',
+    addPrintTradeProvider,
+    [
+      {
+        flags: '--print-trade-provider-program <string>',
+        description: 'print trade provider program address',
+      },
+      {
+        flags: '--settlement-can-expire <boolean>',
+        description: 'settlement can expire',
+      },
+      {
+        flags: '--validate-response-account-amount <number>',
+        description: 'amount of account passed to validate response CPI call',
+      },
+    ]
+  );
+
 const closeCmd = (c: Command) =>
   addCmd(c, 'close', 'closes protocol configuration', closeProtocol);
 
@@ -112,6 +136,51 @@ const addBaseAssetCmd = (c: Command) =>
       defaultValue: 'medium',
     },
   ]);
+
+const changeBaseAssetParametersCmd = (c: Command) =>
+  addCmd(
+    c,
+    'change-base-asset-parameters',
+    'change existing base asset parameters',
+    changeBaseAssetParameters,
+    [
+      {
+        flags: '--index <number>',
+        description: 'base asset index',
+      },
+      {
+        flags: '--enabled <string>',
+        description: 'true to enable base asset, false to disable',
+        defaultValue: null,
+      },
+      {
+        flags: '--risk-category <string>',
+        description: 'risk category',
+        defaultValue: null,
+      },
+      {
+        flags: '--oracle-source <string>',
+        description: 'oracle source',
+        defaultValue: null,
+      },
+      {
+        flags: '--switchboard-oracle <string>',
+        description: 'switchboard oracle, none to unset',
+        defaultValue: null,
+      },
+      {
+        flags: '--pyth-oracle <string>',
+        description: 'pyth oracle, none to unset',
+        defaultValue: null,
+      },
+
+      {
+        flags: '--in-place-price <number>',
+        description: 'in place price, -1 to unset',
+        defaultValue: null,
+      },
+    ]
+  );
 
 const registerMintCmd = (c: Command) =>
   addCmd(c, 'register-mint', 'registers protocol mint', registerMint, [
@@ -192,7 +261,9 @@ export const protocolGroup = (c: Command) => {
   const group = c.command('protocol');
   initializeProtocolCmd(group);
   addInstrumentCmd(group);
+  addPrintTradeProviderCmd(group);
   addBaseAssetCmd(group);
+  changeBaseAssetParametersCmd(group);
   registerMintCmd(group);
   getRegisteredMintsCmd(group);
   getCmd(group);

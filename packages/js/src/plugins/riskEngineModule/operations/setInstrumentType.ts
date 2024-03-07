@@ -1,9 +1,7 @@
 import { createSetInstrumentTypeInstruction } from '@convergence-rfq/risk-engine';
-import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { Config } from '../models';
-import { InstrumentType } from '../types';
+import { Config, InstrumentType, toSolitaInstrumentType } from '../models';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -11,12 +9,14 @@ import {
   OperationScope,
   useOperation,
   Signer,
+  PublicKey,
 } from '../../../types';
 import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { riskEngineConfigCache } from '../cache';
+import { getInstrumentProgramIndex } from '@/plugins/instrumentModule';
 
 const Key = 'SetInstrumentTypeOperation' as const;
 
@@ -89,9 +89,16 @@ export const setInstrumentTypeOperationHandler: OperationHandler<SetInstrumentTy
       convergence: Convergence,
       scope: OperationScope
     ): Promise<SetInstrumentTypeOutput> => {
+      const protocol = await convergence.protocol().get();
+      const instrumentIndex = getInstrumentProgramIndex(
+        protocol,
+        operation.input.instrumentProgram
+      );
+
       const builder = setInstrumentTypeBuilder(
         convergence,
         operation.input,
+        instrumentIndex,
         scope
       );
 
@@ -129,10 +136,11 @@ export type SetInstrumentTypeBuilderParams = SetInstrumentTypeInput;
 export const setInstrumentTypeBuilder = (
   convergence: Convergence,
   params: SetInstrumentTypeBuilderParams,
+  instrumentIndex: number,
   options: TransactionBuilderOptions = {}
 ): TransactionBuilder => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const { authority = payer, instrumentProgram, instrumentType } = params;
+  const { authority = payer, instrumentType } = params;
 
   const riskEngineProgram = convergence.programs().getRiskEngine(programs);
 
@@ -150,8 +158,8 @@ export const setInstrumentTypeBuilder = (
           config,
         },
         {
-          instrumentProgram,
-          instrumentType,
+          instrumentIndex,
+          instrumentType: toSolitaInstrumentType(instrumentType),
         },
         riskEngineProgram.address
       ),

@@ -4,24 +4,13 @@ import {
   PsyoptionsEuropeanInstrument,
   LegInstrument,
   FixedSize,
-  InstrumentType,
 } from '@convergence-rfq/sdk';
 import { Command } from 'commander';
 
 import { Connection } from '@solana/web3.js';
 import { CoinGeckoResponse, Instrument } from './types';
 import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
-
-export const getInstrumentType = (type: string): InstrumentType => {
-  switch (type) {
-    case 'spot':
-      return InstrumentType.Spot;
-    case 'option':
-      return InstrumentType.Option;
-    default:
-      throw new Error('Invalid instrument type');
-  }
-};
+import { Opts } from './cvg';
 
 export const getSize = (size: string, amount: number): FixedSize => {
   switch (size) {
@@ -62,6 +51,7 @@ export const formatInstrument = (instrument: Instrument): string => {
 
 export const addDefaultArgs = (cmd: any) => {
   cmd.option('--rpc-endpoint <string>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
+  cmd.option('--skip-preflight', 'skip preflight', false);
   cmd.option('--keypair-file <string>', 'keypair file', DEFAULT_KEYPAIR_FILE);
   cmd.option('--verbose <boolean>', 'verbose', false);
   return cmd;
@@ -97,6 +87,17 @@ export const addCmd = (
   addDefaultArgs(cmd);
 
   return cmd;
+};
+
+export const extractBooleanString = (opts: Opts, name: string): boolean => {
+  const value = opts[name];
+  if (value !== 'true' && value !== 'false') {
+    throw new Error(
+      `${name} parameter value should be either 'true' or 'false'`
+    );
+  }
+
+  return value === 'true' ? true : false;
 };
 
 export const getSigConfirmation = async (
