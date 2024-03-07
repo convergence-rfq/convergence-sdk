@@ -183,6 +183,7 @@ export const updateBaseAsset = async (opts: Opts) => {
     oracleAddress,
     riskCategory,
   } = opts;
+  const enabledArg = enabled === 'true' ? true : false;
   if (!oraclePrice && !oracleAddress) {
     throw new Error('Either oraclePrice or oracleAddress must be provided');
   }
@@ -192,7 +193,7 @@ export const updateBaseAsset = async (opts: Opts) => {
   try {
     const { response } = await cvg.protocol().updateBaseAsset({
       authority: cvg.rpc().getDefaultFeePayer(),
-      enabled,
+      enabled: enabledArg,
       index,
       priceOracle: {
         source: oracleSource,
