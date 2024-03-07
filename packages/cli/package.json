@@ -47,7 +47,7 @@
     "cli": "ts-node src/index.ts"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "4.5.30",
+    "@convergence-rfq/sdk": "4.5.35",
     "@solana/web3.js": "^1.87.6",
     "@types/cookie": "^0.5.1",
     "commander": "^10.0.0"
