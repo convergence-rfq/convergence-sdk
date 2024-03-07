@@ -18,6 +18,12 @@
 
 - Hxro integration
 
+## 4.5.35
+
+### Patch Changes
+
+- fix collateral calculation for in-place price oracles
+
 ## 4.5.30
 
 ### Patch Changes
