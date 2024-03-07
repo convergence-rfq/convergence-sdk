@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.2.0
+
+### Minor Changes
+
+- Integrate hxro ,collateral req changes
+
 ## 6.1.0
 
 ### Minor Changes
