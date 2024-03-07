@@ -164,6 +164,7 @@ export const logRfq = (r: Rfq) => {
   l('Order type:', r.orderType);
   l('Size:', r.size.type === 'open' ? 'open' : 'fixed');
   if (r.model === 'escrowRfq') {
+    /* empty */
   }
   l('Created:', new Date(created).toString());
   l(`Active window: ${r.activeWindow} seconds`);
