@@ -39,12 +39,8 @@ import {
   FindResponsesByRfqInput,
   findResponsesByOwnerOperation,
   FindResponsesByOwnerInput,
-  partiallySettleLegsOperation,
-  PartiallySettleLegsInput,
   partlyRevertSettlementPreparationOperation,
   PartlyRevertSettlementPreparationInput,
-  partiallySettleLegsAndSettleOperation,
-  PartiallySettleLegsAndSettleInput,
   revertSettlementPreparationOperation,
   RevertSettlementPreparationInput,
   prepareMoreLegsSettlementOperation,
@@ -57,14 +53,6 @@ import {
   RespondToRfqInput,
   settleOperation,
   SettleInput,
-  settleOnePartyDefaultOperation,
-  SettleOnePartyDefaultInput,
-  settleTwoPartyDefaultOperation,
-  SettleTwoPartyDefaultInput,
-  unlockResponseCollateralOperation,
-  UnlockResponseCollateralInput,
-  unlockRfqCollateralOperation,
-  UnlockRfqCollateralInput,
   createAndFinalizeRfqConstructionOperation,
   CleanUpRfqsInput,
   cleanUpRfqsOperation,
@@ -72,10 +60,6 @@ import {
   CleanUpResponseInput,
   cleanUpResponsesOperation,
   CleanUpResponsesInput,
-  unlockResponsesCollateralOperation,
-  UnlockResponsesCollateralInput,
-  UnlockRfqsCollateralInput,
-  unlockRfqsCollateralOperation,
   GetSettlementResultInput,
   getSettlementResultOperation,
   CreatePrintTradeRfqInput,
@@ -304,16 +288,6 @@ export class RfqClient {
       .execute(findRfqByAddressOperation(input), options);
   }
 
-  /** {@inheritDoc partiallySettleLegsOperation} */
-  partiallySettleLegs(
-    input: PartiallySettleLegsInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(partiallySettleLegsOperation(input), options);
-  }
-
   /** {@inheritDoc partlyRevertSettlementPreparationOperation} */
   partlyRevertSettlementPreparation(
     input: PartlyRevertSettlementPreparationInput,
@@ -322,16 +296,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(partlyRevertSettlementPreparationOperation(input), options);
-  }
-
-  /** {@inheritDoc partiallySettleLegsAndSettleOperation} */
-  partiallySettleLegsAndSettle(
-    input: PartiallySettleLegsAndSettleInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(partiallySettleLegsAndSettleOperation(input), options);
   }
 
   /** {@inheritDoc revertSettlementPreparationOperation} */
@@ -441,66 +405,6 @@ export class RfqClient {
     return this.convergence
       .operations()
       .execute(settleOperation(input), options);
-  }
-
-  /** {@inheritDoc settleOnePartyDefaultOperation} */
-  settleOnePartyDefault(
-    input: SettleOnePartyDefaultInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(settleOnePartyDefaultOperation(input), options);
-  }
-
-  /** {@inheritDoc settleTwoPartyDefaultOperation} */
-  settleTwoPartyDefault(
-    input: SettleTwoPartyDefaultInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(settleTwoPartyDefaultOperation(input), options);
-  }
-
-  /** {@inheritDoc unlockResponseCollateralOperation} */
-  unlockResponseCollateral(
-    input: UnlockResponseCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(unlockResponseCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc unlockResponsesCollateralOperation} */
-  unlockResponsesCollateral(
-    input: UnlockResponsesCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(unlockResponsesCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc unlockRfqCollateralOperation} */
-  unlockRfqCollateral(
-    input: UnlockRfqCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(unlockRfqCollateralOperation(input), options);
-  }
-
-  /** {@inheritDoc unlockRfqsCollateralOperation} */
-  unlockRfqsCollateral(
-    input: UnlockRfqsCollateralInput,
-    options?: OperationOptions
-  ) {
-    return this.convergence
-      .operations()
-      .execute(unlockRfqsCollateralOperation(input), options);
   }
 
   /** {@inheritDoc sendTokensOperation} */

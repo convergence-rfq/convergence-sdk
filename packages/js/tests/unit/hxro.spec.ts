@@ -132,11 +132,6 @@ describe('unit.hxro', () => {
       response: rfqResponse.address,
     });
 
-    await cvgMaker.rfqs().settleOnePartyDefault({
-      rfq: rfq.address,
-      response: rfqResponse.address,
-    });
-
     await cvgMaker.rfqs().revertSettlementPreparation({
       response: rfqResponse.address,
       side: 'maker',
@@ -195,11 +190,6 @@ describe('unit.hxro', () => {
       response: rfqResponse.address,
     });
     await cvgMaker.rfqs().settle({
-      response: rfqResponse.address,
-    });
-
-    await cvgMaker.rfqs().settleOnePartyDefault({
-      rfq: rfq.address,
       response: rfqResponse.address,
     });
 

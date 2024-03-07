@@ -16,7 +16,7 @@ const initializeConfigCmd = (c: Command) =>
     },
   ]);
 
-export const initializeConfig = async (opts: Opts) => {
+const initializeConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     const response = await cvg
@@ -36,7 +36,7 @@ const modifyConfigCmd = (c: Command) =>
     },
   ]);
 
-export const modifyConfig = async (opts: Opts) => {
+const modifyConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     const response = await cvg
@@ -51,7 +51,7 @@ export const modifyConfig = async (opts: Opts) => {
 const displayConfigCmd = (c: Command) =>
   addCmd(c, 'display-config', 'displays hxro config', displayConfig, []);
 
-export const displayConfig = async (opts: Opts) => {
+const displayConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     const config = await cvg.hxro().fetchConfig();
@@ -64,7 +64,7 @@ export const displayConfig = async (opts: Opts) => {
 const displayProductsCmd = (c: Command) =>
   addCmd(c, 'display-products', 'displays hxro products', displayProducts, []);
 
-export const displayProducts = async (opts: Opts) => {
+const displayProducts = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
     const products: HxroProductInfo[] = await cvg.hxro().fetchProducts();
@@ -93,7 +93,7 @@ const initializeOperatorTRGCmd = (c: Command) =>
     ]
   );
 
-export const initializeOperatorTRG = async (opts: Opts) => {
+const initializeOperatorTRG = async (opts: Opts) => {
   const cvg = await createCvg(opts);
 
   try {

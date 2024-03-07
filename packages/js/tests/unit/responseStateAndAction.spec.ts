@@ -72,22 +72,6 @@ describe('unit.responseStateAndAction', () => {
       }).responseState
     ).toBe('Cancelled');
 
-    //Unlock Response Collateral for maker
-    refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
-      address: rfqResponse.address,
-    });
-    expect(
-      takerCvg.rfqs().getResponseStateAndAction({
-        response: refreshedResponse,
-        rfq,
-        caller: 'maker',
-        responseSide: 'bid',
-      }).responseAction
-    ).toBe('UnlockCollateral');
-    await makerCvg.rfqs().unlockResponseCollateral({
-      response: refreshedResponse.address,
-    });
-
     //Cleanup for maker
     refreshedResponse = await makerCvg.rfqs().findResponseByAddress({
       address: rfqResponse.address,

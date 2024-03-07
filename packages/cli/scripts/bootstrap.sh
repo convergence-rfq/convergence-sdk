@@ -36,6 +36,8 @@ convergence protocol add-print-trade-provider --print-trade-provider-program $HX
 convergence hxro initialize-config --valid-mpg $HXRO_MPG --rpc-endpoint=$RPC_ENDPOINT
 convergence hxro initialize-operator-trg --rpc-endpoint=$RPC_ENDPOINT
 
+convergence spot-instrument initialize-config --fee-bps "0.01" --rpc-endpoint=$RPC_ENDPOINT
+
 convergence protocol add-instrument --instrument-program=$SPOT_INSTRUMENT                --can-be-used-as-quote=true  --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4 --rpc-endpoint=$RPC_ENDPOINT  
 convergence protocol add-instrument --instrument-program=$PSYOPTIONS_EUROPEAN_INSTRUMENT --can-be-used-as-quote=false --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4 --rpc-endpoint=$RPC_ENDPOINT
 convergence protocol add-instrument --instrument-program=$PSYOPTIONS_AMERICAN_INSTRUMENT --can-be-used-as-quote=false --validate-data-account-amount=3 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4 --rpc-endpoint=$RPC_ENDPOINT

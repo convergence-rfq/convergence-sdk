@@ -16,6 +16,7 @@ import {
   toPriceOracle,
   PrintTradeLeg,
   HxroPrintTradeProviderConfig,
+  SpotInstrumentConfig,
 } from '@convergence-rfq/sdk';
 
 import { formatInstrument, assertInstrument } from './helpers';
@@ -183,4 +184,9 @@ export const logRfq = (r: Rfq) => {
 export const logHxroConfig = (d: HxroPrintTradeProviderConfig) => {
   l('Address:', d.address.toString());
   l('Valid Hxro market product group:', d.validMpg.toString());
+};
+
+export const logSpotInstrumentConfig = (d: SpotInstrumentConfig) => {
+  l('Address:', d.address.toString());
+  l('Quote fees:', d.feeBps.toString());
 };
