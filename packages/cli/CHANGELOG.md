@@ -1,5 +1,16 @@
 # @convergence-rfq/cli
 
+## 6.1.0
+
+### Minor Changes
+
+- Remove collateral requirements, add quote spot fees, add spot instrument config, remove operations to unlock collateral or settle defaults
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.1.0
+
 ## 6.0.1
 
 ### Patch Changes
