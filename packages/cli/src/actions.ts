@@ -623,7 +623,12 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
         !registerMintAddresses.includes(t.address.toString())
     );
 
-    let baseAssetIndexToStart = Math.max(...baseAssets.map((b) => b.index)) + 1;
+    let baseAssetIndexToStart;
+    if (baseAssets?.length > 0) {
+      baseAssetIndexToStart = Math.max(...baseAssets.map((b) => b.index)) + 1;
+    } else {
+      baseAssetIndexToStart = 0;
+    }
     // eslint-disable-next-line no-console
     console.log('last baseAssetIndex', baseAssetIndexToStart - 1);
     for (const token of jupTokensToAdd) {

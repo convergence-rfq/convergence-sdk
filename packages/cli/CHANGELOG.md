@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.2.1
+
+### Patch Changes
+
+- fix addJupBaseAssets command
+- Updated dependencies
+  - @convergence-rfq/sdk@6.2.1
+
 ## 6.2.0
 
 ### Minor Changes
