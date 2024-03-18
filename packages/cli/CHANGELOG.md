@@ -1,5 +1,16 @@
 # @convergence-rfq/cli
 
+## 6.3.0
+
+### Minor Changes
+
+- Update program ids and add vault operator program
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.3.0
+
 ## 6.2.1
 
 ### Patch Changes
