@@ -1281,10 +1281,10 @@
     bn.js "^5.2.0"
     debug "^4.3.3"
 
-"@convergence-rfq/hxro-print-trade-provider@3.8.0":
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/hxro-print-trade-provider/-/hxro-print-trade-provider-3.8.0.tgz#fbde20acc78cd67dd7320b319a5b43d31d9a8f2b"
-  integrity sha512-rTPysSD38HPJp1rOkm1Pu2kjSK4Q9FRYkSRcuNmnZpj9h+goqzHrqVCS7jVOWS7D2lj0DqEXidFl/TSkraTopw==
+"@convergence-rfq/hxro-print-trade-provider@3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/hxro-print-trade-provider/-/hxro-print-trade-provider-3.9.0.tgz#69ff37b155c10ec04db685ec07b85cc4fc7679a1"
+  integrity sha512-taK9TCm42h9BcH/IrrQ0lYa9Q6MqsyIiUWAMJNIcwRlNc93X/eNLRFtr+KcvXqt8WWPhtxCU81xgicSGf19DHQ==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
@@ -1292,10 +1292,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/psyoptions-american-instrument@3.8.0":
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-american-instrument/-/psyoptions-american-instrument-3.8.0.tgz#4f762d39c786ca06a4138df9f03b8cb1d2fef1fa"
-  integrity sha512-rfyiJb+Am86BUQaeEMGXiNtw7AI13S5jL7OabMd80XpQ0hY6ylnzGyZFNByq4foDrYXPlHo3O6TpBBIbGiJMmQ==
+"@convergence-rfq/psyoptions-american-instrument@3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-american-instrument/-/psyoptions-american-instrument-3.9.0.tgz#36539c537269785cd77c4fa4129d3b370c9e0b41"
+  integrity sha512-WHK/hnx2pduaK3DxNpf8Y7oiwVBQ6jzKerwRkQveAU3QQZR4I7FsPE79Z7uJuW8XbRyPG2Zs1J+MB4YcNxDkdw==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
@@ -1303,10 +1303,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/psyoptions-european-instrument@3.8.0":
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-european-instrument/-/psyoptions-european-instrument-3.8.0.tgz#25b097016f57d2fa59264a61ac1a866f5294bc5f"
-  integrity sha512-AtqrOMFmeBdg4rYZE7ISKdjzTmZczHSrECKmkGud42C5sZkS9+dNI7I7k0UMThDhBGEu9CwbXEWsQXfJw9e+aw==
+"@convergence-rfq/psyoptions-european-instrument@3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/psyoptions-european-instrument/-/psyoptions-european-instrument-3.9.0.tgz#dc0c9555534db280be9c9a2b492e293755916767"
+  integrity sha512-U7Lk1hLAu0A4y60LPNTjH0i7AB4qq59gKUZ+i5Yf+yh6QzVQ3rP2lRL8LVBV/dMi+4CEOonIWFCwv4hdKE3uzg==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
@@ -1314,10 +1314,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/rfq@3.8.0":
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-3.8.0.tgz#545a39766832f5bd1050acecbe93a4fd1ef4d6a1"
-  integrity sha512-oKaJ0xsHZhxIf2jCPzYE0yDSOqbdZzWqwL5IGVVZkPac6IWsQwfa11PiaSE2Xt5R+gJH1VyKFUranwCE+DQBEg==
+"@convergence-rfq/rfq@3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/rfq/-/rfq-3.9.0.tgz#a3b380c8017d2a6ae699ccda41498381217e8e24"
+  integrity sha512-/+3zEMnRUkVEHneVwxdDN3yzrzXE24O+2WRBmd6ILZeGPiS6s7RnecEudQuc2l1Ss18gCC6UwPqkvAt+8lCm4w==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
@@ -1325,10 +1325,10 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/risk-engine@3.8.0":
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-3.8.0.tgz#05df6a6bdef2ddbd18ba4d55df1b5329a85b8222"
-  integrity sha512-b/WimuZR31HP6aW09xnzjlmZc/hZ3mi+7Wxz1OxcUiFUbtfKJbEFzw0+MAMI9lOulk+VFxb4yd7UBP8Y3AJVAw==
+"@convergence-rfq/risk-engine@3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/risk-engine/-/risk-engine-3.9.0.tgz#4254d1f9ed4b9d6dbb04342fdea223515608e0cb"
+  integrity sha512-brir10dX3vWsQodlBm8jFY+1RbGrYZwIAjAvxND/PjC2P7xZ32VLxIZVAEnfcc9JZgGEwWoWUOPjfsAnAVkqhg==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"
@@ -1336,10 +1336,21 @@
     "@solana/web3.js" "^1.56.2"
     bn.js "^5.2.0"
 
-"@convergence-rfq/spot-instrument@3.8.0":
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-3.8.0.tgz#5e1a5f294a667b96ba9fffa2542c9c336765067e"
-  integrity sha512-+va2znXJQZRMr4WsUPUsrLPXTajSuQBtE61c5IfABbrbCokyYUJy3pSDTNY9HuGjErs+M2TiyTlUSSmgK4B2xQ==
+"@convergence-rfq/spot-instrument@3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/spot-instrument/-/spot-instrument-3.9.0.tgz#f5fbe3c29db66192622fcf22c66161c4aca80453"
+  integrity sha512-odOtMFQ4/hpQAyxXokaJ5ZVBx+zfG7htr/IfRVX63QbPSuB4aLUisWb2cqmC+0Nj4mzlXU6rs+gWkdaBuV7Nyg==
+  dependencies:
+    "@convergence-rfq/beet" "^0.7.10"
+    "@convergence-rfq/beet-solana" "^0.4.11"
+    "@solana/spl-token" "^0.3.5"
+    "@solana/web3.js" "^1.56.2"
+    bn.js "^5.2.0"
+
+"@convergence-rfq/vault-operator@^3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@convergence-rfq/vault-operator/-/vault-operator-3.9.0.tgz#bea35581df1bd22cf75cb1aab34933613294a70c"
+  integrity sha512-0E5gYdD+haVz5Cd++GcZ6UJ0ucgvakb3maviELtD6rv8mBDBy5D6nER6c135xgF84PFEt2p2V0d2sz0awa5rWw==
   dependencies:
     "@convergence-rfq/beet" "^0.7.10"
     "@convergence-rfq/beet-solana" "^0.4.11"

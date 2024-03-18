@@ -9,6 +9,7 @@ import * as spotInstrument from '@convergence-rfq/spot-instrument';
 import * as psyoptionsEuropeanInstrument from '@convergence-rfq/psyoptions-european-instrument';
 import * as psyoptionsAmericanInstrument from '@convergence-rfq/psyoptions-american-instrument';
 import * as hxroPrintTradeProvider from '@convergence-rfq/hxro-print-trade-provider';
+import * as vaultOperator from '@convergence-rfq/vault-operator';
 
 export type ChildProccess = ChildProcessWithoutNullStreams;
 
@@ -91,6 +92,9 @@ const getBaseArgs = () => [
   '--bpf-program',
   hxroPrintTradeProvider.PROGRAM_ADDRESS,
   path.join(FIXTURES, 'programs/hxro_print_trade_provider.so'),
+  '--bpf-program',
+  vaultOperator.PROGRAM_ADDRESS,
+  path.join(FIXTURES, 'programs/vault_operator.so'),
 
   '--account-dir',
   path.join(FIXTURES, 'accounts'),
