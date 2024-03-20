@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.3.1
+
+### Patch Changes
+
+- Add tx-priority-fee argument to cli and modify sdk txPriority to take custom values
+
 ## 6.3.0
 
 ### Minor Changes
