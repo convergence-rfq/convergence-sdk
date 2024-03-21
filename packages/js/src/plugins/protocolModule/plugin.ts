@@ -77,10 +77,3 @@ declare module '../../Convergence' {
     protocol(): ProtocolClient;
   }
 }
-
-declare module '../protocolModule/ProtocolClient' {
-  interface ProtocolClient {
-    // TODO this method actually does not exist
-    getProtocol(): Protocol;
-  }
-}

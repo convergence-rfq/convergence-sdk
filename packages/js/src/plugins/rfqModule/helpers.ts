@@ -1,6 +1,10 @@
 import { AccountMeta, PublicKey } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { ApiLeg } from '@convergence-rfq/rfq';
+import {
+  ApiLeg,
+  FixedSize as SolitaFixedSize,
+  fixedSizeBeet,
+} from '@convergence-rfq/rfq';
 import {
   Confirmation,
   Quote,
@@ -8,7 +12,7 @@ import {
   isFixedSizeQuoteAsset,
   isQuoteStandard,
 } from '../rfqModule/models';
-import { UnparsedAccount } from '../../types';
+import { UnparsedAccount, createSerializerFromFixableBeet } from '../../types';
 import { Convergence } from '../../Convergence';
 import {
   LegInstrument,
@@ -170,3 +174,9 @@ export function extractLegsMultiplier(
   }
   throw new Error('Invalid fixed size');
 }
+
+export const serializeFixedSizeData = (fixedSize: SolitaFixedSize): Buffer => {
+  const fixedSizeSerializer = createSerializerFromFixableBeet(fixedSizeBeet);
+
+  return fixedSizeSerializer.serialize(fixedSize);
+};
