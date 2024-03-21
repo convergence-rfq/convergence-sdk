@@ -58,6 +58,11 @@ export const addDefaultArgs = (cmd: any) => {
     'transaction priority fee can be [none : 0 mcLamports , normal : 1 mcLamports, high : 10 mcLamports, turbo : 100 mcLamports, custom : <number> mcLamports]',
     'none'
   );
+  cmd.option(
+    '--max-retries <number>',
+    'maximum numbers of retries for sending failed txs',
+    0
+  );
   cmd.option('--keypair-file <string>', 'keypair file', DEFAULT_KEYPAIR_FILE);
   cmd.option('--verbose <boolean>', 'verbose', false);
   return cmd;
@@ -174,4 +179,12 @@ export const resolveTxPriorityArg = (
         return 'none';
       }
   }
+};
+
+export const resolveMaxRetriesArg = (maxRetries: string): number => {
+  const maxRetriesInNumber = Number(maxRetries);
+  if (isNaN(maxRetriesInNumber) || maxRetriesInNumber < 0) {
+    return 0;
+  }
+  return maxRetriesInNumber;
 };
