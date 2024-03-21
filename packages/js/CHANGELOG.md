@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.3.2
+
+### Patch Changes
+
+- Add max-retries arg to cli and also implement maxRetries logic for retrying sending failed txs to chain again
+
 ## 6.3.1
 
 ### Patch Changes
