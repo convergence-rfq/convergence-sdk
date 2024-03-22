@@ -267,14 +267,6 @@ export class TransactionBuilder<C extends object = object> {
     convergence: Convergence,
     confirmOptions?: ConfirmOptions
   ): Promise<{ response: SendAndConfirmTransactionResponse } & C> {
-    const { maxRetries } = convergence;
-
-    if (maxRetries > 0) {
-      confirmOptions = {
-        ...confirmOptions,
-        maxRetries,
-      };
-    }
     const response = await convergence
       .rpc()
       .sendAndConfirmTransaction(this, [], confirmOptions);

@@ -21,6 +21,7 @@ import {
   extractBooleanString,
   getSigConfirmation,
   getSize,
+  expirationRetry,
 } from './helpers';
 import {
   logPk,
@@ -110,13 +111,17 @@ export const mintTo = async (opts: Opts) => {
 export const initializeProtocol = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response, protocol } = await cvg.protocol().initialize({
-      collateralMint: new PublicKey(opts.collateralMint),
-      protocolTakerFee: opts.protocolTakerFee,
-      protocolMakerFee: opts.protocolMakerFee,
-      settlementTakerFee: opts.settlementTakerFee,
-      settlementMakerFee: opts.settlementMakerFee,
-    });
+    const { response, protocol } = await expirationRetry(
+      () =>
+        cvg.protocol().initialize({
+          collateralMint: new PublicKey(opts.collateralMint),
+          protocolTakerFee: opts.protocolTakerFee,
+          protocolMakerFee: opts.protocolMakerFee,
+          settlementTakerFee: opts.settlementTakerFee,
+          settlementMakerFee: opts.settlementMakerFee,
+        }),
+      opts
+    );
     logPk(protocol.address);
     logResponse(response);
   } catch (e) {
@@ -127,16 +132,21 @@ export const initializeProtocol = async (opts: Opts) => {
 export const addInstrument = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.protocol().addInstrument({
-      authority: cvg.rpc().getDefaultFeePayer(),
-      instrumentProgram: new PublicKey(opts.instrumentProgram),
-      canBeUsedAsQuote: extractBooleanString(opts, 'canBeUsedAsQuote'),
-      validateDataAccountAmount: opts.validateDataAccountAmount,
-      prepareToSettleAccountAmount: opts.prepareToSettleAccountAmount,
-      settleAccountAmount: opts.settleAccountAmount,
-      revertPreparationAccountAmount: opts.revertPreparationAccountAmount,
-      cleanUpAccountAmount: opts.cleanUpAccountAmount,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.protocol().addInstrument({
+          authority: cvg.rpc().getDefaultFeePayer(),
+          instrumentProgram: new PublicKey(opts.instrumentProgram),
+          canBeUsedAsQuote: extractBooleanString(opts, 'canBeUsedAsQuote'),
+          validateDataAccountAmount: opts.validateDataAccountAmount,
+          prepareToSettleAccountAmount: opts.prepareToSettleAccountAmount,
+          settleAccountAmount: opts.settleAccountAmount,
+          revertPreparationAccountAmount: opts.revertPreparationAccountAmount,
+          cleanUpAccountAmount: opts.cleanUpAccountAmount,
+        }),
+      opts
+    );
+
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -146,11 +156,20 @@ export const addInstrument = async (opts: Opts) => {
 export const addPrintTradeProvider = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.protocol().addPrintTradeProvider({
-      printTradeProviderProgram: new PublicKey(opts.printTradeProviderProgram),
-      settlementCanExpire: extractBooleanString(opts, 'settlementCanExpire'),
-      validateResponseAccountAmount: opts.validateResponseAccountAmount,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.protocol().addPrintTradeProvider({
+          printTradeProviderProgram: new PublicKey(
+            opts.printTradeProviderProgram
+          ),
+          settlementCanExpire: extractBooleanString(
+            opts,
+            'settlementCanExpire'
+          ),
+          validateResponseAccountAmount: opts.validateResponseAccountAmount,
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -477,17 +496,21 @@ export const getCollateral = async (opts: Opts) => {
 export const initializeRiskEngine = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.riskEngine().initializeConfig({
-      collateralMintDecimals: opts.collateralMintDecimals,
-      minCollateralRequirement: opts.minCollateralRequirement,
-      collateralForFixedQuoteAmountRfqCreation:
-        opts.collateralForFixedQuoteAmountRfqCreation,
-      safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
-      overallSafetyFactor: opts.overallSafetyFace,
-      acceptedOracleStaleness: opts.acceptedOracleStaleness,
-      acceptedOracleConfidenceIntervalPortion:
-        opts.acceptedOracleConfidenceIntervalPortion,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.riskEngine().initializeConfig({
+          collateralMintDecimals: opts.collateralMintDecimals,
+          minCollateralRequirement: opts.minCollateralRequirement,
+          collateralForFixedQuoteAmountRfqCreation:
+            opts.collateralForFixedQuoteAmountRfqCreation,
+          safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
+          overallSafetyFactor: opts.overallSafetyFace,
+          acceptedOracleStaleness: opts.acceptedOracleStaleness,
+          acceptedOracleConfidenceIntervalPortion:
+            opts.acceptedOracleConfidenceIntervalPortion,
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -497,17 +520,21 @@ export const initializeRiskEngine = async (opts: Opts) => {
 export const updateRiskEngine = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.riskEngine().updateConfig({
-      collateralMintDecimals: opts.collateralMintDecimals,
-      minCollateralRequirement: opts.minCollateralRequirement,
-      collateralForFixedQuoteAmountRfqCreation:
-        opts.collateralForFixedQuoteAmountRfqCreation,
-      safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
-      overallSafetyFactor: opts.overallSafetyFace,
-      acceptedOracleStaleness: opts.acceptedOracleStaleness,
-      acceptedOracleConfidenceIntervalPortion:
-        opts.acceptedOracleConfidenceIntervalPortion,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.riskEngine().updateConfig({
+          collateralMintDecimals: opts.collateralMintDecimals,
+          minCollateralRequirement: opts.minCollateralRequirement,
+          collateralForFixedQuoteAmountRfqCreation:
+            opts.collateralForFixedQuoteAmountRfqCreation,
+          safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
+          overallSafetyFactor: opts.overallSafetyFace,
+          acceptedOracleStaleness: opts.acceptedOracleStaleness,
+          acceptedOracleConfidenceIntervalPortion:
+            opts.acceptedOracleConfidenceIntervalPortion,
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
