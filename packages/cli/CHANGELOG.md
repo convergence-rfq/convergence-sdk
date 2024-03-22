@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.3.3
+
+### Patch Changes
+
+- Update max-retries logic
+- Updated dependencies
+  - @convergence-rfq/sdk@6.3.3
+
 ## 6.3.2
 
 ### Patch Changes
