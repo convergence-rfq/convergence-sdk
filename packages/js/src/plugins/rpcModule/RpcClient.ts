@@ -233,13 +233,6 @@ export class RpcClient {
 
     const rawTransaction = transaction.serialize();
 
-    const { maxRetries } = this.convergence;
-    if (maxRetries > 0) {
-      confirmOptions = {
-        ...confirmOptions,
-        maxRetries,
-      };
-    }
     const signature = await this.sendRawTransaction(
       rawTransaction,
       confirmOptions,

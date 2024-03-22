@@ -188,3 +188,31 @@ export const resolveMaxRetriesArg = (maxRetries: string): number => {
   }
   return maxRetriesInNumber;
 };
+
+export async function expirationRetry<T>(
+  fn: () => Promise<T>,
+  opts: Opts
+): Promise<T> {
+  let { maxRetries } = opts;
+  maxRetries = resolveMaxRetriesArg(maxRetries);
+  if (maxRetries === 0) return await fn();
+  let retryCount = 0;
+
+  while (retryCount < maxRetries) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (!isTransactionExpiredBlockheightExceededError(error)) throw error;
+      retryCount++;
+      console.error(`Attempt ${retryCount + 1} tx expired. Retrying...`);
+    }
+  }
+  throw new Error('Max Tx Expiration retries exceeded');
+}
+
+function isTransactionExpiredBlockheightExceededError(error: unknown) {
+  return (
+    error instanceof Error &&
+    error.message.includes('TransactionExpiredBlockheightExceededError')
+  );
+}
