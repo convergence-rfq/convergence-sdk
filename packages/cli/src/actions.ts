@@ -179,7 +179,10 @@ export const addPrintTradeProvider = async (opts: Opts) => {
 export const addBaseAsset = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const baseAssets = await cvg.protocol().getBaseAssets();
+    const baseAssets = await expirationRetry(
+      () => cvg.protocol().getBaseAssets(),
+      opts
+    );
     const { oracleSource } = opts;
 
     let priceOracle: PriceOracle;
@@ -331,7 +334,10 @@ export const registerMint = async (opts: Opts) => {
   };
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.protocol().registerMint(getMintArgs());
+    const { response } = await expirationRetry(
+      () => cvg.protocol().registerMint(getMintArgs()),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -563,10 +569,14 @@ export const getRiskEngineConfig = async (opts: Opts) => {
 export const setRiskEngineInstrumentType = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.riskEngine().setInstrumentType({
-      instrumentProgram: new PublicKey(opts.program),
-      instrumentType: opts.type,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.riskEngine().setInstrumentType({
+          instrumentProgram: new PublicKey(opts.program),
+          instrumentType: opts.type,
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -577,21 +587,25 @@ export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
   const newValue = opts.newValue.split(',').map((x: string) => parseFloat(x));
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
-      changes: [
-        {
-          value: toRiskCategoryInfo(newValue[0], newValue[1], [
-            toScenario(newValue[2], newValue[3]),
-            toScenario(newValue[4], newValue[5]),
-            toScenario(newValue[6], newValue[7]),
-            toScenario(newValue[8], newValue[9]),
-            toScenario(newValue[10], newValue[11]),
-            toScenario(newValue[12], newValue[13]),
-          ]),
-          category: opts.category,
-        },
-      ],
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.riskEngine().setRiskCategoriesInfo({
+          changes: [
+            {
+              value: toRiskCategoryInfo(newValue[0], newValue[1], [
+                toScenario(newValue[2], newValue[3]),
+                toScenario(newValue[4], newValue[5]),
+                toScenario(newValue[6], newValue[7]),
+                toScenario(newValue[8], newValue[9]),
+                toScenario(newValue[10], newValue[11]),
+                toScenario(newValue[12], newValue[13]),
+              ]),
+              category: opts.category,
+            },
+          ],
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);

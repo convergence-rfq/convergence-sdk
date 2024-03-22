@@ -41,9 +41,10 @@ const modifyConfigCmd = (c: Command) =>
 const modifyConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const response = await cvg
-      .hxro()
-      .modifyConfig({ validMpg: new PublicKey(opts.validMpg) });
+    const response = await expirationRetry(
+      () => cvg.hxro().modifyConfig({ validMpg: new PublicKey(opts.validMpg) }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
