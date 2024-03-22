@@ -4,6 +4,14 @@ import type { Convergence } from '../../Convergence';
 import {
   createVaultOperation,
   createVaultOperationHandler,
+  findVaultByAddressOperation,
+  findVaultByAddressOperationHandler,
+  findVaultsOperation,
+  findVaultsOperationHandler,
+  confirmAndPrepareVaultOperation,
+  confirmAndPrepareVaultOperationHandler,
+  withdrawVaultTokensOperation,
+  withdrawVaultTokensOperationHandler,
 } from './operations';
 import { vaultOperatorProgram } from './program';
 import { VaultOperatorClient } from './client';
@@ -21,6 +29,19 @@ export const vaultOperatorModule = (): ConvergencePlugin => ({
 
     const op = cvg.operations();
     op.register(createVaultOperation, createVaultOperationHandler);
+    op.register(
+      findVaultByAddressOperation,
+      findVaultByAddressOperationHandler
+    );
+    op.register(findVaultsOperation, findVaultsOperationHandler);
+    op.register(
+      confirmAndPrepareVaultOperation,
+      confirmAndPrepareVaultOperationHandler
+    );
+    op.register(
+      withdrawVaultTokensOperation,
+      withdrawVaultTokensOperationHandler
+    );
 
     cvg.vaultOperator = function () {
       return new VaultOperatorClient(this);

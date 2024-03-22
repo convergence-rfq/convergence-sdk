@@ -62,6 +62,8 @@ export type CreateVaultInput = {
 };
 
 export type CreateVaultOutput = {
+  vaultAddress: PublicKey;
+  rfqAddress: PublicKey;
   response: SendAndConfirmTransactionResponse;
 };
 
@@ -72,28 +74,33 @@ export const createVaultOperationHandler: OperationHandler<CreateVaultOperation>
       cvg: Convergence,
       scope: OperationScope
     ) => {
-      const builder = await CreateVaultBuilder(cvg, operation.input, scope);
+      const { builder, vaultAddress, rfqAddress } = await createVaultBuilder(
+        cvg,
+        operation.input,
+        scope
+      );
 
       const output = await builder.sendAndConfirm(cvg, scope.confirmOptions);
 
       scope.throwIfCanceled();
 
-      return output;
+      return { ...output, vaultAddress, rfqAddress };
     },
   };
 
 export type CreateVaultBuilderParams = CreateVaultInput;
 
 export type CreateVaultBuilderResult = {
-  prerequisitesBuilder?: TransactionBuilder;
-  createVaultBuilder: TransactionBuilder;
+  builder: TransactionBuilder;
+  vaultAddress: PublicKey;
+  rfqAddress: PublicKey;
 };
 
-export const CreateVaultBuilder = async (
+export const createVaultBuilder = async (
   cvg: Convergence,
   params: CreateVaultBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
+): Promise<CreateVaultBuilderResult> => {
   const { programs, payer = cvg.rpc().getDefaultFeePayer() } = options;
   const {
     acceptablePriceLimit,
@@ -130,6 +137,12 @@ export const CreateVaultBuilder = async (
 
   const { ataPubKey: vaultTokens, txBuilder: vaultAtaBuilder } =
     await getOrCreateATAtxBuilder(cvg, sendMint, operator, programs);
+  const { txBuilder: receivedAtaBuilder } = await getOrCreateATAtxBuilder(
+    cvg,
+    receiveMint,
+    operator,
+    programs
+  );
   const creatorTokens = cvg.tokens().pdas().associatedTokenAccount({
     mint: sendMint,
     owner: creator.publicKey,
@@ -191,7 +204,7 @@ export const CreateVaultBuilder = async (
     quote.decimals
   ).mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)));
 
-  const createVaultBuilder = TransactionBuilder.make()
+  const builder = TransactionBuilder.make()
     .setFeePayer(payer)
     .addTxPriorityFeeIx(cvg)
     .add(transferLamportIx, {
@@ -240,8 +253,11 @@ export const CreateVaultBuilder = async (
     });
 
   if (vaultAtaBuilder !== undefined) {
-    createVaultBuilder.prepend(vaultAtaBuilder);
+    builder.prepend(vaultAtaBuilder);
+  }
+  if (receivedAtaBuilder !== undefined) {
+    builder.prepend(receivedAtaBuilder);
   }
 
-  return createVaultBuilder;
+  return { builder, vaultAddress: vaultParams.publicKey, rfqAddress: rfqPda };
 };

@@ -729,3 +729,7 @@ export const ensureHxroOperatorTRGInitialized = async (
 
   hxroOperatorTRGInitialized = true;
 };
+
+export const applySpotQuoteFee = (value: number) => {
+  return value * 0.99;
+};

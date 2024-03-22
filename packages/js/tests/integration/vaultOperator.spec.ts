@@ -1,10 +1,18 @@
+import expect from 'expect';
 import { Mint } from '../../src';
-import { createUserCvg } from '../helpers';
+import {
+  applySpotQuoteFee,
+  createUserCvg,
+  fetchTokenAmount,
+  runInParallelWithWait,
+  sleep,
+} from '../helpers';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from '../constants';
 
 describe('integration.vaultOperator', () => {
   const takerCvg = createUserCvg('taker');
   const makerCvg = createUserCvg('maker');
+  const executorCvg = createUserCvg('dao'); // any user actually
 
   let baseMintBTC: Mint;
   let quoteMint: Mint;
@@ -19,65 +27,120 @@ describe('integration.vaultOperator', () => {
   });
 
   it('sell', async () => {
-    await takerCvg.vaultOperator().create({
+    const [takerBtcBefore, takerQuoteBefore] = await Promise.all([
+      fetchTokenAmount(takerCvg, baseMintBTC.address),
+      fetchTokenAmount(takerCvg, quoteMint.address),
+    ]);
+
+    const responsePrice = 52000;
+    const size = 2;
+
+    const { vaultAddress } = await takerCvg.vaultOperator().create({
       acceptablePriceLimit: 50000,
       legMint: baseMintBTC,
       quoteMint,
       orderDetails: {
         type: 'sell',
-        legAmount: 2,
+        legAmount: size,
       },
       activeWindow: 600,
       settlingWindow: 600,
     });
 
-    // const baseAmount = 1.536_421;
-    // const quoteAmount = 22_000.86;
-    // const feeAmount = quoteAmount * 0.01; // 1% is specified in fixtures
+    const { vault, rfq } = await takerCvg
+      .vaultOperator()
+      .findByAddress({ address: vaultAddress });
 
-    // const { rfq } = await createRfq(takerCvg, baseAmount, 'sell');
-    // expect(rfq).toHaveProperty('address');
+    const { rfqResponse: response } = await makerCvg
+      .rfqs()
+      .respond({ rfq: rfq.address, bid: { price: responsePrice } });
+    await executorCvg
+      .vaultOperator()
+      .confirmAndPrepare({ vault, rfq, response });
+    await makerCvg.rfqs().prepareSettlement({
+      response: response.address,
+      rfq: rfq.address,
+      legAmountToPrepare: 1,
+    });
+    await makerCvg.rfqs().settle({
+      response: response.address,
+    });
+    await executorCvg.rfqs().cleanUpResponse({ response: response.address });
 
-    // const { rfqResponse } = await respondToRfq(makerCvg, rfq, quoteAmount);
-    // expect(rfqResponse).toHaveProperty('address');
+    await executorCvg.vaultOperator().withdrawTokens({ vault, rfq, response });
 
-    // const confirmResponse = await takerCvg.rfqs().confirmResponse({
-    //   taker: takerCvg.identity(),
-    //   rfq: rfq.address,
-    //   response: rfqResponse.address,
-    //   side: 'bid',
-    // });
+    const [takerBtcAfter, takerQuoteAfter] = await Promise.all([
+      fetchTokenAmount(takerCvg, baseMintBTC.address),
+      fetchTokenAmount(takerCvg, quoteMint.address),
+    ]);
 
-    // expect(confirmResponse.response).toHaveProperty('signature');
-
-    // const [takerBtcBefore, takerQuoteBefore] = await Promise.all([
-    //   fetchTokenAmount(takerCvg, baseMintBTC.address),
-    //   fetchTokenAmount(takerCvg, quoteMint.address),
-    // ]);
-
-    // const takerResult = await prepareRfqSettlement(takerCvg, rfq, rfqResponse);
-    // expect(takerResult.response).toHaveProperty('signature');
-
-    // const makerResult = await prepareRfqSettlement(makerCvg, rfq, rfqResponse);
-    // expect(makerResult.response).toHaveProperty('signature');
-
-    // const settleResult = await settleRfq(takerCvg, rfq, rfqResponse);
-    // expect(settleResult.response).toHaveProperty('signature');
-
-    // const [takerBtcAfter, takerQuoteAfter] = await Promise.all([
-    //   fetchTokenAmount(takerCvg, baseMintBTC.address),
-    //   fetchTokenAmount(takerCvg, quoteMint.address),
-    // ]);
-
-    // // TODO: This does not seem right in terms of handling precision
-    // expect(takerQuoteAfter).toBeCloseTo(
-    //   takerQuoteBefore + quoteAmount - feeAmount
-    // );
-    // expect(takerBtcAfter).toBeCloseTo(takerBtcBefore - baseAmount);
+    expect(takerQuoteAfter).toBeCloseTo(
+      takerQuoteBefore + applySpotQuoteFee(responsePrice * size)
+    );
+    expect(takerBtcAfter).toBeCloseTo(takerBtcBefore - size);
   });
 
   it('buy', async () => {
-    await takerCvg.vaultOperator().create({
+    const [takerBtcBefore, takerQuoteBefore] = await Promise.all([
+      fetchTokenAmount(takerCvg, baseMintBTC.address),
+      fetchTokenAmount(takerCvg, quoteMint.address),
+    ]);
+
+    const responsePrice = 40000;
+    const quoteSize = 80000;
+
+    const { vaultAddress } = await takerCvg.vaultOperator().create({
+      acceptablePriceLimit: 40000,
+      legMint: baseMintBTC,
+      quoteMint,
+      orderDetails: {
+        type: 'buy',
+        quoteAmount: quoteSize,
+      },
+      activeWindow: 600,
+      settlingWindow: 600,
+    });
+
+    const { vault, rfq } = await takerCvg
+      .vaultOperator()
+      .findByAddress({ address: vaultAddress });
+
+    const { rfqResponse: response } = await makerCvg
+      .rfqs()
+      .respond({ rfq: rfq.address, ask: { price: responsePrice } });
+    await executorCvg
+      .vaultOperator()
+      .confirmAndPrepare({ vault, rfq, response });
+    await makerCvg.rfqs().prepareSettlement({
+      response: response.address,
+      rfq: rfq.address,
+      legAmountToPrepare: 1,
+    });
+    await executorCvg.rfqs().settle({
+      response: response.address,
+    });
+    await executorCvg.rfqs().cleanUpResponse({ response: response.address });
+
+    await executorCvg.vaultOperator().withdrawTokens({ vault, rfq, response });
+
+    const [takerBtcAfter, takerQuoteAfter] = await Promise.all([
+      fetchTokenAmount(takerCvg, baseMintBTC.address),
+      fetchTokenAmount(takerCvg, quoteMint.address),
+    ]);
+
+    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore - quoteSize);
+    expect(takerBtcAfter).toBeCloseTo(
+      takerBtcBefore + quoteSize / responsePrice
+    );
+  });
+
+  it('maker defaults', async () => {
+    const [takerBtcBefore, takerQuoteBefore] = await Promise.all([
+      fetchTokenAmount(takerCvg, baseMintBTC.address),
+      fetchTokenAmount(takerCvg, quoteMint.address),
+    ]);
+
+    const { vaultAddress } = await takerCvg.vaultOperator().create({
       acceptablePriceLimit: 40000,
       legMint: baseMintBTC,
       quoteMint,
@@ -85,8 +148,72 @@ describe('integration.vaultOperator', () => {
         type: 'buy',
         quoteAmount: 80000,
       },
-      activeWindow: 600,
+      activeWindow: 2,
+      settlingWindow: 1,
+    });
+
+    const { vault, rfq } = await takerCvg
+      .vaultOperator()
+      .findByAddress({ address: vaultAddress });
+
+    const response = await runInParallelWithWait(async () => {
+      const { rfqResponse: response } = await makerCvg
+        .rfqs()
+        .respond({ rfq: rfq.address, ask: { price: 40000 } });
+      await executorCvg
+        .vaultOperator()
+        .confirmAndPrepare({ vault, rfq, response });
+
+      return response;
+    }, 3.5);
+
+    await executorCvg.rfqs().revertSettlementPreparation({
+      response: response.address,
+      side: 'taker',
+    });
+    await executorCvg.rfqs().cleanUpResponse({ response: response.address });
+
+    await executorCvg.vaultOperator().withdrawTokens({ vault, rfq, response });
+
+    const [takerBtcAfter, takerQuoteAfter] = await Promise.all([
+      fetchTokenAmount(takerCvg, baseMintBTC.address),
+      fetchTokenAmount(takerCvg, quoteMint.address),
+    ]);
+    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore);
+    expect(takerBtcAfter).toBeCloseTo(takerBtcBefore);
+  });
+
+  it('no response', async () => {
+    const [takerBtcBefore, takerQuoteBefore] = await Promise.all([
+      fetchTokenAmount(takerCvg, baseMintBTC.address),
+      fetchTokenAmount(takerCvg, quoteMint.address),
+    ]);
+
+    const { vaultAddress } = await takerCvg.vaultOperator().create({
+      acceptablePriceLimit: 40000,
+      legMint: baseMintBTC,
+      quoteMint,
+      orderDetails: {
+        type: 'buy',
+        quoteAmount: 80000,
+      },
+      activeWindow: 1,
       settlingWindow: 600,
     });
+
+    const { vault, rfq } = await takerCvg
+      .vaultOperator()
+      .findByAddress({ address: vaultAddress });
+
+    await sleep(1.5);
+
+    await executorCvg.vaultOperator().withdrawTokens({ vault, rfq });
+
+    const [takerBtcAfter, takerQuoteAfter] = await Promise.all([
+      fetchTokenAmount(takerCvg, baseMintBTC.address),
+      fetchTokenAmount(takerCvg, quoteMint.address),
+    ]);
+    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore);
+    expect(takerBtcAfter).toBeCloseTo(takerBtcBefore);
   });
 });

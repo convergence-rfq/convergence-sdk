@@ -62,7 +62,8 @@ describe('unit.rfq', () => {
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
       return (
         takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
-          .rfqAction === 'Cancel'
+          .rfqAction === 'Cancel' &&
+        rfq.taker.equals(takerCvg.identity().publicKey)
       );
     });
     expect(rfqs.length).toBeGreaterThan(0);
@@ -77,7 +78,8 @@ describe('unit.rfq', () => {
     const rfqs = (await getAll(iterator)).flat().filter((rfq: any) => {
       return (
         takerCvg.rfqs().getRfqStateAndAction({ rfq, caller: 'taker' })
-          .rfqAction === 'Cleanup'
+          .rfqAction === 'Cleanup' &&
+        rfq.taker.equals(takerCvg.identity().publicKey)
       );
     });
     expect(rfqs.length).toBeGreaterThan(0);
