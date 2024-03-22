@@ -4,6 +4,7 @@ import {
   PsyoptionsEuropeanInstrument,
   LegInstrument,
   FixedSize,
+  TransactionPriority,
 } from '@convergence-rfq/sdk';
 import { Command } from 'commander';
 
@@ -52,6 +53,16 @@ export const formatInstrument = (instrument: Instrument): string => {
 export const addDefaultArgs = (cmd: any) => {
   cmd.option('--rpc-endpoint <string>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
   cmd.option('--skip-preflight', 'skip preflight', false);
+  cmd.option(
+    '--tx-priority-fee <string>',
+    'transaction priority fee can be [none : 0 mcLamports , normal : 1 mcLamports, high : 10 mcLamports, turbo : 100 mcLamports, custom : <number> mcLamports]',
+    'none'
+  );
+  cmd.option(
+    '--max-retries <number>',
+    'maximum numbers of retries for sending failed txs',
+    0
+  );
   cmd.option('--keypair-file <string>', 'keypair file', DEFAULT_KEYPAIR_FILE);
   cmd.option('--verbose <boolean>', 'verbose', false);
   return cmd;
@@ -144,3 +155,64 @@ export const fetchBirdeyeTokenPrice = async (
   }
   return undefined;
 };
+
+export const resolveTxPriorityArg = (
+  txPriority: string
+): TransactionPriority => {
+  switch (txPriority) {
+    case 'none':
+      return 'none';
+    case 'normal':
+      return 'normal';
+    case 'high':
+      return 'high';
+    case 'turbo':
+      return 'turbo';
+    default:
+      try {
+        const txPriorityInNumber = Number(txPriority);
+        if (isNaN(txPriorityInNumber) || txPriorityInNumber < 0) {
+          return 'none';
+        }
+        return txPriorityInNumber;
+      } catch (e) {
+        return 'none';
+      }
+  }
+};
+
+export const resolveMaxRetriesArg = (maxRetries: string): number => {
+  const maxRetriesInNumber = Number(maxRetries);
+  if (isNaN(maxRetriesInNumber) || maxRetriesInNumber < 0) {
+    return 0;
+  }
+  return maxRetriesInNumber;
+};
+
+export async function expirationRetry<T>(
+  fn: () => Promise<T>,
+  opts: Opts
+): Promise<T> {
+  let { maxRetries } = opts;
+  maxRetries = resolveMaxRetriesArg(maxRetries);
+  if (maxRetries === 0) return await fn();
+  let retryCount = 0;
+
+  while (retryCount < maxRetries) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (!isTransactionExpiredBlockheightExceededError(error)) throw error;
+      retryCount++;
+      console.error(`Attempt ${retryCount + 1} tx expired. Retrying...`);
+    }
+  }
+  throw new Error('Max Tx Expiration retries exceeded');
+}
+
+function isTransactionExpiredBlockheightExceededError(error: unknown) {
+  return (
+    error instanceof Error &&
+    error.message.includes('TransactionExpiredBlockheightExceededError')
+  );
+}

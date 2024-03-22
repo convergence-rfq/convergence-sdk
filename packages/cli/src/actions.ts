@@ -21,6 +21,7 @@ import {
   extractBooleanString,
   getSigConfirmation,
   getSize,
+  expirationRetry,
 } from './helpers';
 import {
   logPk,
@@ -110,13 +111,17 @@ export const mintTo = async (opts: Opts) => {
 export const initializeProtocol = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response, protocol } = await cvg.protocol().initialize({
-      collateralMint: new PublicKey(opts.collateralMint),
-      protocolTakerFee: opts.protocolTakerFee,
-      protocolMakerFee: opts.protocolMakerFee,
-      settlementTakerFee: opts.settlementTakerFee,
-      settlementMakerFee: opts.settlementMakerFee,
-    });
+    const { response, protocol } = await expirationRetry(
+      () =>
+        cvg.protocol().initialize({
+          collateralMint: new PublicKey(opts.collateralMint),
+          protocolTakerFee: opts.protocolTakerFee,
+          protocolMakerFee: opts.protocolMakerFee,
+          settlementTakerFee: opts.settlementTakerFee,
+          settlementMakerFee: opts.settlementMakerFee,
+        }),
+      opts
+    );
     logPk(protocol.address);
     logResponse(response);
   } catch (e) {
@@ -127,16 +132,21 @@ export const initializeProtocol = async (opts: Opts) => {
 export const addInstrument = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.protocol().addInstrument({
-      authority: cvg.rpc().getDefaultFeePayer(),
-      instrumentProgram: new PublicKey(opts.instrumentProgram),
-      canBeUsedAsQuote: extractBooleanString(opts, 'canBeUsedAsQuote'),
-      validateDataAccountAmount: opts.validateDataAccountAmount,
-      prepareToSettleAccountAmount: opts.prepareToSettleAccountAmount,
-      settleAccountAmount: opts.settleAccountAmount,
-      revertPreparationAccountAmount: opts.revertPreparationAccountAmount,
-      cleanUpAccountAmount: opts.cleanUpAccountAmount,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.protocol().addInstrument({
+          authority: cvg.rpc().getDefaultFeePayer(),
+          instrumentProgram: new PublicKey(opts.instrumentProgram),
+          canBeUsedAsQuote: extractBooleanString(opts, 'canBeUsedAsQuote'),
+          validateDataAccountAmount: opts.validateDataAccountAmount,
+          prepareToSettleAccountAmount: opts.prepareToSettleAccountAmount,
+          settleAccountAmount: opts.settleAccountAmount,
+          revertPreparationAccountAmount: opts.revertPreparationAccountAmount,
+          cleanUpAccountAmount: opts.cleanUpAccountAmount,
+        }),
+      opts
+    );
+
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -146,11 +156,20 @@ export const addInstrument = async (opts: Opts) => {
 export const addPrintTradeProvider = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.protocol().addPrintTradeProvider({
-      printTradeProviderProgram: new PublicKey(opts.printTradeProviderProgram),
-      settlementCanExpire: extractBooleanString(opts, 'settlementCanExpire'),
-      validateResponseAccountAmount: opts.validateResponseAccountAmount,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.protocol().addPrintTradeProvider({
+          printTradeProviderProgram: new PublicKey(
+            opts.printTradeProviderProgram
+          ),
+          settlementCanExpire: extractBooleanString(
+            opts,
+            'settlementCanExpire'
+          ),
+          validateResponseAccountAmount: opts.validateResponseAccountAmount,
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -160,7 +179,10 @@ export const addPrintTradeProvider = async (opts: Opts) => {
 export const addBaseAsset = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const baseAssets = await cvg.protocol().getBaseAssets();
+    const baseAssets = await expirationRetry(
+      () => cvg.protocol().getBaseAssets(),
+      opts
+    );
     const { oracleSource } = opts;
 
     let priceOracle: PriceOracle;
@@ -312,7 +334,10 @@ export const registerMint = async (opts: Opts) => {
   };
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.protocol().registerMint(getMintArgs());
+    const { response } = await expirationRetry(
+      () => cvg.protocol().registerMint(getMintArgs()),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -477,17 +502,21 @@ export const getCollateral = async (opts: Opts) => {
 export const initializeRiskEngine = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.riskEngine().initializeConfig({
-      collateralMintDecimals: opts.collateralMintDecimals,
-      minCollateralRequirement: opts.minCollateralRequirement,
-      collateralForFixedQuoteAmountRfqCreation:
-        opts.collateralForFixedQuoteAmountRfqCreation,
-      safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
-      overallSafetyFactor: opts.overallSafetyFace,
-      acceptedOracleStaleness: opts.acceptedOracleStaleness,
-      acceptedOracleConfidenceIntervalPortion:
-        opts.acceptedOracleConfidenceIntervalPortion,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.riskEngine().initializeConfig({
+          collateralMintDecimals: opts.collateralMintDecimals,
+          minCollateralRequirement: opts.minCollateralRequirement,
+          collateralForFixedQuoteAmountRfqCreation:
+            opts.collateralForFixedQuoteAmountRfqCreation,
+          safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
+          overallSafetyFactor: opts.overallSafetyFace,
+          acceptedOracleStaleness: opts.acceptedOracleStaleness,
+          acceptedOracleConfidenceIntervalPortion:
+            opts.acceptedOracleConfidenceIntervalPortion,
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -497,17 +526,21 @@ export const initializeRiskEngine = async (opts: Opts) => {
 export const updateRiskEngine = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.riskEngine().updateConfig({
-      collateralMintDecimals: opts.collateralMintDecimals,
-      minCollateralRequirement: opts.minCollateralRequirement,
-      collateralForFixedQuoteAmountRfqCreation:
-        opts.collateralForFixedQuoteAmountRfqCreation,
-      safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
-      overallSafetyFactor: opts.overallSafetyFace,
-      acceptedOracleStaleness: opts.acceptedOracleStaleness,
-      acceptedOracleConfidenceIntervalPortion:
-        opts.acceptedOracleConfidenceIntervalPortion,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.riskEngine().updateConfig({
+          collateralMintDecimals: opts.collateralMintDecimals,
+          minCollateralRequirement: opts.minCollateralRequirement,
+          collateralForFixedQuoteAmountRfqCreation:
+            opts.collateralForFixedQuoteAmountRfqCreation,
+          safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
+          overallSafetyFactor: opts.overallSafetyFace,
+          acceptedOracleStaleness: opts.acceptedOracleStaleness,
+          acceptedOracleConfidenceIntervalPortion:
+            opts.acceptedOracleConfidenceIntervalPortion,
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -536,10 +569,14 @@ export const getRiskEngineConfig = async (opts: Opts) => {
 export const setRiskEngineInstrumentType = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.riskEngine().setInstrumentType({
-      instrumentProgram: new PublicKey(opts.program),
-      instrumentType: opts.type,
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.riskEngine().setInstrumentType({
+          instrumentProgram: new PublicKey(opts.program),
+          instrumentType: opts.type,
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -550,21 +587,25 @@ export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
   const newValue = opts.newValue.split(',').map((x: string) => parseFloat(x));
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.riskEngine().setRiskCategoriesInfo({
-      changes: [
-        {
-          value: toRiskCategoryInfo(newValue[0], newValue[1], [
-            toScenario(newValue[2], newValue[3]),
-            toScenario(newValue[4], newValue[5]),
-            toScenario(newValue[6], newValue[7]),
-            toScenario(newValue[8], newValue[9]),
-            toScenario(newValue[10], newValue[11]),
-            toScenario(newValue[12], newValue[13]),
-          ]),
-          category: opts.category,
-        },
-      ],
-    });
+    const { response } = await expirationRetry(
+      () =>
+        cvg.riskEngine().setRiskCategoriesInfo({
+          changes: [
+            {
+              value: toRiskCategoryInfo(newValue[0], newValue[1], [
+                toScenario(newValue[2], newValue[3]),
+                toScenario(newValue[4], newValue[5]),
+                toScenario(newValue[6], newValue[7]),
+                toScenario(newValue[8], newValue[9]),
+                toScenario(newValue[10], newValue[11]),
+                toScenario(newValue[12], newValue[13]),
+              ]),
+              category: opts.category,
+            },
+          ],
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);

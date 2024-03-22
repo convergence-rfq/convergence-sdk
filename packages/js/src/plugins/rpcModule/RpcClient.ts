@@ -232,6 +232,7 @@ export class RpcClient {
     }
 
     const rawTransaction = transaction.serialize();
+
     const signature = await this.sendRawTransaction(
       rawTransaction,
       confirmOptions,
