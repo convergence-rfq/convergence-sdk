@@ -225,7 +225,6 @@ export class TransactionBuilder<C extends object = object> {
       (s): s is Keypair => s instanceof Keypair
     );
     if (keypairSigners.length > 0) {
-      console.log('!!!');
       transaction.partialSign(...keypairSigners);
     }
 
