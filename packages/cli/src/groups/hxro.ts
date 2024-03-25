@@ -4,7 +4,7 @@ import { Command } from 'commander';
 
 import { PublicKey } from '@solana/web3.js';
 import { HxroProductInfo } from '@convergence-rfq/sdk';
-import { addCmd } from '../helpers';
+import { addCmd, expirationRetry } from '../helpers';
 import { createCvg, Opts } from '../cvg';
 import { logError, logHxroConfig, logResponse } from '../logger';
 
@@ -19,9 +19,11 @@ const initializeConfigCmd = (c: Command) =>
 const initializeConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const response = await cvg
-      .hxro()
-      .initializeConfig({ validMpg: new PublicKey(opts.validMpg) });
+    const response = await expirationRetry(
+      () =>
+        cvg.hxro().initializeConfig({ validMpg: new PublicKey(opts.validMpg) }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -39,9 +41,10 @@ const modifyConfigCmd = (c: Command) =>
 const modifyConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const response = await cvg
-      .hxro()
-      .modifyConfig({ validMpg: new PublicKey(opts.validMpg) });
+    const response = await expirationRetry(
+      () => cvg.hxro().modifyConfig({ validMpg: new PublicKey(opts.validMpg) }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
@@ -101,9 +104,13 @@ const initializeOperatorTRG = async (opts: Opts) => {
       opts.hxroRiskEngine !== ''
         ? new PublicKey(opts.hxroRiskEngine)
         : undefined;
-    const response = await cvg.hxro().initializeOperatorTraderRiskGroup({
-      hxroRiskEngineAddress,
-    });
+    const response = await expirationRetry(
+      () =>
+        cvg.hxro().initializeOperatorTraderRiskGroup({
+          hxroRiskEngineAddress,
+        }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);

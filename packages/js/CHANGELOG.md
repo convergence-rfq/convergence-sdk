@@ -1,5 +1,23 @@
 # @convergence-rfq/sdk
 
+## 6.3.3
+
+### Patch Changes
+
+- Update max-retries logic
+
+## 6.3.2
+
+### Patch Changes
+
+- Add max-retries arg to cli and also implement maxRetries logic for retrying sending failed txs to chain again
+
+## 6.3.1
+
+### Patch Changes
+
+- Add tx-priority-fee argument to cli and modify sdk txPriority to take custom values
+
 ## 6.3.0
 
 ### Minor Changes

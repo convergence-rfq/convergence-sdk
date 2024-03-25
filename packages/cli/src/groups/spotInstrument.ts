@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 
-import { addCmd } from '../helpers';
+import { addCmd, expirationRetry } from '../helpers';
 import { createCvg, Opts } from '../cvg';
 import { logError, logResponse, logSpotInstrumentConfig } from '../logger';
 
@@ -23,9 +23,10 @@ const initializeConfigCmd = (c: Command) =>
 const initializeConfig = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const response = await cvg
-      .spotInstrument()
-      .initializeConfig({ feeBps: opts.feeBps });
+    const response = await expirationRetry(
+      () => cvg.spotInstrument().initializeConfig({ feeBps: opts.feeBps }),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
