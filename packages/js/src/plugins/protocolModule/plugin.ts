@@ -27,7 +27,6 @@ import {
   updateBaseAssetOperation,
   updateBaseAssetOperationHandler,
 } from './operations';
-import { Protocol } from './models';
 import { ConvergencePlugin } from '@/types';
 import type { Convergence } from '@/Convergence';
 
@@ -75,12 +74,5 @@ export const protocolModule = (): ConvergencePlugin => ({
 declare module '../../Convergence' {
   interface Convergence {
     protocol(): ProtocolClient;
-  }
-}
-
-declare module '../protocolModule/ProtocolClient' {
-  interface ProtocolClient {
-    // TODO this method actually does not exist
-    getProtocol(): Protocol;
   }
 }

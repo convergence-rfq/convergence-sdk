@@ -2,6 +2,7 @@ import {
   BlockhashWithExpiryBlockHeight,
   ComputeBudgetProgram,
   ConfirmOptions,
+  Keypair,
   PACKET_DATA_SIZE,
   SignaturePubkeyPair,
   Transaction,
@@ -208,6 +209,24 @@ export class TransactionBuilder<C extends object = object> {
     });
 
     transaction.add(...this.getInstructions());
+
+    return transaction;
+  }
+
+  toPartiallySignedTransaction(
+    blockhashWithExpiryBlockHeight: BlockhashWithExpiryBlockHeight,
+    options: TransactionOptions = {}
+  ): Transaction {
+    const transaction = this.toTransaction(
+      blockhashWithExpiryBlockHeight,
+      options
+    );
+    const keypairSigners = this.getSigners().filter(
+      (s): s is Keypair => s instanceof Keypair
+    );
+    if (keypairSigners.length > 0) {
+      transaction.partialSign(...keypairSigners);
+    }
 
     return transaction;
   }

@@ -25,7 +25,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { EscrowRfq, Rfq } from '../../rfqModule';
+import { EscrowResponse, EscrowRfq, Rfq } from '../../rfqModule';
 import { getOrCreateATAtxBuilder } from '../../../utils/ata';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
@@ -309,115 +309,14 @@ export const prepareSettlementBuilder = async (
       ? AuthoritySide.Maker
       : AuthoritySide.Taker;
 
-  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
-
-  const baseAssetMints: Mint[] = [];
-
-  for (const leg of rfqModel.legs) {
-    baseAssetMints.push(await legToBaseAssetMint(convergence, leg));
-  }
-
-  const anchorRemainingAccounts: AccountMeta[] = [];
-
-  const spotInstrumentProgramAccount: AccountMeta = {
-    pubkey: spotInstrumentProgram.address,
-    isSigner: false,
-    isWritable: false,
-  };
-
-  const systemProgram = convergence.programs().getSystem(programs);
-
-  const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
-    response,
-    program: spotInstrumentProgram.address,
-  });
-
-  const quoteAccounts: AccountMeta[] = [
-    {
-      pubkey: caller.publicKey,
-      isSigner: true,
-      isWritable: true,
-    },
-    {
-      pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        mint: rfqModel.quoteMint,
-        owner: caller.publicKey,
-        programs,
-      }),
-      isSigner: false,
-      isWritable: true,
-    },
-    { pubkey: rfqModel.quoteMint, isSigner: false, isWritable: false },
-    {
-      pubkey: quoteEscrowPda,
-      isSigner: false,
-      isWritable: true,
-    },
-    { pubkey: systemProgram.address, isSigner: false, isWritable: false },
-    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-    { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-  ];
-
-  anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
-
-  const ataTxBuilderArray: TransactionBuilder[] = [];
-  for (let legIndex = 0; legIndex < legAmountToPrepare; legIndex++) {
-    const instrumentProgramAccount: AccountMeta = {
-      pubkey: rfqModel.legs[legIndex].getProgramId(),
-      isSigner: false,
-      isWritable: false,
-    };
-
-    const instrumentEscrowPda = new InstrumentPdasClient(
-      convergence
-    ).instrumentEscrow({
-      response,
-      index: legIndex,
-      rfqModel,
-    });
-
-    const { ataPubKey, txBuilder } = await getOrCreateATAtxBuilder(
+  const { anchorRemainingAccounts, ataTxBuilderArray } =
+    await getEscrowPrepareSettlementRemainingAccounts(
       convergence,
-      baseAssetMints[legIndex].address,
       caller.publicKey,
-      programs
+      rfqModel,
+      responseModel,
+      legAmountToPrepare
     );
-
-    if (txBuilder) {
-      ataTxBuilderArray.push(txBuilder);
-    }
-
-    const legAccounts: AccountMeta[] = [
-      // `caller`
-      {
-        pubkey: caller.publicKey,
-        isSigner: true,
-        isWritable: true,
-      },
-      // `caller_token_account`
-      {
-        pubkey: ataPubKey,
-        isSigner: false,
-        isWritable: true,
-      },
-      // `mint`
-      {
-        pubkey: baseAssetMints[legIndex].address,
-        isSigner: false,
-        isWritable: false,
-      },
-      // `escrow`
-      {
-        pubkey: instrumentEscrowPda,
-        isSigner: false,
-        isWritable: true,
-      },
-      { pubkey: systemProgram.address, isSigner: false, isWritable: false },
-      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-      { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-    ];
-    anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
-  }
 
   const prepareSettlementTxBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
@@ -451,6 +350,122 @@ export const prepareSettlementBuilder = async (
     ataTxBuilderArray,
     prepareSettlementTxBuilder,
   };
+};
+
+export const getEscrowPrepareSettlementRemainingAccounts = async (
+  cvg: Convergence,
+  caller: PublicKey,
+  rfq: EscrowRfq,
+  response: EscrowResponse,
+  legAmountToPrepare: number
+) => {
+  const baseAssetMints: Mint[] = [];
+
+  for (const leg of rfq.legs) {
+    baseAssetMints.push(await legToBaseAssetMint(cvg, leg));
+  }
+
+  const spotInstrumentProgram = cvg.programs().getSpotInstrument();
+
+  const anchorRemainingAccounts: AccountMeta[] = [];
+
+  const spotInstrumentProgramAccount: AccountMeta = {
+    pubkey: spotInstrumentProgram.address,
+    isSigner: false,
+    isWritable: false,
+  };
+
+  const systemProgram = cvg.programs().getSystem();
+
+  const quoteEscrowPda = new InstrumentPdasClient(cvg).quoteEscrow({
+    response: response.address,
+    program: spotInstrumentProgram.address,
+  });
+
+  const quoteAccounts: AccountMeta[] = [
+    {
+      pubkey: caller,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: cvg.tokens().pdas().associatedTokenAccount({
+        mint: rfq.quoteMint,
+        owner: caller,
+      }),
+      isSigner: false,
+      isWritable: true,
+    },
+    { pubkey: rfq.quoteMint, isSigner: false, isWritable: false },
+    {
+      pubkey: quoteEscrowPda,
+      isSigner: false,
+      isWritable: true,
+    },
+    { pubkey: systemProgram.address, isSigner: false, isWritable: false },
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+  ];
+
+  anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
+
+  const ataTxBuilderArray: TransactionBuilder[] = [];
+  for (let legIndex = 0; legIndex < legAmountToPrepare; legIndex++) {
+    const instrumentProgramAccount: AccountMeta = {
+      pubkey: rfq.legs[legIndex].getProgramId(),
+      isSigner: false,
+      isWritable: false,
+    };
+
+    const instrumentEscrowPda = new InstrumentPdasClient(cvg).instrumentEscrow({
+      response: response.address,
+      index: legIndex,
+      rfqModel: rfq,
+    });
+
+    const { ataPubKey, txBuilder } = await getOrCreateATAtxBuilder(
+      cvg,
+      baseAssetMints[legIndex].address,
+      caller
+    );
+
+    if (txBuilder) {
+      ataTxBuilderArray.push(txBuilder);
+    }
+
+    const legAccounts: AccountMeta[] = [
+      // `caller`
+      {
+        pubkey: caller,
+        isSigner: false,
+        isWritable: true,
+      },
+      // `caller_token_account`
+      {
+        pubkey: ataPubKey,
+        isSigner: false,
+        isWritable: true,
+      },
+      // `mint`
+      {
+        pubkey: baseAssetMints[legIndex].address,
+        isSigner: false,
+        isWritable: false,
+      },
+      // `escrow`
+      {
+        pubkey: instrumentEscrowPda,
+        isSigner: false,
+        isWritable: true,
+      },
+      { pubkey: systemProgram.address, isSigner: false, isWritable: false },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+    ];
+    anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
+  }
+
+  return { anchorRemainingAccounts, ataTxBuilderArray };
 };
 
 const doesRfqLegContainsPsyoptionsAmerican = (rfq: EscrowRfq) => {
