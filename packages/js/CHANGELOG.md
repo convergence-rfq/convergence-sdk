@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.4.2
+
+### Patch Changes
+
+- Update some of vault operator actions API
+
 ## 6.4.1
 
 ### Patch Changes
