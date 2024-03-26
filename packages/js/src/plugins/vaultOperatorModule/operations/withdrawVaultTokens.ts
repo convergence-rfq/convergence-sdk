@@ -1,5 +1,4 @@
 import { createWithdrawTokensInstruction } from '@convergence-rfq/vault-operator';
-import { PublicKey } from '@solana/web3.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 
 import { Convergence } from '../../../Convergence';
@@ -14,7 +13,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { VaultParameters } from '../models';
-import { EscrowResponse, EscrowRfq } from '@/plugins/rfqModule';
+import { EscrowRfq } from '@/plugins/rfqModule';
 
 const Key = 'WithdrawVaultTokensOperation' as const;
 
@@ -30,7 +29,6 @@ export type WithdrawVaultTokensOperation = Operation<
 export type WithdrawVaultTokensInput = {
   vault: VaultParameters;
   rfq: EscrowRfq;
-  response?: EscrowResponse;
 };
 
 export type WithdrawVaultTokensOutput = {
@@ -66,13 +64,10 @@ export const withdrawVaultTokensBuilder = async (
   options: TransactionBuilderOptions = {}
 ): Promise<TransactionBuilder> => {
   const { programs, payer = cvg.rpc().getDefaultFeePayer() } = options;
-  const { vault, rfq, response } = params;
+  const { vault, rfq } = params;
 
   if (!vault.rfq.equals(rfq.address)) {
     throw new Error('RFQ does not match the provided vault');
-  }
-  if (response !== undefined && !response.rfq.equals(rfq.address)) {
-    throw new Error('RFQ does not match the provided response');
   }
 
   const vaultProgram = cvg.programs().getVaultOperator(programs).address;
@@ -105,7 +100,7 @@ export const withdrawVaultTokensBuilder = async (
           .pdas()
           .associatedTokenAccount({ mint: quoteMint, owner: vault.creator }),
         quoteMint,
-        response: response?.address ?? PublicKey.default,
+        response: vault.confirmedResponse,
       },
       vaultProgram
     ),

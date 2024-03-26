@@ -54,7 +54,7 @@ describe('integration.vaultOperator', () => {
     const { rfqResponse: response } = await makerCvg
       .rfqs()
       .respond({ rfq: rfq.address, bid: { price: responsePrice } });
-    await executorCvg
+    const { vault: updatedVault } = await executorCvg
       .vaultOperator()
       .confirmAndPrepare({ vault, rfq, response });
     await makerCvg.rfqs().prepareSettlement({
@@ -67,7 +67,9 @@ describe('integration.vaultOperator', () => {
     });
     await executorCvg.rfqs().cleanUpResponse({ response: response.address });
 
-    await executorCvg.vaultOperator().withdrawTokens({ vault, rfq, response });
+    await executorCvg
+      .vaultOperator()
+      .withdrawTokens({ vault: updatedVault, rfq });
 
     const [takerBtcAfter, takerQuoteAfter] = await Promise.all([
       fetchTokenAmount(takerCvg, baseMintBTC.address),
@@ -108,7 +110,7 @@ describe('integration.vaultOperator', () => {
     const { rfqResponse: response } = await makerCvg
       .rfqs()
       .respond({ rfq: rfq.address, ask: { price: responsePrice } });
-    await executorCvg
+    const { vault: updatedVault } = await executorCvg
       .vaultOperator()
       .confirmAndPrepare({ vault, rfq, response });
     await makerCvg.rfqs().prepareSettlement({
@@ -121,7 +123,9 @@ describe('integration.vaultOperator', () => {
     });
     await executorCvg.rfqs().cleanUpResponse({ response: response.address });
 
-    await executorCvg.vaultOperator().withdrawTokens({ vault, rfq, response });
+    await executorCvg
+      .vaultOperator()
+      .withdrawTokens({ vault: updatedVault, rfq });
 
     const [takerBtcAfter, takerQuoteAfter] = await Promise.all([
       fetchTokenAmount(takerCvg, baseMintBTC.address),
@@ -156,15 +160,15 @@ describe('integration.vaultOperator', () => {
       .vaultOperator()
       .findByAddress({ address: vaultAddress });
 
-    const response = await runInParallelWithWait(async () => {
+    const [response, updatedVault] = await runInParallelWithWait(async () => {
       const { rfqResponse: response } = await makerCvg
         .rfqs()
         .respond({ rfq: rfq.address, ask: { price: 40000 } });
-      await executorCvg
+      const { vault: updatedVault } = await executorCvg
         .vaultOperator()
         .confirmAndPrepare({ vault, rfq, response });
 
-      return response;
+      return [response, updatedVault];
     }, 3.5);
 
     await executorCvg.rfqs().revertSettlementPreparation({
@@ -173,7 +177,9 @@ describe('integration.vaultOperator', () => {
     });
     await executorCvg.rfqs().cleanUpResponse({ response: response.address });
 
-    await executorCvg.vaultOperator().withdrawTokens({ vault, rfq, response });
+    await executorCvg
+      .vaultOperator()
+      .withdrawTokens({ vault: updatedVault, rfq });
 
     const [takerBtcAfter, takerQuoteAfter] = await Promise.all([
       fetchTokenAmount(takerCvg, baseMintBTC.address),
