@@ -43,6 +43,7 @@ export type ConfirmAndPrepareVaultInput = {
 
 export type ConfirmAndPrepareVaultOutput = {
   response: SendAndConfirmTransactionResponse;
+  vault: VaultParameters;
 };
 
 export const confirmAndPrepareVaultOperationHandler: OperationHandler<ConfirmAndPrepareVaultOperation> =
@@ -52,7 +53,7 @@ export const confirmAndPrepareVaultOperationHandler: OperationHandler<ConfirmAnd
       cvg: Convergence,
       scope: OperationScope
     ) => {
-      const builder = await confirmAndPrepareVaultBuilder(
+      const { builder, vault } = await confirmAndPrepareVaultBuilder(
         cvg,
         operation.input,
         scope
@@ -62,17 +63,22 @@ export const confirmAndPrepareVaultOperationHandler: OperationHandler<ConfirmAnd
 
       scope.throwIfCanceled();
 
-      return output;
+      return { ...output, vault };
     },
   };
 
 export type ConfirmAndPrepareVaultBuilderParams = ConfirmAndPrepareVaultInput;
 
+export type ConfirmAndPrepareVaultResult = {
+  builder: TransactionBuilder;
+  vault: VaultParameters;
+};
+
 export const confirmAndPrepareVaultBuilder = async (
   cvg: Convergence,
   params: ConfirmAndPrepareVaultBuilderParams,
   options: TransactionBuilderOptions = {}
-): Promise<TransactionBuilder> => {
+): Promise<ConfirmAndPrepareVaultResult> => {
   const { programs, payer = cvg.rpc().getDefaultFeePayer() } = options;
   const { vault, rfq, response } = params;
 
@@ -151,8 +157,16 @@ export const confirmAndPrepareVaultBuilder = async (
     key: 'prepareVaultSettlement',
   };
 
-  return TransactionBuilder.make()
+  const builder = TransactionBuilder.make()
     .setFeePayer(payer)
     .addTxPriorityFeeIx(cvg)
     .add(confirmIx, prepareIx);
+
+  return {
+    builder,
+    vault: {
+      ...vault,
+      confirmedResponse: response.address,
+    },
+  };
 };
