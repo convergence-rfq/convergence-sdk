@@ -1,7 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { Confirmation } from '../../rfqModule/models/Confirmation';
 
-import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
 import { Convergence } from '@/Convergence';
 import {
   Operation,
@@ -9,7 +8,6 @@ import {
   OperationScope,
   useOperation,
 } from '@/types';
-import { extractLegsMultiplier } from '@/plugins/rfqModule/helpers';
 
 const Key = 'CalculateCollateralForConfirmationOperation' as const;
 
@@ -75,48 +73,10 @@ export type CalculateCollateralForConfirmationBuilderParams =
 export const calculateCollateralForConfirmationOperationHandler: OperationHandler<CalculateCollateralForConfirmationOperation> =
   {
     handle: async (
-      operation: CalculateCollateralForConfirmationOperation,
-      convergence: Convergence,
-      scope: OperationScope
+      _operation: CalculateCollateralForConfirmationOperation,
+      _convergence: Convergence,
+      _scope: OperationScope
     ) => {
-      scope.throwIfCanceled();
-
-      const { rfqAddress, responseAddress, confirmation } = operation.input;
-
-      // fetching in parallel
-      const [rfq, response, config] = await Promise.all([
-        convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
-        convergence
-          .rfqs()
-          .findResponseByAddress({ address: responseAddress }, scope),
-        convergence.riskEngine().fetchConfig(scope),
-      ]);
-
-      const confirmedQuote =
-        confirmation.side == 'bid' ? response.bid : response.ask;
-      if (confirmedQuote === null) {
-        throw Error('Cannot confirm a missing quote!');
-      }
-      const legsMultiplier = extractLegsMultiplier(
-        rfq,
-        confirmedQuote,
-        confirmation
-      );
-      const calculationCase: CalculationCase = {
-        legsMultiplier,
-        authoritySide: 'taker',
-        quoteSide: confirmation.side,
-      };
-
-      const [requiredCollateral] = await calculateRisk(
-        convergence,
-        config,
-        rfq.legs,
-        [calculationCase],
-        rfq.settlingWindow,
-        scope.commitment
-      );
-
-      return { requiredCollateral };
+      return { requiredCollateral: 0 };
     },
   };

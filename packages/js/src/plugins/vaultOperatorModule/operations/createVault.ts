@@ -26,16 +26,13 @@ import {
 } from '@/plugins/instrumentModule';
 import {
   ABSOLUTE_PRICE_DECIMALS,
+  LEG_MULTIPLIER_DECIMALS,
   calculateExpectedLegsHash,
-  calculateExpectedLegsSize,
   instrumentsToLegAccounts,
   legsToBaseAssetAccounts,
-  serializeFixedSizeData,
-  toSolitaFixedSize,
   toSolitaOrderType,
 } from '@/plugins/rfqModule';
 import { addDecimals, getOrCreateATAtxBuilder } from '@/utils';
-import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 import { Mint } from '@/plugins/tokenModule';
 
 const Key = 'CreateVaultOperation' as const;
@@ -74,11 +71,9 @@ export const createVaultOperationHandler: OperationHandler<CreateVaultOperation>
       cvg: Convergence,
       scope: OperationScope
     ) => {
-      const { builder, vaultAddress, rfqAddress } = await createVaultBuilder(
-        cvg,
-        operation.input,
-        scope
-      );
+      const { builder, ataBuilder, vaultAddress, rfqAddress } =
+        await createVaultBuilder(cvg, operation.input, scope);
+      builder.prepend(ataBuilder);
 
       const output = await builder.sendAndConfirm(cvg, scope.confirmOptions);
 
@@ -92,6 +87,7 @@ export type CreateVaultBuilderParams = CreateVaultInput;
 
 export type CreateVaultBuilderResult = {
   builder: TransactionBuilder;
+  ataBuilder: TransactionBuilder;
   vaultAddress: PublicKey;
   rfqAddress: PublicKey;
 };
@@ -128,7 +124,6 @@ export const createVaultBuilder = async (
   const solitaLeg = instrumentToSolitaLeg(leg);
   const serializedLeg = serializeInstrumentAsSolitaLeg(leg);
   const expectedLegsHash = calculateExpectedLegsHash([serializedLeg]);
-  const expectedLegsSize = calculateExpectedLegsSize([serializedLeg]);
   const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
   const fixedSize =
     orderDetails.type === 'buy'
@@ -181,13 +176,11 @@ export const createVaultBuilder = async (
   ];
   const baseAssetAccounts = legsToBaseAssetAccounts(cvg, [solitaLeg]);
   const legAccounts = await instrumentsToLegAccounts([leg]);
-  const riskEngineAccounts = await getRiskEngineAccounts(cvg, [leg]);
   const createRfqAccounts = [
     ...quoteAccounts,
     ...baseAssetAccounts,
     ...legAccounts,
   ];
-  const allRemainingAccounts = [...createRfqAccounts, ...riskEngineAccounts];
 
   const lamportsForOperator = 14288880;
   const transferLamportIx = {
@@ -203,6 +196,11 @@ export const createVaultBuilder = async (
     acceptablePriceLimit,
     quote.decimals
   ).mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)));
+
+  const size =
+    fixedSize.type === 'fixed-base'
+      ? addDecimals(fixedSize.amount, LEG_MULTIPLIER_DECIMALS)
+      : addDecimals(fixedSize.amount, quote.decimals);
 
   const builder = TransactionBuilder.make()
     .setFeePayer(payer)
@@ -229,19 +227,13 @@ export const createVaultBuilder = async (
           collateralMint: protocol.collateralMint,
           riskEngine: cvg.programs().getRiskEngine().address,
           rfqProgram: cvg.programs().getRfq().address,
-          anchorRemainingAccounts: allRemainingAccounts,
+          anchorRemainingAccounts: createRfqAccounts,
         },
         {
           acceptablePriceLimit: acceptablePriceLimitWithDecimals,
-          createRfqRemainingAccountsCount: createRfqAccounts.length,
-          expectedLegsSize,
-          expectedLegsHash: Array.from(expectedLegsHash),
           legBaseAssetIndex: leg.getBaseAssetIndex().value,
-          legAmount: solitaLeg.amount,
           orderType: toSolitaOrderType(orderDetails.type),
-          fixedSize: Array.from(
-            serializeFixedSizeData(toSolitaFixedSize(fixedSize, quote.decimals))
-          ),
+          size,
           activeWindow,
           settlingWindow,
           recentTimestamp,
@@ -252,12 +244,18 @@ export const createVaultBuilder = async (
       key: 'createVault',
     });
 
+  const ataBuilder = TransactionBuilder.make().setFeePayer(payer);
   if (vaultAtaBuilder !== undefined) {
-    builder.prepend(vaultAtaBuilder);
+    ataBuilder.add(vaultAtaBuilder);
   }
   if (receivedAtaBuilder !== undefined) {
-    builder.prepend(receivedAtaBuilder);
+    ataBuilder.add(receivedAtaBuilder);
   }
 
-  return { builder, vaultAddress: vaultParams.publicKey, rfqAddress: rfqPda };
+  return {
+    builder,
+    ataBuilder,
+    vaultAddress: vaultParams.publicKey,
+    rfqAddress: rfqPda,
+  };
 };

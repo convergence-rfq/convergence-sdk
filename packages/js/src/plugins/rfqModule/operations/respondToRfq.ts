@@ -18,7 +18,6 @@ import {
 import { Quote, Rfq } from '../models';
 import { toSolitaQuote } from '../models/Quote';
 import { rfqProgram } from '../program';
-import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 import { convertTimestampToSeconds } from '@/utils';
 import {
   AdditionalResponseData,
@@ -275,11 +274,6 @@ export const respondToRfqBuilder = async (
       rfqModel
     );
 
-  const riskEngineAccounts = await getRiskEngineAccounts(
-    convergence,
-    rfqModel.legs
-  );
-
   const defaultPubkey = PublicKey.default;
   const whitelist =
     rfqModel.whitelist.toBase58() !== defaultPubkey.toBase58()
@@ -322,10 +316,7 @@ export const respondToRfqBuilder = async (
           riskEngine,
           whitelist,
           maker: maker.publicKey,
-          anchorRemainingAccounts: [
-            ...validateResponseAccounts,
-            ...riskEngineAccounts,
-          ],
+          anchorRemainingAccounts: validateResponseAccounts,
         },
         {
           bid: bid && toSolitaQuote(bid, rfqModel.quoteAsset.getDecimals()),

@@ -127,7 +127,6 @@ export class Ctx {
 
   // Protocol
   protocol = getAccountPk('rfq-protocol');
-  riskEngine = getAccountPk('risk-engine-config');
   baseAsset = getAccountPk('rfq-base-asset-btc');
   quoteRegisteredMint = getAccountPk('rfq-mint-info-usd-quote');
   baseRegisteredMint = getAccountPk('rfq-mint-info-btc');

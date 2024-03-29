@@ -17,7 +17,6 @@ import {
 import { Response } from '../models';
 import { ResponseSide, toSolitaQuoteSide } from '../models/ResponseSide';
 import { toSolitaOverrideLegMultiplierBps } from '../models/Confirmation';
-import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 
 const Key = 'ConfirmResponseOperation' as const;
 
@@ -201,12 +200,6 @@ export const confirmResponseBuilder = async (
     programs,
   });
 
-  const rfqModel = await convergence.rfqs().findRfqByAddress({ address: rfq });
-  const riskEngineAccounts = await getRiskEngineAccounts(
-    convergence,
-    rfqModel.legs
-  );
-
   return TransactionBuilder.make()
     .setFeePayer(payer)
     .add(
@@ -227,7 +220,6 @@ export const confirmResponseBuilder = async (
             taker: taker.publicKey,
             protocol: convergence.protocol().pdas().protocol(),
             riskEngine: convergence.programs().getRiskEngine(programs).address,
-            anchorRemainingAccounts: riskEngineAccounts,
           },
           {
             side: toSolitaQuoteSide(side),
