@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.5.0
+
+### Minor Changes
+
+- Replace risk engine program with a simplified one, add squads integration
+
 ## 6.4.2
 
 ### Patch Changes
