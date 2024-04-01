@@ -22,7 +22,6 @@ import {
   EscrowRfq,
   getEscrowPrepareSettlementRemainingAccounts,
 } from '@/plugins/rfqModule';
-import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 
 const Key = 'ConfirmAndPrepareVaultOperation' as const;
 
@@ -95,8 +94,6 @@ export const confirmAndPrepareVaultBuilder = async (
   const vaultProgram = cvg.programs().getVaultOperator(programs).address;
   const operator = cvg.vaultOperator().pdas().operator(vault.address);
 
-  const riskEngineAccounts = await getRiskEngineAccounts(cvg, rfq.legs);
-
   const confirmIx = {
     instruction: createConfirmResponseInstruction(
       {
@@ -116,7 +113,6 @@ export const confirmAndPrepareVaultBuilder = async (
         }),
         riskEngine: cvg.programs().getRiskEngine(programs).address,
         rfqProgram: cvg.programs().getRfq(programs).address,
-        anchorRemainingAccounts: riskEngineAccounts,
       },
       vaultProgram
     ),

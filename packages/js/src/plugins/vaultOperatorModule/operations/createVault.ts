@@ -1,6 +1,7 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/vault-operator';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import BN from 'bn.js';
+import * as multisig from '@sqds/multisig';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 
 import { Convergence } from '../../../Convergence';
@@ -8,6 +9,7 @@ import {
   Operation,
   OperationHandler,
   OperationScope,
+  Signer,
   useOperation,
 } from '../../../types';
 import {
@@ -26,16 +28,13 @@ import {
 } from '@/plugins/instrumentModule';
 import {
   ABSOLUTE_PRICE_DECIMALS,
+  LEG_MULTIPLIER_DECIMALS,
   calculateExpectedLegsHash,
-  calculateExpectedLegsSize,
   instrumentsToLegAccounts,
   legsToBaseAssetAccounts,
-  serializeFixedSizeData,
-  toSolitaFixedSize,
   toSolitaOrderType,
 } from '@/plugins/rfqModule';
 import { addDecimals, getOrCreateATAtxBuilder } from '@/utils';
-import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 import { Mint } from '@/plugins/tokenModule';
 
 const Key = 'CreateVaultOperation' as const;
@@ -74,11 +73,9 @@ export const createVaultOperationHandler: OperationHandler<CreateVaultOperation>
       cvg: Convergence,
       scope: OperationScope
     ) => {
-      const { builder, vaultAddress, rfqAddress } = await createVaultBuilder(
-        cvg,
-        operation.input,
-        scope
-      );
+      const { builder, ataBuilder, vaultAddress, rfqAddress } =
+        await createVaultBuilder(cvg, operation.input, scope);
+      builder.prepend(ataBuilder);
 
       const output = await builder.sendAndConfirm(cvg, scope.confirmOptions);
 
@@ -88,10 +85,13 @@ export const createVaultOperationHandler: OperationHandler<CreateVaultOperation>
     },
   };
 
-export type CreateVaultBuilderParams = CreateVaultInput;
+export type CreateVaultBuilderParams = CreateVaultInput & {
+  squads?: { vaultPda: PublicKey; transactionPda: PublicKey };
+};
 
 export type CreateVaultBuilderResult = {
   builder: TransactionBuilder;
+  ataBuilder: TransactionBuilder;
   vaultAddress: PublicKey;
   rfqAddress: PublicKey;
 };
@@ -109,15 +109,33 @@ export const createVaultBuilder = async (
     orderDetails,
     activeWindow,
     settlingWindow,
+    squads,
   } = params;
 
   const leg = await SpotLegInstrument.create(cvg, legMint, 1, 'long');
   const quote = await SpotQuoteInstrument.create(cvg, quoteMint);
 
-  const vaultProgram = cvg.programs().getVaultOperator(programs).address;
   const creator = cvg.identity();
-  const vaultParams = Keypair.generate();
-  const operator = cvg.vaultOperator().pdas().operator(vaultParams.publicKey);
+
+  let signers: Signer[];
+  let vaultParamsKey: PublicKey;
+  let executorKey: PublicKey;
+  if (squads === undefined) {
+    const vaultParamsSigner = Keypair.generate();
+    signers = [creator, vaultParamsSigner];
+    vaultParamsKey = vaultParamsSigner.publicKey;
+    executorKey = creator.publicKey;
+  } else {
+    signers = [];
+    vaultParamsKey = multisig.getEphemeralSignerPda({
+      ephemeralSignerIndex: 0,
+      transactionPda: squads.transactionPda,
+    })[0];
+    executorKey = squads.vaultPda;
+  }
+
+  const vaultProgram = cvg.programs().getVaultOperator(programs).address;
+  const operator = cvg.vaultOperator().pdas().operator(vaultParamsKey);
   const protocol = await cvg.protocol().get();
 
   const sendMint =
@@ -128,7 +146,6 @@ export const createVaultBuilder = async (
   const solitaLeg = instrumentToSolitaLeg(leg);
   const serializedLeg = serializeInstrumentAsSolitaLeg(leg);
   const expectedLegsHash = calculateExpectedLegsHash([serializedLeg]);
-  const expectedLegsSize = calculateExpectedLegsSize([serializedLeg]);
   const recentTimestamp = new BN(Math.floor(Date.now() / 1_000));
   const fixedSize =
     orderDetails.type === 'buy'
@@ -143,9 +160,9 @@ export const createVaultBuilder = async (
     operator,
     programs
   );
-  const creatorTokens = cvg.tokens().pdas().associatedTokenAccount({
+  const executorTokens = cvg.tokens().pdas().associatedTokenAccount({
     mint: sendMint,
-    owner: creator.publicKey,
+    owner: executorKey,
     programs,
   });
 
@@ -181,22 +198,20 @@ export const createVaultBuilder = async (
   ];
   const baseAssetAccounts = legsToBaseAssetAccounts(cvg, [solitaLeg]);
   const legAccounts = await instrumentsToLegAccounts([leg]);
-  const riskEngineAccounts = await getRiskEngineAccounts(cvg, [leg]);
   const createRfqAccounts = [
     ...quoteAccounts,
     ...baseAssetAccounts,
     ...legAccounts,
   ];
-  const allRemainingAccounts = [...createRfqAccounts, ...riskEngineAccounts];
 
   const lamportsForOperator = 14288880;
   const transferLamportIx = {
     instruction: SystemProgram.transfer({
-      fromPubkey: creator.publicKey,
+      fromPubkey: executorKey,
       toPubkey: operator,
       lamports: lamportsForOperator,
     }),
-    signers: [creator],
+    signers: [],
     key: 'sendLamportsToOperator',
   };
   const acceptablePriceLimitWithDecimals = addDecimals(
@@ -204,19 +219,24 @@ export const createVaultBuilder = async (
     quote.decimals
   ).mul(new BN(10).pow(new BN(ABSOLUTE_PRICE_DECIMALS)));
 
+  const size =
+    fixedSize.type === 'fixed-base'
+      ? addDecimals(fixedSize.amount, LEG_MULTIPLIER_DECIMALS)
+      : addDecimals(fixedSize.amount, quote.decimals);
+
   const builder = TransactionBuilder.make()
     .setFeePayer(payer)
     .addTxPriorityFeeIx(cvg)
     .add(transferLamportIx, {
       instruction: createCreateRfqInstruction(
         {
-          creator: creator.publicKey,
-          vaultParams: vaultParams.publicKey,
+          creator: executorKey,
+          vaultParams: vaultParamsKey,
           operator,
           sendMint,
           receiveMint,
           vault: vaultTokens,
-          vaultTokensSource: creatorTokens,
+          vaultTokensSource: executorTokens,
           protocol: cvg.protocol().pdas().protocol(),
           rfq: rfqPda,
           whitelist: vaultProgram,
@@ -229,35 +249,35 @@ export const createVaultBuilder = async (
           collateralMint: protocol.collateralMint,
           riskEngine: cvg.programs().getRiskEngine().address,
           rfqProgram: cvg.programs().getRfq().address,
-          anchorRemainingAccounts: allRemainingAccounts,
+          anchorRemainingAccounts: createRfqAccounts,
         },
         {
           acceptablePriceLimit: acceptablePriceLimitWithDecimals,
-          createRfqRemainingAccountsCount: createRfqAccounts.length,
-          expectedLegsSize,
-          expectedLegsHash: Array.from(expectedLegsHash),
           legBaseAssetIndex: leg.getBaseAssetIndex().value,
-          legAmount: solitaLeg.amount,
           orderType: toSolitaOrderType(orderDetails.type),
-          fixedSize: Array.from(
-            serializeFixedSizeData(toSolitaFixedSize(fixedSize, quote.decimals))
-          ),
+          size,
           activeWindow,
           settlingWindow,
           recentTimestamp,
         },
         vaultProgram
       ),
-      signers: [creator, vaultParams],
+      signers,
       key: 'createVault',
     });
 
+  const ataBuilder = TransactionBuilder.make().setFeePayer(payer);
   if (vaultAtaBuilder !== undefined) {
-    builder.prepend(vaultAtaBuilder);
+    ataBuilder.add(vaultAtaBuilder);
   }
   if (receivedAtaBuilder !== undefined) {
-    builder.prepend(receivedAtaBuilder);
+    ataBuilder.add(receivedAtaBuilder);
   }
 
-  return { builder, vaultAddress: vaultParams.publicKey, rfqAddress: rfqPda };
+  return {
+    builder,
+    ataBuilder,
+    vaultAddress: vaultParamsKey,
+    rfqAddress: rfqPda,
+  };
 };

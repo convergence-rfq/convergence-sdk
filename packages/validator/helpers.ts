@@ -102,6 +102,16 @@ const getBaseArgs = () => [
   '--account-dir',
   path.join(HXRO_DEPS, 'accounts'),
 
+  // squads fixtures
+  '--url',
+  'm',
+  '-c',
+  'BSTq9w3kZwNwpBXJEvTZz2G9ZTNyKBvoSeXMvwb4cNZr',
+  '-c',
+  'SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf',
+  '-c',
+  'Fy3YMJCvwbAXUgUM5b91ucUVA3jYzwWLHL3MwBqKsh8n',
+
   '--ledger',
   './test-ledger',
   '--reset',
@@ -127,7 +137,6 @@ export class Ctx {
 
   // Protocol
   protocol = getAccountPk('rfq-protocol');
-  riskEngine = getAccountPk('risk-engine-config');
   baseAsset = getAccountPk('rfq-base-asset-btc');
   quoteRegisteredMint = getAccountPk('rfq-mint-info-usd-quote');
   baseRegisteredMint = getAccountPk('rfq-mint-info-btc');

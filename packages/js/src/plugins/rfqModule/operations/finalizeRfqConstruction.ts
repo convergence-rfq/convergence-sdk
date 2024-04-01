@@ -17,7 +17,6 @@ import {
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
 import { LegInstrument } from '@/plugins/instrumentModule';
-import { getRiskEngineAccounts } from '@/plugins/riskEngineModule/helpers';
 import { PrintTradeLeg } from '@/plugins/printTradeModule';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
@@ -198,8 +197,6 @@ export const finalizeRfqConstructionBuilder = async (
   collateralInfo = collateralInfo ?? collateralInfoPda;
   collateralToken = collateralToken ?? collateralTokenPda;
 
-  const riskEngineAccounts = await getRiskEngineAccounts(convergence, legs);
-
   const protocol = convergence.protocol().pdas().protocol();
 
   return TransactionBuilder.make()
@@ -223,7 +220,6 @@ export const finalizeRfqConstructionBuilder = async (
           collateralInfo,
           collateralToken,
           riskEngine,
-          anchorRemainingAccounts: riskEngineAccounts,
         },
         rfqProgram.address
       ),

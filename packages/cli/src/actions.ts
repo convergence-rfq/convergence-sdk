@@ -1,8 +1,6 @@
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   token,
-  toRiskCategoryInfo,
-  toScenario,
   devnetAirdrops,
   PriceOracle,
   SpotLegInstrument,
@@ -33,7 +31,6 @@ import {
   logTx,
   logError,
   logTokenAccount,
-  logRiskEngineConfig,
   logRegisteredMint,
   logCollateral,
   logToken,
@@ -492,121 +489,6 @@ export const getCollateral = async (opts: Opts) => {
       .collateral()
       .findByUser({ user: new PublicKey(opts.user) });
     logCollateral(collateral);
-  } catch (e) {
-    logError(e);
-  }
-};
-
-// Risk engine
-
-export const initializeRiskEngine = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  try {
-    const { response } = await expirationRetry(
-      () =>
-        cvg.riskEngine().initializeConfig({
-          collateralMintDecimals: opts.collateralMintDecimals,
-          minCollateralRequirement: opts.minCollateralRequirement,
-          collateralForFixedQuoteAmountRfqCreation:
-            opts.collateralForFixedQuoteAmountRfqCreation,
-          safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
-          overallSafetyFactor: opts.overallSafetyFace,
-          acceptedOracleStaleness: opts.acceptedOracleStaleness,
-          acceptedOracleConfidenceIntervalPortion:
-            opts.acceptedOracleConfidenceIntervalPortion,
-        }),
-      opts
-    );
-    logResponse(response);
-  } catch (e) {
-    logError(e);
-  }
-};
-
-export const updateRiskEngine = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  try {
-    const { response } = await expirationRetry(
-      () =>
-        cvg.riskEngine().updateConfig({
-          collateralMintDecimals: opts.collateralMintDecimals,
-          minCollateralRequirement: opts.minCollateralRequirement,
-          collateralForFixedQuoteAmountRfqCreation:
-            opts.collateralForFixedQuoteAmountRfqCreation,
-          safetyPriceShiftFactor: opts.safetyPriceShiftFactor,
-          overallSafetyFactor: opts.overallSafetyFace,
-          acceptedOracleStaleness: opts.acceptedOracleStaleness,
-          acceptedOracleConfidenceIntervalPortion:
-            opts.acceptedOracleConfidenceIntervalPortion,
-        }),
-      opts
-    );
-    logResponse(response);
-  } catch (e) {
-    logError(e);
-  }
-};
-export const closeRiskEngine = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  try {
-    const { response } = await cvg.riskEngine().closeConfig();
-    logResponse(response);
-  } catch (e) {
-    logError(e);
-  }
-};
-
-export const getRiskEngineConfig = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  try {
-    const config = await cvg.riskEngine().fetchConfig();
-    logRiskEngineConfig(config);
-  } catch (e) {
-    logError(e);
-  }
-};
-
-export const setRiskEngineInstrumentType = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  try {
-    const { response } = await expirationRetry(
-      () =>
-        cvg.riskEngine().setInstrumentType({
-          instrumentProgram: new PublicKey(opts.program),
-          instrumentType: opts.type,
-        }),
-      opts
-    );
-    logResponse(response);
-  } catch (e) {
-    logError(e);
-  }
-};
-
-export const setRiskEngineCategoriesInfo = async (opts: Opts) => {
-  const newValue = opts.newValue.split(',').map((x: string) => parseFloat(x));
-  const cvg = await createCvg(opts);
-  try {
-    const { response } = await expirationRetry(
-      () =>
-        cvg.riskEngine().setRiskCategoriesInfo({
-          changes: [
-            {
-              value: toRiskCategoryInfo(newValue[0], newValue[1], [
-                toScenario(newValue[2], newValue[3]),
-                toScenario(newValue[4], newValue[5]),
-                toScenario(newValue[6], newValue[7]),
-                toScenario(newValue[8], newValue[9]),
-                toScenario(newValue[10], newValue[11]),
-                toScenario(newValue[12], newValue[13]),
-              ]),
-              category: opts.category,
-            },
-          ],
-        }),
-      opts
-    );
-    logResponse(response);
   } catch (e) {
     logError(e);
   }
