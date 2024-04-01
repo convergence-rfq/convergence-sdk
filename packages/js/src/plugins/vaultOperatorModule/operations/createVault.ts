@@ -1,6 +1,7 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/vault-operator';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import BN from 'bn.js';
+import * as multisig from '@sqds/multisig';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 
 import { Convergence } from '../../../Convergence';
@@ -8,6 +9,7 @@ import {
   Operation,
   OperationHandler,
   OperationScope,
+  Signer,
   useOperation,
 } from '../../../types';
 import {
@@ -83,7 +85,9 @@ export const createVaultOperationHandler: OperationHandler<CreateVaultOperation>
     },
   };
 
-export type CreateVaultBuilderParams = CreateVaultInput;
+export type CreateVaultBuilderParams = CreateVaultInput & {
+  squads?: { vaultPda: PublicKey; transactionPda: PublicKey };
+};
 
 export type CreateVaultBuilderResult = {
   builder: TransactionBuilder;
@@ -105,15 +109,33 @@ export const createVaultBuilder = async (
     orderDetails,
     activeWindow,
     settlingWindow,
+    squads,
   } = params;
 
   const leg = await SpotLegInstrument.create(cvg, legMint, 1, 'long');
   const quote = await SpotQuoteInstrument.create(cvg, quoteMint);
 
-  const vaultProgram = cvg.programs().getVaultOperator(programs).address;
   const creator = cvg.identity();
-  const vaultParams = Keypair.generate();
-  const operator = cvg.vaultOperator().pdas().operator(vaultParams.publicKey);
+
+  let signers: Signer[];
+  let vaultParamsKey: PublicKey;
+  let executorKey: PublicKey;
+  if (squads === undefined) {
+    const vaultParamsSigner = Keypair.generate();
+    signers = [creator, vaultParamsSigner];
+    vaultParamsKey = vaultParamsSigner.publicKey;
+    executorKey = creator.publicKey;
+  } else {
+    signers = [];
+    vaultParamsKey = multisig.getEphemeralSignerPda({
+      ephemeralSignerIndex: 0,
+      transactionPda: squads.transactionPda,
+    })[0];
+    executorKey = squads.vaultPda;
+  }
+
+  const vaultProgram = cvg.programs().getVaultOperator(programs).address;
+  const operator = cvg.vaultOperator().pdas().operator(vaultParamsKey);
   const protocol = await cvg.protocol().get();
 
   const sendMint =
@@ -138,9 +160,9 @@ export const createVaultBuilder = async (
     operator,
     programs
   );
-  const creatorTokens = cvg.tokens().pdas().associatedTokenAccount({
+  const executorTokens = cvg.tokens().pdas().associatedTokenAccount({
     mint: sendMint,
-    owner: creator.publicKey,
+    owner: executorKey,
     programs,
   });
 
@@ -185,11 +207,11 @@ export const createVaultBuilder = async (
   const lamportsForOperator = 14288880;
   const transferLamportIx = {
     instruction: SystemProgram.transfer({
-      fromPubkey: creator.publicKey,
+      fromPubkey: executorKey,
       toPubkey: operator,
       lamports: lamportsForOperator,
     }),
-    signers: [creator],
+    signers: [],
     key: 'sendLamportsToOperator',
   };
   const acceptablePriceLimitWithDecimals = addDecimals(
@@ -208,13 +230,13 @@ export const createVaultBuilder = async (
     .add(transferLamportIx, {
       instruction: createCreateRfqInstruction(
         {
-          creator: creator.publicKey,
-          vaultParams: vaultParams.publicKey,
+          creator: executorKey,
+          vaultParams: vaultParamsKey,
           operator,
           sendMint,
           receiveMint,
           vault: vaultTokens,
-          vaultTokensSource: creatorTokens,
+          vaultTokensSource: executorTokens,
           protocol: cvg.protocol().pdas().protocol(),
           rfq: rfqPda,
           whitelist: vaultProgram,
@@ -240,7 +262,7 @@ export const createVaultBuilder = async (
         },
         vaultProgram
       ),
-      signers: [creator, vaultParams],
+      signers,
       key: 'createVault',
     });
 
@@ -255,7 +277,7 @@ export const createVaultBuilder = async (
   return {
     builder,
     ataBuilder,
-    vaultAddress: vaultParams.publicKey,
+    vaultAddress: vaultParamsKey,
     rfqAddress: rfqPda,
   };
 };
