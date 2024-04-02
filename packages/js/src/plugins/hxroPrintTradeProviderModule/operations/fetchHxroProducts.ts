@@ -60,6 +60,7 @@ export const fetchHxroProductsOperationHandler: OperationHandler<FetchHxroProduc
     ): Promise<FetchHxroProductsOutput> => {
       const manifest = await hxroManifestCache.get(cvg);
       const baseProductData = await parseBaseProductData(cvg, manifest);
+      console.log('baseProductData', baseProductData);
       scope.throwIfCanceled();
 
       const baseAssets = await cvg.protocol().getBaseAssets();
@@ -104,6 +105,7 @@ const expandProductData = async (
   const metadata = await manifest.getDerivativeMetadata(
     baseData.productAddress
   );
+  console.log('metadata', metadata);
   const {
     instrumentType: rawInstrumentType,
     strike,
@@ -122,6 +124,7 @@ const expandProductData = async (
       oracleType.pyth !== undefined &&
       baseAsset.pythOracle.equals(priceOracle)
   );
+  console.log('baseAsset', baseAsset);
 
   if (baseAsset === undefined) {
     return null;

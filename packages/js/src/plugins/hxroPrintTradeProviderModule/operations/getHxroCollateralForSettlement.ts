@@ -7,7 +7,7 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
-import { HxroContextHelper } from '../printTrade';
+import { HxroContextHelper, HxroPrintTrade } from '../printTrade';
 import { lockHxroCollateralBuilder } from './lockHxroCollateral';
 import {
   AuthoritySide,
@@ -45,8 +45,6 @@ export type GetRequiredHxroCollateralForSettlementInput = {
   response: PrintTradeResponse;
   /** The side of the authority. */
   side: AuthoritySide;
-  /** The hxroContext. */
-  hxroContext: HxroContextHelper;
 };
 
 /**
@@ -54,7 +52,7 @@ export type GetRequiredHxroCollateralForSettlementInput = {
  * @category Outputs
  */
 export type GetRequiredHxroCollateralForSettlementOutput = {
-  excessCollateral: number;
+  remainingCollateral: number;
 };
 
 /**
@@ -69,13 +67,25 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
       scope: OperationScope
     ): Promise<GetRequiredHxroCollateralForSettlementOutput> => {
       const payer = await convergence.identity().publicKey;
+      const { printTrade } = operation.input.rfq;
+
+      const hxroContext = await printTrade.getHxroContextHelper(
+        convergence,
+        operation.input.response,
+        operation.input.side
+      );
       const txBuilder = await lockHxroCollateralBuilder(
         convergence,
-        operation.input,
+        {
+          hxroContext,
+          rfq: operation.input.rfq,
+          response: operation.input.response,
+          side: operation.input.side,
+        },
         scope
       );
 
-      const excessCollateral = 0;
+      const remainingCollateral = 0;
 
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
       const ixs = txBuilder.getInstructions();
@@ -96,12 +106,13 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
       if (simulateTxResult.value.err) {
         const { logs } = simulateTxResult.value;
         if (!logs) {
-          throw new Error('Simulate transaction failed');
+          return { remainingCollateral: 0 };
         }
-        for (const log of logs) {
-        }
+
+        // for (const log of logs) {
+        // }
       }
       scope.throwIfCanceled();
-      return { excessCollateral };
+      return { remainingCollateral };
     },
   };

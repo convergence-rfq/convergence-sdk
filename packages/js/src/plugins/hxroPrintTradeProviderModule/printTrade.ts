@@ -52,7 +52,13 @@ export class HxroPrintTrade implements PrintTrade {
     public takerTrg: PublicKey,
     protected legsInfo: HxroLegInput[]
   ) {}
-
+  getHxroContextHelper = async (
+    cvg: Convergence,
+    response: PrintTradeResponse,
+    firstToPrepare: AuthoritySide
+  ) => {
+    return HxroContextHelper.create(cvg, this, response, firstToPrepare);
+  };
   getPrintTradeProviderProgramId = () =>
     this.cvg.programs().getHxroPrintTradeProvider().address;
   getLegs = () => this.legsInfo.map((legInfo) => new HxroLeg(legInfo));
