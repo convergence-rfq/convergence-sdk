@@ -7,13 +7,13 @@ import {
   OperationScope,
   useOperation,
 } from '../../../types';
-import { HxroContextHelper, HxroPrintTrade } from '../printTrade';
 import { lockHxroCollateralBuilder } from './lockHxroCollateral';
 import {
-  AuthoritySide,
   PrintTradeResponse,
   PrintTradeRfq,
+  getAuthoritySide,
 } from '@/plugins/rfqModule';
+import { HXRO_COLLATERAL_LOG_INDEX } from '@/constants';
 
 const Key = 'GetRequiredHxroCollateralForSettlementOperation' as const;
 
@@ -21,7 +21,7 @@ const Key = 'GetRequiredHxroCollateralForSettlementOperation' as const;
  * @group Operations
  * @category Constructors
  */
-export const GetRequiredHxroCollateralForSettlementOperation =
+export const getRequiredHxroCollateralForSettlementOperation =
   useOperation<GetRequiredHxroCollateralForSettlementOperation>(Key);
 
 /**
@@ -43,8 +43,6 @@ export type GetRequiredHxroCollateralForSettlementInput = {
   rfq: PrintTradeRfq;
   /** The response to prepare settlement for. */
   response: PrintTradeResponse;
-  /** The side of the authority. */
-  side: AuthoritySide;
 };
 
 /**
@@ -66,13 +64,19 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
       convergence: Convergence,
       scope: OperationScope
     ): Promise<GetRequiredHxroCollateralForSettlementOutput> => {
-      const payer = await convergence.identity().publicKey;
+      const payer = convergence.identity().publicKey;
+      const { rfq: rfqModel, response: responseModel } = operation.input;
       const { printTrade } = operation.input.rfq;
 
+      const caller = convergence.identity();
+      const side = getAuthoritySide(caller.publicKey, rfqModel, responseModel);
+      if (!side) {
+        throw new Error('caller is not authorized to prepare settlement');
+      }
       const hxroContext = await printTrade.getHxroContextHelper(
         convergence,
         operation.input.response,
-        operation.input.side
+        side
       );
       const txBuilder = await lockHxroCollateralBuilder(
         convergence,
@@ -80,7 +84,7 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
           hxroContext,
           rfq: operation.input.rfq,
           response: operation.input.response,
-          side: operation.input.side,
+          side,
         },
         scope
       );
@@ -108,9 +112,25 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
         if (!logs) {
           return { remainingCollateral: 0 };
         }
+        const logToParse = logs[HXRO_COLLATERAL_LOG_INDEX];
+        const logsSplit = logToParse.split(',');
+        let totalVariance = Number(logsSplit[0].split(':')[2]);
+        let openOrdersVariance = Number(logsSplit[1].split(':')[1]);
+        let positionalValue = Number(logsSplit[2].split(':')[1]);
 
-        // for (const log of logs) {
-        // }
+        if (totalVariance < 0 || isNaN(totalVariance)) {
+          totalVariance = 0;
+        }
+        if (openOrdersVariance < 0 || isNaN(openOrdersVariance)) {
+          openOrdersVariance = 0;
+        }
+        if (positionalValue < 0 || isNaN(positionalValue)) {
+          positionalValue = 0;
+        }
+
+        const remainingCollateralReq =
+          (Math.sqrt(positionalValue) + Math.sqrt(openOrdersVariance)) * 1.5;
+        return { remainingCollateral: remainingCollateralReq };
       }
       scope.throwIfCanceled();
       return { remainingCollateral };

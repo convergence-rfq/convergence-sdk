@@ -15,6 +15,8 @@ import {
   modifyHxroConfigOperationHandler,
   unlockHxroCollateralByRecordOperation,
   unlockHxroCollateralByRecordOperationHandler,
+  getRequiredHxroCollateralForSettlementOperation,
+  getRequiredHxroCollateralForSettlementOperationHandler,
 } from './operations';
 import { hxroPrintTradeProviderProgram } from './program';
 import { HxroPrintTradeParser } from './printTrade';
@@ -54,6 +56,11 @@ export const hxroModule = (): ConvergencePlugin => ({
     op.register(
       unlockHxroCollateralByRecordOperation,
       unlockHxroCollateralByRecordOperationHandler
+    );
+
+    op.register(
+      getRequiredHxroCollateralForSettlementOperation,
+      getRequiredHxroCollateralForSettlementOperationHandler
     );
 
     convergence.hxro = function () {

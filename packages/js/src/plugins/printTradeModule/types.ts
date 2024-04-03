@@ -11,10 +11,7 @@ import {
   PrintTradeResponse,
   PrintTradeRfq,
 } from '../rfqModule';
-import {
-  HxroContextHelper,
-  HxroPrintTrade,
-} from '../hxroPrintTradeProviderModule';
+import { HxroContextHelper } from '../hxroPrintTradeProviderModule';
 import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
