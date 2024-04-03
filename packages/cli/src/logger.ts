@@ -120,22 +120,6 @@ export const logProtocol = (p: Protocol): void => {
   });
 };
 
-export const logRiskEngineConfig = (r: any): void => {
-  l('Address:', r.address.toString());
-  l(
-    'Minimal collateral requirement:',
-    N(r.minCollateralRequirement.toString())
-  );
-  l(
-    'Collateral for fixed quote amount RFQ creation:',
-    N(r.collateralForFixedQuoteAmountRfqCreation.toString())
-  );
-  l('Collateral mint decimals:', N(r.collateralMintDecimals.toString()));
-  l('Safety price shift factor:', N(r.safetyPriceShiftFactor.toString()));
-  l('Overall safety factor:', r.overallSafetyFactor);
-  r.riskCategoriesInfo.map(logRiskCategoryInfo);
-};
-
 export const logRiskCategoryInfo = (c: any): void => {
   const formatRatio = (x: any) => {
     return [x.baseAssetPriceChange, x.volatilityChange].join('/');

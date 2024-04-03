@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 
-import { CalculationCase, calculateRisk } from '../clientCollateralCalculator';
 import {
   Operation,
   OperationHandler,
@@ -8,8 +7,7 @@ import {
   useOperation,
 } from '../../../types';
 import { Convergence } from '../../../Convergence';
-import { Quote, ResponseSide } from '../../rfqModule';
-import { extractLegsMultiplier } from '@/plugins/rfqModule/helpers';
+import { Quote } from '../../rfqModule';
 
 const Key = 'CalculateCollateralForResponseOperation' as const;
 
@@ -76,44 +74,10 @@ export type CalculateCollateralForResponseBuilderParams =
 export const calculateCollateralForResponseOperationHandler: OperationHandler<CalculateCollateralForResponseOperation> =
   {
     handle: async (
-      operation: CalculateCollateralForResponseOperation,
-      convergence: Convergence,
-      scope: OperationScope
+      _operation: CalculateCollateralForResponseOperation,
+      _convergence: Convergence,
+      _scope: OperationScope
     ): Promise<CalculateCollateralForResponseOutput> => {
-      const { rfqAddress, bid, ask } = operation.input;
-
-      const [rfq, config] = await Promise.all([
-        convergence.rfqs().findRfqByAddress({ address: rfqAddress }, scope),
-        convergence.riskEngine().fetchConfig(scope),
-      ]);
-
-      const getCase = (quote: Quote, side: ResponseSide): CalculationCase => {
-        const legsMultiplier = extractLegsMultiplier(rfq, quote);
-        return {
-          legsMultiplier,
-          authoritySide: 'maker',
-          quoteSide: side,
-        };
-      };
-
-      const cases: CalculationCase[] = [];
-      if (bid) {
-        cases.push(getCase(bid, 'bid'));
-      }
-      if (ask) {
-        cases.push(getCase(ask, 'ask'));
-      }
-
-      const risks = await calculateRisk(
-        convergence,
-        config,
-        rfq.legs,
-        cases,
-        rfq.settlingWindow,
-        scope.commitment
-      );
-      const requiredCollateral = risks.reduce((x, y) => Math.max(x, y), 0);
-
-      return { requiredCollateral };
+      return { requiredCollateral: 0 };
     },
   };

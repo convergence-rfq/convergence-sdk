@@ -1,13 +1,11 @@
 import { Buffer } from 'buffer';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import {
-  FixedSize as SolitaFixedSize,
   OrderType as SolitaOrderType,
   QuoteAsset,
   Quote,
   quoteBeet,
   quoteAssetBeet,
-  fixedSizeBeet,
 } from '@convergence-rfq/rfq';
 import * as beet from '@convergence-rfq/beet';
 
@@ -24,6 +22,7 @@ import type { Convergence } from '../../Convergence';
 import { Option } from '../../utils';
 import { FixedSize, toSolitaFixedSize } from './models';
 import { OrderType, toSolitaOrderType } from './models/OrderType';
+import { serializeFixedSizeData } from './helpers';
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -136,12 +135,6 @@ const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
     createSerializerFromFixableBeetArgsStruct(quoteAssetBeet);
 
   return quoteAssetSerializer.serialize(quoteAsset);
-};
-
-const serializeFixedSizeData = (fixedSize: SolitaFixedSize): Buffer => {
-  const fixedSizeSerializer = createSerializerFromFixableBeet(fixedSizeBeet);
-
-  return fixedSizeSerializer.serialize(fixedSize);
 };
 
 type MintInfoInput = {

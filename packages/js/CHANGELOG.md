@@ -1,5 +1,29 @@
 # @convergence-rfq/sdk
 
+## 6.5.0
+
+### Minor Changes
+
+- Replace risk engine program with a simplified one, add squads integration
+
+## 6.4.2
+
+### Patch Changes
+
+- Update some of vault operator actions API
+
+## 6.4.1
+
+### Patch Changes
+
+- Removed reduntant console log
+
+## 6.4.0
+
+### Minor Changes
+
+- Add vault operator functionality - an ability to predefine acceptable price for an rfq. User would deposit tokens at the moment of the rfq creation and the settlement would be executed automatically if an acceptable response arrives using a crank bot
+
 ## 6.3.3
 
 ### Patch Changes
