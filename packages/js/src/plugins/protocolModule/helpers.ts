@@ -1,7 +1,8 @@
 import { COption } from '@convergence-rfq/beet';
 import { CustomOptionalF64, CustomOptionalPubkey } from '@convergence-rfq/rfq';
 import { PublicKey } from '@solana/web3.js';
-import { Convergence } from '@/index';
+import { baseAssetsCache } from './cache';
+import { Convergence } from '@/Convergence';
 
 export const toCustomOptionalF64 = (
   input: COption<number>
@@ -32,13 +33,15 @@ export const toCustomOptionalPubkey = (
 };
 
 export const findVacantBaseAssetIndex = async (cvg: Convergence) => {
+  await baseAssetsCache.clear(); // clear the cache to use up-to-date base assets
+
   const getRandomNumber = (min: number, max: number) => {
     const minCeiled = Math.ceil(min);
     const maxFloored = Math.floor(max);
     return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
   };
-
   let elementsToSkip = getRandomNumber(0, 100);
+
   const existingBaseAssets = await cvg.protocol().getBaseAssets();
   const existing = existingBaseAssets
     .map((el) => el.index)
