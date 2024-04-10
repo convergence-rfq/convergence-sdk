@@ -11,6 +11,7 @@ import {
   PrintTradeResponse,
   PrintTradeRfq,
 } from '../rfqModule';
+import { HxroContextHelper } from '../hxroPrintTradeProviderModule';
 import { Convergence } from '@/Convergence';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 
@@ -25,6 +26,11 @@ export interface PrintTrade {
     side: AuthoritySide,
     options: TransactionBuilderOptions
   ) => Promise<{ accounts: AccountMeta[]; builders: TransactionBuilder[] }>;
+  getHxroContextHelper: (
+    cvg: Convergence,
+    response: PrintTradeResponse,
+    firstToPrepare: AuthoritySide
+  ) => Promise<HxroContextHelper>;
   getSettlementAccounts: (
     rfq: PrintTradeRfq,
     response: PrintTradeResponse

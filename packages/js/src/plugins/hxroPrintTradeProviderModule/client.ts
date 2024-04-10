@@ -20,6 +20,9 @@ import {
   UnlockHxroCollateralByRecordInput,
   UnlockHxroCollateralByRecordOutput,
   modifyHxroConfigOperation,
+  GetRequiredHxroCollateralForSettlementInput,
+  GetRequiredHxroCollateralForSettlementOutput,
+  getRequiredHxroCollateralForSettlementOperation,
 } from './operations';
 import { HxroPdasClient } from './pdas';
 import { OperationOptions } from '@/types';
@@ -93,5 +96,14 @@ export class HxroClient {
     return this.cvg
       .operations()
       .execute(unlockHxroCollateralByRecordOperation(input), options);
+  }
+
+  getRequiredCollateralForSettlement(
+    input: GetRequiredHxroCollateralForSettlementInput,
+    options?: OperationOptions
+  ): Promise<GetRequiredHxroCollateralForSettlementOutput> {
+    return this.cvg
+      .operations()
+      .execute(getRequiredHxroCollateralForSettlementOperation(input), options);
   }
 }
