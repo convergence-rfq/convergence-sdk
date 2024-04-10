@@ -181,7 +181,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
     expirationTimestamp: number
   ) {
     const mintInfoAddress = convergence
-      .rfqs()
+      .protocol()
       .pdas()
       .mintInfo({ mint: underlyingMint.address });
     const mintInfo = await convergence
@@ -249,7 +249,7 @@ export class PsyoptionsEuropeanInstrument implements LegInstrument {
       { pubkey: this.optionMetaPubKey, isSigner: false, isWritable: false },
       {
         pubkey: this.convergence
-          .rfqs()
+          .protocol()
           .pdas()
           .mintInfo({ mint: this.underlyingAssetMint }),
         isSigner: false,

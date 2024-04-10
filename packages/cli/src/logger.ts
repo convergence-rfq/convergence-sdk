@@ -13,7 +13,6 @@ import {
   SpotLegInstrument,
   PsyoptionsAmericanInstrument,
   PsyoptionsEuropeanInstrument,
-  toPriceOracle,
   PrintTradeLeg,
   HxroPrintTradeProviderConfig,
   SpotInstrumentConfig,
@@ -53,18 +52,16 @@ export const logResponse = (r: SendAndConfirmTransactionResponse): void =>
   l('Tx:', r.signature);
 
 export const logBaseAsset = (b: BaseAsset): void => {
-  const priceOracle = toPriceOracle(b);
   l('Address:', b.address.toString());
   l('Ticker:', b.ticker.toString());
   l('Enabled:', b.enabled);
   l('Index:', b.index);
   l('Risk category:', b.riskCategory);
-  l('Oracle source:', priceOracle.source);
-  if (priceOracle.address) {
-    l('Oracle address:', priceOracle.address.toString());
-  } else if (priceOracle.price) {
-    l('Oracle price:', priceOracle.price.toString());
-  }
+  l('Oracle source:', b.oracleSource);
+  l('Switchboard oracle:', b.switchboardOracle);
+  l('Pyth oracle:', b.pythOracle);
+  l('In place price:', b.inPlacePrice);
+  l('Strict:', b.strict);
 };
 
 export const logRegisteredMint = (r: RegisteredMint): void => {

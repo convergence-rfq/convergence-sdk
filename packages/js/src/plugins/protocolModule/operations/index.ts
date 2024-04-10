@@ -10,4 +10,4 @@ export * from './getRegisteredMints';
 export * from './findRegisteredMintByAddress';
 export * from './findBaseAssetByAddress';
 export * from './closeProtocol';
-export * from './updateBaseAssets';
+export * from './addUserAsset';

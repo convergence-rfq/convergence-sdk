@@ -74,6 +74,8 @@ export type ChangeBaseAssetParametersInput = {
    * If a null value is passed, unset it
    */
   inPlacePrice?: number | null;
+
+  strict?: boolean;
 };
 
 /**
@@ -134,12 +136,13 @@ export const changeBaseAssetParametersBuilder = (
   const protocolPda = cvg.protocol().pdas().protocol();
   const {
     index,
-    enabled,
-    riskCategory,
-    oracleSource,
+    enabled = null,
+    riskCategory = null,
+    oracleSource = null,
     switchboardOracle,
     pythOracle,
     inPlacePrice,
+    strict = null,
   } = params;
 
   const baseAsset = cvg.protocol().pdas().baseAsset({ index });
@@ -159,16 +162,13 @@ export const changeBaseAssetParametersBuilder = (
           baseAsset,
         },
         {
-          riskCategory: riskCategory
-            ? toSolitaRiskCategory(riskCategory)
-            : null,
-          enabled: enabled ?? null,
-          oracleSource: oracleSource
-            ? toSolitaOracleSource(oracleSource)
-            : null,
+          riskCategory: riskCategory && toSolitaRiskCategory(riskCategory),
+          enabled,
+          oracleSource: oracleSource && toSolitaOracleSource(oracleSource),
           switchboardOracle: wrapInCustomOption(switchboardOracle),
           pythOracle: wrapInCustomOption(pythOracle),
           inPlacePrice: wrapInCustomOption(inPlacePrice),
+          strict,
         },
         rfqProgram.address
       ),

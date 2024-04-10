@@ -1,7 +1,7 @@
 {
   "name": "@convergence-rfq/cli",
   "description": "Official Convergence CLI",
-  "version": "6.5.0",
+  "version": "6.6.1",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -47,7 +47,7 @@
     "cli": "ts-node src/index.ts"
   },
   "dependencies": {
-    "@convergence-rfq/sdk": "6.5.0",
+    "@convergence-rfq/sdk": "6.6.1",
     "@solana/web3.js": "^1.87.6",
     "@types/cookie": "^0.5.1",
     "commander": "^10.0.0"

@@ -11,7 +11,7 @@ import {
   addPrintTradeProvider,
   changeBaseAssetParameters,
   addBaseAssetsFromJupiter,
-  updateBaseAsset,
+  addUserAsset,
 } from '../actions';
 
 import { addCmd } from '../helpers';
@@ -73,6 +73,11 @@ const initializeProtocolCmd = (c: Command) =>
       description: 'settlement taker fee',
       defaultValue: '0',
     },
+    {
+      flags: '--add-asset-fee <number>',
+      description: 'add asset fee in sol',
+      defaultValue: '0',
+    },
   ]);
 
 const addInstrumentCmd = (c: Command) =>
@@ -112,28 +117,38 @@ const closeCmd = (c: Command) =>
 const addBaseAssetCmd = (c: Command) =>
   addCmd(c, 'add-base-asset', 'adds protocol base asset', addBaseAsset, [
     {
+      flags: '--index <number>',
+      description: 'base asset index',
+      defaultValue: null,
+    },
+    {
       flags: '--ticker <string>',
       description: 'ticker',
-    },
-    {
-      flags: '--oracle-source <string>',
-      description: 'oracle source',
-      defaultValue: null,
-    },
-    {
-      flags: '--oracle-price <number>',
-      description: 'oracle price',
-      defaultValue: null,
-    },
-    {
-      flags: '--oracle-address <string>',
-      description: 'oracle address',
-      defaultValue: null,
     },
     {
       flags: '--risk-category <string>',
       description: 'risk category',
       defaultValue: 'medium',
+    },
+    {
+      flags: '--oracle-source <string>',
+      description: 'oracle source - in-place | switchboard | pyth,',
+      defaultValue: null,
+    },
+    {
+      flags: '--switchboard-address <string>',
+      description: 'switchboard address',
+      defaultValue: null,
+    },
+    {
+      flags: '--pyth-address <string>',
+      description: 'pyth address',
+      defaultValue: null,
+    },
+    {
+      flags: '--in-place-price <number>',
+      description: 'in place price',
+      defaultValue: null,
     },
   ]);
 
@@ -173,10 +188,14 @@ const changeBaseAssetParametersCmd = (c: Command) =>
         description: 'pyth oracle, none to unset',
         defaultValue: null,
       },
-
       {
         flags: '--in-place-price <number>',
         description: 'in place price, -1 to unset',
+        defaultValue: null,
+      },
+      {
+        flags: '--strict <string>',
+        description: 'true to set asset as strict, false to unset',
         defaultValue: null,
       },
     ]
@@ -190,6 +209,15 @@ const registerMintCmd = (c: Command) =>
       description: 'base asset index',
       // NOTE: This is a hack to make the command work without this option
       defaultValue: null,
+    },
+  ]);
+
+const addUserAssetCmd = (c: Command) =>
+  addCmd(c, 'add-user-asset', 'adds user asset', addUserAsset, [
+    { flags: '--mint <string>', description: 'mint address' },
+    {
+      flags: '--ticker <string>',
+      description: 'ticker',
     },
   ]);
 
@@ -225,38 +253,6 @@ const addBaseAssetsFromJupiterCmd = (c: Command) =>
     ]
   );
 
-const updateBaseAssetCmd = (c: Command) =>
-  addCmd(c, 'update-base-asset', 'updates base asset', updateBaseAsset, [
-    {
-      flags: '--index <number>',
-      description: 'index',
-    },
-    {
-      flags: '--enabled <boolean>',
-      description: 'enabled',
-      defaultValue: 'true',
-    },
-    {
-      flags: '--oracle-source <string>',
-      description: 'oracle source - in-place | switchboard | pyth,',
-    },
-    {
-      flags: '--oracle-price <number>',
-      description: 'oracle price',
-      defaultValue: null,
-    },
-    {
-      flags: '--oracle-address <string>',
-      description: 'oracle address',
-      defaultValue: null,
-    },
-    {
-      flags: '--risk-category <string>',
-      description:
-        'risk category - "very-low" | "low" | "medium" | "high" | "very-high" | "custom-1" | "custom-2" | "custom-3"',
-    },
-  ]);
-
 export const protocolGroup = (c: Command) => {
   const group = c.command('protocol');
   initializeProtocolCmd(group);
@@ -270,5 +266,5 @@ export const protocolGroup = (c: Command) => {
   getBaseAssetsCmd(group);
   closeCmd(group);
   addBaseAssetsFromJupiterCmd(group);
-  updateBaseAssetCmd(group);
+  addUserAssetCmd(group);
 };

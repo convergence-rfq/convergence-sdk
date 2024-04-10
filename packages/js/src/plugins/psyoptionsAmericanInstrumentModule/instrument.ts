@@ -120,7 +120,7 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
     expirationTimestamp: number
   ) {
     const mintInfoAddress = convergence
-      .rfqs()
+      .protocol()
       .pdas()
       .mintInfo({ mint: underlyingMint.address });
     const mintInfo = await convergence
@@ -199,11 +199,11 @@ export class PsyoptionsAmericanInstrument implements LegInstrument {
       throw new Error('Missing stable asset mint');
     }
     const mintInfoPda = this.convergence
-      .rfqs()
+      .protocol()
       .pdas()
       .mintInfo({ mint: this.underlyingAssetMint });
     const quoteAssetMintPda = this.convergence
-      .rfqs()
+      .protocol()
       .pdas()
       .mintInfo({ mint: this.stableAssetMint });
     return [

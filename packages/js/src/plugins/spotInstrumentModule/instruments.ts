@@ -67,7 +67,7 @@ export class SpotLegInstrument implements LegInstrument {
     side: LegSide = 'long'
   ): Promise<SpotLegInstrument> {
     const mintInfoAddress = convergence
-      .rfqs()
+      .protocol()
       .pdas()
       .mintInfo({ mint: mint.address });
     const mintInfo = await convergence
@@ -102,7 +102,7 @@ export class SpotLegInstrument implements LegInstrument {
   /** Helper method to get validation accounts for a spot instrument. */
   getValidationAccounts() {
     const mintInfo = this.convergence
-      .rfqs()
+      .protocol()
       .pdas()
       .mintInfo({ mint: this.mintAddress });
     return [{ pubkey: mintInfo, isSigner: false, isWritable: false }];
@@ -178,7 +178,7 @@ export class SpotQuoteInstrument implements QuoteInstrument {
     mint: Mint
   ): Promise<SpotQuoteInstrument> {
     const mintInfoAddress = convergence
-      .rfqs()
+      .protocol()
       .pdas()
       .mintInfo({ mint: mint.address });
     const mintInfo = await convergence
@@ -210,7 +210,7 @@ export class SpotQuoteInstrument implements QuoteInstrument {
   /** Helper method to get validation accounts for a spot instrument. */
   getValidationAccounts() {
     const mintInfo = this.convergence
-      .rfqs()
+      .protocol()
       .pdas()
       .mintInfo({ mint: this.mintAddress });
     return [{ pubkey: mintInfo, isSigner: false, isWritable: false }];
