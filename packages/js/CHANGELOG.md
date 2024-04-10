@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.0
+
+### Minor Changes
+
+- Add user asset functionality, remove duplicated operation to change the existing base asset, add logic to automatically find a vacant base asset index
+
 ## 6.5.0
 
 ### Minor Changes
