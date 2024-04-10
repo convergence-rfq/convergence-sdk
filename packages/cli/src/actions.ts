@@ -2,7 +2,6 @@ import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   token,
   devnetAirdrops,
-  PriceOracle,
   SpotLegInstrument,
   SpotQuoteInstrument,
   isRiskCategory,
@@ -116,6 +115,7 @@ export const initializeProtocol = async (opts: Opts) => {
           protocolMakerFee: opts.protocolMakerFee,
           settlementTakerFee: opts.settlementTakerFee,
           settlementMakerFee: opts.settlementMakerFee,
+          addAssetFee: Number(opts.addAssetFee),
         }),
       opts
     );
@@ -176,31 +176,16 @@ export const addPrintTradeProvider = async (opts: Opts) => {
 export const addBaseAsset = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const baseAssets = await expirationRetry(
-      () => cvg.protocol().getBaseAssets(),
-      opts
-    );
-    const { oracleSource } = opts;
-
-    let priceOracle: PriceOracle;
-    if (oracleSource === 'in-place') {
-      priceOracle = {
-        source: 'in-place',
-        price: opts.oraclePrice,
-      };
-    } else {
-      priceOracle = {
-        source: oracleSource,
-        address: new PublicKey(opts.oracleAddress),
-      };
-    }
-
     const { response } = await cvg.protocol().addBaseAsset({
       authority: cvg.rpc().getDefaultFeePayer(),
-      index: baseAssets.length,
+      index: opts.index && Number(opts.index),
       ticker: opts.ticker,
       riskCategory: opts.riskCategory,
-      priceOracle,
+      oracleSource: opts.oracleSource,
+      inPlacePrice: opts.inPlacePrice && Number(opts.inPlacePrice),
+      pythOracle: opts.pythAddress && new PublicKey(opts.pythAddress),
+      switchboardOracle:
+        opts.switchboardAddress && new PublicKey(opts.switchboardAddress),
     });
     logResponse(response);
   } catch (e) {
@@ -219,29 +204,32 @@ export const changeBaseAssetParameters = async (opts: Opts) => {
       switchboardOracle: switchboardOracleOpts,
       pythOracle: pythOracleOpts,
       inPlacePrice: inPlacePriceOpts,
+      strict: strictOpts,
     }: {
-      index: number;
+      index: string;
       enabled?: string;
       riskCategory?: string;
       oracleSource?: string;
       switchboardOracle?: string;
       pythOracle?: string;
-      inPlacePrice?: number;
+      inPlacePrice?: string;
+      strict?: string;
     } = opts;
 
-    let enabled;
-    switch (enabledOpts) {
-      case undefined:
-        break;
-      case 'true':
-        enabled = true;
-        break;
-      case 'false':
-        enabled = false;
-        break;
-      default:
-        throw new Error('Unrecognized enabled parameter!');
-    }
+    const parseBool = (value: string | undefined, name: string) => {
+      switch (value) {
+        case undefined:
+          return undefined;
+        case 'true':
+          return true;
+        case 'false':
+          return false;
+        default:
+          throw new Error(`Unrecognized ${name} parameter!`);
+      }
+    };
+    const enabled = parseBool(enabledOpts, 'enabled');
+    const strict = parseBool(strictOpts, 'strict');
 
     if (riskCategory !== undefined && !isRiskCategory(riskCategory)) {
       throw new Error('Unrecognized risk category parameter!');
@@ -266,55 +254,22 @@ export const changeBaseAssetParameters = async (opts: Opts) => {
     }
 
     let inPlacePrice;
-    if (inPlacePriceOpts === -1) {
-      inPlacePrice = null;
-    } else if (typeof inPlacePriceOpts === 'number') {
-      inPlacePrice = inPlacePriceOpts;
+    if (inPlacePriceOpts !== undefined) {
+      inPlacePrice = Number(inPlacePriceOpts);
+      if (inPlacePrice === -1) {
+        inPlacePrice = null;
+      }
     }
 
     const { response } = await cvg.protocol().changeBaseAssetParameters({
-      index,
+      index: Number(index),
       enabled,
       riskCategory,
       oracleSource,
       switchboardOracle,
       pythOracle,
       inPlacePrice,
-    });
-    logResponse(response);
-  } catch (e) {
-    logError(e);
-  }
-};
-
-export const updateBaseAsset = async (opts: Opts) => {
-  const cvg = await createCvg(opts);
-  const {
-    enabled,
-    index,
-    oracleSource,
-    oraclePrice,
-    oracleAddress,
-    riskCategory,
-  } = opts;
-  const enabledArg = enabled === 'true' ? true : false;
-  if (!oraclePrice && !oracleAddress) {
-    throw new Error('Either oraclePrice or oracleAddress must be provided');
-  }
-  if (!riskCategory) {
-    throw new Error('riskCategory must be provided');
-  }
-  try {
-    const { response } = await cvg.protocol().updateBaseAsset({
-      authority: cvg.rpc().getDefaultFeePayer(),
-      enabled: enabledArg,
-      index,
-      priceOracle: {
-        source: oracleSource,
-        price: oraclePrice,
-        address: oracleAddress ? new PublicKey(opts.oracleAddress) : undefined,
-      },
-      riskCategory,
+      strict,
     });
     logResponse(response);
   } catch (e) {
@@ -333,6 +288,23 @@ export const registerMint = async (opts: Opts) => {
   try {
     const { response } = await expirationRetry(
       () => cvg.protocol().registerMint(getMintArgs()),
+      opts
+    );
+    logResponse(response);
+  } catch (e) {
+    logError(e);
+  }
+};
+
+export const addUserAsset = async (opts: Opts) => {
+  const cvg = await createCvg(opts);
+  try {
+    const { response } = await expirationRetry(
+      () =>
+        cvg.protocol().addUserAsset({
+          mint: new PublicKey(opts.mint),
+          ticker: opts.ticker,
+        }),
       opts
     );
     logResponse(response);
@@ -546,14 +518,6 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
         !registerMintAddresses.includes(t.address.toString())
     );
 
-    let baseAssetIndexToStart;
-    if (baseAssets?.length > 0) {
-      baseAssetIndexToStart = Math.max(...baseAssets.map((b) => b.index)) + 1;
-    } else {
-      baseAssetIndexToStart = 0;
-    }
-    // eslint-disable-next-line no-console
-    console.log('last baseAssetIndex', baseAssetIndexToStart - 1);
     for (const token of jupTokensToAdd) {
       try {
         const coingeckoId = token?.extensions?.coingeckoId;
@@ -589,23 +553,19 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
         console.log('Adding token:', token.symbol, 'with price:', tokenPrice);
 
         //mint should already exists on mainnet
-        const addBaseAssetTxBuilder = addBaseAssetBuilder(cvg, {
-          authority: cvg.rpc().getDefaultFeePayer(),
-          ticker: token.symbol,
-          riskCategory: 'high',
-          index: baseAssetIndexToStart,
-          priceOracle: {
-            source: 'in-place',
-            price: tokenPrice,
-          },
-        });
+        const { builder: addBaseAssetTxBuilder, baseAssetIndex } =
+          await addBaseAssetBuilder(cvg, {
+            authority: cvg.rpc().getDefaultFeePayer(),
+            ticker: token.symbol,
+            riskCategory: 'high',
+            oracleSource: 'in-place',
+            inPlacePrice: tokenPrice,
+          });
         // eslint-disable-next-line no-console
         console.log('Adding base asset:', token.symbol);
-        // eslint-disable-next-line no-console
-        console.log('current baseAssetIndex:', baseAssetIndexToStart);
         const registerMintTxBuilder = await registerMintBuilder(cvg, {
           mint: new PublicKey(token.address),
-          baseAssetIndex: baseAssetIndexToStart,
+          baseAssetIndex,
         });
 
         const mergedTxBuiler = TransactionBuilder.make()
@@ -623,7 +583,6 @@ export const addBaseAssetsFromJupiter = async (opts: Opts) => {
         if (signatureStatus && signatureStatus === commitment) {
           // eslint-disable-next-line no-console
           console.log('Transaction confirmed');
-          baseAssetIndexToStart++;
         }
       } catch (e) {
         // eslint-disable-next-line no-console

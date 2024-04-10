@@ -7,6 +7,7 @@ import {
 
 import { ProtocolAccount } from '../accounts';
 import { assert } from '../../../utils/assert';
+import { removeDecimals } from '@/utils/conversions';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -32,6 +33,9 @@ export type Protocol = {
 
   /** The default fees for the protocol */
   readonly defaultFees: FeeParameters;
+
+  /** Sol fee to add a user asset */
+  readonly assetAddFee: number;
 
   /** The address of the risk engine */
   readonly riskEngine: PublicKey;
@@ -63,6 +67,7 @@ export const toProtocol = (account: ProtocolAccount): Protocol => ({
   active: account.data.active,
   settleFees: account.data.settleFees,
   defaultFees: account.data.defaultFees,
+  assetAddFee: removeDecimals(account.data.assetAddFee, 9),
   riskEngine: account.data.riskEngine,
   collateralMint: account.data.collateralMint,
   instruments: account.data.instruments,

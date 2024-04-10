@@ -52,6 +52,8 @@ describe('unit.protocol', () => {
       'initialize',
       '--collateral-mint',
       COLLATERAL_MINT,
+      '--add-asset-fee',
+      '1',
     ]);
     expect(stub.args[0][0]).toEqual(ADDRESS_LABEL);
   });
@@ -145,7 +147,7 @@ describe('unit.protocol', () => {
       'GOD',
       '--oracle-source',
       'switchboard',
-      '--oracle-address',
+      '--switchboard-address',
       SWITCHBOARD_BTC_ORACLE,
     ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
@@ -159,7 +161,7 @@ describe('unit.protocol', () => {
       'DOG',
       '--oracle-source',
       'in-place',
-      '--oracle-price',
+      '--in-place-price',
       '101',
     ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
@@ -175,6 +177,8 @@ describe('unit.protocol', () => {
       'true',
       '--in-place-price',
       '42',
+      '--strict',
+      'true',
     ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
   });
@@ -187,10 +191,23 @@ describe('unit.protocol', () => {
       'ODG',
       '--oracle-source',
       'pyth',
-      '--oracle-address',
+      '--pyth-address',
       PYTH_SOL_ORACLE,
     ]);
     expect(stub.args[0][0]).toEqual(TX_LABEL);
+  });
+
+  it('add-user-asset', async () => {
+    await runCli(['token', 'create-mint', '--decimals', '3']);
+    await runCli([
+      'protocol',
+      'add-user-asset',
+      '--ticker',
+      'TEST',
+      '--mint',
+      stub.args[0][1],
+    ]);
+    expect(stub.args[1][0]).toEqual(TX_LABEL);
   });
 
   it('get-registered-mints', async () => {

@@ -38,14 +38,6 @@ function toLittleEndian(value: number, bytes: number) {
  */
 export class RfqPdasClient {
   constructor(protected readonly convergence: Convergence) {}
-  /** Finds the PDA of a given mint. */
-  mintInfo({ mint }: MintInfoInput): Pda {
-    const programId = this.programId();
-    return Pda.find(programId, [
-      Buffer.from('mint_info', 'utf8'),
-      mint.toBuffer(),
-    ]);
-  }
 
   /** Finds the PDA of a given quote asset. */
   quote({ quoteAsset }: QuoteInput): Pda {
@@ -135,14 +127,6 @@ const serializeQuoteAssetData = (quoteAsset: QuoteAsset): Buffer => {
     createSerializerFromFixableBeetArgsStruct(quoteAssetBeet);
 
   return quoteAssetSerializer.serialize(quoteAsset);
-};
-
-type MintInfoInput = {
-  /** The address of the mint account. */
-  mint: PublicKey;
-
-  /** An optional set of programs that override the registered ones. */
-  programs?: Program[];
 };
 
 type QuoteInput = {
