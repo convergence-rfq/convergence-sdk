@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.6.1
+
+### Patch Changes
+
+- Add clear cache before finding a vacant base asset index
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.1
+
 ## 6.6.0
 
 ### Minor Changes
