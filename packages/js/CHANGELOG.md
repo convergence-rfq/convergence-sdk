@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.2
+
+### Major Changes
+
+- add getRequiredCollateralForSettlement operation
+
 ## 6.6.1
 
 ### Patch Changes
