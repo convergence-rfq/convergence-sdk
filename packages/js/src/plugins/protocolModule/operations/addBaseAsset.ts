@@ -3,10 +3,10 @@ import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import {
+  OracleSource,
   RiskCategory,
-  PriceOracle,
+  toSolitaOracleSource,
   toSolitaRiskCategory,
-  toSolitaPriceOracle,
 } from '../models/BaseAsset';
 import { Convergence } from '../../../Convergence';
 import {
@@ -21,6 +21,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { baseAssetsCache } from '../cache';
+import { findVacantBaseAssetIndex } from '../helpers';
 
 const Key = 'AddBaseAssetOperation' as const;
 
@@ -66,13 +67,19 @@ export type AddBaseAssetInput = {
   /**
    * The index of the BaseAsset.
    */
-  index: number;
+  index?: number;
 
   ticker: string;
 
-  riskCategory: RiskCategory;
+  riskCategory?: RiskCategory;
 
-  priceOracle: PriceOracle;
+  oracleSource?: OracleSource;
+
+  inPlacePrice?: number;
+
+  pythOracle?: PublicKey;
+
+  switchboardOracle?: PublicKey;
 };
 
 /**
@@ -82,6 +89,8 @@ export type AddBaseAssetInput = {
 export type AddBaseAssetOutput = {
   /** The blockchain response from sending and confirming the transaction. */
   response: SendAndConfirmTransactionResponse;
+
+  baseAssetIndex: number;
 };
 
 /**
@@ -92,19 +101,23 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
   {
     handle: async (
       operation: AddBaseAssetOperation,
-      convergence: Convergence,
+      cvg: Convergence,
       scope: OperationScope
     ): Promise<AddBaseAssetOutput> => {
       scope.throwIfCanceled();
 
-      const builder = addBaseAssetBuilder(convergence, operation.input, scope);
+      const { builder, baseAssetIndex } = await addBaseAssetBuilder(
+        cvg,
+        operation.input,
+        scope
+      );
       const { response } = await builder.sendAndConfirm(
-        convergence,
+        cvg,
         scope.confirmOptions
       );
       baseAssetsCache.clear();
 
-      return { response };
+      return { response, baseAssetIndex };
     },
   };
 
@@ -113,6 +126,11 @@ export const addBaseAssetOperationHandler: OperationHandler<AddBaseAssetOperatio
  * @category Inputs
  */
 export type AddBaseAssetBuilderParams = AddBaseAssetInput;
+
+export type AddBaseAssetBuilderResult = {
+  builder: TransactionBuilder;
+  baseAssetIndex: number;
+};
 
 /**
  * Adds an BaseAsset
@@ -127,29 +145,31 @@ export type AddBaseAssetBuilderParams = AddBaseAssetInput;
  * @group Transaction Builders
  * @category Constructors
  */
-export const addBaseAssetBuilder = (
-  convergence: Convergence,
+export const addBaseAssetBuilder = async (
+  cvg: Convergence,
   params: AddBaseAssetBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
-  const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
-  const rfqProgram = convergence.programs().getRfq(programs);
-  const protocolPda = convergence.protocol().pdas().protocol();
+): Promise<AddBaseAssetBuilderResult> => {
+  const { programs, payer = cvg.rpc().getDefaultFeePayer() } = options;
+  const rfqProgram = cvg.programs().getRfq(programs);
+  const protocolPda = cvg.protocol().pdas().protocol();
   const {
     protocol = protocolPda,
     authority,
-    index,
+    index = await findVacantBaseAssetIndex(cvg),
     ticker,
-    riskCategory,
-    priceOracle,
+    riskCategory = 'low',
+    oracleSource = 'in-place',
+    inPlacePrice = null,
+    pythOracle = null,
+    switchboardOracle = null,
   } = params;
 
-  const baseAsset = convergence.protocol().pdas().baseAsset({ index });
-  const { oracleSource, inPlacePrice, pythOracle, switchboardOracle } =
-    toSolitaPriceOracle(priceOracle);
+  const baseAsset = cvg.protocol().pdas().baseAsset({ index });
 
-  return TransactionBuilder.make()
+  const builder = TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(cvg)
     .add({
       instruction: createAddBaseAssetInstruction(
         {
@@ -161,7 +181,7 @@ export const addBaseAssetBuilder = (
           index: { value: index },
           ticker,
           riskCategory: toSolitaRiskCategory(riskCategory),
-          oracleSource,
+          oracleSource: toSolitaOracleSource(oracleSource),
           inPlacePrice,
           pythOracle,
           switchboardOracle,
@@ -171,4 +191,9 @@ export const addBaseAssetBuilder = (
       signers: [authority],
       key: 'addBaseAsset',
     });
+
+  return {
+    builder,
+    baseAssetIndex: index,
+  };
 };

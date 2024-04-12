@@ -1,6 +1,6 @@
-import { PROGRAM_ID } from '@convergence-rfq/psyoptions-european-instrument';
 import { ProgramClient } from '../programModule';
 import { psyoptionsEuropeanInstrumentParser } from './instrument';
+import { PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID } from './types';
 import { ConvergencePlugin, Program } from '@/types';
 import type { Convergence } from '@/Convergence';
 
@@ -9,7 +9,7 @@ export const psyoptionsEuropeanInstrumentModule = (): ConvergencePlugin => ({
   install(convergence: Convergence) {
     const psyoptionsEuropeanInstrumentProgram = {
       name: 'PsyoptionsEuropeanInstrumentProgram',
-      address: PROGRAM_ID,
+      address: PSYOPTIONS_EUROPEAN_INSTRUMENT_PROGRAM_ID,
     };
     convergence.programs().register(psyoptionsEuropeanInstrumentProgram);
 

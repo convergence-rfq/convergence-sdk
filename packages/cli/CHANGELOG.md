@@ -1,12 +1,231 @@
 # @convergence-rfq/cli
 
+## 6.6.2
+
+### Major Changes
+
+- add getRequiredCollateralForSettlement operation
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@7.0.0
+
+## 6.6.1
+
+### Patch Changes
+
+- Add clear cache before finding a vacant base asset index
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.1
+
+## 6.6.0
+
+### Minor Changes
+
+- Add user asset functionality, remove duplicated operation to change the existing base asset, add logic to automatically find a vacant base asset index
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.0
+
+## 6.5.0
+
+### Minor Changes
+
+- Replace risk engine program with a simplified one, add squads integration
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.5.0
+
+## 6.4.2
+
+### Patch Changes
+
+- Update some of vault operator actions API
+- Updated dependencies
+  - @convergence-rfq/sdk@6.4.2
+
+## 6.4.1
+
+### Patch Changes
+
+- Removed reduntant console log
+- Updated dependencies
+  - @convergence-rfq/sdk@6.4.1
+
+## 6.4.0
+
+### Minor Changes
+
+- Add vault operator functionality - an ability to predefine acceptable price for an rfq. User would deposit tokens at the moment of the rfq creation and the settlement would be executed automatically if an acceptable response arrives using a crank bot
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.4.0
+
+## 6.3.3
+
+### Patch Changes
+
+- Update max-retries logic
+- Updated dependencies
+  - @convergence-rfq/sdk@6.3.3
+
+## 6.3.2
+
+### Patch Changes
+
+- Add max-retries arg to cli and also implement maxRetries logic for retrying sending failed txs to chain again
+- Updated dependencies
+  - @convergence-rfq/sdk@6.3.2
+
+## 6.3.1
+
+### Patch Changes
+
+- Add tx-priority-fee argument to cli and modify sdk txPriority to take custom values
+- Updated dependencies
+  - @convergence-rfq/sdk@6.3.1
+
+## 6.3.0
+
+### Minor Changes
+
+- Update program ids and add vault operator program
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.3.0
+
+## 6.2.1
+
+### Patch Changes
+
+- fix addJupBaseAssets command
+- Updated dependencies
+  - @convergence-rfq/sdk@6.2.1
+
+## 6.2.0
+
+### Minor Changes
+
+- Integrate hxro ,collateral req changes
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.2.0
+
+## 6.1.0
+
+### Minor Changes
+
+- Remove collateral requirements, add quote spot fees, add spot instrument config, remove operations to unlock collateral or settle defaults
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.1.0
+
+## 6.0.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.0.1
+
+## 6.0.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@6.0.0
+
+## 4.5.35
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.35
+
+## 4.5.34
+
+### Patch Changes
+
+- fix updateBaseAsset cmd
+
+## 4.5.33
+
+### Patch Changes
+
+- Add Birdeye support to fetch token prices for adding jup base assets
+
+## 4.5.32
+
+### Patch Changes
+
+- add additional mint address check for addJupiterTokens check
+
+## 4.5.31
+
+### Patch Changes
+
+- add update base assets command
+
+## 4.5.30
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.30
+
+## 4.5.29
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.29
+
+## 4.5.28
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.28
+
+## 4.5.27
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.27
+
+## 4.5.26
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.26
+
+## 4.5.25
+
+### Patch Changes
+
+- Updated dependencies
+  - @convergence-rfq/sdk@4.5.25
+
 ## 4.5.24
 
 ### Patch Changes
 
-- Added whitelist
 - Updated dependencies
-  - @convergence-rfq/sdk@4.5.24
+- @convergence-rfq/sdk@4.5.24
 
 ## 4.5.22
 

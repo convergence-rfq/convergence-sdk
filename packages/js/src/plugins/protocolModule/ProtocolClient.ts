@@ -19,6 +19,12 @@ import {
   getRegisteredMintsOperation,
   closeProtocolOperation,
   CloseProtocolInput,
+  AddPrintTradeProviderInput,
+  addPrintTradeProviderOperation,
+  ChangeBaseAssetParametersInput,
+  changeBaseAssetParametersOperation,
+  AddUserAssetInput,
+  addUserAssetOperation,
 } from './operations';
 import { ProtocolPdasClient } from './ProtocolPdasClient';
 import { OperationOptions } from '@/types';
@@ -72,6 +78,16 @@ export class ProtocolClient {
       .execute(addInstrumentOperation(input), options);
   }
 
+  /** {@inheritDoc addPrintTradeProviderOperation} */
+  addPrintTradeProvider(
+    input: AddPrintTradeProviderInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(addPrintTradeProviderOperation(input), options);
+  }
+
   /** {@inheritDoc getProtocolOperation} */
   get(input?: GetProtocolInput, options?: OperationOptions) {
     return this.convergence
@@ -90,6 +106,16 @@ export class ProtocolClient {
     return this.convergence
       .operations()
       .execute(addBaseAssetOperation(input), options);
+  }
+
+  /** {@inheritDoc changeBaseAssetParametersOperation} */
+  changeBaseAssetParameters(
+    input: ChangeBaseAssetParametersInput,
+    options?: OperationOptions
+  ) {
+    return this.convergence
+      .operations()
+      .execute(changeBaseAssetParametersOperation(input), options);
   }
 
   /** {@inheritDoc registerMintOperation} */
@@ -127,5 +153,12 @@ export class ProtocolClient {
     return this.convergence
       .operations()
       .execute(findBaseAssetByAddressOperation(input), options);
+  }
+
+  /** {@inheritDoc addUserAssetOperation} */
+  addUserAsset(input: AddUserAssetInput, options?: OperationOptions) {
+    return this.convergence
+      .operations()
+      .execute(addUserAssetOperation(input), options);
   }
 }

@@ -1,14 +1,8 @@
 import {
   findWhitelistByAddressOperation,
   findWhitelistByAddressOperationHandler,
-  findWhitelistsByCreatorOperation,
-  findWhitelistsByCreatorOperationHandler,
   createWhitelistOperation,
   createWhitelistOperationHandler,
-  addAddressToWhitelistOperation,
-  addAddressToWhitelistOperationHandler,
-  removeAddressFromWhitelistOperation,
-  removeAddressFromWhitelistOperationHandler,
   checkAddressExistsOnWhitelistOperation,
   checkAddressExistsOnWhitelistOperationHandler,
   cleanUpWhitelistOperation,
@@ -28,18 +22,7 @@ export const whitelistModule = (): ConvergencePlugin => ({
       findWhitelistByAddressOperation,
       findWhitelistByAddressOperationHandler
     );
-    op.register(
-      findWhitelistsByCreatorOperation,
-      findWhitelistsByCreatorOperationHandler
-    );
-    op.register(
-      addAddressToWhitelistOperation,
-      addAddressToWhitelistOperationHandler
-    );
-    op.register(
-      removeAddressFromWhitelistOperation,
-      removeAddressFromWhitelistOperationHandler
-    );
+
     op.register(
       checkAddressExistsOnWhitelistOperation,
       checkAddressExistsOnWhitelistOperationHandler

@@ -1,6 +1,8 @@
 import {
   BlockhashWithExpiryBlockHeight,
+  ComputeBudgetProgram,
   ConfirmOptions,
+  Keypair,
   PACKET_DATA_SIZE,
   SignaturePubkeyPair,
   Transaction,
@@ -9,6 +11,7 @@ import {
 import { SendAndConfirmTransactionResponse } from '../plugins/rpcModule';
 import type { Convergence } from '../Convergence';
 import type { OperationOptions, Signer } from '../types';
+import { TRANSACTION_PRIORITY_FEE_MAP } from '../constants';
 
 export const DUMMY_BLOCKHASH = 'H9cCgV1suCbdxMGDGUecdgJPZzdCe4CbNYa6ijP1uBLS';
 
@@ -210,6 +213,75 @@ export class TransactionBuilder<C extends object = object> {
     return transaction;
   }
 
+  toPartiallySignedTransaction(
+    blockhashWithExpiryBlockHeight: BlockhashWithExpiryBlockHeight,
+    options: TransactionOptions = {}
+  ): Transaction {
+    const transaction = this.toTransaction(
+      blockhashWithExpiryBlockHeight,
+      options
+    );
+    const keypairSigners = this.getSigners().filter(
+      (s): s is Keypair => s instanceof Keypair
+    );
+    if (keypairSigners.length > 0) {
+      transaction.partialSign(...keypairSigners);
+    }
+
+    return transaction;
+  }
+
+  protected cloneWithoutRecords(): TransactionBuilder<C> {
+    const result = TransactionBuilder.make<C>(this.transactionOptions);
+    if (this.feePayer !== undefined) {
+      result.setFeePayer(this.feePayer);
+    }
+
+    result.setContext(this.context);
+
+    return result;
+  }
+
+  divideToMultipleBuildersThatFit(): TransactionBuilder<C>[] {
+    if (this.checkTransactionFits()) {
+      return [this];
+    }
+
+    if (this.records.length === 0) {
+      return [];
+    }
+
+    const builders: TransactionBuilder<C>[] = [];
+    let unprocessedRecords = [...this.records];
+
+    while (unprocessedRecords.length > 0) {
+      let builderAdded = false;
+      for (
+        let recordsToTake = unprocessedRecords.length;
+        recordsToTake > 0;
+        recordsToTake--
+      ) {
+        const records = unprocessedRecords.slice(0, recordsToTake);
+        const builder = this.cloneWithoutRecords().append(...records);
+
+        if (builder.checkTransactionFits()) {
+          builders.push(builder);
+          unprocessedRecords = unprocessedRecords.slice(recordsToTake);
+          builderAdded = true;
+          break;
+        }
+      }
+
+      if (!builderAdded) {
+        throw new Error(
+          `Instruction ${unprocessedRecords[0].key} is too big to fit into the transaction`
+        );
+      }
+    }
+
+    return builders;
+  }
+
   async sendAndConfirm(
     convergence: Convergence,
     confirmOptions?: ConfirmOptions
@@ -222,5 +294,21 @@ export class TransactionBuilder<C extends object = object> {
       response,
       ...this.getContext(),
     };
+  }
+
+  addTxPriorityFeeIx(convergence: Convergence) {
+    if (!convergence.transactionPriority) {
+      return this;
+    }
+    const txPriorityInMicroLamports =
+      typeof convergence.transactionPriority === 'number'
+        ? convergence.transactionPriority
+        : TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority];
+    return this.add({
+      instruction: ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: txPriorityInMicroLamports,
+      }),
+      signers: [],
+    });
   }
 }

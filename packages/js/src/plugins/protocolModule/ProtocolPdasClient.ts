@@ -1,7 +1,7 @@
 import { Buffer } from 'buffer';
 
 import type { Convergence } from '../../Convergence';
-import { Pda, Program } from '../../types';
+import { Pda, Program, PublicKey } from '../../types';
 
 function toLittleEndian(value: number, bytes: number) {
   const buf = Buffer.allocUnsafe(bytes);
@@ -34,6 +34,15 @@ export class ProtocolPdasClient {
     ]);
   }
 
+  /** Finds the PDA of a given mint. */
+  mintInfo({ mint }: MintInfoInput): Pda {
+    const programId = this.programId();
+    return Pda.find(programId, [
+      Buffer.from('mint_info', 'utf8'),
+      mint.toBuffer(),
+    ]);
+  }
+
   private programId(programs?: Program[]) {
     return this.convergence.programs().getRfq(programs).address;
   }
@@ -42,4 +51,12 @@ export class ProtocolPdasClient {
 type BaseAssetInput = {
   /** The base asset index. */
   index: number;
+};
+
+type MintInfoInput = {
+  /** The address of the mint account. */
+  mint: PublicKey;
+
+  /** An optional set of programs that override the registered ones. */
+  programs?: Program[];
 };

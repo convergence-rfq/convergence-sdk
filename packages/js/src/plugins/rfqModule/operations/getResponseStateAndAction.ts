@@ -24,15 +24,7 @@ export type ResponseState =
   | 'OnlyTakerPrepared'
   | 'Rejected';
 
-export type ResponseAction =
-  | 'Cancel'
-  | 'UnlockCollateral'
-  | 'Cleanup'
-  | 'Settle'
-  | 'Approve'
-  | 'Settle One Party Defaulted'
-  | 'Settle Both Party Defaulted'
-  | null;
+export type ResponseAction = 'Cancel' | 'Cleanup' | 'Settle' | 'Approve' | null;
 
 /**
  * getResponseStateAndAction.
@@ -187,26 +179,12 @@ const getResponseAction = (
         case 'Expired':
         case 'Cancelled':
         case 'Settled':
-          if (
-            response.makerCollateralLocked > 0 ||
-            response.takerCollateralLocked > 0
-          )
-            return 'UnlockCollateral';
-          if (
-            response.makerCollateralLocked === 0 &&
-            response.takerCollateralLocked === 0
-          )
-            return 'Cleanup';
+          return 'Cleanup';
         case 'SettlingPreparations':
         case 'OnlyMakerPrepared':
         case 'OnlyTakerPrepared':
         case 'ReadyForSettling':
           return 'Settle';
-        case 'MakerDefaulted':
-        case 'TakerDefaulted':
-          return 'Settle One Party Defaulted';
-        case 'BothDefaulted':
-          return 'Settle Both Party Defaulted';
         case 'Rejected':
           return null;
       }
@@ -222,25 +200,10 @@ const getResponseAction = (
         case 'OnlyTakerPrepared':
         case 'ReadyForSettling':
           return 'Settle';
-        case 'MakerDefaulted':
-          return 'Settle One Party Defaulted';
-        case 'TakerDefaulted':
-          return 'Settle One Party Defaulted';
-        case 'BothDefaulted':
-          return 'Settle Both Party Defaulted';
         case 'Settled':
         case 'Expired':
         case 'Cancelled':
-          if (
-            response.takerCollateralLocked > 0 ||
-            response.makerCollateralLocked > 0
-          )
-            return 'UnlockCollateral';
-          if (
-            response.takerCollateralLocked === 0 &&
-            response.makerCollateralLocked === 0
-          )
-            return 'Cleanup';
+          return 'Cleanup';
         case 'Rejected':
           return null;
       }
@@ -270,9 +233,17 @@ const getDefautingParty = (
 };
 
 const hasMakerPrepared = (response: Response, rfq: Rfq) => {
-  return response.makerPreparedLegs === rfq.legs.length;
+  if (response.model === 'escrowResponse') {
+    return response.makerPreparedLegs === rfq.legs.length;
+  }
+
+  return response.makerPrepared;
 };
 
 const hasTakerPrepared = (response: Response, rfq: Rfq) => {
-  return response.takerPreparedLegs === rfq.legs.length;
+  if (response.model === 'escrowResponse') {
+    return response.takerPreparedLegs === rfq.legs.length;
+  }
+
+  return response.takerPrepared;
 };

@@ -168,10 +168,6 @@ describe('unit.response', () => {
       address: rfq2.address,
     });
 
-    await makerCvg.rfqs().unlockResponsesCollateral({
-      responses: responsesBefore.map((r) => r.address),
-    });
-
     const responsesAfter = await makerCvg.rfqs().findResponsesByRfq({
       address: rfq2.address,
     });
@@ -184,7 +180,6 @@ describe('unit.response', () => {
     });
     await makerCvg.rfqs().cleanUpResponse({
       response: responses[0].address,
-      maker: makerCvg.identity().publicKey,
     });
   });
 
@@ -227,7 +222,7 @@ describe('unit.response', () => {
   });
 
   it('Cannot confirm Response if response is expired', async () => {
-    const rfq = await createRfq(takerCvg, amount0, 'buy', 10);
+    const rfq = await createRfq(takerCvg, amount0, 'buy', [], 10);
 
     const res = await respondToRfq(
       makerCvg,
@@ -237,7 +232,7 @@ describe('unit.response', () => {
       convertTimestampToSeconds(Date.now()) + 2
     );
 
-    await sleep(2);
+    await sleep(3);
 
     await expectError(
       takerCvg.rfqs().confirmResponse({
@@ -248,13 +243,8 @@ describe('unit.response', () => {
       'Response is expired'
     );
 
-    await makerCvg.rfqs().unlockResponseCollateral({
-      response: res.rfqResponse.address,
-    });
-
     await makerCvg.rfqs().cleanUpResponse({
       response: res.rfqResponse.address,
-      maker: makerCvg.identity().publicKey,
     });
   });
 });

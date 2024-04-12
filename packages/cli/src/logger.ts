@@ -13,6 +13,9 @@ import {
   SpotLegInstrument,
   PsyoptionsAmericanInstrument,
   PsyoptionsEuropeanInstrument,
+  PrintTradeLeg,
+  HxroPrintTradeProviderConfig,
+  SpotInstrumentConfig,
 } from '@convergence-rfq/sdk';
 
 import { formatInstrument, assertInstrument } from './helpers';
@@ -27,18 +30,21 @@ export const logPk = (p: PublicKey): void => l('Address:', p.toString());
 
 export const logTx = (t: string): void => l('Tx:', t);
 
-export const logInstrument = (i: LegInstrument): void => {
-  assertInstrument(i);
-  l('Instrument:', formatInstrument(i));
+export const logInstrument = (i: LegInstrument | PrintTradeLeg): void => {
   l('Amount:', N(i?.getAmount().toString()));
   l('Side:', i.getSide());
-  if (i instanceof SpotLegInstrument) {
-    l('Decimals:', N(i?.decimals.toString()));
-    l('Mint:', i.mintAddress.toString());
-  } else if (i instanceof PsyoptionsAmericanInstrument) {
-    l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
-  } else if (i instanceof PsyoptionsEuropeanInstrument) {
-    l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
+
+  if (i.legType == 'escrow') {
+    assertInstrument(i);
+    l('Instrument:', formatInstrument(i));
+    if (i instanceof SpotLegInstrument) {
+      l('Decimals:', N(i?.decimals.toString()));
+      l('Mint:', i.mintAddress.toString());
+    } else if (i instanceof PsyoptionsAmericanInstrument) {
+      l('Decimals:', N(PsyoptionsAmericanInstrument.decimals.toString()));
+    } else if (i instanceof PsyoptionsEuropeanInstrument) {
+      l('Decimals:', N(PsyoptionsEuropeanInstrument.decimals.toString()));
+    }
   }
 };
 
@@ -51,12 +57,11 @@ export const logBaseAsset = (b: BaseAsset): void => {
   l('Enabled:', b.enabled);
   l('Index:', b.index);
   l('Risk category:', b.riskCategory);
-  l('Oracle source:', b.priceOracle.source);
-  if (b.priceOracle.address) {
-    l('Oracle address:', b.priceOracle.address.toString());
-  } else if (b.priceOracle.price) {
-    l('Oracle price:', b.priceOracle.price.toString());
-  }
+  l('Oracle source:', b.oracleSource);
+  l('Switchboard oracle:', b.switchboardOracle);
+  l('Pyth oracle:', b.pythOracle);
+  l('In place price:', b.inPlacePrice);
+  l('Strict:', b.strict);
 };
 
 export const logRegisteredMint = (r: RegisteredMint): void => {
@@ -102,23 +107,14 @@ export const logProtocol = (p: Protocol): void => {
   l(`Maker fee: ${p.settleFees.makerBps.toString()} bps`);
   l(`Taker default fee: ${p.defaultFees.takerBps.toString()} bps`);
   l(`Maker default fee: ${p.defaultFees.makerBps.toString()} bps`);
+  l('Registered instruments:', p.instruments.length);
   p.instruments.map(logProtocolInstrument);
-};
-
-export const logRiskEngineConfig = (r: any): void => {
-  l('Address:', r.address.toString());
-  l(
-    'Minimal collateral requirement:',
-    N(r.minCollateralRequirement.toString())
-  );
-  l(
-    'Collateral for fixed quote amount RFQ creation:',
-    N(r.collateralForFixedQuoteAmountRfqCreation.toString())
-  );
-  l('Collateral mint decimals:', N(r.collateralMintDecimals.toString()));
-  l('Safety price shift factor:', N(r.safetyPriceShiftFactor.toString()));
-  l('Overall safety factor:', r.overallSafetyFactor);
-  r.riskCategoriesInfo.map(logRiskCategoryInfo);
+  l('Registered print trade providers:', p.printTradeProviders.length);
+  p.printTradeProviders.map((x) => {
+    l('Print trade provider address:', x.programKey.toString());
+    l('Settlement can expire:', x.settlementCanExpire);
+    l('Validate response account amount:', x.validateResponseAccountAmount);
+  });
 };
 
 export const logRiskCategoryInfo = (c: any): void => {
@@ -148,7 +144,9 @@ export const logRfq = (r: Rfq) => {
   l('Taker:', r.taker.toString());
   l('Order type:', r.orderType);
   l('Size:', r.size.type === 'open' ? 'open' : 'fixed');
-  l('Quote asset:', r.quoteMint.toString());
+  if (r.model === 'escrowRfq') {
+    /* empty */
+  }
   l('Created:', new Date(created).toString());
   l(`Active window: ${r.activeWindow} seconds`);
   l(`Settlement window: ${r.settlingWindow} seconds`);
@@ -157,4 +155,20 @@ export const logRfq = (r: Rfq) => {
   l('Total responses:', r.totalResponses);
   l('Confirmed responses:', r.confirmedResponses);
   l('Cleared responses:', r.clearedResponses);
+  if (r.model === 'printTradeRfq') {
+    l(
+      'Print trade provider:',
+      r.printTrade.getPrintTradeProviderProgramId().toString()
+    );
+  }
+};
+
+export const logHxroConfig = (d: HxroPrintTradeProviderConfig) => {
+  l('Address:', d.address.toString());
+  l('Valid Hxro market product group:', d.validMpg.toString());
+};
+
+export const logSpotInstrumentConfig = (d: SpotInstrumentConfig) => {
+  l('Address:', d.address.toString());
+  l('Quote fees:', d.feeBps.toString());
 };

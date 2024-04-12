@@ -156,7 +156,7 @@ export const registerMintBuilder = async (
   const rfqProgram = convergence.programs().getRfq();
 
   const protocol = convergence.protocol().pdas().protocol();
-  const mintInfo = convergence.rfqs().pdas().mintInfo({ mint });
+  const mintInfo = convergence.protocol().pdas().mintInfo({ mint });
 
   let baseAsset: PublicKey;
   if (baseAssetIndex >= 0) {

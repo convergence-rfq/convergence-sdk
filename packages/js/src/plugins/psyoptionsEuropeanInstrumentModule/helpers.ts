@@ -21,7 +21,7 @@ export const prepareEuropeanOptions = async (
   caller: PublicKey
 ) => {
   const ixTracker = new InstructionUniquenessTracker([]);
-  const europeanProgram = await createEuropeanProgram(convergence);
+  const europeanProgram = await createEuropeanProgram(convergence, caller);
   const response = await convergence
     .rfqs()
     .findResponseByAddress({ address: responseAddress });
@@ -122,7 +122,7 @@ export const prepareEuropeanOptions = async (
     const mintTxBuilder = TransactionBuilder.make().setFeePayer(
       convergence.rpc().getDefaultFeePayer()
     );
-    mintTxBuilder.add({
+    mintTxBuilder.addTxPriorityFeeIx(convergence).add({
       instruction: ix,
       signers: [convergence.identity()],
     });

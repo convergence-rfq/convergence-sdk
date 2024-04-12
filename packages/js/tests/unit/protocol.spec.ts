@@ -4,6 +4,8 @@ import {
   protocolCache,
   baseAssetsCache,
   registeredMintsCache,
+  BaseAsset,
+  Mint,
 } from '../../src';
 import { createUserCvg, generateTicker } from '../helpers';
 import {
@@ -14,6 +16,7 @@ import {
 
 describe('unit.protocol', () => {
   const cvg = createUserCvg('dao');
+  const userCvg = createUserCvg('taker');
 
   it('get', async () => {
     const protocol = await cvg.protocol().get();
@@ -74,7 +77,7 @@ describe('unit.protocol', () => {
       canBeUsedAsQuote: true,
       validateDataAccountAmount: 1,
       prepareToSettleAccountAmount: 7,
-      settleAccountAmount: 3,
+      settleAccountAmount: 5,
       revertPreparationAccountAmount: 3,
       cleanUpAccountAmount: 4,
     });
@@ -111,68 +114,83 @@ describe('unit.protocol', () => {
     expect(response).toHaveProperty('signature');
   });
 
+  it('add print trade provider [hxro]', async () => {
+    const { response } = await cvg.protocol().addPrintTradeProvider({
+      printTradeProviderProgram: cvg.programs().getHxroPrintTradeProvider()
+        .address,
+      settlementCanExpire: false,
+      validateResponseAccountAmount: 2,
+    });
+    expect(response).toHaveProperty('signature');
+  });
+
   it('add base asset [switchboard oracle]', async () => {
-    const baseAssets = await cvg.protocol().getBaseAssets();
     const { response } = await cvg.protocol().addBaseAsset({
       authority: cvg.identity(),
-      index: baseAssets.length + 1,
       ticker: generateTicker(),
       riskCategory: 'very-low',
-      priceOracle: {
-        source: 'switchboard',
-        address: SWITCHBOARD_BTC_ORACLE_PK,
-      },
+      oracleSource: 'switchboard',
+      switchboardOracle: SWITCHBOARD_BTC_ORACLE_PK,
     });
     expect(response).toHaveProperty('signature');
   });
 
   it('add base asset [pyth oracle]', async () => {
-    const baseAssets = await cvg.protocol().getBaseAssets();
     const { response } = await cvg.protocol().addBaseAsset({
       authority: cvg.identity(),
-      index: baseAssets.length + 1,
       ticker: generateTicker(),
       riskCategory: 'very-low',
-      priceOracle: {
-        source: 'pyth',
-        address: PYTH_SOL_ORACLE_PK,
-      },
+      oracleSource: 'pyth',
+      pythOracle: PYTH_SOL_ORACLE_PK,
     });
     expect(response).toHaveProperty('signature');
   });
 
   it('add base asset [in-place price]', async () => {
-    let baseAssets = await cvg.protocol().getBaseAssets();
-    const index = baseAssets.length + 1;
     const price = 101;
-    const { response } = await cvg.protocol().addBaseAsset({
+    const { response, baseAssetIndex } = await cvg.protocol().addBaseAsset({
       authority: cvg.identity(),
-      index,
       ticker: generateTicker(),
       riskCategory: 'very-low',
-      priceOracle: {
-        source: 'in-place',
-        price,
-      },
+      oracleSource: 'in-place',
+      inPlacePrice: price,
     });
     expect(response).toHaveProperty('signature');
 
-    const baseAssetPda = cvg.protocol().pdas().baseAsset({ index });
-    baseAssets = await cvg.protocol().getBaseAssets();
-    expect(baseAssets[baseAssets.length - 1].address.toBase58()).toBe(
-      baseAssetPda.toBase58()
-    );
-
+    const baseAssetPda = cvg
+      .protocol()
+      .pdas()
+      .baseAsset({ index: baseAssetIndex });
     const baseAsset = await cvg
       .protocol()
       .findBaseAssetByAddress({ address: baseAssetPda });
-    expect(baseAsset.priceOracle.price).toEqual(price);
+    expect(baseAsset.inPlacePrice).toEqual(price);
+  });
+
+  it('change base asset parameters', async () => {
+    const baseAssets: BaseAsset[] = await cvg.protocol().getBaseAssets();
+    const baseAsset = baseAssets[0];
+    const { response } = await cvg.protocol().changeBaseAssetParameters({
+      index: 0,
+      enabled: true,
+      inPlacePrice: 42,
+      strict: false,
+    });
+    expect(response).toHaveProperty('signature');
+
+    const dataAfter = await cvg
+      .protocol()
+      .findBaseAssetByAddress({ address: baseAsset.address });
+    expect(dataAfter?.inPlacePrice).toBe(42);
+    expect(dataAfter?.strict).toBe(false);
   });
 
   it('register mint', async () => {
+    const baseAssets: BaseAsset[] = await cvg.protocol().getBaseAssets();
+    const baseAssetIndex = baseAssets[0].index;
     const { mint } = await cvg.tokens().createMint({ decimals: 3 });
     const { response } = await cvg.protocol().registerMint({
-      baseAssetIndex: 1,
+      baseAssetIndex,
       mint: mint.address,
     });
     expect(response).toHaveProperty('signature');
@@ -188,5 +206,28 @@ describe('unit.protocol', () => {
       address: cvg.protocol().pdas().baseAsset({ index: 1 }),
     });
     expect(baseAsset).toHaveProperty('address');
+  });
+
+  it('add user asset', async () => {
+    const { mint } = await cvg.tokens().createMint();
+    const ticker = generateTicker();
+    const { baseAssetIndex } = await cvg
+      .protocol()
+      .addUserAsset({ ticker, mint: mint.address });
+    const address = cvg.protocol().pdas().baseAsset({ index: baseAssetIndex });
+    const baseAsset: BaseAsset = await cvg
+      .protocol()
+      .findBaseAssetByAddress({ address });
+    expect(baseAsset.ticker).toBe(ticker);
+  });
+
+  it('add several user assets', async () => {
+    const mintResults = await Promise.all(
+      new Array(5).fill(null).map(() => cvg.tokens().createMint())
+    );
+    for (const { mint } of mintResults) {
+      const ticker = generateTicker();
+      await cvg.protocol().addUserAsset({ ticker, mint: mint.address });
+    }
   });
 });

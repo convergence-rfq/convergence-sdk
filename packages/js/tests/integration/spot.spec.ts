@@ -38,6 +38,7 @@ describe('integration.spot', () => {
   it('sell', async () => {
     const baseAmount = 1.536_421;
     const quoteAmount = 22_000.86;
+    const feeAmount = quoteAmount * 0.01; // 1% is specified in fixtures
 
     const { rfq } = await createRfq(takerCvg, baseAmount, 'sell');
     expect(rfq).toHaveProperty('address');
@@ -74,7 +75,9 @@ describe('integration.spot', () => {
     ]);
 
     // TODO: This does not seem right in terms of handling precision
-    expect(takerQuoteAfter).toBeCloseTo(takerQuoteBefore + quoteAmount);
+    expect(takerQuoteAfter).toBeCloseTo(
+      takerQuoteBefore + quoteAmount - feeAmount
+    );
     expect(takerBtcAfter).toBeCloseTo(takerBtcBefore - baseAmount);
   });
 
@@ -173,18 +176,13 @@ describe('integration.spot', () => {
     const baseAmount = 2.5;
     const quoteAmount = 24_300.75 * baseAmount;
 
-    const { whitelist } = await takerCvg.whitelist().createWhitelist({
-      creator: TAKER_PK,
-      capacity: 10,
-      whitelist: [MAKER_PK, DAO_PK],
-    });
-
+    const counterParties = [MAKER_PK, DAO_PK, TESTING_PK];
     const { rfq } = await createRfq(
       takerCvg,
       baseAmount,
       'two-way',
-      undefined,
-      whitelist.address
+      counterParties,
+      undefined
     );
     expect(rfq).toHaveProperty('address');
     const { rfqResponse } = await respondToRfq(
@@ -206,19 +204,13 @@ describe('integration.spot', () => {
   it('Create a Rfq with a whitelist , maker is not whitelisted resulting in error in responding ', async () => {
     const baseAmount = 2.5;
     const quoteAmount = 24_300.75 * baseAmount;
-
-    const { whitelist } = await takerCvg.whitelist().createWhitelist({
-      creator: TAKER_PK,
-      capacity: 10,
-      whitelist: [DAO_PK, TESTING_PK],
-    });
-
+    const counterParties = [DAO_PK, TESTING_PK];
     const { rfq } = await createRfq(
       takerCvg,
       baseAmount,
       'two-way',
-      undefined,
-      whitelist.address
+      counterParties,
+      undefined
     );
     expect(rfq).toHaveProperty('address');
 

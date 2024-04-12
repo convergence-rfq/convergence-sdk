@@ -1,6 +1,10 @@
-import { AccountMeta } from '@solana/web3.js';
+import { AccountMeta, PublicKey } from '@solana/web3.js';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { ApiLeg } from '@convergence-rfq/rfq';
+import {
+  ApiLeg,
+  FixedSize as SolitaFixedSize,
+  fixedSizeBeet,
+} from '@convergence-rfq/rfq';
 import {
   Confirmation,
   Quote,
@@ -8,17 +12,15 @@ import {
   isFixedSizeQuoteAsset,
   isQuoteStandard,
 } from '../rfqModule/models';
-import { UnparsedAccount } from '../../types';
+import { UnparsedAccount, createSerializerFromFixableBeet } from '../../types';
 import { Convergence } from '../../Convergence';
 import {
   LegInstrument,
-  getSerializedLegLength,
   getValidationAccounts,
-  serializeAsLeg,
-  toLeg,
+  instrumentToSolitaLeg,
 } from '../instrumentModule';
+import { Rfq, Response, AuthoritySide, isFixedSizeOpen } from './models';
 import { LEG_MULTIPLIER_DECIMALS } from './constants';
-import { Rfq, Response, isFixedSizeOpen } from './models';
 
 export function getPages<T extends UnparsedAccount | Rfq | Response>(
   accounts: T[],
@@ -52,18 +54,11 @@ export function getPages<T extends UnparsedAccount | Rfq | Response>(
 }
 
 export const calculateExpectedLegsHash = (
-  instruments: LegInstrument[]
+  serializedLegs: Buffer[]
 ): Uint8Array => {
-  const serializedLegsData: Buffer[] = instruments.map((i) =>
-    serializeAsLeg(i)
-  );
-
   const lengthBuffer = Buffer.alloc(4);
-  lengthBuffer.writeInt32LE(instruments.length);
-  const fullLegDataBuffer = Buffer.concat([
-    lengthBuffer,
-    ...serializedLegsData,
-  ]);
+  lengthBuffer.writeInt32LE(serializedLegs.length);
+  const fullLegDataBuffer = Buffer.concat([lengthBuffer, ...serializedLegs]);
 
   const hash = new Sha256();
   hash.update(fullLegDataBuffer);
@@ -72,37 +67,12 @@ export const calculateExpectedLegsHash = (
   return expectedLegsHash;
 };
 
-export const calculateExpectedLegsSize = (
-  instruments: LegInstrument[]
-): number => {
-  return (
-    4 +
-    instruments.map((i) => getSerializedLegLength(i)).reduce((x, y) => x + y, 0)
-  );
-};
-
-// TODO remove
-export const instrumentsToLegsAndLegsSize = (
-  instruments: LegInstrument[]
-): [ApiLeg[], number] => {
-  return [
-    instrumentsToLegs(instruments),
-    calculateExpectedLegsSize(instruments),
-  ];
+export const calculateExpectedLegsSize = (serializedLegs: Buffer[]): number => {
+  return 4 + serializedLegs.map((leg) => leg.length).reduce((x, y) => x + y, 0);
 };
 
 export const instrumentsToLegs = (instruments: LegInstrument[]): ApiLeg[] => {
-  return instruments.map((i) => toLeg(i));
-};
-
-// TODO remove
-export const instrumentsToLegsAndExpectedLegsHash = (
-  instruments: LegInstrument[]
-): [ApiLeg[], Uint8Array] => {
-  return [
-    instrumentsToLegs(instruments),
-    calculateExpectedLegsHash(instruments),
-  ];
+  return instruments.map((i) => instrumentToSolitaLeg(i));
 };
 
 export const legsToBaseAssetAccounts = (
@@ -155,6 +125,22 @@ export const sortByActiveAndExpiry = (rfqs: Rfq[]) => {
     });
 };
 
+export const getAuthoritySide = (
+  user: PublicKey,
+  rfq: Rfq,
+  response: Response
+): AuthoritySide | null => {
+  if (rfq.taker.equals(user)) {
+    return 'taker';
+  }
+
+  if (response.maker.equals(user)) {
+    return 'maker';
+  }
+
+  return null;
+};
+
 export function extractLegsMultiplier(
   rfq: Rfq,
   quote: Quote,
@@ -188,3 +174,9 @@ export function extractLegsMultiplier(
   }
   throw new Error('Invalid fixed size');
 }
+
+export const serializeFixedSizeData = (fixedSize: SolitaFixedSize): Buffer => {
+  const fixedSizeSerializer = createSerializerFromFixableBeet(fixedSizeBeet);
+
+  return fixedSizeSerializer.serialize(fixedSize);
+};

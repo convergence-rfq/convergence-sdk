@@ -1,5 +1,5 @@
 import {
-  createPrepareSettlementInstruction,
+  createPrepareEscrowSettlementInstruction,
   AuthoritySide,
 } from '@convergence-rfq/rfq';
 import {
@@ -25,7 +25,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-import { Rfq } from '../../rfqModule';
+import { EscrowResponse, EscrowRfq, Rfq } from '../../rfqModule';
 import { getOrCreateATAtxBuilder } from '../../../utils/ata';
 import { Mint } from '../../tokenModule';
 import { InstrumentPdasClient } from '../../instrumentModule';
@@ -146,6 +146,10 @@ export const prepareSettlementOperationHandler: OperationHandler<PrepareSettleme
         },
         scope
       );
+
+      if (rfqModel.model !== 'escrowRfq') {
+        throw new Error('Response is not settled as an escrow trade!');
+      }
 
       let ataTxs: Transaction[] = [];
       let mintTxs: Transaction[] = [];
@@ -293,18 +297,75 @@ export const prepareSettlementBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
+  if (
+    responseModel.model !== 'escrowResponse' ||
+    rfqModel.model !== 'escrowRfq'
+  ) {
+    throw new Error('Response is not settled as an escrow!');
+  }
+
   const side =
     caller.publicKey.toBase58() == responseModel.maker.toBase58()
       ? AuthoritySide.Maker
       : AuthoritySide.Taker;
 
-  const spotInstrumentProgram = convergence.programs().getSpotInstrument();
+  const { anchorRemainingAccounts, ataTxBuilderArray } =
+    await getEscrowPrepareSettlementRemainingAccounts(
+      convergence,
+      caller.publicKey,
+      rfqModel,
+      responseModel,
+      legAmountToPrepare
+    );
 
+  const prepareSettlementTxBuilder = TransactionBuilder.make()
+    .setFeePayer(payer)
+    .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 1400000,
+      }),
+      signers: [],
+    })
+    .addTxPriorityFeeIx(convergence)
+    .add({
+      instruction: createPrepareEscrowSettlementInstruction(
+        {
+          caller: caller.publicKey,
+          protocol: convergence.protocol().pdas().protocol(),
+          rfq,
+          response,
+          anchorRemainingAccounts,
+        },
+        {
+          side,
+          legAmountToPrepare,
+        },
+        rfqProgram.address
+      ),
+      signers: [caller],
+      key: 'prepareSettlement',
+    });
+
+  return {
+    ataTxBuilderArray,
+    prepareSettlementTxBuilder,
+  };
+};
+
+export const getEscrowPrepareSettlementRemainingAccounts = async (
+  cvg: Convergence,
+  caller: PublicKey,
+  rfq: EscrowRfq,
+  response: EscrowResponse,
+  legAmountToPrepare: number
+) => {
   const baseAssetMints: Mint[] = [];
 
-  for (const leg of rfqModel.legs) {
-    baseAssetMints.push(await legToBaseAssetMint(convergence, leg));
+  for (const leg of rfq.legs) {
+    baseAssetMints.push(await legToBaseAssetMint(cvg, leg));
   }
+
+  const spotInstrumentProgram = cvg.programs().getSpotInstrument();
 
   const anchorRemainingAccounts: AccountMeta[] = [];
 
@@ -314,29 +375,28 @@ export const prepareSettlementBuilder = async (
     isWritable: false,
   };
 
-  const systemProgram = convergence.programs().getSystem(programs);
+  const systemProgram = cvg.programs().getSystem();
 
-  const quoteEscrowPda = new InstrumentPdasClient(convergence).quoteEscrow({
-    response,
+  const quoteEscrowPda = new InstrumentPdasClient(cvg).quoteEscrow({
+    response: response.address,
     program: spotInstrumentProgram.address,
   });
 
   const quoteAccounts: AccountMeta[] = [
     {
-      pubkey: caller.publicKey,
-      isSigner: true,
+      pubkey: caller,
+      isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: convergence.tokens().pdas().associatedTokenAccount({
-        mint: rfqModel.quoteMint,
-        owner: caller.publicKey,
-        programs,
+      pubkey: cvg.tokens().pdas().associatedTokenAccount({
+        mint: rfq.quoteMint,
+        owner: caller,
       }),
       isSigner: false,
       isWritable: true,
     },
-    { pubkey: rfqModel.quoteMint, isSigner: false, isWritable: false },
+    { pubkey: rfq.quoteMint, isSigner: false, isWritable: false },
     {
       pubkey: quoteEscrowPda,
       isSigner: false,
@@ -352,24 +412,21 @@ export const prepareSettlementBuilder = async (
   const ataTxBuilderArray: TransactionBuilder[] = [];
   for (let legIndex = 0; legIndex < legAmountToPrepare; legIndex++) {
     const instrumentProgramAccount: AccountMeta = {
-      pubkey: rfqModel.legs[legIndex].getProgramId(),
+      pubkey: rfq.legs[legIndex].getProgramId(),
       isSigner: false,
       isWritable: false,
     };
 
-    const instrumentEscrowPda = new InstrumentPdasClient(
-      convergence
-    ).instrumentEscrow({
-      response,
+    const instrumentEscrowPda = new InstrumentPdasClient(cvg).instrumentEscrow({
+      response: response.address,
       index: legIndex,
-      rfqModel,
+      rfqModel: rfq,
     });
 
     const { ataPubKey, txBuilder } = await getOrCreateATAtxBuilder(
-      convergence,
+      cvg,
       baseAssetMints[legIndex].address,
-      caller.publicKey,
-      programs
+      caller
     );
 
     if (txBuilder) {
@@ -379,8 +436,8 @@ export const prepareSettlementBuilder = async (
     const legAccounts: AccountMeta[] = [
       // `caller`
       {
-        pubkey: caller.publicKey,
-        isSigner: true,
+        pubkey: caller,
+        isSigner: false,
         isWritable: true,
       },
       // `caller_token_account`
@@ -408,47 +465,16 @@ export const prepareSettlementBuilder = async (
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
 
-  const prepareSettlementTxBuilder = TransactionBuilder.make()
-    .setFeePayer(payer)
-    .add(
-      {
-        instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1400000,
-        }),
-        signers: [],
-      },
-      {
-        instruction: createPrepareSettlementInstruction(
-          {
-            caller: caller.publicKey,
-            protocol: convergence.protocol().pdas().protocol(),
-            rfq,
-            response,
-            anchorRemainingAccounts,
-          },
-          {
-            side,
-            legAmountToPrepare,
-          },
-          rfqProgram.address
-        ),
-        signers: [caller],
-        key: 'prepareSettlement',
-      }
-    );
-  return {
-    ataTxBuilderArray,
-    prepareSettlementTxBuilder,
-  };
+  return { anchorRemainingAccounts, ataTxBuilderArray };
 };
 
-const doesRfqLegContainsPsyoptionsAmerican = (rfq: Rfq) => {
+const doesRfqLegContainsPsyoptionsAmerican = (rfq: EscrowRfq) => {
   return rfq.legs.some((leg) =>
     leg.getProgramId().equals(psyoptionsAmericanInstrumentProgram.address)
   );
 };
 
-const doesRfqLegContainsPsyoptionsEuropean = (rfq: Rfq) => {
+const doesRfqLegContainsPsyoptionsEuropean = (rfq: EscrowRfq) => {
   return rfq.legs.some((leg) =>
     leg.getProgramId().equals(psyoptionsEuropeanInstrumentProgram.address)
   );

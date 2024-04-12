@@ -18,9 +18,6 @@ export type Whitelist = {
   /** The address of the whitelist */
   readonly address: PublicKey;
 
-  /** Max capacity of whitelist. */
-  readonly capacity: number;
-
   /** Whitelisted Addresses */
   readonly whitelist: PublicKey[];
 };
@@ -40,7 +37,6 @@ export const toWhitelist = (account: WhitelistAccount): Whitelist => {
     model: 'whitelist',
     address: account.publicKey,
     creator: data.creator,
-    capacity: data.capacity,
     whitelist: data.whitelist,
   };
 
@@ -49,7 +45,6 @@ export const toWhitelist = (account: WhitelistAccount): Whitelist => {
     model: 'whitelist',
     address: account.publicKey,
     creator: data.creator,
-    capacity: data.capacity,
     whitelist: data.whitelist,
   };
 };

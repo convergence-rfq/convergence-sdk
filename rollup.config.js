@@ -81,7 +81,8 @@ const createConfig = (build, options) => {
           'process.env.BROWSER': JSON.stringify(browser),
         },
       }),
-      ...(bundle ? [json(), nodePolyfills()] : []),
+      json(),
+      ...(bundle ? [nodePolyfills()] : []),
       ...(minified ? [terser()] : []),
     ],
     onwarn(warning, rollupWarn) {

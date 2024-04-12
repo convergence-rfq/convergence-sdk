@@ -1,12 +1,13 @@
 import { Command } from 'commander';
 
 import {
-  riskEngineGroup,
   protocolGroup,
   collateralGroup,
   airdropGroup,
   rfqGroup,
   tokenGroup,
+  hxroGroup,
+  spotInstrumentGroup,
 } from './groups';
 
 export const makeCli = (): Command => {
@@ -14,9 +15,10 @@ export const makeCli = (): Command => {
     airdropGroup,
     tokenGroup,
     protocolGroup,
-    riskEngineGroup,
     collateralGroup,
     rfqGroup,
+    hxroGroup,
+    spotInstrumentGroup,
   ];
 
   const cli = new Command();

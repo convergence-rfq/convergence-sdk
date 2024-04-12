@@ -13,7 +13,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
-
+import { rfqProgram } from '../program';
 const Key = 'CleanUpRfqOperation' as const;
 
 /**
@@ -131,14 +131,25 @@ export const cleanUpRfqBuilder = async (
 ): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const { taker = convergence.identity().publicKey, rfq } = params;
+  const rfqModel = await convergence.rfqs().findRfqByAddress({
+    address: rfq,
+  });
+
+  const defaultPubkey = PublicKey.default;
+  const whitelist =
+    rfqModel.whitelist.toBase58() !== defaultPubkey.toBase58()
+      ? rfqModel.whitelist
+      : rfqProgram.address;
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCleanUpRfqInstruction(
         {
           taker,
           protocol: convergence.protocol().pdas().protocol(),
           rfq,
+          whitelist,
         },
         convergence.programs().getRfq(programs).address
       ),

@@ -15,7 +15,10 @@ import { instrumentModule } from '../instrumentModule';
 import { psyoptionsEuropeanInstrumentModule } from '../psyoptionsEuropeanInstrumentModule';
 import { psyoptionsAmericanInstrumentModule } from '../psyoptionsAmericanInstrumentModule';
 import { spotInstrumentModule } from '../spotInstrumentModule';
+import { hxroModule } from '../hxroPrintTradeProviderModule';
+import { printTradeModule } from '../printTradeModule';
 import { whitelistModule } from '../whitelistModule';
+import { vaultOperatorModule } from '../vaultOperatorModule';
 
 export const corePlugins = () => ({
   install(convergence: Convergence) {
@@ -38,11 +41,14 @@ export const corePlugins = () => ({
     convergence.use(riskEngineModule());
     convergence.use(accountModule());
     convergence.use(whitelistModule());
+    convergence.use(vaultOperatorModule());
 
     // Integrations
     convergence.use(instrumentModule());
+    convergence.use(printTradeModule());
     convergence.use(spotInstrumentModule());
     convergence.use(psyoptionsEuropeanInstrumentModule());
     convergence.use(psyoptionsAmericanInstrumentModule());
+    convergence.use(hxroModule());
   },
 });

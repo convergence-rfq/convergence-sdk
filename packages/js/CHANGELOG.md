@@ -1,10 +1,149 @@
 # @convergence-rfq/sdk
 
+## 6.6.2
+
+### Major Changes
+
+- add getRequiredCollateralForSettlement operation
+
+## 6.6.1
+
+### Patch Changes
+
+- Add clear cache before finding a vacant base asset index
+
+## 6.6.0
+
+### Minor Changes
+
+- Add user asset functionality, remove duplicated operation to change the existing base asset, add logic to automatically find a vacant base asset index
+
+## 6.5.0
+
+### Minor Changes
+
+- Replace risk engine program with a simplified one, add squads integration
+
+## 6.4.2
+
+### Patch Changes
+
+- Update some of vault operator actions API
+
+## 6.4.1
+
+### Patch Changes
+
+- Removed reduntant console log
+
+## 6.4.0
+
+### Minor Changes
+
+- Add vault operator functionality - an ability to predefine acceptable price for an rfq. User would deposit tokens at the moment of the rfq creation and the settlement would be executed automatically if an acceptable response arrives using a crank bot
+
+## 6.3.3
+
+### Patch Changes
+
+- Update max-retries logic
+
+## 6.3.2
+
+### Patch Changes
+
+- Add max-retries arg to cli and also implement maxRetries logic for retrying sending failed txs to chain again
+
+## 6.3.1
+
+### Patch Changes
+
+- Add tx-priority-fee argument to cli and modify sdk txPriority to take custom values
+
+## 6.3.0
+
+### Minor Changes
+
+- Update program ids and add vault operator program
+
+## 6.2.1
+
+### Patch Changes
+
+- fix addJupBaseAssets command
+
+## 6.2.0
+
+### Minor Changes
+
+- Integrate hxro ,collateral req changes
+
+## 6.1.0
+
+### Minor Changes
+
+- Remove collateral requirements, add quote spot fees, add spot instrument config, remove operations to unlock collateral or settle defaults
+
+## 6.0.1
+
+### Patch Changes
+
+- update cpl packages
+
+## 6.0.0
+
+### Minor Changes
+
+- Hxro integration
+
+## 4.5.35
+
+### Patch Changes
+
+- fix collateral calculation for in-place price oracles
+
+## 4.5.30
+
+### Patch Changes
+
+- add UpdateBaseAsset operation to sdk
+
+## 4.5.29
+
+### Patch Changes
+
+- Optimize Whitelist creation logic for sigle signature on user side
+
+## 4.5.28
+
+### Patch Changes
+
+- Update SDK with CPL whitelist changes
+
+## 4.5.27
+
+### Patch Changes
+
+- revoke NoopWallet logic and use this instead of CvgWallet while creating programs
+
+## 4.5.26
+
+### Patch Changes
+
+- Add Priority Fees to sdk
+
+## 4.5.25
+
+### Patch Changes
+
+- Update CPL packages and add updated programs in fixtures
+  (cpl ref : adding validation for whitelst in respond_to_rfq ix)
+
 ## 4.5.24
 
 ### Patch Changes
 
-- Added whitelist
+- add Whitelist feature to SDK
 
 ## 4.5.22
 

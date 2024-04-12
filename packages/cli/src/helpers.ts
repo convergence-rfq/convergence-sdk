@@ -4,23 +4,14 @@ import {
   PsyoptionsEuropeanInstrument,
   LegInstrument,
   FixedSize,
-  InstrumentType,
+  TransactionPriority,
 } from '@convergence-rfq/sdk';
 import { Command } from 'commander';
 
-import { Instrument } from './types';
+import { Connection } from '@solana/web3.js';
+import { CoinGeckoResponse, Instrument } from './types';
 import { DEFAULT_KEYPAIR_FILE, DEFAULT_RPC_ENDPOINT } from './constants';
-
-export const getInstrumentType = (type: string): InstrumentType => {
-  switch (type) {
-    case 'spot':
-      return InstrumentType.Spot;
-    case 'option':
-      return InstrumentType.Option;
-    default:
-      throw new Error('Invalid instrument type');
-  }
-};
+import { Opts } from './cvg';
 
 export const getSize = (size: string, amount: number): FixedSize => {
   switch (size) {
@@ -61,6 +52,17 @@ export const formatInstrument = (instrument: Instrument): string => {
 
 export const addDefaultArgs = (cmd: any) => {
   cmd.option('--rpc-endpoint <string>', 'RPC endpoint', DEFAULT_RPC_ENDPOINT);
+  cmd.option('--skip-preflight', 'skip preflight', false);
+  cmd.option(
+    '--tx-priority-fee <string>',
+    'transaction priority fee can be [none : 0 mcLamports , normal : 1 mcLamports, high : 10 mcLamports, turbo : 100 mcLamports, custom : <number> mcLamports]',
+    'none'
+  );
+  cmd.option(
+    '--max-retries <number>',
+    'maximum numbers of retries for sending failed txs',
+    0
+  );
   cmd.option('--keypair-file <string>', 'keypair file', DEFAULT_KEYPAIR_FILE);
   cmd.option('--verbose <boolean>', 'verbose', false);
   return cmd;
@@ -97,3 +99,120 @@ export const addCmd = (
 
   return cmd;
 };
+
+export const extractBooleanString = (opts: Opts, name: string): boolean => {
+  const value = opts[name];
+  if (value !== 'true' && value !== 'false') {
+    throw new Error(
+      `${name} parameter value should be either 'true' or 'false'`
+    );
+  }
+
+  return value === 'true' ? true : false;
+};
+
+export const getSigConfirmation = async (
+  connection: Connection,
+  tx: string
+) => {
+  const result = await connection.getSignatureStatus(tx, {
+    searchTransactionHistory: true,
+  });
+  return result?.value?.confirmationStatus;
+};
+
+export const fetchCoinGeckoTokenPrice = async (
+  coinGeckoApiKey: string,
+  coingeckoId: string
+) => {
+  const tokenPriceResponse = await fetch(
+    `https://pro-api.coingecko.com/api/v3/simple/price?ids=${coingeckoId}&vs_currencies=usd&x_cg_pro_api_key=${coinGeckoApiKey}`
+  );
+  const tokenPriceJson: CoinGeckoResponse = await tokenPriceResponse.json();
+
+  if (tokenPriceJson[coingeckoId]?.usd) {
+    return Number(tokenPriceJson[coingeckoId]?.usd);
+  }
+  return undefined;
+};
+
+export const fetchBirdeyeTokenPrice = async (
+  birdeyeApiKey: string,
+  tokenAddress: string
+) => {
+  const options = {
+    method: 'GET',
+    headers: { 'X-API-KEY': birdeyeApiKey },
+  };
+
+  const tokenPriceResponse = await fetch(
+    `https://public-api.birdeye.so/defi/price?address=${tokenAddress}`,
+    options
+  );
+  const tokenPriceJson: any = await tokenPriceResponse.json();
+  if (tokenPriceJson?.success === true) {
+    return Number(tokenPriceJson?.data?.value);
+  }
+  return undefined;
+};
+
+export const resolveTxPriorityArg = (
+  txPriority: string
+): TransactionPriority => {
+  switch (txPriority) {
+    case 'none':
+      return 'none';
+    case 'normal':
+      return 'normal';
+    case 'high':
+      return 'high';
+    case 'turbo':
+      return 'turbo';
+    default:
+      try {
+        const txPriorityInNumber = Number(txPriority);
+        if (isNaN(txPriorityInNumber) || txPriorityInNumber < 0) {
+          return 'none';
+        }
+        return txPriorityInNumber;
+      } catch (e) {
+        return 'none';
+      }
+  }
+};
+
+export const resolveMaxRetriesArg = (maxRetries: string): number => {
+  const maxRetriesInNumber = Number(maxRetries);
+  if (isNaN(maxRetriesInNumber) || maxRetriesInNumber < 0) {
+    return 0;
+  }
+  return maxRetriesInNumber;
+};
+
+export async function expirationRetry<T>(
+  fn: () => Promise<T>,
+  opts: Opts
+): Promise<T> {
+  let { maxRetries } = opts;
+  maxRetries = resolveMaxRetriesArg(maxRetries);
+  if (maxRetries === 0) return await fn();
+  let retryCount = 0;
+
+  while (retryCount < maxRetries) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (!isTransactionExpiredBlockheightExceededError(error)) throw error;
+      retryCount++;
+      console.error(`Attempt ${retryCount + 1} tx expired. Retrying...`);
+    }
+  }
+  throw new Error('Max Tx Expiration retries exceeded');
+}
+
+function isTransactionExpiredBlockheightExceededError(error: unknown) {
+  return (
+    error instanceof Error &&
+    error.message.includes('TransactionExpiredBlockheightExceededError')
+  );
+}

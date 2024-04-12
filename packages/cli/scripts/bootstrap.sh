@@ -4,9 +4,10 @@ set -e
 
 export DEVNET="true"
 
-export SPOT_INSTRUMENT="CjQCEjXtG3QNBuT5Z1sctaAYCo5Mt6edftqHQetEPo9w"
-export PSYOPTIONS_EUROPEAN_INSTRUMENT="A86fhhdNVDdXV8pB48WXtPeM3EBkcBeJEdrx9xrUo9nF"
-export PSYOPTIONS_AMERICAN_INSTRUMENT="6JG1tWK4w6LmjeXbmDZJsmUsPSjgnp74j2XPsTvjjTX8"
+export SPOT_INSTRUMENT="4A9M7iojGDPc4n4YDGnTmsYsNKUohG1zM1nrAqVMMmrm"
+export PSYOPTIONS_EUROPEAN_INSTRUMENT="6B7TdBNAF7tWWz5sZbbBZj8jH1ix7QWAchtkvMHveEuW"
+export PSYOPTIONS_AMERICAN_INSTRUMENT="HGmSFSRfVAG8RC8Ae4G1JFSHK7Au5GrGskDxncG3JRok"
+export HXRO_PRINT_TRADE_PROVIDER="4WbVwc5Edfo3oB1n16bVC9qrghYHSNh1qAECbSCyiT95"
 
 # Same for devnet and mainnet
 export BTC_ORACLE_ADDRESS="8SXvChNYFhRq4EZuZvnhjrB3jJRQCv4k3P4W6hesH3Ee"
@@ -31,6 +32,12 @@ convergence protocol initialize --collateral-mint=$USDC_MINT --rpc-endpoint=$RPC
 
 convergence risk-engine initialize --rpc-endpoint=$RPC_ENDPOINT
 
+convergence protocol add-print-trade-provider --print-trade-provider-program $HXRO_PRINT_TRADE_PROVIDER --settlement-can-expire false --validate-response-account-amount 2 --rpc-endpoint=$RPC_ENDPOINT
+convergence hxro initialize-config --valid-mpg $HXRO_MPG --rpc-endpoint=$RPC_ENDPOINT
+convergence hxro initialize-operator-trg --rpc-endpoint=$RPC_ENDPOINT
+
+convergence spot-instrument initialize-config --fee-bps "0.01" --rpc-endpoint=$RPC_ENDPOINT
+
 convergence protocol add-instrument --instrument-program=$SPOT_INSTRUMENT                --can-be-used-as-quote=true  --validate-data-account-amount=1 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4 --rpc-endpoint=$RPC_ENDPOINT  
 convergence protocol add-instrument --instrument-program=$PSYOPTIONS_EUROPEAN_INSTRUMENT --can-be-used-as-quote=false --validate-data-account-amount=2 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4 --rpc-endpoint=$RPC_ENDPOINT
 convergence protocol add-instrument --instrument-program=$PSYOPTIONS_AMERICAN_INSTRUMENT --can-be-used-as-quote=false --validate-data-account-amount=3 --prepare-to-settle-account-amount=7 --settle-account-amount=3 --revert-preparation-account-amount=3 --clean-up-account-amount=4 --rpc-endpoint=$RPC_ENDPOINT
@@ -45,8 +52,8 @@ convergence risk-engine set-risk-categories-info --new-value="0.05,1.2,0.06,0.6,
 convergence risk-engine set-risk-categories-info --new-value="0.05,2.4,0.08,0.8,0.16,1.2,0.32,1.6,0.48,2.0,0.8,2.4,1.2,2.8" --category=high      --rpc-endpoint=$RPC_ENDPOINT
 convergence risk-engine set-risk-categories-info --new-value="0.05,5.0,0.10,1.0,0.20,1.5,0.40,2.0,0.60,2.5,1.0,3.0,1.5,3.5" --category=very-high --rpc-endpoint=$RPC_ENDPOINT
 
-convergence protocol add-base-asset --ticker=BTC --oracle-address=$BTC_ORACLE_ADDRESS --oracle-source=switchboard --rpc-endpoint=$RPC_ENDPOINT
-convergence protocol add-base-asset --ticker=SOL --oracle-address=$SOL_ORACLE_ADDRESS --oracle-source=switchboard --rpc-endpoint=$RPC_ENDPOINT
+convergence protocol add-base-asset --index=0 --ticker=BTC --oracle-address=$BTC_ORACLE_ADDRESS --oracle-source=switchboard --rpc-endpoint=$RPC_ENDPOINT
+convergence protocol add-base-asset --index=1 --ticker=SOL --oracle-address=$SOL_ORACLE_ADDRESS --oracle-source=switchboard --rpc-endpoint=$RPC_ENDPOINT
 
 convergence protocol register-mint --mint=$BTC_MINT --base-asset-index=0 --rpc-endpoint=$RPC_ENDPOINT
 convergence protocol register-mint --mint=$SOL_MINT --base-asset-index=1 --rpc-endpoint=$RPC_ENDPOINT

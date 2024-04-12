@@ -162,6 +162,7 @@ export const revokeTokenDelegateAuthorityBuilder = (
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createRevokeInstruction(
         tokenAccount,

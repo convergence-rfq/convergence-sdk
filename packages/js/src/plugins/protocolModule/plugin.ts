@@ -20,8 +20,13 @@ import {
   findBaseAssetByAddressOperationHandler,
   closeProtocolOperation,
   closeProtocolOperationHandler,
+  addPrintTradeProviderOperation,
+  addPrintTradeProviderOperationHandler,
+  changeBaseAssetParametersOperation,
+  changeBaseAssetParametersOperationHandler,
+  addUserAssetOperation,
+  addUserAssetOperationHandler,
 } from './operations';
-import { Protocol } from './models';
 import { ConvergencePlugin } from '@/types';
 import type { Convergence } from '@/Convergence';
 
@@ -35,7 +40,15 @@ export const protocolModule = (): ConvergencePlugin => ({
     );
     op.register(getProtocolOperation, getProtocolOperationHandler);
     op.register(addInstrumentOperation, addInstrumentOperationHandler);
+    op.register(
+      addPrintTradeProviderOperation,
+      addPrintTradeProviderOperationHandler
+    );
     op.register(addBaseAssetOperation, addBaseAssetOperationHandler);
+    op.register(
+      changeBaseAssetParametersOperation,
+      changeBaseAssetParametersOperationHandler
+    );
     op.register(registerMintOperation, registerMintOperationHandler);
     op.register(getBaseAssetsOperation, getBaseAssetsOperationHandler);
     op.register(
@@ -51,7 +64,7 @@ export const protocolModule = (): ConvergencePlugin => ({
       findBaseAssetByAddressOperationHandler
     );
     op.register(closeProtocolOperation, closeProtocolOperationHandler);
-
+    op.register(addUserAssetOperation, addUserAssetOperationHandler);
     convergence.protocol = function () {
       return new ProtocolClient(this);
     };
@@ -61,11 +74,5 @@ export const protocolModule = (): ConvergencePlugin => ({
 declare module '../../Convergence' {
   interface Convergence {
     protocol(): ProtocolClient;
-  }
-}
-
-declare module '../protocolModule/ProtocolClient' {
-  interface ProtocolClient {
-    getProtocol(): Protocol;
   }
 }

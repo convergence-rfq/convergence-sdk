@@ -1,8 +1,13 @@
 import { PublicKey } from '@solana/web3.js';
-import { FeeParameters, Instrument } from '@convergence-rfq/rfq';
+import {
+  FeeParameters,
+  Instrument,
+  PrintTradeProvider,
+} from '@convergence-rfq/rfq';
 
 import { ProtocolAccount } from '../accounts';
 import { assert } from '../../../utils/assert';
+import { removeDecimals } from '@/utils/conversions';
 
 /**
  * This model captures all the relevant information about an RFQ
@@ -29,6 +34,9 @@ export type Protocol = {
   /** The default fees for the protocol */
   readonly defaultFees: FeeParameters;
 
+  /** Sol fee to add a user asset */
+  readonly assetAddFee: number;
+
   /** The address of the risk engine */
   readonly riskEngine: PublicKey;
 
@@ -37,6 +45,9 @@ export type Protocol = {
 
   /** The procotol instruments. */
   readonly instruments: Instrument[];
+
+  /** The procotol instruments. */
+  readonly printTradeProviders: PrintTradeProvider[];
 };
 
 /** @group Model Helpers */
@@ -56,7 +67,9 @@ export const toProtocol = (account: ProtocolAccount): Protocol => ({
   active: account.data.active,
   settleFees: account.data.settleFees,
   defaultFees: account.data.defaultFees,
+  assetAddFee: removeDecimals(account.data.assetAddFee, 9),
   riskEngine: account.data.riskEngine,
   collateralMint: account.data.collateralMint,
   instruments: account.data.instruments,
+  printTradeProviders: account.data.printTradeProviders,
 });

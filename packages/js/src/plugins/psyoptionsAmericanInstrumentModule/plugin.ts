@@ -21,7 +21,7 @@ export const psyoptionsAmericanInstrumentModule = (): ConvergencePlugin => ({
     };
 
     convergence.addLegInstrument(
-      PSYOPTIONS_AMERICAN_INSTRUMENT_PROGRAM_ID,
+      psyoptionsAmericanInstrumentProgram.address,
       psyoptionsAmericanInstrumentParser
     );
   },

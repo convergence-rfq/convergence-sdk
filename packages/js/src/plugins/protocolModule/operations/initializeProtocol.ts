@@ -83,6 +83,11 @@ export type InitializeProtocolInput = {
    * The protocol settlement taker fee.
    */
   settlementTakerFee?: number;
+
+  /**
+   * The add user asset sol fee.
+   */
+  addAssetFee?: number;
 };
 
 /**
@@ -183,6 +188,7 @@ export const createProtocolBuilder = async (
     protocolTakerFee = 0,
     settlementTakerFee = 0,
     settlementMakerFee = 0,
+    addAssetFee = 0,
   } = params;
 
   const systemProgram = convergence.programs().getSystem(programs);
@@ -214,6 +220,7 @@ export const createProtocolBuilder = async (
       collateralMintTokenAccount.decimals
     ),
   };
+  const solitaAddAssetFee = addDecimals(addAssetFee, 9);
 
   return TransactionBuilder.make<InitializeProtocolBuilderContext>()
     .setFeePayer(payer)
@@ -229,6 +236,7 @@ export const createProtocolBuilder = async (
         {
           settleFees,
           defaultFees,
+          assetAddFee: solitaAddAssetFee,
         },
         rfqProgram.address
       ),

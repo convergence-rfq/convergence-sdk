@@ -20,7 +20,7 @@ import {
   SpotLegInstrument,
   Mint,
 } from '../src';
-import { getUserKp, RPC_ENDPOINT } from '../../validator';
+import { getUserKp, HXRO_RISK_ENGINE, RPC_ENDPOINT } from '../../validator';
 import { BASE_MINT_BTC_PK, QUOTE_MINT_PK } from './constants';
 const DEFAULT_COMMITMENT = 'confirmed';
 const DEFAULT_SKIP_PREFLIGHT = true;
@@ -40,7 +40,10 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
     commitment: options.commitment ?? DEFAULT_COMMITMENT,
     wsEndpoint: options.wsEndpoint,
   });
-  return Convergence.make(connection, { skipPreflight: options.skipPreflight });
+  return Convergence.make(connection, {
+    skipPreflight: options.skipPreflight,
+    transactionPriority: 'normal',
+  });
 };
 
 // Default user is dao but could be maker or taker
@@ -70,6 +73,14 @@ export const generatePk = async (): Promise<PublicKey> => {
 export const sleep = (seconds: number) => {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 };
+
+export async function runInParallelWithWait<T>(
+  promiseGetter: () => Promise<T>,
+  waitInSeconds: number
+): Promise<T> {
+  const [result] = await Promise.all([promiseGetter(), sleep(waitInSeconds)]);
+  return result;
+}
 
 export const fetchTokenAmount = async (
   cvg: Convergence,
@@ -113,6 +124,7 @@ export const createAmericanCoveredCallRfq = async (
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, 1.0, 'long'),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -146,6 +158,7 @@ export const createEuropeanCoveredCallRfq = async (
     instruments: [
       await SpotLegInstrument.create(cvg, baseMint, 1.0, 'long'),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -179,6 +192,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -192,6 +206,7 @@ export const createEuropeanOpenSizeCallSpdOptionRfq = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -223,6 +238,7 @@ export const createAmericanFixedBaseStraddle = async (
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -234,6 +250,7 @@ export const createAmericanFixedBaseStraddle = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -266,6 +283,7 @@ export const createEuropeanFixedBaseStraddle = async (
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -279,6 +297,7 @@ export const createEuropeanFixedBaseStraddle = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -311,6 +330,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
   const { rfq, response } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -322,6 +342,7 @@ export const createAmericanOpenSizeCallSpdOptionRfq = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -358,6 +379,7 @@ export const createCFlyRfq = async (
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -369,6 +391,7 @@ export const createCFlyRfq = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -380,6 +403,7 @@ export const createCFlyRfq = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -404,11 +428,12 @@ export const createRfq = async (
   cvg: Convergence,
   amount: number,
   orderType: OrderType,
+  counterParties: PublicKey[] = [],
   activeWindow?: number,
-  whitelist?: PublicKey,
   rfqType: 'open' | 'fixed-base' | 'fixed-quote' = 'fixed-base',
   quoteMintPk = QUOTE_MINT_PK,
   baseMintPk = BASE_MINT_BTC_PK
+
   // 10 minutes
 ) => {
   let instrumentAmount = 1;
@@ -433,7 +458,7 @@ export const createRfq = async (
     fixedSize: { type: rfqType, amount: fixedSizeAmount },
     quoteAsset: await SpotQuoteInstrument.create(cvg, quoteMint),
     activeWindow,
-    whitelistAddress: whitelist,
+    counterParties: counterParties.length > 0 ? counterParties : undefined,
   });
   return { rfq, response };
 };
@@ -450,7 +475,6 @@ export const respondToRfq = async (
     throw new Error('Must provide bid and/or ask');
   }
   return await cvg.rfqs().respond({
-    maker: cvg.identity(),
     rfq: rfq.address,
     bid: bid ? { price: bid, legsMultiplier } : undefined,
     ask: ask ? { price: ask, legsMultiplier } : undefined,
@@ -477,10 +501,7 @@ export const settleRfq = async (
   response: Response
 ) => {
   return await cvg.rfqs().settle({
-    rfq: rfq.address,
     response: response.address,
-    maker: response.maker,
-    taker: rfq.taker,
   });
 };
 
@@ -545,6 +566,7 @@ export const createAmericanIronCondor = async (
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -556,6 +578,7 @@ export const createAmericanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -567,6 +590,7 @@ export const createAmericanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -578,6 +602,7 @@ export const createAmericanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsAmericanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -610,6 +635,7 @@ export const createEuropeanIronCondor = async (
   const { rfq } = await cvg.rfqs().createAndFinalize({
     instruments: [
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -623,6 +649,7 @@ export const createEuropeanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -636,6 +663,7 @@ export const createEuropeanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -649,6 +677,7 @@ export const createEuropeanIronCondor = async (
         expirationTimestamp
       ),
       await PsyoptionsEuropeanInstrument.create(
+        cvg.identity().publicKey,
         cvg,
         baseMint,
         quoteMint,
@@ -683,4 +712,24 @@ export const expectError = async (promise: Promise<any>, errorText: string) => {
       throw e;
     }
   }
+};
+
+let hxroOperatorTRGInitialized = false;
+
+export const ensureHxroOperatorTRGInitialized = async (
+  cvgAuthority: Convergence
+) => {
+  if (hxroOperatorTRGInitialized) {
+    return;
+  }
+
+  await cvgAuthority.hxro().initializeOperatorTraderRiskGroup({
+    hxroRiskEngineAddress: new PublicKey(HXRO_RISK_ENGINE),
+  });
+
+  hxroOperatorTRGInitialized = true;
+};
+
+export const applySpotQuoteFee = (value: number) => {
+  return value * 0.99;
 };

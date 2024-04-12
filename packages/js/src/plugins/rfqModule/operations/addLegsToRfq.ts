@@ -1,8 +1,12 @@
 import { createAddLegsToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, AccountMeta } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
-import { instrumentsToLegAccounts, instrumentsToLegs } from '../helpers';
+import {
+  instrumentsToLegAccounts,
+  instrumentsToLegs,
+  legsToBaseAssetAccounts,
+} from '../helpers';
 import { Convergence } from '../../../Convergence';
 import {
   Operation,
@@ -136,28 +140,13 @@ export const addLegsToRfqBuilder = async (
   const legs = instrumentsToLegs(instruments);
   const legAccounts = await instrumentsToLegAccounts(instruments);
 
-  const baseAssetAccounts: AccountMeta[] = [];
-  const baseAssetIndexValues = [];
-  for (const leg of legs) {
-    baseAssetIndexValues.push(leg.baseAssetIndex.value);
-  }
-
-  for (const value of baseAssetIndexValues) {
-    const baseAsset = convergence.protocol().pdas().baseAsset({ index: value });
-
-    const baseAssetAccount: AccountMeta = {
-      pubkey: baseAsset,
-      isSigner: false,
-      isWritable: false,
-    };
-
-    baseAssetAccounts.push(baseAssetAccount);
-  }
+  const baseAssetAccounts = legsToBaseAssetAccounts(convergence, legs);
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
   return TransactionBuilder.make()
     .setFeePayer(payer)
+    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createAddLegsToRfqInstruction(
         {
