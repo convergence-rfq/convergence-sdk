@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.3
+
+### Patch Changes
+
+- change bootstrap script and add retryExpiration logic to closeProtocol
+
 ## 6.6.2
 
 ### Major Changes
