@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.6.5
+
+### Patch Changes
+
+- replace microlamports with lamports to test
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.5
+
 ## 6.6.4
 
 ### Patch Changes
