@@ -1,5 +1,21 @@
 # @convergence-rfq/cli
 
+## 6.6.4
+
+### Patch Changes
+
+- Update Tx priortiy fees
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.4
+
+## 6.6.3
+
+### Patch Changes
+
+- change bootstrap script and add retryExpiration logic to closeProtocol
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.3
+
 ## 6.6.2
 
 ### Major Changes

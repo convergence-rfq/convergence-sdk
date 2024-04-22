@@ -336,7 +336,10 @@ export const getBaseAssets = async (opts: Opts) => {
 export const closeProtocol = async (opts: Opts) => {
   const cvg = await createCvg(opts);
   try {
-    const { response } = await cvg.protocol().close();
+    const { response } = await expirationRetry(
+      () => cvg.protocol().close(),
+      opts
+    );
     logResponse(response);
   } catch (e) {
     logError(e);
