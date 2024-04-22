@@ -300,13 +300,13 @@ export class TransactionBuilder<C extends object = object> {
     if (!convergence.transactionPriority) {
       return this;
     }
-    const txPriorityInMicroLamports =
+    const txPriorityInLamports =
       typeof convergence.transactionPriority === 'number'
         ? convergence.transactionPriority
         : TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority];
     return this.add({
       instruction: ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: txPriorityInMicroLamports,
+        microLamports: txPriorityInLamports * Math.pow(10, 6),
       }),
       signers: [],
     });

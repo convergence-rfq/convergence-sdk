@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.4
+
+### Patch Changes
+
+- Update Tx priortiy fees
+
 ## 6.6.3
 
 ### Patch Changes
