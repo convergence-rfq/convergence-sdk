@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.6.4
+
+### Patch Changes
+
+- Update Tx priortiy fees
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.4
+
 ## 6.6.3
 
 ### Patch Changes
