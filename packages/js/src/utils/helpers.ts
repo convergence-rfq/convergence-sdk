@@ -6,6 +6,7 @@ import {
 } from '@solana/web3.js';
 import { TransactionBuilder } from './TransactionBuilder';
 import { Convergence } from '@/Convergence';
+import { DEFAULT_COMPUTE_UNITS, DEFAULT_COMPUTE_UNIT_PRICE } from '@/constants';
 
 type EstimatedPriorityFee = {
   microLamports: number;
@@ -42,7 +43,6 @@ export const getEstimatedPriorityFee = async (
       microLamports: avgPriorityFee,
     };
   } catch (error) {
-    console.error(error);
     return null;
   }
 };
@@ -87,21 +87,21 @@ export const getComputeUnitsToBeConsumed = async (
       unitsConsumed,
     };
   } catch (error) {
-    console.error(error);
     return null;
   }
 };
 
 export const addComputeBudgetIxsIfNeeded = async <T extends object>(
   txBuilder: TransactionBuilder<T>,
-  convergence: Convergence
+  convergence: Convergence,
+  disableSettingComputeUnits?: boolean
 ) => {
-  const computeUnitsConsumed = await getComputeUnitsToBeConsumed(
+  let computeUnitsConsumed = await getComputeUnitsToBeConsumed(
     txBuilder,
     convergence.connection
   );
   if (!computeUnitsConsumed) {
-    return txBuilder;
+    computeUnitsConsumed = { unitsConsumed: DEFAULT_COMPUTE_UNITS };
   }
   if (convergence.transactionPriority === 'dynamic') {
     const estimatedFee = await getEstimatedPriorityFee(
@@ -110,17 +110,23 @@ export const addComputeBudgetIxsIfNeeded = async <T extends object>(
     );
 
     if (!estimatedFee) {
-      return txBuilder;
+      txBuilder.addDynamicComputeBudgetIxs(
+        DEFAULT_COMPUTE_UNIT_PRICE,
+        computeUnitsConsumed.unitsConsumed,
+        disableSettingComputeUnits
+      );
+      return;
     }
     txBuilder.addDynamicComputeBudgetIxs(
       estimatedFee.microLamports,
-      computeUnitsConsumed.unitsConsumed
+      computeUnitsConsumed.unitsConsumed,
+      disableSettingComputeUnits
     );
   } else {
     txBuilder.addStaticComputeBudgetIxs(
       convergence,
-      computeUnitsConsumed.unitsConsumed
+      computeUnitsConsumed.unitsConsumed,
+      disableSettingComputeUnits
     );
   }
-  return txBuilder;
 };

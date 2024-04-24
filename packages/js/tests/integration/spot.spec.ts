@@ -15,7 +15,6 @@ import {
   DAO_PK,
   MAKER_PK,
   QUOTE_MINT_PK,
-  TAKER_PK,
   TESTING_PK,
 } from '../constants';
 

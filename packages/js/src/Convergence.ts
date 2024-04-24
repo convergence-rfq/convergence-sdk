@@ -23,7 +23,7 @@ export class Convergence {
     this.connection = connection;
     this.cluster = options.cluster ?? resolveClusterFromConnection(connection);
     this.skipPreflight = options.skipPreflight ?? false;
-    this.transactionPriority = options.transactionPriority ?? 'none';
+    this.transactionPriority = options.transactionPriority ?? 'normal';
     this.use(corePlugins());
   }
 

@@ -178,5 +178,6 @@ export const fundCollateralBuilder = async (
       signers: [user],
       key: 'fundCollateral',
     });
-  return await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

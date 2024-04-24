@@ -277,7 +277,7 @@ export const settleEscrowBuilder = async (
     .setFeePayer(payer)
     .add({
       instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1_400_000,
+        units: 300000,
       }),
       signers: [],
     })
@@ -294,7 +294,7 @@ export const settleEscrowBuilder = async (
       signers: [],
       key: 'settle',
     });
-  await addComputeBudgetIxsIfNeeded(settleTxBuilder, cvg);
+  await addComputeBudgetIxsIfNeeded(settleTxBuilder, cvg, true);
   return {
     ataTxBuilderArray,
     settleTxBuilder,
@@ -467,7 +467,7 @@ export const settlePrintTradeBuilder = async (
     .add(
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
+          units: 300000,
         }),
         signers: [],
       },
@@ -485,7 +485,7 @@ export const settlePrintTradeBuilder = async (
         key: 'settle',
       }
     );
-
+  await addComputeBudgetIxsIfNeeded(settleTxBuilder, convergence, true);
   return {
     ataTxBuilderArray: [],
     settleTxBuilder,

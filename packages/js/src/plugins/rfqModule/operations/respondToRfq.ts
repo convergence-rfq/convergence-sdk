@@ -1,5 +1,5 @@
 import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, ComputeBudgetProgram, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 
 import BN from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -298,12 +298,6 @@ export const respondToRfqBuilder = async (
     .setFeePayer(maker)
     .setContext({
       response,
-    })
-    .add({
-      instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1_400_000,
-      }),
-      signers: [],
     })
     .add({
       instruction: createRespondToRfqInstruction(

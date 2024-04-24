@@ -1,9 +1,4 @@
-import {
-  PublicKey,
-  AccountMeta,
-  SYSVAR_RENT_PUBKEY,
-  ComputeBudgetProgram,
-} from '@solana/web3.js';
+import { PublicKey, AccountMeta, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
 import {
   createPrepareMoreEscrowLegsSettlementInstruction,
   AuthoritySide,
@@ -257,12 +252,6 @@ export const prepareMoreLegsSettlementBuilder = async (
 
   const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1400000,
-      }),
-      signers: [],
-    })
     .add({
       instruction: createPrepareMoreEscrowLegsSettlementInstruction(
         {

@@ -273,7 +273,7 @@ export const createVaultBuilder = async (
   if (receivedAtaBuilder !== undefined) {
     ataBuilder.add(receivedAtaBuilder);
   }
-  await addComputeBudgetIxsIfNeeded(builder, cvg);
+  await addComputeBudgetIxsIfNeeded(builder, cvg, true);
 
   return {
     builder,

@@ -323,7 +323,7 @@ export const prepareSettlementBuilder = async (
     .setFeePayer(payer)
     .add({
       instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1400000,
+        units: 300000,
       }),
       signers: [],
     })
@@ -346,7 +346,11 @@ export const prepareSettlementBuilder = async (
       key: 'prepareSettlement',
     });
 
-  await addComputeBudgetIxsIfNeeded(prepareSettlementTxBuilder, convergence);
+  await addComputeBudgetIxsIfNeeded(
+    prepareSettlementTxBuilder,
+    convergence,
+    true
+  );
   return {
     ataTxBuilderArray,
     prepareSettlementTxBuilder,

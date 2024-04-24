@@ -107,9 +107,12 @@ export const prepareAmericanOptions = async (
       isSigner: true,
       isWritable: false,
     };
-    const mintTxBuilder = TransactionBuilder.make().setFeePayer(
-      convergence.rpc().getDefaultFeePayer()
-    );
+    const mintTxBuilder = TransactionBuilder.make()
+      .setFeePayer(convergence.rpc().getDefaultFeePayer())
+      .add({
+        instruction: ixWithSigners.ix,
+        signers: [convergence.identity()],
+      });
     await addComputeBudgetIxsIfNeeded(mintTxBuilder, convergence);
 
     mintTxBuilderArray.push(mintTxBuilder);

@@ -1,5 +1,5 @@
 import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
@@ -204,12 +204,6 @@ export const finalizeRfqConstructionBuilder = async (
     .setFeePayer(payer)
     .setContext({
       rfq,
-    })
-    .add({
-      instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1400000,
-      }),
-      signers: [],
     })
     .add({
       instruction: createFinalizeRfqConstructionInstruction(
