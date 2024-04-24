@@ -304,9 +304,23 @@ export class TransactionBuilder<C extends object = object> {
       typeof convergence.transactionPriority === 'number'
         ? convergence.transactionPriority
         : TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority];
-    return this.add({
+    return this.prepend({
       instruction: ComputeBudgetProgram.setComputeUnitPrice({
         microLamports: txPriorityInLamports * Math.pow(10, 6),
+      }),
+      signers: [],
+    });
+  }
+
+  addComputeBudgetIxs(microLamports: number, computeUnits: number) {
+    return this.prepend({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: computeUnits,
+      }),
+      signers: [],
+    }).add({
+      instruction: ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports,
       }),
       signers: [],
     });
