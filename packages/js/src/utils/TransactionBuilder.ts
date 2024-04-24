@@ -306,7 +306,7 @@ export class TransactionBuilder<C extends object = object> {
         : TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority];
     return this.prepend({
       instruction: ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: txPriorityInLamports * Math.pow(10, 6),
+        microLamports: txPriorityInLamports,
       }),
       signers: [],
     });
