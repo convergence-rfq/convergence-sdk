@@ -1,5 +1,5 @@
 import { createRespondToRfqInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, ComputeBudgetProgram, AccountMeta } from '@solana/web3.js';
+import { PublicKey, AccountMeta } from '@solana/web3.js';
 
 import BN from 'bn.js';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
@@ -23,6 +23,7 @@ import {
   AdditionalResponseData,
   prependWithProviderProgram,
 } from '@/plugins/printTradeModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -293,18 +294,11 @@ export const respondToRfqBuilder = async (
     }
   }
 
-  return TransactionBuilder.make<RespondToRfqBuilderContext>()
+  const txBuilder = TransactionBuilder.make<RespondToRfqBuilderContext>()
     .setFeePayer(maker)
     .setContext({
       response,
     })
-    .add({
-      instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1_400_000,
-      }),
-      signers: [],
-    })
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createRespondToRfqInstruction(
         {
@@ -329,4 +323,7 @@ export const respondToRfqBuilder = async (
       signers: [maker],
       key: 'respondToRfq',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

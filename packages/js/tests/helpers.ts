@@ -42,7 +42,7 @@ export const createCvg = (options: ConvergenceTestOptions = {}) => {
   });
   return Convergence.make(connection, {
     skipPreflight: options.skipPreflight,
-    transactionPriority: 'normal',
+    transactionPriority: 'dynamic',
   });
 };
 

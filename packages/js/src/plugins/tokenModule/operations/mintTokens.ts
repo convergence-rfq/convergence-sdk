@@ -18,6 +18,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 // -----------------
 // Operation
@@ -231,39 +232,38 @@ export const mintTokensBuilder = async (
       programs,
     });
 
-  return (
-    TransactionBuilder.make()
-      .addTxPriorityFeeIx(convergence)
-      // Create token account if missing.
-      .add(
-        await convergence
-          .tokens()
-          .builders()
-          .createTokenIfMissing(
-            {
-              ...params,
-              mint: mintAddress,
-              owner: toOwner,
-              token: toToken,
-              tokenExists: toTokenExists,
-              tokenVariable: 'toToken',
-            },
-            { payer, programs }
-          )
-      )
+  const txBuilder = TransactionBuilder.make()
+    // Create token account if missing.
+    .add(
+      await convergence
+        .tokens()
+        .builders()
+        .createTokenIfMissing(
+          {
+            ...params,
+            mint: mintAddress,
+            owner: toOwner,
+            token: toToken,
+            tokenExists: toTokenExists,
+            tokenVariable: 'toToken',
+          },
+          { payer, programs }
+        )
+    )
 
-      // Mint tokens.
-      .add({
-        instruction: createMintToInstruction(
-          mintAddress,
-          toPublicKey(destination),
-          mintAuthorityPublicKey,
-          amount.basisPoints.toNumber(),
-          multiSigners,
-          tokenProgram.address
-        ),
-        signers,
-        key: params.mintTokensInstructionKey ?? 'mintTokens',
-      })
-  );
+    // Mint tokens.
+    .add({
+      instruction: createMintToInstruction(
+        mintAddress,
+        toPublicKey(destination),
+        mintAuthorityPublicKey,
+        amount.basisPoints.toNumber(),
+        multiSigners,
+        tokenProgram.address
+      ),
+      signers,
+      key: params.mintTokensInstructionKey ?? 'mintTokens',
+    });
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

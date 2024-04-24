@@ -18,6 +18,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'SendTokensOperation' as const;
 
@@ -257,40 +258,39 @@ export const sendTokensBuilder = async (
       programs,
     });
 
-  return (
-    TransactionBuilder.make()
-      .setFeePayer(payer)
-      .addTxPriorityFeeIx(convergence)
-      // Create token account if missing.
-      .add(
-        await convergence
-          .tokens()
-          .builders()
-          .createTokenIfMissing(
-            {
-              ...params,
-              mint: mintAddress,
-              owner: toOwner,
-              token: toToken,
-              tokenExists: toTokenExists,
-              tokenVariable: 'toToken',
-            },
-            { programs, payer }
-          )
-      )
+  const txBuilder = TransactionBuilder.make()
+    .setFeePayer(payer)
+    // Create token account if missing.
+    .add(
+      await convergence
+        .tokens()
+        .builders()
+        .createTokenIfMissing(
+          {
+            ...params,
+            mint: mintAddress,
+            owner: toOwner,
+            token: toToken,
+            tokenExists: toTokenExists,
+            tokenVariable: 'toToken',
+          },
+          { programs, payer }
+        )
+    )
 
-      // Transfer tokens.
-      .add({
-        instruction: createTransferInstruction(
-          source,
-          toPublicKey(destination),
-          delegateAuthority ? delegateAuthority.publicKey : fromOwnerPublicKey,
-          amount.basisPoints.toNumber(),
-          fromMultiSigners,
-          tokenProgram.address
-        ),
-        signers,
-        key: params.transferTokensInstructionKey ?? 'transferTokens',
-      })
-  );
+    // Transfer tokens.
+    .add({
+      instruction: createTransferInstruction(
+        source,
+        toPublicKey(destination),
+        delegateAuthority ? delegateAuthority.publicKey : fromOwnerPublicKey,
+        amount.basisPoints.toNumber(),
+        fromMultiSigners,
+        tokenProgram.address
+      ),
+      signers,
+      key: params.transferTokensInstructionKey ?? 'transferTokens',
+    });
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

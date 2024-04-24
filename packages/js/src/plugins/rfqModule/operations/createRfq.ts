@@ -35,6 +35,7 @@ import {
 import { OrderType, toSolitaOrderType } from '../models/OrderType';
 import { InstructionUniquenessTracker } from '@/utils/classes';
 import { createWhitelistBuilder } from '@/plugins/whitelistModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'CreateRfqOperation' as const;
 
@@ -399,7 +400,6 @@ export const createRfqBuilder = async (
     .setContext({
       rfq,
     })
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCreateRfqInstruction(
         {
@@ -445,7 +445,6 @@ export const createRfqBuilder = async (
       .setContext({
         rfq,
       })
-      .addTxPriorityFeeIx(convergence)
       .add({
         instruction: createCreateRfqInstruction(
           {
@@ -480,6 +479,8 @@ export const createRfqBuilder = async (
   }
 
   const remainingLegsToAdd = instruments.slice(legsToAdd.length, legs.length);
+
+  await addComputeBudgetIxsIfNeeded(rfqBuilder, convergence);
 
   return {
     createRfqTxBuilder: rfqBuilder,

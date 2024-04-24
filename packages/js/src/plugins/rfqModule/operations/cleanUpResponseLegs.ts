@@ -18,6 +18,7 @@ import { getOrCreateATA } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule/InstrumentPdasClient';
 import { protocolCache } from '../../protocolModule/cache';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'CleanUpResponseLegsOperation' as const;
 
@@ -211,9 +212,8 @@ export const cleanUpResponseLegsBuilder = async (
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCleanUpResponseEscrowLegsInstruction(
         {
@@ -230,4 +230,7 @@ export const cleanUpResponseLegsBuilder = async (
       signers: [],
       key: 'cleanUpResponseLegs',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

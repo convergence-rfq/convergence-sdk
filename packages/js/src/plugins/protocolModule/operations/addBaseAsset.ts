@@ -22,6 +22,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { baseAssetsCache } from '../cache';
 import { findVacantBaseAssetIndex } from '../helpers';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'AddBaseAssetOperation' as const;
 
@@ -169,7 +170,6 @@ export const addBaseAssetBuilder = async (
 
   const builder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(cvg)
     .add({
       instruction: createAddBaseAssetInstruction(
         {
@@ -191,7 +191,7 @@ export const addBaseAssetBuilder = async (
       signers: [authority],
       key: 'addBaseAsset',
     });
-
+  await addComputeBudgetIxsIfNeeded(builder, cvg);
   return {
     builder,
     baseAssetIndex: index,

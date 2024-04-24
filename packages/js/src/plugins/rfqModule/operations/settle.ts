@@ -32,6 +32,7 @@ import { prependWithProviderProgram } from '@/plugins/printTradeModule';
 import { spotInstrumentProgram } from '@/plugins/spotInstrumentModule';
 import { InstructionUniquenessTracker, getOrCreateATAtxBuilder } from '@/utils';
 import { Protocol } from '@/plugins/protocolModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'SettleOperation' as const;
 
@@ -276,11 +277,10 @@ export const settleEscrowBuilder = async (
     .setFeePayer(payer)
     .add({
       instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1_400_000,
+        units: 300000,
       }),
       signers: [],
     })
-    .addTxPriorityFeeIx(cvg)
     .add({
       instruction: createSettleEscrowInstruction(
         {
@@ -294,7 +294,7 @@ export const settleEscrowBuilder = async (
       signers: [],
       key: 'settle',
     });
-
+  await addComputeBudgetIxsIfNeeded(settleTxBuilder, cvg, true);
   return {
     ataTxBuilderArray,
     settleTxBuilder,
@@ -467,7 +467,7 @@ export const settlePrintTradeBuilder = async (
     .add(
       {
         instruction: ComputeBudgetProgram.setComputeUnitLimit({
-          units: 1_400_000,
+          units: 300000,
         }),
         signers: [],
       },
@@ -485,7 +485,7 @@ export const settlePrintTradeBuilder = async (
         key: 'settle',
       }
     );
-
+  await addComputeBudgetIxsIfNeeded(settleTxBuilder, convergence, true);
   return {
     ataTxBuilderArray: [],
     settleTxBuilder,

@@ -14,6 +14,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'CancelRfqOperation' as const;
 
@@ -124,9 +125,8 @@ export const cancelRfqBuilder = async (
     taker = convergence.identity(),
     protocol = convergence.protocol().pdas().protocol(),
   } = params;
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCancelRfqInstruction(
         {
@@ -139,4 +139,6 @@ export const cancelRfqBuilder = async (
       signers: [taker],
       key: 'cancelRfq',
     });
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

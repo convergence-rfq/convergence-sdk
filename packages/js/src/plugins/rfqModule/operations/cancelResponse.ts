@@ -11,6 +11,7 @@ import {
 } from '../../../types';
 import { TransactionBuilder, TransactionBuilderOptions } from '../../../utils';
 import { SendAndConfirmTransactionResponse } from '@/plugins';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'cancelResponseOperation' as const;
 
@@ -135,9 +136,8 @@ export const cancelResponseBuilder = async (
     .rfqs()
     .findResponseByAddress({ address: response });
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCancelResponseInstruction(
         {
@@ -151,4 +151,7 @@ export const cancelResponseBuilder = async (
       signers: [maker],
       key: 'cancelResponse',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

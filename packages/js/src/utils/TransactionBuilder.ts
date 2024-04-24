@@ -11,7 +11,7 @@ import {
 import { SendAndConfirmTransactionResponse } from '../plugins/rpcModule';
 import type { Convergence } from '../Convergence';
 import type { OperationOptions, Signer } from '../types';
-import { TRANSACTION_PRIORITY_FEE_MAP } from '../constants';
+import { COMPUTE_UNIT_PRICE_IN_MICRO_LAMPORTS_MAP } from '../constants';
 
 export const DUMMY_BLOCKHASH = 'H9cCgV1suCbdxMGDGUecdgJPZzdCe4CbNYa6ijP1uBLS';
 
@@ -296,17 +296,63 @@ export class TransactionBuilder<C extends object = object> {
     };
   }
 
-  addTxPriorityFeeIx(convergence: Convergence) {
-    if (!convergence.transactionPriority) {
+  addStaticComputeBudgetIxs(
+    convergence: Convergence,
+    computeUnits: number,
+    disableSettingComputeUnits?: boolean
+  ) {
+    if (convergence.transactionPriority === 'dynamic') {
       return this;
     }
-    const txPriorityInLamports =
+    const txPriorityInMicroLamports =
       typeof convergence.transactionPriority === 'number'
         ? convergence.transactionPriority
-        : TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority];
-    return this.add({
+        : COMPUTE_UNIT_PRICE_IN_MICRO_LAMPORTS_MAP[
+            convergence.transactionPriority
+          ];
+
+    if (disableSettingComputeUnits) {
+      return this.prepend({
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: txPriorityInMicroLamports,
+        }),
+        signers: [],
+      });
+    }
+    return this.prepend({
       instruction: ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: txPriorityInLamports,
+        microLamports: txPriorityInMicroLamports,
+      }),
+      signers: [],
+    }).prepend({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: computeUnits,
+      }),
+      signers: [],
+    });
+  }
+
+  addDynamicComputeBudgetIxs(
+    microLamports: number,
+    computeUnits: number,
+    disableSettingComputeUnits?: boolean
+  ) {
+    if (disableSettingComputeUnits) {
+      return this.prepend({
+        instruction: ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports,
+        }),
+        signers: [],
+      });
+    }
+    return this.prepend({
+      instruction: ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports,
+      }),
+      signers: [],
+    }).prepend({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: computeUnits,
       }),
       signers: [],
     });

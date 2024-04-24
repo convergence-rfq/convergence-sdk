@@ -28,6 +28,7 @@ import {
 } from '../models';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import { prependWithProviderProgram } from '@/plugins/printTradeModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'RevertSettlementPreparationOperation' as const;
 
@@ -287,9 +288,8 @@ export const revertEscrowSettlementPreparationBuilder = async (
 
   anchorRemainingAccounts.push(spotInstrumentProgramAccount, ...quoteAccounts);
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(cvg)
     .add({
       instruction: createRevertEscrowSettlementPreparationInstruction(
         {
@@ -306,6 +306,8 @@ export const revertEscrowSettlementPreparationBuilder = async (
       signers: [],
       key: 'revertSettlementPreparation',
     });
+  await addComputeBudgetIxsIfNeeded(txBuilder, cvg);
+  return txBuilder;
 };
 
 export type RevertPrintTradeSettlementPreparationBuilderParams = {

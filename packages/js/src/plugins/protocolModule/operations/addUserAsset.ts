@@ -15,6 +15,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { baseAssetsCache, registeredMintsCache } from '../cache';
 import { findVacantBaseAssetIndex } from '../helpers';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'AddUserAssetOperation' as const;
 
@@ -128,14 +129,15 @@ export const addUserAssetBuilder = async (
   try {
     await cvg.protocol().findRegisteredMintByAddress({ address: mintInfo });
     mintRegistered = true;
-  } catch (e) {}
+  } catch (e) {
+    //
+  }
   if (mintRegistered) {
     throw new Error(`Mint ${mint.toString()} had been already registered`);
   }
 
   const builder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(cvg)
     .add({
       instruction: createAddUserAssetInstruction(
         {
@@ -155,6 +157,9 @@ export const addUserAssetBuilder = async (
       signers: [cvg.identity()],
       key: 'addUserAsset',
     });
-
-  return { builder, baseAssetIndex };
+  await addComputeBudgetIxsIfNeeded(builder, cvg);
+  return {
+    builder,
+    baseAssetIndex,
+  };
 };

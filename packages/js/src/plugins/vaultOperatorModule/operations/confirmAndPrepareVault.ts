@@ -22,6 +22,7 @@ import {
   EscrowRfq,
   getEscrowPrepareSettlementRemainingAccounts,
 } from '@/plugins/rfqModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'ConfirmAndPrepareVaultOperation' as const;
 
@@ -155,8 +156,9 @@ export const confirmAndPrepareVaultBuilder = async (
 
   const builder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(cvg)
     .add(confirmIx, prepareIx);
+
+  await addComputeBudgetIxsIfNeeded(builder, cvg);
 
   return {
     builder,

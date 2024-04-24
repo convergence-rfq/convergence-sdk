@@ -9,6 +9,7 @@ import {
   PsyoptionsEuropeanInstrument,
   createEuropeanProgram,
 } from './instrument';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 export type PrepareEuropeanOptionsResult = {
   ataTxBuilders: TransactionBuilder[];
@@ -119,13 +120,14 @@ export const prepareEuropeanOptions = async (
       isWritable: false,
     };
 
-    const mintTxBuilder = TransactionBuilder.make().setFeePayer(
-      convergence.rpc().getDefaultFeePayer()
-    );
-    mintTxBuilder.addTxPriorityFeeIx(convergence).add({
-      instruction: ix,
-      signers: [convergence.identity()],
-    });
+    const mintTxBuilder = TransactionBuilder.make()
+      .setFeePayer(convergence.rpc().getDefaultFeePayer())
+      .add({
+        instruction: ix,
+        signers: [convergence.identity()],
+      });
+
+    await addComputeBudgetIxsIfNeeded(mintTxBuilder, convergence);
     mintTxBuilderArray.push(mintTxBuilder);
   }
 
