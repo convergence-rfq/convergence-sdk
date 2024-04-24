@@ -297,10 +297,7 @@ export class TransactionBuilder<C extends object = object> {
   }
 
   addStaticComputeBudgetIxs(convergence: Convergence, computeUnits: number) {
-    if (
-      !convergence.transactionPriority ||
-      convergence.transactionPriority === 'dynamic'
-    ) {
+    if (convergence.transactionPriority === 'dynamic') {
       return this;
     }
     const txPriorityInLamports =
