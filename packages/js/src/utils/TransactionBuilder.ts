@@ -296,8 +296,11 @@ export class TransactionBuilder<C extends object = object> {
     };
   }
 
-  addTxPriorityFeeIx(convergence: Convergence) {
-    if (!convergence.transactionPriority) {
+  addStaticComputeBudgetIxs(convergence: Convergence, computeUnits: number) {
+    if (
+      !convergence.transactionPriority ||
+      convergence.transactionPriority === 'dynamic'
+    ) {
       return this;
     }
     const txPriorityInLamports =
@@ -306,21 +309,26 @@ export class TransactionBuilder<C extends object = object> {
         : TRANSACTION_PRIORITY_FEE_MAP[convergence.transactionPriority];
     return this.prepend({
       instruction: ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: txPriorityInLamports,
+        microLamports: txPriorityInLamports * Math.pow(10, 6),
+      }),
+      signers: [],
+    }).prepend({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: computeUnits,
       }),
       signers: [],
     });
   }
 
-  addComputeBudgetIxs(microLamports: number, computeUnits: number) {
+  addDynamicComputeBudgetIxs(microLamports: number, computeUnits: number) {
     return this.prepend({
-      instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: computeUnits,
-      }),
-      signers: [],
-    }).add({
       instruction: ComputeBudgetProgram.setComputeUnitPrice({
         microLamports,
+      }),
+      signers: [],
+    }).prepend({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: computeUnits,
       }),
       signers: [],
     });

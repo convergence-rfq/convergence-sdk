@@ -38,7 +38,44 @@ export const getEstimatedPriorityFeeInMicorLamps = async (
     );
     avgPriorityFee /= recentPriorityFeeData.length;
 
+    const computeUnits = await getComputeUnitsToBeConsumed(
+      txToProcess,
+      connection
+    );
+    if (!computeUnits) {
+      throw new Error('Failed to get compute units consumed');
+    }
+    return {
+      unitsConsumed: computeUnits.unitsConsumed,
+      microLamports: avgPriorityFee,
+    };
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+type GetComputeUnitsToBeConsumed = {
+  unitsConsumed: number;
+} | null;
+
+export const getComputeUnitsToBeConsumed = async (
+  tx: Transaction | TransactionBuilder,
+  connection: Connection
+): Promise<GetComputeUnitsToBeConsumed> => {
+  try {
+    let txToProcess: Transaction;
+    const latestBlockhash = await connection.getLatestBlockhash();
+    if (tx instanceof TransactionBuilder) {
+      txToProcess = tx.toTransaction(latestBlockhash);
+    } else {
+      txToProcess = tx;
+    }
     const ixs = txToProcess.instructions.map((ix) => ix);
+
+    if (!txToProcess.feePayer) {
+      throw new Error('Transaction must have a fee payer');
+    }
 
     const txMessage = new TransactionMessage({
       payerKey: txToProcess.feePayer,
@@ -56,7 +93,6 @@ export const getEstimatedPriorityFeeInMicorLamps = async (
     }
     return {
       unitsConsumed,
-      microLamports: avgPriorityFee,
     };
   } catch (error) {
     console.error(error);
