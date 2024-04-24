@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.6
+
+### Patch Changes
+
+- ComputeUnits Improvement and implement dynamic Priority fee
+
 ## 6.6.5
 
 ### Patch Changes
