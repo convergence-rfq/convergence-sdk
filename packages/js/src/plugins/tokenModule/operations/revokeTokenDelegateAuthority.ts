@@ -16,6 +16,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'RevokeTokenDelegateAuthorityOperation' as const;
 
@@ -97,11 +98,12 @@ export const revokeTokenDelegateAuthorityOperationHandler: OperationHandler<Revo
       convergence: Convergence,
       scope: OperationScope
     ): Promise<RevokeTokenDelegateAuthorityOutput> => {
-      return revokeTokenDelegateAuthorityBuilder(
+      const builder = await revokeTokenDelegateAuthorityBuilder(
         convergence,
         operation.input,
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      return builder.sendAndConfirm(convergence, scope.confirmOptions);
     },
   };
 
@@ -134,11 +136,11 @@ export type RevokeTokenDelegateAuthorityBuilderParams = Omit<
  * @group Transaction Builders
  * @category Constructors
  */
-export const revokeTokenDelegateAuthorityBuilder = (
+export const revokeTokenDelegateAuthorityBuilder = async (
   convergence: Convergence,
   params: RevokeTokenDelegateAuthorityBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     mintAddress,
@@ -160,9 +162,8 @@ export const revokeTokenDelegateAuthorityBuilder = (
       programs,
     });
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createRevokeInstruction(
         tokenAccount,
@@ -173,4 +174,7 @@ export const revokeTokenDelegateAuthorityBuilder = (
       signers,
       key: params.instructionKey ?? 'revokeDelegateAuthority',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

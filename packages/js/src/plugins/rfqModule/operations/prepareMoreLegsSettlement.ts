@@ -27,6 +27,7 @@ import {
 import { getOrCreateATA } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 
@@ -254,7 +255,7 @@ export const prepareMoreLegsSettlementBuilder = async (
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
     .add({
       instruction: ComputeBudgetProgram.setComputeUnitLimit({
@@ -262,7 +263,6 @@ export const prepareMoreLegsSettlementBuilder = async (
       }),
       signers: [],
     })
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createPrepareMoreEscrowLegsSettlementInstruction(
         {
@@ -281,4 +281,7 @@ export const prepareMoreLegsSettlementBuilder = async (
       signers: [caller],
       key: 'prepareMoreLegsSettlement',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

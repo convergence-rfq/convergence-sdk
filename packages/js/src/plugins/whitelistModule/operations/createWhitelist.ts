@@ -14,6 +14,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '@/utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'CreateWhitelistOperation' as const;
 
@@ -136,9 +137,8 @@ export const createWhitelistBuilder = async (
   const systemProgram = convergence.programs().getSystem(programs);
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCreateWhitelistInstruction(
         {
@@ -154,4 +154,7 @@ export const createWhitelistBuilder = async (
       signers: [whitelistKeypair, payer],
       key: 'CreateWhitelist',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

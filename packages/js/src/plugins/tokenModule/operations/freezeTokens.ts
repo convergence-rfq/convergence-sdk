@@ -16,6 +16,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'FreezeTokensOperation' as const;
 
@@ -100,11 +101,12 @@ export const freezeTokensOperationHandler: OperationHandler<FreezeTokensOperatio
       convergence: Convergence,
       scope: OperationScope
     ): Promise<FreezeTokensOutput> {
-      return freezeTokensBuilder(
+      const builder = await freezeTokensBuilder(
         convergence,
         operation.input,
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      return builder.sendAndConfirm(convergence, scope.confirmOptions);
     },
   };
 
@@ -134,11 +136,11 @@ export type FreezeTokensBuilderParams = Omit<
  * @group Transaction Builders
  * @category Constructors
  */
-export const freezeTokensBuilder = (
+export const freezeTokensBuilder = async (
   convergence: Convergence,
   params: FreezeTokensBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     mintAddress,
@@ -161,9 +163,8 @@ export const freezeTokensBuilder = (
       programs,
     });
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createFreezeAccountInstruction(
         tokenAddressOrAta,
@@ -175,4 +176,7 @@ export const freezeTokensBuilder = (
       signers,
       key: params.instructionKey ?? 'freezeTokens',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

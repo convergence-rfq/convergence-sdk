@@ -14,6 +14,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { rfqProgram } from '../program';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 const Key = 'CleanUpRfqOperation' as const;
 
 /**
@@ -140,9 +141,8 @@ export const cleanUpRfqBuilder = async (
     rfqModel.whitelist.toBase58() !== defaultPubkey.toBase58()
       ? rfqModel.whitelist
       : rfqProgram.address;
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCleanUpRfqInstruction(
         {
@@ -156,4 +156,7 @@ export const cleanUpRfqBuilder = async (
       signers: [],
       key: 'cleanUpRfq',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

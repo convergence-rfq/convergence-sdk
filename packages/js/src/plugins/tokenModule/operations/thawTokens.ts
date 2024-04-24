@@ -16,6 +16,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'ThawTokensOperation' as const;
 
@@ -100,11 +101,12 @@ export const thawTokensOperationHandler: OperationHandler<ThawTokensOperation> =
       convergence: Convergence,
       scope: OperationScope
     ): Promise<ThawTokensOutput> {
-      return thawTokensBuilder(
+      const builder = await thawTokensBuilder(
         convergence,
         operation.input,
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      return builder.sendAndConfirm(convergence, scope.confirmOptions);
     },
   };
 
@@ -134,11 +136,11 @@ export type ThawTokensBuilderParams = Omit<
  * @group Transaction Builders
  * @category Constructors
  */
-export const thawTokensBuilder = (
+export const thawTokensBuilder = async (
   convergence: Convergence,
   params: ThawTokensBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     mintAddress,
@@ -161,9 +163,8 @@ export const thawTokensBuilder = (
       programs,
     });
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createThawAccountInstruction(
         tokenAddressOrAta,
@@ -175,4 +176,7 @@ export const thawTokensBuilder = (
       signers,
       key: params.instructionKey ?? 'thawTokens',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

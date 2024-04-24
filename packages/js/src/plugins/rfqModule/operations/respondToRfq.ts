@@ -23,6 +23,7 @@ import {
   AdditionalResponseData,
   prependWithProviderProgram,
 } from '@/plugins/printTradeModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const getNextResponsePdaAndDistinguisher = async (
   cvg: Convergence,
@@ -293,7 +294,7 @@ export const respondToRfqBuilder = async (
     }
   }
 
-  return TransactionBuilder.make<RespondToRfqBuilderContext>()
+  const txBuilder = TransactionBuilder.make<RespondToRfqBuilderContext>()
     .setFeePayer(maker)
     .setContext({
       response,
@@ -304,7 +305,6 @@ export const respondToRfqBuilder = async (
       }),
       signers: [],
     })
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createRespondToRfqInstruction(
         {
@@ -329,4 +329,7 @@ export const respondToRfqBuilder = async (
       signers: [maker],
       key: 'respondToRfq',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

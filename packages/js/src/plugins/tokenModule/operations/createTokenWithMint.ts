@@ -20,6 +20,7 @@ import {
   useOperation,
 } from '../../../types';
 import type { Convergence } from '../../../Convergence';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'CreateTokenWithMintOperation' as const;
 
@@ -276,7 +277,6 @@ export const createTokenWithMintBuilder = async (
   const builder = TransactionBuilder.make<CreateTokenWithMintBuilderContext>()
     .setFeePayer(payer)
     .setContext({ mintSigner: mint, tokenAddress })
-    .addTxPriorityFeeIx(convergence)
 
     // Create the Mint account.
     .add(createMintBuilder)
@@ -284,6 +284,7 @@ export const createTokenWithMintBuilder = async (
     // Create the Token account.
     .add(createTokenBuilder);
 
+  await addComputeBudgetIxsIfNeeded(builder, convergence);
   // Potentially mint the initial supply to the token account.
   if (!!initialSupply) {
     if (!isSigner(mintAuthority)) {

@@ -15,6 +15,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'TransferSolOperation' as const;
 
@@ -98,7 +99,11 @@ export const transferSolOperationHandler: OperationHandler<TransferSolOperation>
       convergence: Convergence,
       scope: OperationScope
     ): Promise<TransferSolOutput> {
-      const builder = transferSolBuilder(convergence, operation.input, scope);
+      const builder = await transferSolBuilder(
+        convergence,
+        operation.input,
+        scope
+      );
       return builder.sendAndConfirm(convergence, scope.confirmOptions);
     },
   };
@@ -135,11 +140,11 @@ export type TransferSolBuilderParams = Omit<
  * @group Transaction Builders
  * @category Constructors
  */
-export const transferSolBuilder = (
+export const transferSolBuilder = async (
   convergence: Convergence,
   params: TransferSolBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     from = convergence.identity(),
@@ -151,9 +156,8 @@ export const transferSolBuilder = (
 
   assertSol(amount);
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: SystemProgram.transfer({
         fromPubkey: from.publicKey,
@@ -165,4 +169,7 @@ export const transferSolBuilder = (
       signers: [from],
       key: params.instructionKey ?? 'transferSol',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

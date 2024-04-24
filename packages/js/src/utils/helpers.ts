@@ -92,8 +92,8 @@ export const getComputeUnitsToBeConsumed = async (
   }
 };
 
-export const addComputeBudgetIxsIfNeeded = async (
-  txBuilder: TransactionBuilder,
+export const addComputeBudgetIxsIfNeeded = async <T extends object>(
+  txBuilder: TransactionBuilder<T>,
   convergence: Convergence
 ) => {
   const computeUnitsConsumed = await getComputeUnitsToBeConsumed(

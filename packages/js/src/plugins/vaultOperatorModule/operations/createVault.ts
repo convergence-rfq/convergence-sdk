@@ -36,6 +36,7 @@ import {
 } from '@/plugins/rfqModule';
 import { addDecimals, getOrCreateATAtxBuilder } from '@/utils';
 import { Mint } from '@/plugins/tokenModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'CreateVaultOperation' as const;
 
@@ -226,7 +227,6 @@ export const createVaultBuilder = async (
 
   const builder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(cvg)
     .add(transferLamportIx, {
       instruction: createCreateRfqInstruction(
         {
@@ -273,6 +273,7 @@ export const createVaultBuilder = async (
   if (receivedAtaBuilder !== undefined) {
     ataBuilder.add(receivedAtaBuilder);
   }
+  await addComputeBudgetIxsIfNeeded(builder, cvg);
 
   return {
     builder,
