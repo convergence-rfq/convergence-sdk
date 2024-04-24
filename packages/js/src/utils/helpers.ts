@@ -5,6 +5,7 @@ import {
   VersionedTransaction,
 } from '@solana/web3.js';
 import { TransactionBuilder } from './TransactionBuilder';
+import { Convergence } from '@/Convergence';
 
 type EstimatedPriorityFee = {
   unitsConsumed: number;
@@ -97,5 +98,38 @@ export const getComputeUnitsToBeConsumed = async (
   } catch (error) {
     console.error(error);
     return null;
+  }
+};
+
+export const addComputeBudgetIxsIfNeeded = async (
+  txBuilder: TransactionBuilder,
+  convergence: Convergence
+) => {
+  const computeUnitsConsumed = await getComputeUnitsToBeConsumed(
+    txBuilder,
+    convergence.connection
+  );
+  if (!computeUnitsConsumed) {
+    return txBuilder;
+  }
+  if (convergence.transactionPriority === 'dynamic') {
+    const estimatedTxFeeWithComputeUnits =
+      await getEstimatedPriorityFeeInMicorLamps(
+        txBuilder,
+        convergence.connection
+      );
+
+    if (!estimatedTxFeeWithComputeUnits) {
+      return txBuilder;
+    }
+    txBuilder.addDynamicComputeBudgetIxs(
+      estimatedTxFeeWithComputeUnits.microLamports,
+      estimatedTxFeeWithComputeUnits.unitsConsumed
+    );
+  } else {
+    txBuilder.addStaticComputeBudgetIxs(
+      convergence,
+      computeUnitsConsumed.unitsConsumed
+    );
   }
 };

@@ -19,6 +19,7 @@ import { Convergence } from '../../../Convergence';
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
 import {
+  addComputeBudgetIxsIfNeeded,
   getComputeUnitsToBeConsumed,
   getEstimatedPriorityFeeInMicorLamps,
 } from '@/utils/helpers';
@@ -181,32 +182,6 @@ export const fundCollateralBuilder = async (
       signers: [user],
       key: 'fundCollateral',
     });
-  const computeUnitsConsumed = await getComputeUnitsToBeConsumed(
-    txBuilder,
-    convergence.connection
-  );
-  if (!computeUnitsConsumed) {
-    return txBuilder;
-  }
-  if (convergence.transactionPriority === 'dynamic') {
-    const estimatedTxFeeWithComputeUnits =
-      await getEstimatedPriorityFeeInMicorLamps(
-        txBuilder,
-        convergence.connection
-      );
-
-    if (!estimatedTxFeeWithComputeUnits) {
-      return txBuilder;
-    }
-    txBuilder.addDynamicComputeBudgetIxs(
-      estimatedTxFeeWithComputeUnits.microLamports,
-      estimatedTxFeeWithComputeUnits.unitsConsumed
-    );
-  } else {
-    txBuilder.addStaticComputeBudgetIxs(
-      convergence,
-      computeUnitsConsumed.unitsConsumed
-    );
-  }
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
   return txBuilder;
 };
