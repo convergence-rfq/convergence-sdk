@@ -18,11 +18,7 @@ import { addDecimals } from '../../../utils/conversions';
 import { Convergence } from '../../../Convergence';
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
-import {
-  addComputeBudgetIxsIfNeeded,
-  getComputeUnitsToBeConsumed,
-  getEstimatedPriorityFeeInMicorLamps,
-} from '@/utils/helpers';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 const Key = 'FundCollateralOperation' as const;
 
 /**
@@ -182,6 +178,5 @@ export const fundCollateralBuilder = async (
       signers: [user],
       key: 'fundCollateral',
     });
-  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
-  return txBuilder;
+  return await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
 };

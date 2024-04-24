@@ -8,11 +8,10 @@ import { TransactionBuilder } from './TransactionBuilder';
 import { Convergence } from '@/Convergence';
 
 type EstimatedPriorityFee = {
-  unitsConsumed: number;
   microLamports: number;
 } | null;
 
-export const getEstimatedPriorityFeeInMicorLamps = async (
+export const getEstimatedPriorityFee = async (
   tx: Transaction | TransactionBuilder,
   connection: Connection
 ): Promise<EstimatedPriorityFee> => {
@@ -39,15 +38,7 @@ export const getEstimatedPriorityFeeInMicorLamps = async (
     );
     avgPriorityFee /= recentPriorityFeeData.length;
 
-    const computeUnits = await getComputeUnitsToBeConsumed(
-      txToProcess,
-      connection
-    );
-    if (!computeUnits) {
-      throw new Error('Failed to get compute units consumed');
-    }
     return {
-      unitsConsumed: computeUnits.unitsConsumed,
       microLamports: avgPriorityFee,
     };
   } catch (error) {
@@ -113,18 +104,17 @@ export const addComputeBudgetIxsIfNeeded = async (
     return txBuilder;
   }
   if (convergence.transactionPriority === 'dynamic') {
-    const estimatedTxFeeWithComputeUnits =
-      await getEstimatedPriorityFeeInMicorLamps(
-        txBuilder,
-        convergence.connection
-      );
+    const estimatedFee = await getEstimatedPriorityFee(
+      txBuilder,
+      convergence.connection
+    );
 
-    if (!estimatedTxFeeWithComputeUnits) {
+    if (!estimatedFee) {
       return txBuilder;
     }
     txBuilder.addDynamicComputeBudgetIxs(
-      estimatedTxFeeWithComputeUnits.microLamports,
-      estimatedTxFeeWithComputeUnits.unitsConsumed
+      estimatedFee.microLamports,
+      computeUnitsConsumed.unitsConsumed
     );
   } else {
     txBuilder.addStaticComputeBudgetIxs(
@@ -132,4 +122,5 @@ export const addComputeBudgetIxsIfNeeded = async (
       computeUnitsConsumed.unitsConsumed
     );
   }
+  return txBuilder;
 };
