@@ -164,6 +164,6 @@ export const addLegsToRfqBuilder = async (
       key: 'addLegsToRfq',
     });
 
-  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence, true);
   return txBuilder;
 };

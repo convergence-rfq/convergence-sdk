@@ -127,7 +127,7 @@ export const prepareEuropeanOptions = async (
         signers: [convergence.identity()],
       });
 
-    await addComputeBudgetIxsIfNeeded(mintTxBuilder, convergence);
+    await addComputeBudgetIxsIfNeeded(mintTxBuilder, convergence, true);
     mintTxBuilderArray.push(mintTxBuilder);
   }
 
