@@ -1,5 +1,5 @@
 import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
-import { PublicKey } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
@@ -206,6 +206,12 @@ export const finalizeRfqConstructionBuilder = async (
       rfq,
     })
     .add({
+      instruction: ComputeBudgetProgram.setComputeUnitLimit({
+        units: 300000,
+      }),
+      signers: [],
+    })
+    .add({
       instruction: createFinalizeRfqConstructionInstruction(
         {
           taker: taker.publicKey,
@@ -221,6 +227,6 @@ export const finalizeRfqConstructionBuilder = async (
       key: 'finalizeRfqConstruction',
     });
 
-  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence, true);
   return txBuilder;
 };
