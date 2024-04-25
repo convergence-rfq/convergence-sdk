@@ -6,7 +6,11 @@ import {
 } from '@solana/web3.js';
 import { TransactionBuilder } from './TransactionBuilder';
 import { Convergence } from '@/Convergence';
-import { DEFAULT_COMPUTE_UNITS, DEFAULT_COMPUTE_UNIT_PRICE } from '@/constants';
+import {
+  DEFAULT_COMPUTE_UNITS,
+  DEFAULT_COMPUTE_UNITS_OFFSET,
+  DEFAULT_COMPUTE_UNIT_PRICE,
+} from '@/constants';
 
 type EstimatedPriorityFee = {
   microLamports: number;
@@ -38,6 +42,7 @@ export const getEstimatedPriorityFee = async (
       0
     );
     avgPriorityFee /= recentPriorityFeeData.length;
+    avgPriorityFee = Math.ceil(avgPriorityFee);
 
     return {
       microLamports: avgPriorityFee,
@@ -84,7 +89,7 @@ export const getComputeUnitsToBeConsumed = async (
       throw new Error('Failed to get units consumed');
     }
     return {
-      unitsConsumed,
+      unitsConsumed: unitsConsumed + DEFAULT_COMPUTE_UNITS_OFFSET,
     };
   } catch (error) {
     return null;

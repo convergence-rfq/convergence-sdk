@@ -1,5 +1,17 @@
 # @convergence-rfq/sdk
 
+## 6.6.8
+
+### Patch Changes
+
+- fix FinalizeRFQCOnstruction CU limits
+
+## 6.6.7
+
+### Patch Changes
+
+- Add Offset of 1000 CUs to simulates CUs
+
 ## 6.6.6
 
 ### Patch Changes

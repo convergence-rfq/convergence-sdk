@@ -9,7 +9,6 @@ export const createCvg = async (opts: Opts): Promise<Convergence> => {
   const buffer = JSON.parse(readFileSync(opts.keypairFile, 'utf8'));
   const user = Keypair.fromSecretKey(new Uint8Array(buffer));
   const txPriorityString: string = opts.txPriorityFee;
-
   const txPriority = resolveTxPriorityArg(txPriorityString);
   const cvg = new Convergence(
     new Connection(opts.rpcEndpoint, {
