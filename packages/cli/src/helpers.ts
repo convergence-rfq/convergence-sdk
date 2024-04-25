@@ -160,6 +160,8 @@ export const resolveTxPriorityArg = (
   txPriority: string
 ): TransactionPriority => {
   switch (txPriority) {
+    case 'dynamic':
+      return 'dynamic';
     case 'none':
       return 'none';
     case 'normal':

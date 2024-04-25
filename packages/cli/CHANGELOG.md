@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.6.7
+
+### Patch Changes
+
+- Add Offset of 1000 CUs to simulates CUs
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.7
+
 ## 6.6.6
 
 ### Patch Changes
