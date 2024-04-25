@@ -480,7 +480,7 @@ export const createRfqBuilder = async (
 
   const remainingLegsToAdd = instruments.slice(legsToAdd.length, legs.length);
 
-  await addComputeBudgetIxsIfNeeded(rfqBuilder, convergence);
+  await addComputeBudgetIxsIfNeeded(rfqBuilder, convergence, true);
 
   return {
     createRfqTxBuilder: rfqBuilder,

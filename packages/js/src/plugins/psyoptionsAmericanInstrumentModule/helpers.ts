@@ -113,7 +113,7 @@ export const prepareAmericanOptions = async (
         instruction: ixWithSigners.ix,
         signers: [convergence.identity()],
       });
-    await addComputeBudgetIxsIfNeeded(mintTxBuilder, convergence);
+    await addComputeBudgetIxsIfNeeded(mintTxBuilder, convergence, true);
 
     mintTxBuilderArray.push(mintTxBuilder);
   }
