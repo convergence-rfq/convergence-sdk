@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.6.9
+
+### Patch Changes
+
+- Disable CU calculations for Create RFQ Txs
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.9
+
 ## 6.6.8
 
 ### Patch Changes

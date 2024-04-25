@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.9
+
+### Patch Changes
+
+- Disable CU calculations for Create RFQ Txs
+
 ## 6.6.8
 
 ### Patch Changes
