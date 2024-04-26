@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.10
+
+### Patch Changes
+
+- Fix an issue with hxro library when the SDK is imported as .mjs
+
 ## 6.6.9
 
 ### Patch Changes
