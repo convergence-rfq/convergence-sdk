@@ -13,7 +13,6 @@ import {
   PrintTradeRfq,
   getAuthoritySide,
 } from '@/plugins/rfqModule';
-import { HXRO_COLLATERAL_LOG_INDEX } from '@/constants';
 
 const Key = 'GetRequiredHxroCollateralForSettlementOperation' as const;
 

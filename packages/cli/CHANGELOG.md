@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.6.11
+
+### Patch Changes
+
+- Update hxro collateral logs fetching logic
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.11
+
 ## 6.6.10
 
 ### Patch Changes
