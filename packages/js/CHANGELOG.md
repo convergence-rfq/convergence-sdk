@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.18
+
+### Patch Changes
+
+- update getHxroCollateralForSettlement
+
 ## 6.6.17
 
 ### Patch Changes

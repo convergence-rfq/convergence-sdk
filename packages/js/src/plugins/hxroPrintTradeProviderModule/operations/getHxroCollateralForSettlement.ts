@@ -92,10 +92,13 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
 
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
       const ixs = txBuilder.getInstructions();
+      if (!ixs[1]) {
+        return { remainingCollateral: 0 };
+      }
       const txMessage = new TransactionMessage({
         payerKey: payer,
         recentBlockhash: lastValidBlockHeight.blockhash,
-        instructions: ixs,
+        instructions: [ixs[1]],
       }).compileToV0Message();
 
       const tx = new VersionedTransaction(txMessage);

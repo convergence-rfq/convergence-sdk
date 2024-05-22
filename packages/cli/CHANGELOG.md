@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.6.18
+
+### Patch Changes
+
+- update getHxroCollateralForSettlement
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.18
+
 ## 6.6.17
 
 ### Patch Changes
