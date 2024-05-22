@@ -14,6 +14,7 @@ import {
 } from '../../../utils/TransactionBuilder';
 import { VaultParameters } from '../models';
 import { EscrowRfq } from '@/plugins/rfqModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'WithdrawVaultTokensOperation' as const;
 
@@ -108,8 +109,8 @@ export const withdrawVaultTokensBuilder = async (
     key: 'withdrawVaultTokens',
   };
 
-  return TransactionBuilder.make()
-    .setFeePayer(payer)
-    .addTxPriorityFeeIx(cvg)
-    .add(ix);
+  const txBuilder = TransactionBuilder.make().setFeePayer(payer).add(ix);
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, cvg);
+  return txBuilder;
 };

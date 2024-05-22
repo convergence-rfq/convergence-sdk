@@ -18,6 +18,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'ApproveTokenDelegateAuthorityOperation' as const;
 
@@ -114,11 +115,12 @@ export const approveTokenDelegateAuthorityOperationHandler: OperationHandler<App
       convergence: Convergence,
       scope: OperationScope
     ): Promise<ApproveTokenDelegateAuthorityOutput> => {
-      return approveTokenDelegateAuthorityBuilder(
+      const builder = await approveTokenDelegateAuthorityBuilder(
         convergence,
         operation.input,
         scope
-      ).sendAndConfirm(convergence, scope.confirmOptions);
+      );
+      return builder.sendAndConfirm(convergence, scope.confirmOptions);
     },
   };
 
@@ -154,11 +156,11 @@ export type ApproveTokenDelegateAuthorityBuilderParams = Omit<
  * @group Transaction Builders
  * @category Constructors
  */
-export const approveTokenDelegateAuthorityBuilder = (
+export const approveTokenDelegateAuthorityBuilder = async (
   convergence: Convergence,
   params: ApproveTokenDelegateAuthorityBuilderParams,
   options: TransactionBuilderOptions = {}
-): TransactionBuilder => {
+): Promise<TransactionBuilder> => {
   const { programs, payer = convergence.rpc().getDefaultFeePayer() } = options;
   const {
     mintAddress,
@@ -182,9 +184,8 @@ export const approveTokenDelegateAuthorityBuilder = (
       programs,
     });
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createApproveInstruction(
         tokenAddressOrAta,
@@ -197,4 +198,7 @@ export const approveTokenDelegateAuthorityBuilder = (
       signers,
       key: params.instructionKey ?? 'approveDelegateAuthority',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

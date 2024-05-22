@@ -18,6 +18,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { protocolCache } from '../../protocolModule/cache';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'InitializeCollateralOperation' as const;
 
@@ -196,21 +197,24 @@ export const initializeCollateralBuilder = async (
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  return TransactionBuilder.make<InitializeCollateralBuilderContext>()
-    .setFeePayer(user)
-    .addTxPriorityFeeIx(convergence)
-    .add({
-      instruction: createInitializeCollateralInstruction(
-        {
-          user: user.publicKey,
-          protocol,
-          collateralMint,
-          collateralToken,
-          collateralInfo,
-        },
-        rfqProgram.address
-      ),
-      signers: [user],
-      key: 'initializeCollateral',
-    });
+  const txBuilder =
+    TransactionBuilder.make<InitializeCollateralBuilderContext>()
+      .setFeePayer(user)
+      .add({
+        instruction: createInitializeCollateralInstruction(
+          {
+            user: user.publicKey,
+            protocol,
+            collateralMint,
+            collateralToken,
+            collateralInfo,
+          },
+          rfqProgram.address
+        ),
+        signers: [user],
+        key: 'initializeCollateral',
+      });
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+
+  return txBuilder;
 };

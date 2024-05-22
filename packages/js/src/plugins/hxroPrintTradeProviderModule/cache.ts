@@ -21,7 +21,10 @@ export const hxroManifestCache = useCache(async (cvg: Convergence) => {
   console.debug = () => {};
   let manifest: any; // dexterity doesn't export a type for a manifest
   try {
-    manifest = await dexterity.getManifest(
+    // @ts-ignore the next line fixes a strange issue with dexterity default export when imported from .mjs files
+    const getManifest = dexterity.getManifest ?? dexterity.default.getManifest;
+
+    manifest = await getManifest(
       cvg.connection.rpcEndpoint,
       true,
       new CvgWallet(cvg)

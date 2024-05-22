@@ -11,6 +11,7 @@ import {
   createAmericanProgram,
 } from './instrument';
 import { TransactionBuilder } from '@/utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 export type PrepareAmericanOptionsResult = {
   ataTxBuilders: TransactionBuilder[];
@@ -106,13 +107,14 @@ export const prepareAmericanOptions = async (
       isSigner: true,
       isWritable: false,
     };
-    const mintTxBuilder = TransactionBuilder.make().setFeePayer(
-      convergence.rpc().getDefaultFeePayer()
-    );
-    mintTxBuilder.addTxPriorityFeeIx(convergence).add({
-      instruction: ixWithSigners.ix,
-      signers: [convergence.identity()],
-    });
+    const mintTxBuilder = TransactionBuilder.make()
+      .setFeePayer(convergence.rpc().getDefaultFeePayer())
+      .add({
+        instruction: ixWithSigners.ix,
+        signers: [convergence.identity()],
+      });
+    await addComputeBudgetIxsIfNeeded(mintTxBuilder, convergence, true);
+
     mintTxBuilderArray.push(mintTxBuilder);
   }
   return {

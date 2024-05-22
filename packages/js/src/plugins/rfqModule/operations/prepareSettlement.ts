@@ -40,6 +40,7 @@ import {
   psyoptionsEuropeanInstrumentProgram,
 } from '@/plugins/psyoptionsEuropeanInstrumentModule';
 import { InstructionUniquenessTracker } from '@/utils/classes';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'PrepareSettlementOperation' as const;
 
@@ -322,11 +323,10 @@ export const prepareSettlementBuilder = async (
     .setFeePayer(payer)
     .add({
       instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1400000,
+        units: 300000,
       }),
       signers: [],
     })
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createPrepareEscrowSettlementInstruction(
         {
@@ -346,6 +346,11 @@ export const prepareSettlementBuilder = async (
       key: 'prepareSettlement',
     });
 
+  await addComputeBudgetIxsIfNeeded(
+    prepareSettlementTxBuilder,
+    convergence,
+    true
+  );
   return {
     ataTxBuilderArray,
     prepareSettlementTxBuilder,

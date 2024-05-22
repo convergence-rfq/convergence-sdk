@@ -15,6 +15,7 @@ import {
   TransactionBuilder,
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'CreateAccountOperation' as const;
 
@@ -161,13 +162,12 @@ export const createAccountBuilder = async (
   const lamports = params.lamports ?? (await convergence.rpc().getRent(space));
   assertSol(lamports);
 
-  return TransactionBuilder.make<CreateAccountBuilderContext>()
+  const txBuilder = TransactionBuilder.make<CreateAccountBuilderContext>()
     .setFeePayer(payer)
     .setContext({
       newAccount,
       lamports,
     })
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: SystemProgram.createAccount({
         fromPubkey: payer.publicKey,
@@ -179,4 +179,7 @@ export const createAccountBuilder = async (
       signers: [payer, newAccount],
       key: params.instructionKey ?? 'createAccount',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

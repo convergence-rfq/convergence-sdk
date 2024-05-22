@@ -1,9 +1,4 @@
-import {
-  PublicKey,
-  AccountMeta,
-  SYSVAR_RENT_PUBKEY,
-  ComputeBudgetProgram,
-} from '@solana/web3.js';
+import { PublicKey, AccountMeta, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
 import {
   createPrepareMoreEscrowLegsSettlementInstruction,
   AuthoritySide,
@@ -27,6 +22,7 @@ import {
 import { getOrCreateATA } from '../../../utils/ata';
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'PrepareMoreLegsSettlementOperation' as const;
 
@@ -254,15 +250,8 @@ export const prepareMoreLegsSettlementBuilder = async (
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .add({
-      instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1400000,
-      }),
-      signers: [],
-    })
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createPrepareMoreEscrowLegsSettlementInstruction(
         {
@@ -281,4 +270,7 @@ export const prepareMoreLegsSettlementBuilder = async (
       signers: [caller],
       key: 'prepareMoreLegsSettlement',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

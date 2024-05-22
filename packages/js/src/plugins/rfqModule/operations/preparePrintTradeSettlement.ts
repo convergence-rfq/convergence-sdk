@@ -84,9 +84,7 @@ export const preparePrintTradeSettlementOperationHandler: OperationHandler<Prepa
 
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
       const txs = builders.map((x) => x.toTransaction(lastValidBlockHeight));
-
       const signedTxs = await convergence.identity().signAllTransactions(txs);
-
       const outputs = [];
       for (const signedTx of signedTxs) {
         const output = await convergence
@@ -96,7 +94,6 @@ export const preparePrintTradeSettlementOperationHandler: OperationHandler<Prepa
             lastValidBlockHeight,
             confirmOptions
           );
-
         outputs.push(output);
       }
 
@@ -163,6 +160,7 @@ export const preparePrintTradeSettlementBuilders = async (
       side,
       options
     );
+
   const remainingAccounts = prependWithProviderProgram(
     printTrade,
     printTradeAccounts

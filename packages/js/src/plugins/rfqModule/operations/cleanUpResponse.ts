@@ -20,6 +20,7 @@ import {
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
 import { SendAndConfirmTransactionResponse } from '@/plugins/rpcModule';
 import { prependWithProviderProgram } from '@/plugins/printTradeModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'cleanUpResponseOperation' as const;
 
@@ -279,9 +280,8 @@ export const cleanUpEscrowResponseBuilder = async (
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
   );
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createCleanUpResponseInstruction(
         {
@@ -296,6 +296,9 @@ export const cleanUpEscrowResponseBuilder = async (
       signers: [],
       key: 'cleanUpResponses',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };
 
 export type CleanUpPrintTradeResponseBuilderParams = {

@@ -19,6 +19,7 @@ import {
 import { protocolCache } from '../../protocolModule/cache';
 import { collateralMintCache } from '../cache';
 import { addDecimals } from '../../..//utils/conversions';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'WithdrawCollateralOperation' as const;
 
@@ -182,9 +183,8 @@ export const withdrawCollateralBuilder = async (
   const collateralMint = await collateralMintCache.get(convergence);
   const collateralDecimals = collateralMint.decimals;
 
-  return TransactionBuilder.make<WithdrawCollateralBuilderContext>()
+  const txBuilder = TransactionBuilder.make<WithdrawCollateralBuilderContext>()
     .setFeePayer(user)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createWithdrawCollateralInstruction(
         {
@@ -202,4 +202,7 @@ export const withdrawCollateralBuilder = async (
       signers: [user],
       key: 'withdrawCollateral',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

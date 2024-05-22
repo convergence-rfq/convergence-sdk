@@ -20,6 +20,7 @@ import {
   TransactionBuilderOptions,
 } from '../../../utils/TransactionBuilder';
 import { LegInstrument } from '../../../plugins/instrumentModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'AddLegsToRfqOperation' as const;
 
@@ -144,9 +145,8 @@ export const addLegsToRfqBuilder = async (
 
   const rfqProgram = convergence.programs().getRfq(programs);
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createAddLegsToRfqInstruction(
         {
@@ -163,4 +163,7 @@ export const addLegsToRfqBuilder = async (
       signers: [taker],
       key: 'addLegsToRfq',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence, true);
+  return txBuilder;
 };

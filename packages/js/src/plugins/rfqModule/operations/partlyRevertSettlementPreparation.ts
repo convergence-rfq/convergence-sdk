@@ -18,6 +18,7 @@ import {
 import { InstrumentPdasClient } from '../../instrumentModule';
 import { AuthoritySide, toSolitaAuthoritySide } from '../models/AuthoritySide';
 import { legToBaseAssetMint } from '@/plugins/instrumentModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'PartlyRevertSettlementPreparationOperation' as const;
 
@@ -214,9 +215,8 @@ export const partlyRevertSettlementPreparationBuilder = async (
     anchorRemainingAccounts.push(instrumentProgramAccount, ...legAccounts);
   }
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createPartlyRevertEscrowSettlementPreparationInstruction(
         {
@@ -234,4 +234,7 @@ export const partlyRevertSettlementPreparationBuilder = async (
       signers: [],
       key: 'partlyRevertSettlementPreparation',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence);
+  return txBuilder;
 };

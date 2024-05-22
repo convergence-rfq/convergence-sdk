@@ -1,5 +1,5 @@
 import { createFinalizeRfqConstructionInstruction } from '@convergence-rfq/rfq';
-import { PublicKey, ComputeBudgetProgram } from '@solana/web3.js';
+import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 import { assertRfq, Rfq } from '../models';
@@ -18,6 +18,7 @@ import {
 import { Convergence } from '../../../Convergence';
 import { LegInstrument } from '@/plugins/instrumentModule';
 import { PrintTradeLeg } from '@/plugins/printTradeModule';
+import { addComputeBudgetIxsIfNeeded } from '@/utils/helpers';
 
 const Key = 'FinalizeRfqConstructionOperation' as const;
 
@@ -199,18 +200,17 @@ export const finalizeRfqConstructionBuilder = async (
 
   const protocol = convergence.protocol().pdas().protocol();
 
-  return TransactionBuilder.make()
+  const txBuilder = TransactionBuilder.make()
     .setFeePayer(payer)
     .setContext({
       rfq,
     })
     .add({
       instruction: ComputeBudgetProgram.setComputeUnitLimit({
-        units: 1400000,
+        units: 300000,
       }),
       signers: [],
     })
-    .addTxPriorityFeeIx(convergence)
     .add({
       instruction: createFinalizeRfqConstructionInstruction(
         {
@@ -226,4 +226,7 @@ export const finalizeRfqConstructionBuilder = async (
       signers: [taker],
       key: 'finalizeRfqConstruction',
     });
+
+  await addComputeBudgetIxsIfNeeded(txBuilder, convergence, true);
+  return txBuilder;
 };

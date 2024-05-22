@@ -1,5 +1,83 @@
 # @convergence-rfq/sdk
 
+## 6.6.18
+
+### Patch Changes
+
+- update getHxroCollateralForSettlement
+
+## 6.6.17
+
+### Patch Changes
+
+- finish hxro updateMarkPrice integration
+
+## 6.6.16
+
+### Patch Changes
+
+- remove console logs
+
+## 6.6.15
+
+### Patch Changes
+
+- experiment hxro updateMarkPrice
+
+## 6.6.14
+
+### Patch Changes
+
+- Modify preparePrintTradeSettlement logic
+
+## 6.6.13
+
+### Patch Changes
+
+- fix sig verify error
+
+## 6.6.12
+
+### Patch Changes
+
+- add updateMarkPrice ix to lockcollateral
+
+## 6.6.11
+
+### Patch Changes
+
+- Update hxro collateral logs fetching logic
+
+## 6.6.10
+
+### Patch Changes
+
+- Fix an issue with hxro library when the SDK is imported as .mjs
+
+## 6.6.9
+
+### Patch Changes
+
+- Disable CU calculations for Create RFQ Txs
+
+## 6.6.8
+
+### Patch Changes
+
+- fix FinalizeRFQCOnstruction CU limits
+
+## 6.6.7
+
+### Patch Changes
+
+- Add Offset of 1000 CUs to simulates CUs
+
+## 6.6.6
+
+### Patch Changes
+
+- ComputeUnits Improvement and implement dynamic Priority fee
+
 ## 6.6.5
 
 ### Patch Changes
