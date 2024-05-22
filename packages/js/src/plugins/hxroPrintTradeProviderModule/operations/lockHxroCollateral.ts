@@ -1,5 +1,6 @@
 import BN from 'bn.js';
 import BigNumber from 'bignumber.js';
+import dexterity from '@hxronetwork/dexterity-ts';
 import { getHxroProgramFromIDL } from '../program';
 import type { HxroContextHelper, HxroLeg } from '../printTrade';
 import { HXRO_LEG_DECIMALS } from '../constants';
@@ -11,6 +12,7 @@ import {
   PrintTradeResponse,
   PrintTradeRfq,
 } from '@/plugins/rfqModule';
+import { isLocalEnv } from '@/utils/helpers';
 
 export type LockHxroCollateralParams = {
   rfq: PrintTradeRfq;
@@ -26,7 +28,6 @@ export const lockHxroCollateralBuilder = async (
 ): Promise<TransactionBuilder<{}>> => {
   const { rfq, response, side, hxroContext } = params;
   const { payer = cvg.rpc().getDefaultFeePayer() } = options;
-
   const { mpg, manifest } = hxroContext;
   const userTrg = await hxroContext.getTrgDataBySide(side).get();
 
@@ -109,11 +110,32 @@ export const lockHxroCollateralBuilder = async (
     ])
     .instruction();
 
-  return TransactionBuilder.make<{}>()
+  const txBuilder = TransactionBuilder.make<{}>()
     .setFeePayer(payer)
     .add({
       instruction,
       signers: [payer],
       key: 'lockHxroCollateral',
     });
+
+  if (!isLocalEnv(cvg)) {
+    let traderRiskGrop: PublicKey;
+    if (rfq.taker.equals(payer.publicKey)) {
+      traderRiskGrop = hxroContext.getTakerTrg();
+    } else {
+      traderRiskGrop = hxroContext.getMakerTrg();
+    }
+    const trader = new dexterity.Trader(manifest, traderRiskGrop, true);
+
+    await trader.connect(null, null);
+    const updateMarkPriceIx = trader.getUpdateMarkPricesIx();
+    updateMarkPriceIx.keys[0].pubkey = payer.publicKey;
+
+    txBuilder.prepend({
+      instruction: updateMarkPriceIx,
+      signers: [payer],
+      key: 'updateMarkPrices',
+    });
+  }
+  return txBuilder;
 };

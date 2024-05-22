@@ -1,5 +1,53 @@
 # @convergence-rfq/cli
 
+## 6.6.17
+
+### Patch Changes
+
+- finish hxro updateMarkPrice integration
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.17
+
+## 6.6.16
+
+### Patch Changes
+
+- remove console logs
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.16
+
+## 6.6.15
+
+### Patch Changes
+
+- experiment hxro updateMarkPrice
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.15
+
+## 6.6.14
+
+### Patch Changes
+
+- Modify preparePrintTradeSettlement logic
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.14
+
+## 6.6.13
+
+### Patch Changes
+
+- fix sig verify error
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.13
+
+## 6.6.12
+
+### Patch Changes
+
+- add updateMarkPrice ix to lockcollateral
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.12
+
 ## 6.6.11
 
 ### Patch Changes

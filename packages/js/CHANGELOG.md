@@ -1,5 +1,41 @@
 # @convergence-rfq/sdk
 
+## 6.6.17
+
+### Patch Changes
+
+- finish hxro updateMarkPrice integration
+
+## 6.6.16
+
+### Patch Changes
+
+- remove console logs
+
+## 6.6.15
+
+### Patch Changes
+
+- experiment hxro updateMarkPrice
+
+## 6.6.14
+
+### Patch Changes
+
+- Modify preparePrintTradeSettlement logic
+
+## 6.6.13
+
+### Patch Changes
+
+- fix sig verify error
+
+## 6.6.12
+
+### Patch Changes
+
+- add updateMarkPrice ix to lockcollateral
+
 ## 6.6.11
 
 ### Patch Changes

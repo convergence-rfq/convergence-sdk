@@ -135,3 +135,7 @@ export const addComputeBudgetIxsIfNeeded = async <T extends object>(
     );
   }
 };
+
+export const isLocalEnv = (cvg: Convergence) => {
+  return cvg.connection.rpcEndpoint === 'http://127.0.0.1:8899';
+};
