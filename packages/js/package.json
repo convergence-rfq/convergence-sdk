@@ -1,7 +1,7 @@
 {
   "name": "@convergence-rfq/sdk",
   "description": "Official Convergence RFQ SDK",
-  "version": "6.6.10",
+  "version": "6.6.18",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -62,7 +62,7 @@
     "@convergence-rfq/vault-operator": "^3.11.0",
     "@coral-xyz/anchor": "^0.28.0",
     "@coral-xyz/borsh": "^0.28.0",
-    "@hxronetwork/dexterity-ts": "1.6.16",
+    "@hxronetwork/dexterity-ts": "1.6.40",
     "@mithraic-labs/psy-american": "^0.2.3",
     "@mithraic-labs/tokenized-euros": "^0.2.3",
     "@noble/ed25519": "^1.7.1",

@@ -13,7 +13,6 @@ import {
   PrintTradeRfq,
   getAuthoritySide,
 } from '@/plugins/rfqModule';
-import { HXRO_COLLATERAL_LOG_INDEX } from '@/constants';
 
 const Key = 'GetRequiredHxroCollateralForSettlementOperation' as const;
 
@@ -93,10 +92,13 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
 
       const lastValidBlockHeight = await convergence.rpc().getLatestBlockhash();
       const ixs = txBuilder.getInstructions();
+      if (!ixs[1]) {
+        return { remainingCollateral: 0 };
+      }
       const txMessage = new TransactionMessage({
         payerKey: payer,
         recentBlockhash: lastValidBlockHeight.blockhash,
-        instructions: ixs,
+        instructions: [ixs[1]],
       }).compileToV0Message();
 
       const tx = new VersionedTransaction(txMessage);
@@ -112,8 +114,12 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
         if (!logs) {
           return { remainingCollateral: 0 };
         }
-        const logToParse = logs[HXRO_COLLATERAL_LOG_INDEX];
+        const logToParse = logs.find((l) => l.includes('Total Variance'));
+        if (!logToParse || logToParse === '') {
+          return { remainingCollateral: 0 };
+        }
         const logsSplit = logToParse.split(',');
+
         let totalVariance = Number(logsSplit[0].split(':')[2]);
         let openOrdersVariance = Number(logsSplit[1].split(':')[1]);
         let positionalValue = Number(logsSplit[2].split(':')[1]);
