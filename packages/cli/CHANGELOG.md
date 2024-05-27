@@ -1,5 +1,29 @@
 # @convergence-rfq/cli
 
+## 6.6.21
+
+### Patch Changes
+
+- add logs to check unlockhxroCollateralTxSize
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.21
+
+## 6.6.20
+
+### Patch Changes
+
+- fix tx size overflow for unlockHxroCollateralTx
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.20
+
+## 6.6.19
+
+### Patch Changes
+
+- modify unclockHxroCollateral and add markPriceUpdate ixs
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.19
+
 ## 6.6.18
 
 ### Patch Changes

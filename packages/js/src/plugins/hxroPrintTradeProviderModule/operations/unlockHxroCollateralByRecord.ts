@@ -6,6 +6,7 @@ import {
 import dexterity from '@hxronetwork/dexterity-ts';
 
 import BN from 'bn.js';
+import { Transaction } from '@solana/web3.js';
 import { getHxroProgramFromIDL } from '../program';
 import { fetchValidHxroMpg } from '../helpers';
 import { hxroManifestCache } from '../cache';
@@ -20,6 +21,7 @@ import {
 } from '@/types';
 import { TransactionBuilder, TransactionBuilderOptions } from '@/utils';
 import { SendAndConfirmTransactionResponse } from '@/plugins/rpcModule';
+import { isLocalEnv } from '@/utils/helpers';
 
 const Key = 'unlockHxroCollateralByRecord' as const;
 
@@ -79,9 +81,13 @@ export const unlockHxroCollateralByRecordOperationHandler: OperationHandler<Unlo
         lockRecordData = { ...accountData, publicKey: lockRecord };
       }
 
-      const builder = TransactionBuilder.make().setFeePayer(cvg.identity());
+      const unlockHxroCollateralTxBuilder =
+        TransactionBuilder.make().setFeePayer(cvg.identity());
+      const removeRecordCollateralTxBuilder =
+        TransactionBuilder.make().setFeePayer(cvg.identity());
+
       if (action == 'unlock' || action == 'unlock-and-remove-record') {
-        builder.add(
+        unlockHxroCollateralTxBuilder.add(
           await unlockHxroCollateralBuilder(
             cvg,
             {
@@ -93,7 +99,7 @@ export const unlockHxroCollateralByRecordOperationHandler: OperationHandler<Unlo
       }
 
       if (action == 'remove-record' || action == 'unlock-and-remove-record') {
-        builder.add(
+        removeRecordCollateralTxBuilder.add(
           await removeLockCollateralRecordBuilder(
             cvg,
             {
@@ -103,9 +109,31 @@ export const unlockHxroCollateralByRecordOperationHandler: OperationHandler<Unlo
           )
         );
       }
+      const lastValidBlockHeight = await cvg.rpc().getLatestBlockhash();
+      const txs: Transaction[] = [];
+      if (action == 'unlock' || action == 'unlock-and-remove-record') {
+        txs.push(
+          unlockHxroCollateralTxBuilder.toTransaction(lastValidBlockHeight)
+        );
+      }
+      if (action == 'remove-record' || action == 'unlock-and-remove-record') {
+        txs.push(
+          removeRecordCollateralTxBuilder.toTransaction(lastValidBlockHeight)
+        );
+      }
 
-      const output = await builder.sendAndConfirm(cvg, scope.confirmOptions);
-      return output.response;
+      if (txs.length === 0) {
+        throw new Error('No transactions to send');
+      }
+      const signedTxs = await cvg.identity().signAllTransactions(txs);
+      let txResponse: SendAndConfirmTransactionResponse | null = null;
+      for (const tx of signedTxs) {
+        txResponse = await cvg.rpc().serializeAndSendTransaction(tx);
+      }
+      if (!txResponse) {
+        throw new Error('No transaction response');
+      }
+      return txResponse;
     },
   };
 
@@ -197,11 +225,27 @@ export const unlockHxroCollateralBuilder = async (
     ])
     .instruction();
 
-  return TransactionBuilder.make<{}>()
+  const txBuilder = TransactionBuilder.make<{}>()
     .setFeePayer(payer)
     .add({
       instruction,
       signers: [payer],
       key: 'unlockHxroCollateral',
     });
+
+  if (!isLocalEnv(cvg)) {
+    const trader = new dexterity.Trader(manifest, lockRecord.trg, true);
+
+    await trader.connect(null, null);
+    const updateMarkPriceIx = trader.getUpdateMarkPricesIx();
+    updateMarkPriceIx.keys[0].pubkey = payer.publicKey;
+
+    txBuilder.prepend({
+      instruction: updateMarkPriceIx,
+      signers: [payer],
+      key: 'updateMarkPrices',
+    });
+  }
+  console.log('unlockHxroCollateralBuilder', txBuilder.checkTransactionFits());
+  return txBuilder;
 };
