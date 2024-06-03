@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.6.24
+
+### Patch Changes
+
+- add lastValidBlockhash to revertSettlementPreparation txs
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.24
+
 ## 6.6.23
 
 ### Patch Changes
