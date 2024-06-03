@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.6.23
+
+### Patch Changes
+
+- split txs for revertPrepareSettlement
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.23
+
 ## 6.6.22
 
 ### Patch Changes
