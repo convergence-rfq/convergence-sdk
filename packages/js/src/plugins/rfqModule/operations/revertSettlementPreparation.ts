@@ -105,11 +105,29 @@ export const revertSettlementPreparationOperationHandler: OperationHandler<Rever
         convergence,
         scope.confirmOptions
       );
+      if (builder.checkTransactionFits()) {
+        const output = await builder.sendAndConfirm(
+          convergence,
+          confirmOptions
+        );
+        scope.throwIfCanceled();
 
-      const output = await builder.sendAndConfirm(convergence, confirmOptions);
-      scope.throwIfCanceled();
-
-      return output;
+        return output;
+      }
+      const builders = builder.divideToMultipleBuildersThatFit();
+      const latestBlockhash = await convergence.rpc().getLatestBlockhash();
+      const txs = builders.map((b) => b.toTransaction(latestBlockhash));
+      const signedTxs = await convergence.identity().signAllTransactions(txs);
+      let output: SendAndConfirmTransactionResponse | undefined;
+      for (const signedTx of signedTxs) {
+        output = await convergence
+          .rpc()
+          .serializeAndSendTransaction(signedTx, latestBlockhash);
+      }
+      if (!output) {
+        throw new Error('No transaction was sent');
+      }
+      return { response: output };
     },
   };
 
