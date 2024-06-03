@@ -120,7 +120,9 @@ export const revertSettlementPreparationOperationHandler: OperationHandler<Rever
       const signedTxs = await convergence.identity().signAllTransactions(txs);
       let output: SendAndConfirmTransactionResponse | undefined;
       for (const signedTx of signedTxs) {
-        output = await convergence.rpc().serializeAndSendTransaction(signedTx);
+        output = await convergence
+          .rpc()
+          .serializeAndSendTransaction(signedTx, latestBlockhash);
       }
       if (!output) {
         throw new Error('No transaction was sent');
