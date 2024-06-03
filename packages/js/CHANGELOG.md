@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.22
+
+### Patch Changes
+
+- add updateMarkPriceIx to unlockHxroCollatera fn
+
 ## 6.6.21
 
 ### Patch Changes
