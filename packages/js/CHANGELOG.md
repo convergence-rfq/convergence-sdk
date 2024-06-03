@@ -1,5 +1,41 @@
 # @convergence-rfq/sdk
 
+## 6.6.24
+
+### Patch Changes
+
+- add lastValidBlockhash to revertSettlementPreparation txs
+
+## 6.6.23
+
+### Patch Changes
+
+- split txs for revertPrepareSettlement
+
+## 6.6.22
+
+### Patch Changes
+
+- add updateMarkPriceIx to unlockHxroCollatera fn
+
+## 6.6.21
+
+### Patch Changes
+
+- add logs to check unlockhxroCollateralTxSize
+
+## 6.6.20
+
+### Patch Changes
+
+- fix tx size overflow for unlockHxroCollateralTx
+
+## 6.6.19
+
+### Patch Changes
+
+- modify unclockHxroCollateral and add markPriceUpdate ixs
+
 ## 6.6.18
 
 ### Patch Changes
