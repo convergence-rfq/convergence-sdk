@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.25
+
+### Patch Changes
+
+- fix hxro collateral calculations
+
 ## 6.6.24
 
 ### Patch Changes

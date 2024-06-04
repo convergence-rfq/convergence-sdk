@@ -1,7 +1,7 @@
 {
   "name": "@convergence-rfq/sdk",
   "description": "Official Convergence RFQ SDK",
-  "version": "6.6.24",
+  "version": "6.6.25",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
