@@ -119,10 +119,12 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
           return { remainingCollateral: 0 };
         }
         const logsSplit = logToParse.split(',');
+        if (logsSplit.length < 2) {
+          return { remainingCollateral: 0 };
+        }
 
-        let totalVariance = Number(logsSplit[0].split(':')[2]);
+        let totalVariance = Number(logsSplit[0].split(':')[1]);
         let openOrdersVariance = Number(logsSplit[1].split(':')[1]);
-        let positionalValue = Number(logsSplit[2].split(':')[1]);
 
         if (totalVariance < 0 || isNaN(totalVariance)) {
           totalVariance = 0;
@@ -130,12 +132,9 @@ export const getRequiredHxroCollateralForSettlementOperationHandler: OperationHa
         if (openOrdersVariance < 0 || isNaN(openOrdersVariance)) {
           openOrdersVariance = 0;
         }
-        if (positionalValue < 0 || isNaN(positionalValue)) {
-          positionalValue = 0;
-        }
 
         const remainingCollateralReq =
-          (Math.sqrt(positionalValue) + Math.sqrt(openOrdersVariance)) * 1.5;
+          (Math.sqrt(totalVariance) + Math.sqrt(openOrdersVariance)) * 1.5;
         return { remainingCollateral: remainingCollateralReq };
       }
       scope.throwIfCanceled();
