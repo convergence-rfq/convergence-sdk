@@ -1,5 +1,17 @@
 # @convergence-rfq/sdk
 
+## 6.6.26
+
+### Patch Changes
+
+- new solita package - 3.12.0
+
+## 6.6.25
+
+### Patch Changes
+
+- HXRO updates
+
 ## 6.6.24
 
 ### Patch Changes
