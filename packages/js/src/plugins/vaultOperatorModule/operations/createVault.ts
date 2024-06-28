@@ -1,7 +1,7 @@
 import { createCreateRfqInstruction } from '@convergence-rfq/vault-operator';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import BN from 'bn.js';
-import * as multisig from '@sqds/multisig';
+import { getEphemeralSignerPda } from '@sqds/multisig';
 import { SendAndConfirmTransactionResponse } from '../../rpcModule';
 
 import { Convergence } from '../../../Convergence';
@@ -128,7 +128,7 @@ export const createVaultBuilder = async (
     executorKey = creator.publicKey;
   } else {
     signers = [];
-    vaultParamsKey = multisig.getEphemeralSignerPda({
+    vaultParamsKey = getEphemeralSignerPda({
       ephemeralSignerIndex: 0,
       transactionPda: squads.transactionPda,
     })[0];

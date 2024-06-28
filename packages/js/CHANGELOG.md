@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.27
+
+### Patch Changes
+
+- fix squads imports
+
 ## 6.6.26
 
 ### Patch Changes
