@@ -1,7 +1,7 @@
 {
   "name": "@convergence-rfq/sdk",
   "description": "Official Convergence RFQ SDK",
-  "version": "6.6.28",
+  "version": "6.6.29",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -70,7 +70,6 @@
     "@project-serum/anchor": "^0.26.0",
     "@solana/spl-token": "^0.3.8",
     "@solana/web3.js": "^1.87.6",
-    "@sqds/multisig": "^2.1.2",
     "@types/uuid": "^9.0.1",
     "big.js": "^6.2.1",
     "bignumber.js": "^9.0.2",

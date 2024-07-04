@@ -1,5 +1,11 @@
 # @convergence-rfq/sdk
 
+## 6.6.29
+
+### Patch Changes
+
+- indexer version
+
 ## 6.6.28
 
 ### Patch Changes
