@@ -1,5 +1,13 @@
 # @convergence-rfq/cli
 
+## 6.7.0
+
+### Patch Changes
+
+- revert hxro to old program id
+- Updated dependencies
+  - @convergence-rfq/sdk@6.6.25
+
 ## 6.6.24
 
 ### Patch Changes
