@@ -1,28 +1,10 @@
 # @convergence-rfq/sdk
 
-## 6.6.28
+## 6.7.0
 
 ### Patch Changes
 
-- update squads pkg
-
-## 6.6.27
-
-### Patch Changes
-
-- fix squads imports
-
-## 6.6.26
-
-### Patch Changes
-
-- new solita package - 3.12.0
-
-## 6.6.25
-
-### Patch Changes
-
-- HXRO updates
+- revert hxro to old program id
 
 ## 6.6.24
 
